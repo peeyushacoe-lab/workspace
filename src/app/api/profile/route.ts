@@ -15,7 +15,7 @@ const profileFields = z.object({
   company:        nstr(100),
   department:     nstr(100),
   phone:          nstr(40),
-  website:        z.string().max(200).url().or(z.literal("")).nullish(),
+  website:        nstr(200),
   location:       nstr(120),
   timezone:       nstr(60),
   language:       nstr(10),

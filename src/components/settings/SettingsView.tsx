@@ -270,8 +270,11 @@ function ProfileTab({ userId }: { userId: string }) {
         }),
       });
       if (!res.ok) {
-        const e = await res.json() as { error?: string };
-        throw new Error(e.error ?? "Save failed");
+        const e = await res.json() as { error?: string; details?: { message: string; path: (string | number)[] }[] };
+        const msg = e.details?.length
+          ? `${String(e.details[0].path[0] ?? "field")}: ${e.details[0].message}`
+          : (e.error ?? "Save failed");
+        throw new Error(msg);
       }
       toast.success("Profile saved");
     } catch (e) {
