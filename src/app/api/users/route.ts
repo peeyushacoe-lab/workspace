@@ -115,6 +115,18 @@ export async function POST(request: Request) {
       },
     });
 
+    // Auto-create mailbox for the new user
+    await prisma.mailbox.upsert({
+      where: { email: user.email },
+      update: {},
+      create: {
+        email: user.email,
+        displayName: user.fullName,
+        isShared: false,
+        accessLogs: { create: { userId: user.id, role: "OWNER" } },
+      },
+    }).catch(err => console.error("[mailbox create]", err));
+
     // Send invite email to personal address — fire-and-forget (don't block response)
     sendInviteEmail({
       toPersonalEmail: validated.personalEmail,
