@@ -17,10 +17,13 @@ export async function POST(_request: Request, { params }: Params) {
   });
   if (!membership) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  await redis.publish(
+  // Fire-and-forget — non-fatal if Redis is unavailable
+  redis.publish(
     `chat:channel:${channelId}`,
     JSON.stringify({ type: "typing", data: { userId: user.id, fullName: user.fullName } }),
-  );
+  ).catch((err: Error) => {
+    console.error("[chat/typing] Redis publish failed:", err.message);
+  });
 
   return NextResponse.json({ ok: true });
 }

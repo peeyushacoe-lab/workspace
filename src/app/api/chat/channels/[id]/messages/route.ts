@@ -101,8 +101,10 @@ export async function POST(request: Request, { params }: Params) {
     select: { id: true },
   }).catch(() => {});
 
-  // Broadcast to SSE subscribers via Redis pub/sub
-  await redis.publish(`chat:channel:${channelId}`, JSON.stringify({ type: "message", data: message }));
+  // Broadcast to SSE subscribers via Redis pub/sub — non-fatal if Redis is unavailable
+  await redis.publish(`chat:channel:${channelId}`, JSON.stringify({ type: "message", data: message })).catch((err: Error) => {
+    console.error("[chat/messages] Redis publish failed:", err.message);
+  });
 
   emitEvent("CHAT_MESSAGE_CREATED", {
     channelId,

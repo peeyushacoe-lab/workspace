@@ -1858,3 +1858,22 @@
    Reload env: .env
  ✓ Compiled in 243ms (1639 modules)
  ✓ Compiled in 262ms (1639 modules)
+   ▲ Next.js 15.5.18
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.247.1:3000
+   - Environments: .env
+   - Experiments (use with caution):
+     · clientTraceMetadata
+     · optimizePackageImports
+
+ ✓ Starting...
+ ○ Compiling /instrumentation ...
+ ✓ Compiled /instrumentation in 4.2s (1163 modules)
+ ✓ Ready in 8.3s
+ ✓ Compiled in 905ms (779 modules)
+ ✓ Compiled in 345ms (779 modules)
+ ✓ Compiled in 380ms (1163 modules)
+ ✓ Compiled in 237ms (1163 modules)
+ ✓ Compiled in 474ms (1163 modules)
+ ✓ Compiled in 616ms (1163 modules)
+ ✓ Compiled in 390ms (1163 modules)

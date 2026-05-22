@@ -26,7 +26,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https://lh3.googleusercontent.com",
       "font-src 'self'",
-      "connect-src 'self' https://*.sentry.io https://o*.ingest.sentry.io wss: ws:",
+      "connect-src 'self' https://*.sentry.io wss: ws:",
       "media-src 'self' blob:",
       "object-src 'none'",
       "frame-src 'none'",

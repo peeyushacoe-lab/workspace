@@ -329,32 +329,26 @@ export function SimpleComposer({
     setIsPending(true);
 
     const parseEmails = (raw: string) =>
-      raw.split(",").map(e => e.trim()).filter(e => e.length > 0);
+      raw.split(",").map(s => s.trim()).filter(s => s.length > 0);
 
     try {
-      const response = await fetch("/api/send", {
+      const response = await fetch("/api/inbox/compose", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          contacts: [{
-            email: recipient,
-            name: recipient.split('@')[0],
-            status: "Direct"
-          }],
+          to: recipient,
           subject,
           body,
-          title: `Direct Mail from ${userRole || 'User'}`,
-          senderEmail: selectedSenderEmail || undefined,
           signatureId: selectedSignatureId || undefined,
-          ...(cc.trim() ? { cc: parseEmails(cc) } : {}),
+          ...(cc.trim()  ? { cc:  parseEmails(cc) }  : {}),
           ...(bcc.trim() ? { bcc: parseEmails(bcc) } : {}),
         }),
       });
 
-      const data = await response.json();
+      const data = await response.json() as { ok?: boolean; error?: string };
 
-      if (response.ok && data.success > 0) {
-        toast.success("Email sent successfully");
+      if (response.ok && data.ok) {
+        toast.success("Email sent");
         setRecipient("");
         setCc("");
         setBcc("");
@@ -371,7 +365,7 @@ export function SimpleComposer({
         }
         if (onSuccess) onSuccess();
       } else {
-        toast.error(data.errors?.[0] || "Failed to send email");
+        toast.error(data.error ?? "Failed to send email");
       }
     } catch {
       toast.error("An unexpected error occurred");

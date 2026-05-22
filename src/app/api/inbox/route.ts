@@ -17,10 +17,12 @@ export async function GET(request: Request) {
 
     const cursor = searchParams.get("cursor") ?? undefined;
 
+    const viewAll = isPrivileged && searchParams.get("viewAll") === "true";
+
     const threads = await prisma.inboxThread.findMany({
       where: {
         AND: [
-          isPrivileged
+          viewAll
             ? {}
             : {
                 mailbox: {

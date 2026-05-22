@@ -1,33 +1,39 @@
-﻿"use client";
+"use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   User, Shield, Bell, Mail, FileSignature, Palette,
-  Globe, Clock, KeyRound, Monitor, Sun, Moon,
-  Smartphone, ToggleLeft, Volume2, MailCheck, CalendarDays,
-  HardDrive, MessageSquare, Lock, AlertTriangle, Download,
-  ChevronRight, Check, Filter, Plus, Trash2, ToggleRight, Loader2, X,
+  Globe, Lock, Filter, Plus, Trash2, Loader2, X,
+  Sun, Moon, Monitor, ChevronRight, Check, ToggleRight,
+  Download, AlertTriangle, Camera, Key, Cpu,
+  Copy, Eye, EyeOff, Building2, Phone, MapPin,
+  Link2, Languages, Tag, Briefcase, Users,
 } from "lucide-react";
-import { ProfileSettings } from "@/components/ProfileSettings";
 import { MFASetup } from "@/components/MFASetup";
 import { SessionManager } from "@/components/SessionManager";
 import { toast } from "sonner";
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+
 type Tab =
   | "profile"
   | "appearance"
-  | "signature"
   | "notifications"
-  | "security"
+  | "signature"
+  | "mail-rules"
   | "mailboxes"
+  | "security"
   | "language"
   | "privacy"
-  | "mail-rules";
+  | "ai"
+  | "api-tokens"
+  | "roles";
 
 type SettingsUser = {
   id: string;
   email: string;
   fullName: string;
+  role: string;
 };
 
 type RecentLogin = {
@@ -38,19 +44,83 @@ type RecentLogin = {
   createdAt: Date | string;
 };
 
-const TABS: { id: Tab; label: string; icon: React.ElementType; description: string }[] = [
-  { id: "profile",      label: "Profile",       icon: User,          description: "Personal info and avatar" },
-  { id: "appearance",   label: "Appearance",    icon: Palette,       description: "Theme, density, and fonts" },
-  { id: "notifications",label: "Notifications", icon: Bell,          description: "Alerts and email digests" },
-  { id: "signature",    label: "Signature",     icon: FileSignature, description: "Email signature editor" },
-  { id: "mail-rules",   label: "Mail Rules",    icon: Filter,        description: "Auto-sort and label emails" },
-  { id: "mailboxes",    label: "Mailboxes",     icon: Mail,          description: "Managed inbox access" },
-  { id: "security",     label: "Security",      icon: Shield,        description: "MFA, sessions, and logins" },
-  { id: "language",     label: "Language & Region", icon: Globe,     description: "Locale, timezone, and formats" },
-  { id: "privacy",      label: "Privacy & Data", icon: Lock,         description: "Export and account controls" },
-];
+type UserProfile = {
+  id: string;
+  email: string;
+  fullName: string;
+  role: string;
+  customRole?: string | null;
+  displayName?: string | null;
+  bio?: string | null;
+  jobTitle?: string | null;
+  company?: string | null;
+  department?: string | null;
+  phone?: string | null;
+  website?: string | null;
+  location?: string | null;
+  timezone?: string | null;
+  language?: string | null;
+  pronouns?: string | null;
+  birthday?: string | null;
+  statusMessage?: string | null;
+  statusEmoji?: string | null;
+  avatarUrl?: string | null;
+  coverUrl?: string | null;
+  preferences?: Record<string, unknown> | null;
+};
 
-function SectionCard({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
+type Signature = {
+  id: string;
+  fullName: string;
+  title: string;
+  phone?: string | null;
+  linkedinUrl?: string | null;
+  website?: string | null;
+  html?: string | null;
+};
+
+type APIKey = {
+  id: string;
+  name: string;
+  keyPrefix: string;
+  scopes: string[];
+  lastUsedAt?: string | null;
+  expiresAt?: string | null;
+  isActive: boolean;
+  createdAt: string;
+};
+
+type CustomRole = {
+  id: string;
+  name: string;
+  description?: string | null;
+  isSingleton: boolean;
+  color?: string | null;
+};
+
+// ─── Shared primitives ────────────────────────────────────────────────────────
+
+const inputClass =
+  "block w-full py-2.5 border border-[rgba(0,255,255,0.1)] rounded-lg bg-[#0f1321] text-[#dfe1f6] placeholder-[#5c6b72] focus:ring-2 focus:ring-[#00d2ff]/40 focus:border-[#00d2ff]/50 text-sm px-3 outline-none transition";
+
+const selectClass =
+  "rounded-lg border border-[rgba(0,255,255,0.08)] bg-[#262939] px-3 py-1.5 text-sm text-[#dfe1f6] focus:ring-2 focus:ring-[#00d2ff]/30 focus:border-[#00d2ff]/50 outline-none";
+
+const btnPrimary =
+  "inline-flex items-center justify-center gap-2 rounded-lg bg-[#00d2ff] px-5 py-2 text-sm font-semibold text-[#003543] hover:bg-[#47d6ff] transition disabled:opacity-50 disabled:cursor-not-allowed";
+
+const btnSecondary =
+  "inline-flex items-center justify-center gap-2 rounded-lg border border-[rgba(0,255,255,0.1)] bg-[#1b1f2e] px-4 py-2 text-sm font-medium text-[#bbc9cf] hover:bg-[#262939] transition disabled:opacity-50";
+
+function SectionCard({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="bg-[#1b1f2e] border border-[rgba(0,255,255,0.08)] rounded-xl overflow-hidden mb-6">
       <div className="px-6 py-4 border-b border-[rgba(0,255,255,0.08)]">
@@ -62,9 +132,17 @@ function SectionCard({ title, description, children }: { title: string; descript
   );
 }
 
-function SettingRow({ label, description, children }: { label: string; description?: string; children: React.ReactNode }) {
+function SettingRow({
+  label,
+  description,
+  children,
+}: {
+  label: string;
+  description?: string;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="flex items-center justify-between py-3 border-b border-[rgba(0,255,255,0.08)] last:border-0">
+    <div className="flex items-center justify-between py-3 border-b border-[rgba(0,255,255,0.06)] last:border-0">
       <div className="flex-1 mr-6">
         <p className="text-sm font-medium text-[#dfe1f6]">{label}</p>
         {description && <p className="text-xs text-[#bbc9cf] mt-0.5">{description}</p>}
@@ -93,66 +171,476 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
   );
 }
 
+// ─── TABS config ─────────────────────────────────────────────────────────────
+
+const ALL_TABS: { id: Tab; label: string; icon: React.ElementType; description: string; adminOnly?: boolean }[] = [
+  { id: "profile",       label: "Profile",          icon: User,          description: "Personal info and avatar" },
+  { id: "appearance",    label: "Appearance",        icon: Palette,       description: "Theme, density, and fonts" },
+  { id: "notifications", label: "Notifications",     icon: Bell,          description: "Alerts and digests" },
+  { id: "signature",     label: "Signature",         icon: FileSignature, description: "Email signature editor" },
+  { id: "mail-rules",    label: "Mail Rules",        icon: Filter,        description: "Auto-sort emails" },
+  { id: "mailboxes",     label: "Mailboxes",         icon: Mail,          description: "Managed inbox access" },
+  { id: "security",      label: "Security",          icon: Shield,        description: "MFA, sessions, logins" },
+  { id: "language",      label: "Language & Region", icon: Globe,         description: "Locale and timezone" },
+  { id: "privacy",       label: "Privacy & Data",    icon: Lock,          description: "Export and account controls" },
+  { id: "ai",            label: "AI Preferences",    icon: Cpu,           description: "CyberSage AI settings" },
+  { id: "api-tokens",    label: "API Tokens",        icon: Key,           description: "Personal access tokens" },
+  { id: "roles",         label: "Custom Roles",      icon: Tag,           description: "Manage org roles", adminOnly: true },
+];
+
+// ─── Profile Tab ─────────────────────────────────────────────────────────────
+
+function ProfileTab({ userId }: { userId: string }) {
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    fetch("/api/profile")
+      .then((r) => r.json())
+      .then((d: UserProfile) => setProfile(d))
+      .catch(() => toast.error("Failed to load profile"))
+      .finally(() => setLoading(false));
+  }, [userId]);
+
+  const update = (field: keyof UserProfile, value: string | null) => {
+    setProfile((p) => p ? { ...p, [field]: value } : p);
+  };
+
+  const handleAvatarUpload = async (file: File) => {
+    if (!file) return;
+    setAvatarUploading(true);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("folderId", "");
+      const res = await fetch("/api/drive/upload", { method: "POST", body: form });
+      if (!res.ok) throw new Error("Upload failed");
+      const data = await res.json() as { url?: string; fileUrl?: string };
+      const url = data.url ?? data.fileUrl ?? "";
+      if (url) update("avatarUrl", url);
+      toast.success("Avatar uploaded");
+    } catch {
+      toast.error("Failed to upload avatar");
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!profile) return;
+    setSaving(true);
+    try {
+      const res = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fullName:     profile.fullName,
+          displayName:  profile.displayName,
+          bio:          profile.bio,
+          jobTitle:     profile.jobTitle,
+          company:      profile.company,
+          department:   profile.department,
+          phone:        profile.phone,
+          website:      profile.website,
+          location:     profile.location,
+          timezone:     profile.timezone,
+          language:     profile.language,
+          pronouns:     profile.pronouns,
+          birthday:     profile.birthday,
+          statusMessage: profile.statusMessage,
+          statusEmoji:  profile.statusEmoji,
+          avatarUrl:    profile.avatarUrl,
+          coverUrl:     profile.coverUrl,
+        }),
+      });
+      if (!res.ok) {
+        const e = await res.json() as { error?: string };
+        throw new Error(e.error ?? "Save failed");
+      }
+      toast.success("Profile saved");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to save");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <Loader2 className="h-6 w-6 animate-spin text-[#00d2ff]" />
+      </div>
+    );
+  }
+
+  if (!profile) return null;
+
+  return (
+    <>
+      {/* Cover + Avatar */}
+      <SectionCard title="Profile Photo & Cover">
+        {/* Cover */}
+        <div className="relative rounded-xl overflow-hidden h-32 bg-gradient-to-r from-[#00d2ff]/20 to-[#003543] mb-4 group">
+          {profile.coverUrl && (
+            <img src={profile.coverUrl} alt="Cover" className="w-full h-full object-cover" />
+          )}
+          <button
+            onClick={() => coverInputRef.current?.click()}
+            className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <Camera className="h-5 w-5 text-white mr-2" />
+            <span className="text-sm text-white font-medium">Change cover</span>
+          </button>
+          <input
+            ref={coverInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={async (e) => {
+              const f = e.target.files?.[0];
+              if (!f) return;
+              const form = new FormData();
+              form.append("file", f);
+              form.append("folderId", "");
+              try {
+                const r = await fetch("/api/drive/upload", { method: "POST", body: form });
+                const d = await r.json() as { url?: string; fileUrl?: string };
+                const url = d.url ?? d.fileUrl ?? "";
+                if (url) update("coverUrl", url);
+              } catch { toast.error("Upload failed"); }
+            }}
+          />
+        </div>
+
+        {/* Avatar */}
+        <div className="flex items-center gap-5">
+          <div className="relative group">
+            <div className="h-20 w-20 rounded-full overflow-hidden border-2 border-[rgba(0,255,255,0.15)] bg-[#262939] flex items-center justify-center">
+              {profile.avatarUrl ? (
+                <img src={profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-2xl font-bold text-[#00d2ff]">
+                  {profile.fullName?.[0]?.toUpperCase() ?? "?"}
+                </span>
+              )}
+            </div>
+            <button
+              onClick={() => avatarInputRef.current?.click()}
+              disabled={avatarUploading}
+              className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+            >
+              {avatarUploading ? (
+                <Loader2 className="h-4 w-4 animate-spin text-white" />
+              ) : (
+                <Camera className="h-4 w-4 text-white" />
+              )}
+            </button>
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleAvatarUpload(f); }}
+            />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-[#dfe1f6]">{profile.fullName}</p>
+            <p className="text-xs text-[#bbc9cf]">{profile.email}</p>
+            <p className="text-xs text-[#00d2ff] mt-0.5 font-medium">{profile.jobTitle || profile.role}</p>
+          </div>
+        </div>
+
+        {/* Status */}
+        <div className="flex items-center gap-2 mt-4">
+          <input
+            value={profile.statusEmoji ?? ""}
+            onChange={(e) => update("statusEmoji", e.target.value)}
+            placeholder="😊"
+            className="w-14 text-center border border-[rgba(0,255,255,0.1)] rounded-lg bg-[#0f1321] py-2 text-sm text-[#dfe1f6] outline-none focus:ring-1 focus:ring-[#00d2ff]/40"
+            maxLength={4}
+          />
+          <input
+            value={profile.statusMessage ?? ""}
+            onChange={(e) => update("statusMessage", e.target.value)}
+            placeholder="What's your status? (e.g. In a meeting)"
+            className={`flex-1 ${inputClass}`}
+            maxLength={140}
+          />
+        </div>
+      </SectionCard>
+
+      {/* Personal Info */}
+      <SectionCard title="Personal Information">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="text-xs font-medium text-[#bbc9cf] mb-1 block">Full Name</label>
+            <input value={profile.fullName ?? ""} onChange={(e) => update("fullName", e.target.value)} className={inputClass} placeholder="Your full name" />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-[#bbc9cf] mb-1 block">Display Name</label>
+            <input value={profile.displayName ?? ""} onChange={(e) => update("displayName", e.target.value)} className={inputClass} placeholder="How you appear to others" />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-[#bbc9cf] mb-1 block">Pronouns</label>
+            <input value={profile.pronouns ?? ""} onChange={(e) => update("pronouns", e.target.value)} className={inputClass} placeholder="e.g. he/him, she/her" />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-[#bbc9cf] mb-1 block">Birthday</label>
+            <input
+              type="date"
+              value={profile.birthday ? new Date(profile.birthday).toISOString().slice(0, 10) : ""}
+              onChange={(e) => update("birthday", e.target.value || null)}
+              className={inputClass}
+            />
+          </div>
+        </div>
+        <div className="mt-4">
+          <label className="text-xs font-medium text-[#bbc9cf] mb-1 block">Bio</label>
+          <textarea
+            value={profile.bio ?? ""}
+            onChange={(e) => update("bio", e.target.value)}
+            rows={3}
+            placeholder="A short bio about yourself…"
+            className={`${inputClass} min-h-[80px] resize-y`}
+            maxLength={500}
+          />
+          <p className="text-[10px] text-[#5c6b72] mt-1 text-right">{(profile.bio ?? "").length}/500</p>
+        </div>
+      </SectionCard>
+
+      {/* Work Info */}
+      <SectionCard title="Work Information">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="text-xs font-medium text-[#bbc9cf] mb-1 block flex items-center gap-1">
+              <Briefcase className="h-3 w-3" /> Job Title
+            </label>
+            <input value={profile.jobTitle ?? ""} onChange={(e) => update("jobTitle", e.target.value)} className={inputClass} placeholder="e.g. Senior Developer" />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-[#bbc9cf] mb-1 block flex items-center gap-1">
+              <Building2 className="h-3 w-3" /> Company
+            </label>
+            <input value={profile.company ?? ""} onChange={(e) => update("company", e.target.value)} className={inputClass} placeholder="Organisation name" />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-[#bbc9cf] mb-1 block flex items-center gap-1">
+              <Users className="h-3 w-3" /> Department
+            </label>
+            <input value={profile.department ?? ""} onChange={(e) => update("department", e.target.value)} className={inputClass} placeholder="e.g. Engineering" />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-[#bbc9cf] mb-1 block flex items-center gap-1">
+              <Phone className="h-3 w-3" /> Phone
+            </label>
+            <input value={profile.phone ?? ""} onChange={(e) => update("phone", e.target.value)} className={inputClass} placeholder="+44 7700 000000" type="tel" />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-[#bbc9cf] mb-1 block flex items-center gap-1">
+              <Link2 className="h-3 w-3" /> Website
+            </label>
+            <input value={profile.website ?? ""} onChange={(e) => update("website", e.target.value)} className={inputClass} placeholder="https://yoursite.com" type="url" />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-[#bbc9cf] mb-1 block flex items-center gap-1">
+              <MapPin className="h-3 w-3" /> Location
+            </label>
+            <input value={profile.location ?? ""} onChange={(e) => update("location", e.target.value)} className={inputClass} placeholder="City, Country" />
+          </div>
+        </div>
+      </SectionCard>
+
+      {/* Save */}
+      <div className="flex justify-end gap-3">
+        <button onClick={handleSave} disabled={saving} className={btnPrimary}>
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+          {saving ? "Saving…" : "Save Profile"}
+        </button>
+      </div>
+    </>
+  );
+}
+
+// ─── Signature Tab ────────────────────────────────────────────────────────────
+
+function SignatureTab({ userName }: { userName: string }) {
+  const [signature, setSignature] = useState<Signature | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({ fullName: userName, title: "", phone: "", linkedinUrl: "", website: "", html: "" });
+
+  useEffect(() => {
+    fetch("/api/signatures")
+      .then((r) => r.json())
+      .then((d: Signature | Signature[]) => {
+        const sig = Array.isArray(d) ? (d[0] ?? null) : d;
+        setSignature(sig);
+        if (sig) setForm({ fullName: sig.fullName, title: sig.title, phone: sig.phone ?? "", linkedinUrl: sig.linkedinUrl ?? "", website: sig.website ?? "", html: sig.html ?? "" });
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const method = signature ? "PUT" : "POST";
+      const url = signature ? `/api/signatures/${signature.id}` : "/api/signatures";
+      const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+      if (!res.ok) throw new Error("Failed to save signature");
+      const saved = await res.json() as Signature;
+      setSignature(saved);
+      setIsEditing(false);
+      toast.success("Signature saved");
+    } catch {
+      toast.error("Failed to save signature");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!signature) return;
+    try {
+      await fetch(`/api/signatures/${signature.id}`, { method: "DELETE" });
+      setSignature(null);
+      setForm({ fullName: userName, title: "", phone: "", linkedinUrl: "", website: "", html: "" });
+      setIsEditing(false);
+      toast.success("Signature deleted");
+    } catch {
+      toast.error("Failed to delete signature");
+    }
+  };
+
+  const updateField = (k: keyof typeof form, v: string) => setForm((p) => ({ ...p, [k]: v }));
+
+  const generatedHtml = `<div style="font-family:Arial,sans-serif;font-size:13px;color:#333;border-top:2px solid #00d2ff;padding-top:10px;margin-top:10px"><strong style="font-size:14px;color:#003543">${form.fullName}</strong><br/><span style="color:#555">${form.title}</span>${form.phone ? `<br/>📞 ${form.phone}` : ""}${form.website ? `<br/><a href="${form.website}" style="color:#00d2ff">${form.website}</a>` : ""}${form.linkedinUrl ? `<br/><a href="${form.linkedinUrl}" style="color:#0077b5">LinkedIn</a>` : ""}<br/><span style="color:#888;font-size:11px">Powered by CyberSage</span></div>`;
+
+  if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-[#00d2ff]" /></div>;
+
+  return (
+    <>
+      {!isEditing && signature ? (
+        <SectionCard title="Your Signature" description="Appended automatically to outgoing emails">
+          <div
+            className="p-4 rounded-lg bg-[#0f1321] border border-[rgba(0,255,255,0.08)] mb-4 text-sm"
+            dangerouslySetInnerHTML={{ __html: signature.html ?? generatedHtml }}
+          />
+          <div className="flex gap-2">
+            <button onClick={() => setIsEditing(true)} className={btnSecondary}>Edit</button>
+            <button onClick={() => void handleDelete()} className="inline-flex items-center gap-2 rounded-lg border border-red-500/20 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/10 transition">
+              <Trash2 className="h-3.5 w-3.5" /> Delete
+            </button>
+          </div>
+        </SectionCard>
+      ) : (
+        <SectionCard title={signature ? "Edit Signature" : "Create Signature"}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="text-xs text-[#bbc9cf] mb-1 block">Full Name</label>
+              <input value={form.fullName} onChange={(e) => updateField("fullName", e.target.value)} className={inputClass} />
+            </div>
+            <div>
+              <label className="text-xs text-[#bbc9cf] mb-1 block">Title / Role</label>
+              <input value={form.title} onChange={(e) => updateField("title", e.target.value)} className={inputClass} placeholder="e.g. Security Engineer" />
+            </div>
+            <div>
+              <label className="text-xs text-[#bbc9cf] mb-1 block">Phone</label>
+              <input value={form.phone} onChange={(e) => updateField("phone", e.target.value)} className={inputClass} placeholder="+44 7700 000000" />
+            </div>
+            <div>
+              <label className="text-xs text-[#bbc9cf] mb-1 block">Website</label>
+              <input value={form.website} onChange={(e) => updateField("website", e.target.value)} className={inputClass} placeholder="https://..." />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="text-xs text-[#bbc9cf] mb-1 block">LinkedIn URL</label>
+              <input value={form.linkedinUrl} onChange={(e) => updateField("linkedinUrl", e.target.value)} className={inputClass} placeholder="https://linkedin.com/in/..." />
+            </div>
+          </div>
+
+          <div className="mb-4">
+            <label className="text-xs text-[#bbc9cf] mb-1 block">Custom HTML (optional — overrides generated)</label>
+            <textarea
+              value={form.html}
+              onChange={(e) => updateField("html", e.target.value)}
+              rows={5}
+              placeholder="<div>Your custom HTML signature…</div>"
+              className={`${inputClass} min-h-[100px] font-mono text-xs resize-y`}
+            />
+          </div>
+
+          <div className="mb-4">
+            <p className="text-xs text-[#bbc9cf] mb-2">Preview</p>
+            <div
+              className="p-4 rounded-lg bg-[#0f1321] border border-[rgba(0,255,255,0.08)]"
+              dangerouslySetInnerHTML={{ __html: form.html || generatedHtml }}
+            />
+          </div>
+
+          <div className="flex gap-2">
+            <button onClick={() => void handleSave()} disabled={saving} className={btnPrimary}>
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+              {saving ? "Saving…" : "Save Signature"}
+            </button>
+            {signature && <button onClick={() => setIsEditing(false)} className={btnSecondary}>Cancel</button>}
+          </div>
+        </SectionCard>
+      )}
+
+      {!signature && !isEditing && (
+        <SectionCard title="No Signature Yet">
+          <div className="flex flex-col items-center py-8 text-center">
+            <FileSignature className="h-10 w-10 text-[#3c494e] mb-3" />
+            <p className="text-sm text-[#bbc9cf] mb-4">Create a professional signature for your outgoing emails.</p>
+            <button onClick={() => setIsEditing(true)} className={btnPrimary}>
+              <Plus className="h-4 w-4" /> Create Signature
+            </button>
+          </div>
+        </SectionCard>
+      )}
+    </>
+  );
+}
+
+// ─── Appearance Tab ───────────────────────────────────────────────────────────
+
 function AppearanceTab() {
-  const [theme, setTheme] = useState<"light" | "dark" | "system">("light");
+  const [theme,   setTheme]   = useState<"light" | "dark" | "system">("dark");
   const [density, setDensity] = useState<"comfortable" | "compact">("comfortable");
   const [fontSize, setFontSize] = useState<"normal" | "large">("normal");
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("theme") as "light" | "dark" | "system" | null;
-      if (saved) setTheme(saved);
-      else setTheme("system");
-    } catch {}
-    try {
-      const d = localStorage.getItem("ui_density") as "comfortable" | "compact" | null;
-      if (d) setDensity(d);
-    } catch {}
-    try {
-      const f = localStorage.getItem("font_size") as "normal" | "large" | null;
-      if (f) setFontSize(f);
-    } catch {}
+    try { const s = localStorage.getItem("theme") as typeof theme | null; if (s) setTheme(s); } catch {}
+    try { const d = localStorage.getItem("ui_density") as typeof density | null; if (d) setDensity(d); } catch {}
+    try { const f = localStorage.getItem("font_size") as typeof fontSize | null; if (f) setFontSize(f); } catch {}
   }, []);
 
-  const applyTheme = (t: "light" | "dark" | "system") => {
+  const applyTheme = (t: typeof theme) => {
     setTheme(t);
     try {
       localStorage.setItem("theme", t);
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      const isDark = t === "dark" || (t === "system" && prefersDark);
-      if (isDark) document.documentElement.classList.add("dark");
-      else document.documentElement.classList.remove("dark");
+      const dark = t === "dark" || (t === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+      document.documentElement.classList.toggle("dark", dark);
     } catch {}
     toast.success(`Theme set to ${t}`);
   };
-
-  const THEME_OPTIONS = [
-    { value: "light", label: "Light", icon: Sun },
-    { value: "dark",  label: "Dark",  icon: Moon },
-    { value: "system",label: "System", icon: Monitor },
-  ] as const;
 
   return (
     <>
       <SectionCard title="Theme" description="Choose how CyberSage looks on your device">
         <div className="grid grid-cols-3 gap-3">
-          {THEME_OPTIONS.map((opt) => {
-            const Icon = opt.icon;
-            const active = theme === opt.value;
+          {([["light","Light",Sun],["dark","Dark",Moon],["system","System",Monitor]] as const).map(([val, label, Icon]) => {
+            const active = theme === val;
             return (
-              <button
-                key={opt.value}
-                onClick={() => applyTheme(opt.value)}
-                className={`flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all ${
-                  active
-                    ? "border-[#00d2ff] bg-[#00d2ff]/10"
-                    : "border-[rgba(0,255,255,0.08)] hover:border-[#bbc9cf]"
-                }`}
-              >
+              <button key={val} onClick={() => applyTheme(val)}
+                className={`flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all ${active ? "border-[#00d2ff] bg-[#00d2ff]/10" : "border-[rgba(0,255,255,0.08)] hover:border-[#bbc9cf]"}`}>
                 <Icon className={`h-6 w-6 ${active ? "text-[#00d2ff]" : "text-[#bbc9cf]"}`} />
-                <span className={`text-sm font-medium ${active ? "text-[#a5e7ff]" : "text-[#bbc9cf]"}`}>
-                  {opt.label}
-                </span>
+                <span className={`text-sm font-medium ${active ? "text-[#a5e7ff]" : "text-[#bbc9cf]"}`}>{label}</span>
                 {active && <Check className="h-4 w-4 text-[#00d2ff]" />}
               </button>
             );
@@ -162,169 +650,126 @@ function AppearanceTab() {
 
       <SectionCard title="Layout Density" description="Control spacing and information density">
         <SettingRow label="Comfortable" description="More whitespace, easier to scan">
-          <input
-            type="radio"
-            name="density"
-            checked={density === "comfortable"}
-            onChange={() => { setDensity("comfortable"); localStorage.setItem("ui_density", "comfortable"); }}
-            className="accent-[#00d2ff]"
-          />
+          <input type="radio" name="density" checked={density === "comfortable"} onChange={() => { setDensity("comfortable"); localStorage.setItem("ui_density","comfortable"); }} className="accent-[#00d2ff]" />
         </SettingRow>
         <SettingRow label="Compact" description="Tighter spacing, more content visible">
-          <input
-            type="radio"
-            name="density"
-            checked={density === "compact"}
-            onChange={() => { setDensity("compact"); localStorage.setItem("ui_density", "compact"); }}
-            className="accent-[#00d2ff]"
-          />
+          <input type="radio" name="density" checked={density === "compact"} onChange={() => { setDensity("compact"); localStorage.setItem("ui_density","compact"); }} className="accent-[#00d2ff]" />
         </SettingRow>
       </SectionCard>
 
       <SectionCard title="Text Size">
-        <SettingRow label="Normal (14px)" description="Default reading size">
-          <input
-            type="radio"
-            name="fontSize"
-            checked={fontSize === "normal"}
-            onChange={() => { setFontSize("normal"); localStorage.setItem("font_size", "normal"); }}
-            className="accent-[#00d2ff]"
-          />
+        <SettingRow label="Normal (14px)">
+          <input type="radio" name="fontSize" checked={fontSize === "normal"} onChange={() => { setFontSize("normal"); localStorage.setItem("font_size","normal"); document.documentElement.style.fontSize = "14px"; }} className="accent-[#00d2ff]" />
         </SettingRow>
         <SettingRow label="Large (16px)" description="Easier on the eyes">
-          <input
-            type="radio"
-            name="fontSize"
-            checked={fontSize === "large"}
-            onChange={() => {
-              setFontSize("large");
-              localStorage.setItem("font_size", "large");
-              document.documentElement.style.fontSize = "16px";
-            }}
-            className="accent-[#00d2ff]"
-          />
+          <input type="radio" name="fontSize" checked={fontSize === "large"} onChange={() => { setFontSize("large"); localStorage.setItem("font_size","large"); document.documentElement.style.fontSize = "16px"; }} className="accent-[#00d2ff]" />
         </SettingRow>
       </SectionCard>
     </>
   );
 }
 
+// ─── Notifications Tab ────────────────────────────────────────────────────────
+
 function NotificationsTab() {
   const [prefs, setPrefs] = useState({
-    newMail: true,
-    calendarReminders: true,
-    socAlerts: true,
-    dlpAlerts: true,
-    chatMentions: true,
-    fileShared: true,
-    emailDigest: false,
-    pushEnabled: false,
-    soundEnabled: false,
-    quietHoursEnabled: false,
-    quietStart: "22:00",
-    quietEnd: "08:00",
+    newMail: true, calendarReminders: true, socAlerts: true, dlpAlerts: true,
+    chatMentions: true, fileShared: true, emailDigest: false,
+    pushEnabled: false, soundEnabled: false, quietHoursEnabled: false,
+    quietStart: "22:00", quietEnd: "08:00",
   });
+  const [saving, setSaving] = useState(false);
 
-  const update = (key: keyof typeof prefs, val: boolean | string) => {
-    setPrefs((p) => ({ ...p, [key]: val }));
+  useEffect(() => {
+    fetch("/api/profile").then(r => r.json()).then((d: UserProfile) => {
+      if (d.preferences?.notifications && typeof d.preferences.notifications === "object") {
+        setPrefs(p => ({ ...p, ...(d.preferences!.notifications as typeof prefs) }));
+      }
+    }).catch(() => {});
+  }, []);
+
+  const update = (key: keyof typeof prefs, val: boolean | string) => setPrefs(p => ({ ...p, [key]: val }));
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await fetch("/api/profile", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ preferences: { notifications: prefs } }) });
+      toast.success("Notification preferences saved");
+    } catch { toast.error("Save failed"); }
+    finally { setSaving(false); }
   };
 
   return (
     <>
-      <SectionCard title="Email Alerts" description="Get notified via in-app notifications">
-        <SettingRow label="New mail received" description="Alert when email arrives in your inbox">
-          <Toggle value={prefs.newMail} onChange={(v) => update("newMail", v)} />
-        </SettingRow>
-        <SettingRow label="Calendar reminders" description="Event start notifications">
-          <Toggle value={prefs.calendarReminders} onChange={(v) => update("calendarReminders", v)} />
-        </SettingRow>
-        <SettingRow label="Chat mentions" description="When someone @mentions you">
-          <Toggle value={prefs.chatMentions} onChange={(v) => update("chatMentions", v)} />
-        </SettingRow>
-        <SettingRow label="File shared with me" description="When a Drive file is shared">
-          <Toggle value={prefs.fileShared} onChange={(v) => update("fileShared", v)} />
-        </SettingRow>
+      <SectionCard title="Email & App Alerts">
+        <SettingRow label="New mail received" description="Alert when email arrives in your inbox"><Toggle value={prefs.newMail} onChange={(v) => update("newMail", v)} /></SettingRow>
+        <SettingRow label="Calendar reminders" description="Event start notifications"><Toggle value={prefs.calendarReminders} onChange={(v) => update("calendarReminders", v)} /></SettingRow>
+        <SettingRow label="Chat mentions" description="When someone @mentions you"><Toggle value={prefs.chatMentions} onChange={(v) => update("chatMentions", v)} /></SettingRow>
+        <SettingRow label="File shared with me" description="When a Drive file is shared"><Toggle value={prefs.fileShared} onChange={(v) => update("fileShared", v)} /></SettingRow>
       </SectionCard>
-
-      <SectionCard title="Security Alerts" description="Critical security notifications — always recommended">
-        <SettingRow label="SOC incidents" description="Open or escalated security incidents">
-          <Toggle value={prefs.socAlerts} onChange={(v) => update("socAlerts", v)} />
-        </SettingRow>
-        <SettingRow label="DLP violations" description="Data loss prevention policy triggers">
-          <Toggle value={prefs.dlpAlerts} onChange={(v) => update("dlpAlerts", v)} />
-        </SettingRow>
+      <SectionCard title="Security Alerts" description="Always recommended">
+        <SettingRow label="SOC incidents"><Toggle value={prefs.socAlerts} onChange={(v) => update("socAlerts", v)} /></SettingRow>
+        <SettingRow label="DLP violations"><Toggle value={prefs.dlpAlerts} onChange={(v) => update("dlpAlerts", v)} /></SettingRow>
       </SectionCard>
-
       <SectionCard title="Delivery Preferences">
-        <SettingRow label="Daily email digest" description="Summary of activity emailed each morning">
-          <Toggle value={prefs.emailDigest} onChange={(v) => update("emailDigest", v)} />
-        </SettingRow>
-        <SettingRow label="Push notifications" description="Browser push when tab is not focused">
-          <Toggle value={prefs.pushEnabled} onChange={(v) => update("pushEnabled", v)} />
-        </SettingRow>
-        <SettingRow label="Sound alerts" description="Play sound on new notification">
-          <Toggle value={prefs.soundEnabled} onChange={(v) => update("soundEnabled", v)} />
-        </SettingRow>
+        <SettingRow label="Daily email digest" description="Morning activity summary"><Toggle value={prefs.emailDigest} onChange={(v) => update("emailDigest", v)} /></SettingRow>
+        <SettingRow label="Browser push" description="Push when tab is not focused"><Toggle value={prefs.pushEnabled} onChange={(v) => update("pushEnabled", v)} /></SettingRow>
+        <SettingRow label="Sound alerts"><Toggle value={prefs.soundEnabled} onChange={(v) => update("soundEnabled", v)} /></SettingRow>
       </SectionCard>
-
-      <SectionCard title="Quiet Hours" description="Suppress notifications during these hours">
-        <SettingRow label="Enable quiet hours">
-          <Toggle value={prefs.quietHoursEnabled} onChange={(v) => update("quietHoursEnabled", v)} />
-        </SettingRow>
+      <SectionCard title="Quiet Hours">
+        <SettingRow label="Enable quiet hours"><Toggle value={prefs.quietHoursEnabled} onChange={(v) => update("quietHoursEnabled", v)} /></SettingRow>
         {prefs.quietHoursEnabled && (
           <div className="flex items-center gap-4 mt-4">
-            <div>
-              <label className="text-xs text-[#bbc9cf]">From</label>
-              <input
-                type="time"
-                value={prefs.quietStart}
-                onChange={(e) => update("quietStart", e.target.value)}
-                className="block mt-1 rounded-md border border-[rgba(0,255,255,0.08)] bg-[#262939] px-3 py-1.5 text-sm text-[#dfe1f6] focus:ring-2 focus:ring-[#00d2ff]/30 focus:border-[#00d2ff]/50 outline-none"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-[#bbc9cf]">To</label>
-              <input
-                type="time"
-                value={prefs.quietEnd}
-                onChange={(e) => update("quietEnd", e.target.value)}
-                className="block mt-1 rounded-md border border-[rgba(0,255,255,0.08)] bg-[#262939] px-3 py-1.5 text-sm text-[#dfe1f6] focus:ring-2 focus:ring-[#00d2ff]/30 focus:border-[#00d2ff]/50 outline-none"
-              />
-            </div>
+            <div><label className="text-xs text-[#bbc9cf]">From</label><input type="time" value={prefs.quietStart} onChange={(e) => update("quietStart", e.target.value)} className={`block mt-1 ${selectClass}`} /></div>
+            <div><label className="text-xs text-[#bbc9cf]">To</label><input type="time" value={prefs.quietEnd} onChange={(e) => update("quietEnd", e.target.value)} className={`block mt-1 ${selectClass}`} /></div>
           </div>
         )}
       </SectionCard>
+      <div className="flex justify-end">
+        <button onClick={() => void save()} disabled={saving} className={btnPrimary}>
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+          {saving ? "Saving…" : "Save Preferences"}
+        </button>
+      </div>
     </>
   );
 }
 
-function LanguageTab() {
-  const TIMEZONES = [
-    "UTC", "Europe/London", "Europe/Berlin", "Europe/Paris",
-    "America/New_York", "America/Chicago", "America/Los_Angeles",
-    "Asia/Dubai", "Asia/Karachi", "Asia/Kolkata", "Asia/Singapore",
-    "Asia/Tokyo", "Australia/Sydney",
-  ];
-  const DATE_FORMATS = [
-    { label: "DD/MM/YYYY (31/12/2026)", value: "dd/MM/yyyy" },
-    { label: "MM/DD/YYYY (12/31/2026)", value: "MM/dd/yyyy" },
-    { label: "YYYY-MM-DD (2026-12-31)", value: "yyyy-MM-dd" },
-  ];
+// ─── Language & Region Tab ────────────────────────────────────────────────────
 
-  const [lang, setLang] = useState("en");
-  const [tz, setTz] = useState("UTC");
+function LanguageTab() {
+  const TIMEZONES = ["UTC","Europe/London","Europe/Berlin","Europe/Paris","America/New_York","America/Chicago","America/Los_Angeles","Asia/Dubai","Asia/Karachi","Asia/Kolkata","Asia/Singapore","Asia/Tokyo","Australia/Sydney"];
+  const DATE_FORMATS = [{ label: "DD/MM/YYYY", value: "dd/MM/yyyy" }, { label: "MM/DD/YYYY", value: "MM/dd/yyyy" }, { label: "YYYY-MM-DD", value: "yyyy-MM-dd" }];
+
+  const [lang,       setLang]       = useState("en");
+  const [tz,         setTz]         = useState("UTC");
   const [dateFormat, setDateFormat] = useState("dd/MM/yyyy");
-  const [timeFormat, setTimeFormat] = useState<"12h" | "24h">("24h");
+  const [timeFormat, setTimeFormat] = useState<"12h"|"24h">("24h");
+  const [saving,     setSaving]     = useState(false);
+
+  useEffect(() => {
+    fetch("/api/profile").then(r => r.json()).then((d: UserProfile) => {
+      if (d.language) setLang(d.language);
+      if (d.timezone) setTz(d.timezone);
+      if (d.preferences?.dateFormat) setDateFormat(d.preferences.dateFormat as string);
+      if (d.preferences?.timeFormat) setTimeFormat(d.preferences.timeFormat as "12h"|"24h");
+    }).catch(() => {});
+  }, []);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await fetch("/api/profile", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ language: lang, timezone: tz, preferences: { dateFormat, timeFormat } }) });
+      toast.success("Region settings saved");
+    } catch { toast.error("Save failed"); }
+    finally { setSaving(false); }
+  };
 
   return (
     <>
       <SectionCard title="Language">
         <SettingRow label="Interface language">
-          <select
-            value={lang}
-            onChange={(e) => setLang(e.target.value)}
-            className="rounded-md border border-[rgba(0,255,255,0.08)] bg-[#262939] px-3 py-1.5 text-sm text-[#dfe1f6] focus:ring-2 focus:ring-[#00d2ff]/30 focus:border-[#00d2ff]/50 outline-none"
-          >
+          <select value={lang} onChange={(e) => setLang(e.target.value)} className={selectClass}>
             <option value="en">English</option>
             <option value="ar">Arabic (العربية)</option>
             <option value="fr">French (Français)</option>
@@ -336,49 +781,61 @@ function LanguageTab() {
           </select>
         </SettingRow>
       </SectionCard>
-
       <SectionCard title="Time & Date">
         <SettingRow label="Timezone">
-          <select
-            value={tz}
-            onChange={(e) => setTz(e.target.value)}
-            className="rounded-md border border-[rgba(0,255,255,0.08)] bg-[#262939] px-3 py-1.5 text-sm text-[#dfe1f6] focus:ring-2 focus:ring-[#00d2ff]/30 focus:border-[#00d2ff]/50 outline-none"
-          >
-            {TIMEZONES.map((t) => (
-              <option key={t} value={t}>{t}</option>
-            ))}
+          <select value={tz} onChange={(e) => setTz(e.target.value)} className={selectClass}>
+            {TIMEZONES.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
         </SettingRow>
         <SettingRow label="Date format">
-          <select
-            value={dateFormat}
-            onChange={(e) => setDateFormat(e.target.value)}
-            className="rounded-md border border-[rgba(0,255,255,0.08)] bg-[#262939] px-3 py-1.5 text-sm text-[#dfe1f6] focus:ring-2 focus:ring-[#00d2ff]/30 focus:border-[#00d2ff]/50 outline-none"
-          >
-            {DATE_FORMATS.map((f) => (
-              <option key={f.value} value={f.value}>{f.label}</option>
-            ))}
+          <select value={dateFormat} onChange={(e) => setDateFormat(e.target.value)} className={selectClass}>
+            {DATE_FORMATS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
           </select>
         </SettingRow>
         <SettingRow label="Time format">
           <div className="flex gap-3">
-            <label className="flex items-center gap-1.5 text-sm text-[#bbc9cf]">
-              <input type="radio" name="timeFormat" value="12h" checked={timeFormat === "12h"} onChange={() => setTimeFormat("12h")} className="accent-[#00d2ff]" />
-              12h
-            </label>
-            <label className="flex items-center gap-1.5 text-sm text-[#bbc9cf]">
-              <input type="radio" name="timeFormat" value="24h" checked={timeFormat === "24h"} onChange={() => setTimeFormat("24h")} className="accent-[#00d2ff]" />
-              24h
-            </label>
+            {(["12h","24h"] as const).map(v => (
+              <label key={v} className="flex items-center gap-1.5 text-sm text-[#bbc9cf]">
+                <input type="radio" name="timeFormat" value={v} checked={timeFormat === v} onChange={() => setTimeFormat(v)} className="accent-[#00d2ff]" />
+                {v}
+              </label>
+            ))}
           </div>
         </SettingRow>
       </SectionCard>
+      <div className="flex justify-end">
+        <button onClick={() => void save()} disabled={saving} className={btnPrimary}>
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+          {saving ? "Saving…" : "Save Settings"}
+        </button>
+      </div>
     </>
   );
 }
 
+// ─── Privacy Tab ──────────────────────────────────────────────────────────────
+
 function PrivacyTab({ userId }: { userId: string }) {
   const [exporting, setExporting] = useState(false);
+  const [controls, setControls] = useState({ analytics: true, readReceipts: true, showPresence: true, contactPermissions: "team" });
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/profile").then(r => r.json()).then((d: UserProfile) => {
+      if (d.preferences?.privacy && typeof d.preferences.privacy === "object") {
+        setControls(c => ({ ...c, ...(d.preferences!.privacy as typeof controls) }));
+      }
+    }).catch(() => {});
+  }, []);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await fetch("/api/profile", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ preferences: { privacy: controls } }) });
+      toast.success("Privacy settings saved");
+    } catch { toast.error("Save failed"); }
+    finally { setSaving(false); }
+  };
 
   const handleExport = async () => {
     setExporting(true);
@@ -388,76 +845,361 @@ function PrivacyTab({ userId }: { userId: string }) {
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url;
-      a.download = `cybersage-data-export-${new Date().toISOString().slice(0, 10)}.json`;
-      a.click();
+      a.href = url; a.download = `cybersage-export-${new Date().toISOString().slice(0,10)}.json`; a.click();
       URL.revokeObjectURL(url);
-      toast.success("Your data has been exported");
-    } catch {
-      toast.error("Export failed — you may not have permission");
-    } finally {
-      setExporting(false);
-    }
+      toast.success("Data exported");
+    } catch { toast.error("Export failed"); }
+    finally { setExporting(false); }
   };
 
   return (
     <>
-      <SectionCard title="Your Data" description="Control how your personal data is stored and used">
-        <SettingRow label="Export all data" description="Download a copy of all your mail, chats, calendar events, and files">
-          <button
-            onClick={handleExport}
-            disabled={exporting}
-            className="bg-[#262939] text-[#bbc9cf] hover:bg-[#303444] border border-[rgba(0,255,255,0.08)] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2 transition-colors disabled:opacity-50"
-          >
-            <Download className="h-4 w-4" />
-            {exporting ? "Exporting…" : "Export"}
+      <SectionCard title="Privacy Controls">
+        <SettingRow label="Analytics & usage data" description="Anonymous usage statistics to improve CyberSage">
+          <Toggle value={controls.analytics} onChange={(v) => setControls(c => ({ ...c, analytics: v }))} />
+        </SettingRow>
+        <SettingRow label="Read receipts" description="Let others know when you've read their emails">
+          <Toggle value={controls.readReceipts} onChange={(v) => setControls(c => ({ ...c, readReceipts: v }))} />
+        </SettingRow>
+        <SettingRow label="Online presence" description="Show your active status to teammates">
+          <Toggle value={controls.showPresence} onChange={(v) => setControls(c => ({ ...c, showPresence: v }))} />
+        </SettingRow>
+        <SettingRow label="Who can contact me">
+          <select value={controls.contactPermissions} onChange={(e) => setControls(c => ({ ...c, contactPermissions: e.target.value }))} className={selectClass}>
+            <option value="everyone">Everyone</option>
+            <option value="team">Team members only</option>
+            <option value="none">Nobody (DND)</option>
+          </select>
+        </SettingRow>
+      </SectionCard>
+      <SectionCard title="Your Data">
+        <SettingRow label="Export all data" description="Download mail, chats, calendar events, and files">
+          <button onClick={() => void handleExport()} disabled={exporting} className={btnSecondary}>
+            <Download className="h-4 w-4" />{exporting ? "Exporting…" : "Export"}
           </button>
         </SettingRow>
       </SectionCard>
-
-      <SectionCard title="Account" description="Permanent account actions">
-        <div className="border border-red-200 rounded-xl p-5 bg-red-50">
+      <SectionCard title="Account">
+        <div className="border border-red-500/20 rounded-xl p-5 bg-red-500/5">
           <div className="flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+            <AlertTriangle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-semibold text-red-800">Deactivate account</p>
-              <p className="text-xs text-red-600 mt-0.5">
-                Account deactivation is handled by your workspace administrator. Contact your admin or submit a request via the Help desk.
-              </p>
+              <p className="text-sm font-semibold text-red-400">Deactivate account</p>
+              <p className="text-xs text-red-400/70 mt-0.5">Account deactivation is handled by your workspace administrator.</p>
             </div>
           </div>
         </div>
       </SectionCard>
-
-      <SectionCard title="Privacy Controls">
-        <SettingRow label="Analytics & usage data" description="Help improve CyberSage by sending anonymous usage statistics">
-          <Toggle value={true} onChange={() => {}} />
-        </SettingRow>
-        <SettingRow label="Read receipts" description="Let others know when you've read their emails">
-          <Toggle value={true} onChange={() => {}} />
-        </SettingRow>
-        <SettingRow label="Online presence" description="Show your active status to teammates">
-          <Toggle value={true} onChange={() => {}} />
-        </SettingRow>
-      </SectionCard>
+      <div className="flex justify-end">
+        <button onClick={() => void save()} disabled={saving} className={btnPrimary}>
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+          {saving ? "Saving…" : "Save Privacy Settings"}
+        </button>
+      </div>
     </>
   );
 }
 
-// ── Mail Rules Tab ────────────────────────────────────────────────────────────
+// ─── AI Preferences Tab ───────────────────────────────────────────────────────
+
+function AITab() {
+  const [prefs, setPrefs] = useState({
+    enabled: true, smartReply: true, smartCompose: true, autoSummarize: false,
+    autoCategorizeMail: true, meetingInsights: true, chatBot: true,
+    model: "claude-sonnet-4-6", tone: "professional",
+  });
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/profile").then(r => r.json()).then((d: UserProfile) => {
+      if (d.preferences?.ai && typeof d.preferences.ai === "object") {
+        setPrefs(p => ({ ...p, ...(d.preferences!.ai as typeof prefs) }));
+      }
+    }).catch(() => {});
+  }, []);
+
+  const update = (k: keyof typeof prefs, v: boolean | string) => setPrefs(p => ({ ...p, [k]: v }));
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await fetch("/api/profile", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ preferences: { ai: prefs } }) });
+      toast.success("AI preferences saved");
+    } catch { toast.error("Save failed"); }
+    finally { setSaving(false); }
+  };
+
+  return (
+    <>
+      <SectionCard title="CyberSage AI" description="Control how the AI assistant helps you across the workspace">
+        <SettingRow label="Enable AI features" description="Master toggle for all AI functionality">
+          <Toggle value={prefs.enabled} onChange={(v) => update("enabled", v)} />
+        </SettingRow>
+      </SectionCard>
+      <SectionCard title="Email AI">
+        <SettingRow label="Smart Reply" description="One-click AI-generated reply suggestions"><Toggle value={prefs.smartReply} onChange={(v) => update("smartReply", v)} /></SettingRow>
+        <SettingRow label="Smart Compose" description="AI autocomplete while typing emails"><Toggle value={prefs.smartCompose} onChange={(v) => update("smartCompose", v)} /></SettingRow>
+        <SettingRow label="Auto-summarize threads" description="Summarize long email threads automatically"><Toggle value={prefs.autoSummarize} onChange={(v) => update("autoSummarize", v)} /></SettingRow>
+        <SettingRow label="Auto-categorize mail" description="Automatically sort mail using AI"><Toggle value={prefs.autoCategorizeMail} onChange={(v) => update("autoCategorizeMail", v)} /></SettingRow>
+      </SectionCard>
+      <SectionCard title="Chat & Meetings">
+        <SettingRow label="Chat AI bot (@CyberSage)" description="Ask the AI anything in chat"><Toggle value={prefs.chatBot} onChange={(v) => update("chatBot", v)} /></SettingRow>
+        <SettingRow label="Meeting insights" description="Auto-generated meeting notes and actions"><Toggle value={prefs.meetingInsights} onChange={(v) => update("meetingInsights", v)} /></SettingRow>
+      </SectionCard>
+      <SectionCard title="Style Preferences">
+        <SettingRow label="Default tone">
+          <select value={prefs.tone} onChange={(e) => update("tone", e.target.value)} className={selectClass}>
+            <option value="professional">Professional</option>
+            <option value="friendly">Friendly</option>
+            <option value="concise">Concise</option>
+            <option value="formal">Formal</option>
+          </select>
+        </SettingRow>
+      </SectionCard>
+      <div className="flex justify-end">
+        <button onClick={() => void save()} disabled={saving} className={btnPrimary}>
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+          {saving ? "Saving…" : "Save AI Settings"}
+        </button>
+      </div>
+    </>
+  );
+}
+
+// ─── API Tokens Tab ───────────────────────────────────────────────────────────
+
+function APITokensTab() {
+  const [tokens, setTokens]   = useState<APIKey[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showNew, setShowNew] = useState(false);
+  const [name, setName]       = useState("");
+  const [creating, setCreating] = useState(false);
+  const [newToken, setNewToken] = useState<string | null>(null);
+  const [revealed, setRevealed] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/ecosystem/api-keys")
+      .then(r => r.json())
+      .then((d: APIKey[]) => setTokens(Array.isArray(d) ? d : []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const create = async () => {
+    if (!name.trim()) { toast.error("Enter a token name"); return; }
+    setCreating(true);
+    try {
+      const res = await fetch("/api/ecosystem/api-keys", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: name.trim() }) });
+      if (!res.ok) throw new Error("Failed");
+      const data = await res.json() as { key: string; apiKey: APIKey };
+      setNewToken(data.key);
+      setTokens(prev => [data.apiKey, ...prev]);
+      setName(""); setShowNew(false);
+    } catch { toast.error("Failed to create token"); }
+    finally { setCreating(false); }
+  };
+
+  const revoke = async (id: string) => {
+    await fetch(`/api/ecosystem/api-keys/${id}`, { method: "DELETE" }).catch(() => {});
+    setTokens(prev => prev.filter(t => t.id !== id));
+    toast.success("Token revoked");
+  };
+
+  return (
+    <>
+      {newToken && (
+        <div className="mb-6 bg-[#00d2ff]/10 border border-[#00d2ff]/30 rounded-xl p-4">
+          <p className="text-sm font-semibold text-[#a5e7ff] mb-2">Token created — copy it now, it won&apos;t be shown again</p>
+          <div className="flex items-center gap-2">
+            <code className="flex-1 bg-[#0f1321] px-3 py-2 rounded-lg text-xs text-[#dfe1f6] font-mono truncate">
+              {revealed ? newToken : newToken.slice(0, 12) + "•".repeat(24)}
+            </code>
+            <button onClick={() => setRevealed(r => !r)} className="p-2 text-[#bbc9cf] hover:text-[#dfe1f6]">
+              {revealed ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+            <button onClick={() => { void navigator.clipboard.writeText(newToken); toast.success("Copied!"); }} className="p-2 text-[#bbc9cf] hover:text-[#dfe1f6]">
+              <Copy className="h-4 w-4" />
+            </button>
+          </div>
+          <button onClick={() => setNewToken(null)} className="mt-2 text-xs text-[#bbc9cf] hover:text-[#dfe1f6]">Dismiss</button>
+        </div>
+      )}
+
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-sm text-[#bbc9cf]">{tokens.length} token{tokens.length !== 1 ? "s" : ""}</p>
+        <button onClick={() => setShowNew(v => !v)} className={btnPrimary}>
+          <Plus className="h-4 w-4" /> New Token
+        </button>
+      </div>
+
+      {showNew && (
+        <div className="bg-[#1b1f2e] border border-[rgba(0,255,255,0.1)] rounded-xl p-4 mb-6">
+          <div className="flex gap-2">
+            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Token name (e.g. CI/CD Pipeline)" className={`flex-1 ${inputClass}`} onKeyDown={(e) => { if (e.key === "Enter") void create(); }} />
+            <button onClick={() => void create()} disabled={creating} className={btnPrimary}>
+              {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create"}
+            </button>
+            <button onClick={() => { setShowNew(false); setName(""); }} className={btnSecondary}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {loading ? (
+        <div className="text-center py-8"><Loader2 className="h-5 w-5 animate-spin text-[#00d2ff] mx-auto" /></div>
+      ) : tokens.length === 0 ? (
+        <div className="text-center py-12">
+          <Key className="h-10 w-10 text-[#3c494e] mx-auto mb-3" />
+          <p className="text-sm text-[#bbc9cf]">No API tokens yet. Create one to integrate with external tools.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {tokens.map(t => (
+            <div key={t.id} className="bg-[#1b1f2e] border border-[rgba(0,255,255,0.08)] rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <Key className="h-4 w-4 text-[#00d2ff] flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-[#dfe1f6] truncate">{t.name}</p>
+                  <p className="text-xs text-[#bbc9cf] font-mono">{t.keyPrefix}••••••••••••••••</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 flex-shrink-0">
+                {t.lastUsedAt && <span className="text-xs text-[#bbc9cf]">Last used {new Date(t.lastUsedAt).toLocaleDateString()}</span>}
+                <button onClick={() => void revoke(t.id)} className="p-1.5 text-[#bbc9cf] hover:text-[#ff4d6d] hover:bg-[#ff4d6d]/10 rounded-lg transition-colors" title="Revoke">
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
+// ─── Custom Roles Tab (admin only) ────────────────────────────────────────────
+
+function CustomRolesTab() {
+  const [roles, setRoles]     = useState<CustomRole[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showNew, setShowNew] = useState(false);
+  const [form, setForm]       = useState({ name: "", description: "", isSingleton: false, color: "#00d2ff" });
+  const [saving, setSaving]   = useState(false);
+
+  useEffect(() => {
+    fetch("/api/admin/roles")
+      .then(r => r.json())
+      .then((d: CustomRole[]) => setRoles(Array.isArray(d) ? d : []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const create = async () => {
+    if (!form.name.trim()) { toast.error("Role name required"); return; }
+    setSaving(true);
+    try {
+      const res = await fetch("/api/admin/roles", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+      if (!res.ok) { const e = await res.json() as { error?: string }; throw new Error(e.error ?? "Failed"); }
+      const role = await res.json() as CustomRole;
+      setRoles(prev => [...prev, role]);
+      setForm({ name: "", description: "", isSingleton: false, color: "#00d2ff" });
+      setShowNew(false);
+      toast.success("Role created");
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
+    finally { setSaving(false); }
+  };
+
+  const del = async (id: string) => {
+    await fetch(`/api/admin/roles/${id}`, { method: "DELETE" }).catch(() => {});
+    setRoles(prev => prev.filter(r => r.id !== id));
+    toast.success("Role deleted");
+  };
+
+  return (
+    <>
+      <div className="mb-4 p-4 bg-[#262939] rounded-xl border border-[rgba(0,255,255,0.08)]">
+        <p className="text-xs text-[#bbc9cf]">
+          Custom roles supplement the built-in roles (CEO, CISO, Developer, etc.). Mark a role as <strong className="text-[#dfe1f6]">singleton</strong> if only one person in the org can hold it (like a CEO).
+        </p>
+      </div>
+
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-sm text-[#bbc9cf]">{roles.length} custom role{roles.length !== 1 ? "s" : ""}</p>
+        <button onClick={() => setShowNew(v => !v)} className={btnPrimary}><Plus className="h-4 w-4" /> New Role</button>
+      </div>
+
+      {showNew && (
+        <div className="bg-[#1b1f2e] border border-[rgba(0,255,255,0.1)] rounded-xl p-5 mb-6 space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-[#bbc9cf] mb-1 block">Role Name *</label>
+              <input value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} className={inputClass} placeholder="e.g. Lead Auditor" />
+            </div>
+            <div>
+              <label className="text-xs text-[#bbc9cf] mb-1 block">Badge Colour</label>
+              <div className="flex items-center gap-2">
+                <input type="color" value={form.color} onChange={(e) => setForm(f => ({ ...f, color: e.target.value }))} className="h-9 w-14 rounded border border-[rgba(0,255,255,0.1)] bg-transparent cursor-pointer" />
+                <span className="text-xs text-[#bbc9cf]" style={{ color: form.color }}>{form.name || "Preview"}</span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <label className="text-xs text-[#bbc9cf] mb-1 block">Description</label>
+            <input value={form.description} onChange={(e) => setForm(f => ({ ...f, description: e.target.value }))} className={inputClass} placeholder="Brief description of this role" />
+          </div>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" checked={form.isSingleton} onChange={(e) => setForm(f => ({ ...f, isSingleton: e.target.checked }))} className="accent-[#00d2ff]" />
+            <div>
+              <p className="text-sm font-medium text-[#dfe1f6]">Singleton role</p>
+              <p className="text-xs text-[#bbc9cf]">Only one user in the org can be assigned this role at a time</p>
+            </div>
+          </label>
+          <div className="flex gap-2">
+            <button onClick={() => void create()} disabled={saving} className={btnPrimary}>{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create Role"}</button>
+            <button onClick={() => { setShowNew(false); setForm({ name: "", description: "", isSingleton: false, color: "#00d2ff" }); }} className={btnSecondary}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {loading ? (
+        <div className="text-center py-8"><Loader2 className="h-5 w-5 animate-spin text-[#00d2ff] mx-auto" /></div>
+      ) : roles.length === 0 ? (
+        <div className="text-center py-12">
+          <Tag className="h-10 w-10 text-[#3c494e] mx-auto mb-3" />
+          <p className="text-sm text-[#bbc9cf]">No custom roles yet.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {roles.map(r => (
+            <div key={r.id} className="bg-[#1b1f2e] border border-[rgba(0,255,255,0.08)] rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ backgroundColor: `${r.color ?? "#00d2ff"}20`, color: r.color ?? "#00d2ff" }}>
+                  {r.name}
+                </span>
+                {r.isSingleton && <span className="text-[10px] bg-purple-500/20 text-purple-300 px-1.5 py-0.5 rounded-full font-medium">SINGLETON</span>}
+                {r.description && <p className="text-xs text-[#bbc9cf] truncate max-w-xs">{r.description}</p>}
+              </div>
+              <button onClick={() => void del(r.id)} className="p-1.5 text-[#bbc9cf] hover:text-[#ff4d6d] hover:bg-[#ff4d6d]/10 rounded-lg transition-colors">
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
+// ─── Mail Rules Tab ───────────────────────────────────────────────────────────
+
 type MailRule = {
-  id: string;
-  name: string;
-  isActive: boolean;
-  priority: number;
+  id: string; name: string; isActive: boolean; priority: number;
   conditions: { field: string; op: string; value: string }[];
-  action: string;
-  actionData: Record<string, string> | null;
+  action: string; actionData: Record<string, string> | null;
 };
 
 const CONDITION_FIELDS = ["from","to","subject","body"] as const;
 const CONDITION_OPS    = ["contains","equals","startsWith","endsWith","notContains"] as const;
-const RULE_ACTIONS     = [
+const RULE_ACTIONS = [
   { value: "LABEL",       label: "Add label" },
   { value: "MOVE_FOLDER", label: "Move to folder" },
   { value: "MARK_READ",   label: "Mark as read" },
@@ -469,199 +1211,88 @@ const RULE_ACTIONS     = [
 ];
 
 function MailRulesTab() {
-  const [rules, setRules]       = useState<MailRule[]>([]);
-  const [loading, setLoading]   = useState(true);
+  const [rules, setRules]     = useState<MailRule[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-
-  const [name,      setName]      = useState("");
-  const [action,    setAction]    = useState("LABEL");
+  const [name, setName]       = useState("");
+  const [action, setAction]   = useState("LABEL");
   const [actionVal, setActionVal] = useState("");
-  const [conditions, setConditions] = useState([
-    { field: "from", op: "contains", value: "" },
-  ]);
-  const [saving, setSaving] = useState(false);
+  const [conditions, setConditions] = useState([{ field: "from", op: "contains", value: "" }]);
+  const [saving, setSaving]   = useState(false);
 
   useEffect(() => {
-    fetch("/api/inbox/rules")
-      .then(r => r.json())
-      .then((data: MailRule[]) => setRules(data))
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    fetch("/api/inbox/rules").then(r => r.json()).then((d: MailRule[]) => setRules(d)).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
-  const addCondition = () =>
-    setConditions(prev => [...prev, { field: "from", op: "contains", value: "" }]);
-
-  const removeCondition = (i: number) =>
-    setConditions(prev => prev.filter((_, idx) => idx !== i));
-
-  const updateCondition = (i: number, key: string, val: string) =>
-    setConditions(prev => prev.map((c, idx) => idx === i ? { ...c, [key]: val } : c));
-
   const handleCreate = async () => {
-    if (!name.trim() || conditions.some(c => !c.value.trim())) {
-      toast.error("Fill in all condition values and a rule name");
-      return;
-    }
+    if (!name.trim() || conditions.some(c => !c.value.trim())) { toast.error("Fill in all fields"); return; }
     setSaving(true);
     try {
       const actionData: Record<string, string> = {};
-      if (action === "LABEL")    actionData.label    = actionVal;
+      if (action === "LABEL") actionData.label = actionVal;
       if (action === "MOVE_FOLDER") actionData.folderId = actionVal;
       if (action === "PRIORITY") actionData.priority = actionVal;
-      if (action === "FORWARD")  actionData.to       = actionVal;
-
-      const res = await fetch("/api/inbox/rules", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, conditions, action, actionData }),
-      });
+      if (action === "FORWARD") actionData.to = actionVal;
+      const res = await fetch("/api/inbox/rules", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, conditions, action, actionData }) });
       const data = await res.json() as MailRule & { error?: string };
-      if (!res.ok) throw new Error(data.error ?? "Failed to create rule");
+      if (!res.ok) throw new Error(data.error ?? "Failed");
       setRules(prev => [...prev, data]);
-      setShowForm(false);
-      setName(""); setActionVal(""); setConditions([{ field: "from", op: "contains", value: "" }]);
+      setShowForm(false); setName(""); setActionVal(""); setConditions([{ field: "from", op: "contains", value: "" }]);
       toast.success("Rule created");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const toggleActive = async (rule: MailRule) => {
-    setRules(prev => prev.map(r => r.id === rule.id ? { ...r, isActive: !r.isActive } : r));
-    await fetch(`/api/inbox/rules/${rule.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ isActive: !rule.isActive }),
-    }).catch(() => {});
-  };
-
-  const deleteRule = async (id: string) => {
-    setRules(prev => prev.filter(r => r.id !== id));
-    await fetch(`/api/inbox/rules/${id}`, { method: "DELETE" }).catch(() => {});
-    toast.success("Rule deleted");
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
+    finally { setSaving(false); }
   };
 
   const needsValue = ["LABEL","MOVE_FOLDER","PRIORITY","FORWARD"].includes(action);
-  const actionPlaceholder =
-    action === "LABEL"       ? "Label name" :
-    action === "MOVE_FOLDER" ? "Folder ID" :
-    action === "PRIORITY"    ? "LOW / NORMAL / HIGH / URGENT" :
-    action === "FORWARD"     ? "email@example.com" : "";
 
   return (
     <>
       <div className="flex items-center justify-between mb-4">
-        <p className="text-sm text-[#bbc9cf]">{rules.length} rule{rules.length !== 1 ? "s" : ""} configured</p>
-        <button
-          onClick={() => setShowForm(v => !v)}
-          className="flex items-center gap-2 bg-[#00d2ff] text-[#003543] px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-[#00b8d9] transition-colors"
-        >
-          <Plus className="w-3.5 h-3.5" /> New Rule
-        </button>
+        <p className="text-sm text-[#bbc9cf]">{rules.length} rule{rules.length !== 1 ? "s" : ""}</p>
+        <button onClick={() => setShowForm(v => !v)} className={btnPrimary}><Plus className="h-4 w-4" /> New Rule</button>
       </div>
 
-      {/* Create rule form */}
       {showForm && (
         <div className="bg-[#1b1f2e] border border-[rgba(0,255,255,0.12)] rounded-xl p-5 mb-6 space-y-4">
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-bold text-[#dfe1f6]">New Rule</h4>
             <button onClick={() => setShowForm(false)} className="p-1 text-[#bbc9cf] hover:text-[#dfe1f6] rounded"><X className="w-4 h-4" /></button>
           </div>
-
-          {/* Rule name */}
           <div>
-            <label className="block text-xs text-[#bbc9cf] mb-1">Rule name</label>
-            <input
-              type="text"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder="e.g. Move newsletters"
-              className="w-full bg-[#0f1321] border border-[rgba(0,255,255,0.12)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] focus:outline-none focus:ring-1 focus:ring-[#00d2ff]/40"
-            />
+            <label className="text-xs text-[#bbc9cf] mb-1 block">Rule name</label>
+            <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Move newsletters" className={inputClass} />
           </div>
-
-          {/* Conditions */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="text-xs text-[#bbc9cf]">When…</label>
-              <button onClick={addCondition} className="text-xs text-[#00d2ff] hover:underline flex items-center gap-1">
-                <Plus className="w-3 h-3" /> Add condition
-              </button>
+              <button onClick={() => setConditions(p => [...p, { field: "from", op: "contains", value: "" }])} className="text-xs text-[#00d2ff] hover:underline flex items-center gap-1"><Plus className="w-3 h-3" /> Add condition</button>
             </div>
             <div className="space-y-2">
               {conditions.map((cond, i) => (
                 <div key={i} className="flex gap-2 items-center">
-                  <select
-                    value={cond.field}
-                    onChange={e => updateCondition(i, "field", e.target.value)}
-                    className="bg-[#0f1321] border border-[rgba(0,255,255,0.12)] rounded-lg px-2 py-1.5 text-xs text-[#dfe1f6] focus:outline-none"
-                  >
-                    {CONDITION_FIELDS.map(f => <option key={f} value={f}>{f}</option>)}
-                  </select>
-                  <select
-                    value={cond.op}
-                    onChange={e => updateCondition(i, "op", e.target.value)}
-                    className="bg-[#0f1321] border border-[rgba(0,255,255,0.12)] rounded-lg px-2 py-1.5 text-xs text-[#dfe1f6] focus:outline-none"
-                  >
-                    {CONDITION_OPS.map(o => <option key={o} value={o}>{o}</option>)}
-                  </select>
-                  <input
-                    type="text"
-                    value={cond.value}
-                    onChange={e => updateCondition(i, "value", e.target.value)}
-                    placeholder="value"
-                    className="flex-1 bg-[#0f1321] border border-[rgba(0,255,255,0.12)] rounded-lg px-2 py-1.5 text-xs text-[#dfe1f6] focus:outline-none focus:ring-1 focus:ring-[#00d2ff]/40"
-                  />
-                  {conditions.length > 1 && (
-                    <button onClick={() => removeCondition(i)} className="p-1 text-[#bbc9cf] hover:text-[#ff4d6d] rounded">
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  )}
+                  <select value={cond.field} onChange={e => setConditions(p => p.map((c,idx) => idx===i ? {...c,field:e.target.value}:c))} className={`${selectClass} text-xs`}>{CONDITION_FIELDS.map(f => <option key={f} value={f}>{f}</option>)}</select>
+                  <select value={cond.op} onChange={e => setConditions(p => p.map((c,idx) => idx===i ? {...c,op:e.target.value}:c))} className={`${selectClass} text-xs`}>{CONDITION_OPS.map(o => <option key={o} value={o}>{o}</option>)}</select>
+                  <input value={cond.value} onChange={e => setConditions(p => p.map((c,idx) => idx===i ? {...c,value:e.target.value}:c))} placeholder="value" className={`flex-1 ${inputClass} text-xs py-1.5`} />
+                  {conditions.length > 1 && <button onClick={() => setConditions(p => p.filter((_,idx) => idx!==i))} className="p-1 text-[#bbc9cf] hover:text-[#ff4d6d]"><X className="w-3.5 h-3.5" /></button>}
                 </div>
               ))}
             </div>
           </div>
-
-          {/* Action */}
           <div>
-            <label className="block text-xs text-[#bbc9cf] mb-1">Then…</label>
+            <label className="text-xs text-[#bbc9cf] mb-1 block">Then…</label>
             <div className="flex gap-2">
-              <select
-                value={action}
-                onChange={e => { setAction(e.target.value); setActionVal(""); }}
-                className="bg-[#0f1321] border border-[rgba(0,255,255,0.12)] rounded-lg px-2 py-2 text-sm text-[#dfe1f6] focus:outline-none"
-              >
-                {RULE_ACTIONS.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
-              </select>
-              {needsValue && (
-                <input
-                  type="text"
-                  value={actionVal}
-                  onChange={e => setActionVal(e.target.value)}
-                  placeholder={actionPlaceholder}
-                  className="flex-1 bg-[#0f1321] border border-[rgba(0,255,255,0.12)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] focus:outline-none focus:ring-1 focus:ring-[#00d2ff]/40"
-                />
-              )}
+              <select value={action} onChange={e => { setAction(e.target.value); setActionVal(""); }} className={selectClass}>{RULE_ACTIONS.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}</select>
+              {needsValue && <input value={actionVal} onChange={e => setActionVal(e.target.value)} placeholder={action==="LABEL"?"Label name":action==="FORWARD"?"email@example.com":"Value"} className={`flex-1 ${inputClass}`} />}
             </div>
           </div>
-
-          <button
-            onClick={() => void handleCreate()}
-            disabled={saving}
-            className="w-full bg-[#00d2ff] text-[#003543] py-2 rounded-lg text-sm font-bold disabled:opacity-40 flex items-center justify-center gap-2"
-          >
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-            Create Rule
+          <button onClick={() => void handleCreate()} disabled={saving} className={`w-full ${btnPrimary} justify-center py-2`}>
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null} Create Rule
           </button>
         </div>
       )}
 
-      {/* Rules list */}
       {loading ? (
-        <div className="text-center py-8 text-[#bbc9cf] text-sm">Loading rules…</div>
+        <div className="text-center py-8 text-[#bbc9cf] text-sm">Loading…</div>
       ) : rules.length === 0 ? (
         <div className="text-center py-12">
           <Filter className="w-10 h-10 text-[#3c494e] mx-auto mb-3" />
@@ -674,29 +1305,12 @@ function MailRulesTab() {
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-[#dfe1f6] truncate">{rule.name}</p>
-                  <p className="text-xs text-[#bbc9cf] mt-0.5">
-                    {rule.conditions.map(c => `${c.field} ${c.op} "${c.value}"`).join(" AND ")}
-                  </p>
-                  <p className="text-xs text-[#00d2ff] mt-0.5">
-                    → {RULE_ACTIONS.find(a => a.value === rule.action)?.label ?? rule.action}
-                    {rule.actionData && Object.values(rule.actionData).length > 0 && `: ${Object.values(rule.actionData)[0]}`}
-                  </p>
+                  <p className="text-xs text-[#bbc9cf] mt-0.5">{rule.conditions.map(c => `${c.field} ${c.op} "${c.value}"`).join(" AND ")}</p>
+                  <p className="text-xs text-[#00d2ff] mt-0.5">→ {RULE_ACTIONS.find(a => a.value === rule.action)?.label ?? rule.action}</p>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
-                  <button
-                    onClick={() => void toggleActive(rule)}
-                    className={`p-1.5 rounded-lg transition-colors ${rule.isActive ? "text-[#00d2ff] hover:bg-[#00d2ff]/10" : "text-[#3c494e] hover:bg-[#262939]"}`}
-                    title={rule.isActive ? "Disable rule" : "Enable rule"}
-                  >
-                    <ToggleRight className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => void deleteRule(rule.id)}
-                    className="p-1.5 rounded-lg text-[#bbc9cf] hover:bg-[#ff4d6d]/10 hover:text-[#ff4d6d] transition-colors"
-                    title="Delete rule"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <button onClick={async () => { setRules(p => p.map(r => r.id===rule.id ? {...r,isActive:!r.isActive}:r)); await fetch(`/api/inbox/rules/${rule.id}`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({isActive:!rule.isActive})}).catch(()=>{}); }} className={`p-1.5 rounded-lg ${rule.isActive?"text-[#00d2ff]":"text-[#3c494e]"} hover:bg-[#262939]`}><ToggleRight className="w-4 h-4" /></button>
+                  <button onClick={async () => { setRules(p => p.filter(r => r.id!==rule.id)); await fetch(`/api/inbox/rules/${rule.id}`,{method:"DELETE"}).catch(()=>{}); toast.success("Rule deleted"); }} className="p-1.5 rounded-lg text-[#bbc9cf] hover:text-[#ff4d6d] hover:bg-[#ff4d6d]/10"><Trash2 className="w-4 h-4" /></button>
                 </div>
               </div>
             </div>
@@ -707,6 +1321,8 @@ function MailRulesTab() {
   );
 }
 
+// ─── Main SettingsView ────────────────────────────────────────────────────────
+
 export function SettingsView({
   user,
   recentLogins,
@@ -716,34 +1332,34 @@ export function SettingsView({
   recentLogins: RecentLogin[];
   mfaEnabled: boolean;
 }) {
-  const [activeTab, setActiveTab] = useState<Tab>("profile");
-  const [currentMfaEnabled, setCurrentMfaEnabled] = useState(mfaEnabled);
+  const [activeTab, setActiveTab]           = useState<Tab>("profile");
+  const [currentMfaEnabled, setMfaEnabled]  = useState(mfaEnabled);
+
+  const isAdmin = ["ADMIN", "CEO", "CISO"].includes(user.role);
+  const visibleTabs = ALL_TABS.filter(t => !t.adminOnly || isAdmin);
 
   return (
     <div className="bg-[#0f1321] min-h-screen">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* Settings sidebar nav */}
-          <aside className="bg-[#1b1f2e] border-r border-[rgba(0,255,255,0.08)] w-52 flex-shrink-0 rounded-xl self-start">
+
+          {/* Sidebar */}
+          <aside className="bg-[#1b1f2e] border border-[rgba(0,255,255,0.08)] w-56 flex-shrink-0 rounded-xl self-start">
             <nav className="space-y-0.5 p-2">
-              {TABS.map((tab) => {
+              {visibleTabs.map((tab) => {
                 const Icon = tab.icon;
-                const isActive = activeTab === tab.id;
+                const active = activeTab === tab.id;
                 return (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`w-full flex items-center gap-3 text-left transition-all ${
-                      isActive
-                        ? "bg-[#00d2ff]/15 text-[#00d2ff] font-semibold rounded-lg px-3 py-2 text-sm"
-                        : "text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-lg px-3 py-2 text-sm transition-colors"
+                    className={`w-full flex items-center gap-3 text-left rounded-lg px-3 py-2 text-sm transition-all ${
+                      active ? "bg-[#00d2ff]/15 text-[#00d2ff] font-semibold" : "text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6]"
                     }`}
                   >
                     <Icon className="h-4 w-4 flex-shrink-0" />
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">{tab.label}</p>
-                    </div>
-                    {isActive && <ChevronRight className="h-3.5 w-3.5 ml-auto flex-shrink-0" />}
+                    <span className="flex-1 truncate">{tab.label}</span>
+                    {active && <ChevronRight className="h-3.5 w-3.5 flex-shrink-0" />}
                   </button>
                 );
               })}
@@ -752,156 +1368,85 @@ export function SettingsView({
 
           {/* Content */}
           <main className="flex-1 min-w-0">
-            {activeTab === "profile" && (
-              <div>
-                <h2 className="text-xl font-bold text-[#dfe1f6] mb-1">Profile</h2>
-                <p className="text-sm text-[#bbc9cf] mb-6">Manage your name, email, and personal information.</p>
-                <ProfileSettings userEmail={user.email} userName={user.fullName} />
-              </div>
-            )}
+            {(() => {
+              const tab = visibleTabs.find(t => t.id === activeTab);
+              return (
+                <div>
+                  <h2 className="text-xl font-bold text-[#dfe1f6] mb-1">{tab?.label}</h2>
+                  <p className="text-sm text-[#bbc9cf] mb-6">{tab?.description}</p>
+                </div>
+              );
+            })()}
 
-            {activeTab === "appearance" && (
-              <div>
-                <h2 className="text-xl font-bold text-[#dfe1f6] mb-1">Appearance</h2>
-                <p className="text-sm text-[#bbc9cf] mb-6">Customize how CyberSage looks and feels.</p>
-                <AppearanceTab />
-              </div>
-            )}
-
-            {activeTab === "notifications" && (
-              <div>
-                <h2 className="text-xl font-bold text-[#dfe1f6] mb-1">Notifications</h2>
-                <p className="text-sm text-[#bbc9cf] mb-6">Control how and when CyberSage alerts you.</p>
-                <NotificationsTab />
-              </div>
-            )}
-
-            {activeTab === "signature" && (
-              <div>
-                <h2 className="text-xl font-bold text-[#dfe1f6] mb-1">Email Signature</h2>
-                <p className="text-sm text-[#bbc9cf] mb-6">Appended to every outgoing email automatically.</p>
-                <SectionCard title="Signature Editor">
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <FileSignature className="h-10 w-10 text-[#bbc9cf] mb-3" />
-                    <p className="text-sm font-medium text-[#bbc9cf]">Rich HTML Signature Builder</p>
-                    <p className="text-xs text-[#bbc9cf] mt-1">
-                      Full signature editor with logo upload, social links, and HTML preview — coming in the next release.
-                    </p>
-                  </div>
-                </SectionCard>
-              </div>
-            )}
+            {activeTab === "profile"       && <ProfileTab userId={user.id} />}
+            {activeTab === "appearance"    && <AppearanceTab />}
+            {activeTab === "notifications" && <NotificationsTab />}
+            {activeTab === "signature"     && <SignatureTab userName={user.fullName} />}
+            {activeTab === "mail-rules"    && <MailRulesTab />}
 
             {activeTab === "mailboxes" && (
-              <div>
-                <h2 className="text-xl font-bold text-[#dfe1f6] mb-1">Mailboxes</h2>
-                <p className="text-sm text-[#bbc9cf] mb-6">Shared and personal mailboxes you can access.</p>
-                <SectionCard title="Your Mailboxes">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 rounded-md bg-[#dbeafe] border border-[#dbeafe]">
-                      <div className="flex items-center gap-3">
-                        <Mail className="h-4 w-4 text-[#00d2ff]" />
-                        <div>
-                          <p className="text-sm font-medium text-[#dfe1f6]">{user.email}</p>
-                          <p className="text-xs text-[#a5e7ff] uppercase tracking-wider font-medium">Primary · Owner</p>
-                        </div>
-                      </div>
-                      <div className="h-2 w-2 rounded-full bg-emerald-500" />
+              <SectionCard title="Your Mailboxes" description="Shared and personal mailboxes you can access">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-[#00d2ff]/5 border border-[#00d2ff]/15 mb-2">
+                  <div className="flex items-center gap-3">
+                    <Mail className="h-4 w-4 text-[#00d2ff]" />
+                    <div>
+                      <p className="text-sm font-medium text-[#dfe1f6]">{user.email}</p>
+                      <p className="text-xs text-[#00d2ff] uppercase tracking-wider font-medium">Primary · Owner</p>
                     </div>
-                    <p className="text-xs text-center text-[#bbc9cf] mt-4">
-                      Additional shared mailboxes are assigned by your administrator.
-                    </p>
                   </div>
-                </SectionCard>
-              </div>
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                </div>
+                <p className="text-xs text-[#bbc9cf] text-center mt-4">Additional shared mailboxes are assigned by your administrator.</p>
+              </SectionCard>
             )}
 
             {activeTab === "security" && (
-              <div>
-                <h2 className="text-xl font-bold text-[#dfe1f6] mb-1">Security</h2>
-                <p className="text-sm text-[#bbc9cf] mb-6">Protect your account with two-factor authentication and monitor active sessions.</p>
-
+              <>
                 <SectionCard title="Two-Factor Authentication" description="Add an extra layer of security to your account">
-                  <MFASetup
-                    mfaEnabled={currentMfaEnabled}
-                    onStatusChange={() => setCurrentMfaEnabled((prev) => !prev)}
-                  />
+                  <MFASetup mfaEnabled={currentMfaEnabled} onStatusChange={() => setMfaEnabled(p => !p)} />
                 </SectionCard>
-
-                <SectionCard title="Active Sessions" description="Devices currently logged into your account">
+                <SectionCard title="Active Sessions" description="Devices currently signed in to your account">
                   <SessionManager />
                 </SectionCard>
-
-                <SectionCard title="Recent Login Activity" description="Last 10 sign-in attempts to your account">
+                <SectionCard title="Recent Login Activity" description="Last 10 sign-in attempts">
                   <div className="space-y-2">
                     {recentLogins.length === 0 ? (
-                      <p className="text-sm text-[#bbc9cf] text-center py-4">No login history available.</p>
-                    ) : (
-                      recentLogins.map((login) => (
-                        <div
-                          key={login.id}
-                          className="bg-[#262939] border border-[rgba(0,255,255,0.08)] rounded-xl px-4 py-3 flex items-center justify-between"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className={`h-2 w-2 rounded-full flex-shrink-0 ${login.success ? "bg-emerald-500" : "bg-red-500"}`} />
-                            <div>
-                              <p className={`text-xs font-semibold ${login.success ? "text-emerald-700" : "text-red-500"}`}>
-                                {login.success ? "Successful login" : "Failed attempt"}
-                              </p>
-                              <p className="text-xs text-[#bbc9cf]">
-                                {login.ip ?? "Unknown IP"} · {login.userAgent?.split(" ")[0] ?? "Unknown browser"}
-                              </p>
-                            </div>
+                      <p className="text-sm text-center text-[#bbc9cf] py-4">No login history.</p>
+                    ) : recentLogins.map(login => (
+                      <div key={login.id} className="bg-[#262939] border border-[rgba(0,255,255,0.08)] rounded-xl px-4 py-3 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <span className={`h-2 w-2 rounded-full flex-shrink-0 ${login.success ? "bg-emerald-500" : "bg-red-500"}`} />
+                          <div>
+                            <p className={`text-xs font-semibold ${login.success ? "text-emerald-400" : "text-red-400"}`}>{login.success ? "Successful" : "Failed"}</p>
+                            <p className="text-xs text-[#bbc9cf]">{login.ip ?? "Unknown IP"} · {login.userAgent?.split(" ")[0] ?? "Unknown"}</p>
                           </div>
-                          <p className="text-xs text-[#bbc9cf] flex-shrink-0">
-                            {new Date(login.createdAt).toLocaleString()}
-                          </p>
                         </div>
-                      ))
-                    )}
+                        <p className="text-xs text-[#bbc9cf]">{new Date(login.createdAt).toLocaleString()}</p>
+                      </div>
+                    ))}
                   </div>
                 </SectionCard>
-
-                <SectionCard title="Password" description="Change your account password">
+                <SectionCard title="Password">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-[#dfe1f6]">••••••••••••</p>
-                      <p className="text-xs text-[#bbc9cf]">Last changed: unknown</p>
-                    </div>
-                    <a
-                      href="/reset-password"
-                      className="text-sm font-medium text-[#00d2ff] hover:text-[#00b8d9] transition-colors"
-                    >
-                      Change password →
-                    </a>
+                    <div><p className="text-sm text-[#dfe1f6]">••••••••••••</p><p className="text-xs text-[#bbc9cf]">Change via reset link</p></div>
+                    <a href="/reset-password" className="text-sm font-medium text-[#00d2ff] hover:text-[#47d6ff] transition">Change password →</a>
                   </div>
                 </SectionCard>
-              </div>
+              </>
             )}
 
-            {activeTab === "mail-rules" && (
-              <div>
-                <h2 className="text-xl font-bold text-[#dfe1f6] mb-1">Mail Rules</h2>
-                <p className="text-sm text-[#bbc9cf] mb-6">Automatically sort, label, and manage incoming emails.</p>
-                <MailRulesTab />
-              </div>
+            {activeTab === "language" && <LanguageTab />}
+            {activeTab === "privacy"  && <PrivacyTab userId={user.id} />}
+            {activeTab === "ai"       && <AITab />}
+            {activeTab === "api-tokens" && (
+              <>
+                <div className="mb-4 p-4 bg-[#262939] rounded-xl border border-[rgba(0,255,255,0.08)]">
+                  <p className="text-xs text-[#bbc9cf]">Personal access tokens allow external tools to interact with the CyberSage API on your behalf. Treat them like passwords — never share or commit them.</p>
+                </div>
+                <APITokensTab />
+              </>
             )}
-
-            {activeTab === "language" && (
-              <div>
-                <h2 className="text-xl font-bold text-[#dfe1f6] mb-1">Language & Region</h2>
-                <p className="text-sm text-[#bbc9cf] mb-6">Set your language, timezone, and date preferences.</p>
-                <LanguageTab />
-              </div>
-            )}
-
-            {activeTab === "privacy" && (
-              <div>
-                <h2 className="text-xl font-bold text-[#dfe1f6] mb-1">Privacy & Data</h2>
-                <p className="text-sm text-[#bbc9cf] mb-6">Manage your data and account privacy preferences.</p>
-                <PrivacyTab userId={user.id} />
-              </div>
-            )}
+            {activeTab === "roles" && isAdmin && <CustomRolesTab />}
           </main>
         </div>
       </div>

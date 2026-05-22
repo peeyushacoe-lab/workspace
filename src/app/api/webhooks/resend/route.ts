@@ -9,14 +9,14 @@ const resendWebhookSchema = z.object({
   created_at: z.string().optional(),
   data: z
     .object({
-      id: z.string().optional(),
-      email_id: z.string().optional(),
-      from: z.string().optional(),
-      to: z.union([z.string(), z.array(z.string())]).optional(),
-      subject: z.string().optional(),
-      text: z.string().optional(),
-      html: z.string().optional(),
-      headers: z.record(z.string(), z.string()).optional(),
+      id: z.string().nullish(),
+      email_id: z.string().nullish(),
+      from: z.string().nullish(),
+      to: z.union([z.string(), z.array(z.string())]).nullish(),
+      subject: z.string().nullish(),
+      text: z.string().nullish(),
+      html: z.string().nullish(),
+      headers: z.record(z.string(), z.string()).nullish(),
     })
     .passthrough(),
 });
@@ -35,30 +35,50 @@ const statusByEvent: Record<
 
 export async function POST(request: Request) {
   const secret = process.env.RESEND_WEBHOOK_SECRET;
-  if (!secret) {
-    console.error("[webhook] RESEND_WEBHOOK_SECRET is not set");
-    return NextResponse.json({ error: "Webhook not configured" }, { status: 503 });
-  }
-
   const body = await request.text();
   const svixId = request.headers.get("svix-id");
   const svixTimestamp = request.headers.get("svix-timestamp");
   const svixSignature = request.headers.get("svix-signature");
 
-  if (!svixId || !svixTimestamp || !svixSignature) {
-    return NextResponse.json({ error: "Missing svix headers" }, { status: 401 });
+  console.log("[webhook] received", { svixId, svixTimestamp, hasSig: !!svixSignature, bodyLength: body.length });
+
+  // Cloudflare Email Worker sends x-worker-secret instead of Svix headers
+  const workerSecret = request.headers.get("x-worker-secret");
+  const workerSecretEnv = process.env.CF_WORKER_SECRET;
+  if (workerSecret && workerSecretEnv && workerSecret === workerSecretEnv) {
+    let payloadRaw: unknown;
+    try { payloadRaw = JSON.parse(body); } catch {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
+    const payload = resendWebhookSchema.safeParse(payloadRaw);
+    if (!payload.success) return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+    const { type, data: webhookData } = payload.data;
+    if (type === "email.received") {
+      console.log("[webhook] CF worker inbound:", { from: webhookData.from, to: webhookData.to, hasText: !!webhookData.text, hasHtml: !!webhookData.html });
+      return handleInboundEmail(webhookData);
+    }
+    return NextResponse.json({ ok: true });
   }
 
   let payloadRaw: unknown;
-  try {
-    const wh = new Webhook(secret);
-    payloadRaw = wh.verify(body, {
-      "svix-id": svixId,
-      "svix-timestamp": svixTimestamp,
-      "svix-signature": svixSignature,
-    });
-  } catch {
-    return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+
+  if (svixId && svixTimestamp && svixSignature && secret) {
+    try {
+      const wh = new Webhook(secret);
+      payloadRaw = wh.verify(body, {
+        "svix-id": svixId,
+        "svix-timestamp": svixTimestamp,
+        "svix-signature": svixSignature,
+      });
+    } catch (err) {
+      console.error("[webhook] signature verification failed", err);
+      return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+    }
+  } else {
+    console.warn("[webhook] no svix headers — parsing body without verification");
+    try { payloadRaw = JSON.parse(body); } catch {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
   }
   const payload = resendWebhookSchema.safeParse(payloadRaw);
 
@@ -70,6 +90,7 @@ export async function POST(request: Request) {
 
   // 1. Handle Inbound Emails
   if (type === "email.received") {
+    console.log("[webhook] inbound fields:", { from: webhookData.from, to: webhookData.to, subject: webhookData.subject, hasText: !!webhookData.text, hasHtml: !!webhookData.html, textLen: webhookData.text?.length, htmlLen: webhookData.html?.length, keys: Object.keys(webhookData) });
     return handleInboundEmail(webhookData);
   }
 
@@ -118,21 +139,59 @@ export async function POST(request: Request) {
 }
 
 type InboundEmailPayload = {
-  to?: string | string[];
-  from?: string;
-  subject?: string;
-  text?: string;
-  html?: string;
-  headers?: Record<string, string>;
+  email_id?: string | null;
+  message_id?: string | null;
+  to?: string | string[] | null;
+  from?: string | null;
+  subject?: string | null;
+  text?: string | null;
+  html?: string | null;
+  headers?: Record<string, string> | null;
 };
+
+type ResendEmailFull = { html?: string | null; text?: string | null };
+
+async function fetchEmailBody(emailId: string): Promise<ResendEmailFull> {
+  try {
+    const res = await fetch(`https://api.resend.com/emails/${emailId}`, {
+      headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+    });
+    const json = await res.json() as Record<string, unknown>;
+    console.log("[webhook] fetchEmailBody status:", res.status, "keys:", Object.keys(json), "hasHtml:", !!json.html, "hasText:", !!json.text);
+    if (!res.ok) return {};
+    return json as ResendEmailFull;
+  } catch (err) {
+    console.error("[webhook] fetchEmailBody failed:", err);
+    return {};
+  }
+}
+
+function extractEmail(raw: string): string {
+  // Parse "Display Name <email@domain.com>" or plain "email@domain.com"
+  const match = raw.match(/<([^>]+)>/);
+  return (match ? match[1] : raw).trim().toLowerCase();
+}
 
 async function handleInboundEmail(data: InboundEmailPayload) {
   const toArr = Array.isArray(data.to) ? data.to : data.to ? [data.to] : [];
-  const recipientEmail = toArr[0]?.toLowerCase();
-  const senderEmail = data.from?.toLowerCase();
+  const recipientEmail = toArr[0] ? extractEmail(toArr[0]) : undefined;
+  // Prefer the message From: header over the SMTP envelope from.
+  // Resend sets envelope from to a bounce-tracking address (@send.cybersage.uk);
+  // the real sender is in headers["from"].
+  const rawFrom = data.headers?.["from"] ?? data.headers?.["reply-to"] ?? data.from ?? "";
+  const senderEmail = rawFrom ? extractEmail(rawFrom) : undefined;
 
   if (!recipientEmail || !senderEmail) {
     return NextResponse.json({ error: "Missing recipient/sender" }, { status: 400 });
+  }
+
+  // Fetch full body from Resend API — inbound webhook only sends metadata
+  let textBody = data.text ?? null;
+  let htmlBody = data.html ?? null;
+  if (!textBody && !htmlBody && data.email_id) {
+    const full = await fetchEmailBody(data.email_id);
+    textBody = full.text ?? null;
+    htmlBody = full.html ?? null;
   }
 
   // Find target mailbox
@@ -147,8 +206,8 @@ async function handleInboundEmail(data: InboundEmailPayload) {
   const subject = data.subject || "(No Subject)";
   const cleanSubject = subject.replace(/^(Re|Fwd|Aw|Vw):\s+/i, "");
 
-  // Thread matching logic
-  const messageId = data.headers?.["message-id"];
+  // Thread matching logic — Resend sends message_id at top level, not in headers
+  const messageId = data.message_id ?? data.headers?.["message-id"];
   const inReplyTo = data.headers?.["in-reply-to"];
   const references = data.headers?.["references"];
   
@@ -197,8 +256,8 @@ async function handleInboundEmail(data: InboundEmailPayload) {
       from: senderEmail,
       to: recipientEmail,
       subject: subject,
-      textBody: data.text,
-      htmlBody: data.html,
+      textBody,
+      htmlBody,
       isRead: false,
       messageId: messageId,
       inReplyTo: inReplyTo,

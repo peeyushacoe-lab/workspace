@@ -8,19 +8,15 @@ export async function GET() {
   if (!user) return NextResponse.json({ count: 0 });
 
   try {
-    const isPrivileged = ["ADMIN", "CEO", "CISO"].includes(user.role);
-
     const count = await prisma.inboxMessage.count({
       where: {
         isRead: false,
-        thread: isPrivileged 
-          ? {} 
-          : {
-              mailbox: {
-                accessLogs: { some: { userId: user.id } }
-              }
-            }
-      }
+        thread: {
+          mailbox: {
+            accessLogs: { some: { userId: user.id } },
+          },
+        },
+      },
     });
 
     const response = NextResponse.json({ count });

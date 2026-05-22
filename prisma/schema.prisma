@@ -68,7 +68,9 @@ model User {
   passwordHash    String?
   fullName        String
   role            UserRole @default(ADMIN)
-  avatarUrl         String?
+  customRole      String?
+  avatarUrl       String?
+  coverUrl        String?
   isActive          Boolean  @default(true)
   mustResetPassword Boolean  @default(false)
   hasCompletedTour  Boolean  @default(false)
@@ -77,6 +79,23 @@ model User {
   mfaEnabled        Boolean  @default(false)
   mfaSecret         String?
   mfaBackupCodes    String[] @default([])
+  // Profile fields
+  displayName       String?
+  bio               String?
+  jobTitle          String?
+  company           String?
+  department        String?
+  phone             String?
+  website           String?
+  location          String?
+  timezone          String?  @default("UTC")
+  language          String?  @default("en")
+  pronouns          String?
+  birthday          DateTime?
+  statusMessage     String?
+  statusEmoji       String?
+  // Persisted preferences (JSON blob — flexible, no extra migrations needed)
+  preferences       Json?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
@@ -108,6 +127,17 @@ model User {
   meetingParticipations MeetingParticipant[]
   legalHolds        LegalHold[]        @relation("LegalHoldUser")
   legalHoldsPlaced  LegalHold[]        @relation("LegalHoldPlacedBy")
+}
+
+// Admin-defined custom roles (supplements UserRole enum)
+model CustomRole {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  isSingleton Boolean  @default(false) // true = only one user may hold this role
+  color       String?  // hex for UI badge
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model LoginEvent {

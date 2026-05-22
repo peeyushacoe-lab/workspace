@@ -115,8 +115,10 @@ export async function POST(request: Request) {
       },
     });
 
-    // Auto-create mailbox for the new user
-    await prisma.mailbox.upsert({
+    // Auto-create mailbox for the new user, then ensure the access log exists
+    // (upsert create path handles new mailboxes; the explicit upsert below handles
+    //  pre-existing mailboxes where update:{} would silently skip access log creation)
+    const mailbox = await prisma.mailbox.upsert({
       where: { email: user.email },
       update: {},
       create: {
@@ -125,7 +127,16 @@ export async function POST(request: Request) {
         isShared: false,
         accessLogs: { create: { userId: user.id, role: "OWNER" } },
       },
-    }).catch(err => console.error("[mailbox create]", err));
+      select: { id: true },
+    }).catch(err => { console.error("[mailbox create]", err); return null; });
+
+    if (mailbox) {
+      await prisma.mailboxAccess.upsert({
+        where: { mailboxId_userId: { mailboxId: mailbox.id, userId: user.id } },
+        update: {},
+        create: { mailboxId: mailbox.id, userId: user.id, role: "OWNER" },
+      }).catch(err => console.error("[mailbox access]", err));
+    }
 
     // Send invite email to personal address — fire-and-forget (don't block response)
     sendInviteEmail({

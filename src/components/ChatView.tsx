@@ -1223,6 +1223,148 @@ function ChannelSection({
   );
 }
 
+// ─── Add Members Modal ────────────────────────────────────────────────────────
+
+function AddMembersModal({
+  channel,
+  currentUserId,
+  onClose,
+  onAdded,
+}: {
+  channel: Channel;
+  currentUserId: string;
+  onClose: () => void;
+  onAdded: (c: Channel) => void;
+}) {
+  const [users, setUsers] = useState<UserSummary[]>([]);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [query, setQuery] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const existingMemberIds = new Set(channel.members.map((m) => m.userId));
+
+  useEffect(() => {
+    fetch("/api/admin/users?limit=200")
+      .then((r) => r.json())
+      .then((data: { users?: UserSummary[]; items?: UserSummary[] } | UserSummary[]) => {
+        let list: UserSummary[] = [];
+        if (Array.isArray(data)) list = data;
+        else if (data && typeof data === "object") {
+          const obj = data as Record<string, unknown>;
+          if (Array.isArray(obj.users)) list = obj.users as UserSummary[];
+          else if (Array.isArray(obj.items)) list = obj.items as UserSummary[];
+        }
+        setUsers(list.filter((u) => u.id !== currentUserId && !existingMemberIds.has(u.id)));
+      })
+      .catch(() => toast.error("Failed to load users"))
+      .finally(() => setLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUserId, channel.id]);
+
+  const filtered = users.filter(
+    (u) =>
+      u.fullName.toLowerCase().includes(query.toLowerCase()) ||
+      u.email.toLowerCase().includes(query.toLowerCase())
+  );
+
+  const toggle = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const submit = async () => {
+    if (selected.size === 0) { toast.error("Select at least one person"); return; }
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/chat/channels/${channel.id}/members`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userIds: Array.from(selected) }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      const { channel: updated } = (await res.json()) as { channel: Channel };
+      toast.success(`Added ${selected.size} member${selected.size > 1 ? "s" : ""}`);
+      onAdded(updated);
+      onClose();
+    } catch {
+      toast.error("Failed to add members");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+      <div className="bg-[#1b1f2e] rounded-2xl shadow-xl p-6 w-full max-w-md mx-4 border border-[rgba(0,255,255,0.1)]">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold text-[#dfe1f6]">Add Members to #{channel.name}</h2>
+          <button onClick={onClose} className="text-[#bbc9cf] hover:text-[#dfe1f6]">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search people…"
+          className="w-full bg-[#0f1321] border border-[rgba(0,255,255,0.1)] rounded-xl px-4 py-2.5 text-sm text-[#dfe1f6] placeholder-[#bbc9cf] outline-none focus:border-[#00d2ff] mb-3"
+        />
+
+        <div className="max-h-56 overflow-y-auto space-y-1 mb-4">
+          {loading ? (
+            <p className="text-sm text-[#bbc9cf] text-center py-4">Loading users…</p>
+          ) : filtered.length === 0 ? (
+            <p className="text-sm text-[#bbc9cf] text-center py-4">
+              {users.length === 0 ? "All users are already members" : "No matching users"}
+            </p>
+          ) : (
+            filtered.map((u) => (
+              <button
+                key={u.id}
+                onClick={() => toggle(u.id)}
+                className={`w-full flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-left transition-colors ${
+                  selected.has(u.id) ? "bg-[#00d2ff]/10 text-[#a5e7ff] border border-[#00d2ff]/30" : "text-[#dfe1f6] hover:bg-[#262939]"
+                }`}
+              >
+                <div className="w-8 h-8 rounded-full bg-[#262939] border border-[rgba(0,255,255,0.1)] flex items-center justify-center text-xs font-bold text-[#00d2ff] flex-shrink-0">
+                  {u.fullName[0]?.toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium truncate">{u.fullName}</p>
+                  <p className="text-xs text-[#bbc9cf] truncate">{u.email}</p>
+                </div>
+                {selected.has(u.id) && <Check className="w-4 h-4 text-[#00d2ff] flex-shrink-0" />}
+              </button>
+            ))
+          )}
+        </div>
+
+        {selected.size > 0 && (
+          <p className="text-xs text-[#bbc9cf] mb-3">{selected.size} selected</p>
+        )}
+
+        <div className="flex gap-2">
+          <button onClick={onClose} className="flex-1 px-4 py-2 border border-[rgba(0,255,255,0.1)] text-[#bbc9cf] rounded-xl text-sm hover:bg-[#262939]">
+            Cancel
+          </button>
+          <button
+            onClick={submit}
+            disabled={selected.size === 0 || saving}
+            className="flex-1 px-4 py-2 bg-[#00d2ff] text-[#003543] rounded-xl text-sm font-semibold hover:bg-[#47d6ff] disabled:opacity-50"
+          >
+            {saving ? "Adding…" : `Add ${selected.size > 0 ? selected.size : ""} Member${selected.size !== 1 ? "s" : ""}`}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main ChatView ────────────────────────────────────────────────────────────
 
 export function ChatView({ currentUserId }: { currentUserId: string }) {
@@ -1234,6 +1376,7 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
   const [sending, setSending] = useState(false);
   const [showNewChannel, setShowNewChannel] = useState(false);
   const [showNewGroupDM, setShowNewGroupDM] = useState(false);
+  const [showAddMembers, setShowAddMembers] = useState(false);
   const [typingNames, setTypingNames] = useState<Map<string, string>>(new Map());
   const [threadParentMsg, setThreadParentMsg] = useState<Message | null>(null);
   const [threadMessages, setThreadMessages] = useState<Message[]>([]);
@@ -1946,6 +2089,14 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
                     </span>
                   </div>
                 )}
+                <button
+                  onClick={() => setShowAddMembers(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-[rgba(0,255,255,0.1)] text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] transition-colors"
+                  title="Add members"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Add</span>
+                </button>
                 <div className="flex items-center gap-1 text-[#bbc9cf] text-xs">
                   <Users className="w-4 h-4" />
                   <span>{selectedChannel?.members.length ?? 0} members</span>
@@ -2146,6 +2297,17 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
           onCreate={(ch) => {
             setChannels((prev) => [ch, ...prev]);
             setSelectedChannelId(ch.id);
+          }}
+        />
+      )}
+
+      {showAddMembers && selectedChannel && (
+        <AddMembersModal
+          channel={selectedChannel}
+          currentUserId={currentUserId}
+          onClose={() => setShowAddMembers(false)}
+          onAdded={(updatedChannel) => {
+            setChannels((prev) => prev.map((c) => c.id === updatedChannel.id ? updatedChannel : c));
           }}
         />
       )}

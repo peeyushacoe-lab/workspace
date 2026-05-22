@@ -9,16 +9,12 @@ export default async function InboxPage() {
 
   // Fetch the first page of threads server-side so InboxView has data
   // immediately on hydration with zero client-side waterfall on initial load.
-  const isPrivileged = user ? ["ADMIN", "CEO", "CISO"].includes(user.role) : false;
-
   const rawThreads = await prisma.inboxThread.findMany({
-    where: isPrivileged
-      ? {}
-      : {
-          mailbox: {
-            accessLogs: { some: { userId: user?.id ?? "" } },
-          },
-        },
+    where: {
+      mailbox: {
+        accessLogs: { some: { userId: user?.id ?? "" } },
+      },
+    },
     include: {
       mailbox: {
         select: { email: true, displayName: true },

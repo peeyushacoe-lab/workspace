@@ -23,22 +23,27 @@ export async function GET(_request: Request, { params }: Params) {
   });
   if (!membership) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const raw = await redis.hgetall(presenceKey(channelId));
-  const now = Date.now();
-  const online: { userId: string; fullName: string }[] = [];
+  try {
+    const raw = await redis.hgetall(presenceKey(channelId));
+    const now = Date.now();
+    const online: { userId: string; fullName: string }[] = [];
 
-  if (raw) {
-    for (const [userId, val] of Object.entries(raw)) {
-      try {
-        const entry = JSON.parse(val) as { fullName: string; lastSeen: number };
-        if (now - entry.lastSeen < PRESENCE_TTL_MS) {
-          online.push({ userId, fullName: entry.fullName });
-        }
-      } catch {}
+    if (raw) {
+      for (const [userId, val] of Object.entries(raw)) {
+        try {
+          const entry = JSON.parse(val) as { fullName: string; lastSeen: number };
+          if (now - entry.lastSeen < PRESENCE_TTL_MS) {
+            online.push({ userId, fullName: entry.fullName });
+          }
+        } catch {}
+      }
     }
-  }
 
-  return NextResponse.json(online);
+    return NextResponse.json(online);
+  } catch (err) {
+    console.error("[chat/presence GET] Redis error:", (err as Error).message);
+    return NextResponse.json([]);
+  }
 }
 
 export async function POST(_request: Request, { params }: Params) {
@@ -55,14 +60,17 @@ export async function POST(_request: Request, { params }: Params) {
   const key = presenceKey(channelId);
   const entry = JSON.stringify({ fullName: user.fullName, lastSeen: Date.now() });
 
-  await redis.hset(key, { [user.id]: entry });
-  await redis.expire(key, 120); // Keep hash alive for 2x TTL
-
-  // Broadcast presence update to SSE subscribers
-  await redis.publish(
-    `chat:channel:${channelId}`,
-    JSON.stringify({ type: "presence", data: { userId: user.id, fullName: user.fullName, online: true } }),
-  );
+  // Non-fatal — if Redis is unavailable, presence just won't show
+  try {
+    await redis.hset(key, { [user.id]: entry });
+    await redis.expire(key, 120);
+    await redis.publish(
+      `chat:channel:${channelId}`,
+      JSON.stringify({ type: "presence", data: { userId: user.id, fullName: user.fullName, online: true } }),
+    );
+  } catch (err) {
+    console.error("[chat/presence POST] Redis error:", (err as Error).message);
+  }
 
   return NextResponse.json({ ok: true });
 }
@@ -74,12 +82,16 @@ export async function DELETE(_request: Request, { params }: Params) {
   const { id: channelId } = await params;
 
   const key = presenceKey(channelId);
-  await redis.hdel(key, user.id);
 
-  await redis.publish(
-    `chat:channel:${channelId}`,
-    JSON.stringify({ type: "presence", data: { userId: user.id, fullName: user.fullName, online: false } }),
-  );
+  try {
+    await redis.hdel(key, user.id);
+    await redis.publish(
+      `chat:channel:${channelId}`,
+      JSON.stringify({ type: "presence", data: { userId: user.id, fullName: user.fullName, online: false } }),
+    );
+  } catch (err) {
+    console.error("[chat/presence DELETE] Redis error:", (err as Error).message);
+  }
 
   return NextResponse.json({ ok: true });
 }
