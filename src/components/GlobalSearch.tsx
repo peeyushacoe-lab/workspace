@@ -315,8 +315,8 @@ export function GlobalSearch({
         if (onAction) {
           onAction(action);
         } else {
-          // Dispatch synthetic 'c' keypress to open ComposeButton modal
-          const evt = new KeyboardEvent("keydown", { key: "c", bubbles: true });
+          // Dispatch synthetic Ctrl+Shift+C to open ComposeButton modal
+          const evt = new KeyboardEvent("keydown", { key: "C", ctrlKey: true, shiftKey: true, bubbles: true });
           window.dispatchEvent(evt);
         }
       }

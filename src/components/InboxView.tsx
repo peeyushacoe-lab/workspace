@@ -358,7 +358,11 @@ export function InboxView({ userRole, initialThreads }: {
     try {
       const url = searchQuery ? `/api/inbox?q=${encodeURIComponent(searchQuery)}` : "/api/inbox";
       const response = await fetch(url);
-      if (response.ok) setThreads(await response.json());
+      if (response.ok) {
+        const data = await response.json() as ThreadSummary[];
+        // On silent background polls, don't wipe threads if server returns empty
+        if (!silent || data.length > 0) setThreads(data);
+      }
     } catch {
       if (!silent) toast.error("Failed to load inbox");
     } finally {

@@ -25,7 +25,7 @@ export function ComposeButton({
         setOpen(false);
         return;
       }
-      if (e.key === "c" && !["INPUT", "TEXTAREA", "SELECT"].includes(tag)) {
+      if (e.key === "C" && e.ctrlKey && e.shiftKey && !["INPUT", "TEXTAREA", "SELECT"].includes(tag)) {
         e.preventDefault();
         setOpen(true);
       }
@@ -39,7 +39,7 @@ export function ComposeButton({
       <>
         <button
           onClick={() => setOpen(true)}
-          title="Compose (C)"
+          title="Compose (Ctrl+Shift+C)"
           className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#00d2ff] text-[#003543] hover:bg-[#47d6ff] transition-colors"
         >
           <Pencil className="h-3.5 w-3.5" />
@@ -57,7 +57,7 @@ export function ComposeButton({
       >
         <Pencil className="h-3.5 w-3.5 flex-shrink-0" />
         <span>Compose</span>
-        <span className="ml-auto text-[10px] font-normal text-[#003543]/60 hidden xl:inline">C</span>
+        <span className="ml-auto text-[10px] font-normal text-[#003543]/60 hidden xl:inline">⌃⇧C</span>
       </button>
       {open && <ComposeModal userRole={userRole} onClose={() => setOpen(false)} />}
     </>
