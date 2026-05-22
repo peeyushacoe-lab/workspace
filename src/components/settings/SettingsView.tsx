@@ -365,21 +365,52 @@ function ProfileTab({ userId }: { userId: string }) {
         </div>
 
         {/* Status */}
-        <div className="flex items-center gap-2 mt-4">
-          <input
-            value={profile.statusEmoji ?? ""}
-            onChange={(e) => update("statusEmoji", e.target.value)}
-            placeholder="😊"
-            className="w-14 text-center border border-[rgba(0,255,255,0.1)] rounded-lg bg-[#0f1321] py-2 text-sm text-[#dfe1f6] outline-none focus:ring-1 focus:ring-[#00d2ff]/40"
-            maxLength={4}
-          />
-          <input
-            value={profile.statusMessage ?? ""}
-            onChange={(e) => update("statusMessage", e.target.value)}
-            placeholder="What's your status? (e.g. In a meeting)"
-            className={`flex-1 ${inputClass}`}
-            maxLength={140}
-          />
+        <div className="mt-4">
+          <p className="text-xs font-medium text-[#bbc9cf] mb-2">Status</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {([
+              { emoji: "🟢", message: "Available" },
+              { emoji: "📅", message: "In a meeting" },
+              { emoji: "🏠", message: "Working from home" },
+              { emoji: "🔕", message: "Do not disturb" },
+              { emoji: "✈️", message: "Out of office" },
+              { emoji: "🎯", message: "Focused" },
+              { emoji: "🏖️", message: "On vacation" },
+              { emoji: "⏰", message: "Be right back" },
+            ] as const).map(({ emoji, message }) => {
+              const active = profile.statusEmoji === emoji && profile.statusMessage === message;
+              return (
+                <button
+                  key={message}
+                  type="button"
+                  onClick={() => { update("statusEmoji", emoji); update("statusMessage", message); }}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition ${
+                    active
+                      ? "border-[#00d2ff] bg-[#00d2ff]/10 text-[#00d2ff] font-medium"
+                      : "border-[rgba(0,255,255,0.1)] bg-[#0f1321] text-[#bbc9cf] hover:border-[#00d2ff]/40 hover:text-[#dfe1f6]"
+                  }`}
+                >
+                  <span>{emoji}</span>
+                  <span className="truncate">{message}</span>
+                </button>
+              );
+            })}
+          </div>
+          {/* Show active status or allow clearing */}
+          {(profile.statusEmoji || profile.statusMessage) && (
+            <div className="flex items-center justify-between mt-2">
+              <span className="text-xs text-[#bbc9cf]">
+                Current: {profile.statusEmoji} {profile.statusMessage}
+              </span>
+              <button
+                type="button"
+                onClick={() => { update("statusEmoji", null); update("statusMessage", null); }}
+                className="text-xs text-[#7a8fa6] hover:text-[#ff4d6d] transition"
+              >
+                Clear
+              </button>
+            </div>
+          )}
         </div>
       </SectionCard>
 

@@ -66,6 +66,25 @@ type Message = {
 
 type ThreadDetail = { id: string; subject: string; mailboxId: string; messages: Message[] };
 
+type WorkspaceMember = { email: string; fullName: string; displayName: string | null; avatarUrl: string | null };
+
+// Render a sender avatar — shows profile pic if available, falls back to initial
+function SenderAvatar({ member, email, size = 8 }: { member?: WorkspaceMember; email: string; size?: number }) {
+  const label = (member?.displayName ?? member?.fullName ?? email).charAt(0).toUpperCase();
+  const cls = `w-${size} h-${size} rounded-full object-cover flex-shrink-0`;
+  if (member?.avatarUrl) return <img src={member.avatarUrl} alt={label} className={cls} />;
+  return (
+    <div className={`${cls} bg-[#00d2ff]/10 text-[#00d2ff] flex items-center justify-center font-bold text-sm`}>
+      {label}
+    </div>
+  );
+}
+
+// Display name for an email address — shows display/full name for workspace members
+function senderName(member?: WorkspaceMember, fallback?: string): string {
+  return member?.displayName ?? member?.fullName ?? fallback ?? "Unknown";
+}
+
 // ── HTML sanitiser ──────────────────────────────────────────────────────────
 const ALLOWED_TAGS = new Set([
   "a","abbr","address","article","aside","b","bdi","bdo","blockquote","br",
@@ -317,6 +336,7 @@ export function InboxView({ userRole, initialThreads }: {
 }) {
   const [threads, setThreads]               = useState<ThreadSummary[]>(initialThreads ?? []);
   const [customFolders, setCustomFolders]   = useState<CustomFolder[]>([]);
+  const [memberMap, setMemberMap]           = useState<Record<string, WorkspaceMember>>({});
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
   const [threadDetail, setThreadDetail]     = useState<ThreadDetail | null>(null);
   const [isLoading, setIsLoading]           = useState(!initialThreads?.length);
@@ -350,6 +370,15 @@ export function InboxView({ userRole, initialThreads }: {
     fetch("/api/inbox/folders")
       .then(r => r.json())
       .then((data: CustomFolder[]) => setCustomFolders(data))
+      .catch(() => {});
+
+    fetch("/api/workspace/members")
+      .then(r => r.ok ? r.json() : [])
+      .then((members: WorkspaceMember[]) => {
+        const map: Record<string, WorkspaceMember> = {};
+        members.forEach(m => { map[m.email.toLowerCase()] = m; });
+        setMemberMap(map);
+      })
       .catch(() => {});
   }, []);
 
@@ -913,12 +942,13 @@ export function InboxView({ userRole, initialThreads }: {
                     </span>
                   </div>
                   <div className="flex items-start gap-2">
-                    <div className="w-8 h-8 rounded-full bg-[#00d2ff]/10 text-[#00d2ff] flex items-center justify-center font-bold text-sm flex-shrink-0">
-                      {(thread.lastMessage?.from ?? "?").charAt(0).toUpperCase()}
-                    </div>
+                    <SenderAvatar
+                      member={memberMap[(thread.lastMessage?.from ?? "").toLowerCase()]}
+                      email={thread.lastMessage?.from ?? "?"}
+                    />
                     <div className="flex-1 min-w-0">
                       <p className={`truncate ${thread.unreadCount > 0 ? "font-bold text-sm text-[#dfe1f6]" : "font-medium text-sm text-[#dfe1f6]"}`}>
-                        {thread.lastMessage?.from ?? "Unknown"}
+                        {senderName(memberMap[(thread.lastMessage?.from ?? "").toLowerCase()], thread.lastMessage?.from)}
                       </p>
                       <p className={`truncate ${thread.unreadCount > 0 ? "font-bold text-sm text-[#dfe1f6]" : "font-medium text-sm text-[#dfe1f6]"}`}>
                         {thread.subject}
@@ -1039,12 +1069,19 @@ export function InboxView({ userRole, initialThreads }: {
                 <div key={msg.id} className="bg-[#1b1f2e] rounded-xl border border-[rgba(0,255,255,0.08)] shadow-sm overflow-hidden">
                   <div className="px-6 py-4 border-b border-[rgba(0,255,255,0.08)] flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-[#00d2ff]/10 text-[#00d2ff] flex items-center justify-center font-bold text-sm flex-shrink-0">
-                        {msg.from.charAt(0).toUpperCase()}
-                      </div>
+                      <SenderAvatar
+                        member={memberMap[msg.from.toLowerCase()]}
+                        email={msg.from}
+                        size={10}
+                      />
                       <div>
-                        <p className="text-sm font-bold text-[#dfe1f6]">{msg.from}</p>
-                        <p className="text-sm text-[#bbc9cf]">to {msg.to}</p>
+                        <p className="text-sm font-bold text-[#dfe1f6]">
+                          {senderName(memberMap[msg.from.toLowerCase()], msg.from)}
+                        </p>
+                        <p className="text-xs text-[#7a8fa6]">{msg.from}</p>
+                        <p className="text-sm text-[#bbc9cf]">
+                          to {senderName(memberMap[msg.to.toLowerCase()], msg.to)}
+                        </p>
                         {(() => {
                           const domain = (msg.from.match(/@([\w.-]+)/)?.[1] ?? "").toLowerCase();
                           const freeProviders = ["gmail.com","yahoo.com","hotmail.com","outlook.com","aol.com","protonmail.com","icloud.com","live.com"];
