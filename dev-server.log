@@ -1851,3 +1851,10 @@
  ✓ Compiled in 241ms (1639 modules)
  ✓ Compiled in 238ms (1639 modules)
  ✓ Compiled in 270ms (1639 modules)
+   Reload env: .env
+ ✓ Compiled in 1032ms (1639 modules)
+   Reload env: .env
+ ✓ Compiled in 468ms (1639 modules)
+   Reload env: .env
+ ✓ Compiled in 243ms (1639 modules)
+ ✓ Compiled in 262ms (1639 modules)

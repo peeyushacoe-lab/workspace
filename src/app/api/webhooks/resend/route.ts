@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { Webhook } from "svix";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
@@ -33,18 +34,32 @@ const statusByEvent: Record<
 };
 
 export async function POST(request: Request) {
-  const expectedSecret = process.env.RESEND_WEBHOOK_SECRET;
-  if (!expectedSecret) {
-    console.error("[webhook] RESEND_WEBHOOK_SECRET is not set — rejecting all webhook requests");
+  const secret = process.env.RESEND_WEBHOOK_SECRET;
+  if (!secret) {
+    console.error("[webhook] RESEND_WEBHOOK_SECRET is not set");
     return NextResponse.json({ error: "Webhook not configured" }, { status: 503 });
   }
 
-  const incomingSecret = request.headers.get("x-cybersage-webhook-secret");
-  if (incomingSecret !== expectedSecret) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const body = await request.text();
+  const svixId = request.headers.get("svix-id");
+  const svixTimestamp = request.headers.get("svix-timestamp");
+  const svixSignature = request.headers.get("svix-signature");
+
+  if (!svixId || !svixTimestamp || !svixSignature) {
+    return NextResponse.json({ error: "Missing svix headers" }, { status: 401 });
   }
 
-  const payloadRaw = await request.json();
+  let payloadRaw: unknown;
+  try {
+    const wh = new Webhook(secret);
+    payloadRaw = wh.verify(body, {
+      "svix-id": svixId,
+      "svix-timestamp": svixTimestamp,
+      "svix-signature": svixSignature,
+    });
+  } catch {
+    return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+  }
   const payload = resendWebhookSchema.safeParse(payloadRaw);
 
   if (!payload.success) {
