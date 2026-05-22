@@ -4,25 +4,27 @@ import bcrypt from "bcrypt";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 
+const nstr = (max: number) => z.string().max(max).nullish();
+
 const profileFields = z.object({
-  // Identity
+  // Identity — all nullish() so DB-read nulls pass through without rejection
   fullName:       z.string().min(1).max(120).optional(),
-  displayName:    z.string().max(60).optional(),
-  bio:            z.string().max(500).optional(),
-  jobTitle:       z.string().max(100).optional(),
-  company:        z.string().max(100).optional(),
-  department:     z.string().max(100).optional(),
-  phone:          z.string().max(40).optional(),
-  website:        z.string().max(200).url().or(z.literal("")).optional(),
-  location:       z.string().max(120).optional(),
-  timezone:       z.string().max(60).optional(),
-  language:       z.string().max(10).optional(),
-  pronouns:       z.string().max(40).optional(),
-  birthday:       z.string().optional(), // ISO date string
-  statusMessage:  z.string().max(140).optional(),
-  statusEmoji:    z.string().max(10).optional(),
-  avatarUrl:      z.string().max(300_000).optional(),
-  coverUrl:       z.string().max(600_000).optional(),
+  displayName:    nstr(60),
+  bio:            nstr(500),
+  jobTitle:       nstr(100),
+  company:        nstr(100),
+  department:     nstr(100),
+  phone:          nstr(40),
+  website:        z.string().max(200).url().or(z.literal("")).nullish(),
+  location:       nstr(120),
+  timezone:       nstr(60),
+  language:       nstr(10),
+  pronouns:       nstr(40),
+  birthday:       z.string().nullish(),
+  statusMessage:  nstr(140),
+  statusEmoji:    nstr(10),
+  avatarUrl:      z.string().max(300_000).nullish(),
+  coverUrl:       z.string().max(600_000).nullish(),
   // Password change
   currentPassword: z.string().min(1).optional(),
   newPassword:     z.string().min(8).optional(),
