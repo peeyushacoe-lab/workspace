@@ -1,36 +1,96 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CyberSage Mail System
 
-## Getting Started
+Production-ready MVP for sending personalized CyberSage internship/client emails from `noreply@cybersage.uk`.
 
-First, run the development server:
+## Stack
+
+- Next.js 15 App Router
+- TypeScript
+- Tailwind CSS
+- Prisma + PostgreSQL
+- Resend
+- React Email
+- PapaParse CSV upload
+
+## Setup
+
+1. Install dependencies:
+
+```bash
+npm install
+```
+
+2. Copy environment variables:
+
+```bash
+cp .env.example .env
+```
+
+3. Fill in:
+
+```txt
+DATABASE_URL=
+RESEND_API_KEY=
+RESEND_FROM_EMAIL="CyberSage <noreply@cybersage.uk>"
+ADMIN_EMAIL="admin@cybersage.uk"
+ADMIN_PASSWORD=
+ADMIN_SESSION_TOKEN=
+RESEND_WEBHOOK_SECRET=
+```
+
+4. Generate Prisma and migrate:
+
+```bash
+npm run prisma:generate
+npm run prisma:migrate
+```
+
+5. Start locally:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## CSV Format
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```csv
+name,email,status
+Peeyush,test@gmail.com,Accepted
+Rahul,test2@gmail.com,Rejected
+```
 
-## Learn More
+Optional columns:
 
-To learn more about Next.js, take a look at the following resources:
+```csv
+interviewDate,customMessage
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Resend Domain Checklist
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Add `cybersage.uk` in Resend, then publish the SPF, DKIM, and DMARC records Resend gives you in DNS. After verification, use:
 
-## Deploy on Vercel
+```txt
+noreply@cybersage.uk
+internships@cybersage.uk
+team@cybersage.uk
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Deploying To Vercel
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Create a PostgreSQL database, for example Neon.
+2. Add all environment variables in Vercel.
+3. Run Prisma migration against production before first send.
+4. Deploy.
+
+The app runs in dry-run mode when `RESEND_API_KEY` is missing, which is useful for UI testing without sending real email.
+
+## Phase 2 Additions
+
+- Direct paste recipients from plain email lists, comma-separated rows, or `Name <email>` format.
+- Recipient deduplication across CSV and pasted contacts.
+- Message safety checks for insecure or risky links.
+- Resend webhook endpoint at `/api/webhooks/resend` for delivered, opened, clicked, bounced, and complaint status updates.
+
+Set `RESEND_WEBHOOK_SECRET` and send the same value as the `x-cybersage-webhook-secret` header from your webhook configuration.

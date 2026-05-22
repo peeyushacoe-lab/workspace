@@ -1,0 +1,13 @@
+{
+  "name": "cybersage-mail-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for Cybersage Mail email provider",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.4.0"
+  }
+}

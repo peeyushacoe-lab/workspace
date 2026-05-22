@@ -1,26 +1,291 @@
+@import url('https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Geist:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
+/* Enable class-based dark mode in Tailwind v4 */
+@variant dark (&:where(.dark, .dark *));
+
+/* Mobile touch improvements */
+* { -webkit-tap-highlight-color: transparent; }
+button, a { touch-action: manipulation; }
+input, textarea, select { font-size: 16px; }
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Cyber-Sentry design system — typography & effect tokens */
+  --font-geist: "Geist", "Geist Mono", ui-monospace, monospace;
+  --glow-primary: 0 0 20px rgba(0, 210, 255, 0.35), 0 0 40px rgba(0, 210, 255, 0.12);
+  --glow-primary-sm: 0 0 12px rgba(0, 210, 255, 0.25);
+  --glow-danger: 0 0 20px rgba(255, 77, 109, 0.35), 0 0 40px rgba(255, 77, 109, 0.12);
+  --glow-danger-sm: 0 0 12px rgba(255, 77, 109, 0.25);
+  --glow-secondary: 0 0 20px rgba(0, 254, 178, 0.3);
+  --card-border: rgba(0, 255, 255, 0.08);
+  --glass-bg: rgba(27, 31, 46, 0.65);
+  --glass-blur: blur(20px);
+
+  /* Content surfaces — light mode */
+  --background: #fafafa;
+  --surface: #ffffff;
+  --surface-sunken: #f4f4f5;
+  --foreground: #18181b;
+  --muted: #52525b;
+  --subtle: #71717a;
+  --placeholder: #a1a1aa;
+  --border: #e4e4e7;
+  --border-strong: #d4d4d8;
+
+  /* Accent — clean blue, no purple */
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-soft: #eff6ff;
+  --accent-foreground: #ffffff;
+  --ring: rgba(37, 99, 235, 0.2);
+
+  /* Stitch design system tokens */
+  --stitch-primary: #2563eb;
+  --stitch-primary-hover: #1d4ed8;
+  --stitch-primary-container: #dbeafe;
+  --stitch-on-primary: #ffffff;
+  --stitch-on-primary-container: #1e3a8a;
+  --stitch-surface-variant: #f1f5f9;
+  --stitch-on-surface: #0f172a;
+  --stitch-on-surface-variant: #475569;
+  --stitch-outline: #cbd5e1;
+  --stitch-outline-variant: #e2e8f0;
+  --stitch-sidebar-bg: #0f172a;
+  --stitch-sidebar-hover: #1e293b;
+  --stitch-sidebar-text: #94a3b8;
+  --stitch-sidebar-text-active: #f8fafc;
+  --stitch-canvas: #f8fafc;
+  --stitch-error: #ef4444;
+
+  /* Shadcn/radix compatibility — maps their variable names to our design tokens */
+  --popover: #ffffff;
+  --popover-foreground: #18181b;
+  --card: #ffffff;
+  --card-foreground: #18181b;
+  --input: #e4e4e7;
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #18181b;
+  --muted-foreground: #71717a;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --radius: 0.5rem;
+}
+
+/* Dark mode overrides — Stitch dark palette */
+.dark {
+  --background: #0f1321;
+  --surface: #1b1f2e;
+  --surface-sunken: #0a0d1c;
+  --foreground: #dfe1f6;
+  --muted: #bbc9cf;
+  --subtle: #859399;
+  --placeholder: #859399;
+  --border: #3c494e;
+  --border-strong: #859399;
+
+  --accent: #00d2ff;
+  --accent-hover: #a5e7ff;
+  --accent-soft: #00d2ff1a;
+  --accent-foreground: #003543;
+  --ring: rgba(0, 210, 255, 0.25);
+
+  /* Shadcn/radix dark mode compatibility */
+  --popover: #1b1f2e;
+  --popover-foreground: #dfe1f6;
+  --card: #1b1f2e;
+  --card-foreground: #dfe1f6;
+  --input: #3c494e;
+  --primary: #00d2ff;
+  --primary-foreground: #003543;
+  --secondary: #262939;
+  --secondary-foreground: #dfe1f6;
+  --muted-foreground: #bbc9cf;
+  --destructive: #ffb4ab;
+  --destructive-foreground: #690005;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-sunken: var(--surface-sunken);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-foreground: var(--accent-foreground);
+
+  /* Shadcn/radix token aliases — makes bg-popover, bg-card, bg-input etc. work */
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-input: var(--input);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-ring: var(--ring);
+
+  /* Stitch design system — Tailwind color utilities */
+  --color-stitch-primary: var(--stitch-primary);
+  --color-stitch-primary-hover: var(--stitch-primary-hover);
+  --color-stitch-primary-container: var(--stitch-primary-container);
+  --color-stitch-on-primary: var(--stitch-on-primary);
+  --color-stitch-on-primary-container: var(--stitch-on-primary-container);
+  --color-stitch-surface-variant: var(--stitch-surface-variant);
+  --color-stitch-on-surface: var(--stitch-on-surface);
+  --color-stitch-on-surface-variant: var(--stitch-on-surface-variant);
+  --color-stitch-outline: var(--stitch-outline);
+  --color-stitch-outline-variant: var(--stitch-outline-variant);
+  --color-stitch-sidebar-bg: var(--stitch-sidebar-bg);
+  --color-stitch-sidebar-hover: var(--stitch-sidebar-hover);
+  --color-stitch-sidebar-text: var(--stitch-sidebar-text);
+  --color-stitch-sidebar-text-active: var(--stitch-sidebar-text-active);
+  --color-stitch-canvas: var(--stitch-canvas);
+  --color-stitch-error: var(--stitch-error);
+
+  --font-sans: var(--font-dm, "DM Sans", ui-sans-serif, system-ui, sans-serif);
+  --font-serif: "Georgia", serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+  --font-label: var(--font-geist);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #0f1321;
+  /* Cyber grid overlay — 5% opacity per Stitch design system spec */
+  background-image:
+    linear-gradient(rgba(0, 210, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 210, 255, 0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-attachment: fixed;
+  color: #dfe1f6;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 150ms ease-out, color 150ms ease-out;
+}
+
+/* Geist label font — monospaced technical feel for chips, metadata, badges */
+::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+  opacity: 1;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+::selection {
+  background: var(--accent);
+  color: #fff;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* =========================================================
+   Cyber-Sentry Design System — utility classes
+   Glassmorphism, neon glows, Geist labels
+   ========================================================= */
+
+/* Glass panels — primary floating surfaces */
+@utility glass-panel {
+  background: rgba(11, 18, 32, 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-color: rgba(0, 255, 255, 0.08) !important;
+}
+
+/* Glass surface — secondary containers inside panels */
+@utility glass-surface {
+  background: rgba(27, 31, 46, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-color: rgba(0, 255, 255, 0.08) !important;
+}
+
+/* Neon glow — cyan (primary actions, active states) */
+@utility glow-cyan {
+  box-shadow: var(--glow-primary);
+}
+@utility glow-cyan-sm {
+  box-shadow: var(--glow-primary-sm);
+}
+
+/* Neon glow — danger red (alerts, destructive) */
+@utility glow-danger {
+  box-shadow: var(--glow-danger);
+}
+@utility glow-danger-sm {
+  box-shadow: var(--glow-danger-sm);
+}
+
+/* Neon glow — secondary green (success, health) */
+@utility glow-secondary {
+  box-shadow: var(--glow-secondary);
+}
+
+/* Label typography — Geist for chips, badges, metadata */
+@utility font-label {
+  font-family: var(--font-geist);
+  letter-spacing: 0.02em;
+}
+
+/* Cyan card border per design system spec (rgba(0,255,255,0.08)) */
+@utility border-card {
+  border-color: rgba(0, 255, 255, 0.08);
+}
+
+/* Primary button — cyan bg with hover glow */
+.btn-primary {
+  background-color: #00d2ff;
+  color: #003543;
+  transition: background-color 150ms ease, box-shadow 200ms ease;
+}
+.btn-primary:hover:not(:disabled) {
+  background-color: #00b8d9;
+  box-shadow: var(--glow-primary);
+}
+.btn-primary:disabled {
+  opacity: 0.5;
+}
+
+/* Danger button — red bg with hover glow */
+.btn-danger {
+  background-color: #ff4d6d;
+  color: #ffffff;
+  transition: background-color 150ms ease, box-shadow 200ms ease;
+}
+.btn-danger:hover:not(:disabled) {
+  background-color: #e8344f;
+  box-shadow: var(--glow-danger);
+}
+
+/* Active nav item glow */
+.nav-active {
+  box-shadow: inset 0 0 16px rgba(0, 210, 255, 0.08);
 }

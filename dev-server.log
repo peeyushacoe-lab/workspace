@@ -1,0 +1,1853 @@
+
+> cybersage-mail@0.1.0 dev
+> next dev
+
+   ▲ Next.js 15.5.18
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.0.119:3000
+   - Environments: .env
+   - Experiments (use with caution):
+     · clientTraceMetadata
+     · optimizePackageImports
+
+ ✓ Starting...
+ ○ Compiling /instrumentation ...
+ ✓ Compiled /instrumentation in 2.8s (1163 modules)
+ ✓ Ready in 5.3s
+ ○ Compiling /middleware ...
+ ✓ Compiled /middleware in 1034ms (860 modules)
+ ○ Compiling /api/inbox/unread-count ...
+ ✓ Compiled /api/inbox/unread-count in 3.8s (2220 modules)
+ GET /api/inbox/unread-count 200 in 4398ms
+ ○ Compiling /api/inbox/[id] ...
+ ✓ Compiled /api/inbox/[id] in 971ms (2222 modules)
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 3.1s (2938 modules)
+ GET /api/inbox/unread-count 500 in 5054ms
+ ○ Compiling / ...
+ ✓ Compiled / in 5.4s (3985 modules)
+ GET / 307 in 6413ms
+ ○ Compiling /inbox ...
+ ✓ Compiled /inbox in 2.2s (4238 modules)
+ GET /inbox 200 in 5655ms
+ GET /api/inbox/unread-count 200 in 773ms
+ ○ Compiling /api/notifications/stream ...
+ ✓ Compiled /api/inbox in 4.6s (4248 modules)
+ GET /favicon.ico 200 in 4280ms
+ GET /api/notifications/stream 200 in 5493ms
+ GET /api/notifications 200 in 5022ms
+ ○ Compiling /admin ...
+ GET /api/notifications 200 in 6715ms
+ GET /api/inbox 200 in 5790ms
+ ✓ Compiled /admin in 1440ms (4328 modules)
+ GET /admin 200 in 1792ms
+ ○ Compiling /api/admin/stats ...
+ ✓ Compiled /api/admin/stats in 1279ms (4330 modules)
+ GET /api/admin/stats 200 in 1784ms
+ ○ Compiling /api/admin/users ...
+ ✓ Compiled /api/admin/users in 1476ms (4332 modules)
+ GET /api/admin/users 200 in 1978ms
+ GET /api/admin/users 200 in 344ms
+ GET /api/inbox/unread-count 200 in 200ms
+ ○ Compiling /api/admin/mailboxes ...
+ ✓ Compiled /api/admin/mailboxes in 1672ms (4334 modules)
+ GET /api/admin/mailboxes 200 in 2310ms
+ GET /api/admin/mailboxes 200 in 483ms
+ GET /api/inbox/unread-count 200 in 193ms
+ ○ Compiling /api/admin/audit-logs ...
+ ✓ Compiled /api/admin/audit-logs in 1316ms (4238 modules)
+ GET /api/admin/audit-logs?limit=50&offset=0 200 in 1865ms
+ GET /api/admin/audit-logs?limit=50&offset=0 200 in 193ms
+ ○ Compiling /api/admin/suppression ...
+ ✓ Compiled /api/admin/suppression in 1396ms (4240 modules)
+ GET /api/admin/suppression 200 in 1734ms
+ GET /api/admin/suppression 200 in 192ms
+ ○ Compiling /api/soc/stats ...
+ ✓ Compiled /api/soc/stats in 1240ms (4242 modules)
+ GET /api/soc/stats 200 in 1587ms
+ GET /api/soc/stats 200 in 194ms
+ ○ Compiling /api/admin/legal-hold ...
+ ✓ Compiled /api/admin/legal-hold in 2.3s (4244 modules)
+ GET /api/admin/users 200 in 2844ms
+ GET /api/admin/legal-hold 200 in 2991ms
+ GET /api/admin/users 200 in 475ms
+ GET /api/admin/legal-hold 200 in 478ms
+ GET /api/admin/users 200 in 354ms
+ GET /api/notifications/stream 200 in 53497ms
+ GET /api/admin/users 200 in 399ms
+ GET /api/inbox/unread-count 200 in 184ms
+ ✓ Compiled in 3.1s (4201 modules)
+ GET /admin 200 in 2153ms
+ ○ Compiling /api/admin/stats ...
+ ✓ Compiled /api/admin/stats in 1796ms (4203 modules)
+ ✓ Compiled in 1ms (2875 modules)
+ ✓ Compiled in 1ms (2875 modules)
+ ✓ Compiled in 0ms (2875 modules)
+ GET /api/inbox/unread-count 200 in 3084ms
+ GET /api/admin/stats 200 in 3086ms
+ GET /admin 200 in 2311ms
+ ✓ Compiled in 950ms (4203 modules)
+ ✓ Compiled in 1022ms (4203 modules)
+ ✓ Compiled in 890ms (4203 modules)
+ ✓ Compiled in 782ms (4203 modules)
+ GET /api/inbox/unread-count 200 in 287ms
+ ✓ Compiled in 982ms (4203 modules)
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 807ms (4285 modules)
+ GET /api/inbox/unread-count 500 in 1241ms
+ ○ Compiling /api/notifications/stream ...
+ ✓ Compiled /api/notifications/stream in 1196ms (2974 modules)
+ ○ Compiling /api/admin/suppression ...
+ ✓ Compiled /api/admin/suppression in 782ms (2976 modules)
+ GET /api/admin/suppression 200 in 1122ms
+ GET /api/admin/suppression 200 in 180ms
+ ○ Compiling /api/soc/stats ...
+ ✓ Compiled /api/soc/stats in 675ms (2978 modules)
+ GET /api/soc/stats 200 in 1079ms
+ GET /api/soc/stats 200 in 191ms
+ ○ Compiling /api/admin/users ...
+ ✓ Compiled /api/admin/users in 718ms (2980 modules)
+ ✓ Compiled (2982 modules)
+ GET /api/admin/users 200 in 2000ms
+ GET /api/admin/legal-hold 200 in 2131ms
+ GET /api/admin/users 200 in 333ms
+ GET /api/inbox/unread-count 200 in 200ms
+ GET /api/admin/legal-hold 200 in 475ms
+ ○ Compiling /settings ...
+ ✓ Compiled /settings in 1435ms (4340 modules)
+ GET /settings 200 in 1869ms
+ ○ Compiling /api/signatures ...
+ ✓ Compiled /api/signatures in 1228ms (4421 modules)
+ GET /api/signatures 200 in 1748ms
+ GET /api/inbox/unread-count 200 in 191ms
+ ○ Compiling /api/auth/sessions ...
+ ✓ Compiled /api/auth/sessions in 1311ms (4423 modules)
+ GET /api/auth/sessions 200 in 1628ms
+ GET /api/auth/sessions 200 in 182ms
+ GET /api/inbox/unread-count 200 in 182ms
+ GET /api/auth/sessions 200 in 187ms
+ GET /api/auth/sessions 200 in 187ms
+ GET /settings 200 in 422ms
+ GET /admin 200 in 79ms
+ ○ Compiling /api/admin/stats ...
+ ✓ Compiled /api/admin/stats in 1031ms (2995 modules)
+ GET /api/admin/stats 200 in 1632ms
+ ○ Compiling /users ...
+ ✓ Compiled /users in 2.1s (4528 modules)
+ GET /users 200 in 2393ms
+ ○ Compiling /api/users ...
+ ✓ Compiled /api/users in 3.6s (4807 modules)
+ GET /api/auth/me 200 in 3855ms
+ GET /api/auth/me 200 in 32ms
+ GET /api/inbox/unread-count 200 in 3431ms
+ GET /api/users 200 in 4270ms
+ GET /api/users 200 in 339ms
+ GET /api/inbox/unread-count 200 in 207ms
+ GET /api/inbox/unread-count 200 in 180ms
+ ○ Compiling /contacts ...
+ ✓ Compiled /contacts in 2.2s (4802 modules)
+ GET /contacts 200 in 2778ms
+ GET /api/inbox/unread-count 200 in 222ms
+ ○ Compiling /ai ...
+ ✓ Compiled /ai in 1831ms (4458 modules)
+ GET /ai 200 in 2153ms
+ ○ Compiling /api/ai/status ...
+ ✓ Compiled /api/ai/status in 2.5s (4600 modules)
+ GET /api/ai/status 200 in 2734ms
+ GET /api/ai/status 200 in 51ms
+ GET /api/inbox/unread-count 200 in 1790ms
+ ○ Compiling /docs ...
+ ✓ Compiled /docs in 2.7s (4643 modules)
+ GET /docs 200 in 3046ms
+ ○ Compiling /_error ...
+ ✓ Compiled /api/docs in 1422ms (4739 modules)
+ ✓ Compiled in 761ms (1458 modules)
+ GET /api/inbox/unread-count 500 in 4760ms
+ GET /api/docs 200 in 2871ms
+ GET /api/docs 200 in 178ms
+ GET /api/docs 200 in 181ms
+ ○ Compiling /notes ...
+ ✓ Compiled /notes in 1648ms (4718 modules)
+ GET /notes 200 in 1962ms
+ ○ Compiling /api/notes ...
+ ✓ Compiled /api/notes in 1641ms (4720 modules)
+ GET /api/notes 200 in 1992ms
+ GET /api/notes 200 in 185ms
+ POST /api/notes 201 in 261ms
+ GET /docs 200 in 105ms
+ GET /api/docs 200 in 206ms
+ GET /api/docs 200 in 182ms
+ GET /api/docs 200 in 186ms
+ POST /api/docs 201 in 186ms
+ GET /api/inbox/unread-count 200 in 191ms
+ ○ Compiling /api/docs/[id] ...
+ ✓ Compiled /api/docs/[id] in 1783ms (4698 modules)
+ PATCH /api/docs/cmpd5pcgz000134lqg7svsten 200 in 3281ms
+ GET /api/inbox/unread-count 200 in 191ms
+ ○ Compiling /calendar ...
+ ✓ Compiled /calendar in 2.2s (4637 modules)
+ GET /calendar 200 in 2372ms
+ ○ Compiling /api/calendar/events ...
+ ✓ Compiled /api/calendar/events in 1391ms (4639 modules)
+ GET /api/calendar/events?from=2026-04-25T23:00:00.000Z&to=2026-06-06T22:59:59.999Z 200 in 2006ms
+ GET /api/calendar/events?from=2026-04-25T23:00:00.000Z&to=2026-06-06T22:59:59.999Z 200 in 496ms
+ GET /api/inbox/unread-count 200 in 212ms
+ POST /api/calendar/events 201 in 1265ms
+ GET /api/calendar/events?from=2026-04-25T23:00:00.000Z&to=2026-06-06T22:59:59.999Z 200 in 469ms
+ ○ Compiling /drive ...
+ ✓ Compiled /drive in 2.5s (4494 modules)
+ GET /drive 200 in 2829ms
+ ○ Compiling /api/drive/files ...
+ ✓ Compiled /api/drive/files in 2.8s (4500 modules)
+ GET /api/drive/storage 200 in 3166ms
+ GET /api/drive/folders?parentId=root 200 in 3172ms
+ GET /api/drive/files?folderId= 200 in 3159ms
+ GET /api/drive/storage 200 in 207ms
+ GET /api/drive/folders?parentId=root 200 in 216ms
+ GET /api/drive/files?folderId= 200 in 222ms
+ GET /api/drive/folders?parentId=root 200 in 183ms
+ GET /api/drive/folders?parentId=root 200 in 186ms
+ GET /api/inbox/unread-count 200 in 187ms
+ POST /api/drive/folders 201 in 624ms
+ GET /api/drive/folders?parentId=root 200 in 193ms
+ GET /api/drive/files?folderId= 200 in 209ms
+ GET /api/drive/folders?parentId=root 200 in 204ms
+ GET /api/inbox/unread-count 200 in 186ms
+ ○ Compiling /api/drive/upload ...
+ ✓ Compiled /api/drive/upload in 2.8s (4916 modules)
+ POST /api/drive/upload 201 in 5071ms
+ GET /api/drive/folders?parentId=root 200 in 216ms
+ GET /api/drive/files?folderId= 200 in 236ms
+ GET /api/drive/storage 200 in 242ms
+ GET /api/inbox/unread-count 200 in 195ms
+ ○ Compiling /chat ...
+ ✓ Compiled /chat in 3.9s (4937 modules)
+ GET /chat 200 in 4287ms
+ ○ Compiling /api/chat/channels ...
+ ✓ Compiled /api/admin/users in 4.9s (4941 modules)
+ GET /api/chat/channels 200 in 5511ms
+ GET /api/admin/users?limit=200 200 in 3083ms
+ GET /api/admin/users?limit=200 200 in 357ms
+ GET /api/inbox/unread-count 200 in 182ms
+ GET /api/inbox/unread-count 200 in 184ms
+ GET /api/inbox/unread-count 200 in 201ms
+ GET /api/inbox/unread-count 200 in 188ms
+ GET /api/inbox/unread-count 200 in 193ms
+ GET /api/inbox/unread-count 200 in 182ms
+ GET /api/inbox/unread-count 200 in 180ms
+ ○ Compiling /api/inbox ...
+ ✓ Compiled /api/inbox in 2.2s (2973 modules)
+ GET /api/inbox 200 in 2770ms
+ ○ Compiling /inbox ...
+ ✓ Compiled /inbox in 2.5s (2990 modules)
+ GET /api/notifications/stream 200 in 442780ms
+ GET /api/notifications/stream 200 in 442787ms
+ GET /inbox 200 in 3480ms
+ ○ Compiling /api/notifications/stream ...
+ ✓ Compiled /api/notifications/stream in 1137ms (2992 modules)
+ ✓ Compiled (2998 modules)
+ GET /favicon.ico 200 in 2254ms
+ GET /api/notifications/stream 200 in 2427ms
+ GET /api/notifications 200 in 2520ms
+ GET /api/inbox/unread-count 200 in 2429ms
+ GET /chat 200 in 114ms
+ ○ Compiling /api/chat/channels ...
+ ✓ Compiled /api/chat/channels in 1806ms (2991 modules)
+ GET /api/inbox/unread-count 200 in 396ms
+ GET /api/chat/channels 200 in 2314ms
+ ○ Compiling /api/signatures ...
+ ✓ Compiled /api/signatures in 1018ms (3072 modules)
+ ○ Compiling /compose ...
+ ✓ Compiled /compose in 4s (4602 modules)
+ GET /compose 200 in 4222ms
+ GET /api/signatures 200 in 3030ms
+ GET /api/inbox/unread-count 200 in 114ms
+ ○ Compiling /api/send ...
+ ✓ Compiled /api/drafts in 6s (4898 modules)
+ POST /api/send 400 in 6568ms
+ POST /api/drafts 201 in 4066ms
+ GET /api/inbox/unread-count 200 in 189ms
+ GET /api/notifications/stream 200 in 62704ms
+ GET /api/inbox/unread-count 200 in 184ms
+ GET /api/inbox/unread-count 200 in 186ms
+ GET /api/inbox/unread-count 200 in 181ms
+ GET /api/inbox/unread-count 200 in 173ms
+ GET /api/notifications/stream 200 in 111ms
+ POST /api/send 400 in 50ms
+ GET /api/inbox/unread-count 200 in 189ms
+ GET /api/inbox/unread-count 200 in 199ms
+ GET /api/notifications/stream 200 in 36222ms
+ GET /api/inbox/unread-count 200 in 202ms
+ GET /api/inbox/unread-count 200 in 177ms
+ GET /api/inbox/unread-count 200 in 183ms
+ GET /api/inbox/unread-count 200 in 193ms
+ GET /api/inbox/unread-count 200 in 184ms
+ GET /api/inbox/unread-count 200 in 189ms
+ GET /api/inbox/unread-count 200 in 196ms
+ GET /api/inbox/unread-count 200 in 211ms
+ ✓ Compiled in 5.1s (4505 modules)
+ GET /compose 200 in 385ms
+ ✓ Compiled in 348ms (1537 modules)
+ GET /compose 200 in 94ms
+ GET /api/inbox/unread-count 200 in 211ms
+ ○ Compiling /api/notifications/stream ...
+ ✓ Compiled /api/notifications/stream in 970ms (2972 modules)
+ GET /api/notifications/stream 200 in 1359ms
+ ✓ Compiled in 472ms (1537 modules)
+ GET /compose 200 in 171ms
+ ○ Compiling /api/send ...
+ ✓ Compiled /api/send in 1070ms (3363 modules)
+ POST /api/send 400 in 2158ms
+ ✓ Compiled in 2.3s (4900 modules)
+ GET /compose 200 in 2139ms
+ GET /api/inbox/unread-count 200 in 380ms
+ GET /compose 200 in 76ms
+ ○ Compiling /api/signatures ...
+ ✓ Compiled /api/signatures in 2.1s (4902 modules)
+ GET /compose 200 in 151ms
+ GET /api/signatures 200 in 2592ms
+ GET /api/inbox/unread-count 200 in 246ms
+ ✓ Compiled in 444ms (1537 modules)
+ GET /compose 200 in 130ms
+ GET /api/notifications/stream 200 in 32594ms
+ ○ Compiling /api/notifications ...
+ ✓ Compiled / in 10.6s (4904 modules)
+ ✓ Compiled in 4.2s (1537 modules)
+ GET /api/notifications 200 in 14976ms
+ GET /api/inbox/unread-count 200 in 14981ms
+ GET / 307 in 14091ms
+ GET /api/notifications 200 in 203ms
+ GET /api/inbox/unread-count 200 in 217ms
+ GET /inbox 200 in 575ms
+ ✓ Compiled in 3.9s (4907 modules)
+ ✓ Compiled in 366ms (1537 modules)
+ GET /api/inbox/unread-count 200 in 431ms
+ ✓ Compiled in 435ms (1537 modules)
+ ✓ Compiled in 403ms (1537 modules)
+ GET /api/inbox/unread-count 200 in 190ms
+ GET /api/notifications/stream 200 in 44479ms
+ GET /api/notifications/stream 200 in 44482ms
+ GET /api/notifications/stream 200 in 38062ms
+ GET /api/notifications/stream 200 in 30104ms
+ ○ Compiling /settings ...
+ ✓ Compiled /settings in 3.7s (4605 modules)
+ GET /api/inbox/unread-count 200 in 3885ms
+ GET /settings 200 in 4359ms
+ GET /settings 200 in 360ms
+ GET /settings 200 in 286ms
+ ○ Compiling /favicon.ico ...
+ ✓ Compiled /favicon.ico in 2.2s (4621 modules)
+ GET /favicon.ico 200 in 2317ms
+ ✓ Compiled in 3.9s (4514 modules)
+ ✓ Compiled in 1194ms (4514 modules)
+ GET /api/inbox/unread-count 200 in 297ms
+ GET /api/inbox/unread-count 200 in 176ms
+ GET /api/inbox/unread-count 200 in 171ms
+ GET /api/notifications/stream 200 in 126ms
+ GET /settings 200 in 521ms
+ GET /favicon.ico 200 in 88ms
+ GET /api/notifications 200 in 250ms
+ GET /api/inbox/unread-count 200 in 274ms
+ GET /inbox 200 in 378ms
+ ○ Compiling /api/inbox ...
+ ✓ Compiled /api/inbox in 4.1s (2977 modules)
+ GET /api/inbox 200 in 6705ms
+ GET /api/notifications/stream 200 in 20977ms
+ GET /api/notifications/stream 200 in 20926ms
+ GET /api/notifications/stream 200 in 30059ms
+ GET /api/inbox/unread-count 200 in 219ms
+ GET /api/inbox/unread-count 200 in 185ms
+ GET /api/inbox/unread-count 200 in 180ms
+ GET /api/inbox/unread-count 200 in 187ms
+ GET /api/inbox/unread-count 200 in 181ms
+ GET /api/inbox/unread-count 200 in 178ms
+ ✓ Compiled in 4.4s (4504 modules)
+ GET /inbox 200 in 591ms
+ ✓ Compiled in 1950ms (4504 modules)
+ GET /api/inbox/unread-count 200 in 2000ms
+ GET /api/inbox/unread-count 200 in 728ms
+ ○ Compiling /api/signatures ...
+ ✓ Compiled /api/signatures in 2.3s (3048 modules)
+ GET /api/signatures 200 in 3371ms
+ GET /inbox 200 in 3603ms
+ ○ Compiling /api/notifications/stream ...
+ ✓ Compiled /api/notifications/stream in 1895ms (3052 modules)
+ GET /api/notifications/stream 200 in 2138ms
+ GET /api/signatures 200 in 385ms
+ GET /api/notifications/stream 200 in 8933ms
+ GET /api/inbox/unread-count 200 in 188ms
+ GET /api/inbox/unread-count 200 in 199ms
+ GET /api/inbox/unread-count 200 in 341ms
+ GET /api/inbox/unread-count 200 in 200ms
+ GET /api/inbox/unread-count 200 in 219ms
+ ✓ Compiled in 1381ms (1537 modules)
+ ✓ Compiled in 555ms (1537 modules)
+ GET /inbox 200 in 756ms
+ GET /inbox 200 in 401ms
+ GET /api/inbox/unread-count 200 in 191ms
+ ✓ Compiled in 4.3s (4504 modules)
+ GET /inbox 200 in 760ms
+ ✓ Compiled in 1166ms (4504 modules)
+ GET /inbox 200 in 602ms
+ ✓ Compiled in 1128ms (4504 modules)
+ GET /inbox 200 in 512ms
+ ✓ Compiled in 291ms (1537 modules)
+ ✓ Compiled in 402ms (1537 modules)
+ GET /inbox 200 in 576ms
+ GET /inbox 200 in 975ms
+ GET /api/inbox/unread-count 200 in 200ms
+ GET /api/inbox/unread-count 200 in 185ms
+ ✓ Compiled in 320ms (1537 modules)
+ GET /inbox 200 in 369ms
+ ✓ Compiled in 840ms (1537 modules)
+ ✓ Compiled in 371ms (1537 modules)
+ GET /inbox 200 in 595ms
+ GET /inbox 200 in 370ms
+ ✓ Compiled in 2.3s (4491 modules)
+ GET /inbox 200 in 478ms
+ ✓ Compiled in 298ms (1537 modules)
+ GET /inbox 200 in 358ms
+ ✓ Compiled in 281ms (1537 modules)
+ GET /inbox 200 in 357ms
+ ✓ Compiled in 298ms (1537 modules)
+ GET /inbox 200 in 363ms
+ GET /api/inbox/unread-count 200 in 194ms
+ ✓ Compiled in 277ms (1537 modules)
+ GET /inbox 200 in 363ms
+ GET /api/inbox/unread-count 200 in 189ms
+ ✓ Compiled in 4.1s (4505 modules)
+ GET /api/inbox/unread-count 200 in 199ms
+ GET /inbox 200 in 621ms
+ ✓ Compiled in 1264ms (4505 modules)
+ GET /inbox 200 in 495ms
+ GET /api/inbox/unread-count 200 in 194ms
+ GET /api/inbox/unread-count 200 in 173ms
+ GET /api/inbox/unread-count 200 in 172ms
+ GET /api/inbox/unread-count 200 in 182ms
+ GET /api/inbox/unread-count 200 in 185ms
+ GET /api/inbox/unread-count 200 in 189ms
+ GET /api/inbox/unread-count 200 in 198ms
+ GET /api/inbox/unread-count 200 in 188ms
+ GET /api/inbox/unread-count 200 in 176ms
+ GET /api/inbox/unread-count 200 in 184ms
+ GET /api/inbox/unread-count 200 in 201ms
+ GET /api/inbox/unread-count 200 in 188ms
+ GET /api/inbox/unread-count 200 in 173ms
+ GET /api/inbox/unread-count 200 in 198ms
+ GET /api/inbox/unread-count 200 in 216ms
+ GET /api/inbox/unread-count 200 in 193ms
+ GET /api/inbox/unread-count 200 in 211ms
+ GET /api/inbox/unread-count 200 in 202ms
+ GET /api/inbox/unread-count 200 in 207ms
+ GET /api/inbox/unread-count 200 in 198ms
+ GET /api/inbox/unread-count 200 in 222ms
+ GET /api/inbox/unread-count 200 in 199ms
+ GET /api/inbox/unread-count 200 in 193ms
+ GET /api/inbox/unread-count 200 in 189ms
+ GET /api/inbox/unread-count 200 in 211ms
+ GET /api/inbox/unread-count 200 in 217ms
+ GET /api/inbox/unread-count 200 in 178ms
+ GET /api/inbox/unread-count 200 in 196ms
+ GET /api/inbox/unread-count 200 in 216ms
+ GET /api/inbox/unread-count 200 in 203ms
+ GET /api/inbox/unread-count 200 in 206ms
+ GET /api/inbox/unread-count 200 in 191ms
+ GET /api/inbox/unread-count 200 in 209ms
+ GET /api/inbox/unread-count 200 in 197ms
+ GET /api/inbox/unread-count 200 in 206ms
+ GET /api/inbox/unread-count 200 in 195ms
+ GET /api/inbox/unread-count 200 in 194ms
+ GET /api/inbox/unread-count 200 in 205ms
+ GET /api/inbox/unread-count 200 in 218ms
+ GET /api/inbox/unread-count 200 in 199ms
+ GET /api/inbox/unread-count 200 in 222ms
+ GET /api/inbox/unread-count 200 in 199ms
+ GET /api/inbox/unread-count 200 in 179ms
+ GET /api/inbox/unread-count 200 in 203ms
+ GET /api/inbox/unread-count 200 in 233ms
+ GET /api/inbox/unread-count 200 in 190ms
+ GET /api/inbox/unread-count 200 in 202ms
+ GET /api/inbox/unread-count 200 in 193ms
+ GET /api/inbox/unread-count 200 in 217ms
+ GET /api/inbox/unread-count 200 in 195ms
+ GET /api/inbox/unread-count 200 in 203ms
+ GET /api/inbox/unread-count 200 in 199ms
+ GET /api/inbox/unread-count 200 in 184ms
+ GET /api/inbox/unread-count 200 in 206ms
+ GET /api/inbox/unread-count 200 in 222ms
+ GET /api/inbox/unread-count 200 in 193ms
+ GET /api/inbox/unread-count 200 in 222ms
+ GET /api/inbox/unread-count 200 in 190ms
+ GET /api/inbox/unread-count 200 in 215ms
+ GET /api/inbox/unread-count 200 in 187ms
+ GET /api/inbox/unread-count 200 in 215ms
+ GET /api/inbox/unread-count 200 in 213ms
+ GET /api/inbox/unread-count 200 in 189ms
+ GET /api/inbox/unread-count 200 in 183ms
+ GET /api/inbox/unread-count 200 in 183ms
+ GET /api/inbox/unread-count 200 in 193ms
+ GET /api/inbox/unread-count 200 in 206ms
+ GET /api/inbox/unread-count 200 in 195ms
+ GET /api/inbox/unread-count 200 in 218ms
+ GET /api/inbox/unread-count 200 in 194ms
+ GET /api/inbox/unread-count 200 in 209ms
+ GET /api/inbox/unread-count 200 in 209ms
+ GET /api/inbox/unread-count 200 in 219ms
+ GET /api/inbox/unread-count 200 in 198ms
+ GET /api/inbox/unread-count 200 in 215ms
+ GET /api/inbox/unread-count 200 in 205ms
+ GET /api/inbox/unread-count 200 in 219ms
+ GET /api/inbox/unread-count 200 in 198ms
+ GET /api/inbox/unread-count 200 in 215ms
+ GET /api/inbox/unread-count 200 in 202ms
+ GET /api/inbox/unread-count 200 in 220ms
+ GET /api/inbox/unread-count 200 in 211ms
+ GET /api/inbox/unread-count 200 in 180ms
+ GET /api/inbox/unread-count 200 in 194ms
+ GET /api/inbox/unread-count 200 in 187ms
+ GET /api/inbox/unread-count 200 in 224ms
+ GET /api/inbox/unread-count 200 in 236ms
+ GET /api/inbox/unread-count 200 in 218ms
+ GET /api/inbox/unread-count 200 in 240ms
+ GET /api/inbox/unread-count 200 in 209ms
+ GET /api/inbox/unread-count 200 in 223ms
+ GET /api/inbox/unread-count 200 in 224ms
+ GET /api/inbox/unread-count 200 in 197ms
+ GET /api/inbox/unread-count 200 in 229ms
+ GET /api/inbox/unread-count 200 in 193ms
+ GET /api/inbox/unread-count 200 in 222ms
+ GET /api/inbox/unread-count 200 in 211ms
+ GET /api/inbox/unread-count 200 in 230ms
+ GET /api/inbox/unread-count 200 in 202ms
+ GET /api/inbox/unread-count 200 in 213ms
+ GET /api/inbox/unread-count 200 in 241ms
+ GET /api/inbox/unread-count 200 in 222ms
+ GET /api/inbox/unread-count 200 in 192ms
+ GET /api/inbox/unread-count 200 in 256ms
+ GET /api/inbox/unread-count 200 in 196ms
+ GET /api/inbox/unread-count 200 in 207ms
+ GET /api/inbox/unread-count 200 in 234ms
+ GET /api/inbox/unread-count 200 in 225ms
+ GET /api/inbox/unread-count 200 in 235ms
+ GET /api/inbox/unread-count 200 in 207ms
+ GET /api/inbox/unread-count 200 in 198ms
+ GET /api/inbox/unread-count 200 in 199ms
+ GET /api/inbox/unread-count 200 in 230ms
+ GET /api/inbox/unread-count 200 in 206ms
+ GET /api/inbox/unread-count 200 in 233ms
+ GET /api/inbox/unread-count 200 in 239ms
+ GET /api/inbox/unread-count 200 in 247ms
+ GET /api/inbox/unread-count 200 in 208ms
+ GET /api/inbox/unread-count 200 in 222ms
+ GET /api/inbox/unread-count 200 in 198ms
+ GET /api/inbox/unread-count 200 in 226ms
+ GET /api/inbox/unread-count 200 in 212ms
+ GET /api/inbox/unread-count 200 in 202ms
+ GET /api/inbox/unread-count 200 in 202ms
+ GET /api/inbox/unread-count 200 in 235ms
+ GET /api/inbox/unread-count 200 in 216ms
+ GET /api/inbox/unread-count 200 in 221ms
+ GET /api/inbox/unread-count 200 in 244ms
+ GET /api/inbox/unread-count 200 in 268ms
+ GET /api/inbox/unread-count 200 in 209ms
+ GET /api/inbox/unread-count 200 in 223ms
+ GET /api/inbox/unread-count 200 in 206ms
+ GET /api/inbox/unread-count 200 in 253ms
+ GET /api/inbox/unread-count 200 in 210ms
+ GET /api/inbox/unread-count 200 in 240ms
+ GET /api/inbox/unread-count 200 in 203ms
+ GET /api/inbox/unread-count 200 in 248ms
+ GET /api/inbox/unread-count 200 in 204ms
+ GET /api/inbox/unread-count 200 in 217ms
+ GET /api/inbox/unread-count 200 in 203ms
+ GET /api/inbox/unread-count 200 in 233ms
+ GET /api/inbox/unread-count 200 in 212ms
+ GET /api/inbox/unread-count 200 in 202ms
+ GET /api/inbox/unread-count 200 in 240ms
+ GET /api/inbox/unread-count 200 in 267ms
+ GET /api/inbox/unread-count 200 in 1967ms
+ GET /api/inbox/unread-count 200 in 2312ms
+ GET /api/inbox/unread-count 200 in 608ms
+ GET /api/inbox/unread-count 200 in 117ms
+ GET /api/inbox/unread-count 200 in 118ms
+ GET /api/inbox/unread-count 200 in 141ms
+ GET /api/inbox/unread-count 200 in 811ms
+ GET /api/inbox/unread-count 200 in 90ms
+ GET /api/inbox/unread-count 200 in 63ms
+ GET /api/inbox/unread-count 200 in 62ms
+ GET /api/inbox/unread-count 200 in 59ms
+ GET /api/inbox/unread-count 200 in 80ms
+ GET /api/inbox/unread-count 200 in 57ms
+ GET /api/inbox/unread-count 200 in 85ms
+ GET /api/inbox/unread-count 200 in 713ms
+ GET /api/inbox/unread-count 200 in 981ms
+ GET /api/inbox/unread-count 200 in 64ms
+ GET /api/inbox/unread-count 200 in 92ms
+ GET /api/inbox/unread-count 200 in 73ms
+ GET /api/inbox/unread-count 200 in 93ms
+ GET /api/inbox/unread-count 200 in 59ms
+ GET /api/inbox/unread-count 200 in 85ms
+ GET /api/inbox/unread-count 200 in 47ms
+ GET /api/inbox/unread-count 200 in 74ms
+ GET /api/inbox/unread-count 200 in 68ms
+ GET /api/inbox/unread-count 200 in 96ms
+ GET /api/inbox/unread-count 200 in 61ms
+ GET /api/inbox/unread-count 200 in 53ms
+ GET /api/inbox/unread-count 200 in 48ms
+ GET /api/inbox/unread-count 200 in 81ms
+ GET /api/inbox/unread-count 200 in 49ms
+ GET /api/inbox/unread-count 200 in 70ms
+ GET /api/inbox/unread-count 200 in 50ms
+ GET /api/inbox/unread-count 200 in 83ms
+ GET /api/inbox/unread-count 200 in 67ms
+ GET /api/inbox/unread-count 200 in 96ms
+ GET /api/inbox/unread-count 200 in 48ms
+ GET /api/inbox/unread-count 200 in 70ms
+ GET /api/inbox/unread-count 200 in 68ms
+ GET /api/inbox/unread-count 200 in 79ms
+ GET /api/inbox/unread-count 200 in 46ms
+ GET /api/inbox/unread-count 200 in 66ms
+ GET /api/inbox/unread-count 200 in 56ms
+ GET /api/inbox/unread-count 200 in 76ms
+ GET /api/inbox/unread-count 200 in 62ms
+ GET /api/inbox/unread-count 200 in 96ms
+ GET /api/inbox/unread-count 200 in 58ms
+ GET /api/inbox/unread-count 200 in 58ms
+ GET /api/inbox/unread-count 200 in 47ms
+ GET /api/inbox/unread-count 200 in 83ms
+ GET /api/inbox/unread-count 200 in 52ms
+ GET /api/inbox/unread-count 200 in 74ms
+ GET /api/inbox/unread-count 200 in 59ms
+ GET /api/inbox/unread-count 200 in 78ms
+ GET /api/inbox/unread-count 200 in 64ms
+ GET /api/inbox/unread-count 200 in 47ms
+ GET /api/inbox/unread-count 200 in 50ms
+ GET /api/inbox/unread-count 200 in 76ms
+ GET /api/inbox/unread-count 200 in 75ms
+ GET /api/inbox/unread-count 200 in 93ms
+ GET /api/inbox/unread-count 200 in 52ms
+ GET /api/inbox/unread-count 200 in 72ms
+ GET /api/inbox/unread-count 200 in 48ms
+ GET /api/inbox/unread-count 200 in 70ms
+ GET /api/inbox/unread-count 200 in 65ms
+ GET /api/inbox/unread-count 200 in 95ms
+ GET /api/inbox/unread-count 200 in 53ms
+ GET /api/inbox/unread-count 200 in 40ms
+ GET /api/inbox/unread-count 200 in 55ms
+ GET /api/inbox/unread-count 200 in 84ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 80ms
+ GET /api/inbox/unread-count 200 in 41ms
+ GET /api/inbox/unread-count 200 in 69ms
+ GET /api/inbox/unread-count 200 in 66ms
+ GET /api/inbox/unread-count 200 in 91ms
+ GET /api/inbox/unread-count 200 in 49ms
+ GET /api/inbox/unread-count 200 in 65ms
+ GET /api/inbox/unread-count 200 in 68ms
+ GET /api/inbox/unread-count 200 in 99ms
+ GET /api/inbox/unread-count 200 in 52ms
+ GET /api/inbox/unread-count 200 in 63ms
+ GET /api/inbox/unread-count 200 in 40ms
+ GET /api/inbox/unread-count 200 in 61ms
+ GET /api/inbox/unread-count 200 in 68ms
+ GET /api/inbox/unread-count 200 in 81ms
+ GET /api/inbox/unread-count 200 in 75ms
+ GET /api/inbox/unread-count 200 in 94ms
+ GET /api/inbox/unread-count 200 in 43ms
+ GET /api/inbox/unread-count 200 in 51ms
+ GET /api/inbox/unread-count 200 in 49ms
+ GET /api/inbox/unread-count 200 in 35ms
+ GET /api/inbox/unread-count 200 in 45ms
+ GET /api/inbox/unread-count 200 in 72ms
+ GET /api/inbox/unread-count 200 in 41ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 69ms
+ GET /api/inbox/unread-count 200 in 80ms
+ GET /api/inbox/unread-count 200 in 43ms
+ GET /api/inbox/unread-count 200 in 59ms
+ GET /api/inbox/unread-count 200 in 45ms
+ GET /api/inbox/unread-count 200 in 42ms
+ GET /api/inbox/unread-count 200 in 60ms
+ GET /api/inbox/unread-count 200 in 70ms
+ GET /api/inbox/unread-count 200 in 51ms
+ GET /api/inbox/unread-count 200 in 69ms
+ GET /api/inbox/unread-count 200 in 59ms
+ GET /api/inbox/unread-count 200 in 77ms
+ GET /api/inbox/unread-count 200 in 45ms
+ GET /api/inbox/unread-count 200 in 40ms
+ GET /api/inbox/unread-count 200 in 56ms
+ GET /api/inbox/unread-count 200 in 73ms
+ GET /api/inbox/unread-count 200 in 48ms
+ GET /api/inbox/unread-count 200 in 81ms
+ GET /api/inbox/unread-count 200 in 49ms
+ GET /api/inbox/unread-count 200 in 62ms
+ GET /api/inbox/unread-count 200 in 64ms
+ GET /api/inbox/unread-count 200 in 95ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 61ms
+ GET /api/inbox/unread-count 200 in 77ms
+ GET /api/inbox/unread-count 200 in 99ms
+ GET /api/inbox/unread-count 200 in 83ms
+ GET /api/inbox/unread-count 200 in 100ms
+ GET /api/inbox/unread-count 200 in 46ms
+ GET /api/inbox/unread-count 200 in 65ms
+ GET /api/inbox/unread-count 200 in 64ms
+ GET /api/inbox/unread-count 200 in 100ms
+ GET /api/inbox/unread-count 200 in 75ms
+ GET /api/inbox/unread-count 200 in 37ms
+ GET /api/inbox/unread-count 200 in 58ms
+ GET /api/inbox/unread-count 200 in 84ms
+ GET /api/inbox/unread-count 200 in 55ms
+ GET /api/inbox/unread-count 200 in 69ms
+ GET /api/inbox/unread-count 200 in 52ms
+ GET /api/inbox/unread-count 200 in 68ms
+ GET /api/inbox/unread-count 200 in 45ms
+ GET /api/inbox/unread-count 200 in 77ms
+ GET /api/inbox/unread-count 200 in 46ms
+ GET /api/inbox/unread-count 200 in 72ms
+ GET /api/inbox/unread-count 200 in 34ms
+ GET /api/inbox/unread-count 200 in 35ms
+ GET /api/inbox/unread-count 200 in 51ms
+ GET /api/inbox/unread-count 200 in 66ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 64ms
+ GET /api/inbox/unread-count 200 in 53ms
+ GET /api/inbox/unread-count 200 in 69ms
+ GET /api/inbox/unread-count 200 in 65ms
+ GET /api/inbox/unread-count 200 in 93ms
+ GET /api/inbox/unread-count 200 in 52ms
+ GET /api/inbox/unread-count 200 in 42ms
+ GET /api/inbox/unread-count 200 in 50ms
+ GET /api/inbox/unread-count 200 in 80ms
+ GET /api/inbox/unread-count 200 in 47ms
+ GET /api/inbox/unread-count 200 in 66ms
+ GET /api/inbox/unread-count 200 in 57ms
+ GET /api/inbox/unread-count 200 in 82ms
+ GET /api/inbox/unread-count 200 in 75ms
+ GET /api/inbox/unread-count 200 in 95ms
+ GET /api/inbox/unread-count 200 in 45ms
+ GET /api/inbox/unread-count 200 in 60ms
+ GET /api/inbox/unread-count 200 in 46ms
+ GET /api/inbox/unread-count 200 in 77ms
+ GET /api/inbox/unread-count 200 in 96ms
+ GET /api/inbox/unread-count 200 in 130ms
+ GET /api/inbox/unread-count 200 in 42ms
+ GET /api/inbox/unread-count 200 in 63ms
+ GET /api/inbox/unread-count 200 in 54ms
+ GET /api/inbox/unread-count 200 in 56ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 40ms
+ GET /api/inbox/unread-count 200 in 43ms
+ GET /api/inbox/unread-count 200 in 61ms
+ GET /api/inbox/unread-count 200 in 475ms
+ GET /api/inbox/unread-count 200 in 1099ms
+ GET /api/inbox/unread-count 200 in 50ms
+ GET /api/inbox/unread-count 200 in 83ms
+ GET /api/inbox/unread-count 200 in 47ms
+ GET /api/inbox/unread-count 200 in 79ms
+ GET /api/inbox/unread-count 200 in 47ms
+ GET /api/inbox/unread-count 200 in 69ms
+ GET /api/inbox/unread-count 200 in 43ms
+ GET /api/inbox/unread-count 200 in 62ms
+ GET /api/inbox/unread-count 200 in 47ms
+ GET /api/inbox/unread-count 200 in 72ms
+ GET /api/inbox/unread-count 200 in 51ms
+ GET /api/inbox/unread-count 200 in 65ms
+ GET /api/inbox/unread-count 200 in 37ms
+ GET /api/inbox/unread-count 200 in 27ms
+ GET /api/inbox/unread-count 200 in 55ms
+ GET /api/inbox/unread-count 200 in 64ms
+ GET /api/inbox/unread-count 200 in 49ms
+ GET /api/inbox/unread-count 200 in 41ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 76ms
+ GET /api/inbox/unread-count 200 in 48ms
+ GET /api/inbox/unread-count 200 in 62ms
+ GET /api/inbox/unread-count 200 in 59ms
+ GET /api/inbox/unread-count 200 in 81ms
+ GET /api/inbox/unread-count 200 in 40ms
+ GET /api/inbox/unread-count 200 in 65ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 59ms
+ GET /api/inbox/unread-count 200 in 47ms
+ GET /api/inbox/unread-count 200 in 80ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 60ms
+ GET /api/inbox/unread-count 200 in 49ms
+ GET /api/inbox/unread-count 200 in 80ms
+ GET /api/inbox/unread-count 200 in 52ms
+ GET /api/inbox/unread-count 200 in 69ms
+ GET /api/inbox/unread-count 200 in 46ms
+ GET /api/inbox/unread-count 200 in 42ms
+ GET /api/inbox/unread-count 200 in 72ms
+ GET /api/inbox/unread-count 200 in 39ms
+ GET /api/inbox/unread-count 200 in 46ms
+ GET /api/inbox/unread-count 200 in 55ms
+ GET /api/inbox/unread-count 200 in 40ms
+ GET /api/inbox/unread-count 200 in 67ms
+ GET /api/inbox/unread-count 200 in 40ms
+ GET /api/inbox/unread-count 200 in 26ms
+ GET /api/inbox/unread-count 200 in 153ms
+ GET /api/inbox/unread-count 200 in 53ms
+ GET /api/inbox/unread-count 200 in 45ms
+ GET /api/inbox/unread-count 200 in 63ms
+ GET /api/inbox/unread-count 200 in 39ms
+ GET /api/inbox/unread-count 200 in 81ms
+ GET /api/inbox/unread-count 200 in 43ms
+ GET /api/inbox/unread-count 200 in 41ms
+ GET /api/inbox/unread-count 200 in 42ms
+ GET /api/inbox/unread-count 200 in 62ms
+ GET /api/inbox/unread-count 200 in 47ms
+ GET /api/inbox/unread-count 200 in 63ms
+ GET /api/inbox/unread-count 200 in 39ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 78ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 79ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 38ms
+ GET /api/inbox/unread-count 200 in 45ms
+ GET /api/inbox/unread-count 200 in 66ms
+ GET /api/inbox/unread-count 200 in 43ms
+ GET /api/inbox/unread-count 200 in 85ms
+ GET /api/inbox/unread-count 200 in 53ms
+ GET /api/inbox/unread-count 200 in 75ms
+ GET /api/inbox/unread-count 200 in 95ms
+ GET /api/inbox/unread-count 200 in 113ms
+ GET /api/inbox/unread-count 200 in 46ms
+ GET /api/inbox/unread-count 200 in 63ms
+ GET /api/inbox/unread-count 200 in 48ms
+ GET /api/inbox/unread-count 200 in 62ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 67ms
+ GET /api/inbox/unread-count 200 in 48ms
+ GET /api/inbox/unread-count 200 in 65ms
+ GET /api/inbox/unread-count 200 in 87ms
+ GET /api/inbox/unread-count 200 in 105ms
+ GET /api/inbox/unread-count 200 in 41ms
+ GET /api/inbox/unread-count 200 in 66ms
+ GET /api/inbox/unread-count 200 in 41ms
+ GET /api/inbox/unread-count 200 in 61ms
+ GET /api/inbox/unread-count 200 in 47ms
+ GET /api/inbox/unread-count 200 in 79ms
+ GET /api/inbox/unread-count 200 in 55ms
+ GET /api/inbox/unread-count 200 in 69ms
+ GET /api/inbox/unread-count 200 in 55ms
+ GET /api/inbox/unread-count 200 in 36ms
+ GET /api/inbox/unread-count 200 in 45ms
+ GET /api/inbox/unread-count 200 in 62ms
+ GET /api/inbox/unread-count 200 in 34ms
+ GET /api/inbox/unread-count 200 in 31ms
+ GET /api/inbox/unread-count 200 in 43ms
+ GET /api/inbox/unread-count 200 in 60ms
+ GET /api/inbox/unread-count 200 in 45ms
+ GET /api/inbox/unread-count 200 in 48ms
+ GET /api/inbox/unread-count 200 in 63ms
+ GET /api/inbox/unread-count 200 in 46ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 65ms
+ GET /api/inbox/unread-count 200 in 41ms
+ GET /api/inbox/unread-count 200 in 49ms
+ GET /api/inbox/unread-count 200 in 51ms
+ GET /api/inbox/unread-count 200 in 55ms
+ GET /api/inbox/unread-count 200 in 41ms
+ GET /api/inbox/unread-count 200 in 66ms
+ GET /api/inbox/unread-count 200 in 62ms
+ GET /api/inbox/unread-count 200 in 43ms
+ GET /api/inbox/unread-count 200 in 38ms
+ GET /api/inbox/unread-count 200 in 32ms
+ GET /api/inbox/unread-count 200 in 78ms
+ GET /api/inbox/unread-count 200 in 106ms
+ GET /api/inbox/unread-count 200 in 40ms
+ GET /api/inbox/unread-count 200 in 60ms
+ GET /api/inbox/unread-count 200 in 49ms
+ GET /api/inbox/unread-count 200 in 69ms
+ GET /api/inbox/unread-count 200 in 68ms
+ GET /api/inbox/unread-count 200 in 46ms
+ GET /api/inbox/unread-count 200 in 40ms
+ GET /api/inbox/unread-count 200 in 51ms
+ GET /api/inbox/unread-count 200 in 68ms
+ GET /api/inbox/unread-count 200 in 60ms
+ GET /api/inbox/unread-count 200 in 42ms
+ GET /api/inbox/unread-count 200 in 49ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 62ms
+ GET /api/inbox/unread-count 200 in 59ms
+ GET /api/inbox/unread-count 200 in 128ms
+ GET /api/inbox/unread-count 200 in 42ms
+ GET /api/inbox/unread-count 200 in 114ms
+ GET /api/inbox/unread-count 200 in 38ms
+ GET /api/inbox/unread-count 200 in 35ms
+ GET /api/inbox/unread-count 200 in 52ms
+ GET /api/inbox/unread-count 200 in 66ms
+ GET /api/inbox/unread-count 200 in 76ms
+ GET /api/inbox/unread-count 200 in 99ms
+ GET /api/inbox/unread-count 200 in 64ms
+ GET /api/inbox/unread-count 200 in 49ms
+ GET /api/inbox/unread-count 200 in 45ms
+ GET /api/inbox/unread-count 200 in 55ms
+ GET /api/inbox/unread-count 200 in 60ms
+ GET /api/inbox/unread-count 200 in 49ms
+ GET /api/inbox/unread-count 200 in 52ms
+ GET /api/inbox/unread-count 200 in 83ms
+ GET /api/inbox/unread-count 200 in 50ms
+ GET /api/inbox/unread-count 200 in 101ms
+ GET /api/inbox/unread-count 200 in 78ms
+ GET /api/inbox/unread-count 200 in 48ms
+ GET /api/inbox/unread-count 200 in 70ms
+ GET /api/inbox/unread-count 200 in 100ms
+ GET /api/inbox/unread-count 200 in 40ms
+ GET /api/inbox/unread-count 200 in 59ms
+ GET /api/inbox/unread-count 200 in 88ms
+ GET /api/inbox/unread-count 200 in 111ms
+ GET /api/inbox/unread-count 200 in 48ms
+ GET /api/inbox/unread-count 200 in 65ms
+ GET /api/inbox/unread-count 200 in 57ms
+ GET /api/inbox/unread-count 200 in 80ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 38ms
+ GET /api/inbox/unread-count 200 in 43ms
+ GET /api/inbox/unread-count 200 in 47ms
+ GET /api/inbox/unread-count 200 in 43ms
+ GET /api/inbox/unread-count 200 in 62ms
+ GET /api/inbox/unread-count 200 in 68ms
+ GET /api/inbox/unread-count 200 in 38ms
+ GET /api/inbox/unread-count 200 in 81ms
+ GET /api/inbox/unread-count 200 in 104ms
+ GET /api/inbox/unread-count 200 in 51ms
+ GET /api/inbox/unread-count 200 in 65ms
+ GET /api/inbox/unread-count 200 in 42ms
+ GET /api/inbox/unread-count 200 in 63ms
+ GET /api/inbox/unread-count 200 in 42ms
+ GET /api/inbox/unread-count 200 in 64ms
+ GET /api/inbox/unread-count 200 in 52ms
+ GET /api/inbox/unread-count 200 in 62ms
+ GET /api/inbox/unread-count 200 in 63ms
+ GET /api/inbox/unread-count 200 in 92ms
+ GET /api/inbox/unread-count 200 in 69ms
+ GET /api/inbox/unread-count 200 in 84ms
+ GET /api/inbox/unread-count 200 in 46ms
+ GET /api/inbox/unread-count 200 in 54ms
+ GET /api/inbox/unread-count 200 in 42ms
+ GET /api/inbox/unread-count 200 in 74ms
+ GET /api/inbox/unread-count 200 in 62ms
+ GET /api/inbox/unread-count 200 in 93ms
+ GET /api/inbox/unread-count 200 in 86ms
+ GET /api/inbox/unread-count 200 in 109ms
+ GET /api/inbox/unread-count 200 in 49ms
+ GET /api/inbox/unread-count 200 in 57ms
+ GET /api/inbox/unread-count 200 in 51ms
+ GET /api/inbox/unread-count 200 in 69ms
+ GET /api/inbox/unread-count 200 in 42ms
+ GET /api/inbox/unread-count 200 in 66ms
+ GET /api/inbox/unread-count 200 in 50ms
+ GET /api/inbox/unread-count 200 in 63ms
+ GET /api/inbox/unread-count 200 in 54ms
+ GET /api/inbox/unread-count 200 in 49ms
+ GET /api/inbox/unread-count 200 in 37ms
+ GET /api/inbox/unread-count 200 in 56ms
+ GET /api/inbox/unread-count 200 in 47ms
+ GET /api/inbox/unread-count 200 in 50ms
+ GET /api/inbox/unread-count 200 in 40ms
+ GET /api/inbox/unread-count 200 in 32ms
+ GET /api/inbox/unread-count 200 in 47ms
+ GET /api/inbox/unread-count 200 in 48ms
+ GET /api/inbox/unread-count 200 in 59ms
+ GET /api/inbox/unread-count 200 in 74ms
+ GET /api/inbox/unread-count 200 in 56ms
+ GET /api/inbox/unread-count 200 in 81ms
+ GET /api/inbox/unread-count 200 in 53ms
+ GET /api/inbox/unread-count 200 in 70ms
+ GET /api/inbox/unread-count 200 in 47ms
+ GET /api/inbox/unread-count 200 in 74ms
+ GET /api/inbox/unread-count 200 in 46ms
+ GET /api/inbox/unread-count 200 in 62ms
+ GET /api/inbox/unread-count 200 in 54ms
+ GET /api/inbox/unread-count 200 in 75ms
+ GET /api/inbox/unread-count 200 in 48ms
+ GET /api/inbox/unread-count 200 in 63ms
+ GET /api/inbox/unread-count 200 in 54ms
+ GET /api/inbox/unread-count 200 in 41ms
+ GET /api/inbox/unread-count 200 in 46ms
+ GET /api/inbox/unread-count 200 in 43ms
+ GET /api/inbox/unread-count 200 in 42ms
+ GET /api/inbox/unread-count 200 in 61ms
+ GET /api/inbox/unread-count 200 in 47ms
+ GET /api/inbox/unread-count 200 in 78ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 72ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 61ms
+ GET /api/inbox/unread-count 200 in 140ms
+ GET /api/inbox/unread-count 200 in 35ms
+ GET /api/inbox/unread-count 200 in 55ms
+ GET /api/inbox/unread-count 200 in 62ms
+ GET /api/inbox/unread-count 200 in 41ms
+ GET /api/inbox/unread-count 200 in 70ms
+ GET /api/inbox/unread-count 200 in 47ms
+ GET /api/inbox/unread-count 200 in 66ms
+ GET /api/inbox/unread-count 200 in 40ms
+ GET /api/inbox/unread-count 200 in 97ms
+ GET /api/inbox/unread-count 200 in 48ms
+ GET /api/inbox/unread-count 200 in 42ms
+ GET /api/inbox/unread-count 200 in 48ms
+ GET /api/inbox/unread-count 200 in 63ms
+ GET /api/inbox/unread-count 200 in 43ms
+ GET /api/inbox/unread-count 200 in 64ms
+ GET /api/inbox/unread-count 200 in 45ms
+ GET /api/inbox/unread-count 200 in 71ms
+ GET /api/inbox/unread-count 200 in 55ms
+ GET /api/inbox/unread-count 200 in 66ms
+ GET /api/inbox/unread-count 200 in 62ms
+ GET /api/inbox/unread-count 200 in 106ms
+ GET /api/inbox/unread-count 200 in 50ms
+ GET /api/inbox/unread-count 200 in 38ms
+ GET /api/inbox/unread-count 200 in 45ms
+ GET /api/inbox/unread-count 200 in 67ms
+ GET /api/inbox/unread-count 200 in 42ms
+ GET /api/inbox/unread-count 200 in 75ms
+ GET /api/inbox/unread-count 200 in 48ms
+ GET /api/inbox/unread-count 200 in 66ms
+ GET /api/inbox/unread-count 200 in 42ms
+ GET /api/inbox/unread-count 200 in 38ms
+ GET /api/inbox/unread-count 200 in 64ms
+ GET /api/inbox/unread-count 200 in 48ms
+ GET /api/inbox/unread-count 200 in 41ms
+ GET /api/inbox/unread-count 200 in 64ms
+ GET /api/inbox/unread-count 200 in 41ms
+ GET /api/inbox/unread-count 200 in 67ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 62ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 64ms
+ GET /api/inbox/unread-count 200 in 45ms
+ GET /api/inbox/unread-count 200 in 80ms
+ GET /api/inbox/unread-count 200 in 84ms
+ GET /api/inbox/unread-count 200 in 98ms
+ GET /api/inbox/unread-count 200 in 101ms
+ GET /api/inbox/unread-count 200 in 121ms
+ GET /api/inbox/unread-count 200 in 68ms
+ GET /api/inbox/unread-count 200 in 86ms
+ GET /api/inbox/unread-count 200 in 55ms
+ GET /api/inbox/unread-count 200 in 41ms
+ GET /api/inbox/unread-count 200 in 61ms
+ GET /api/inbox/unread-count 200 in 38ms
+ GET /api/inbox/unread-count 200 in 79ms
+ GET /api/inbox/unread-count 200 in 97ms
+ GET /api/inbox/unread-count 200 in 87ms
+ GET /api/inbox/unread-count 200 in 113ms
+ GET /api/inbox/unread-count 200 in 51ms
+ GET /api/inbox/unread-count 200 in 64ms
+ GET /api/inbox/unread-count 200 in 64ms
+ GET /api/inbox/unread-count 200 in 82ms
+ GET /api/inbox/unread-count 200 in 46ms
+ GET /api/inbox/unread-count 200 in 40ms
+ GET /api/inbox/unread-count 200 in 53ms
+ GET /api/inbox/unread-count 200 in 42ms
+ GET /api/inbox/unread-count 200 in 45ms
+ GET /api/inbox/unread-count 200 in 70ms
+ GET /api/inbox/unread-count 200 in 66ms
+ GET /api/inbox/unread-count 200 in 95ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 71ms
+ GET /api/inbox/unread-count 200 in 648ms
+ GET /api/inbox/unread-count 200 in 1181ms
+ GET /api/inbox/unread-count 200 in 81ms
+ GET /api/inbox/unread-count 200 in 45ms
+ GET /api/inbox/unread-count 200 in 96ms
+ GET /api/inbox/unread-count 200 in 114ms
+ GET /api/inbox/unread-count 200 in 66ms
+ GET /api/inbox/unread-count 200 in 88ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 66ms
+ GET /api/inbox/unread-count 200 in 45ms
+ GET /api/inbox/unread-count 200 in 67ms
+ GET /api/inbox/unread-count 200 in 45ms
+ GET /api/inbox/unread-count 200 in 60ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 35ms
+ GET /api/inbox/unread-count 200 in 59ms
+ GET /api/inbox/unread-count 200 in 80ms
+ GET /api/inbox/unread-count 200 in 39ms
+ GET /api/inbox/unread-count 200 in 56ms
+ GET /api/inbox/unread-count 200 in 34ms
+ GET /api/inbox/unread-count 200 in 29ms
+ GET /api/inbox/unread-count 200 in 48ms
+ GET /api/inbox/unread-count 200 in 68ms
+ GET /api/inbox/unread-count 200 in 52ms
+ GET /api/inbox/unread-count 200 in 82ms
+ GET /api/inbox/unread-count 200 in 69ms
+ GET /api/inbox/unread-count 200 in 93ms
+ GET /api/inbox/unread-count 200 in 48ms
+ GET /api/inbox/unread-count 200 in 79ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 67ms
+ GET /api/inbox/unread-count 200 in 70ms
+ GET /api/inbox/unread-count 200 in 94ms
+ GET /api/inbox/unread-count 200 in 52ms
+ GET /api/inbox/unread-count 200 in 85ms
+ GET /api/inbox/unread-count 200 in 76ms
+ GET /api/inbox/unread-count 200 in 98ms
+ GET /api/inbox/unread-count 200 in 47ms
+ GET /api/inbox/unread-count 200 in 77ms
+ GET /api/inbox/unread-count 200 in 47ms
+ GET /api/inbox/unread-count 200 in 63ms
+ GET /api/inbox/unread-count 200 in 45ms
+ GET /api/inbox/unread-count 200 in 39ms
+ GET /api/inbox/unread-count 200 in 55ms
+ GET /api/inbox/unread-count 200 in 70ms
+ GET /api/inbox/unread-count 200 in 59ms
+ GET /api/inbox/unread-count 200 in 48ms
+ GET /api/inbox/unread-count 200 in 39ms
+ GET /api/inbox/unread-count 200 in 30ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 68ms
+ GET /api/inbox/unread-count 200 in 66ms
+ GET /api/inbox/unread-count 200 in 97ms
+ GET /api/inbox/unread-count 200 in 41ms
+ GET /api/inbox/unread-count 200 in 31ms
+ GET /api/inbox/unread-count 200 in 59ms
+ GET /api/inbox/unread-count 200 in 50ms
+ GET /api/inbox/unread-count 200 in 42ms
+ GET /api/inbox/unread-count 200 in 67ms
+ GET /api/inbox/unread-count 200 in 52ms
+ GET /api/inbox/unread-count 200 in 77ms
+ GET /api/inbox/unread-count 200 in 43ms
+ GET /api/inbox/unread-count 200 in 64ms
+ GET /api/inbox/unread-count 200 in 43ms
+ GET /api/inbox/unread-count 200 in 63ms
+ GET /api/inbox/unread-count 200 in 59ms
+ GET /api/inbox/unread-count 200 in 75ms
+ GET /api/inbox/unread-count 200 in 46ms
+ GET /api/inbox/unread-count 200 in 49ms
+ GET /api/inbox/unread-count 200 in 41ms
+ GET /api/inbox/unread-count 200 in 82ms
+ GET /api/inbox/unread-count 200 in 90ms
+ GET /api/inbox/unread-count 200 in 124ms
+ GET /api/inbox/unread-count 200 in 46ms
+ GET /api/inbox/unread-count 200 in 63ms
+ GET /api/inbox/unread-count 200 in 73ms
+ GET /api/inbox/unread-count 200 in 103ms
+ GET /api/inbox/unread-count 200 in 48ms
+ GET /api/inbox/unread-count 200 in 73ms
+ GET /api/inbox/unread-count 200 in 43ms
+ GET /api/inbox/unread-count 200 in 50ms
+ GET /api/inbox/unread-count 200 in 36ms
+ GET /api/inbox/unread-count 200 in 40ms
+ GET /api/inbox/unread-count 200 in 53ms
+ GET /api/inbox/unread-count 200 in 38ms
+ GET /api/inbox/unread-count 200 in 120ms
+ GET /api/inbox/unread-count 200 in 144ms
+ GET /api/inbox/unread-count 200 in 40ms
+ GET /api/inbox/unread-count 200 in 63ms
+ GET /api/inbox/unread-count 200 in 50ms
+ GET /api/inbox/unread-count 200 in 74ms
+ GET /api/inbox/unread-count 200 in 55ms
+ GET /api/inbox/unread-count 200 in 70ms
+ GET /api/inbox/unread-count 200 in 37ms
+ GET /api/inbox/unread-count 200 in 48ms
+ GET /api/inbox/unread-count 200 in 53ms
+ GET /api/inbox/unread-count 200 in 152ms
+ GET /api/inbox/unread-count 200 in 75ms
+ GET /api/inbox/unread-count 200 in 95ms
+ GET /api/inbox/unread-count 200 in 46ms
+ GET /api/inbox/unread-count 200 in 65ms
+ GET /api/inbox/unread-count 200 in 37ms
+ GET /api/inbox/unread-count 200 in 31ms
+ GET /api/inbox/unread-count 200 in 35ms
+ GET /api/inbox/unread-count 200 in 45ms
+ GET /api/inbox/unread-count 200 in 74ms
+ GET /api/inbox/unread-count 200 in 94ms
+ GET /api/inbox/unread-count 200 in 32ms
+ GET /api/inbox/unread-count 200 in 31ms
+ GET /api/inbox/unread-count 200 in 69ms
+ GET /api/inbox/unread-count 200 in 86ms
+ GET /api/inbox/unread-count 200 in 37ms
+ GET /api/inbox/unread-count 200 in 59ms
+ GET /api/inbox/unread-count 200 in 54ms
+ GET /api/inbox/unread-count 200 in 69ms
+ GET /api/inbox/unread-count 200 in 87ms
+ GET /api/inbox/unread-count 200 in 101ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 66ms
+ GET /api/inbox/unread-count 200 in 57ms
+ GET /api/inbox/unread-count 200 in 71ms
+ GET /api/inbox/unread-count 200 in 82ms
+ GET /api/inbox/unread-count 200 in 113ms
+ GET /api/inbox/unread-count 200 in 43ms
+ GET /api/inbox/unread-count 200 in 37ms
+ GET /api/inbox/unread-count 200 in 42ms
+ GET /api/inbox/unread-count 200 in 28ms
+ GET /api/inbox/unread-count 200 in 50ms
+ GET /api/inbox/unread-count 200 in 82ms
+ GET /api/inbox/unread-count 200 in 41ms
+ GET /api/inbox/unread-count 200 in 92ms
+ GET /api/inbox/unread-count 200 in 45ms
+ GET /api/inbox/unread-count 200 in 65ms
+ GET /api/inbox/unread-count 200 in 35ms
+ GET /api/inbox/unread-count 200 in 27ms
+ GET /api/inbox/unread-count 200 in 43ms
+ GET /api/inbox/unread-count 200 in 59ms
+ GET /api/inbox/unread-count 200 in 65ms
+ GET /api/inbox/unread-count 200 in 83ms
+ GET /api/inbox/unread-count 200 in 52ms
+ GET /api/inbox/unread-count 200 in 71ms
+ GET /api/inbox/unread-count 200 in 63ms
+ GET /api/inbox/unread-count 200 in 83ms
+ GET /api/inbox/unread-count 200 in 60ms
+ GET /api/inbox/unread-count 200 in 78ms
+ GET /api/inbox/unread-count 200 in 36ms
+ GET /api/inbox/unread-count 200 in 34ms
+ GET /api/inbox/unread-count 200 in 66ms
+ GET /api/inbox/unread-count 200 in 81ms
+ GET /api/inbox/unread-count 200 in 42ms
+ GET /api/inbox/unread-count 200 in 47ms
+ GET /api/inbox/unread-count 200 in 42ms
+ GET /api/inbox/unread-count 200 in 58ms
+ GET /api/inbox/unread-count 200 in 61ms
+ GET /api/inbox/unread-count 200 in 243ms
+ GET /api/inbox/unread-count 200 in 68ms
+ GET /api/inbox/unread-count 200 in 92ms
+ GET /api/inbox/unread-count 200 in 37ms
+ GET /api/inbox/unread-count 200 in 41ms
+ GET /api/inbox/unread-count 200 in 60ms
+ GET /api/inbox/unread-count 200 in 83ms
+ GET /api/inbox/unread-count 200 in 46ms
+ GET /api/inbox/unread-count 200 in 62ms
+ GET /api/inbox/unread-count 200 in 42ms
+ GET /api/inbox/unread-count 200 in 63ms
+ GET /api/inbox/unread-count 200 in 43ms
+ GET /api/inbox/unread-count 200 in 78ms
+ GET /api/inbox/unread-count 200 in 55ms
+ GET /api/inbox/unread-count 200 in 66ms
+ GET /api/inbox/unread-count 200 in 41ms
+ GET /api/inbox/unread-count 200 in 68ms
+ GET /api/inbox/unread-count 200 in 49ms
+ GET /api/inbox/unread-count 200 in 79ms
+ GET /api/inbox/unread-count 200 in 45ms
+ GET /api/inbox/unread-count 200 in 76ms
+ GET /api/inbox/unread-count 200 in 92ms
+ GET /api/inbox/unread-count 200 in 109ms
+ GET /api/inbox/unread-count 200 in 43ms
+ GET /api/inbox/unread-count 200 in 66ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 75ms
+ GET /api/inbox/unread-count 200 in 49ms
+ GET /api/inbox/unread-count 200 in 87ms
+ GET /api/inbox/unread-count 200 in 46ms
+ GET /api/inbox/unread-count 200 in 40ms
+ GET /api/inbox/unread-count 200 in 47ms
+ GET /api/inbox/unread-count 200 in 77ms
+ GET /api/inbox/unread-count 200 in 34ms
+ GET /api/inbox/unread-count 200 in 29ms
+ GET /api/inbox/unread-count 200 in 46ms
+ GET /api/inbox/unread-count 200 in 76ms
+ GET /api/inbox/unread-count 200 in 42ms
+ GET /api/inbox/unread-count 200 in 43ms
+ GET /api/inbox/unread-count 200 in 48ms
+ GET /api/inbox/unread-count 200 in 76ms
+ GET /api/inbox/unread-count 200 in 51ms
+ GET /api/inbox/unread-count 200 in 79ms
+ GET /api/inbox/unread-count 200 in 38ms
+ GET /api/inbox/unread-count 200 in 59ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 75ms
+ GET /api/inbox/unread-count 200 in 40ms
+ GET /api/inbox/unread-count 200 in 56ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 65ms
+ GET /api/inbox/unread-count 200 in 38ms
+ GET /api/inbox/unread-count 200 in 59ms
+ GET /api/inbox/unread-count 200 in 46ms
+ GET /api/inbox/unread-count 200 in 51ms
+ GET /api/inbox/unread-count 200 in 45ms
+ GET /api/inbox/unread-count 200 in 66ms
+ GET /api/inbox/unread-count 200 in 43ms
+ GET /api/inbox/unread-count 200 in 36ms
+ GET /api/inbox/unread-count 200 in 64ms
+ GET /api/inbox/unread-count 200 in 95ms
+ GET /api/inbox/unread-count 200 in 38ms
+ GET /api/inbox/unread-count 200 in 37ms
+ GET /api/inbox/unread-count 200 in 46ms
+ GET /api/inbox/unread-count 200 in 73ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 67ms
+ GET /api/inbox/unread-count 200 in 45ms
+ GET /api/inbox/unread-count 200 in 62ms
+ GET /api/inbox/unread-count 200 in 50ms
+ GET /api/inbox/unread-count 200 in 80ms
+ GET /api/inbox/unread-count 200 in 64ms
+ GET /api/inbox/unread-count 200 in 75ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 40ms
+ GET /api/inbox/unread-count 200 in 46ms
+ GET /api/inbox/unread-count 200 in 47ms
+ GET /api/inbox/unread-count 200 in 40ms
+ GET /api/inbox/unread-count 200 in 67ms
+ GET /api/inbox/unread-count 200 in 43ms
+ GET /api/inbox/unread-count 200 in 76ms
+ GET /api/inbox/unread-count 200 in 36ms
+ GET /api/inbox/unread-count 200 in 33ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 62ms
+ GET /api/inbox/unread-count 200 in 42ms
+ GET /api/inbox/unread-count 200 in 74ms
+ GET /api/inbox/unread-count 200 in 76ms
+ GET /api/inbox/unread-count 200 in 94ms
+ GET /api/inbox/unread-count 200 in 43ms
+ GET /api/inbox/unread-count 200 in 53ms
+ GET /api/inbox/unread-count 200 in 39ms
+ GET /api/inbox/unread-count 200 in 60ms
+ GET /api/inbox/unread-count 200 in 43ms
+ GET /api/inbox/unread-count 200 in 59ms
+ GET /api/inbox/unread-count 200 in 46ms
+ GET /api/inbox/unread-count 200 in 63ms
+ GET /api/inbox/unread-count 200 in 54ms
+ GET /api/inbox/unread-count 200 in 52ms
+ GET /api/inbox/unread-count 200 in 37ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 37ms
+ GET /api/inbox/unread-count 200 in 37ms
+ GET /api/inbox/unread-count 200 in 40ms
+ GET /api/inbox/unread-count 200 in 59ms
+ GET /api/inbox/unread-count 200 in 32ms
+ GET /api/inbox/unread-count 200 in 42ms
+ GET /api/inbox/unread-count 200 in 40ms
+ GET /api/inbox/unread-count 200 in 33ms
+ GET /api/inbox/unread-count 200 in 54ms
+ GET /api/inbox/unread-count 200 in 72ms
+ GET /api/inbox/unread-count 200 in 46ms
+ GET /api/inbox/unread-count 200 in 68ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 62ms
+ GET /api/inbox/unread-count 200 in 45ms
+ GET /api/inbox/unread-count 200 in 64ms
+ GET /api/inbox/unread-count 200 in 52ms
+ GET /api/inbox/unread-count 200 in 61ms
+ GET /api/inbox/unread-count 200 in 60ms
+ GET /api/inbox/unread-count 200 in 46ms
+ GET /api/inbox/unread-count 200 in 64ms
+ GET /api/inbox/unread-count 200 in 78ms
+ GET /api/inbox/unread-count 200 in 47ms
+ GET /api/inbox/unread-count 200 in 33ms
+ GET /api/inbox/unread-count 200 in 50ms
+ GET /api/inbox/unread-count 200 in 39ms
+ GET /api/inbox/unread-count 200 in 75ms
+ GET /api/inbox/unread-count 200 in 93ms
+ GET /api/inbox/unread-count 200 in 49ms
+ GET /api/inbox/unread-count 200 in 62ms
+ GET /api/inbox/unread-count 200 in 81ms
+ GET /api/inbox/unread-count 200 in 102ms
+ GET /api/inbox/unread-count 200 in 33ms
+ GET /api/inbox/unread-count 200 in 38ms
+ GET /api/inbox/unread-count 200 in 34ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 38ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 56ms
+ GET /api/inbox/unread-count 200 in 84ms
+ GET /api/inbox/unread-count 200 in 111ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 66ms
+ GET /api/inbox/unread-count 200 in 46ms
+ GET /api/inbox/unread-count 200 in 65ms
+ GET /api/inbox/unread-count 200 in 43ms
+ GET /api/inbox/unread-count 200 in 62ms
+ GET /api/inbox/unread-count 200 in 46ms
+ GET /api/inbox/unread-count 200 in 70ms
+ ○ Compiling / ...
+ ✓ Compiled / in 3.3s (2970 modules)
+ GET / 307 in 4217ms
+ ○ Compiling /login ...
+ ✓ Compiled /login in 5.2s (4519 modules)
+ GET /login?next=%2Finbox 200 in 5846ms
+ ✓ Compiled in 767ms (1541 modules)
+ GET /login?next=%2Fusers 200 in 80ms
+ GET /api/inbox/unread-count 200 in 150ms
+ GET /api/inbox/unread-count 200 in 50ms
+ GET /api/inbox/unread-count 200 in 39ms
+ GET /api/inbox/unread-count 200 in 49ms
+ GET /api/inbox/unread-count 200 in 42ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 35ms
+ GET /api/inbox/unread-count 200 in 36ms
+ GET /api/inbox/unread-count 200 in 47ms
+ GET /api/inbox/unread-count 200 in 40ms
+ GET /api/inbox/unread-count 200 in 35ms
+ GET /api/inbox/unread-count 200 in 35ms
+ GET /api/inbox/unread-count 200 in 52ms
+ GET /api/inbox/unread-count 200 in 37ms
+ GET /api/inbox/unread-count 200 in 41ms
+ GET /api/inbox/unread-count 200 in 35ms
+ GET /api/inbox/unread-count 200 in 45ms
+ GET /api/inbox/unread-count 200 in 36ms
+ GET /api/inbox/unread-count 200 in 42ms
+ GET /api/inbox/unread-count 200 in 41ms
+ GET /api/inbox/unread-count 200 in 52ms
+ GET /api/inbox/unread-count 200 in 48ms
+ GET /api/inbox/unread-count 200 in 43ms
+ GET /api/inbox/unread-count 200 in 33ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 48ms
+ GET /api/inbox/unread-count 200 in 39ms
+ GET /api/inbox/unread-count 200 in 51ms
+ GET /api/inbox/unread-count 200 in 84ms
+ GET /api/inbox/unread-count 200 in 42ms
+ GET /api/inbox/unread-count 200 in 49ms
+ GET /api/inbox/unread-count 200 in 51ms
+ GET /api/inbox/unread-count 200 in 49ms
+ GET /api/inbox/unread-count 200 in 41ms
+ GET /api/inbox/unread-count 200 in 42ms
+ GET /api/inbox/unread-count 200 in 31ms
+ GET /api/inbox/unread-count 200 in 51ms
+ GET /api/inbox/unread-count 200 in 45ms
+ GET /api/inbox/unread-count 200 in 47ms
+ GET /api/inbox/unread-count 200 in 53ms
+ GET /api/inbox/unread-count 200 in 53ms
+ GET /api/inbox/unread-count 200 in 42ms
+ GET /api/inbox/unread-count 200 in 52ms
+ GET /api/inbox/unread-count 200 in 46ms
+ GET /api/inbox/unread-count 200 in 42ms
+ GET /api/inbox/unread-count 200 in 43ms
+ GET /api/inbox/unread-count 200 in 55ms
+ GET /api/inbox/unread-count 200 in 50ms
+ GET /api/inbox/unread-count 200 in 45ms
+ GET /api/inbox/unread-count 200 in 46ms
+ GET /api/inbox/unread-count 200 in 54ms
+ GET /api/inbox/unread-count 200 in 45ms
+ GET /api/inbox/unread-count 200 in 47ms
+ GET /api/inbox/unread-count 200 in 47ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 59ms
+ GET /api/inbox/unread-count 200 in 50ms
+ GET /api/inbox/unread-count 200 in 36ms
+ GET /api/inbox/unread-count 200 in 41ms
+ GET /api/inbox/unread-count 200 in 43ms
+ GET /api/inbox/unread-count 200 in 80ms
+ GET /api/inbox/unread-count 200 in 56ms
+ GET /api/inbox/unread-count 200 in 51ms
+ GET /api/inbox/unread-count 200 in 49ms
+ GET /api/inbox/unread-count 200 in 37ms
+ GET /api/inbox/unread-count 200 in 46ms
+ GET /api/inbox/unread-count 200 in 40ms
+ GET /api/inbox/unread-count 200 in 46ms
+ GET /api/inbox/unread-count 200 in 48ms
+ GET /api/inbox/unread-count 200 in 65ms
+ GET /api/inbox/unread-count 200 in 57ms
+ GET /api/inbox/unread-count 200 in 45ms
+ GET /api/inbox/unread-count 200 in 52ms
+ GET /api/inbox/unread-count 200 in 56ms
+ GET /api/inbox/unread-count 200 in 47ms
+ GET /api/inbox/unread-count 200 in 43ms
+ GET /api/inbox/unread-count 200 in 52ms
+ GET /api/inbox/unread-count 200 in 43ms
+ GET /api/inbox/unread-count 200 in 63ms
+ GET /api/inbox/unread-count 200 in 57ms
+ GET /api/inbox/unread-count 200 in 52ms
+ GET /api/inbox/unread-count 200 in 48ms
+ GET /api/inbox/unread-count 200 in 46ms
+ GET /api/inbox/unread-count 200 in 46ms
+ GET /api/inbox/unread-count 200 in 42ms
+ GET /api/inbox/unread-count 200 in 47ms
+ GET /api/inbox/unread-count 200 in 48ms
+ GET /api/inbox/unread-count 200 in 68ms
+ GET /api/inbox/unread-count 200 in 79ms
+ GET /api/inbox/unread-count 200 in 46ms
+ GET /api/inbox/unread-count 200 in 54ms
+ GET /api/inbox/unread-count 200 in 55ms
+ GET /api/inbox/unread-count 200 in 52ms
+ GET /api/inbox/unread-count 200 in 38ms
+ GET /api/inbox/unread-count 200 in 50ms
+ GET /api/inbox/unread-count 200 in 44ms
+ GET /api/inbox/unread-count 200 in 57ms
+ GET /api/inbox/unread-count 200 in 46ms
+ GET /api/inbox/unread-count 200 in 55ms
+ GET /api/inbox/unread-count 200 in 63ms
+ GET /api/inbox/unread-count 200 in 52ms
+ GET /api/inbox/unread-count 200 in 52ms
+ GET /api/inbox/unread-count 200 in 53ms
+ GET /api/inbox/unread-count 200 in 53ms
+ GET /api/inbox/unread-count 200 in 45ms
+ GET /api/inbox/unread-count 200 in 48ms
+ GET /api/inbox/unread-count 200 in 63ms
+ GET /api/inbox/unread-count 200 in 41ms
+ GET /api/inbox/unread-count 200 in 60ms
+ ✓ Compiled in 12.7s (4486 modules)
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 4.8s (4568 modules)
+ GET /login?next=%2Fusers 500 in 5192ms
+ GET /login?next=%2Fusers 500 in 311ms
+ GET /login?next=%2Fusers 500 in 254ms
+ ✓ Compiled in 322ms (1542 modules)
+ ✓ Compiled in 338ms (1542 modules)
+ ✓ Compiled in 291ms (1542 modules)
+ GET /api/inbox/unread-count 500 in 328ms
+ ✓ Compiled in 330ms (1542 modules)
+ GET /api/inbox/unread-count 500 in 279ms
+ GET /api/inbox/unread-count 500 in 281ms
+ GET /api/inbox/unread-count 500 in 273ms
+ GET /api/inbox/unread-count 500 in 285ms
+ GET /api/inbox/unread-count 500 in 275ms
+ GET /api/inbox/unread-count 500 in 293ms
+ GET /api/inbox/unread-count 500 in 265ms
+ GET /api/inbox/unread-count 500 in 300ms
+ GET /api/inbox/unread-count 500 in 261ms
+ GET /api/inbox/unread-count 500 in 280ms
+ GET /api/inbox/unread-count 500 in 296ms
+ GET /api/inbox/unread-count 500 in 288ms
+ GET /api/inbox/unread-count 500 in 273ms
+ GET /api/inbox/unread-count 500 in 280ms
+ ○ Compiling /api/inbox ...
+ ✓ Compiled /api/inbox in 6.1s (3044 modules)
+ ✓ Compiled (3046 modules)
+ ✓ Compiled in 6.1s (2401 modules)
+ ✓ Compiled in 1175ms (2401 modules)
+ ✓ Compiled in 408ms (2401 modules)
+ ✓ Compiled in 1230ms (1541 modules)
+ ✓ Compiled in 282ms (1541 modules)
+ ✓ Compiled in 300ms (1541 modules)
+ ✓ Compiled in 238ms (1541 modules)
+ ✓ Compiled in 254ms (1541 modules)
+ ✓ Compiled in 263ms (1541 modules)
+ ✓ Compiled in 5.5s (5329 modules)
+ ✓ Compiled in 269ms (1541 modules)
+   ▲ Next.js 15.5.18
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.0.119:3000
+   - Environments: .env
+   - Experiments (use with caution):
+     · clientTraceMetadata
+     · optimizePackageImports
+
+ ✓ Starting...
+ ○ Compiling /instrumentation ...
+ ✓ Compiled /instrumentation in 3.1s (1163 modules)
+ ✓ Ready in 6.3s
+ ○ Compiling /middleware ...
+ ✓ Compiled /middleware in 1346ms (860 modules)
+ ○ Compiling /login ...
+ ✓ Compiled /login in 6.4s (3261 modules)
+ GET /login?next=%2Fusers 200 in 7196ms
+ ✓ Compiled in 295ms (674 modules)
+ GET /login?next=%2Fusers 200 in 80ms
+ ✓ Compiled in 167ms (674 modules)
+ ✓ Compiled in 219ms (674 modules)
+ ✓ Compiled in 211ms (674 modules)
+ ✓ Compiled in 323ms (674 modules)
+ ✓ Compiled in 232ms (674 modules)
+ ✓ Compiled in 451ms (1534 modules)
+ ✓ Compiled in 979ms (3243 modules)
+ ✓ Compiled in 261ms (674 modules)
+ ✓ Compiled in 177ms (674 modules)
+ ✓ Compiled in 283ms (674 modules)
+ ✓ Compiled in 201ms (674 modules)
+ ✓ Compiled in 182ms (674 modules)
+ ✓ Compiled in 252ms (674 modules)
+ ✓ Compiled in 1351ms (4103 modules)
+ ✓ Compiled in 302ms (1534 modules)
+ ✓ Compiled in 147ms (674 modules)
+ ✓ Compiled in 741ms (674 modules)
+ ✓ Compiled in 629ms (674 modules)
+ ✓ Compiled in 360ms (674 modules)
+ ✓ Compiled in 249ms (674 modules)
+ ✓ Compiled in 238ms (674 modules)
+ ✓ Compiled in 209ms (674 modules)
+ ✓ Compiled in 218ms (674 modules)
+ ✓ Compiled in 209ms (674 modules)
+ ✓ Compiled in 211ms (674 modules)
+ ✓ Compiled in 210ms (674 modules)
+ ✓ Compiled in 219ms (674 modules)
+ ✓ Compiled in 212ms (674 modules)
+ ✓ Compiled in 208ms (674 modules)
+ ✓ Compiled in 333ms (674 modules)
+ ✓ Compiled in 226ms (674 modules)
+ ✓ Compiled in 258ms (674 modules)
+ ✓ Compiled in 221ms (674 modules)
+ ✓ Compiled in 211ms (674 modules)
+ ✓ Compiled in 251ms (674 modules)
+ ✓ Compiled in 216ms (674 modules)
+ ✓ Compiled in 203ms (674 modules)
+ ✓ Compiled in 310ms (674 modules)
+ ✓ Compiled in 254ms (674 modules)
+ ✓ Compiled in 268ms (674 modules)
+ ✓ Compiled in 228ms (674 modules)
+ ✓ Compiled in 232ms (674 modules)
+ ✓ Compiled in 234ms (674 modules)
+ ✓ Compiled in 253ms (674 modules)
+ ✓ Compiled in 243ms (674 modules)
+ ✓ Compiled in 284ms (674 modules)
+ ✓ Compiled in 239ms (674 modules)
+ ✓ Compiled in 230ms (674 modules)
+ ✓ Compiled in 229ms (674 modules)
+ ✓ Compiled in 235ms (674 modules)
+ ✓ Compiled in 218ms (674 modules)
+ ✓ Compiled in 207ms (674 modules)
+ ✓ Compiled in 224ms (674 modules)
+ ✓ Compiled in 304ms (674 modules)
+ ✓ Compiled in 223ms (674 modules)
+ ✓ Compiled in 251ms (674 modules)
+ ✓ Compiled in 209ms (674 modules)
+ ✓ Compiled in 256ms (674 modules)
+ ✓ Compiled in 229ms (674 modules)
+ ✓ Compiled in 223ms (674 modules)
+ ✓ Compiled in 224ms (674 modules)
+ ✓ Compiled in 226ms (674 modules)
+ ✓ Compiled in 210ms (674 modules)
+ ✓ Compiled in 199ms (674 modules)
+ ✓ Compiled in 206ms (674 modules)
+ ✓ Compiled in 215ms (674 modules)
+ ✓ Compiled in 192ms (674 modules)
+ ✓ Compiled in 233ms (674 modules)
+ ✓ Compiled in 205ms (674 modules)
+ ✓ Compiled in 217ms (674 modules)
+ ✓ Compiled in 205ms (674 modules)
+ ✓ Compiled in 229ms (674 modules)
+ ✓ Compiled in 208ms (674 modules)
+ ✓ Compiled in 205ms (674 modules)
+ ✓ Compiled in 200ms (674 modules)
+ ✓ Compiled in 206ms (674 modules)
+ ✓ Compiled in 244ms (674 modules)
+ ✓ Compiled in 215ms (674 modules)
+ ✓ Compiled in 205ms (674 modules)
+ ✓ Compiled in 211ms (674 modules)
+ ✓ Compiled in 221ms (674 modules)
+ ✓ Compiled in 294ms (674 modules)
+ ✓ Compiled in 213ms (674 modules)
+ ✓ Compiled in 209ms (674 modules)
+ ✓ Compiled in 322ms (674 modules)
+ ✓ Compiled in 264ms (674 modules)
+ ✓ Compiled in 208ms (674 modules)
+ ✓ Compiled in 211ms (674 modules)
+ ✓ Compiled in 238ms (674 modules)
+ ✓ Compiled in 211ms (674 modules)
+ ✓ Compiled in 204ms (674 modules)
+ ✓ Compiled in 199ms (674 modules)
+ ✓ Compiled in 230ms (674 modules)
+ ✓ Compiled in 197ms (674 modules)
+ ✓ Compiled in 207ms (674 modules)
+ ✓ Compiled in 211ms (674 modules)
+ ✓ Compiled in 244ms (674 modules)
+ ✓ Compiled in 215ms (674 modules)
+ ✓ Compiled in 406ms (674 modules)
+ ✓ Compiled in 1400ms (3243 modules)
+ ✓ Compiled in 362ms (674 modules)
+ ✓ Compiled in 265ms (674 modules)
+ ✓ Compiled in 1467ms (4089 modules)
+ ✓ Compiled in 258ms (674 modules)
+ ✓ Compiled in 1072ms (4089 modules)
+ ✓ Compiled in 221ms (674 modules)
+ ✓ Compiled in 229ms (674 modules)
+ ✓ Compiled in 962ms (4089 modules)
+ ✓ Compiled in 214ms (674 modules)
+ ✓ Compiled in 1061ms (4089 modules)
+ ✓ Compiled in 231ms (674 modules)
+ ✓ Compiled in 225ms (674 modules)
+ ✓ Compiled in 224ms (674 modules)
+ ✓ Compiled in 993ms (4089 modules)
+ ✓ Compiled in 220ms (674 modules)
+ ✓ Compiled in 944ms (4089 modules)
+ ✓ Compiled in 219ms (674 modules)
+ ✓ Compiled in 226ms (674 modules)
+ ✓ Compiled in 211ms (674 modules)
+ ✓ Compiled in 226ms (674 modules)
+ ✓ Compiled in 534ms (674 modules)
+ ✓ Compiled in 390ms (674 modules)
+ ✓ Compiled in 426ms (674 modules)
+ ✓ Compiled in 282ms (674 modules)
+ ✓ Compiled in 337ms (674 modules)
+ ✓ Compiled in 274ms (674 modules)
+ ✓ Compiled in 249ms (674 modules)
+ ✓ Compiled in 260ms (674 modules)
+ ✓ Compiled in 229ms (674 modules)
+ ✓ Compiled in 370ms (674 modules)
+ ✓ Compiled in 214ms (674 modules)
+ ✓ Compiled in 239ms (674 modules)
+ ✓ Compiled in 384ms (674 modules)
+ ✓ Compiled in 223ms (674 modules)
+ ✓ Compiled in 237ms (674 modules)
+ ✓ Compiled in 243ms (674 modules)
+ ✓ Compiled in 295ms (674 modules)
+ ✓ Compiled in 236ms (674 modules)
+ ✓ Compiled in 253ms (674 modules)
+ ✓ Compiled in 310ms (674 modules)
+ ✓ Compiled in 281ms (674 modules)
+ ✓ Compiled in 330ms (674 modules)
+ ✓ Compiled in 227ms (674 modules)
+ ✓ Compiled in 234ms (674 modules)
+ ✓ Compiled in 234ms (674 modules)
+ ✓ Compiled in 233ms (674 modules)
+ ✓ Compiled in 320ms (674 modules)
+ ✓ Compiled in 284ms (674 modules)
+ ✓ Compiled in 237ms (674 modules)
+ ✓ Compiled in 221ms (674 modules)
+ ✓ Compiled in 237ms (674 modules)
+ ✓ Compiled in 235ms (674 modules)
+ ✓ Compiled in 1494ms (4103 modules)
+ ✓ Compiled in 260ms (674 modules)
+ ✓ Compiled in 329ms (674 modules)
+ ✓ Compiled in 234ms (674 modules)
+ ✓ Compiled in 231ms (674 modules)
+ ✓ Compiled in 234ms (674 modules)
+ ✓ Compiled in 235ms (674 modules)
+ ✓ Compiled in 259ms (674 modules)
+ ✓ Compiled in 249ms (674 modules)
+ ✓ Compiled in 248ms (674 modules)
+ ✓ Compiled in 237ms (674 modules)
+ ✓ Compiled in 221ms (674 modules)
+ ✓ Compiled in 238ms (674 modules)
+ ✓ Compiled in 281ms (674 modules)
+ ✓ Compiled in 234ms (674 modules)
+ ✓ Compiled in 221ms (674 modules)
+ ✓ Compiled in 226ms (674 modules)
+ ✓ Compiled in 225ms (674 modules)
+ ✓ Compiled in 377ms (674 modules)
+ ✓ Compiled in 274ms (674 modules)
+ ✓ Compiled in 235ms (674 modules)
+ ✓ Compiled in 226ms (674 modules)
+ ✓ Compiled in 314ms (674 modules)
+ ✓ Compiled in 312ms (674 modules)
+ ✓ Compiled in 228ms (674 modules)
+ ✓ Compiled in 245ms (674 modules)
+ ✓ Compiled in 244ms (674 modules)
+ ✓ Compiled in 236ms (674 modules)
+ ✓ Compiled in 1490ms (4089 modules)
+ ✓ Compiled in 243ms (674 modules)
+ ✓ Compiled in 954ms (4089 modules)
+ ✓ Compiled in 222ms (674 modules)
+ ✓ Compiled in 230ms (674 modules)
+ ✓ Compiled in 2.2s (4103 modules)
+ ✓ Compiled in 285ms (674 modules)
+ ✓ Compiled in 292ms (674 modules)
+ ✓ Compiled in 334ms (674 modules)
+ ✓ Compiled in 906ms (1534 modules)
+ ✓ Compiled in 380ms (1534 modules)
+ ✓ Compiled in 232ms (674 modules)
+ ✓ Compiled in 1404ms (4089 modules)
+ ✓ Compiled in 239ms (674 modules)
+ ✓ Compiled in 1113ms (4089 modules)
+ ✓ Compiled in 224ms (674 modules)
+ ✓ Compiled in 1159ms (4089 modules)
+ ✓ Compiled in 240ms (674 modules)
+ ✓ Compiled in 1449ms (4089 modules)
+ ✓ Compiled in 244ms (674 modules)
+ ✓ Compiled in 1126ms (4103 modules)
+ ✓ Compiled in 236ms (674 modules)
+ ✓ Compiled in 930ms (4089 modules)
+ ✓ Compiled in 229ms (674 modules)
+ ✓ Compiled in 915ms (4089 modules)
+ ✓ Compiled in 256ms (674 modules)
+ ✓ Compiled in 1119ms (4103 modules)
+ ✓ Compiled in 331ms (674 modules)
+ ✓ Compiled in 1377ms (4103 modules)
+ ✓ Compiled in 245ms (674 modules)
+ ✓ Compiled in 975ms (4089 modules)
+ ✓ Compiled in 250ms (674 modules)
+ ✓ Compiled in 1255ms (4089 modules)
+ ✓ Compiled in 394ms (674 modules)
+ ✓ Compiled in 242ms (674 modules)
+ ✓ Compiled in 293ms (674 modules)
+ ✓ Compiled in 241ms (674 modules)
+ ✓ Compiled in 296ms (674 modules)
+ ✓ Compiled in 373ms (674 modules)
+ ✓ Compiled in 303ms (674 modules)
+ ✓ Compiled in 418ms (674 modules)
+ ✓ Compiled in 363ms (674 modules)
+ ✓ Compiled in 232ms (674 modules)
+ ✓ Compiled in 229ms (674 modules)
+ ✓ Compiled in 236ms (674 modules)
+ ✓ Compiled in 243ms (674 modules)
+ ✓ Compiled in 258ms (674 modules)
+ ✓ Compiled in 257ms (674 modules)
+ ✓ Compiled in 250ms (674 modules)
+ ✓ Compiled in 240ms (674 modules)
+ ✓ Compiled in 231ms (674 modules)
+ ✓ Compiled in 239ms (674 modules)
+ ✓ Compiled in 237ms (674 modules)
+ ✓ Compiled in 236ms (674 modules)
+ ✓ Compiled in 221ms (674 modules)
+ ✓ Compiled in 264ms (674 modules)
+ ✓ Compiled in 232ms (674 modules)
+ ✓ Compiled in 218ms (674 modules)
+ ✓ Compiled in 243ms (674 modules)
+ ✓ Compiled in 258ms (674 modules)
+ ✓ Compiled in 244ms (674 modules)
+ ✓ Compiled in 235ms (674 modules)
+ ✓ Compiled in 229ms (674 modules)
+ ✓ Compiled in 241ms (674 modules)
+ ✓ Compiled in 214ms (674 modules)
+ ✓ Compiled in 313ms (674 modules)
+ ✓ Compiled in 250ms (674 modules)
+ ✓ Compiled in 220ms (674 modules)
+ ✓ Compiled in 318ms (674 modules)
+ ✓ Compiled in 283ms (674 modules)
+ ✓ Compiled in 249ms (674 modules)
+ ✓ Compiled in 234ms (674 modules)
+ ✓ Compiled in 253ms (674 modules)
+ ✓ Compiled in 236ms (674 modules)
+ ✓ Compiled in 257ms (674 modules)
+ ✓ Compiled in 216ms (674 modules)
+ ✓ Compiled in 388ms (674 modules)
+ ✓ Compiled in 288ms (674 modules)
+ ✓ Compiled in 253ms (674 modules)
+ ✓ Compiled in 247ms (674 modules)
+ ✓ Compiled in 238ms (674 modules)
+ ✓ Compiled in 263ms (674 modules)
+   ▲ Next.js 15.5.18
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.0.119:3000
+   - Environments: .env
+   - Experiments (use with caution):
+     · clientTraceMetadata
+     · optimizePackageImports
+
+ ✓ Starting...
+ ○ Compiling /instrumentation ...
+ ✓ Compiled /instrumentation in 5.1s (1163 modules)
+ ✓ Ready in 9.3s
+   ▲ Next.js 15.5.18
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.0.119:3000
+   - Environments: .env
+   - Experiments (use with caution):
+     · clientTraceMetadata
+     · optimizePackageImports
+
+ ✓ Starting...
+ ○ Compiling /instrumentation ...
+ ✓ Compiled /instrumentation in 4.5s (1163 modules)
+ ✓ Ready in 7.8s
+ ✓ Compiled in 662ms (779 modules)
+ ✓ Compiled in 451ms (1163 modules)
+ ✓ Compiled in 317ms (1163 modules)
+ ✓ Compiled in 414ms (1163 modules)
+ ✓ Compiled in 377ms (1163 modules)
+ ✓ Compiled in 452ms (1163 modules)
+ ✓ Compiled in 453ms (1163 modules)
+ ✓ Compiled in 257ms (1163 modules)
+ ✓ Compiled in 230ms (1163 modules)
+ ✓ Compiled in 204ms (1163 modules)
+ ✓ Compiled in 415ms (1163 modules)
+ ✓ Compiled in 235ms (1163 modules)
+ ✓ Compiled in 207ms (1163 modules)
+ ✓ Compiled in 204ms (1163 modules)
+ ✓ Compiled in 195ms (1163 modules)
+ ○ Compiling /middleware ...
+ ✓ Compiled /middleware in 1306ms (860 modules)
+ ✓ Compiled in 431ms (1639 modules)
+ ✓ Compiled in 245ms (1639 modules)
+ ✓ Compiled in 217ms (1639 modules)
+ ✓ Compiled in 219ms (1639 modules)
+ ✓ Compiled in 228ms (1639 modules)
+ ✓ Compiled in 232ms (1639 modules)
+ ✓ Compiled in 465ms (1639 modules)
+ ✓ Compiled in 262ms (1639 modules)
+ ✓ Compiled in 229ms (1639 modules)
+ ✓ Compiled in 232ms (1639 modules)
+ ✓ Compiled in 232ms (1639 modules)
+ ✓ Compiled in 492ms (1639 modules)
+ ✓ Compiled in 245ms (1639 modules)
+ ✓ Compiled in 241ms (1639 modules)
+ ✓ Compiled in 238ms (1639 modules)
+ ✓ Compiled in 270ms (1639 modules)

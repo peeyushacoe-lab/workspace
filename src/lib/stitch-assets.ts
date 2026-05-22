@@ -1,0 +1,18 @@
+/**
+ * Image URLs from Stitch export (`stitch_cybersage_mail_dashboard/templates_cybersage_mail/code.html`).
+ * Used for template library cards to match the Stitch design.
+ */
+export const STITCH_TEMPLATE_IMAGES: Record<string, string> = {
+  accepted:
+    "https://lh3.googleusercontent.com/aida-public/AB6AXuCnw30xQxGJSQMAtmauY6lYWMR42IxoeTtZSyBwxJasEcOvyqkTp9OWseoRiEc4McVdtZXutOgt0MnNoD3HqaEB2DVo1yXrzbCVADq_speX2BsoDooBTGskNLkmO41k3DRo_33LnUhMd-oT318WYd6awn_j9Jm6qgse27beWFrPs22QXQf9_c1PPPNbZojRn6tocg1yBFcAGSAKJ9aDgVi0o3f1U1-KsbBHfHQks3Qa8JgK6F9DhcPW1O5-Bec2dbWDKJcxB_NIqWcW",
+  rejected:
+    "https://lh3.googleusercontent.com/aida-public/AB6AXuAV33WXReXbMhLBYPSl8cmz-6CbZn29_U5U6M6ZPUeS6REIm_NVSoehn9han51eGhYxH3JcfO7oHFwzoxpDEFTm5lHGgz9tJJaI5aFpJQdJQTje6YOe-tPUKI5JYIOVPiPGrIOxMIj7-pDc55YSlkfo32Rh4HhS4QjkeF0CZNQFS6G-G_FPmUlmaPxnpi8DoMrzu4nzH80TDQkZIYNpFET_PzcOs3A0Ce5admG2IWu4QksiB24ZAWxpJhzT4vJarUNht9_dDgAMYH08",
+  interview:
+    "https://lh3.googleusercontent.com/aida-public/AB6AXuANqeG1GhcE7Sz0o0RhURU7CeK8IVOujsFY8G7p68qOJMzH8kQwsyG-AxBfTvCDs1o1Ymt7O2tOupeEFE6fJr8lQVexOSKjnMoXWfhp9yrl7Gse-zD-W-sJCBAO0w1aenjPiTKjxQpp_uu66xVzagsU5L2ftfXA2pY-gfXY45l2X9vCSslCke0IyUI-UzQuvYa3zeFIu0YpNBGw6Xe4lt9fbdiMXx6Z6ZPrVUE_8ApigAlQCt2FvtrLkjqJRQ6RfVC-TPMU6_Po0AZc",
+  reminder:
+    "https://lh3.googleusercontent.com/aida-public/AB6AXuDN2AQqUGMuU_viXxTk-R-vcphJthgkYYLqWIXFHWpws-N1-3WbJX6mtZz13PhgjM0l46EV7mWMyTv9GkOIfaWGVS0Jwjjg8vaK0wg8qRhfsWXln1qSFIAvOt54B4eDWY0PHBsuC-TtLz337PfEdr3SgPKIrQJSaTUXyw6oLIEPr6Q8rgu-QXWIdfCPaoaGWf-ZlB2BtUv6DcN8Ll-aScsdH2uq0U98KyGH--7o7qs6CFok24PPy6dezdRP4IxUmIKrvOtmq760KxrT",
+};
+
+/** Optional hero / composer art from Stitch composer export */
+export const STITCH_COMPOSER_HERO_IMAGE =
+  "https://lh3.googleusercontent.com/aida-public/AB6AXuB8CP9xC2kakaBldTg_39ll8wzw3YcuCDESuVdeWazvj2h6WR3P7se-We5OgkKR9Iu0AlMLoRwFs4EdmJlTz1GCgC7GwKVb1j-_CT-enK6LK4JPUf-BjbkVEuSUW2k6ozQ930xJv593iboRtw1zr-A4ufsSZu_wYBEHIPs8Iq_r0-1M3aSC_MnwNsSA-iYqDMO58KhQ0FIsY3HT9djJ7D3DFMFQBxwlQiyuVTPCXjox29GLSTV7j_9CP3XbqDmo3w9WeFJk9V67_lZq";

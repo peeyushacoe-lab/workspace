@@ -1,0 +1,1571 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum CampaignStatus {
+  DRAFT
+  QUEUED
+  SENDING
+  SENT
+  FAILED
+}
+
+enum EmailStatus {
+  PENDING
+  QUEUED
+  SENT
+  DELIVERED
+  OPENED
+  CLICKED
+  BOUNCED
+  FAILED
+}
+
+enum EmailTemplate {
+  ACCEPTED
+  REJECTED
+  INTERVIEW
+  REMINDER
+  CUSTOM
+}
+
+enum UserRole {
+  // System
+  ADMIN
+
+  // Key leadership (one of each — enforced in API)
+  CEO
+  CISO
+  R_AND_D
+  COO
+  OPS_MANAGER
+
+  // Team members
+  DEVELOPER
+  CYBER_SECURITY
+  QA
+  MARKETING
+  RESEARCH
+  FINANCE
+  OPERATIONS
+  SUPPORT
+
+  // Legacy — kept for DB backward-compat, not exposed in UI
+  INTERNSHIP
+}
+
+model User {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  passwordHash    String?
+  fullName        String
+  role            UserRole @default(ADMIN)
+  avatarUrl         String?
+  isActive          Boolean  @default(true)
+  mustResetPassword Boolean  @default(false)
+  hasCompletedTour  Boolean  @default(false)
+  personalEmail     String?
+  invitedBy         String?
+  mfaEnabled        Boolean  @default(false)
+  mfaSecret         String?
+  mfaBackupCodes    String[] @default([])
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  mailboxes         MailboxAccess[]
+  presence          UserPresence?
+  riskScore         Int?
+  riskLevel         String?
+  lastRiskSync      DateTime?
+  ssoProvider       String?
+  ssoSubject        String?
+  signature         Signature?
+  loginEvents       LoginEvent[]
+  emailLogs         EmailLog[]
+  chatMemberships   ChatMember[]
+  chatMessages      ChatMessage[]
+  chatReactions     ChatReaction[]
+  driveFolders      DriveFolder[]
+  driveFiles        DriveFile[]
+  calendarEvents    CalendarEvent[]    @relation("EventOrganizer")
+  eventAttendances  EventAttendee[]    @relation("AttendeeUser")
+  aiInteractions    AIInteraction[]
+  aiMemories        AIMemory[]
+  assignedIncidents SecurityIncident[] @relation("IncidentAssignee")
+  notifications     Notification[]
+  userSessions      UserSession[]
+  notes             Note[]
+  drafts            Draft[]
+  meetings          Meeting[]          @relation("MeetingOrganizer")
+  meetingParticipations MeetingParticipant[]
+  legalHolds        LegalHold[]        @relation("LegalHoldUser")
+  legalHoldsPlaced  LegalHold[]        @relation("LegalHoldPlacedBy")
+}
+
+model LoginEvent {
+  id        String   @id @default(cuid())
+  userId    String?
+  email     String
+  success   Boolean
+  ip        String?
+  userAgent String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Signature {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  fullName    String
+  title       String
+  phone       String?
+  linkedinUrl String?
+  website     String?
+  html        String
+  plainText   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Mailbox {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  displayName  String
+  isShared     Boolean    @default(false)
+  isNoReply    Boolean    @default(false)
+  allowedRoles UserRole[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  accessLogs   MailboxAccess[]
+  threads      InboxThread[]
+  folders      MailFolder[]
+}
+
+model MailboxAccess {
+  id          String   @id @default(cuid())
+  mailboxId   String
+  userId      String
+  role        String   @default("VIEWER") // OWNER, EDITOR, VIEWER
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  mailbox     Mailbox @relation(fields: [mailboxId], references: [id], onDelete: Cascade)
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([mailboxId, userId])
+  @@index([userId])
+}
+
+enum ThreadPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+model MailFolder {
+  id        String   @id @default(cuid())
+  userId    String
+  mailboxId String?
+  name      String
+  color     String?
+  icon      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  mailbox Mailbox?      @relation(fields: [mailboxId], references: [id], onDelete: Cascade)
+  threads InboxThread[]
+
+  @@index([userId])
+  @@index([mailboxId])
+}
+
+enum MailRuleAction {
+  LABEL
+  MOVE_FOLDER
+  MARK_READ
+  STAR
+  ARCHIVE
+  TRASH
+  FORWARD
+  PRIORITY
+}
+
+model MailRule {
+  id         String         @id @default(cuid())
+  userId     String
+  name       String
+  isActive   Boolean        @default(true)
+  priority   Int            @default(0)
+  // Conditions (JSON): [{field: "from"|"to"|"subject"|"body", op: "contains"|"equals"|"startsWith", value: "..."}]
+  conditions Json
+  action     MailRuleAction
+  // Action params: folder id, label name, forward address, priority level, etc.
+  actionData Json?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  @@index([userId, isActive])
+}
+
+model ScheduledEmail {
+  id          String    @id @default(cuid())
+  userId      String
+  scheduledAt DateTime
+  sentAt      DateTime?
+  subject     String
+  body        String
+  toAddresses String[]
+  ccAddresses String[]  @default([])
+  bccAddresses String[] @default([])
+  fromEmail   String
+  signatureId String?
+  metadata    Json?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+  @@index([scheduledAt, sentAt])
+}
+
+model InboxThread {
+  id           String          @id @default(cuid())
+  subject      String
+  mailboxId    String
+  mailbox      Mailbox         @relation(fields: [mailboxId], references: [id], onDelete: Cascade)
+  folderId     String?
+  folder       MailFolder?     @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  isStarred    Boolean         @default(false)
+  isArchived   Boolean         @default(false)
+  isTrashed    Boolean         @default(false)
+  isSnoozed    Boolean         @default(false)
+  snoozedUntil DateTime?
+  priority     ThreadPriority  @default(NORMAL)
+  labels       String[]        @default([])
+  // Shared mailbox fields
+  assignedToId String?
+  slaDeadline  DateTime?
+  isLocked     Boolean         @default(false)
+  lockedBy     String?
+  lockedAt     DateTime?
+  // Internal notes for shared mailboxes
+  internalNote String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @default(now()) @updatedAt
+
+  messages InboxMessage[]
+
+  @@index([mailboxId])
+  @@index([mailboxId, createdAt])
+  @@index([mailboxId, isStarred])
+  @@index([mailboxId, isArchived])
+  @@index([mailboxId, isTrashed])
+  @@index([mailboxId, isSnoozed])
+  @@index([folderId])
+  @@index([assignedToId])
+}
+
+model Draft {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  to          String   @default("")
+  cc          String   @default("")
+  bcc         String   @default("")
+  subject     String   @default("")
+  body        String   @default("")
+  signatureId String?
+  savedAt     DateTime @default(now()) @updatedAt
+
+  @@index([userId, savedAt])
+}
+
+model InboxMessage {
+  id          String      @id @default(cuid())
+  threadId    String
+  thread      InboxThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  from        String
+  to          String
+  subject     String
+  textBody    String?
+  htmlBody    String?
+  isRead      Boolean     @default(false)
+  attachments EmailAttachment[]
+  threatScan  ThreatScan?
+  messageId   String?     @unique
+  inReplyTo   String?
+  references  String?
+  receivedAt  DateTime    @default(now())
+
+  @@index([threadId])
+  @@index([isRead])
+  @@index([threadId, receivedAt])
+}
+
+model EmailAttachment {
+  id          String   @id @default(cuid())
+  messageId   String
+  message     InboxMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  filename    String
+  mimeType    String
+  size        Int      @default(0)
+  storageUrl  String?
+  key         String?
+  bucket      String?
+  createdAt   DateTime @default(now())
+
+  @@index([messageId])
+}
+
+model SecurityEvent {
+  id        String   @id @default(cuid())
+  type      String
+  severity  String
+  userId    String?
+  ipAddress String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([type, severity])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorId     String?
+  action      String
+  targetType  String?
+  targetId    String?
+  metadata    Json?
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+
+  @@index([actorId])
+  @@index([targetId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+model ThreatScan {
+  id          String   @id @default(cuid())
+  messageId   String   @unique
+  message     InboxMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  riskScore   Int
+  findings    Json
+  scannedAt   DateTime @default(now())
+}
+
+model Contact {
+  id        String     @id @default(cuid())
+  name      String
+  email     String     @unique
+  status    String
+  metadata  Json?
+  logs      EmailLog[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Campaign {
+  id         String         @id @default(cuid())
+  title      String
+  template   EmailTemplate
+  recipients Int            @default(0)
+  sentCount  Int            @default(0)
+  failCount  Int            @default(0)
+  status     CampaignStatus @default(DRAFT)
+  logs       EmailLog[]
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model EmailLog {
+  id                String      @id @default(cuid())
+  recipient         String
+  subject           String
+  status            EmailStatus @default(PENDING)
+  error             String?
+  resendId          String?
+  providerMessageId String?
+  openedAt          DateTime?
+  clickedAt         DateTime?
+  bouncedAt         DateTime?
+  contactId         String?
+  campaignId        String?
+  payload           Json?
+  contact           Contact?    @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  campaign          Campaign?   @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  userId            String?
+  user              User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@index([campaignId])
+  @@index([status])
+  @@index([userId])
+  @@index([recipient])
+  @@index([resendId])
+}
+
+model SuppressionList {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  reason    String   // BOUNCE, SPAM, MANUAL
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}
+
+// ─── Phase 3: Workspace Chat ──────────────────────────────────────────────────
+
+enum ChatChannelType {
+  CHANNEL
+  DIRECT
+  GROUP
+}
+
+enum PresenceStatus {
+  ONLINE
+  AWAY
+  BUSY
+  INVISIBLE
+  OFFLINE
+}
+
+model UserPresence {
+  id           String         @id @default(cuid())
+  userId       String         @unique
+  status       PresenceStatus @default(OFFLINE)
+  statusMessage String?
+  lastSeenAt   DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+}
+
+model ChatChannel {
+  id             String          @id @default(cuid())
+  name           String
+  description    String?
+  type           ChatChannelType @default(CHANNEL)
+  isPrivate      Boolean         @default(false)
+  createdById    String?
+  pinnedMessageId String?
+  topic          String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  members  ChatMember[]
+  messages ChatMessage[]
+
+  @@index([type])
+}
+
+model ChatMember {
+  id         String      @id @default(cuid())
+  channelId  String
+  userId     String
+  role       String      @default("MEMBER")
+  lastReadAt DateTime?
+  joinedAt   DateTime    @default(now())
+
+  channel ChatChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([channelId, userId])
+  @@index([userId])
+}
+
+model ChatMessage {
+  id               String    @id @default(cuid())
+  channelId        String
+  userId           String
+  content          String
+  editedAt         DateTime?
+  deletedAt        DateTime?
+  parentId         String?
+  isPinned         Boolean   @default(false)
+  pinnedAt         DateTime?
+  mentionedUserIds String[]  @default([])
+  // Voice note fields
+  voiceNoteUrl     String?
+  voiceNoteDuration Int?
+  // File attachment
+  attachmentUrl    String?
+  attachmentName   String?
+  attachmentMime   String?
+  attachmentSize   Int?
+
+  channel   ChatChannel   @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent    ChatMessage?  @relation("ThreadReplies", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replies   ChatMessage[] @relation("ThreadReplies")
+  reactions ChatReaction[]
+  createdAt DateTime      @default(now())
+
+  @@index([channelId, createdAt])
+  @@index([userId])
+  @@index([parentId])
+  @@index([isPinned])
+}
+
+model ChatReaction {
+  id        String   @id @default(cuid())
+  messageId String
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+
+  message ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, emoji])
+}
+
+// ─── Phase 4: Drive / File Storage ───────────────────────────────────────────
+
+model DriveFolder {
+  id        String   @id @default(cuid())
+  name      String
+  parentId  String?
+  ownerId   String
+  isShared  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  parent      DriveFolder?  @relation("FolderTree", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  children    DriveFolder[] @relation("FolderTree")
+  files       DriveFile[]
+  owner       User          @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  permissions DrivePermission[]
+
+  @@index([ownerId])
+  @@index([parentId])
+}
+
+model DriveFile {
+  id             String    @id @default(cuid())
+  name           String
+  mimeType       String
+  size           BigInt    @default(0)
+  folderId       String?
+  ownerId        String
+  storageKey     String
+  storageUrl     String?
+  previewUrl     String?
+  description    String?
+  // File intelligence (Phase 4)
+  ocrText        String?
+  classification String?   // DOCUMENT, SPREADSHEET, PRESENTATION, IMAGE, CODE, ARCHIVE, OTHER
+  aiSummary      String?
+  isDuplicate    Boolean   @default(false)
+  duplicateOfId  String?
+  sensitivityLevel String? // PUBLIC, INTERNAL, CONFIDENTIAL, RESTRICTED
+  isStarred      Boolean   @default(false)
+  isTrashed      Boolean   @default(false)
+  trashedAt      DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  folder      DriveFolder?      @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  owner       User              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  versions    DriveFileVersion[]
+  permissions DrivePermission[]
+  activities  DriveActivity[]
+
+  @@index([ownerId])
+  @@index([folderId])
+  @@index([classification])
+}
+
+model DriveActivity {
+  id        String   @id @default(cuid())
+  fileId    String
+  userId    String
+  action    String   // VIEW, DOWNLOAD, EDIT, SHARE, COMMENT, VERSION_RESTORE
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  file DriveFile @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@index([fileId, createdAt])
+  @@index([userId])
+}
+
+model DriveFileVersion {
+  id         String   @id @default(cuid())
+  fileId     String
+  versionNum Int      @default(1)
+  storageKey String
+  size       BigInt   @default(0)
+  uploadedBy String
+  createdAt  DateTime @default(now())
+
+  file DriveFile @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@index([fileId])
+}
+
+model DrivePermission {
+  id        String    @id @default(cuid())
+  fileId    String?
+  folderId  String?
+  userId    String?
+  email     String?
+  role      String    @default("VIEWER")
+  token     String?   @unique
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+
+  file   DriveFile?   @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  folder DriveFolder? @relation(fields: [folderId], references: [id], onDelete: Cascade)
+
+  @@index([fileId])
+  @@index([folderId])
+  @@index([userId])
+}
+
+// ─── Phase 5: Calendar ────────────────────────────────────────────────────────
+
+enum EventVisibility {
+  PUBLIC
+  PRIVATE
+  TEAM
+}
+
+enum EventStatus {
+  TENTATIVE
+  CONFIRMED
+  CANCELLED
+}
+
+enum AttendeeStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  MAYBE
+}
+
+model CalendarEvent {
+  id             String          @id @default(cuid())
+  title          String
+  description    String?
+  location       String?
+  startAt        DateTime
+  endAt          DateTime
+  allDay         Boolean         @default(false)
+  timezone       String          @default("UTC")
+  visibility     EventVisibility @default(PUBLIC)
+  status         EventStatus     @default(CONFIRMED)
+  isRecurring    Boolean         @default(false)
+  recurrenceRule String?
+  organizerId    String
+  color          String?
+  meetingUrl     String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  organizer User            @relation("EventOrganizer", fields: [organizerId], references: [id], onDelete: Cascade)
+  attendees EventAttendee[]
+  reminders EventReminder[]
+
+  @@index([organizerId])
+  @@index([startAt, endAt])
+}
+
+model EventAttendee {
+  id      String         @id @default(cuid())
+  eventId String
+  userId  String?
+  email   String
+  name    String?
+  status  AttendeeStatus @default(PENDING)
+
+  event CalendarEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User?         @relation("AttendeeUser", fields: [userId], references: [id], onDelete: SetNull)
+
+  @@unique([eventId, email])
+  @@index([userId])
+}
+
+model EventReminder {
+  id            String   @id @default(cuid())
+  eventId       String
+  minutesBefore Int
+  method        String   @default("EMAIL")
+  sent          Boolean  @default(false)
+
+  event CalendarEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+  @@index([sent, eventId])
+}
+
+// ─── Phase 6: AI Interactions ─────────────────────────────────────────────────
+
+model AIInteraction {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  prompt    String
+  response  String
+  model     String   @default("gpt-4o-mini")
+  tokens    Int?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ─── Phase 8: Notifications ───────────────────────────────────────────────────
+
+enum NotificationType {
+  MENTION
+  CALENDAR_INVITE
+  CALENDAR_REMINDER
+  SOC_ALERT
+  DLP_VIOLATION
+  NEW_MESSAGE
+  FILE_SHARED
+  SYSTEM
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  body      String
+  read      Boolean          @default(false)
+  link      String?
+  metadata  Json?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([createdAt])
+}
+
+// ─── Phase 9: Session Management ─────────────────────────────────────────────
+
+model UserSession {
+  id         String   @id @default(cuid())
+  userId     String
+  token      String   @unique
+  deviceInfo String?
+  ipAddress  String?
+  userAgent  String?
+  lastSeenAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  expiresAt  DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// ─── Phase 7: Security Operations ────────────────────────────────────────────
+
+enum IncidentSeverity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum IncidentStatus {
+  OPEN
+  INVESTIGATING
+  CONTAINED
+  RESOLVED
+  CLOSED
+}
+
+model SecurityIncident {
+  id          String           @id @default(cuid())
+  title       String
+  description String
+  severity    IncidentSeverity
+  status      IncidentStatus   @default(OPEN)
+  assignedTo  String?
+  sourceType  String?
+  sourceId    String?
+  metadata    Json?
+  resolvedAt  DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  assignee User?              @relation("IncidentAssignee", fields: [assignedTo], references: [id], onDelete: SetNull)
+  timeline IncidentTimeline[]
+
+  @@index([status])
+  @@index([severity])
+}
+
+model IncidentTimeline {
+  id         String   @id @default(cuid())
+  incidentId String
+  userId     String?
+  action     String
+  note       String?
+  createdAt  DateTime @default(now())
+
+  incident SecurityIncident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+
+  @@index([incidentId])
+  @@index([userId])
+}
+
+// ─── Phase 9: Notes ───────────────────────────────────────────────────────────
+
+model Note {
+  id        String   @id @default(cuid())
+  title     String
+  content   String   @default("")
+  userId    String
+  pinned    Boolean  @default(false)
+  color     String?
+  isDoc     Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, pinned, updatedAt])
+}
+
+// ─── Phase 5: Sage Meet ───────────────────────────────────────────────────────
+
+enum MeetingStatus {
+  SCHEDULED
+  LIVE
+  ENDED
+  CANCELLED
+}
+
+model Meeting {
+  id            String        @id @default(cuid())
+  title         String
+  description   String?
+  organizerId   String
+  roomName      String        @unique
+  status        MeetingStatus @default(SCHEDULED)
+  scheduledAt   DateTime?
+  startedAt     DateTime?
+  endedAt       DateTime?
+  recordingUrl  String?
+  transcriptUrl String?
+  aiSummary     String?
+  actionItems   String[]      @default([])
+  maxParticipants Int         @default(50)
+  isRecordingEnabled Boolean  @default(false)
+  isTranscriptionEnabled Boolean @default(false)
+  passcode      String?
+  calendarEventId String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  organizer    User                 @relation("MeetingOrganizer", fields: [organizerId], references: [id], onDelete: Cascade)
+  participants MeetingParticipant[]
+
+  @@index([organizerId])
+  @@index([status])
+  @@index([scheduledAt])
+}
+
+enum ParticipantRole {
+  HOST
+  PRESENTER
+  PARTICIPANT
+}
+
+model MeetingParticipant {
+  id          String          @id @default(cuid())
+  meetingId   String
+  userId      String
+  role        ParticipantRole @default(PARTICIPANT)
+  joinedAt    DateTime?
+  leftAt      DateTime?
+  duration    Int?            // seconds
+  createdAt   DateTime        @default(now())
+
+  meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([meetingId, userId])
+  @@index([userId])
+}
+
+// ─── Phase 6: AI Operating System ────────────────────────────────────────────
+
+enum AIMemoryType {
+  PREFERENCE
+  PROJECT
+  WORKFLOW
+  CONTACT
+  FACT
+}
+
+model AIMemory {
+  id        String       @id @default(cuid())
+  userId    String
+  type      AIMemoryType @default(FACT)
+  content   String
+  context   String?
+  // Embedding stored as serialised float array until pgvector is provisioned
+  embedding Json?
+  tags      String[]     @default([])
+  expiresAt DateTime?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+  @@index([userId])
+}
+
+model AIAgent {
+  id           String   @id @default(cuid())
+  name         String
+  description  String?
+  type         String   // INBOX_TRIAGE, SCHEDULING, KNOWLEDGE, COMPLIANCE
+  isActive     Boolean  @default(true)
+  config       Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  runs AIAgentRun[]
+
+  @@index([type, isActive])
+}
+
+model AIAgentRun {
+  id        String   @id @default(cuid())
+  agentId   String
+  userId    String?
+  input     Json
+  output    Json?
+  status    String   @default("PENDING") // PENDING, RUNNING, DONE, FAILED
+  error     String?
+  startedAt DateTime @default(now())
+  endedAt   DateTime?
+
+  agent AIAgent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId])
+  @@index([userId])
+  @@index([status])
+}
+
+// ─── Phase 7: Sentinel Alerts ─────────────────────────────────────────────────
+
+model SentinelAlert {
+  id           String   @id @default(cuid())
+  alertType    String
+  severity     String   // LOW, MEDIUM, HIGH, CRITICAL
+  targetType   String   // email, file, chat, login, user
+  targetId     String
+  userId       String?
+  description  String
+  metadata     Json?
+  acknowledged Boolean  @default(false)
+  resolvedAt   DateTime?
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([severity, acknowledged])
+  @@index([createdAt])
+}
+
+// ─── Phase 8: Enterprise Admin ────────────────────────────────────────────────
+
+model SSOConfig {
+  id            String   @id @default(cuid())
+  provider      String   // SAML, OIDC, GOOGLE, MICROSOFT
+  entityId      String?
+  metadataUrl   String?
+  metadataXml   String?
+  clientId      String?
+  clientSecret  String?
+  callbackUrl   String?
+  isActive      Boolean  @default(false)
+  autoProvision Boolean  @default(true)
+  defaultRole   UserRole @default(DEVELOPER)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([provider, isActive])
+}
+
+model SCIMSync {
+  id          String   @id @default(cuid())
+  externalId  String   @unique
+  userId      String?
+  resourceType String  // User, Group
+  lastSyncAt  DateTime @default(now())
+  metadata    Json?
+
+  @@index([externalId])
+  @@index([userId])
+}
+
+model LegalHold {
+  id          String    @id @default(cuid())
+  userId      String
+  placedById  String
+  reason      String
+  scope       String[]  @default([])  // email, drive, chat, notes
+  isActive    Boolean   @default(true)
+  placedAt    DateTime  @default(now())
+  liftedAt    DateTime?
+  expiresAt   DateTime?
+  notes       String?
+
+  user      User @relation("LegalHoldUser",     fields: [userId],    references: [id], onDelete: Cascade)
+  placedBy  User @relation("LegalHoldPlacedBy", fields: [placedById], references: [id])
+
+  @@index([userId, isActive])
+  @@index([placedAt])
+}
+
+model RetentionPolicy {
+  id              String   @id @default(cuid())
+  name            String
+  resourceType    String   // email, drive, chat, notes, audit_logs
+  retentionDays   Int
+  deleteAfterHold Boolean  @default(false)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([resourceType, isActive])
+}
+
+// ─── Phase 8: Search Index ────────────────────────────────────────────────────
+
+model SearchIndex {
+  id           String   @id @default(cuid())
+  resourceType String   // email, chat_message, file, note, doc, calendar_event
+  resourceId   String
+  userId       String?
+  content      String
+  metadata     Json?
+  indexedAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([resourceType, resourceId])
+  @@index([resourceType])
+  @@index([userId])
+}
+
+// ─── Phase 11: Platform Hardening ────────────────────────────────────────────
+
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  domain      String?  @unique
+  plan        String   @default("FREE")  // FREE, PRO, ENTERPRISE
+  isActive    Boolean  @default(true)
+  settings    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([domain])
+}
+
+model Permission {
+  id        String   @id @default(cuid())
+  userId    String
+  resource  String   // email, drive, chat, meet, admin, sentinel, ai, calendar
+  action    String   // read, write, delete, share, admin
+  granted   Boolean  @default(true)
+  grantedBy String?
+  createdAt DateTime @default(now())
+
+  @@unique([userId, resource, action])
+  @@index([userId])
+}
+
+// ─── Phase 12: AI Memory / RAG ────────────────────────────────────────────────
+
+model DocumentEmbedding {
+  id           String   @id @default(cuid())
+  resourceType String   // email, file, note, doc, chat_message
+  resourceId   String
+  userId       String?
+  content      String   // the text chunk that was embedded
+  // Stored as Float array — cosine similarity via raw SQL / pgvector
+  embedding    Float[]
+  metadata     Json?
+  createdAt    DateTime @default(now())
+
+  @@unique([resourceType, resourceId])
+  @@index([resourceType])
+  @@index([userId])
+}
+
+model WorkspaceKnowledge {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  source    String   @default("manual")  // manual, ai_generated, imported
+  category  String?
+  tags      String[] @default([])
+  embedding Float[]
+  userId    String?
+  isPublic  Boolean  @default(false)
+  viewCount Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category])
+  @@index([userId])
+}
+
+// ─── Phase 13: Automation Engine ─────────────────────────────────────────────
+
+enum WorkflowStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+enum WorkflowRunStatus {
+  QUEUED
+  RUNNING
+  SUCCESS
+  FAILED
+  SKIPPED
+}
+
+model Workflow {
+  id          String         @id @default(cuid())
+  name        String
+  description String?
+  status      WorkflowStatus @default(DRAFT)
+  // { type: "EMAIL_RECEIVED"|"FILE_UPLOADED"|"CHAT_MESSAGE"|"SCHEDULED"|"MANUAL", conditions: [...] }
+  trigger     Json
+  // [{ type: "SEND_EMAIL"|"CREATE_TASK"|"NOTIFY"|"AI_PROCESS"|"WEBHOOK", config: {...} }]
+  actions     Json
+  createdById String
+  runCount    Int            @default(0)
+  lastRunAt   DateTime?
+  isAIPowered Boolean        @default(false)
+  aiPrompt    String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  runs WorkflowRun[]
+
+  @@index([status])
+  @@index([createdById])
+}
+
+model WorkflowRun {
+  id          String            @id @default(cuid())
+  workflowId  String
+  status      WorkflowRunStatus @default(QUEUED)
+  triggerData Json?
+  results     Json?
+  error       String?
+  startedAt   DateTime          @default(now())
+  endedAt     DateTime?
+
+  workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@index([workflowId])
+  @@index([status])
+  @@index([startedAt])
+}
+
+model ApprovalFlow {
+  id           String    @id @default(cuid())
+  title        String
+  description  String?
+  requesterId  String
+  approverId   String
+  status       String    @default("PENDING") // PENDING, APPROVED, REJECTED, CANCELLED
+  resourceType String?
+  resourceId   String?
+  metadata     Json?
+  dueAt        DateTime?
+  decidedAt    DateTime?
+  note         String?
+  createdAt    DateTime  @default(now())
+
+  @@index([requesterId])
+  @@index([approverId, status])
+}
+
+// ─── Phase 14: Sentinel Deep Integration ─────────────────────────────────────
+
+model FileScan {
+  id           String   @id @default(cuid())
+  fileId       String   @unique
+  status       String   @default("PENDING") // PENDING, SCANNING, CLEAN, INFECTED, ERROR
+  engine       String   @default("internal")
+  findings     Json?
+  malwareNames String[] @default([])
+  riskScore    Int      @default(0)
+  scannedAt    DateTime @default(now())
+
+  @@index([status])
+}
+
+model DLPPolicy {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  isActive    Boolean  @default(true)
+  scope       String[] @default([])  // email, drive, chat
+  // [{ type: "regex"|"keyword"|"pattern", value: "..." }]
+  patterns    Json
+  action      String   @default("ALERT")  // ALERT, BLOCK, QUARANTINE
+  severity    String   @default("MEDIUM")
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  violations DLPViolation[]
+
+  @@index([isActive])
+}
+
+model DLPViolation {
+  id           String    @id @default(cuid())
+  policyId     String
+  userId       String?
+  resourceType String    // email, file, chat_message
+  resourceId   String
+  snippet      String?
+  action       String    // ALERTED, BLOCKED, QUARANTINED
+  resolved     Boolean   @default(false)
+  resolvedAt   DateTime?
+  createdAt    DateTime  @default(now())
+
+  policy DLPPolicy @relation(fields: [policyId], references: [id], onDelete: Cascade)
+
+  @@index([policyId])
+  @@index([userId])
+  @@index([resolved])
+}
+
+model DeviceRiskProfile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  deviceId    String?
+  platform    String?
+  riskScore   Int      @default(0)
+  riskFactors Json?
+  lastSeenAt  DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([riskScore])
+}
+
+// ─── Phase 15: Real-Time Collaboration ───────────────────────────────────────
+
+model DocSession {
+  id           String   @id @default(cuid())
+  documentId   String
+  userId       String
+  cursorColor  String?
+  cursorName   String?
+  isActive     Boolean  @default(true)
+  joinedAt     DateTime @default(now())
+  lastSeenAt   DateTime @default(now())
+
+  @@index([documentId])
+  @@index([userId])
+}
+
+model DocComment {
+  id          String    @id @default(cuid())
+  documentId  String
+  userId      String
+  content     String
+  range       Json?     // { from: number, to: number } Tiptap position
+  resolved    Boolean   @default(false)
+  resolvedBy  String?
+  resolvedAt  DateTime?
+  parentId    String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  parent  DocComment?  @relation("CommentThread", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replies DocComment[] @relation("CommentThread")
+
+  @@index([documentId])
+  @@index([userId])
+}
+
+model DocSnapshot {
+  id         String   @id @default(cuid())
+  documentId String
+  content    String   // Tiptap JSON snapshot
+  version    Int      @default(1)
+  createdBy  String?
+  createdAt  DateTime @default(now())
+
+  @@index([documentId, version])
+}
+
+// ─── Phase 16: Ecosystem Platform ────────────────────────────────────────────
+
+model APIKey {
+  id         String    @id @default(cuid())
+  userId     String
+  name       String
+  keyHash    String    @unique
+  keyPrefix  String    // first 8 chars — shown in UI
+  scopes     String[]  @default([])
+  lastUsedAt DateTime?
+  expiresAt  DateTime?
+  isActive   Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model WebhookEndpoint {
+  id              String    @id @default(cuid())
+  userId          String
+  url             String
+  secret          String?
+  events          String[]  @default([])
+  isActive        Boolean   @default(true)
+  failCount       Int       @default(0)
+  lastTriggeredAt DateTime?
+  createdAt       DateTime  @default(now())
+
+  deliveries WebhookDelivery[]
+
+  @@index([userId])
+  @@index([isActive])
+}
+
+model WebhookDelivery {
+  id           String   @id @default(cuid())
+  endpointId   String
+  event        String
+  payload      Json
+  statusCode   Int?
+  responseBody String?
+  success      Boolean  @default(false)
+  attemptedAt  DateTime @default(now())
+
+  endpoint WebhookEndpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+
+  @@index([endpointId])
+  @@index([event])
+}
+
+// ─── Phase 17: Observability ──────────────────────────────────────────────────
+
+model MetricSnapshot {
+  id         String   @id @default(cuid())
+  name       String   // queue_depth, active_users, email_sent, api_latency_p99, etc.
+  value      Float
+  labels     Json?
+  capturedAt DateTime @default(now())
+
+  @@index([name, capturedAt])
+}
+
+model SystemHealthLog {
+  id        String   @id @default(cuid())
+  service   String   // api, worker, database, redis, s3, email
+  status    String   // healthy, degraded, down
+  latencyMs Int?
+  error     String?
+  checkedAt DateTime @default(now())
+
+  @@index([service, checkedAt])
+}
+
+// ─── Sentinel Parallel: SIEM + Threat Intel ──────────────────────────────────
+
+model ThreatIntelFeed {
+  id          String    @id @default(cuid())
+  type        String    // IP, DOMAIN, HASH, EMAIL, URL
+  value       String
+  confidence  Int       @default(50) // 0–100
+  severity    String    @default("MEDIUM")
+  source      String?
+  description String?
+  expiresAt   DateTime?
+  hitCount    Int       @default(0)
+  lastHitAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@unique([type, value])
+  @@index([type])
+  @@index([severity])
+}
+
+model SIEMEvent {
+  id            String   @id @default(cuid())
+  source        String   // email, drive, chat, auth, network, file
+  eventType     String
+  severity      String   @default("INFO")
+  userId        String?
+  ipAddress     String?
+  metadata      Json?
+  rawData       Json?
+  correlationId String?
+  processed     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  @@index([source, eventType])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([correlationId])
+}
+
+model DetectionRule {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  isActive    Boolean  @default(true)
+  severity    String   @default("MEDIUM")
+  // { conditions: [{field, op, value}], logic: "AND"|"OR" }
+  logic       Json
+  action      String   @default("ALERT")  // ALERT, BLOCK, QUARANTINE, ISOLATE
+  category    String?  // PHISHING, MALWARE, EXFILTRATION, ANOMALY, BRUTE_FORCE
+  hitCount    Int      @default(0)
+  lastHitAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive, severity])
+  @@index([category])
+}
+
+model BehavioralBaseline {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  avgEmailsPerDay Float    @default(0)
+  avgFilesPerDay  Float    @default(0)
+  avgLoginHour    Float    @default(9)
+  commonIPs       String[] @default([])
+  anomalyScore    Int      @default(0)
+  lastUpdatedAt   DateTime @default(now())
+
+  @@index([anomalyScore])
+}
+
+// ─── Brain Parallel: Multi-Agent + Knowledge Graph ───────────────────────────
+
+enum AgentTaskStatus {
+  PENDING
+  RUNNING
+  WAITING_APPROVAL
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+model AgentTask {
+  id           String          @id @default(cuid())
+  agentId      String?
+  userId       String?
+  title        String
+  description  String?
+  status       AgentTaskStatus @default(PENDING)
+  priority     Int             @default(5)  // 1–10
+  input        Json?
+  output       Json?
+  steps        Json?           // array of completed reasoning steps
+  error        String?
+  parentTaskId String?
+  metadata     Json?
+  startedAt    DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime        @default(now())
+
+  parent   AgentTask?  @relation("TaskTree", fields: [parentTaskId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  children AgentTask[] @relation("TaskTree")
+
+  @@index([userId])
+  @@index([status])
+  @@index([agentId])
+}
+
+model KnowledgeNode {
+  id         String   @id @default(cuid())
+  label      String
+  type       String   // PERSON, CONCEPT, PROJECT, PROCESS, FACT, ENTITY
+  content    String?
+  embedding  Float[]
+  properties Json?
+  userId     String?
+  isPublic   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  sourceEdges KnowledgeEdge[] @relation("EdgeSource")
+  targetEdges KnowledgeEdge[] @relation("EdgeTarget")
+
+  @@index([type])
+  @@index([userId])
+}
+
+model KnowledgeEdge {
+  id           String   @id @default(cuid())
+  sourceId     String
+  targetId     String
+  relationship String   // RELATES_TO, PART_OF, CREATED_BY, DEPENDS_ON, CONTRADICTS
+  weight       Float    @default(1.0)
+  metadata     Json?
+  createdAt    DateTime @default(now())
+
+  source KnowledgeNode @relation("EdgeSource", fields: [sourceId], references: [id], onDelete: Cascade)
+  target KnowledgeNode @relation("EdgeTarget", fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceId, targetId, relationship])
+  @@index([sourceId])
+  @@index([targetId])
+}
+
+model AgentOrchestration {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  agentIds    String[]  @default([])
+  objective   String
+  status      String    @default("IDLE")  // IDLE, RUNNING, COMPLETED, FAILED
+  plan        Json?
+  results     Json?
+  userId      String?
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([status])
+  @@index([userId])
+}

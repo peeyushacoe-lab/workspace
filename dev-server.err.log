@@ -1,0 +1,590 @@
+ ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of E:\Custom email provider V2\package-lock.json as the root directory.
+ To silence this warning, set `outputFileTracingRoot` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/output#caveats for more information.
+ Detected additional lockfiles: 
+   * E:\Custom email provider V2\cybersage-mail\package-lock.json
+
+(node:28624) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (194kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (139kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+ ⨯ [Error: ENOENT: no such file or directory, open 'E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'E:\\Custom email provider V2\\cybersage-mail\\.next\\server\\app\\api\\inbox\\unread-count\\route.js',
+  page: '/api/inbox/unread-count'
+}
+TypeError: Invalid state: Controller is already closed
+    at eval (src\app\api\notifications\stream\route.ts:29:22)
+  27 |         if (err) {
+  28 |           clearInterval(keepalive);
+> 29 |           controller.close();
+     |                      ^
+  30 |           subscriber.disconnect();
+  31 |         }
+  32 |       }); {
+  code: 'ERR_INVALID_STATE'
+}
+ ⨯ uncaughtException: TypeError: Invalid state: Controller is already closed
+    at eval (src\app\api\notifications\stream\route.ts:29:22)
+  27 |         if (err) {
+  28 |           clearInterval(keepalive);
+> 29 |           controller.close();
+     |                      ^
+  30 |           subscriber.disconnect();
+  31 |         }
+  32 |       }); {
+  code: 'ERR_INVALID_STATE'
+}
+ ⨯ uncaughtException:  TypeError: Invalid state: Controller is already closed
+    at eval (src\app\api\notifications\stream\route.ts:29:22)
+  27 |         if (err) {
+  28 |           clearInterval(keepalive);
+> 29 |           controller.close();
+     |                      ^
+  30 |           subscriber.disconnect();
+  31 |         }
+  32 |       }); {
+  code: 'ERR_INVALID_STATE'
+}
+[ioredis] Unhandled error event: ReplyError: ERR max requests limit exceeded. Limit: 500000, Usage: 500002. See https://upstash.com/docs/redis/troubleshooting/max_requests_limit for details
+    at parseError (E:\Custom email provider V2\cybersage-mail\node_modules\redis-parser\lib\parser.js:179:12)
+    at parseType (E:\Custom email provider V2\cybersage-mail\node_modules\redis-parser\lib\parser.js:302:14)
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⨯ TypeError: __webpack_modules__[moduleId] is not a function
+    at __webpack_exec__ (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:660:39)
+    at <unknown> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:661:314)
+    at <unknown> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:661:47)
+    at Object.<anonymous> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:664:3) {
+  page: '/api/inbox/unread-count'
+}
+ ⨯ TypeError: __webpack_modules__[moduleId] is not a function
+    at __webpack_exec__ (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:660:39)
+    at <unknown> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:661:314)
+    at <unknown> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:661:47)
+    at Object.<anonymous> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:664:3) {
+  page: '/api/inbox/unread-count'
+}
+[Error: Connection is closed.]
+ ⨯ unhandledRejection: [Error: Connection is closed.]
+ ⨯ unhandledRejection:  [Error: Connection is closed.]
+TypeError: Invalid state: Controller is already closed
+    at eval (src\app\api\notifications\stream\route.ts:29:22)
+  27 |         if (err) {
+  28 |           clearInterval(keepalive);
+> 29 |           controller.close();
+     |                      ^
+  30 |           subscriber.disconnect();
+  31 |         }
+  32 |       }); {
+  code: 'ERR_INVALID_STATE'
+}
+ ⨯ uncaughtException: TypeError: Invalid state: Controller is already closed
+    at eval (src\app\api\notifications\stream\route.ts:29:22)
+  27 |         if (err) {
+  28 |           clearInterval(keepalive);
+> 29 |           controller.close();
+     |                      ^
+  30 |           subscriber.disconnect();
+  31 |         }
+  32 |       }); {
+  code: 'ERR_INVALID_STATE'
+}
+ ⨯ uncaughtException:  TypeError: Invalid state: Controller is already closed
+    at eval (src\app\api\notifications\stream\route.ts:29:22)
+  27 |         if (err) {
+  28 |           clearInterval(keepalive);
+> 29 |           controller.close();
+     |                      ^
+  30 |           subscriber.disconnect();
+  31 |         }
+  32 |       }); {
+  code: 'ERR_INVALID_STATE'
+}
+Validation failed for /api/send: {
+  "_errors": [],
+  "senderEmail": {
+    "_errors": [
+      "Invalid input"
+    ]
+  }
+}
+[Error: Cannot find module 'E:\Custom email provider V2\cybersage-mail\.next\server\vendor-chunks\lib\worker.js'] {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+ ⨯ uncaughtException: [Error: Cannot find module 'E:\Custom email provider V2\cybersage-mail\.next\server\vendor-chunks\lib\worker.js'] {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+ ⨯ uncaughtException:  [Error: Cannot find module 'E:\Custom email provider V2\cybersage-mail\.next\server\vendor-chunks\lib\worker.js'] {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+[Error: the worker thread exited]
+ ⨯ uncaughtException: [Error: the worker thread exited]
+ ⨯ uncaughtException:  [Error: the worker thread exited]
+[Error: Connection is closed.]
+ ⨯ unhandledRejection: [Error: Connection is closed.]
+ ⨯ unhandledRejection:  [Error: Connection is closed.]
+TypeError: Invalid state: Controller is already closed
+    at eval (src\app\api\notifications\stream\route.ts:29:22)
+  27 |         if (err) {
+  28 |           clearInterval(keepalive);
+> 29 |           controller.close();
+     |                      ^
+  30 |           subscriber.disconnect();
+  31 |         }
+  32 |       }); {
+  code: 'ERR_INVALID_STATE'
+}
+ ⨯ uncaughtException: TypeError: Invalid state: Controller is already closed
+    at eval (src\app\api\notifications\stream\route.ts:29:22)
+  27 |         if (err) {
+  28 |           clearInterval(keepalive);
+> 29 |           controller.close();
+     |                      ^
+  30 |           subscriber.disconnect();
+  31 |         }
+  32 |       }); {
+  code: 'ERR_INVALID_STATE'
+}
+ ⨯ uncaughtException:  TypeError: Invalid state: Controller is already closed
+    at eval (src\app\api\notifications\stream\route.ts:29:22)
+  27 |         if (err) {
+  28 |           clearInterval(keepalive);
+> 29 |           controller.close();
+     |                      ^
+  30 |           subscriber.disconnect();
+  31 |         }
+  32 |       }); {
+  code: 'ERR_INVALID_STATE'
+}
+Validation failed for /api/send: {
+  "_errors": [],
+  "senderEmail": {
+    "_errors": [
+      "Invalid input"
+    ]
+  }
+}
+TypeError: Invalid state: Controller is already closed
+    at eval (src\app\api\notifications\stream\route.ts:29:22)
+  27 |         if (err) {
+  28 |           clearInterval(keepalive);
+> 29 |           controller.close();
+     |                      ^
+  30 |           subscriber.disconnect();
+  31 |         }
+  32 |       }); {
+  code: 'ERR_INVALID_STATE'
+}
+ ⨯ uncaughtException: TypeError: Invalid state: Controller is already closed
+    at eval (src\app\api\notifications\stream\route.ts:29:22)
+  27 |         if (err) {
+  28 |           clearInterval(keepalive);
+> 29 |           controller.close();
+     |                      ^
+  30 |           subscriber.disconnect();
+  31 |         }
+  32 |       }); {
+  code: 'ERR_INVALID_STATE'
+}
+ ⨯ uncaughtException:  TypeError: Invalid state: Controller is already closed
+    at eval (src\app\api\notifications\stream\route.ts:29:22)
+  27 |         if (err) {
+  28 |           clearInterval(keepalive);
+> 29 |           controller.close();
+     |                      ^
+  30 |           subscriber.disconnect();
+  31 |         }
+  32 |       }); {
+  code: 'ERR_INVALID_STATE'
+}
+[Error: Cannot find module 'E:\Custom email provider V2\cybersage-mail\.next\server\vendor-chunks\lib\worker.js'] {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+ ⨯ uncaughtException: [Error: Cannot find module 'E:\Custom email provider V2\cybersage-mail\.next\server\vendor-chunks\lib\worker.js'] {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+ ⨯ uncaughtException:  [Error: Cannot find module 'E:\Custom email provider V2\cybersage-mail\.next\server\vendor-chunks\lib\worker.js'] {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+[Error: the worker thread exited]
+ ⨯ uncaughtException: [Error: the worker thread exited]
+ ⨯ uncaughtException:  [Error: the worker thread exited]
+Validation failed for /api/send: {
+  "_errors": [],
+  "senderEmail": {
+    "_errors": [
+      "Invalid input"
+    ]
+  }
+}
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+[Error: Connection is closed.]
+ ⨯ unhandledRejection: [Error: Connection is closed.]
+ ⨯ unhandledRejection:  [Error: Connection is closed.]
+[Error: Connection is closed.]
+ ⨯ unhandledRejection: [Error: Connection is closed.]
+ ⨯ unhandledRejection:  [Error: Connection is closed.]
+[Error: Connection is closed.]
+ ⨯ unhandledRejection: [Error: Connection is closed.]
+ ⨯ unhandledRejection:  [Error: Connection is closed.]
+[Error: Connection is closed.]
+ ⨯ unhandledRejection: [Error: Connection is closed.]
+ ⨯ unhandledRejection:  [Error: Connection is closed.]
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⨯ [TypeError: controller[kState].transformAlgorithm is not a function] {
+  digest: '1421891886'
+}
+TypeError: Invalid state: Controller is already closed
+    at eval (src\app\api\notifications\stream\route.ts:29:22)
+  27 |         if (err) {
+  28 |           clearInterval(keepalive);
+> 29 |           controller.close();
+     |                      ^
+  30 |           subscriber.disconnect();
+  31 |         }
+  32 |       }); {
+  code: 'ERR_INVALID_STATE'
+}
+ ⨯ uncaughtException: TypeError: Invalid state: Controller is already closed
+    at eval (src\app\api\notifications\stream\route.ts:29:22)
+  27 |         if (err) {
+  28 |           clearInterval(keepalive);
+> 29 |           controller.close();
+     |                      ^
+  30 |           subscriber.disconnect();
+  31 |         }
+  32 |       }); {
+  code: 'ERR_INVALID_STATE'
+}
+ ⨯ uncaughtException:  TypeError: Invalid state: Controller is already closed
+    at eval (src\app\api\notifications\stream\route.ts:29:22)
+  27 |         if (err) {
+  28 |           clearInterval(keepalive);
+> 29 |           controller.close();
+     |                      ^
+  30 |           subscriber.disconnect();
+  31 |         }
+  32 |       }); {
+  code: 'ERR_INVALID_STATE'
+}
+TypeError: Invalid state: Controller is already closed
+    at eval (src\app\api\notifications\stream\route.ts:29:22)
+  27 |         if (err) {
+  28 |           clearInterval(keepalive);
+> 29 |           controller.close();
+     |                      ^
+  30 |           subscriber.disconnect();
+  31 |         }
+  32 |       }); {
+  code: 'ERR_INVALID_STATE'
+}
+ ⨯ uncaughtException: TypeError: Invalid state: Controller is already closed
+    at eval (src\app\api\notifications\stream\route.ts:29:22)
+  27 |         if (err) {
+  28 |           clearInterval(keepalive);
+> 29 |           controller.close();
+     |                      ^
+  30 |           subscriber.disconnect();
+  31 |         }
+  32 |       }); {
+  code: 'ERR_INVALID_STATE'
+}
+ ⨯ uncaughtException:  TypeError: Invalid state: Controller is already closed
+    at eval (src\app\api\notifications\stream\route.ts:29:22)
+  27 |         if (err) {
+  28 |           clearInterval(keepalive);
+> 29 |           controller.close();
+     |                      ^
+  30 |           subscriber.disconnect();
+  31 |         }
+  32 |       }); {
+  code: 'ERR_INVALID_STATE'
+}
+[ioredis] Unhandled error event: Error: read ECONNRESET
+    at TLSWrap.onStreamRead (node:internal/stream_base_commons:216:20)
+    at TLSWrap.callbackTrampoline (node:internal/async_hooks:130:17)
+[pg pool] idle client error: Connection terminated unexpectedly
+[pg pool] idle client error: Connection terminated unexpectedly
+[pg pool] idle client error: Connection terminated unexpectedly
+[pg pool] idle client error: Connection terminated unexpectedly
+[pg pool] idle client error: Connection terminated unexpectedly
+[ioredis] Unhandled error event: Error: read ECONNRESET
+    at TLSWrap.onStreamRead (node:internal/stream_base_commons:216:20)
+    at TLSWrap.callbackTrampoline (node:internal/async_hooks:130:17)
+[pg pool] idle client error: Connection terminated unexpectedly
+[pg pool] idle client error: Connection terminated unexpectedly
+[ioredis] Unhandled error event: Error: read ECONNRESET
+    at TLSWrap.onStreamRead (node:internal/stream_base_commons:216:20)
+    at TLSWrap.callbackTrampoline (node:internal/async_hooks:130:17)
+[ioredis] Unhandled error event: ReplyError: ERR max requests limit exceeded. Limit: 500000, Usage: 500002. See https://upstash.com/docs/redis/troubleshooting/max_requests_limit for details
+    at parseError (E:\Custom email provider V2\cybersage-mail\node_modules\redis-parser\lib\parser.js:179:12)
+    at parseType (E:\Custom email provider V2\cybersage-mail\node_modules\redis-parser\lib\parser.js:302:14)
+[ioredis] Unhandled error event: Error: read ECONNRESET
+    at TLSWrap.onStreamRead (node:internal/stream_base_commons:216:20)
+    at TLSWrap.callbackTrampoline (node:internal/async_hooks:130:17)
+[ioredis] Unhandled error event: Error: getaddrinfo ENOTFOUND devoted-mammal-120812.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17)
+[ioredis] Unhandled error event: Error: getaddrinfo ENOTFOUND devoted-mammal-120812.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17)
+[ioredis] Unhandled error event: Error: getaddrinfo ENOTFOUND devoted-mammal-120812.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17)
+[ioredis] Unhandled error event: Error: getaddrinfo ENOTFOUND devoted-mammal-120812.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17)
+[ioredis] Unhandled error event: Error: getaddrinfo ENOTFOUND devoted-mammal-120812.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17)
+[ioredis] Unhandled error event: Error: getaddrinfo ENOTFOUND devoted-mammal-120812.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17)
+[ioredis] Unhandled error event: Error: getaddrinfo ENOTFOUND devoted-mammal-120812.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17)
+[ioredis] Unhandled error event: Error: getaddrinfo ENOTFOUND devoted-mammal-120812.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17)
+[ioredis] Unhandled error event: Error: getaddrinfo ENOTFOUND devoted-mammal-120812.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17)
+[ioredis] Unhandled error event: Error: getaddrinfo ENOTFOUND devoted-mammal-120812.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17)
+[ioredis] Unhandled error event: Error: getaddrinfo ENOTFOUND devoted-mammal-120812.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17)
+[ioredis] Unhandled error event: Error: getaddrinfo ENOTFOUND devoted-mammal-120812.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17)
+[ioredis] Unhandled error event: Error: getaddrinfo ENOTFOUND devoted-mammal-120812.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17)
+[ioredis] Unhandled error event: Error: getaddrinfo ENOTFOUND devoted-mammal-120812.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17)
+[ioredis] Unhandled error event: Error: getaddrinfo ENOTFOUND devoted-mammal-120812.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17)
+[ioredis] Unhandled error event: Error: getaddrinfo ENOTFOUND devoted-mammal-120812.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17)
+[ioredis] Unhandled error event: Error: getaddrinfo ENOTFOUND devoted-mammal-120812.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17)
+[ioredis] Unhandled error event: Error: getaddrinfo ENOTFOUND devoted-mammal-120812.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17)
+[ioredis] Unhandled error event: ReplyError: ERR max requests limit exceeded. Limit: 500000, Usage: 500002. See https://upstash.com/docs/redis/troubleshooting/max_requests_limit for details
+    at parseError (E:\Custom email provider V2\cybersage-mail\node_modules\redis-parser\lib\parser.js:179:12)
+    at parseType (E:\Custom email provider V2\cybersage-mail\node_modules\redis-parser\lib\parser.js:302:14)
+ ⨯ TypeError: __webpack_modules__[moduleId] is not a function
+    at __webpack_exec__ (E:\Custom email provider V2\cybersage-mail\.next\server\app\login\page.js:778:39)
+    at <unknown> (E:\Custom email provider V2\cybersage-mail\.next\server\app\login\page.js:779:335)
+    at <unknown> (E:\Custom email provider V2\cybersage-mail\.next\server\app\login\page.js:779:47)
+    at Object.<anonymous> (E:\Custom email provider V2\cybersage-mail\.next\server\app\login\page.js:782:3) {
+  page: '/login'
+}
+ ⨯ TypeError: __webpack_modules__[moduleId] is not a function
+    at __webpack_exec__ (E:\Custom email provider V2\cybersage-mail\.next\server\app\login\page.js:778:39)
+    at <unknown> (E:\Custom email provider V2\cybersage-mail\.next\server\app\login\page.js:779:335)
+    at <unknown> (E:\Custom email provider V2\cybersage-mail\.next\server\app\login\page.js:779:47)
+    at Object.<anonymous> (E:\Custom email provider V2\cybersage-mail\.next\server\app\login\page.js:782:3) {
+  page: '/login'
+}
+ ⨯ TypeError: __webpack_modules__[moduleId] is not a function
+    at __webpack_exec__ (E:\Custom email provider V2\cybersage-mail\.next\server\app\login\page.js:778:39)
+    at <unknown> (E:\Custom email provider V2\cybersage-mail\.next\server\app\login\page.js:779:335)
+    at <unknown> (E:\Custom email provider V2\cybersage-mail\.next\server\app\login\page.js:779:47)
+    at Object.<anonymous> (E:\Custom email provider V2\cybersage-mail\.next\server\app\login\page.js:782:3) {
+  page: '/login'
+}
+ ⨯ TypeError: __webpack_modules__[moduleId] is not a function
+    at __webpack_exec__ (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:660:39)
+    at <unknown> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:661:314)
+    at <unknown> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:661:47)
+    at Object.<anonymous> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:664:3) {
+  page: '/api/inbox/unread-count'
+}
+ ⨯ TypeError: __webpack_modules__[moduleId] is not a function
+    at __webpack_exec__ (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:660:39)
+    at <unknown> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:661:314)
+    at <unknown> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:661:47)
+    at Object.<anonymous> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:664:3) {
+  page: '/api/inbox/unread-count'
+}
+ ⨯ TypeError: __webpack_modules__[moduleId] is not a function
+    at __webpack_exec__ (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:660:39)
+    at <unknown> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:661:314)
+    at <unknown> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:661:47)
+    at Object.<anonymous> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:664:3) {
+  page: '/api/inbox/unread-count'
+}
+ ⨯ TypeError: __webpack_modules__[moduleId] is not a function
+    at __webpack_exec__ (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:660:39)
+    at <unknown> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:661:314)
+    at <unknown> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:661:47)
+    at Object.<anonymous> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:664:3) {
+  page: '/api/inbox/unread-count'
+}
+ ⨯ TypeError: __webpack_modules__[moduleId] is not a function
+    at __webpack_exec__ (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:660:39)
+    at <unknown> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:661:314)
+    at <unknown> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:661:47)
+    at Object.<anonymous> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:664:3) {
+  page: '/api/inbox/unread-count'
+}
+ ⨯ TypeError: __webpack_modules__[moduleId] is not a function
+    at __webpack_exec__ (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:660:39)
+    at <unknown> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:661:314)
+    at <unknown> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:661:47)
+    at Object.<anonymous> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:664:3) {
+  page: '/api/inbox/unread-count'
+}
+ ⨯ TypeError: __webpack_modules__[moduleId] is not a function
+    at __webpack_exec__ (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:660:39)
+    at <unknown> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:661:314)
+    at <unknown> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:661:47)
+    at Object.<anonymous> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:664:3) {
+  page: '/api/inbox/unread-count'
+}
+ ⨯ TypeError: __webpack_modules__[moduleId] is not a function
+    at __webpack_exec__ (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:660:39)
+    at <unknown> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:661:314)
+    at <unknown> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:661:47)
+    at Object.<anonymous> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:664:3) {
+  page: '/api/inbox/unread-count'
+}
+ ⨯ TypeError: __webpack_modules__[moduleId] is not a function
+    at __webpack_exec__ (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:660:39)
+    at <unknown> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:661:314)
+    at <unknown> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:661:47)
+    at Object.<anonymous> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:664:3) {
+  page: '/api/inbox/unread-count'
+}
+ ⨯ TypeError: __webpack_modules__[moduleId] is not a function
+    at __webpack_exec__ (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:660:39)
+    at <unknown> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:661:314)
+    at <unknown> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:661:47)
+    at Object.<anonymous> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:664:3) {
+  page: '/api/inbox/unread-count'
+}
+ ⨯ TypeError: __webpack_modules__[moduleId] is not a function
+    at __webpack_exec__ (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:660:39)
+    at <unknown> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:661:314)
+    at <unknown> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:661:47)
+    at Object.<anonymous> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:664:3) {
+  page: '/api/inbox/unread-count'
+}
+ ⨯ TypeError: __webpack_modules__[moduleId] is not a function
+    at __webpack_exec__ (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:660:39)
+    at <unknown> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:661:314)
+    at <unknown> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:661:47)
+    at Object.<anonymous> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:664:3) {
+  page: '/api/inbox/unread-count'
+}
+ ⨯ TypeError: __webpack_modules__[moduleId] is not a function
+    at __webpack_exec__ (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:660:39)
+    at <unknown> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:661:314)
+    at <unknown> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:661:47)
+    at Object.<anonymous> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:664:3) {
+  page: '/api/inbox/unread-count'
+}
+ ⨯ TypeError: __webpack_modules__[moduleId] is not a function
+    at __webpack_exec__ (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:660:39)
+    at <unknown> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:661:314)
+    at <unknown> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:661:47)
+    at Object.<anonymous> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:664:3) {
+  page: '/api/inbox/unread-count'
+}
+ ⨯ TypeError: __webpack_modules__[moduleId] is not a function
+    at __webpack_exec__ (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:660:39)
+    at <unknown> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:661:314)
+    at <unknown> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:661:47)
+    at Object.<anonymous> (E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js:664:3) {
+  page: '/api/inbox/unread-count'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'E:\Custom email provider V2\cybersage-mail\.next\server\app\api\inbox\unread-count\route.js'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'E:\\Custom email provider V2\\cybersage-mail\\.next\\server\\app\\api\\inbox\\unread-count\\route.js',
+  page: '/api/inbox/unread-count'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'E:\Custom email provider V2\cybersage-mail\.next\server\pages\_document.js'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'E:\\Custom email provider V2\\cybersage-mail\\.next\\server\\pages\\_document.js'
+}
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (194kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (139kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+ ⚠ Found a change in next.config.ts. Restarting the server to apply the changes...
+(node:34068) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (194kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (139kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+[pg pool] idle client error: Connection terminated unexpectedly
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (194kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (139kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (194kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (139kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+ ⚠ Found a change in next.config.ts. Restarting the server to apply the changes...
+[@sentry/nextjs] DEPRECATION WARNING: disableLogger is deprecated and will be removed in a future version. Use webpack.treeshake.removeDebugLogging instead.
+[env] Optional env vars not set: NEXT_PUBLIC_SENTRY_DSN — some features may be limited.
+(node:8536) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ⚠ Found a change in next.config.ts. Restarting the server to apply the changes...
+[@sentry/nextjs] DEPRECATION WARNING: disableLogger is deprecated and will be removed in a future version. Use webpack.treeshake.removeDebugLogging instead.
+[env] Optional env vars not set: NEXT_PUBLIC_SENTRY_DSN — some features may be limited.
+(node:22520) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[pg pool] idle client error: Connection terminated unexpectedly
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (194kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (139kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
