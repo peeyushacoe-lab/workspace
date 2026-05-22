@@ -4,6 +4,7 @@ import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redis } from "@/lib/redis";
 import { emitEvent } from "@/lib/events";
+import { getTokensForUser, sendExpoPush } from "@/lib/expo-push";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -113,6 +114,26 @@ export async function POST(request: Request, { params }: Params) {
     hasAttachment: false,
     content: content.trim().slice(0, 200),
   });
+
+  // Fire push to other channel members (non-fatal)
+  void (async () => {
+    const [members, channel] = await Promise.all([
+      prisma.chatMember.findMany({
+        where: { channelId, NOT: { userId: user.id } },
+        select: { userId: true },
+      }).catch(() => [] as { userId: string }[]),
+      prisma.chatChannel.findUnique({ where: { id: channelId }, select: { name: true } }).catch(() => null),
+    ]);
+    const tokenArrays = await Promise.all(members.map((m) => getTokensForUser(m.userId)));
+    const allTokens = tokenArrays.flat();
+    if (allTokens.length) {
+      await sendExpoPush(allTokens, {
+        title: `#${channel?.name ?? "Chat"}: ${user.fullName}`,
+        body: content.trim().slice(0, 100),
+        data: { type: "chat", channelId },
+      });
+    }
+  })();
 
   return NextResponse.json(message, { status: 201 });
 }

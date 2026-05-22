@@ -1,0 +1,6 @@
+apps/
+packages/
+scripts/
+scratch/
+mcp-server/
+*.log

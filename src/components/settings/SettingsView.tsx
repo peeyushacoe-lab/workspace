@@ -210,21 +210,33 @@ function ProfileTab({ userId }: { userId: string }) {
     setProfile((p) => p ? { ...p, [field]: value } : p);
   };
 
+  const resizeAndEncode = (file: File, maxPx = 256): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const scale = Math.min(1, maxPx / Math.max(img.width, img.height));
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement("canvas");
+        canvas.width = w; canvas.height = h;
+        canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL("image/jpeg", maxPx > 400 ? 0.75 : 0.82));
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("decode")); };
+      img.src = url;
+    });
+
   const handleAvatarUpload = async (file: File) => {
     if (!file) return;
     setAvatarUploading(true);
     try {
-      const form = new FormData();
-      form.append("file", file);
-      form.append("folderId", "");
-      const res = await fetch("/api/drive/upload", { method: "POST", body: form });
-      if (!res.ok) throw new Error("Upload failed");
-      const data = await res.json() as { url?: string; fileUrl?: string };
-      const url = data.url ?? data.fileUrl ?? "";
-      if (url) update("avatarUrl", url);
-      toast.success("Avatar uploaded");
+      const dataUrl = await resizeAndEncode(file, 256);
+      update("avatarUrl", dataUrl);
+      toast.success("Avatar ready — click Save Profile to apply");
     } catch {
-      toast.error("Failed to upload avatar");
+      toast.error("Failed to process image");
     } finally {
       setAvatarUploading(false);
     }
@@ -303,14 +315,9 @@ function ProfileTab({ userId }: { userId: string }) {
             onChange={async (e) => {
               const f = e.target.files?.[0];
               if (!f) return;
-              const form = new FormData();
-              form.append("file", f);
-              form.append("folderId", "");
               try {
-                const r = await fetch("/api/drive/upload", { method: "POST", body: form });
-                const d = await r.json() as { url?: string; fileUrl?: string };
-                const url = d.url ?? d.fileUrl ?? "";
-                if (url) update("coverUrl", url);
+                const dataUrl = await resizeAndEncode(f, 600);
+                update("coverUrl", dataUrl);
               } catch { toast.error("Upload failed"); }
             }}
           />

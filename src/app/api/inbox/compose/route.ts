@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 import { sendEmail } from "@/lib/email";
+import { getTokensForUser, sendExpoPush } from "@/lib/expo-push";
 
 const composeSchema = z.object({
   to:        z.string().email(),
@@ -121,6 +122,22 @@ export async function POST(request: Request) {
         },
       });
     }
+
+    // Fire push notification to recipient (non-fatal)
+    void prisma.mailboxAccess.findFirst({
+      where: { mailboxId: recipientMailbox.id, role: "OWNER" },
+      select: { userId: true },
+    }).then(async (owner) => {
+      if (!owner) return;
+      const tokens = await getTokensForUser(owner.userId);
+      if (tokens.length) {
+        await sendExpoPush(tokens, {
+          title: `New mail from ${user.fullName}`,
+          body: subject,
+          data: { type: "email", threadId: thread.id },
+        });
+      }
+    }).catch(() => {});
 
     return NextResponse.json({ ok: true, delivery: "internal" });
   }

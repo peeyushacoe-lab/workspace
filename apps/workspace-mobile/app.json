@@ -1,0 +1,34 @@
+{
+  "expo": {
+    "name": "CyberSage",
+    "slug": "cybersage-workspace",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "cybersage",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0f1321"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "uk.cybersage.workspace"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0f1321"
+      },
+      "package": "uk.cybersage.workspace"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

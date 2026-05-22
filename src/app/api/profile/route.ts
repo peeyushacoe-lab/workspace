@@ -21,8 +21,8 @@ const profileFields = z.object({
   birthday:       z.string().optional(), // ISO date string
   statusMessage:  z.string().max(140).optional(),
   statusEmoji:    z.string().max(10).optional(),
-  avatarUrl:      z.string().max(500).optional(),
-  coverUrl:       z.string().max(500).optional(),
+  avatarUrl:      z.string().max(300_000).optional(),
+  coverUrl:       z.string().max(600_000).optional(),
   // Password change
   currentPassword: z.string().min(1).optional(),
   newPassword:     z.string().min(8).optional(),
