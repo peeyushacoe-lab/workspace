@@ -14,10 +14,12 @@ export async function GET() {
   const members = await prisma.user.findMany({
     where: { isActive: true },
     select: {
+      id: true,
       email: true,
       fullName: true,
       displayName: true,
       avatarUrl: true,
+      role: true,
     },
     orderBy: { fullName: "asc" },
   });

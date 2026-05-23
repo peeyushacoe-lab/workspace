@@ -869,19 +869,10 @@ function NewGroupDMModal({
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
-    fetch("/api/admin/users?limit=200")
+    fetch("/api/workspace/members")
       .then((r) => r.json())
-      .then((data: { users?: UserSummary[]; items?: UserSummary[] } | UserSummary[]) => {
-        // The admin/users endpoint returns { users: [...] } or an array
-        let list: UserSummary[] = [];
-        if (Array.isArray(data)) {
-          list = data;
-        } else if (data && typeof data === "object") {
-          const obj = data as Record<string, unknown>;
-          if (Array.isArray(obj.users)) list = obj.users as UserSummary[];
-          else if (Array.isArray(obj.items)) list = obj.items as UserSummary[];
-        }
-        setUsers(list.filter((u) => u.id !== currentUserId));
+      .then((data: UserSummary[]) => {
+        setUsers(data.filter((u) => u.id !== currentUserId));
       })
       .catch(() => toast.error("Failed to load users"))
       .finally(() => setLoading(false));
@@ -1245,17 +1236,10 @@ function AddMembersModal({
   const existingMemberIds = new Set(channel.members.map((m) => m.userId));
 
   useEffect(() => {
-    fetch("/api/admin/users?limit=200")
+    fetch("/api/workspace/members")
       .then((r) => r.json())
-      .then((data: { users?: UserSummary[]; items?: UserSummary[] } | UserSummary[]) => {
-        let list: UserSummary[] = [];
-        if (Array.isArray(data)) list = data;
-        else if (data && typeof data === "object") {
-          const obj = data as Record<string, unknown>;
-          if (Array.isArray(obj.users)) list = obj.users as UserSummary[];
-          else if (Array.isArray(obj.items)) list = obj.items as UserSummary[];
-        }
-        setUsers(list.filter((u) => u.id !== currentUserId && !existingMemberIds.has(u.id)));
+      .then((data: UserSummary[]) => {
+        setUsers(data.filter((u) => u.id !== currentUserId && !existingMemberIds.has(u.id)));
       })
       .catch(() => toast.error("Failed to load users"))
       .finally(() => setLoading(false));
