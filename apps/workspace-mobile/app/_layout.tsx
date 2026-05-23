@@ -5,25 +5,32 @@ import { QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as Notifications from "expo-notifications";
+import Constants from "expo-constants";
 import { useAuthStore } from "../src/store/auth";
 import { apiRequest } from "../src/api/client";
 
-// Show alerts while app is in foreground
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
-});
+// expo-notifications crashes Expo Go (SDK 53+) — only load in real builds
+const IS_EXPO_GO = Constants.appOwnership === "expo";
+
+type NotifModule = typeof import("expo-notifications");
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const Notifications: NotifModule | null = IS_EXPO_GO ? null : require("expo-notifications");
+
+if (Notifications) {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+    }),
+  });
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 2,
       staleTime: 30_000,
-      // Keep cache for 24 h so offline reads work after the app restarts
       gcTime: 1000 * 60 * 60 * 24,
     },
   },
@@ -35,7 +42,7 @@ const asyncStoragePersister = createAsyncStoragePersister({
 });
 
 async function registerPushToken() {
-  if (Platform.OS === "web") return;
+  if (Platform.OS === "web" || !Notifications) return;
 
   const { status: existing } = await Notifications.getPermissionsAsync();
   let finalStatus = existing;
@@ -46,7 +53,6 @@ async function registerPushToken() {
   if (finalStatus !== "granted") return;
 
   try {
-    // projectId is required for production EAS builds; omit for dev (Expo Go)
     const tokenRes = await Notifications.getExpoPushTokenAsync();
     await apiRequest<{ registered: boolean }>("/api/mobile/push/register", {
       method: "POST",
@@ -61,7 +67,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   const { user, loading, hydrate } = useAuthStore();
   const segments = useSegments();
   const router = useRouter();
-  const notifSub = useRef<Notifications.Subscription | null>(null);
+  const notifSub = useRef<ReturnType<NotifModule["addNotificationResponseReceivedListener"]> | null>(null);
 
   useEffect(() => { void hydrate(); }, []);
 
@@ -77,8 +83,8 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     }
   }, [user, loading, segments]);
 
-  // Handle tapping a push notification — deep link to the relevant screen
   useEffect(() => {
+    if (!Notifications) return;
     notifSub.current = Notifications.addNotificationResponseReceivedListener((response) => {
       const data = response.notification.request.content.data as {
         type?: string;

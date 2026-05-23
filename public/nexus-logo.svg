@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#00d2ff"/>
+      <stop offset="100%" stop-color="#0099cc"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <!-- Hexagon background -->
+  <path d="M24 2 L42 12 L42 36 L24 46 L6 36 L6 12 Z" fill="#0f1321" stroke="url(#g1)" stroke-width="1.5"/>
+  <!-- Corner nodes -->
+  <circle cx="24" cy="2"  r="2" fill="#00d2ff" filter="url(#glow)"/>
+  <circle cx="42" cy="12" r="2" fill="#00d2ff" filter="url(#glow)"/>
+  <circle cx="42" cy="36" r="2" fill="#00d2ff" filter="url(#glow)"/>
+  <circle cx="24" cy="46" r="2" fill="#00d2ff" filter="url(#glow)"/>
+  <circle cx="6"  cy="36" r="2" fill="#00d2ff" filter="url(#glow)"/>
+  <circle cx="6"  cy="12" r="2" fill="#00d2ff" filter="url(#glow)"/>
+  <!-- N letterform -->
+  <path d="M15 33 L15 15 L20 15 L29 27 L29 15 L33 15 L33 33 L28 33 L19 21 L19 33 Z"
+        fill="url(#g1)" filter="url(#glow)"/>
+</svg>

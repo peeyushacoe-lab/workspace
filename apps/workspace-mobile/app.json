@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "CyberSage",
-    "slug": "cybersage-workspace",
+    "name": "Nexus",
+    "slug": "nexus-cybersage",
     "version": "1.0.0",
     "orientation": "portrait",
     "scheme": "cybersage",
@@ -18,7 +18,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundColor": "#0f1321"
       },
       "package": "uk.cybersage.workspace"

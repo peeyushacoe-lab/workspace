@@ -34,7 +34,7 @@ export const inboxApi = {
   update: (id: string, data: Partial<{ isStarred: boolean; isArchived: boolean; isTrashed: boolean }>) =>
     apiRequest(`/api/mobile/inbox/${id}`, { method: "PUT", body: JSON.stringify(data) }),
   compose: (data: { to: string; subject: string; body: string; replyToThreadId?: string }) =>
-    apiRequest("/api/inbox/compose", { method: "POST", body: JSON.stringify(data) }),
+    apiRequest("/api/mobile/compose", { method: "POST", body: JSON.stringify(data) }),
   unreadCount: () => apiRequest<{ count: number }>("/api/inbox/unread-count"),
 };
 

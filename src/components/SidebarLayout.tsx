@@ -135,8 +135,8 @@ export function SidebarLayout({
             {!collapsed && (
               <>
                 <div className="flex flex-col flex-1 min-w-0">
-                  <span className="text-sm font-semibold text-[#a5e7ff] leading-tight tracking-tight">CyberSage</span>
-                  <span className="text-[9px] text-[#bbc9cf] uppercase tracking-[0.15em] leading-tight">Workspace</span>
+                  <span className="text-sm font-semibold text-[#a5e7ff] leading-tight tracking-tight">Nexus</span>
+                  <span className="text-[9px] text-[#bbc9cf] uppercase tracking-[0.15em] leading-tight">by CyberSage</span>
                 </div>
                 <button
                   onClick={toggleCollapsed}
@@ -174,8 +174,8 @@ export function SidebarLayout({
                   <Sparkles className="h-3.5 w-3.5 text-[#003543]" />
                 </div>
                 <div className="flex flex-col flex-1">
-                  <span className="text-sm font-semibold text-[#a5e7ff] leading-tight tracking-tight">CyberSage</span>
-                  <span className="text-[9px] text-[#bbc9cf] uppercase tracking-[0.15em] leading-tight">Workspace</span>
+                  <span className="text-sm font-semibold text-[#a5e7ff] leading-tight tracking-tight">Nexus</span>
+                  <span className="text-[9px] text-[#bbc9cf] uppercase tracking-[0.15em] leading-tight">by CyberSage</span>
                 </div>
                 <button
                   onClick={() => setMobileOpen(false)}
@@ -202,7 +202,7 @@ export function SidebarLayout({
             <div className="flex h-6 w-6 items-center justify-center rounded-md bg-[#00d2ff]">
               <Sparkles className="h-3.5 w-3.5 text-[#003543]" />
             </div>
-            <span className="font-semibold text-[#a5e7ff] text-sm tracking-tight">CyberSage</span>
+            <span className="font-semibold text-[#a5e7ff] text-sm tracking-tight">Nexus</span>
           </div>
           {currentUser && (
             <div className="ml-auto flex items-center gap-2">

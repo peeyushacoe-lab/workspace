@@ -21,13 +21,13 @@ const inter = Inter({
 
 
 export const metadata: Metadata = {
-  title: "CyberSage Mail - Professional Email Platform",
-  description: "Advanced bulk email platform with AI-powered design and real-time analytics.",
+  title: "Nexus – CyberSage Workspace",
+  description: "Your unified workspace for email, chat, drive, and calendar.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "CyberSage",
+    title: "Nexus",
   },
 };
 

@@ -1,7 +1,7 @@
 {
-  "name": "CyberSage Workspace",
-  "short_name": "CyberSage",
-  "description": "Secure enterprise workspace — mail, chat, drive, calendar",
+  "name": "Nexus by CyberSage",
+  "short_name": "Nexus",
+  "description": "Unified workspace for email, chat, drive, and calendar",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait-primary",

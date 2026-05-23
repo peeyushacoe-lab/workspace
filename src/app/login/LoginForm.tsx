@@ -51,7 +51,7 @@ export function LoginForm({ next, error: initialError }: { next: string; error: 
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#00d2ff] shadow-[0_0_16px_rgba(0,210,255,0.4)]">
               <ShieldCheck className="h-5 w-5 text-[#003543]" />
             </div>
-            <span className="text-[#a5e7ff] font-semibold text-lg tracking-tight">CyberSage</span>
+            <span className="text-[#a5e7ff] font-semibold text-lg tracking-tight">Nexus</span>
           </div>
         </div>
 
@@ -100,7 +100,7 @@ export function LoginForm({ next, error: initialError }: { next: string; error: 
         {/* Footer */}
         <div className="relative z-10">
           <p className="text-[#bbc9cf]/50 text-xs">
-            &copy; {new Date().getFullYear()} CyberSage. RBAC Protected Environment.
+            &copy; {new Date().getFullYear()} CyberSage · Nexus Workspace
           </p>
         </div>
       </div>
@@ -119,7 +119,7 @@ export function LoginForm({ next, error: initialError }: { next: string; error: 
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#00d2ff] shadow-[0_0_16px_rgba(0,210,255,0.4)]">
               <ShieldCheck className="h-5 w-5 text-[#003543]" />
             </div>
-            <span className="text-[#a5e7ff] font-semibold text-lg tracking-tight">CyberSage</span>
+            <span className="text-[#a5e7ff] font-semibold text-lg tracking-tight">Nexus</span>
           </div>
 
           {/* Heading */}
