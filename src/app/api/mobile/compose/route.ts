@@ -31,12 +31,17 @@ export async function POST(request: Request) {
 
   const sender = await prisma.user.findUnique({
     where: { id: user.userId },
-    select: { email: true, fullName: true },
+    select: { email: true, fullName: true, signature: true },
   });
   if (!sender) return NextResponse.json({ error: "Sender not found" }, { status: 404 });
 
   const fromAddr = sender.email.toLowerCase();
   const cleanSubject = subject.replace(/^(Re|Fwd|Aw|Vw):\s+/i, "");
+
+  // Build HTML body with signature appended if one exists
+  const htmlBody = sender.signature?.html
+    ? `<div>${textBody.replace(/\n/g, "<br/>")}</div>${sender.signature.html}`
+    : undefined;
 
   if (isInternal(toAddr)) {
     const recipientMailbox = await prisma.mailbox.findUnique({ where: { email: toAddr } });
@@ -65,7 +70,7 @@ export async function POST(request: Request) {
     }
 
     await prisma.inboxMessage.create({
-      data: { threadId: thread.id, from: fromAddr, to: toAddr, subject, textBody, isRead: false },
+      data: { threadId: thread.id, from: fromAddr, to: toAddr, subject, textBody, htmlBody: htmlBody ?? null, isRead: false },
     });
 
     // Sender's copy in Sent
@@ -78,7 +83,7 @@ export async function POST(request: Request) {
         data: { subject: cleanSubject, mailboxId: senderMailbox.id },
       });
       await prisma.inboxMessage.create({
-        data: { threadId: sentThread.id, from: fromAddr, to: toAddr, subject, textBody, isRead: true },
+        data: { threadId: sentThread.id, from: fromAddr, to: toAddr, subject, textBody, htmlBody: htmlBody ?? null, isRead: true },
       });
     }
 
@@ -105,7 +110,7 @@ export async function POST(request: Request) {
       subject,
       textBody,
       { email: toAddr, name: toAddr.split("@")[0], status: "Direct" },
-      undefined,
+      sender.signature ? { fullName: sender.fullName, title: sender.signature.title, html: sender.signature.html } : undefined,
       `${sender.fullName} <${fromAddr}>`,
     );
     return NextResponse.json({ ok: true, delivery: "external" });
