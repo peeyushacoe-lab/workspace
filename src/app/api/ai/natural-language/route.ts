@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { getAIClient, AI_MODEL } from "@/lib/ai";
@@ -14,25 +14,25 @@ import { getAIClient, AI_MODEL } from "@/lib/ai";
  * Response: { action, params, displayText, confidence }
  *
  * Actions:
- *   navigate        → { href: string }
- *   compose_email   → { to?: string, subject?: string, body?: string }
- *   search          → { query: string, type?: string }
- *   create_event    → { title?: string, date?: string, time?: string, attendees?: string }
- *   create_note     → { title?: string }
- *   upload_file     → {}
- *   create_channel  → { name?: string }
- *   summarize_inbox → {}
- *   unknown         → { suggestion: string }
+ *   navigate        â†’ { href: string }
+ *   compose_email   â†’ { to?: string, subject?: string, body?: string }
+ *   search          â†’ { query: string, type?: string }
+ *   create_event    â†’ { title?: string, date?: string, time?: string, attendees?: string }
+ *   create_note     â†’ { title?: string }
+ *   upload_file     â†’ {}
+ *   create_channel  â†’ { name?: string }
+ *   summarize_inbox â†’ {}
+ *   unknown         â†’ { suggestion: string }
  */
 
-const SYSTEM_PROMPT = `You are the CyberSage Workspace AI command parser.
+const SYSTEM_PROMPT = `You are the Nexus AI command parser.
 
 The user will type a natural-language command. Parse it into a JSON action.
 
 Available actions and their params:
-- navigate: { href } — one of /inbox /chat /drive /calendar /notes /ai /settings /users /contacts /admin /docs
+- navigate: { href } â€” one of /inbox /chat /drive /calendar /notes /ai /settings /users /contacts /admin /docs
 - compose_email: { to?, subject?, body? }
-- search: { query, type? } — type is one of: mail | chat | drive | calendar | all
+- search: { query, type? } â€” type is one of: mail | chat | drive | calendar | all
 - create_event: { title?, date?, time?, attendees? }
 - create_note: { title? }
 - create_doc: { title? }
@@ -42,8 +42,8 @@ Available actions and their params:
 - unknown: { suggestion }
 
 Rules:
-1. Always respond with ONLY valid JSON — no markdown, no code fences, no commentary.
-2. Be liberal in understanding intent. "go to inbox" → navigate /inbox. "write email to bob" → compose_email.
+1. Always respond with ONLY valid JSON â€” no markdown, no code fences, no commentary.
+2. Be liberal in understanding intent. "go to inbox" â†’ navigate /inbox. "write email to bob" â†’ compose_email.
 3. If you cannot determine the action with confidence > 0.5, use "unknown" with a helpful suggestion.
 4. Extract as many params as available from the command text.
 5. For dates/times in create_event, keep them as the user said them (e.g. "tomorrow 3pm", "Friday").
@@ -91,7 +91,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(parsed);
   } catch (err) {
-    // AI unavailable or parse failure → return unknown action
+    // AI unavailable or parse failure â†’ return unknown action
     console.error("natural-language parse error:", err);
     return NextResponse.json({
       action: "unknown",

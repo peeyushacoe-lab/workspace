@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { getAIClient, AI_MODEL } from "@/lib/ai";
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Prompt is required" }, { status: 400 });
   }
 
-  const systemPrompt = `You are a professional email assistant for CyberSage Workspace.
+  const systemPrompt = `You are a professional email assistant for Nexus.
 Given a description of what the user wants to say, generate a complete email with a subject line and body.
 Respond ONLY in JSON with exactly this shape:
 {"subject": "...", "body": "..."}

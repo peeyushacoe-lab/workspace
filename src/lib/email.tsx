@@ -1,4 +1,4 @@
-import { Resend } from "resend";
+﻿import { Resend } from "resend";
 import type { ContactInput } from "./types";
 import type { SignatureTemplate } from "./signatures";
 
@@ -23,7 +23,7 @@ function getSignatureHtml(signature: SignatureTemplate): string {
   <div style="font-weight: 600; color: #0f172a; margin-bottom: 8px;">${signature.fullName}</div>
   <div style="color: #64748b; font-size: 14px; line-height: 1.5;">
     ${signature.title}<br>
-    CyberSage Workspace Mail<br>
+    Nexus Mail<br>
     ${signature.phone ? `<a href="tel:${signature.phone.replace(/\s+/g, '')}" style="color: #0f766e;">${signature.phone}</a><br>` : ''}
     ${signature.linkedinUrl ? `<a href="${signature.linkedinUrl}" style="color: #0f766e;">LinkedIn</a>` : ''}
     ${signature.website && signature.linkedinUrl ? ' | ' : ''}
@@ -111,12 +111,12 @@ export async function sendInviteEmail({
   <div style="max-width:560px;margin:0 auto;padding:32px 16px;">
     <div style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
       <div style="background:#111113;padding:24px 32px;">
-        <div style="color:#2563eb;font-size:12px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;">CyberSage Workspace</div>
+        <div style="color:#2563eb;font-size:12px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;">Nexus</div>
       </div>
       <div style="padding:32px;">
         <h1 style="font-size:22px;font-weight:700;color:#18181b;margin:0 0 12px;">You've been invited</h1>
         <p style="color:#52525b;line-height:1.7;margin:0 0 24px;">
-          Hi <strong>${fullName}</strong>, <strong>${invitedByName}</strong> has invited you to join CyberSage Workspace.
+          Hi <strong>${fullName}</strong>, <strong>${invitedByName}</strong> has invited you to join Nexus.
         </p>
         <div style="background:#f4f4f5;border-radius:10px;padding:20px;margin:0 0 24px;">
           <div style="margin-bottom:16px;">
@@ -141,7 +141,7 @@ export async function sendInviteEmail({
   const result = await resend.emails.send({
     from: process.env.RESEND_FROM_EMAIL ?? "CyberSage <noreply@cybersage.uk>",
     to: toPersonalEmail,
-    subject: "You've been invited to CyberSage Workspace",
+    subject: "You've been invited to Nexus",
     html,
   });
 

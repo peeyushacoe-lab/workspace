@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { getAIClient, AI_MODEL } from "@/lib/ai";
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
   }));
 
   const systemContent =
-    "You are CyberSage AI, a helpful assistant integrated into CyberSage Workspace. " +
+    "You are CyberSage AI, a helpful assistant integrated into Nexus. " +
     "Answer questions concisely and helpfully. You can help with emails, scheduling, " +
     "document writing, and general productivity tasks.";
 

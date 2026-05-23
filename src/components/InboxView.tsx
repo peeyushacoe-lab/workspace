@@ -977,7 +977,7 @@ export function InboxView({ userRole, initialThreads }: {
           <div className="flex-1 flex flex-col items-center justify-center text-[#bbc9cf] p-8">
             <Mail className="w-14 h-14 mb-4 opacity-20" />
             <p className="text-base font-semibold">Select a message to read</p>
-            <p className="text-sm mt-1 text-[#bbc9cf]">Your secure CyberSage Workspace</p>
+            <p className="text-sm mt-1 text-[#bbc9cf]">Nexus — Your secure workspace</p>
           </div>
         ) : isDetailLoading ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-3 text-[#bbc9cf]">

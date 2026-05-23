@@ -73,7 +73,7 @@ export function InstallPrompt() {
         </div>
         <div className="min-w-0">
           <p className="font-semibold text-[#dfe1f6] text-sm truncate">
-            Install CyberSage for offline access
+            Install Nexus for offline access
           </p>
           <p className="text-xs text-[#bbc9cf] truncate">
             Add to home screen for faster access

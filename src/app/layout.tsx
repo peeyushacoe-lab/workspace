@@ -1,4 +1,4 @@
-import type { Metadata, Viewport } from "next";
+﻿import type { Metadata, Viewport } from "next";
 import { DM_Sans, Inter } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
@@ -21,7 +21,7 @@ const inter = Inter({
 
 
 export const metadata: Metadata = {
-  title: "Nexus – CyberSage Workspace",
+  title: “Nexus by CyberSage”,
   description: "Your unified workspace for email, chat, drive, and calendar.",
   manifest: "/manifest.json",
   appleWebApp: {
@@ -46,7 +46,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${dmSans.variable} ${inter.variable} dark h-full antialiased`} suppressHydrationWarning>
       <head>
-        {/* Inline script to set dark class before first paint — prevents flash */}
+        {/* Inline script to set dark class before first paint â€” prevents flash */}
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem('theme');var d=window.matchMedia('(prefers-color-scheme: dark)').matches;if(t==='dark'||(t===null&&d)){document.documentElement.classList.add('dark');}}catch(e){}})();`,

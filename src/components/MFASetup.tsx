@@ -128,7 +128,7 @@ export function MFASetup({
 
   function downloadCodes(codes: string[]) {
     const text = [
-      "CyberSage Workspace — MFA Backup Codes",
+      "Nexus — MFA Backup Codes",
       "Keep these codes safe. Each code can only be used once.",
       "",
       ...codes,

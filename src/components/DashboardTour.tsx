@@ -6,7 +6,7 @@ import { X, ChevronRight, Mail, MessageSquare, HardDrive, Calendar, Sparkles, Ch
 const TOUR_STEPS = [
   {
     icon: CheckCircle,
-    title: "Welcome to CyberSage Workspace",
+    title: "Welcome to Nexus",
     body: "Your all-in-one enterprise platform. Let's take a quick tour of the key features.",
   },
   {

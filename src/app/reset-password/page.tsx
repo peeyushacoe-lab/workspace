@@ -11,7 +11,7 @@ export default async function ResetPasswordPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="text-xs font-bold text-accent tracking-widest uppercase mb-4">
-            CyberSage Workspace
+            Nexus
           </div>
           <h1 className="text-2xl font-bold text-foreground mb-2">
             {user.mustResetPassword ? "Set Your Password" : "Change Password"}

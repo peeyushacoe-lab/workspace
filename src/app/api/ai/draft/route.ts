@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { getAIClient, AI_MODEL } from "@/lib/ai";
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
   }
 
   const prompt = [
-    `You are a professional email assistant for CyberSage Workspace.`,
+    `You are a professional email assistant for Nexus.`,
     `Write a professional email with the following details:`,
     subject ? `Subject: ${subject}` : "",
     recipient ? `To: ${recipient}` : "",
