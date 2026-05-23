@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { LogOut, Sparkles, ChevronLeft, ChevronRight, Menu, X, Settings } from "lucide-react";
+import { LogOut, ChevronLeft, ChevronRight, Menu, X, Settings } from "lucide-react";
 import { SidebarNav } from "./SidebarNav";
 import { SearchTrigger } from "./GlobalSearch";
 import { NotificationCenter } from "./NotificationCenter";
@@ -129,9 +129,7 @@ export function SidebarLayout({
               collapsed ? "justify-center px-2" : "gap-2.5 px-4"
             }`}
           >
-            <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md bg-[#00d2ff]">
-              <Sparkles className="h-3.5 w-3.5 text-[#003543]" />
-            </div>
+            <img src="/nexus.png" alt="Nexus" className="h-8 w-8 flex-shrink-0 rounded-md object-contain" />
             {!collapsed && (
               <>
                 <div className="flex flex-col flex-1 min-w-0">
@@ -170,9 +168,7 @@ export function SidebarLayout({
             />
             <aside className="relative z-10 flex w-56 flex-col bg-[#0a0d1c]/90 backdrop-blur-xl shadow-2xl">
               <div className="flex h-12 items-center gap-2.5 border-b border-[rgba(0,255,255,0.08)] px-4">
-                <div className="flex h-6 w-6 items-center justify-center rounded-md bg-[#00d2ff]">
-                  <Sparkles className="h-3.5 w-3.5 text-[#003543]" />
-                </div>
+                <img src="/nexus.png" alt="Nexus" className="h-8 w-8 rounded-md object-contain" />
                 <div className="flex flex-col flex-1">
                   <span className="text-sm font-semibold text-[#a5e7ff] leading-tight tracking-tight">Nexus</span>
                   <span className="text-[9px] text-[#bbc9cf] uppercase tracking-[0.15em] leading-tight">by CyberSage</span>
@@ -199,9 +195,7 @@ export function SidebarLayout({
             <Menu className="h-5 w-5" />
           </button>
           <div className="flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-[#00d2ff]">
-              <Sparkles className="h-3.5 w-3.5 text-[#003543]" />
-            </div>
+            <img src="/nexus.png" alt="Nexus" className="h-7 w-7 rounded-md object-contain" />
             <span className="font-semibold text-[#a5e7ff] text-sm tracking-tight">Nexus</span>
           </div>
           {currentUser && (

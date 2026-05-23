@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, Lock, Loader2, ShieldCheck, Zap, Users } from "lucide-react";
+import { Mail, Lock, Loader2, Zap, Users } from "lucide-react";
 
 export function LoginForm({ next, error: initialError }: { next: string; error: boolean }) {
   const [isPending, setIsPending] = useState(false);
@@ -48,9 +48,7 @@ export function LoginForm({ next, error: initialError }: { next: string; error: 
         {/* Logo / brand */}
         <div className="relative z-10">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#00d2ff] shadow-[0_0_16px_rgba(0,210,255,0.4)]">
-              <ShieldCheck className="h-5 w-5 text-[#003543]" />
-            </div>
+            <img src="/nexus.png" alt="Nexus" className="h-12 w-12 rounded-xl object-contain drop-shadow-[0_0_12px_rgba(0,210,255,0.5)]" />
             <span className="text-[#a5e7ff] font-semibold text-lg tracking-tight">Nexus</span>
           </div>
         </div>
@@ -116,9 +114,7 @@ export function LoginForm({ next, error: initialError }: { next: string; error: 
         <div className="relative z-10 w-full max-w-[440px]">
           {/* Mobile logo */}
           <div className="flex items-center gap-3 mb-8 md:hidden">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#00d2ff] shadow-[0_0_16px_rgba(0,210,255,0.4)]">
-              <ShieldCheck className="h-5 w-5 text-[#003543]" />
-            </div>
+            <img src="/nexus.png" alt="Nexus" className="h-10 w-10 rounded-xl object-contain" />
             <span className="text-[#a5e7ff] font-semibold text-lg tracking-tight">Nexus</span>
           </div>
 
