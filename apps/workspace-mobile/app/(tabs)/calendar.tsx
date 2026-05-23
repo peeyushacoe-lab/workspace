@@ -10,7 +10,7 @@ export default function CalendarScreen() {
 
   const { data: events, isLoading } = useQuery({
     queryKey: ["calendar"],
-    queryFn: () => apiRequest<CalEvent[]>(`/api/calendar/events?month=${month}`),
+    queryFn: () => apiRequest<CalEvent[]>(`/api/mobile/calendar/events?month=${month}`),
   });
 
   const sorted = (events ?? [])
