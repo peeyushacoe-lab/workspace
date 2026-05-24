@@ -8,6 +8,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
 import { useAuthStore } from "../src/store/auth";
 import { apiRequest } from "../src/api/client";
+import { ErrorBoundary } from "../src/components/ErrorBoundary";
+import { OfflineBanner } from "../src/components/OfflineBanner";
+import { BiometricLockScreen } from "../src/components/BiometricLockScreen";
+import { useBiometricLock } from "../src/hooks/useBiometricLock";
 
 // expo-notifications crashes Expo Go (SDK 53+) — only load in real builds
 const IS_EXPO_GO = Constants.appOwnership === "expo";
@@ -74,8 +78,14 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (loading) return;
     const inAuth = segments[0] === "(auth)";
-    if (!user && !inAuth) {
-      router.replace("/(auth)/login");
+    const inOnboarding = segments[0] === "onboarding";
+    const inLegal = segments[0] === "legal";
+
+    if (!user && !inAuth && !inOnboarding && !inLegal) {
+      AsyncStorage.getItem("onboardingDone").then(done => {
+        if (!done) router.replace("/onboarding");
+        else router.replace("/(auth)/login");
+      });
     } else if (user && !inAuth) {
       void registerPushToken();
     } else if (user && inAuth) {
@@ -103,15 +113,26 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function LockGate({ children }: { children: React.ReactNode }) {
+  const { locked, authenticate } = useBiometricLock();
+  if (locked) return <BiometricLockScreen onUnlock={() => void authenticate()} />;
+  return <>{children}</>;
+}
+
 export default function RootLayout() {
   return (
-    <PersistQueryClientProvider
-      client={queryClient}
-      persistOptions={{ persister: asyncStoragePersister }}
-    >
-      <AuthGate>
-        <Stack screenOptions={{ headerShown: false }} />
-      </AuthGate>
-    </PersistQueryClientProvider>
+    <ErrorBoundary>
+      <PersistQueryClientProvider
+        client={queryClient}
+        persistOptions={{ persister: asyncStoragePersister }}
+      >
+        <OfflineBanner />
+        <LockGate>
+          <AuthGate>
+            <Stack screenOptions={{ headerShown: false }} />
+          </AuthGate>
+        </LockGate>
+      </PersistQueryClientProvider>
+    </ErrorBoundary>
   );
 }

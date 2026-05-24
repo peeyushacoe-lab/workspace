@@ -25,6 +25,17 @@ export interface MobileProfile {
   avatarUrl?: string | null; statusEmoji?: string | null; statusMessage?: string | null;
 }
 
+export interface ComposeDraft {
+  id: string; userId: string; to: string; subject: string; body: string; savedAt: string;
+}
+
+export const draftApi = {
+  load: () => apiRequest<ComposeDraft | null>("/api/mobile/drafts"),
+  save: (data: { to?: string; subject?: string; body?: string }) =>
+    apiRequest<ComposeDraft>("/api/mobile/drafts", { method: "PUT", body: JSON.stringify(data) }),
+  clear: () => apiRequest("/api/mobile/drafts", { method: "DELETE" }),
+};
+
 export const inboxApi = {
   list: (params?: { q?: string; cursor?: string }) => {
     const qs = new URLSearchParams(params as Record<string, string>).toString();
