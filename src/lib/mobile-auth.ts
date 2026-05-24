@@ -22,6 +22,12 @@ export async function getMobileUser(request: Request): Promise<MobileTokenPayloa
       select: { isActive: true },
     });
     if (!user?.isActive) return null;
+    // Update presence lastSeenAt fire-and-forget
+    prisma.userPresence.upsert({
+      where: { userId: payload.userId },
+      update: { lastSeenAt: new Date(), status: "ONLINE" },
+      create: { userId: payload.userId, status: "ONLINE", lastSeenAt: new Date() },
+    }).catch(() => {});
     return payload;
   } catch {
     return null;

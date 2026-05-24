@@ -30,6 +30,7 @@ export async function GET(
       statusMessage: true,
       pronouns: true,
       location: true,
+      presence: { select: { status: true, lastSeenAt: true } },
     },
   });
 

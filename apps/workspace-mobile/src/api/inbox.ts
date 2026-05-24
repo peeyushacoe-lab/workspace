@@ -44,6 +44,7 @@ export interface WorkspaceUser {
   statusMessage: string | null;
   pronouns: string | null;
   location: string | null;
+  presence?: { status: string; lastSeenAt: string | null } | null;
 }
 
 export const usersApi = {

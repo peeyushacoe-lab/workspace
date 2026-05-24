@@ -19,14 +19,6 @@ function ChatIcon({ color }: { color: string }) {
   );
 }
 
-function DriveIcon({ color }: { color: string }) {
-  return (
-    <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
-      <Path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"/>
-    </Svg>
-  );
-}
-
 function CalendarIcon({ color }: { color: string }) {
   return (
     <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
@@ -36,11 +28,20 @@ function CalendarIcon({ color }: { color: string }) {
   );
 }
 
-function SettingsIcon({ color }: { color: string }) {
+function DriveIcon({ color }: { color: string }) {
   return (
     <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
-      <Circle cx="12" cy="12" r="3" stroke={color} strokeWidth={1.8}/>
-      <Path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"/>
+      <Path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"/>
+    </Svg>
+  );
+}
+
+function MoreIcon({ color }: { color: string }) {
+  return (
+    <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+      <Circle cx="5" cy="12" r="1.5" fill={color}/>
+      <Circle cx="12" cy="12" r="1.5" fill={color}/>
+      <Circle cx="19" cy="12" r="1.5" fill={color}/>
     </Svg>
   );
 }
@@ -48,11 +49,8 @@ function SettingsIcon({ color }: { color: string }) {
 function TabIcon({ Icon, focused }: { Icon: React.ComponentType<{ color: string }>; focused: boolean }) {
   return (
     <View style={{
-      alignItems: "center",
-      justifyContent: "center",
-      width: 40,
-      height: 28,
-      borderRadius: 14,
+      alignItems: "center", justifyContent: "center",
+      width: 40, height: 28, borderRadius: 14,
       backgroundColor: focused ? "rgba(0,210,255,0.12)" : "transparent",
     }}>
       <Icon color={focused ? "#00d2ff" : "#5c6b72"} />
@@ -94,13 +92,6 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="drive"
-        options={{
-          title: "Drive",
-          tabBarIcon: ({ focused }) => <TabIcon Icon={DriveIcon} focused={focused} />,
-        }}
-      />
-      <Tabs.Screen
         name="calendar"
         options={{
           title: "Calendar",
@@ -108,10 +99,24 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="drive"
+        options={{
+          title: "Drive",
+          tabBarIcon: ({ focused }) => <TabIcon Icon={DriveIcon} focused={focused} />,
+        }}
+      />
+      <Tabs.Screen
+        name="more"
+        options={{
+          title: "More",
+          tabBarIcon: ({ focused }) => <TabIcon Icon={MoreIcon} focused={focused} />,
+        }}
+      />
+      {/* Settings is still accessible from More / ProfileSidebar */}
+      <Tabs.Screen
         name="settings"
         options={{
-          title: "Settings",
-          tabBarIcon: ({ focused }) => <TabIcon Icon={SettingsIcon} focused={focused} />,
+          href: null,
         }}
       />
     </Tabs>
