@@ -11,6 +11,7 @@ import {
 import { formatDistanceToNow, isPast, isBefore, addHours, addDays, nextMonday } from "date-fns";
 import { toast } from "sonner";
 import { SimpleComposer } from "./WorkspaceDashboard";
+import { UserProfileModal } from "./UserProfileModal";
 import type { UserRole } from "@/generated/prisma/enums";
 
 type ThreadPriority = "LOW" | "NORMAL" | "HIGH" | "URGENT";
@@ -66,15 +67,16 @@ type Message = {
 
 type ThreadDetail = { id: string; subject: string; mailboxId: string; messages: Message[] };
 
-type WorkspaceMember = { email: string; fullName: string; displayName: string | null; avatarUrl: string | null };
+type WorkspaceMember = { id: string; email: string; fullName: string; displayName: string | null; avatarUrl: string | null };
 
 // Render a sender avatar — shows profile pic if available, falls back to initial
-function SenderAvatar({ member, email, size = 8 }: { member?: WorkspaceMember; email: string; size?: number }) {
+function SenderAvatar({ member, email, size = 8, onClick }: { member?: WorkspaceMember; email: string; size?: number; onClick?: () => void }) {
   const label = (member?.displayName ?? member?.fullName ?? email).charAt(0).toUpperCase();
   const cls = `w-${size} h-${size} rounded-full object-cover flex-shrink-0`;
-  if (member?.avatarUrl) return <img src={member.avatarUrl} alt={label} className={cls} />;
+  const wrap = `cursor-pointer hover:opacity-80 transition-opacity`;
+  if (member?.avatarUrl) return <img src={member.avatarUrl} alt={label} className={`${cls} ${onClick ? wrap : ""}`} onClick={onClick} />;
   return (
-    <div className={`${cls} bg-[#00d2ff]/10 text-[#00d2ff] flex items-center justify-center font-bold text-sm`}>
+    <div className={`${cls} bg-[#00d2ff]/10 text-[#00d2ff] flex items-center justify-center font-bold text-sm ${onClick ? wrap : ""}`} onClick={onClick}>
       {label}
     </div>
   );
@@ -363,6 +365,7 @@ export function InboxView({ userRole, initialThreads }: {
   const [composerKey, setComposerKey]       = useState(0);
   const [snoozeTargetId, setSnoozeTargetId] = useState<string | null>(null);
   const [showNewFolder, setShowNewFolder]   = useState(false);
+  const [profileUserId, setProfileUserId]   = useState<string | null>(null);
   const rewriteMenuRef = useRef<HTMLDivElement>(null);
 
   // Load custom folders once
@@ -945,9 +948,13 @@ export function InboxView({ userRole, initialThreads }: {
                     <SenderAvatar
                       member={memberMap[(thread.lastMessage?.from ?? "").toLowerCase()]}
                       email={thread.lastMessage?.from ?? "?"}
+                      onClick={() => { const m = memberMap[(thread.lastMessage?.from ?? "").toLowerCase()]; if (m?.id) setProfileUserId(m.id); }}
                     />
                     <div className="flex-1 min-w-0">
-                      <p className={`truncate ${thread.unreadCount > 0 ? "font-bold text-sm text-[#dfe1f6]" : "font-medium text-sm text-[#dfe1f6]"}`}>
+                      <p
+                        className={`truncate cursor-pointer hover:text-cyan-400 transition-colors ${thread.unreadCount > 0 ? "font-bold text-sm text-[#dfe1f6]" : "font-medium text-sm text-[#dfe1f6]"}`}
+                        onClick={() => { const m = memberMap[(thread.lastMessage?.from ?? "").toLowerCase()]; if (m?.id) setProfileUserId(m.id); }}
+                      >
                         {senderName(memberMap[(thread.lastMessage?.from ?? "").toLowerCase()], thread.lastMessage?.from)}
                       </p>
                       <p className={`truncate ${thread.unreadCount > 0 ? "font-bold text-sm text-[#dfe1f6]" : "font-medium text-sm text-[#dfe1f6]"}`}>
@@ -1073,9 +1080,13 @@ export function InboxView({ userRole, initialThreads }: {
                         member={memberMap[msg.from.toLowerCase()]}
                         email={msg.from}
                         size={10}
+                        onClick={() => { const m = memberMap[msg.from.toLowerCase()]; if (m?.id) setProfileUserId(m.id); }}
                       />
                       <div>
-                        <p className="text-sm font-bold text-[#dfe1f6]">
+                        <p
+                          className="text-sm font-bold text-[#dfe1f6] cursor-pointer hover:text-cyan-400 transition-colors"
+                          onClick={() => { const m = memberMap[msg.from.toLowerCase()]; if (m?.id) setProfileUserId(m.id); }}
+                        >
                           {senderName(memberMap[msg.from.toLowerCase()], msg.from)}
                         </p>
                         <p className="text-xs text-[#7a8fa6]">{msg.from}</p>
@@ -1304,6 +1315,17 @@ export function InboxView({ userRole, initialThreads }: {
           onCreate={(folder) => setCustomFolders(prev => [...prev, folder])}
         />
       )}
+
+      {/* ── User Profile Modal ── */}
+      <UserProfileModal
+        userId={profileUserId}
+        onClose={() => setProfileUserId(null)}
+        onCompose={(email) => {
+          setProfileUserId(null);
+          // Open composer pre-filled to this recipient
+          document.dispatchEvent(new CustomEvent("nexus:compose", { detail: { to: email } }));
+        }}
+      />
     </div>
   );
 }

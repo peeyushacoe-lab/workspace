@@ -5,8 +5,10 @@ import {
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import * as Haptics from "expo-haptics";
 import { inboxApi } from "../../src/api/inbox";
 import { apiRequest } from "../../src/api/client";
+import { UserProfileSheet } from "../../src/components/UserProfileSheet";
 
 interface AISummary { summary: string; keyPoints: string[]; actionItems: string[] }
 
@@ -16,6 +18,7 @@ export default function ThreadScreen() {
   const qc      = useQueryClient();
   const [replyBody, setReply]       = useState("");
   const [showReply, setShow]        = useState(false);
+  const [profileEmail, setProfileEmail] = useState<string | null>(null);
   const [aiPanel, setAiPanel]       = useState<"none" | "summarize" | "smart-reply">("none");
   const [summary, setSummary]       = useState<AISummary | null>(null);
   const [smartReply, setSmartReply] = useState("");
@@ -120,7 +123,12 @@ export default function ThreadScreen() {
         {thread.messages.map(msg => (
           <View key={msg.id} style={s.msgCard}>
             <View style={s.msgMeta}>
-              <Text style={s.msgFrom}>{msg.from}</Text>
+              <TouchableOpacity
+                onPress={() => { void Haptics.selectionAsync(); setProfileEmail(msg.from); }}
+                activeOpacity={0.7}
+              >
+                <Text style={s.msgFrom}>{msg.from}</Text>
+              </TouchableOpacity>
               <Text style={s.msgDate}>{new Date(msg.receivedAt).toLocaleString()}</Text>
             </View>
             <Text style={s.msgBody}>{msg.textBody ?? "(No content)"}</Text>
@@ -197,6 +205,13 @@ export default function ThreadScreen() {
           </ScrollView>
         </View>
       </Modal>
+
+      {/* User Profile Sheet */}
+      <UserProfileSheet
+        email={profileEmail}
+        onClose={() => setProfileEmail(null)}
+        onCompose={(email) => { setReply(`To: ${email}\n\n`); setShow(true); }}
+      />
 
       {/* Smart Reply Modal */}
       <Modal visible={aiPanel === "smart-reply"} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setAiPanel("none")}>

@@ -1,6 +1,7 @@
 ﻿import { Resend } from "resend";
 import type { ContactInput } from "./types";
 import type { SignatureTemplate } from "./signatures";
+import type { UserRole } from "@/generated/prisma/enums";
 
 const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
@@ -184,4 +185,185 @@ export async function sendEmail(
     id: result.data?.id ?? "unknown",
     skipped: false,
   };
+}
+
+const EXEC_ROLES = new Set<UserRole>(["CEO", "CISO", "COO", "R_AND_D", "OPS_MANAGER"]);
+
+const TEAM_NAMES: Partial<Record<UserRole, string>> = {
+  DEVELOPER:      "Engineering",
+  CYBER_SECURITY: "Cyber Security",
+  QA:             "Quality Assurance",
+  MARKETING:      "Marketing",
+  RESEARCH:       "Research",
+  FINANCE:        "Finance",
+  OPERATIONS:     "Operations",
+  SUPPORT:        "Support",
+  ADMIN:          "Administration",
+};
+
+function buildWelcomeHtml(opts: {
+  fullName: string;
+  workEmail: string;
+  role: UserRole;
+  invitedByName: string;
+  appUrl: string;
+}): { subject: string; html: string } {
+  const { fullName, workEmail, role, invitedByName, appUrl } = opts;
+  const firstName = fullName.split(" ")[0];
+  const isExec = EXEC_ROLES.has(role) || role === "CEO";
+  const teamName = TEAM_NAMES[role] ?? role;
+
+  if (isExec) {
+    const subject = `Welcome to Nexus, ${firstName}`;
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /></head>
+<body style="margin:0;padding:0;background:#0f172a;font-family:system-ui,sans-serif;">
+  <div style="max-width:600px;margin:0 auto;padding:32px 16px;">
+    <div style="background:#111827;border-radius:20px;overflow:hidden;border:1px solid rgba(0,210,255,0.15);">
+      <div style="background:linear-gradient(135deg,#0f1a2e,#0c2340);padding:40px 40px 32px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#00d2ff;margin-bottom:20px;">Nexus by CyberSage</div>
+        <h1 style="font-size:30px;font-weight:800;color:#ffffff;margin:0 0 12px;line-height:1.2;">Welcome, ${firstName}.</h1>
+        <p style="color:#94a3b8;font-size:16px;margin:0;line-height:1.6;">Your unified workspace is ready.</p>
+      </div>
+      <div style="padding:36px 40px;">
+        <p style="color:#cbd5e1;font-size:15px;line-height:1.8;margin:0 0 24px;">
+          You've been added to <strong style="color:#f1f5f9;">Nexus</strong> by ${invitedByName}.
+          As <strong style="color:#00d2ff;">${role.replace(/_/g, " ")}</strong>, this is your personal and professional workspace —
+          your organisation's email, chat, drive, calendar, and AI assistant, all in one place.
+        </p>
+
+        <div style="background:#0f172a;border-radius:14px;padding:22px 24px;margin:0 0 28px;border:1px solid rgba(0,210,255,0.1);">
+          <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;">Your work email</div>
+          <div style="font-size:18px;font-weight:700;color:#00d2ff;">${workEmail}</div>
+        </div>
+
+        <div style="margin:0 0 28px;">
+          <div style="font-size:13px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px;">What's included</div>
+          ${[
+            ["✉️", "Unified Inbox", "All your team email with AI summaries and smart replies"],
+            ["💬", "Team Chat", "Real-time channels for every project and team"],
+            ["📁", "Drive", "Shared files and documents with role-based access"],
+            ["📅", "Calendar", "Meeting scheduling and event management"],
+            ["🤖", "AI Assistant", "Summarise threads, draft replies, and automate workflows"],
+          ].map(([icon, name, desc]) => `
+            <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:14px;">
+              <span style="font-size:20px;flex-shrink:0;">${icon}</span>
+              <div>
+                <div style="font-weight:600;color:#f1f5f9;font-size:14px;">${name}</div>
+                <div style="color:#64748b;font-size:13px;margin-top:2px;">${desc}</div>
+              </div>
+            </div>`).join("")}
+        </div>
+
+        <a href="${appUrl}/login" style="display:inline-block;background:#00d2ff;color:#003543;font-weight:800;font-size:15px;padding:14px 32px;border-radius:10px;text-decoration:none;margin-bottom:28px;">Open Nexus →</a>
+
+        <p style="color:#475569;font-size:13px;line-height:1.7;margin:0;border-top:1px solid rgba(255,255,255,0.06);padding-top:20px;">
+          This email was automatically sent to your Nexus inbox. For any questions, contact your workspace administrator or reply to this message.
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+    return { subject, html };
+  }
+
+  // Team member email
+  const subject = `Congratulations on joining the CyberSage ${teamName} team, ${firstName}! 🎉`;
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /></head>
+<body style="margin:0;padding:0;background:#0f172a;font-family:system-ui,sans-serif;">
+  <div style="max-width:600px;margin:0 auto;padding:32px 16px;">
+    <div style="background:#111827;border-radius:20px;overflow:hidden;border:1px solid rgba(0,210,255,0.15);">
+      <div style="background:linear-gradient(135deg,#0a2218,#0c2a1a);padding:40px 40px 32px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#00d2ff;margin-bottom:20px;">Nexus by CyberSage</div>
+        <div style="font-size:40px;margin-bottom:14px;">🎉</div>
+        <h1 style="font-size:28px;font-weight:800;color:#ffffff;margin:0 0 10px;line-height:1.2;">Congratulations, ${firstName}!</h1>
+        <p style="color:#94a3b8;font-size:16px;margin:0;line-height:1.6;">You've made it to the CyberSage <strong style="color:#4ade80;">${teamName}</strong> team.</p>
+      </div>
+      <div style="padding:36px 40px;">
+        <p style="color:#cbd5e1;font-size:15px;line-height:1.8;margin:0 0 24px;">
+          Hi <strong style="color:#f1f5f9;">${firstName}</strong> — welcome aboard!
+          ${invitedByName} has set up your Nexus workspace. This is your home for email,
+          team chat, shared files, calendar, and AI-powered tools.
+        </p>
+
+        <div style="background:#0f172a;border-radius:14px;padding:22px 24px;margin:0 0 28px;border:1px solid rgba(0,210,255,0.1);">
+          <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;">Your work email</div>
+          <div style="font-size:18px;font-weight:700;color:#00d2ff;">${workEmail}</div>
+        </div>
+
+        <div style="margin:0 0 28px;">
+          <div style="font-size:13px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px;">Getting started</div>
+          ${[
+            ["1", "Sign in to Nexus", `Go to ${appUrl}/login and use your work email + the temporary password from your invite email`],
+            ["2", "Set your password", "You'll be prompted to create a new secure password on first login"],
+            ["3", "Complete your profile", "Add your photo, bio, and status so your teammates can find you easily"],
+            ["4", "Check your inbox", "Say hello in your team's chat channel and explore the tools"],
+          ].map(([num, title, desc]) => `
+            <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:16px;">
+              <div style="width:26px;height:26px;border-radius:50%;background:rgba(0,210,255,0.15);border:1px solid rgba(0,210,255,0.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;font-weight:700;color:#00d2ff;text-align:center;line-height:26px;">${num}</div>
+              <div>
+                <div style="font-weight:600;color:#f1f5f9;font-size:14px;">${title}</div>
+                <div style="color:#64748b;font-size:13px;margin-top:3px;">${desc}</div>
+              </div>
+            </div>`).join("")}
+        </div>
+
+        <a href="${appUrl}/login" style="display:inline-block;background:#4ade80;color:#052e16;font-weight:800;font-size:15px;padding:14px 32px;border-radius:10px;text-decoration:none;margin-bottom:28px;">Get started →</a>
+
+        <p style="color:#475569;font-size:13px;line-height:1.7;margin:0;border-top:1px solid rgba(255,255,255,0.06);padding-top:20px;">
+          Need help? Reach out to ${invitedByName} or your team admin directly in Nexus Chat.
+          We're excited to have you on the team! 🚀
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+  return { subject, html };
+}
+
+/**
+ * Delivers a welcome/onboarding email directly into the new user's Nexus inbox.
+ * This appears as their very first message when they log in.
+ */
+export async function sendWelcomeInboxMessage(opts: {
+  userId: string;
+  workEmail: string;
+  fullName: string;
+  role: UserRole;
+  invitedByName: string;
+}) {
+  // Dynamic import to avoid circular deps with prisma at module level
+  const { prisma } = await import("@/lib/prisma");
+  const { workEmail, fullName, role, invitedByName, userId } = opts;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://nexus.cybersage.uk";
+
+  const { subject, html } = buildWelcomeHtml({ fullName, workEmail, role, invitedByName, appUrl });
+  const fromAddr = "noreply@cybersage.uk";
+
+  const mailbox = await prisma.mailbox.findUnique({ where: { email: workEmail } });
+  if (!mailbox) return;
+
+  const thread = await prisma.inboxThread.create({
+    data: { subject, mailboxId: mailbox.id },
+    select: { id: true },
+  });
+
+  await prisma.inboxMessage.create({
+    data: {
+      threadId: thread.id,
+      from: fromAddr,
+      to: workEmail,
+      subject,
+      textBody: `Welcome to Nexus, ${fullName.split(" ")[0]}! Your work email is ${workEmail}.`,
+      htmlBody: html,
+      isRead: false,
+    },
+  });
+
+  void userId; // referenced for future notification triggers
 }

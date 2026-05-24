@@ -29,6 +29,29 @@ export interface ComposeDraft {
   id: string; userId: string; to: string; subject: string; body: string; savedAt: string;
 }
 
+export interface WorkspaceUser {
+  id: string;
+  email: string;
+  fullName: string;
+  displayName: string | null;
+  avatarUrl: string | null;
+  role: string;
+  customRole: string | null;
+  jobTitle: string | null;
+  department: string | null;
+  bio: string | null;
+  statusEmoji: string | null;
+  statusMessage: string | null;
+  pronouns: string | null;
+  location: string | null;
+}
+
+export const usersApi = {
+  getProfile: (id: string) => apiRequest<WorkspaceUser>(`/api/mobile/users/${id}`),
+  getByEmail: (email: string) => apiRequest<WorkspaceUser>(`/api/mobile/users/${encodeURIComponent(email)}?byEmail=1`),
+  listMembers: () => apiRequest<WorkspaceUser[]>("/api/workspace/members"),
+};
+
 export const draftApi = {
   load: () => apiRequest<ComposeDraft | null>("/api/mobile/drafts"),
   save: (data: { to?: string; subject?: string; body?: string }) =>

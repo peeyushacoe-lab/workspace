@@ -5,7 +5,7 @@ import bcrypt from "bcrypt";
 import { randomBytes } from "crypto";
 import { getCurrentUser } from "@/lib/session";
 import { CREATOR_PERMISSIONS, KEY_ROLES } from "@/lib/auth";
-import { sendInviteEmail } from "@/lib/email";
+import { sendInviteEmail, sendWelcomeInboxMessage } from "@/lib/email";
 import type { UserRole } from "@/generated/prisma/enums";
 
 const createUserSchema = z.object({
@@ -146,6 +146,15 @@ export async function POST(request: Request) {
       tempPassword,
       invitedByName: currentUser.fullName,
     }).catch(err => console.error("[invite email]", err));
+
+    // Deliver welcome message directly to their Nexus inbox — fire-and-forget
+    sendWelcomeInboxMessage({
+      userId: user.id,
+      workEmail: validated.workEmail,
+      fullName: validated.fullName,
+      role,
+      invitedByName: currentUser.fullName,
+    }).catch(err => console.error("[welcome inbox]", err));
 
     return NextResponse.json(user, { status: 201 });
   } catch (error) {
