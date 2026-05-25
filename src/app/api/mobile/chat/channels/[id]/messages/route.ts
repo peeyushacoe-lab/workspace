@@ -52,6 +52,10 @@ export async function GET(request: Request, { params }: Params) {
     reactions: m.reactions.map((r) => ({ emoji: r.emoji, user: r.user.fullName })),
     replyCount: m._count.replies,
     isSaved: m.saved.length > 0,
+    attachmentUrl: m.attachmentUrl,
+    attachmentName: m.attachmentName,
+    attachmentMime: m.attachmentMime,
+    attachmentSize: m.attachmentSize,
   })));
 }
 

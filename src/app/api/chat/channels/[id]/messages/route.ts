@@ -68,9 +68,10 @@ export async function POST(request: Request, { params }: Params) {
   });
   if (!membership) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const { content, parentId } = (await request.json()) as {
+  const { content, parentId, isUrgent } = (await request.json()) as {
     content: string;
     parentId?: string;
+    isUrgent?: boolean;
   };
 
   if (!content?.trim()) {
@@ -87,6 +88,7 @@ export async function POST(request: Request, { params }: Params) {
       userId: user.id,
       content: content.trim(),
       parentId: parentId ?? null,
+      isUrgent: isUrgent === true,
     },
     include: {
       user: { select: { id: true, fullName: true, avatarUrl: true, role: true } },

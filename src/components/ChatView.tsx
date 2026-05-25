@@ -71,6 +71,7 @@ type Message = {
   deletedAt?: string | null;
   parentId?: string | null;
   isPinned?: boolean;
+  isUrgent?: boolean;
   createdAt: string;
   user: MessageUser;
   reactions: Reaction[];
@@ -446,10 +447,9 @@ const MessageItem = memo(function MessageItem({
 
   return (
     <div
-      className="group relative flex gap-3 px-6 py-3 hover:bg-[#262939] transition-colors"
+      className={`group relative flex gap-3 px-6 py-3 transition-colors ${msg.isUrgent ? "bg-[#ff4d6d]/5 border-l-2 border-[#ff4d6d] hover:bg-[#ff4d6d]/10" : "hover:bg-[#262939]"}`}
       onMouseEnter={() => !isDeleted && setShowActions(true)}
       onMouseLeave={() => {
-        // Keep actions visible while emoji picker is open
         if (!showEmojiPicker) setShowActions(false);
       }}
     >
@@ -459,6 +459,9 @@ const MessageItem = memo(function MessageItem({
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline gap-2">
           <span className="font-semibold text-[#dfe1f6] text-sm">{msg.user.fullName}</span>
+          {msg.isUrgent && (
+            <span className="text-[10px] font-bold text-[#ff4d6d] bg-[#ff4d6d]/15 px-1.5 py-0.5 rounded-full leading-none">🚨 Urgent</span>
+          )}
           <span className="text-xs text-[#bbc9cf]">
             {formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true })}
           </span>
@@ -1358,6 +1361,7 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [composerText, setComposerText] = useState("");
   const [sending, setSending] = useState(false);
+  const [composerUrgent, setComposerUrgent] = useState(false);
   const [showNewChannel, setShowNewChannel] = useState(false);
   const [showNewGroupDM, setShowNewGroupDM] = useState(false);
   const [showAddMembers, setShowAddMembers] = useState(false);
@@ -1592,10 +1596,12 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
     const text = composerText;
     setComposerText("");
     try {
+      const urgent = composerUrgent;
+      setComposerUrgent(false);
       const res = await fetch(`/api/chat/channels/${selectedChannelId}/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: text }),
+        body: JSON.stringify({ content: text, isUrgent: urgent }),
       });
       if (!res.ok) throw new Error("Failed");
 
@@ -2163,7 +2169,7 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
                   </div>
                 )}
 
-                <div className="flex items-end gap-3 bg-[#0f1321] border border-[rgba(0,255,255,0.1)] rounded-lg px-4 py-2.5">
+                <div className={`flex items-end gap-3 bg-[#0f1321] border rounded-lg px-4 py-2.5 transition-colors ${composerUrgent ? "border-[#ff4d6d]/50 bg-[#ff4d6d]/5" : "border-[rgba(0,255,255,0.1)]"}`}>
                   <textarea
                     ref={composerRef}
                     value={composerText}
@@ -2175,11 +2181,19 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
                         sendMessage();
                       }
                     }}
-                    placeholder={`Message #${selectedChannel?.name ?? ""}`}
+                    placeholder={composerUrgent ? `🚨 Urgent message to #${selectedChannel?.name ?? ""}` : `Message #${selectedChannel?.name ?? ""}`}
                     rows={1}
                     className="flex-1 bg-transparent resize-none text-sm text-[#dfe1f6] placeholder-[#bbc9cf] outline-none max-h-32 overflow-y-auto"
                     style={{ minHeight: "1.5rem" }}
                   />
+                  {/* Urgent flag toggle */}
+                  <button
+                    onClick={() => setComposerUrgent(v => !v)}
+                    title={composerUrgent ? "Remove urgent flag" : "Mark as urgent"}
+                    className={`p-2 rounded-lg transition-colors flex-shrink-0 text-sm ${composerUrgent ? "bg-[#ff4d6d]/20 text-[#ff4d6d]" : "text-[#5c6b72] hover:text-[#bbc9cf] hover:bg-[#262939]"}`}
+                  >
+                    🚨
+                  </button>
                   {/* Voice note button */}
                   <button
                     onClick={recording ? stopRecording : () => void startRecording()}

@@ -9,6 +9,9 @@ import * as Haptics from "expo-haptics";
 import { apiRequest } from "../../src/api/client";
 import { ProfileSidebar } from "../../src/components/ProfileSidebar";
 import { ThreadView } from "../../src/components/ThreadView";
+import { SearchModal } from "../../src/components/SearchModal";
+import { EmojiPicker } from "../../src/components/EmojiPicker";
+import { FilePreview } from "../../src/components/FilePreview";
 import { profileApi } from "../../src/api/inbox";
 import { useVoiceRecorder } from "../../src/hooks/useVoiceRecorder";
 
@@ -27,6 +30,10 @@ interface ChatMsg {
   isSaved?: boolean;
   replyCount?: number;
   isUrgent?: boolean;
+  attachmentUrl?: string | null;
+  attachmentName?: string | null;
+  attachmentMime?: string | null;
+  attachmentSize?: number | null;
 }
 
 type FilterType = "all" | "unread" | "mentions" | "saved";
@@ -87,6 +94,8 @@ export default function ChatScreen() {
   const [typingNames, setTypingNames] = useState<string[]>([]);
   const [threadMsg, setThreadMsg] = useState<{ id: string; channelId: string } | null>(null);
   const [isUrgent, setIsUrgent] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [emojiTarget, setEmojiTarget] = useState<string | null>(null);
   const fabScale = useRef(new Animated.Value(1)).current;
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const typingClearTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
@@ -199,6 +208,10 @@ export default function ChatScreen() {
                     item.content.length > 60 ? item.content.slice(0, 60) + "…" : item.content,
                     [
                       {
+                        text: "😀 React",
+                        onPress: () => setEmojiTarget(item.id),
+                      },
+                      {
                         text: "💬 Reply in thread",
                         onPress: () => {
                           if (activeChannel) setThreadMsg({ id: item.id, channelId: activeChannel.id });
@@ -258,12 +271,35 @@ export default function ChatScreen() {
                     </View>
                   )}
                   <Text style={[s.msgText, item.isUrgent && s.msgTextUrgent]}>{item.content}</Text>
+                  {item.attachmentUrl && (
+                    <FilePreview
+                      url={item.attachmentUrl}
+                      name={item.attachmentName}
+                      mime={item.attachmentMime}
+                      size={item.attachmentSize}
+                    />
+                  )}
                   {item.reactions.length > 0 && (
                     <View style={s.reactionsRow}>
-                      {item.reactions.map((r, i) => (
-                        <View key={i} style={s.reactionChip}>
-                          <Text style={s.reactionText}>{r.emoji}</Text>
-                        </View>
+                      {Object.entries(
+                        item.reactions.reduce<Record<string, number>>((acc, r) => {
+                          acc[r.emoji] = (acc[r.emoji] ?? 0) + 1;
+                          return acc;
+                        }, {})
+                      ).map(([emoji, count]) => (
+                        <TouchableOpacity
+                          key={emoji}
+                          style={s.reactionChip}
+                          onPress={() => {
+                            void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            apiRequest(`/api/mobile/chat/messages/${item.id}/reactions`, {
+                              method: "POST", body: JSON.stringify({ emoji }),
+                            }).then(() => qc.invalidateQueries({ queryKey: ["m-messages", activeChannel?.id] })).catch(() => {});
+                          }}
+                        >
+                          <Text style={s.reactionText}>{emoji}</Text>
+                          {count > 1 && <Text style={s.reactionCount}>{count}</Text>}
+                        </TouchableOpacity>
                       ))}
                     </View>
                   )}
@@ -379,6 +415,16 @@ export default function ChatScreen() {
             messageId={threadMsg.id}
           />
         )}
+        <EmojiPicker
+          visible={!!emojiTarget}
+          onClose={() => setEmojiTarget(null)}
+          onSelect={(emoji) => {
+            if (!emojiTarget || !activeChannel) return;
+            apiRequest(`/api/mobile/chat/messages/${emojiTarget}/reactions`, {
+              method: "POST", body: JSON.stringify({ emoji }),
+            }).then(() => qc.invalidateQueries({ queryKey: ["m-messages", activeChannel.id] })).catch(() => {});
+          }}
+        />
       </KeyboardAvoidingView>
     );
   }
@@ -428,7 +474,7 @@ export default function ChatScreen() {
           }
         </TouchableOpacity>
         <Text style={s.title}>Chat</Text>
-        <TouchableOpacity onPress={() => Alert.alert("Search", "Search coming soon.")} style={s.headerAction}>
+        <TouchableOpacity onPress={() => { void Haptics.selectionAsync(); setShowSearch(true); }} style={s.headerAction}>
           <Text style={s.headerActionText}>🔍</Text>
         </TouchableOpacity>
       </View>
@@ -536,6 +582,18 @@ export default function ChatScreen() {
       </Animated.View>
 
       <ProfileSidebar visible={showSidebar} onClose={() => setShowSidebar(false)} />
+      <SearchModal
+        visible={showSearch}
+        onClose={() => setShowSearch(false)}
+        onChannelSelect={(channelId) => {
+          const ch = (channels ?? []).find(c => c.id === channelId);
+          if (ch) {
+            setActive(ch);
+            apiRequest<{ content: string }>(`/api/mobile/chat/channels/${channelId}/draft`)
+              .then(d => { if (d.content) setText(d.content); }).catch(() => {});
+          }
+        }}
+      />
     </View>
   );
 }
@@ -618,8 +676,9 @@ const s = StyleSheet.create({
   msgText:          { color: "#dfe1f6", fontSize: 14, lineHeight: 20 },
   msgTime:          { color: "#5c6b72", fontSize: 10 },
   reactionsRow:     { flexDirection: "row", gap: 4, marginTop: 4 },
-  reactionChip:     { backgroundColor: "#1b1f2e", borderRadius: 12, paddingHorizontal: 8, paddingVertical: 2, borderWidth: 1, borderColor: "rgba(0,210,255,0.1)" },
-  reactionText:     { fontSize: 13 },
+  reactionChip:     { flexDirection: "row", alignItems: "center", gap: 3, backgroundColor: "#1b1f2e", borderRadius: 12, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 1, borderColor: "rgba(0,210,255,0.1)" },
+  reactionText:     { fontSize: 14 },
+  reactionCount:    { color: "#8899a6", fontSize: 11, fontWeight: "700" },
   readTick:         { color: "#00d2ff", fontSize: 10, fontWeight: "700" },
   sentTick:         { color: "#5c6b72", fontSize: 10 },
   savedIcon:        { fontSize: 10 },
