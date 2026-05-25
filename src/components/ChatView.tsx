@@ -72,6 +72,10 @@ type Message = {
   parentId?: string | null;
   isPinned?: boolean;
   isUrgent?: boolean;
+  attachmentUrl?: string | null;
+  attachmentMime?: string | null;
+  attachmentName?: string | null;
+  attachmentSize?: number | null;
   createdAt: string;
   user: MessageUser;
   reactions: Reaction[];
@@ -499,9 +503,22 @@ const MessageItem = memo(function MessageItem({
         ) : isBotResponse ? (
           <BotResponseCard content={msg.content} />
         ) : (
-          <p className="text-sm text-[#dfe1f6] whitespace-pre-wrap break-words mt-0.5">
-            {renderWithMentions(msg.content, currentUserId, memberNames)}
-          </p>
+          <>
+            {msg.content && (
+              <p className="text-sm text-[#dfe1f6] whitespace-pre-wrap break-words mt-0.5">
+                {renderWithMentions(msg.content, currentUserId, memberNames)}
+              </p>
+            )}
+            {msg.attachmentUrl && msg.attachmentMime?.startsWith("image/") && (
+              <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer" className="inline-block mt-1.5">
+                <img
+                  src={msg.attachmentUrl}
+                  alt={msg.attachmentName ?? "image"}
+                  className="rounded-xl max-w-xs max-h-64 object-cover border border-[rgba(0,210,255,0.1)] hover:opacity-90 transition-opacity"
+                />
+              </a>
+            )}
+          </>
         )}
 
         {/* Reactions — only on non-deleted messages */}
@@ -1352,6 +1369,91 @@ function AddMembersModal({
   );
 }
 
+// ─── GIF Picker ──────────────────────────────────────────────────────────────
+
+type GifResult = { id: string; title: string; url: string; previewUrl: string };
+
+function GifPicker({ onSelect, onClose }: { onSelect: (url: string, title: string) => void; onClose: () => void }) {
+  const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [results, setResults] = useState<GifResult[]>([]);
+  const [loading, setLoading] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => { inputRef.current?.focus(); }, []);
+
+  useEffect(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => setDebouncedQuery(query), 400);
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, [query]);
+
+  useEffect(() => {
+    setLoading(true);
+    const url = debouncedQuery.trim()
+      ? `/api/chat/gifs?q=${encodeURIComponent(debouncedQuery.trim())}`
+      : "/api/chat/gifs";
+    fetch(url)
+      .then((r) => r.json())
+      .then((d: { results: GifResult[] }) => setResults(d.results ?? []))
+      .catch(() => setResults([]))
+      .finally(() => setLoading(false));
+  }, [debouncedQuery]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
+      <div
+        className="w-full max-w-lg bg-[#1b1f2e] border border-[rgba(0,210,255,0.15)] rounded-t-2xl shadow-2xl overflow-hidden"
+        style={{ maxHeight: "60vh" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-[rgba(0,210,255,0.1)]">
+          <span className="text-base">🎞️</span>
+          <input
+            ref={inputRef}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search GIFs…"
+            className="flex-1 bg-transparent text-sm text-[#dfe1f6] placeholder-[#5c6b72] outline-none"
+            onKeyDown={(e) => e.key === "Escape" && onClose()}
+          />
+          <button onClick={onClose} className="text-[#5c6b72] hover:text-[#bbc9cf]"><X className="w-4 h-4" /></button>
+        </div>
+        <div className="overflow-y-auto p-2" style={{ maxHeight: "calc(60vh - 56px)" }}>
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-5 h-5 animate-spin text-[#5c6b72]" />
+            </div>
+          ) : results.length === 0 ? (
+            <p className="text-center text-sm text-[#5c6b72] py-8">
+              {process.env.NEXT_PUBLIC_GIPHY_ENABLED !== "true" ? "Set GIPHY_API_KEY to enable GIFs" : "No results"}
+            </p>
+          ) : (
+            <div className="grid grid-cols-3 gap-1.5">
+              {results.map((gif) => (
+                <button
+                  key={gif.id}
+                  onClick={() => { onSelect(gif.url, gif.title); onClose(); }}
+                  className="relative group overflow-hidden rounded-lg bg-[#0f1321] aspect-square hover:ring-2 hover:ring-[#00d2ff] transition-all"
+                >
+                  <img src={gif.previewUrl} alt={gif.title} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <span className="text-xs font-semibold text-white">Send</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="px-4 py-1.5 border-t border-[rgba(0,210,255,0.08)]">
+          <span className="text-[9px] text-[#5c6b72]">Powered by GIPHY</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Command Palette ─────────────────────────────────────────────────────────
 
 type CmdAction = {
@@ -1540,6 +1642,14 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
   // @CyberSage bot state
   const [botResponding, setBotResponding] = useState(false);
 
+  // GIF picker
+  const [showGifPicker, setShowGifPicker] = useState(false);
+  const [composerAttachment, setComposerAttachment] = useState<{ url: string; mime: string; name: string } | null>(null);
+
+  // Web Push subscription state
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushLoading, setPushLoading] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const sseRef = useRef<EventSource | null>(null);
   const typingTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
@@ -1578,6 +1688,49 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, []);
+
+  // Check if web push is already subscribed
+  useEffect(() => {
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+    navigator.serviceWorker.ready.then((sw) =>
+      sw.pushManager.getSubscription().then((sub) => setPushEnabled(!!sub))
+    ).catch(() => {});
+  }, []);
+
+  const togglePush = async () => {
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+      toast.error("Push notifications are not supported in this browser");
+      return;
+    }
+    setPushLoading(true);
+    try {
+      const sw = await navigator.serviceWorker.ready;
+      const existing = await sw.pushManager.getSubscription();
+      if (existing) {
+        await existing.unsubscribe();
+        await fetch("/api/push/subscribe", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ endpoint: existing.endpoint }) });
+        setPushEnabled(false);
+        toast.success("Push notifications disabled");
+      } else {
+        const permission = await Notification.requestPermission();
+        if (permission !== "granted") { toast.error("Notification permission denied"); return; }
+        const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+        if (!vapidKey) { toast.error("Push not configured (missing VAPID key)"); return; }
+        const sub = await sw.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: vapidKey,
+        });
+        await fetch("/api/push/subscribe", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(sub.toJSON()) });
+        setPushEnabled(true);
+        toast.success("Push notifications enabled for urgent messages");
+      }
+    } catch (e) {
+      toast.error("Failed to update push subscription");
+      console.error(e);
+    } finally {
+      setPushLoading(false);
+    }
+  };
 
   // Presence heartbeat: announce online status every 30s, clean up on unmount/channel change
   useEffect(() => {
@@ -1745,17 +1898,24 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
   }, [messages]);
 
   const sendMessage = async () => {
-    if (!composerText.trim() || !selectedChannelId || sending) return;
+    if (!composerText.trim() && !composerAttachment) return;
+    if (!selectedChannelId || sending) return;
     setSending(true);
     const text = composerText;
+    const attachment = composerAttachment;
     setComposerText("");
+    setComposerAttachment(null);
     try {
       const urgent = composerUrgent;
       setComposerUrgent(false);
       const res = await fetch(`/api/chat/channels/${selectedChannelId}/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: text, isUrgent: urgent }),
+        body: JSON.stringify({
+          content: text,
+          isUrgent: urgent,
+          ...(attachment ? { attachmentUrl: attachment.url, attachmentMime: attachment.mime, attachmentName: attachment.name } : {}),
+        }),
       });
       if (!res.ok) throw new Error("Failed");
 
@@ -2241,6 +2401,15 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
                     </span>
                   </div>
                 )}
+                {/* Web Push toggle */}
+                <button
+                  onClick={() => void togglePush()}
+                  disabled={pushLoading}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors ${pushEnabled ? "border-[#00d2ff] text-[#00d2ff] bg-[#00d2ff]/10" : "border-[rgba(0,255,255,0.1)] text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6]"} disabled:opacity-40`}
+                  title={pushEnabled ? "Disable urgent push notifications" : "Enable push for urgent messages"}
+                >
+                  {pushLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <span className="text-sm">{pushEnabled ? "🔔" : "🔕"}</span>}
+                </button>
                 <button
                   onClick={() => setShowAddMembers(true)}
                   className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-[rgba(0,255,255,0.1)] text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] transition-colors"
@@ -2331,6 +2500,17 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
                   </div>
                 )}
 
+                {/* GIF attachment preview */}
+                {composerAttachment && (
+                  <div className="mb-2 relative inline-block">
+                    <img src={composerAttachment.url} alt={composerAttachment.name} className="max-h-28 rounded-lg border border-[rgba(0,210,255,0.2)]" />
+                    <button
+                      onClick={() => setComposerAttachment(null)}
+                      className="absolute -top-1.5 -right-1.5 bg-[#ff4d6d] text-white rounded-full w-4 h-4 flex items-center justify-center text-xs leading-none"
+                    >×</button>
+                  </div>
+                )}
+
                 <div className={`flex items-end gap-3 bg-[#0f1321] border rounded-lg px-4 py-2.5 transition-colors ${composerUrgent ? "border-[#ff4d6d]/50 bg-[#ff4d6d]/5" : "border-[rgba(0,255,255,0.1)]"}`}>
                   <textarea
                     ref={composerRef}
@@ -2348,6 +2528,14 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
                     className="flex-1 bg-transparent resize-none text-sm text-[#dfe1f6] placeholder-[#bbc9cf] outline-none max-h-32 overflow-y-auto"
                     style={{ minHeight: "1.5rem" }}
                   />
+                  {/* GIF picker button */}
+                  <button
+                    onClick={() => setShowGifPicker(true)}
+                    title="Send a GIF"
+                    className="p-2 rounded-lg transition-colors flex-shrink-0 text-xs font-bold text-[#5c6b72] hover:text-[#bbc9cf] hover:bg-[#262939]"
+                  >
+                    GIF
+                  </button>
                   {/* Urgent flag toggle */}
                   <button
                     onClick={() => setComposerUrgent(v => !v)}
@@ -2366,7 +2554,7 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
                   </button>
                   <button
                     onClick={sendMessage}
-                    disabled={!composerText.trim() || sending}
+                    disabled={(!composerText.trim() && !composerAttachment) || sending}
                     className="bg-[#00d2ff] text-[#003543] hover:bg-[#47d6ff] rounded-lg p-2 transition-colors disabled:opacity-40 flex-shrink-0"
                   >
                     <Send className="w-4 h-4" />
@@ -2437,6 +2625,14 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
             </div>
           )}
         </>
+      )}
+
+      {/* GIF Picker */}
+      {showGifPicker && (
+        <GifPicker
+          onSelect={(url, name) => setComposerAttachment({ url, mime: "image/gif", name })}
+          onClose={() => setShowGifPicker(false)}
+        />
       )}
 
       {/* Command Palette */}
