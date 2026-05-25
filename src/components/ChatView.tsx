@@ -1352,6 +1352,147 @@ function AddMembersModal({
   );
 }
 
+// ─── Command Palette ─────────────────────────────────────────────────────────
+
+type CmdAction = {
+  id: string;
+  label: string;
+  description?: string;
+  icon: string;
+  onSelect: () => void;
+};
+
+function CommandPalette({
+  channels,
+  onClose,
+  onSelectChannel,
+  onNewChannel,
+  onNewDM,
+}: {
+  channels: Channel[];
+  onClose: () => void;
+  onSelectChannel: (id: string) => void;
+  onNewChannel: () => void;
+  onNewDM: () => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [cursor, setCursor] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  const q = query.trim().toLowerCase();
+
+  const channelItems: CmdAction[] = channels
+    .filter((c) => c.type === "CHANNEL" && c.name.toLowerCase().includes(q))
+    .map((c) => ({
+      id: c.id,
+      label: `#${c.name}`,
+      description: c.description,
+      icon: "#",
+      onSelect: () => { onSelectChannel(c.id); onClose(); },
+    }));
+
+  const dmItems: CmdAction[] = channels
+    .filter((c) => (c.type === "DIRECT" || c.type === "GROUP") && c.name.toLowerCase().includes(q))
+    .map((c) => ({
+      id: c.id,
+      label: c.name,
+      icon: c.type === "GROUP" ? "👥" : "👤",
+      onSelect: () => { onSelectChannel(c.id); onClose(); },
+    }));
+
+  const actionItems: CmdAction[] = [
+    { id: "_new_channel", label: "New Channel", icon: "+", description: "Create a public or private channel", onSelect: () => { onNewChannel(); onClose(); } },
+    { id: "_new_dm", label: "New Direct Message", icon: "✉", description: "Open a DM or group conversation", onSelect: () => { onNewDM(); onClose(); } },
+  ].filter((a) => !q || a.label.toLowerCase().includes(q));
+
+  const groups: { heading: string; items: CmdAction[] }[] = [
+    { heading: "Channels", items: channelItems },
+    { heading: "Direct Messages", items: dmItems },
+    { heading: "Actions", items: actionItems },
+  ].filter((g) => g.items.length > 0);
+
+  const allItems = groups.flatMap((g) => g.items);
+
+  const safeCursor = Math.min(cursor, Math.max(0, allItems.length - 1));
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape") { onClose(); return; }
+    if (e.key === "ArrowDown") { e.preventDefault(); setCursor((c) => Math.min(c + 1, allItems.length - 1)); return; }
+    if (e.key === "ArrowUp") { e.preventDefault(); setCursor((c) => Math.max(c - 1, 0)); return; }
+    if (e.key === "Enter") { e.preventDefault(); allItems[safeCursor]?.onSelect(); return; }
+  };
+
+  let flatIdx = 0;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] bg-black/60 backdrop-blur-sm" onClick={onClose}>
+      <div
+        className="w-full max-w-lg bg-[#1b1f2e] border border-[rgba(0,210,255,0.15)] rounded-2xl shadow-2xl overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Search input */}
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-[rgba(0,210,255,0.1)]">
+          <Search className="w-4 h-4 text-[#bbc9cf] flex-shrink-0" />
+          <input
+            ref={inputRef}
+            value={query}
+            onChange={(e) => { setQuery(e.target.value); setCursor(0); }}
+            onKeyDown={handleKeyDown}
+            placeholder="Jump to channel or action…"
+            className="flex-1 bg-transparent text-sm text-[#dfe1f6] placeholder-[#5c6b72] outline-none"
+          />
+          <kbd className="text-[10px] text-[#5c6b72] bg-[#0f1321] border border-[rgba(255,255,255,0.08)] rounded px-1.5 py-0.5">ESC</kbd>
+        </div>
+
+        {/* Results */}
+        <div className="max-h-80 overflow-y-auto py-1">
+          {allItems.length === 0 ? (
+            <p className="text-center text-sm text-[#5c6b72] py-8">No results</p>
+          ) : (
+            groups.map((group) => (
+              <div key={group.heading}>
+                <p className="px-4 pt-3 pb-1 text-[10px] font-semibold text-[#5c6b72] uppercase tracking-wider">{group.heading}</p>
+                {group.items.map((item) => {
+                  const idx = flatIdx++;
+                  const isActive = idx === safeCursor;
+                  return (
+                    <button
+                      key={item.id}
+                      onMouseEnter={() => setCursor(idx)}
+                      onClick={item.onSelect}
+                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${isActive ? "bg-[#00d2ff]/10" : "hover:bg-[#262939]"}`}
+                    >
+                      <span className={`text-sm w-5 text-center flex-shrink-0 ${isActive ? "text-[#00d2ff]" : "text-[#5c6b72]"}`}>{item.icon}</span>
+                      <span className="flex-1 min-w-0">
+                        <span className={`text-sm font-medium ${isActive ? "text-[#a5e7ff]" : "text-[#dfe1f6]"}`}>{item.label}</span>
+                        {item.description && (
+                          <span className="block text-xs text-[#5c6b72] truncate">{item.description}</span>
+                        )}
+                      </span>
+                      {isActive && <ChevronRight className="w-3.5 h-3.5 text-[#00d2ff] flex-shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Footer hint */}
+        <div className="px-4 py-2 border-t border-[rgba(0,210,255,0.08)] flex items-center gap-4 text-[10px] text-[#5c6b72]">
+          <span><kbd className="bg-[#0f1321] border border-[rgba(255,255,255,0.08)] rounded px-1">↑↓</kbd> navigate</span>
+          <span><kbd className="bg-[#0f1321] border border-[rgba(255,255,255,0.08)] rounded px-1">↵</kbd> select</span>
+          <span><kbd className="bg-[#0f1321] border border-[rgba(255,255,255,0.08)] rounded px-1">Esc</kbd> close</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main ChatView ────────────────────────────────────────────────────────────
 
 export function ChatView({ currentUserId }: { currentUserId: string }) {
@@ -1362,6 +1503,7 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
   const [composerText, setComposerText] = useState("");
   const [sending, setSending] = useState(false);
   const [composerUrgent, setComposerUrgent] = useState(false);
+  const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [showNewChannel, setShowNewChannel] = useState(false);
   const [showNewGroupDM, setShowNewGroupDM] = useState(false);
   const [showAddMembers, setShowAddMembers] = useState(false);
@@ -1424,6 +1566,18 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
   useEffect(() => {
     loadChannels();
   }, [loadChannels]);
+
+  // Global ⌘K / Ctrl+K command palette shortcut
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setShowCommandPalette((v) => !v);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
   // Presence heartbeat: announce online status every 30s, clean up on unmount/channel change
   useEffect(() => {
@@ -1936,7 +2090,15 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
         <div className="p-4 border-b border-[rgba(0,255,255,0.1)]">
           <div className="flex items-center gap-2">
             <MessageSquare className="w-5 h-5 text-[#a5e7ff]" />
-            <span className="text-[#dfe1f6] font-bold text-sm">Workspace Chat</span>
+            <span className="text-[#dfe1f6] font-bold text-sm flex-1">Workspace Chat</span>
+            <button
+              onClick={() => setShowCommandPalette(true)}
+              title="Command palette (⌘K)"
+              className="flex items-center gap-1 text-[10px] text-[#5c6b72] hover:text-[#bbc9cf] bg-[#0f1321] border border-[rgba(255,255,255,0.08)] rounded px-1.5 py-0.5 transition-colors"
+            >
+              <Search className="w-2.5 h-2.5" />
+              <span>⌘K</span>
+            </button>
           </div>
         </div>
 
@@ -2212,7 +2374,7 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
                 </div>
               </div>
               <p className="text-[10px] text-[#bbc9cf] mt-1.5 ml-1">
-                Enter to send · Shift+Enter for new line · Drag files to attach · @ to mention
+                Enter to send · Shift+Enter for new line · Drag files to attach · @ to mention · ⌘K to navigate
               </p>
             </div>
           </div>
@@ -2275,6 +2437,17 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
             </div>
           )}
         </>
+      )}
+
+      {/* Command Palette */}
+      {showCommandPalette && (
+        <CommandPalette
+          channels={channels}
+          onClose={() => setShowCommandPalette(false)}
+          onSelectChannel={(id) => { setSelectedChannelId(id); setShowCommandPalette(false); }}
+          onNewChannel={() => { setShowNewChannel(true); setShowCommandPalette(false); }}
+          onNewDM={() => { setShowNewGroupDM(true); setShowCommandPalette(false); }}
+        />
       )}
 
       {/* Modals */}
