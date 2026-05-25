@@ -252,6 +252,7 @@ export function SimpleComposer({
   const [hasDraft, setHasDraft] = useState(false);
   const [showAIWrite, setShowAIWrite] = useState(false);
   const [draftId, setDraftId] = useState<string | undefined>(initialDraftId);
+  const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [draftSaveStatus, setDraftSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
 
   // Restore draft on mount from localStorage (legacy/offline)
@@ -324,54 +325,68 @@ export function SimpleComposer({
     loadSignatures();
   }, []);
 
+  const doActualSend = async (payload: { to: string; subject: string; body: string; signatureId?: string; cc?: string[]; bcc?: string[] }) => {
+    const response = await fetch("/api/inbox/compose", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await response.json() as { ok?: boolean; error?: string };
+    if (!response.ok || !data.ok) throw new Error(data.error ?? "Failed to send");
+  };
+
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsPending(true);
+    if (!recipient.trim() || !subject.trim()) { toast.error("Recipient and subject are required"); return; }
 
-    const parseEmails = (raw: string) =>
-      raw.split(",").map(s => s.trim()).filter(s => s.length > 0);
+    const parseEmails = (raw: string) => raw.split(",").map(s => s.trim()).filter(Boolean);
+    const payload = {
+      to: recipient,
+      subject,
+      body,
+      signatureId: selectedSignatureId || undefined,
+      ...(cc.trim()  ? { cc:  parseEmails(cc) }  : {}),
+      ...(bcc.trim() ? { bcc: parseEmails(bcc) } : {}),
+    };
 
-    try {
-      const response = await fetch("/api/inbox/compose", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          to: recipient,
-          subject,
-          body,
-          signatureId: selectedSignatureId || undefined,
-          ...(cc.trim()  ? { cc:  parseEmails(cc) }  : {}),
-          ...(bcc.trim() ? { bcc: parseEmails(bcc) } : {}),
-        }),
-      });
+    const DELAY = 8;
+    let remaining = DELAY;
+    const toastId = "undo-send";
 
-      const data = await response.json() as { ok?: boolean; error?: string };
-
-      if (response.ok && data.ok) {
-        toast.success("Email sent");
-        setRecipient("");
-        setCc("");
-        setBcc("");
-        setShowCc(false);
-        setShowBcc(false);
-        setSubject("");
-        setBody("");
-        setHasDraft(false);
-        setDraftSaveStatus("idle");
-        if (draftKey) { try { localStorage.removeItem(draftKey); } catch {} }
-        if (draftId) {
-          fetch(`/api/drafts/${draftId}`, { method: "DELETE" }).catch(() => {});
-          setDraftId(undefined);
-        }
-        if (onSuccess) onSuccess();
-      } else {
-        toast.error(data.error ?? "Failed to send email");
-      }
-    } catch {
-      toast.error("An unexpected error occurred");
-    } finally {
+    const cancelSend = () => {
+      if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+      toast.dismiss(toastId);
+      toast.info("Send cancelled");
       setIsPending(false);
-    }
+    };
+
+    setIsPending(true);
+    toast(
+      `Sending in ${remaining}s…`,
+      { id: toastId, duration: (DELAY + 2) * 1000, action: { label: "Undo", onClick: cancelSend } }
+    );
+
+    const tick = () => {
+      remaining--;
+      if (remaining <= 0) {
+        toast.loading("Sending…", { id: toastId });
+        doActualSend(payload)
+          .then(() => {
+            toast.success("Email sent", { id: toastId });
+            setRecipient(""); setCc(""); setBcc(""); setShowCc(false); setShowBcc(false);
+            setSubject(""); setBody(""); setHasDraft(false); setDraftSaveStatus("idle");
+            if (draftKey) { try { localStorage.removeItem(draftKey); } catch {} }
+            if (draftId) { fetch(`/api/drafts/${draftId}`, { method: "DELETE" }).catch(() => {}); setDraftId(undefined); }
+            if (onSuccess) onSuccess();
+          })
+          .catch((err: Error) => toast.error(err.message, { id: toastId }))
+          .finally(() => setIsPending(false));
+      } else {
+        toast(`Sending in ${remaining}s…`, { id: toastId, duration: (remaining + 2) * 1000, action: { label: "Undo", onClick: cancelSend } });
+        undoTimerRef.current = setTimeout(tick, 1000);
+      }
+    };
+    undoTimerRef.current = setTimeout(tick, 1000);
   };
 
   const formContent = (

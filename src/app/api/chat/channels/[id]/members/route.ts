@@ -18,12 +18,6 @@ export async function POST(request: Request, { params }: Params) {
   });
   if (!membership) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const isChannelAdmin = membership.role === "ADMIN";
-  const isWorkspaceAdmin = ["ADMIN", "CEO", "CISO"].includes(user.role);
-  if (!isChannelAdmin && !isWorkspaceAdmin) {
-    return NextResponse.json({ error: "Only channel admins can add members" }, { status: 403 });
-  }
-
   const body = (await request.json()) as { userIds: string[] };
   if (!Array.isArray(body.userIds) || body.userIds.length === 0) {
     return NextResponse.json({ error: "userIds is required" }, { status: 400 });

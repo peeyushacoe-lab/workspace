@@ -14,9 +14,11 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const q = searchParams.get("q")?.trim();
 
+  const type = searchParams.get("type") === "sticker" ? "stickers" : "gifs";
+
   const url = q
-    ? `${BASE}/search?api_key=${GIPHY_KEY}&q=${encodeURIComponent(q)}&limit=24&rating=g`
-    : `${BASE}/trending?api_key=${GIPHY_KEY}&limit=24&rating=g`;
+    ? `${BASE.replace("gifs", type)}/search?api_key=${GIPHY_KEY}&q=${encodeURIComponent(q)}&limit=24&rating=g`
+    : `${BASE.replace("gifs", type)}/trending?api_key=${GIPHY_KEY}&limit=24&rating=g`;
 
   try {
     const res = await fetch(url, { next: { revalidate: 60 } });

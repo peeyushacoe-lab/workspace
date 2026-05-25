@@ -26,6 +26,8 @@ import {
   Mic,
   MicOff,
   Square,
+  Phone,
+  Video,
 } from "lucide-react";
 import { formatDistanceToNow, isToday, isYesterday, format } from "date-fns";
 import { toast } from "sonner";
@@ -263,12 +265,18 @@ function Avatar({ name, size = "sm" }: { name: string; size?: "sm" | "md" }) {
 // ─── Mention renderer ────────────────────────────────────────────────────────
 
 function renderWithMentions(content: string, currentUserId: string, memberNames: string[]): React.ReactNode {
-  // Match @Word patterns
   const parts = content.split(/(@\w[\w\s]{0,30})/g);
   return parts.map((part, i) => {
     if (part.startsWith("@")) {
-      const name = part.slice(1).trim();
-      const isMention = memberNames.some(m => m.toLowerCase().startsWith(name.toLowerCase()));
+      const name = part.slice(1).trim().toLowerCase();
+      if (name === "here" || name === "channel") {
+        return (
+          <span key={i} className="bg-[#ff4d6d]/15 text-[#ff9db0] font-bold rounded px-0.5">
+            {part}
+          </span>
+        );
+      }
+      const isMention = memberNames.some(m => m.toLowerCase().startsWith(name));
       if (isMention) {
         return (
           <span key={i} className="bg-[#00d2ff]/10 text-[#a5e7ff] font-semibold rounded px-0.5">
@@ -914,12 +922,10 @@ function NewGroupDMModal({
   };
 
   const submit = async () => {
-    if (selected.size < 2) {
-      toast.error("Select at least 2 people");
-      return;
-    }
+    if (selected.size === 0) { toast.error("Select at least one person"); return; }
     setCreating(true);
     const memberIds = Array.from(selected);
+    const isDirect = memberIds.length === 1;
     const names = users
       .filter((u) => selected.has(u.id))
       .map((u) => u.fullName.split(" ")[0])
@@ -929,8 +935,8 @@ function NewGroupDMModal({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: `Group: ${names}`,
-          type: "GROUP",
+          name: isDirect ? names : `Group: ${names}`,
+          type: isDirect ? "DIRECT" : "GROUP",
           isPrivate: true,
           memberIds,
         }),
@@ -940,7 +946,7 @@ function NewGroupDMModal({
       onCreate(ch);
       onClose();
     } catch {
-      toast.error("Failed to create group message");
+      toast.error("Failed to create conversation");
     } finally {
       setCreating(false);
     }
@@ -950,14 +956,16 @@ function NewGroupDMModal({
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
       <div className="bg-[#1b1f2e] rounded-2xl shadow-xl p-6 w-full max-w-md mx-4 border border-[rgba(0,255,255,0.1)]">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-[#dfe1f6]">New Group Message</h2>
+          <h2 className="text-lg font-bold text-[#dfe1f6]">
+            {selected.size > 1 ? "New Group Message" : "New Direct Message"}
+          </h2>
           <button onClick={onClose} className="text-[#bbc9cf] hover:text-[#dfe1f6]">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <p className="text-xs text-[#bbc9cf] mb-3">
-          Select 2 or more people to start a group conversation.
+          Select one person for a DM or multiple for a group conversation.
         </p>
 
         {/* Search */}
@@ -1038,10 +1046,10 @@ function NewGroupDMModal({
           </button>
           <button
             onClick={submit}
-            disabled={selected.size < 2 || creating}
+            disabled={selected.size === 0 || creating}
             className="flex-1 px-4 py-2 bg-[#00d2ff] text-[#003543] rounded-xl text-sm font-semibold hover:bg-[#47d6ff] disabled:opacity-50"
           >
-            {creating ? "Creating…" : `Start Group (${selected.size})`}
+            {creating ? "Creating…" : selected.size === 1 ? "Send Message" : `Start Group (${selected.size})`}
           </button>
         </div>
       </div>
@@ -1372,16 +1380,29 @@ function AddMembersModal({
 // ─── GIF Picker ──────────────────────────────────────────────────────────────
 
 type GifResult = { id: string; title: string; url: string; previewUrl: string };
+type MediaTab = "gif" | "sticker" | "emoji";
 
-function GifPicker({ onSelect, onClose }: { onSelect: (url: string, title: string) => void; onClose: () => void }) {
+function GifPicker({
+  onSelect,
+  onEmojiInsert,
+  onClose,
+  initialTab = "gif",
+}: {
+  onSelect: (url: string, title: string) => void;
+  onEmojiInsert: (emoji: string) => void;
+  onClose: () => void;
+  initialTab?: MediaTab;
+}) {
+  const [tab, setTab] = useState<MediaTab>(initialTab);
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [results, setResults] = useState<GifResult[]>([]);
   const [loading, setLoading] = useState(false);
+  const [emojiCategory, setEmojiCategory] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => { inputRef.current?.focus(); }, []);
+  useEffect(() => { inputRef.current?.focus(); }, [tab]);
 
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -1390,44 +1411,95 @@ function GifPicker({ onSelect, onClose }: { onSelect: (url: string, title: strin
   }, [query]);
 
   useEffect(() => {
+    if (tab === "emoji") return;
     setLoading(true);
-    const url = debouncedQuery.trim()
-      ? `/api/chat/gifs?q=${encodeURIComponent(debouncedQuery.trim())}`
-      : "/api/chat/gifs";
-    fetch(url)
+    const apiUrl = debouncedQuery.trim()
+      ? `/api/chat/gifs?type=${tab}&q=${encodeURIComponent(debouncedQuery.trim())}`
+      : `/api/chat/gifs?type=${tab}`;
+    fetch(apiUrl)
       .then((r) => r.json())
       .then((d: { results: GifResult[] }) => setResults(d.results ?? []))
       .catch(() => setResults([]))
       .finally(() => setLoading(false));
-  }, [debouncedQuery]);
+  }, [debouncedQuery, tab]);
+
+  const emojiRows = query.trim()
+    ? EMOJI_CATEGORIES.flatMap((c) => c.emojis).filter((e) => e.includes(query.trim()))
+    : (EMOJI_CATEGORIES[emojiCategory]?.emojis ?? []);
+
+  const tabs: { id: MediaTab; label: string; icon: string }[] = [
+    { id: "gif", label: "GIF", icon: "🎞️" },
+    { id: "sticker", label: "Sticker", icon: "🎭" },
+    { id: "emoji", label: "Emoji", icon: "😊" },
+  ];
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
       <div
         className="w-full max-w-lg bg-[#1b1f2e] border border-[rgba(0,210,255,0.15)] rounded-t-2xl shadow-2xl overflow-hidden"
-        style={{ maxHeight: "60vh" }}
+        style={{ maxHeight: "65vh" }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-[rgba(0,210,255,0.1)]">
-          <span className="text-base">🎞️</span>
+        {/* Tab bar */}
+        <div className="flex border-b border-[rgba(0,210,255,0.1)]">
+          {tabs.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => { setTab(t.id); setQuery(""); }}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold transition-colors ${tab === t.id ? "text-[#a5e7ff] border-b-2 border-[#00d2ff]" : "text-[#5c6b72] hover:text-[#bbc9cf]"}`}
+            >
+              <span>{t.icon}</span>{t.label}
+            </button>
+          ))}
+          <button onClick={onClose} className="px-3 text-[#5c6b72] hover:text-[#bbc9cf]"><X className="w-4 h-4" /></button>
+        </div>
+
+        {/* Search bar (GIF + Sticker + Emoji) */}
+        <div className="flex items-center gap-2 px-3 py-2 border-b border-[rgba(0,210,255,0.08)]">
+          <Search className="w-3.5 h-3.5 text-[#5c6b72] flex-shrink-0" />
           <input
             ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search GIFs…"
+            placeholder={tab === "emoji" ? "Search emoji…" : tab === "sticker" ? "Search stickers…" : "Search GIFs…"}
             className="flex-1 bg-transparent text-sm text-[#dfe1f6] placeholder-[#5c6b72] outline-none"
             onKeyDown={(e) => e.key === "Escape" && onClose()}
           />
-          <button onClick={onClose} className="text-[#5c6b72] hover:text-[#bbc9cf]"><X className="w-4 h-4" /></button>
         </div>
-        <div className="overflow-y-auto p-2" style={{ maxHeight: "calc(60vh - 56px)" }}>
-          {loading ? (
+
+        {/* Emoji category pills */}
+        {tab === "emoji" && !query && (
+          <div className="flex gap-1 px-3 py-1.5 overflow-x-auto border-b border-[rgba(0,210,255,0.08)]">
+            {EMOJI_CATEGORIES.map((cat, i) => (
+              <button
+                key={cat.label}
+                onClick={() => setEmojiCategory(i)}
+                className={`flex-shrink-0 text-[10px] px-2 py-0.5 rounded-full transition-colors ${emojiCategory === i ? "bg-[#00d2ff]/20 text-[#a5e7ff]" : "text-[#5c6b72] hover:text-[#bbc9cf]"}`}
+              >{cat.label}</button>
+            ))}
+          </div>
+        )}
+
+        {/* Content */}
+        <div className="overflow-y-auto p-2" style={{ maxHeight: "calc(65vh - 120px)" }}>
+          {tab === "emoji" ? (
+            <div className="grid grid-cols-8 gap-0.5">
+              {emojiRows.map((emoji, i) => (
+                <button
+                  key={`${emoji}-${i}`}
+                  onClick={() => { onEmojiInsert(emoji); onClose(); }}
+                  className="flex items-center justify-center w-9 h-9 text-xl hover:bg-[#262939] rounded-lg transition-transform hover:scale-110"
+                >{emoji}</button>
+              ))}
+              {emojiRows.length === 0 && <p className="col-span-8 text-center text-sm text-[#5c6b72] py-6">No results</p>}
+            </div>
+          ) : loading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="w-5 h-5 animate-spin text-[#5c6b72]" />
             </div>
           ) : results.length === 0 ? (
             <p className="text-center text-sm text-[#5c6b72] py-8">
-              {process.env.NEXT_PUBLIC_GIPHY_ENABLED !== "true" ? "Set GIPHY_API_KEY to enable GIFs" : "No results"}
+              {!process.env.NEXT_PUBLIC_GIPHY_KEY ? "Set GIPHY_API_KEY to enable" : "No results"}
             </p>
           ) : (
             <div className="grid grid-cols-3 gap-1.5">
@@ -1446,8 +1518,8 @@ function GifPicker({ onSelect, onClose }: { onSelect: (url: string, title: strin
             </div>
           )}
         </div>
-        <div className="px-4 py-1.5 border-t border-[rgba(0,210,255,0.08)]">
-          <span className="text-[9px] text-[#5c6b72]">Powered by GIPHY</span>
+        <div className="px-4 py-1 border-t border-[rgba(0,210,255,0.08)]">
+          <span className="text-[9px] text-[#5c6b72]">{tab !== "emoji" ? "Powered by GIPHY" : ""}</span>
         </div>
       </div>
     </div>
@@ -1642,9 +1714,23 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
   // @CyberSage bot state
   const [botResponding, setBotResponding] = useState(false);
 
-  // GIF picker
+  // Media picker (GIF / Sticker / Emoji)
   const [showGifPicker, setShowGifPicker] = useState(false);
+  const [mediaPickerTab, setMediaPickerTab] = useState<"gif" | "sticker" | "emoji">("gif");
   const [composerAttachment, setComposerAttachment] = useState<{ url: string; mime: string; name: string } | null>(null);
+
+  const handleEmojiInsert = (emoji: string) => {
+    const ref = composerRef.current;
+    if (!ref) { setComposerText((prev) => prev + emoji); return; }
+    const start = ref.selectionStart ?? composerText.length;
+    const end = ref.selectionEnd ?? composerText.length;
+    const newText = composerText.slice(0, start) + emoji + composerText.slice(end);
+    setComposerText(newText);
+    requestAnimationFrame(() => {
+      ref.focus();
+      ref.setSelectionRange(start + emoji.length, start + emoji.length);
+    });
+  };
 
   // Web Push subscription state
   const [pushEnabled, setPushEnabled] = useState(false);
@@ -2067,19 +2153,27 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
     }
   };
 
-  // @mention autocomplete
+  // @mention autocomplete (includes @here and @channel smart mentions)
+  const SMART_MENTIONS = [
+    { id: "@here", fullName: "here — notify online members" },
+    { id: "@channel", fullName: "channel — notify all members" },
+  ];
+
   const handleMentionInput = async (text: string) => {
     const mentionMatch = text.match(/@(\w*)$/);
     if (!mentionMatch) { setMentionQuery(null); return; }
-    const q = mentionMatch[1];
+    const q = mentionMatch[1].toLowerCase();
     setMentionQuery(q);
     if (!selectedChannelId) return;
+    const smart = SMART_MENTIONS.filter((s) => s.id.slice(1).startsWith(q));
     const res = await fetch(`/api/chat/channels/${selectedChannelId}/mentions?q=${encodeURIComponent(q)}`).catch(() => null);
-    if (res?.ok) setMentionResults(await res.json());
+    const members: { id: string; fullName: string }[] = res?.ok ? await res.json() : [];
+    setMentionResults([...smart, ...members]);
   };
 
   const insertMention = (name: string) => {
-    const text = composerText.replace(/@(\w*)$/, `@${name} `);
+    const bare = name.startsWith("@") ? name.slice(1) : name;
+    const text = composerText.replace(/@(\w*)$/, `@${bare} `);
     setComposerText(text);
     setMentionQuery(null);
     composerRef.current?.focus();
@@ -2401,6 +2495,16 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
                     </span>
                   </div>
                 )}
+                {/* Start a call */}
+                <button
+                  onClick={() => { if (selectedChannelId) window.open(`/meet/cybersage-${selectedChannelId}`, "_blank"); }}
+                  title="Start a voice/video call"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-[rgba(0,255,255,0.1)] text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] transition-colors"
+                >
+                  <Video className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Call</span>
+                </button>
+
                 {/* Web Push toggle */}
                 <button
                   onClick={() => void togglePush()}
@@ -2528,14 +2632,12 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
                     className="flex-1 bg-transparent resize-none text-sm text-[#dfe1f6] placeholder-[#bbc9cf] outline-none max-h-32 overflow-y-auto"
                     style={{ minHeight: "1.5rem" }}
                   />
-                  {/* GIF picker button */}
-                  <button
-                    onClick={() => setShowGifPicker(true)}
-                    title="Send a GIF"
-                    className="p-2 rounded-lg transition-colors flex-shrink-0 text-xs font-bold text-[#5c6b72] hover:text-[#bbc9cf] hover:bg-[#262939]"
-                  >
-                    GIF
-                  </button>
+                  {/* Emoji insert */}
+                  <button onClick={() => { setMediaPickerTab("emoji"); setShowGifPicker(true); }} title="Insert emoji" className="p-2 rounded-lg transition-colors flex-shrink-0 text-sm text-[#5c6b72] hover:text-[#bbc9cf] hover:bg-[#262939]">😊</button>
+                  {/* Sticker */}
+                  <button onClick={() => { setMediaPickerTab("sticker"); setShowGifPicker(true); }} title="Send a sticker" className="p-2 rounded-lg transition-colors flex-shrink-0 text-sm text-[#5c6b72] hover:text-[#bbc9cf] hover:bg-[#262939]">🎭</button>
+                  {/* GIF */}
+                  <button onClick={() => { setMediaPickerTab("gif"); setShowGifPicker(true); }} title="Send a GIF" className="p-2 rounded-lg transition-colors flex-shrink-0 text-xs font-bold text-[#5c6b72] hover:text-[#bbc9cf] hover:bg-[#262939]">GIF</button>
                   {/* Urgent flag toggle */}
                   <button
                     onClick={() => setComposerUrgent(v => !v)}
@@ -2627,10 +2729,12 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
         </>
       )}
 
-      {/* GIF Picker */}
+      {/* Media Picker (GIF / Sticker / Emoji) */}
       {showGifPicker && (
         <GifPicker
+          initialTab={mediaPickerTab}
           onSelect={(url, name) => setComposerAttachment({ url, mime: "image/gif", name })}
+          onEmojiInsert={handleEmojiInsert}
           onClose={() => setShowGifPicker(false)}
         />
       )}
