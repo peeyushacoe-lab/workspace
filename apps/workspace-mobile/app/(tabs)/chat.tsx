@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import {
   View, Text, FlatList, TouchableOpacity, TextInput,
   StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform,
@@ -9,6 +9,7 @@ import * as Haptics from "expo-haptics";
 import { apiRequest } from "../../src/api/client";
 import { ProfileSidebar } from "../../src/components/ProfileSidebar";
 import { profileApi } from "../../src/api/inbox";
+import { useVoiceRecorder } from "../../src/hooks/useVoiceRecorder";
 
 interface Channel {
   id: string; name: string; type: string; description?: string | null;
@@ -21,6 +22,8 @@ interface ChatMsg {
   id: string; content: string; createdAt: string;
   sender: { id: string; fullName: string; avatarUrl?: string | null };
   reactions: { emoji: string; user: string }[];
+  readCount?: number;
+  isSaved?: boolean;
 }
 
 type FilterType = "all" | "unread" | "mentions" | "saved";
@@ -78,7 +81,29 @@ export default function ChatScreen() {
   const [filter, setFilter] = useState<FilterType>("all");
   const [showSidebar, setShowSidebar] = useState(false);
   const [activeCall, setActiveCall] = useState<{ name: string } | null>(null);
+  const [typingNames, setTypingNames] = useState<string[]>([]);
   const fabScale = useRef(new Animated.Value(1)).current;
+  const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const typingClearTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { recording: voiceRecording, seconds: voiceSeconds, start: startVoice, stop: stopVoice, cancel: cancelVoice } = useVoiceRecorder();
+
+  const sendTyping = useCallback((channelId: string) => {
+    if (typingTimer.current) return;
+    apiRequest(`/api/mobile/chat/channels/${channelId}/typing`, { method: "POST" }).catch(() => {});
+    typingTimer.current = setTimeout(() => { typingTimer.current = null; }, 2000);
+  }, []);
+
+  const saveDraft = useCallback((channelId: string, content: string) => {
+    if (draftTimer.current) clearTimeout(draftTimer.current);
+    draftTimer.current = setTimeout(() => {
+      apiRequest(`/api/mobile/chat/channels/${channelId}/draft`, {
+        method: "PUT",
+        body: JSON.stringify({ content }),
+      }).catch(() => {});
+      draftTimer.current = null;
+    }, 1500);
+  }, []);
 
   const { data: myProfile } = useQuery({
     queryKey: ["my-profile"],
@@ -93,7 +118,12 @@ export default function ChatScreen() {
 
   const { data: messages, isLoading: loadingMessages } = useQuery({
     queryKey: ["m-messages", activeChannel?.id],
-    queryFn: () => apiRequest<ChatMsg[]>(`/api/mobile/chat/channels/${activeChannel!.id}/messages`),
+    queryFn: async () => {
+      const msgs = await apiRequest<ChatMsg[]>(`/api/mobile/chat/channels/${activeChannel!.id}/messages`);
+      // Mark as read silently
+      apiRequest(`/api/mobile/chat/channels/${activeChannel!.id}/read`, { method: "POST" }).catch(() => {});
+      return msgs;
+    },
     enabled: !!activeChannel,
     refetchInterval: 4000,
   });
@@ -106,6 +136,9 @@ export default function ChatScreen() {
       }),
     onSuccess: (msg) => {
       setText("");
+      if (activeChannel) {
+        apiRequest(`/api/mobile/chat/channels/${activeChannel.id}/draft`, { method: "PUT", body: JSON.stringify({ content: "" }) }).catch(() => {});
+      }
       qc.setQueryData<ChatMsg[]>(["m-messages", activeChannel?.id], prev =>
         prev ? [...prev, msg] : [msg],
       );
@@ -151,14 +184,61 @@ export default function ChatScreen() {
             keyExtractor={(m) => m.id}
             contentContainerStyle={s.msgList}
             renderItem={({ item }) => (
-              <View style={s.msgRow}>
+              <TouchableOpacity
+                style={s.msgRow}
+                onLongPress={() => {
+                  void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  Alert.alert(
+                    "Message",
+                    item.content.length > 60 ? item.content.slice(0, 60) + "…" : item.content,
+                    [
+                      {
+                        text: item.isSaved ? "🔖 Unsave" : "🔖 Save",
+                        onPress: () => {
+                          apiRequest("/api/mobile/chat/saved", { method: "POST", body: JSON.stringify({ messageId: item.id }) })
+                            .then(() => qc.invalidateQueries({ queryKey: ["m-messages", activeChannel?.id] }))
+                            .catch(() => {});
+                        },
+                      },
+                      {
+                        text: "↪ Forward",
+                        onPress: () => {
+                          const others = (channels ?? []).filter(c => c.id !== activeChannel?.id);
+                          if (others.length === 0) { Alert.alert("No channels", "No other channels to forward to."); return; }
+                          Alert.alert(
+                            "Forward to…",
+                            "Select a channel",
+                            [
+                              ...others.slice(0, 5).map(c => ({
+                                text: c.name,
+                                onPress: () => {
+                                  apiRequest("/api/mobile/chat/forward", { method: "POST", body: JSON.stringify({ messageId: item.id, toChannelId: c.id }) }).catch(() => {});
+                                },
+                              })),
+                              { text: "Cancel", style: "cancel" as const },
+                            ],
+                          );
+                        },
+                      },
+                      { text: "Cancel", style: "cancel" },
+                    ],
+                  );
+                }}
+                activeOpacity={1}
+              >
                 <Avatar name={item.sender.fullName} url={item.sender.avatarUrl} size={36} />
                 <View style={s.msgContent}>
                   <View style={s.msgHeader}>
                     <Text style={s.senderName}>{item.sender.fullName}</Text>
-                    <Text style={s.msgTime}>
-                      {new Date(item.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                    </Text>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                      {item.isSaved && <Text style={s.savedIcon}>🔖</Text>}
+                      <Text style={s.msgTime}>
+                        {new Date(item.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      </Text>
+                      {(item.readCount ?? 0) > 0
+                        ? <Text style={s.readTick}>✓✓</Text>
+                        : <Text style={s.sentTick}>✓</Text>}
+                    </View>
                   </View>
                   <Text style={s.msgText}>{item.content}</Text>
                   {item.reactions.length > 0 && (
@@ -171,29 +251,86 @@ export default function ChatScreen() {
                     </View>
                   )}
                 </View>
-              </View>
+              </TouchableOpacity>
             )}
           />
         )}
 
+        {typingNames.length > 0 && (
+          <View style={s.typingBar}>
+            <Text style={s.typingText}>
+              {typingNames.join(", ")} {typingNames.length === 1 ? "is" : "are"} typing…
+            </Text>
+          </View>
+        )}
+
+        {voiceRecording && (
+          <View style={s.voiceBar}>
+            <View style={s.voiceDot} />
+            <Text style={s.voiceTimer}>
+              {Math.floor(voiceSeconds / 60).toString().padStart(2, "0")}:{(voiceSeconds % 60).toString().padStart(2, "0")}
+            </Text>
+            <Text style={s.voiceHint}>Recording… tap ✕ to cancel</Text>
+            <TouchableOpacity onPress={() => void cancelVoice()}>
+              <Text style={s.voiceCancel}>✕</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         <View style={s.inputBar}>
-          <TextInput
-            style={s.msgInput}
-            placeholder="Message…"
-            placeholderTextColor="#5c6b72"
-            value={text}
-            onChangeText={setText}
-            multiline
-          />
-          <TouchableOpacity
-            style={[s.sendBtn, (!text.trim() || sendMutation.isPending) && s.sendDisabled]}
-            onPress={() => { if (text.trim()) sendMutation.mutate(); }}
-            disabled={!text.trim() || sendMutation.isPending}
-          >
-            {sendMutation.isPending
-              ? <ActivityIndicator color="#003543" size="small" />
-              : <Text style={s.sendText}>↑</Text>}
-          </TouchableOpacity>
+          {!voiceRecording && (
+            <TextInput
+              style={s.msgInput}
+              placeholder="Message…"
+              placeholderTextColor="#5c6b72"
+              value={text}
+              onChangeText={(v) => {
+              setText(v);
+              if (activeChannel) {
+                sendTyping(activeChannel.id);
+                saveDraft(activeChannel.id, v);
+              }
+            }}
+              multiline
+            />
+          )}
+          {/* Voice button — shown when no text; recording indicator when active */}
+          {!text.trim() && (
+            <TouchableOpacity
+              style={[s.voiceBtn, voiceRecording && s.voiceBtnActive]}
+              onPressIn={() => void startVoice()}
+              onPressOut={async () => {
+                const note = await stopVoice();
+                if (!note || !activeChannel) return;
+                // Upload voice note then send as message
+                try {
+                  const uploadRes = await apiRequest<{ url: string; duration: number }>("/api/mobile/chat/voice", {
+                    method: "POST",
+                    body: JSON.stringify({ uri: note.uri, channelId: activeChannel.id, duration: note.duration }),
+                  });
+                  await apiRequest(`/api/mobile/chat/channels/${activeChannel.id}/messages`, {
+                    method: "POST",
+                    body: JSON.stringify({ content: "🎤 Voice message", voiceNoteUrl: uploadRes.url, voiceNoteDuration: uploadRes.duration }),
+                  });
+                  void qc.invalidateQueries({ queryKey: ["m-messages", activeChannel.id] });
+                } catch {}
+              }}
+              disabled={sendMutation.isPending}
+            >
+              <Text style={s.voiceBtnText}>{voiceRecording ? "⏹" : "🎤"}</Text>
+            </TouchableOpacity>
+          )}
+          {text.trim() && (
+            <TouchableOpacity
+              style={[s.sendBtn, sendMutation.isPending && s.sendDisabled]}
+              onPress={() => { if (text.trim()) sendMutation.mutate(); }}
+              disabled={sendMutation.isPending}
+            >
+              {sendMutation.isPending
+                ? <ActivityIndicator color="#003543" size="small" />
+                : <Text style={s.sendText}>↑</Text>}
+            </TouchableOpacity>
+          )}
         </View>
       </KeyboardAvoidingView>
     );
@@ -271,7 +408,14 @@ export default function ChatScreen() {
           renderItem={({ item }) => (
             <TouchableOpacity
               style={s.channelRow}
-              onPress={() => { void Haptics.selectionAsync(); setActive(item); }}
+              onPress={() => {
+                void Haptics.selectionAsync();
+                setActive(item);
+                // Load saved draft for this channel
+                apiRequest<{ content: string }>(`/api/mobile/chat/channels/${item.id}/draft`)
+                  .then(d => { if (d.content) setText(d.content); })
+                  .catch(() => {});
+              }}
               activeOpacity={0.7}
             >
               {/* Channel avatar / presence */}
@@ -429,6 +573,19 @@ const s = StyleSheet.create({
   reactionsRow:     { flexDirection: "row", gap: 4, marginTop: 4 },
   reactionChip:     { backgroundColor: "#1b1f2e", borderRadius: 12, paddingHorizontal: 8, paddingVertical: 2, borderWidth: 1, borderColor: "rgba(0,210,255,0.1)" },
   reactionText:     { fontSize: 13 },
+  readTick:         { color: "#00d2ff", fontSize: 10, fontWeight: "700" },
+  sentTick:         { color: "#5c6b72", fontSize: 10 },
+  savedIcon:        { fontSize: 10 },
+  typingBar:        { paddingHorizontal: 16, paddingVertical: 6 },
+  typingText:       { color: "#5c6b72", fontSize: 12, fontStyle: "italic" },
+  voiceBar:         { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 16, paddingVertical: 8, backgroundColor: "rgba(255,77,109,0.08)" },
+  voiceDot:         { width: 8, height: 8, borderRadius: 4, backgroundColor: "#ff4d6d" },
+  voiceTimer:       { color: "#ff4d6d", fontWeight: "700", fontSize: 14, minWidth: 40 },
+  voiceHint:        { flex: 1, color: "#5c6b72", fontSize: 12 },
+  voiceCancel:      { color: "#ff4d6d", fontSize: 18, fontWeight: "700", padding: 4 },
+  voiceBtn:         { width: 40, height: 40, borderRadius: 20, backgroundColor: "#1b1f2e", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(0,210,255,0.15)", alignSelf: "flex-end" },
+  voiceBtnActive:   { backgroundColor: "rgba(255,77,109,0.15)", borderColor: "#ff4d6d" },
+  voiceBtnText:     { fontSize: 18 },
   inputBar:         { flexDirection: "row", padding: 12, borderTopWidth: 1, borderTopColor: "rgba(0,210,255,0.08)", gap: 8 },
   msgInput:         { flex: 1, backgroundColor: "#1b1f2e", borderRadius: 20, paddingHorizontal: 14, paddingVertical: 10, color: "#dfe1f6", fontSize: 14, maxHeight: 100 },
   sendBtn:          { width: 40, height: 40, borderRadius: 20, backgroundColor: "#00d2ff", alignItems: "center", justifyContent: "center", alignSelf: "flex-end" },

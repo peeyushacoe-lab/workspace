@@ -545,18 +545,28 @@ model ChatMessage {
   attachmentName   String?
   attachmentMime   String?
   attachmentSize   Int?
+  // Forwarded message
+  forwardedFromId  String?
+  forwardedFrom    ChatMessage?  @relation("ForwardedMessages", fields: [forwardedFromId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  forwards         ChatMessage[] @relation("ForwardedMessages")
+  // Polls
+  pollId           String?
+  poll             ChatPoll?     @relation(fields: [pollId], references: [id], onDelete: SetNull)
 
-  channel   ChatChannel   @relation(fields: [channelId], references: [id], onDelete: Cascade)
-  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  parent    ChatMessage?  @relation("ThreadReplies", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  replies   ChatMessage[] @relation("ThreadReplies")
+  channel   ChatChannel      @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent    ChatMessage?     @relation("ThreadReplies", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replies   ChatMessage[]    @relation("ThreadReplies")
   reactions ChatReaction[]
-  createdAt DateTime      @default(now())
+  readBy    ChatMessageRead[]
+  saved     SavedChatMessage[]
+  createdAt DateTime         @default(now())
 
   @@index([channelId, createdAt])
   @@index([userId])
   @@index([parentId])
   @@index([isPinned])
+  @@index([forwardedFromId])
 }
 
 model ChatReaction {
@@ -570,6 +580,81 @@ model ChatReaction {
   user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([messageId, userId, emoji])
+}
+
+model ChatMessageRead {
+  id        String   @id @default(cuid())
+  messageId String
+  userId    String
+  channelId String
+  readAt    DateTime @default(now())
+
+  message ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@index([channelId, userId])
+}
+
+model SavedChatMessage {
+  id        String   @id @default(cuid())
+  messageId String
+  userId    String
+  savedAt   DateTime @default(now())
+
+  message ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@index([userId, savedAt])
+}
+
+model ChatChannelDraft {
+  id        String   @id @default(cuid())
+  channelId String
+  userId    String
+  content   String   @default("")
+  updatedAt DateTime @updatedAt
+
+  @@unique([channelId, userId])
+  @@index([userId])
+}
+
+model ChatPoll {
+  id          String   @id @default(cuid())
+  channelId   String
+  createdById String
+  question    String
+  isMultiple  Boolean  @default(false)
+  endsAt      DateTime?
+  createdAt   DateTime @default(now())
+
+  options  ChatPollOption[]
+  messages ChatMessage[]
+
+  @@index([channelId])
+}
+
+model ChatPollOption {
+  id     String @id @default(cuid())
+  pollId String
+  text   String
+  order  Int    @default(0)
+
+  poll  ChatPoll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  votes ChatPollVote[]
+
+  @@index([pollId])
+}
+
+model ChatPollVote {
+  id       String   @id @default(cuid())
+  optionId String
+  userId   String
+  votedAt  DateTime @default(now())
+
+  option ChatPollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+
+  @@unique([optionId, userId])
+  @@index([userId])
 }
 
 // ─── Phase 4: Drive / File Storage ───────────────────────────────────────────
