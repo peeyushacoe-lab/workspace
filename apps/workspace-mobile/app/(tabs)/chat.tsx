@@ -26,6 +26,7 @@ interface ChatMsg {
   readCount?: number;
   isSaved?: boolean;
   replyCount?: number;
+  isUrgent?: boolean;
 }
 
 type FilterType = "all" | "unread" | "mentions" | "saved";
@@ -85,6 +86,7 @@ export default function ChatScreen() {
   const [activeCall, setActiveCall] = useState<{ name: string } | null>(null);
   const [typingNames, setTypingNames] = useState<string[]>([]);
   const [threadMsg, setThreadMsg] = useState<{ id: string; channelId: string } | null>(null);
+  const [isUrgent, setIsUrgent] = useState(false);
   const fabScale = useRef(new Animated.Value(1)).current;
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const typingClearTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
@@ -135,10 +137,11 @@ export default function ChatScreen() {
     mutationFn: () =>
       apiRequest<ChatMsg>(`/api/mobile/chat/channels/${activeChannel!.id}/messages`, {
         method: "POST",
-        body: JSON.stringify({ content: text }),
+        body: JSON.stringify({ content: text, isUrgent }),
       }),
     onSuccess: (msg) => {
       setText("");
+      setIsUrgent(false);
       if (activeChannel) {
         apiRequest(`/api/mobile/chat/channels/${activeChannel.id}/draft`, { method: "PUT", body: JSON.stringify({ content: "" }) }).catch(() => {});
       }
@@ -188,7 +191,7 @@ export default function ChatScreen() {
             contentContainerStyle={s.msgList}
             renderItem={({ item }) => (
               <TouchableOpacity
-                style={s.msgRow}
+                style={[s.msgRow, item.isUrgent && s.msgRowUrgent]}
                 onLongPress={() => {
                   void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                   Alert.alert(
@@ -249,7 +252,12 @@ export default function ChatScreen() {
                         : <Text style={s.sentTick}>✓</Text>}
                     </View>
                   </View>
-                  <Text style={s.msgText}>{item.content}</Text>
+                  {item.isUrgent && (
+                    <View style={s.urgentLabel}>
+                      <Text style={s.urgentLabelText}>🚨 Urgent</Text>
+                    </View>
+                  )}
+                  <Text style={[s.msgText, item.isUrgent && s.msgTextUrgent]}>{item.content}</Text>
                   {item.reactions.length > 0 && (
                     <View style={s.reactionsRow}>
                       {item.reactions.map((r, i) => (
@@ -301,20 +309,28 @@ export default function ChatScreen() {
 
         <View style={s.inputBar}>
           {!voiceRecording && (
-            <TextInput
-              style={s.msgInput}
-              placeholder="Message…"
-              placeholderTextColor="#5c6b72"
-              value={text}
-              onChangeText={(v) => {
-              setText(v);
-              if (activeChannel) {
-                sendTyping(activeChannel.id);
-                saveDraft(activeChannel.id, v);
-              }
-            }}
-              multiline
-            />
+            <>
+              <TouchableOpacity
+                style={[s.urgentBtn, isUrgent && s.urgentBtnActive]}
+                onPress={() => { void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setIsUrgent(v => !v); }}
+              >
+                <Text style={{ fontSize: 16 }}>🚨</Text>
+              </TouchableOpacity>
+              <TextInput
+                style={[s.msgInput, isUrgent && s.msgInputUrgent]}
+                placeholder={isUrgent ? "Urgent message…" : "Message…"}
+                placeholderTextColor="#5c6b72"
+                value={text}
+                onChangeText={(v) => {
+                setText(v);
+                if (activeChannel) {
+                  sendTyping(activeChannel.id);
+                  saveDraft(activeChannel.id, v);
+                }
+              }}
+                multiline
+              />
+            </>
           )}
           {/* Voice button — shown when no text; recording indicator when active */}
           {!text.trim() && (
@@ -609,6 +625,14 @@ const s = StyleSheet.create({
   savedIcon:        { fontSize: 10 },
   replyBadge:       { flexDirection: "row", alignItems: "center", marginTop: 5, alignSelf: "flex-start", backgroundColor: "rgba(0,210,255,0.06)", borderWidth: 1, borderColor: "rgba(0,210,255,0.15)", borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3 },
   replyBadgeText:   { color: "#00d2ff", fontSize: 11, fontWeight: "600" },
+  // Urgent message
+  msgRowUrgent:     { borderLeftWidth: 3, borderLeftColor: "#ff4d6d", paddingLeft: 8, backgroundColor: "rgba(255,77,109,0.04)", borderRadius: 6 },
+  urgentLabel:      { flexDirection: "row", alignItems: "center", marginBottom: 2 },
+  urgentLabelText:  { color: "#ff4d6d", fontSize: 11, fontWeight: "700" },
+  msgTextUrgent:    { color: "#ffd6dd" },
+  urgentBtn:        { width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center", backgroundColor: "transparent", alignSelf: "flex-end" },
+  urgentBtnActive:  { backgroundColor: "rgba(255,77,109,0.15)" },
+  msgInputUrgent:   { borderColor: "rgba(255,77,109,0.4)", borderWidth: 1 },
   typingBar:        { paddingHorizontal: 16, paddingVertical: 6 },
   typingText:       { color: "#5c6b72", fontSize: 12, fontStyle: "italic" },
   voiceBar:         { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 16, paddingVertical: 8, backgroundColor: "rgba(255,77,109,0.08)" },

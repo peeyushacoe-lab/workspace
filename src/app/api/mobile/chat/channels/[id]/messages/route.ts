@@ -47,6 +47,7 @@ export async function GET(request: Request, { params }: Params) {
     id: m.id,
     content: m.content,
     createdAt: m.createdAt,
+    isUrgent: m.isUrgent,
     sender: { id: m.user.id, fullName: m.user.fullName, avatarUrl: m.user.avatarUrl },
     reactions: m.reactions.map((r) => ({ emoji: r.emoji, user: r.user.fullName })),
     replyCount: m._count.replies,
@@ -65,7 +66,7 @@ export async function POST(request: Request, { params }: Params) {
   });
   if (!membership) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const { content, parentId } = await request.json() as { content?: string; parentId?: string };
+  const { content, parentId, isUrgent } = await request.json() as { content?: string; parentId?: string; isUrgent?: boolean };
   if (!content?.trim()) return NextResponse.json({ error: "content required" }, { status: 400 });
   if (content.length > 10_000) return NextResponse.json({ error: "Message too long" }, { status: 400 });
 
@@ -77,7 +78,7 @@ export async function POST(request: Request, { params }: Params) {
   const sender = await prisma.user.findUnique({ where: { id: user.userId }, select: { fullName: true } });
 
   const message = await prisma.chatMessage.create({
-    data: { channelId, userId: user.userId, content: content.trim(), ...(parentId ? { parentId } : {}) },
+    data: { channelId, userId: user.userId, content: content.trim(), isUrgent: isUrgent === true, ...(parentId ? { parentId } : {}) },
     include: {
       user: { select: { id: true, fullName: true, avatarUrl: true } },
       reactions: true,
@@ -86,17 +87,32 @@ export async function POST(request: Request, { params }: Params) {
 
   prisma.chatChannel.update({ where: { id: channelId }, data: { updatedAt: new Date() }, select: { id: true } }).catch(() => {});
 
-  // Push to other members
+  // Push to other members (respects DND / quiet hours)
   void prisma.chatMember.findMany({
     where: { channelId, NOT: { userId: user.userId } },
     select: { userId: true },
   }).then(async (members) => {
     const channel = await prisma.chatChannel.findUnique({ where: { id: channelId }, select: { name: true } }).catch(() => null);
-    const tokenArrays = await Promise.all(members.map((m) => getTokensForUser(m.userId)));
+    const now = new Date();
+    const nowHHMM = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    const eligibleMembers = await Promise.all(members.map(async (m) => {
+      const u = await prisma.user.findUnique({ where: { id: m.userId }, select: { preferences: true } });
+      const prefs = (u?.preferences as Record<string, unknown> | null) ?? {};
+      if (prefs.dndEnabled) return null;
+      const start = (prefs.quietHoursStart as string | undefined) ?? "22:00";
+      const end = (prefs.quietHoursEnd as string | undefined) ?? "08:00";
+      const inQuiet = start > end
+        ? (nowHHMM >= start || nowHHMM < end)
+        : (nowHHMM >= start && nowHHMM < end);
+      if (inQuiet && !isUrgent) return null;
+      return m.userId;
+    }));
+    const activeMembers = eligibleMembers.filter(Boolean) as string[];
+    const tokenArrays = await Promise.all(activeMembers.map((id) => getTokensForUser(id)));
     const tokens = tokenArrays.flat();
     if (tokens.length) {
       await sendExpoPush(tokens, {
-        title: `#${channel?.name ?? "Chat"}: ${sender?.fullName ?? "Someone"}`,
+        title: `${isUrgent ? "🚨 " : ""}#${channel?.name ?? "Chat"}: ${sender?.fullName ?? "Someone"}`,
         body: content.trim().slice(0, 100),
         data: { type: "chat", channelId },
       });
@@ -107,6 +123,7 @@ export async function POST(request: Request, { params }: Params) {
     id: message.id,
     content: message.content,
     createdAt: message.createdAt,
+    isUrgent: message.isUrgent,
     sender: { id: message.user.id, fullName: message.user.fullName, avatarUrl: message.user.avatarUrl },
     reactions: [],
   }, { status: 201 });

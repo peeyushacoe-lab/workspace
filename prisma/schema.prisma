@@ -545,6 +545,8 @@ model ChatMessage {
   attachmentName   String?
   attachmentMime   String?
   attachmentSize   Int?
+  // Urgent/priority flag
+  isUrgent         Boolean   @default(false)
   // Forwarded message
   forwardedFromId  String?
   forwardedFrom    ChatMessage?  @relation("ForwardedMessages", fields: [forwardedFromId], references: [id], onDelete: SetNull, onUpdate: NoAction)

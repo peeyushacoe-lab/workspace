@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import {
   View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView,
-  Image, TextInput, ActivityIndicator, Alert,
+  Image, TextInput, ActivityIndicator, Alert, Switch,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from "expo-haptics";
@@ -90,19 +90,35 @@ export function ProfileSidebar({ visible, onClose }: Props) {
   const [editStatus, setEditStatus] = useState(false);
   const [statusDraft, setStatusDraft] = useState("");
   const [saving, setSaving] = useState(false);
+  const [dndEnabled, setDndEnabled] = useState(false);
 
   const load = useCallback(async () => {
     try {
-      const [p, pres, accs] = await Promise.all([
+      const [p, pres, accs, notifPrefs] = await Promise.all([
         profileApi.get(),
         apiRequest<PresenceData>("/api/mobile/presence"),
         AsyncStorage.getItem(ACCOUNTS_KEY).then(v => v ? JSON.parse(v) as SavedAccount[] : []),
+        apiRequest<{ dndEnabled: boolean }>("/api/mobile/preferences/notifications"),
       ]);
       setProfile(p);
       setPresence(pres);
       setAccounts(accs);
+      setDndEnabled(notifPrefs.dndEnabled);
     } catch {}
   }, []);
+
+  const toggleDnd = async (value: boolean) => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setDndEnabled(value);
+    try {
+      await apiRequest("/api/mobile/preferences/notifications", {
+        method: "PUT",
+        body: JSON.stringify({ dndEnabled: value }),
+      });
+    } catch {
+      setDndEnabled(!value);
+    }
+  };
 
   useEffect(() => { if (visible) void load(); }, [visible, load]);
 
@@ -298,11 +314,20 @@ export function ProfileSidebar({ visible, onClose }: Props) {
 
           {/* Notifications + Settings quick links */}
           <View style={s.section}>
-            <TouchableOpacity style={s.menuRow} onPress={() => { onClose(); router.push("/(tabs)/settings"); }}>
-              <Text style={s.menuIcon}>🔔</Text>
-              <Text style={s.menuLabel}>Notifications</Text>
-              <Text style={s.chevron}>›</Text>
-            </TouchableOpacity>
+            <View style={s.menuRow}>
+              <Text style={s.menuIcon}>{dndEnabled ? "🔕" : "🔔"}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={s.menuLabel}>Do Not Disturb</Text>
+                {dndEnabled && <Text style={{ color: "#5c6b72", fontSize: 11 }}>Urgent messages still notify you</Text>}
+              </View>
+              <Switch
+                value={dndEnabled}
+                onValueChange={toggleDnd}
+                trackColor={{ false: "#2a3040", true: "rgba(0,210,255,0.4)" }}
+                thumbColor={dndEnabled ? "#00d2ff" : "#5c6b72"}
+                ios_backgroundColor="#2a3040"
+              />
+            </View>
             <TouchableOpacity style={s.menuRow} onPress={() => { onClose(); router.push("/(tabs)/settings"); }}>
               <Text style={s.menuIcon}>⚙️</Text>
               <Text style={s.menuLabel}>Settings</Text>

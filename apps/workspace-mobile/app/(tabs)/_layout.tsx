@@ -36,6 +36,14 @@ function DriveIcon({ color }: { color: string }) {
   );
 }
 
+function ActivityIcon({ color }: { color: string }) {
+  return (
+    <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+      <Path d="M22 12h-4l-3 9L9 3l-3 9H2" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"/>
+    </Svg>
+  );
+}
+
 function MoreIcon({ color }: { color: string }) {
   return (
     <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
@@ -103,6 +111,13 @@ export default function TabsLayout() {
         options={{
           title: "Drive",
           tabBarIcon: ({ focused }) => <TabIcon Icon={DriveIcon} focused={focused} />,
+        }}
+      />
+      <Tabs.Screen
+        name="activity"
+        options={{
+          title: "Activity",
+          tabBarIcon: ({ focused }) => <TabIcon Icon={ActivityIcon} focused={focused} />,
         }}
       />
       <Tabs.Screen
