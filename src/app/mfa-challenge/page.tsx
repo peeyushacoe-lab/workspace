@@ -63,7 +63,7 @@ function MfaChallengeForm() {
             <div className="flex justify-center mb-3">
               <ShieldCheck className="h-8 w-8 text-[#60a5fa]" />
             </div>
-            <h1 className="text-xl font-bold text-[#003543]">Two-Factor Authentication</h1>
+            <h1 className="text-xl font-bold text-[#dfe1f6]">Two-Factor Authentication</h1>
             <p className="text-sm text-[#94a3b8] mt-1">
               {useBackup
                 ? "Enter one of your backup codes"
