@@ -23,11 +23,14 @@ export async function GET(request: Request, { params }: Params) {
     where: {
       channelId,
       deletedAt: null,
+      parentId: null,
       ...(before ? { createdAt: { lt: new Date(before) } } : {}),
     },
     include: {
       user: { select: { id: true, fullName: true, avatarUrl: true } },
       reactions: { include: { user: { select: { id: true, fullName: true } } } },
+      _count: { select: { replies: true } },
+      saved: { where: { userId: user.userId }, select: { id: true } },
     },
     orderBy: { createdAt: "asc" },
     take: limit,
@@ -46,6 +49,8 @@ export async function GET(request: Request, { params }: Params) {
     createdAt: m.createdAt,
     sender: { id: m.user.id, fullName: m.user.fullName, avatarUrl: m.user.avatarUrl },
     reactions: m.reactions.map((r) => ({ emoji: r.emoji, user: r.user.fullName })),
+    replyCount: m._count.replies,
+    isSaved: m.saved.length > 0,
   })));
 }
 
@@ -60,14 +65,19 @@ export async function POST(request: Request, { params }: Params) {
   });
   if (!membership) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const { content } = await request.json() as { content?: string };
+  const { content, parentId } = await request.json() as { content?: string; parentId?: string };
   if (!content?.trim()) return NextResponse.json({ error: "content required" }, { status: 400 });
   if (content.length > 10_000) return NextResponse.json({ error: "Message too long" }, { status: 400 });
+
+  if (parentId) {
+    const parent = await prisma.chatMessage.findUnique({ where: { id: parentId, channelId }, select: { id: true } });
+    if (!parent) return NextResponse.json({ error: "Parent message not found" }, { status: 404 });
+  }
 
   const sender = await prisma.user.findUnique({ where: { id: user.userId }, select: { fullName: true } });
 
   const message = await prisma.chatMessage.create({
-    data: { channelId, userId: user.userId, content: content.trim() },
+    data: { channelId, userId: user.userId, content: content.trim(), ...(parentId ? { parentId } : {}) },
     include: {
       user: { select: { id: true, fullName: true, avatarUrl: true } },
       reactions: true,

@@ -8,6 +8,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as Haptics from "expo-haptics";
 import { apiRequest } from "../../src/api/client";
 import { ProfileSidebar } from "../../src/components/ProfileSidebar";
+import { ThreadView } from "../../src/components/ThreadView";
 import { profileApi } from "../../src/api/inbox";
 import { useVoiceRecorder } from "../../src/hooks/useVoiceRecorder";
 
@@ -24,6 +25,7 @@ interface ChatMsg {
   reactions: { emoji: string; user: string }[];
   readCount?: number;
   isSaved?: boolean;
+  replyCount?: number;
 }
 
 type FilterType = "all" | "unread" | "mentions" | "saved";
@@ -82,6 +84,7 @@ export default function ChatScreen() {
   const [showSidebar, setShowSidebar] = useState(false);
   const [activeCall, setActiveCall] = useState<{ name: string } | null>(null);
   const [typingNames, setTypingNames] = useState<string[]>([]);
+  const [threadMsg, setThreadMsg] = useState<{ id: string; channelId: string } | null>(null);
   const fabScale = useRef(new Animated.Value(1)).current;
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const typingClearTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
@@ -193,6 +196,12 @@ export default function ChatScreen() {
                     item.content.length > 60 ? item.content.slice(0, 60) + "…" : item.content,
                     [
                       {
+                        text: "💬 Reply in thread",
+                        onPress: () => {
+                          if (activeChannel) setThreadMsg({ id: item.id, channelId: activeChannel.id });
+                        },
+                      },
+                      {
                         text: item.isSaved ? "🔖 Unsave" : "🔖 Save",
                         onPress: () => {
                           apiRequest("/api/mobile/chat/saved", { method: "POST", body: JSON.stringify({ messageId: item.id }) })
@@ -249,6 +258,19 @@ export default function ChatScreen() {
                         </View>
                       ))}
                     </View>
+                  )}
+                  {(item.replyCount ?? 0) > 0 && (
+                    <TouchableOpacity
+                      style={s.replyBadge}
+                      onPress={() => {
+                        void Haptics.selectionAsync();
+                        if (activeChannel) setThreadMsg({ id: item.id, channelId: activeChannel.id });
+                      }}
+                    >
+                      <Text style={s.replyBadgeText}>
+                        💬 {item.replyCount} {item.replyCount === 1 ? "reply" : "replies"}
+                      </Text>
+                    </TouchableOpacity>
                   )}
                 </View>
               </TouchableOpacity>
@@ -332,6 +354,15 @@ export default function ChatScreen() {
             </TouchableOpacity>
           )}
         </View>
+
+        {threadMsg && (
+          <ThreadView
+            visible={!!threadMsg}
+            onClose={() => setThreadMsg(null)}
+            channelId={threadMsg.channelId}
+            messageId={threadMsg.id}
+          />
+        )}
       </KeyboardAvoidingView>
     );
   }
@@ -576,6 +607,8 @@ const s = StyleSheet.create({
   readTick:         { color: "#00d2ff", fontSize: 10, fontWeight: "700" },
   sentTick:         { color: "#5c6b72", fontSize: 10 },
   savedIcon:        { fontSize: 10 },
+  replyBadge:       { flexDirection: "row", alignItems: "center", marginTop: 5, alignSelf: "flex-start", backgroundColor: "rgba(0,210,255,0.06)", borderWidth: 1, borderColor: "rgba(0,210,255,0.15)", borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3 },
+  replyBadgeText:   { color: "#00d2ff", fontSize: 11, fontWeight: "600" },
   typingBar:        { paddingHorizontal: 16, paddingVertical: 6 },
   typingText:       { color: "#5c6b72", fontSize: 12, fontStyle: "italic" },
   voiceBar:         { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 16, paddingVertical: 8, backgroundColor: "rgba(255,77,109,0.08)" },

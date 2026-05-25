@@ -9,7 +9,6 @@ export function validateEnv() {
     REDIS_URL: process.env.REDIS_URL,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     SESSION_SECRET: process.env.SESSION_SECRET,
-    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   };
 
   const missing = Object.entries(required)
@@ -29,6 +28,8 @@ export function validateEnv() {
 
   // Warn (not crash) for optional-but-important vars
   const recommended: Record<string, string | undefined> = {
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+    JWT_SECRET: process.env.JWT_SECRET,
     RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL,
     RESEND_WEBHOOK_SECRET: process.env.RESEND_WEBHOOK_SECRET,
     NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
