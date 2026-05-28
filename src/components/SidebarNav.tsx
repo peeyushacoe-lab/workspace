@@ -14,7 +14,6 @@ import {
   Settings2,
   User,
   StickyNote,
-  Shield,
   BookOpen,
   CreditCard,
   Video,
@@ -42,7 +41,6 @@ const icons: Record<string, LucideIcon> = {
   "/whiteboard": PenLine,
   "/org": Building2,
   "/admin": User,
-  "/access": Shield,
   "/compliance": BookOpen,
   "/billing": CreditCard,
 };

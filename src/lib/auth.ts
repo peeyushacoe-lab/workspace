@@ -82,7 +82,6 @@ export const portalNavItems: PortalNavItem[] = [
   { href: "/billing",    label: "Billing",     hint: "Plans & usage",          roles: ["ADMIN"] },
   { href: "/org",       label: "Org",        hint: "Organization settings",  roles: ["ADMIN"] },
   { href: "/admin",     label: "Admin",      hint: "System administration", roles: ["ADMIN"] },
-  { href: "/access",      label: "Access",      hint: "Role-based access control", roles: ["ADMIN", "CISO"] },
   { href: "/compliance",  label: "Compliance",  hint: "Audit logs & GDPR",         roles: ["ADMIN", "CISO"] },
   { href: "/settings",    label: "Settings",    hint: "Signature & security",       roles: ALL_ROLES },
 ];
@@ -109,7 +108,6 @@ const pathAccess: Array<{ prefix: string; roles: UserRole[] }> = [
   { prefix: "/billing",        roles: ["ADMIN"] },
   { prefix: "/org",            roles: ["ADMIN"] },
   { prefix: "/admin",          roles: ["ADMIN"] },
-  { prefix: "/access",         roles: ["ADMIN", "CISO"] },
   { prefix: "/compliance",     roles: ["ADMIN", "CISO"] },
 ];
 

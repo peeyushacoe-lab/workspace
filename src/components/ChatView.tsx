@@ -1,6 +1,8 @@
 ﻿"use client";
 
 import { useCallback, useEffect, useRef, useState, memo } from "react";
+import { connectSocket, disconnectSocket } from "@/lib/socket-client";
+import type { Socket } from "socket.io-client";
 import {
   Hash,
   MessageSquare,
@@ -1752,11 +1754,10 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
   const [pushLoading, setPushLoading] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const sseRef = useRef<EventSource | null>(null);
+  const socketRef = useRef<Socket | null>(null);
   const typingTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const lastTypingSent = useRef(0);
   const threadParentIdRef = useRef<string | null>(null);
-  const presenceIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const selectedChannel = channels.find((c) => c.id === selectedChannelId);
 
@@ -1833,29 +1834,25 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
     }
   };
 
-  // Presence heartbeat: announce online status every 30s, clean up on unmount/channel change
+  // Socket.IO connection — one socket for the whole session, channels managed via join/leave
+  useEffect(() => {
+    const socket = connectSocket();
+    socketRef.current = socket;
+    return () => {
+      disconnectSocket();
+      socketRef.current = null;
+    };
+  }, []);
+
+  // Fetch initial presence snapshot (one-time REST, no polling)
   useEffect(() => {
     if (!selectedChannelId) return;
-
-    const sendPresence = () => {
-      fetch(`/api/chat/channels/${selectedChannelId}/presence`, { method: "POST" }).catch(() => {});
-    };
-
-    // Load initial presence state
     fetch(`/api/chat/channels/${selectedChannelId}/presence`)
-      .then(r => r.json())
-      .then((online: { userId: string; fullName: string }[]) => {
-        setOnlineUsers(new Map(online.map(u => [u.userId, u.fullName])));
-      })
+      .then((r) => r.json())
+      .then((online: { userId: string; fullName: string }[]) =>
+        setOnlineUsers(new Map(online.map((u) => [u.userId, u.fullName])))
+      )
       .catch(() => {});
-
-    sendPresence(); // Announce immediately
-    presenceIntervalRef.current = setInterval(sendPresence, 30_000);
-
-    return () => {
-      if (presenceIntervalRef.current) clearInterval(presenceIntervalRef.current);
-      fetch(`/api/chat/channels/${selectedChannelId}/presence`, { method: "DELETE" }).catch(() => {});
-    };
   }, [selectedChannelId]);
 
   // Load top-level messages when channel changes
@@ -1874,29 +1871,22 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
       .finally(() => setLoadingMessages(false));
   }, [selectedChannelId]);
 
-  // SSE subscription
+  // Socket.IO channel subscription — join/leave rooms, register event handlers
   useEffect(() => {
     if (!selectedChannelId) return;
+    const socket = socketRef.current;
+    if (!socket) return;
 
-    if (sseRef.current) {
-      sseRef.current.close();
-      sseRef.current = null;
-    }
+    socket.emit("chat:join", { channelId: selectedChannelId });
 
-    const es = new EventSource(`/api/chat/channels/${selectedChannelId}/stream`);
-    sseRef.current = es;
-
-    es.addEventListener("message", (e) => {
-      const msg = JSON.parse(e.data as string) as Message;
+    const onMessage = (msg: Message) => {
       if (msg.parentId) {
-        // Thread reply: update thread panel if open for this parent
         if (threadParentIdRef.current === msg.parentId) {
           setThreadMessages((prev) => {
             if (prev.some((m) => m.id === msg.id)) return prev;
             return [...prev, msg];
           });
         }
-        // Increment reply count on parent in main list
         setMessages((prev) =>
           prev.map((m) =>
             m.id === msg.parentId
@@ -1910,83 +1900,60 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
           return [...prev, msg];
         });
       }
-    });
+    };
 
-    es.addEventListener("message_updated", (e) => {
-      const updated = JSON.parse(e.data as string) as Message;
+    const onMessageUpdated = (updated: Message) => {
       setMessages((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
       setThreadMessages((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
-    });
+    };
 
-    es.addEventListener("message_deleted", (e) => {
-      const { id } = JSON.parse(e.data as string) as { id: string };
+    const onMessageDeleted = ({ id }: { id: string }) => {
       const now = new Date().toISOString();
-      // Mark as deleted in-place so "(message deleted)" placeholder renders
-      setMessages((prev) =>
-        prev.map((m) => (m.id === id ? { ...m, deletedAt: now } : m))
-      );
-      setThreadMessages((prev) =>
-        prev.map((m) => (m.id === id ? { ...m, deletedAt: now } : m))
-      );
-    });
+      setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, deletedAt: now } : m)));
+      setThreadMessages((prev) => prev.map((m) => (m.id === id ? { ...m, deletedAt: now } : m)));
+    };
 
-    es.addEventListener("reactions_updated", (e) => {
-      const { messageId, reactions } = JSON.parse(e.data as string) as {
-        messageId: string;
-        reactions: Reaction[];
-      };
-      setMessages((prev) =>
-        prev.map((m) => (m.id === messageId ? { ...m, reactions } : m))
-      );
-      setThreadMessages((prev) =>
-        prev.map((m) => (m.id === messageId ? { ...m, reactions } : m))
-      );
-    });
+    const onReactionsUpdated = ({ messageId, reactions }: { messageId: string; reactions: Reaction[] }) => {
+      setMessages((prev) => prev.map((m) => (m.id === messageId ? { ...m, reactions } : m)));
+      setThreadMessages((prev) => prev.map((m) => (m.id === messageId ? { ...m, reactions } : m)));
+    };
 
-    es.addEventListener("presence", (e) => {
-      const { userId, fullName, online } = JSON.parse(e.data as string) as {
-        userId: string;
-        fullName: string;
-        online: boolean;
-      };
+    const onPresence = ({ userId, fullName, online }: { userId: string; fullName: string; online: boolean }) => {
       setOnlineUsers((prev) => {
         const m = new Map(prev);
         if (online) m.set(userId, fullName);
         else m.delete(userId);
         return m;
       });
-    });
+    };
 
-    es.addEventListener("typing", (e) => {
-      const { userId, fullName } = JSON.parse(e.data as string) as {
-        userId: string;
-        fullName: string;
-      };
+    const onTyping = ({ userId, fullName }: { userId: string; fullName: string }) => {
       if (userId === currentUserId) return;
-
       const existing = typingTimers.current.get(userId);
       if (existing) clearTimeout(existing);
-
-      setTypingNames((prev) => {
-        const m = new Map(prev);
-        m.set(userId, fullName);
-        return m;
-      });
-
+      setTypingNames((prev) => { const m = new Map(prev); m.set(userId, fullName); return m; });
       const timer = setTimeout(() => {
-        setTypingNames((prev) => {
-          const m = new Map(prev);
-          m.delete(userId);
-          return m;
-        });
+        setTypingNames((prev) => { const m = new Map(prev); m.delete(userId); return m; });
         typingTimers.current.delete(userId);
-      }, 3000);
+      }, 3_000);
       typingTimers.current.set(userId, timer);
-    });
+    };
+
+    socket.on("chat:message", onMessage);
+    socket.on("chat:message_updated", onMessageUpdated);
+    socket.on("chat:message_deleted", onMessageDeleted);
+    socket.on("chat:reactions_updated", onReactionsUpdated);
+    socket.on("chat:presence", onPresence);
+    socket.on("chat:typing", onTyping);
 
     return () => {
-      es.close();
-      sseRef.current = null;
+      socket.emit("chat:leave", { channelId: selectedChannelId });
+      socket.off("chat:message", onMessage);
+      socket.off("chat:message_updated", onMessageUpdated);
+      socket.off("chat:message_deleted", onMessageDeleted);
+      socket.off("chat:reactions_updated", onReactionsUpdated);
+      socket.off("chat:presence", onPresence);
+      socket.off("chat:typing", onTyping);
       typingTimers.current.forEach((t) => clearTimeout(t));
       typingTimers.current.clear();
       setTypingNames(new Map());
@@ -2060,7 +2027,7 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
     const now = Date.now();
     if (selectedChannelId && now - lastTypingSent.current > 2000) {
       lastTypingSent.current = now;
-      fetch(`/api/chat/channels/${selectedChannelId}/typing`, { method: "POST" }).catch(() => {});
+      socketRef.current?.emit("chat:typing", { channelId: selectedChannelId });
     }
     void handleMentionInput(val);
   };
