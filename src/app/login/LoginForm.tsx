@@ -1,7 +1,80 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, Lock, Loader2, Zap, Users } from "lucide-react";
+import { Mail, Lock, Loader2, Zap, Users, Monitor } from "lucide-react";
+
+const OS_OPTIONS = [
+  { os: "win",   label: "Windows",  ext: ".exe",      icon: "🪟" },
+  { os: "mac",   label: "macOS",    ext: ".dmg",      icon: "🍎" },
+  { os: "linux", label: "Linux",    ext: ".AppImage",  icon: "🐧" },
+];
+
+function detectOs(): string {
+  if (typeof navigator === "undefined") return "win";
+  const ua = navigator.userAgent.toLowerCase();
+  if (ua.includes("win")) return "win";
+  if (ua.includes("mac")) return "mac";
+  return "linux";
+}
+
+function DownloadCard() {
+  const [expanded, setExpanded] = useState(false);
+  const detectedOs = detectOs();
+  const primary = OS_OPTIONS.find((o) => o.os === detectedOs) ?? OS_OPTIONS[0]!;
+  const others = OS_OPTIONS.filter((o) => o.os !== detectedOs);
+
+  return (
+    <div className="rounded-lg bg-[#1b1f2e] border border-[rgba(0,255,255,0.06)] overflow-hidden">
+      {/* Primary platform row */}
+      <div className="flex items-center justify-between gap-3 p-3">
+        <div className="flex items-center gap-2.5">
+          <Monitor className="w-4 h-4 text-[#00d2ff] flex-shrink-0" />
+          <div>
+            <p className="text-xs font-semibold text-[#dfe1f6] leading-none">Desktop App</p>
+            <p className="text-[10px] text-[#5c6b72] mt-0.5">{primary.icon} {primary.label} {primary.ext}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Main download — opens in new tab, login page stays */}
+          <a
+            href={`/api/download?os=${primary.os}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-3 py-1.5 text-xs font-semibold text-[#003543] bg-[#00d2ff] rounded-md hover:opacity-90 transition-opacity"
+          >
+            ↓ Download
+          </a>
+          <button
+            onClick={() => setExpanded((p) => !p)}
+            className="px-2 py-1.5 text-[10px] text-[#5c6b72] hover:text-[#bbc9cf] transition-colors"
+            title="Other platforms"
+          >
+            {expanded ? "▲" : "▼"}
+          </button>
+        </div>
+      </div>
+
+      {/* Other platforms — shown when expanded */}
+      {expanded && (
+        <div className="border-t border-[rgba(0,255,255,0.06)] px-3 pb-2 pt-2 flex flex-col gap-1">
+          {others.map((o) => (
+            <a
+              key={o.os}
+              href={`/api/download?os=${o.os}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 py-1.5 text-[11px] text-[#5c6b72] hover:text-[#bbc9cf] transition-colors"
+            >
+              <span>{o.icon}</span>
+              <span>{o.label} {o.ext}</span>
+              <span className="ml-auto text-[#00d2ff]/60">↓</span>
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function LoginForm({ next, error: initialError }: { next: string; error: boolean }) {
   const [isPending, setIsPending] = useState(false);
@@ -107,6 +180,8 @@ export function LoginForm({ next, error: initialError }: { next: string; error: 
               <a
                 key={d.label}
                 href={d.href}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-[#1b1f2e]/80 border border-[rgba(0,255,255,0.08)] hover:border-[#00d2ff]/30 hover:bg-[#1b1f2e] transition-all text-xs text-[#bbc9cf] hover:text-[#dfe1f6]"
               >
                 <span>{d.icon}</span>
@@ -204,21 +279,7 @@ export function LoginForm({ next, error: initialError }: { next: string; error: 
 
           <div className="mt-8 border-t border-[rgba(0,255,255,0.08)] pt-5 space-y-4">
             {/* Download desktop app */}
-            <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-[#1b1f2e] border border-[rgba(0,255,255,0.06)]">
-              <div className="flex items-center gap-2.5">
-                <span className="text-lg">🖥️</span>
-                <div>
-                  <p className="text-xs font-semibold text-[#dfe1f6] leading-none">Desktop App</p>
-                  <p className="text-[10px] text-[#5c6b72] mt-0.5">Windows · macOS · Linux</p>
-                </div>
-              </div>
-              <a
-                href="/api/download?os=win"
-                className="flex-shrink-0 px-3 py-1.5 text-xs font-semibold text-[#003543] bg-[#00d2ff] rounded-md hover:opacity-90 transition-opacity"
-              >
-                ↓ Download
-              </a>
-            </div>
+            <DownloadCard />
 
             <p className="text-xs text-center text-[#bbc9cf]/50 uppercase tracking-[0.12em] font-medium">
               RBAC Protected Environment
