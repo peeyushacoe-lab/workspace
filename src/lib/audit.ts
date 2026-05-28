@@ -25,7 +25,9 @@ export type AuditAction =
   | "DRIVE_FILE_SHARE"
   | "DRIVE_FILE_EDIT"
   | "DRIVE_FILE_DELETE"
-  | "DRIVE_FILE_RESTORE";
+  | "DRIVE_FILE_RESTORE"
+  | "RBAC_GRANT"
+  | "RBAC_REVOKE";
 
 export async function logAudit({
   actorId,

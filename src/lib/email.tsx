@@ -187,6 +187,59 @@ export async function sendEmail(
   };
 }
 
+export async function sendRoleGrantEmail({
+  toEmail,
+  fullName,
+  accessRole,
+  grantedByName,
+}: {
+  toEmail: string;
+  fullName: string;
+  accessRole: string;
+  grantedByName: string;
+}): Promise<void> {
+  if (!resend) return;
+  const firstName = fullName.split(" ")[0] || fullName;
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8" /></head>
+<body style="margin:0;padding:0;background:#0f1321;font-family:system-ui,sans-serif;">
+  <div style="max-width:560px;margin:0 auto;padding:32px 16px;">
+    <div style="background:#1b1f2e;border-radius:16px;overflow:hidden;border:1px solid rgba(0,210,255,0.12);">
+      <div style="background:linear-gradient(135deg,#0f1321,#1b1f2e);padding:24px 32px;border-bottom:1px solid rgba(0,210,255,0.1);">
+        <div style="color:#00d2ff;font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;">CyberSage Workspace</div>
+      </div>
+      <div style="padding:32px;">
+        <h1 style="font-size:22px;font-weight:700;color:#dfe1f6;margin:0 0 8px;">${accessRole} Access Granted</h1>
+        <p style="color:#bbc9cf;line-height:1.7;margin:0 0 24px;">
+          Hi <strong style="color:#dfe1f6;">${firstName}</strong>,
+        </p>
+        <p style="color:#bbc9cf;line-height:1.7;margin:0 0 24px;">
+          You have been granted <strong style="color:#a5e7ff;">${accessRole}</strong> access in CyberSage Workspace.
+          Welcome to the <strong style="color:#a5e7ff;">${accessRole} team</strong>!
+        </p>
+        <div style="background:rgba(0,210,255,0.06);border:1px solid rgba(0,210,255,0.15);border-radius:12px;padding:20px;margin:0 0 24px;">
+          <div style="font-size:12px;color:#5c6b72;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;">Access Level</div>
+          <div style="color:#00d2ff;font-weight:700;font-size:18px;">${accessRole}</div>
+          <div style="font-size:12px;color:#bbc9cf;margin-top:4px;">Granted by ${grantedByName} · CISO</div>
+        </div>
+        <p style="color:#5c6b72;font-size:13px;line-height:1.6;margin:0;">
+          You now have access to ${accessRole}-related features and resources in the workspace.
+          If you have any questions about your new access, reach out to the CISO.
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+  await resend.emails.send({
+    from: process.env.RESEND_FROM_EMAIL ?? "CyberSage <noreply@cybersage.uk>",
+    to: toEmail,
+    subject: `${accessRole} Access Granted — Welcome to the ${accessRole} Team`,
+    html,
+  });
+}
+
 const EXEC_ROLES = new Set<UserRole>(["CEO", "CISO", "COO", "R_AND_D", "OPS_MANAGER"]);
 
 const TEAM_NAMES: Partial<Record<UserRole, string>> = {

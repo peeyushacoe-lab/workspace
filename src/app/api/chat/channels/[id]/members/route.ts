@@ -5,6 +5,11 @@ import { prisma } from "@/lib/prisma";
 
 type Params = { params: Promise<{ id: string }> };
 
+const channelInclude = {
+  members: { select: { userId: true, role: true } },
+  _count: { select: { messages: true } },
+} as const;
+
 // POST — add members to an existing channel
 export async function POST(request: Request, { params }: Params) {
   const user = getSessionUserFromCookieStore(await cookies());
@@ -12,7 +17,6 @@ export async function POST(request: Request, { params }: Params) {
 
   const { id: channelId } = await params;
 
-  // Only channel admins or workspace admins can add members
   const membership = await prisma.chatMember.findUnique({
     where: { channelId_userId: { channelId, userId: user.id } },
   });
@@ -23,7 +27,7 @@ export async function POST(request: Request, { params }: Params) {
     return NextResponse.json({ error: "userIds is required" }, { status: 400 });
   }
 
-  // Upsert members — skip users already in the channel
+  // Skip users already in the channel
   const existing = await prisma.chatMember.findMany({
     where: { channelId, userId: { in: body.userIds } },
     select: { userId: true },
@@ -31,18 +35,16 @@ export async function POST(request: Request, { params }: Params) {
   const existingIds = new Set(existing.map((m) => m.userId));
   const newIds = body.userIds.filter((id) => !existingIds.has(id));
 
-  if (newIds.length === 0) {
-    return NextResponse.json({ ok: true, added: 0 });
+  if (newIds.length > 0) {
+    await prisma.chatMember.createMany({
+      data: newIds.map((userId) => ({ channelId, userId, role: "MEMBER" })),
+      skipDuplicates: true,
+    });
   }
 
-  await prisma.chatMember.createMany({
-    data: newIds.map((userId) => ({ channelId, userId, role: "MEMBER" })),
-  });
-
-  // Return updated channel
   const channel = await prisma.chatChannel.findUnique({
     where: { id: channelId },
-    include: { members: { select: { userId: true, role: true } } },
+    include: channelInclude,
   });
 
   return NextResponse.json({ ok: true, added: newIds.length, channel });
@@ -63,7 +65,6 @@ export async function DELETE(request: Request, { params }: Params) {
   const body = (await request.json()) as { userId: string };
   if (!body.userId) return NextResponse.json({ error: "userId is required" }, { status: 400 });
 
-  // Allow leaving yourself, or admin removing others
   const isChannelAdmin = membership.role === "ADMIN";
   const isWorkspaceAdmin = ["ADMIN", "CEO", "CISO"].includes(user.role);
   const isSelf = body.userId === user.id;

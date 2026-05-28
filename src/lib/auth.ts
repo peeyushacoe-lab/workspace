@@ -77,6 +77,7 @@ export const portalNavItems: PortalNavItem[] = [
   { href: "/contacts",  label: "Contacts",   hint: "Recipient book",        roles: MGMT_ROLES },
   { href: "/users",     label: "Users",      hint: "Manage team accounts",  roles: MGMT_ROLES },
   { href: "/admin",     label: "Admin",      hint: "System administration", roles: ["ADMIN"] },
+  { href: "/access",    label: "Access",     hint: "Role-based access control", roles: ["ADMIN", "CISO"] },
   { href: "/settings",  label: "Settings",   hint: "Signature & security",  roles: ALL_ROLES },
 ];
 
@@ -99,6 +100,7 @@ const pathAccess: Array<{ prefix: string; roles: UserRole[] }> = [
   { prefix: "/contacts",       roles: MGMT_ROLES },
   { prefix: "/users",          roles: MGMT_ROLES },
   { prefix: "/admin",          roles: ["ADMIN"] },
+  { prefix: "/access",         roles: ["ADMIN", "CISO"] },
 ];
 
 const validRoles = new Set<UserRole>(ALL_ROLES);
