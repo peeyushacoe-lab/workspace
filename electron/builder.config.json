@@ -1,0 +1,39 @@
+{
+  "appId": "uk.cybersage.workspace",
+  "productName": "CyberSage",
+  "copyright": "Copyright © 2025 CyberSage",
+  "directories": { "output": "dist/desktop" },
+  "files": ["electron/**/*", "public/**/*"],
+  "mac": {
+    "category": "public.app-category.productivity",
+    "hardenedRuntime": true,
+    "gatekeeperAssess": false,
+    "entitlements": "electron/entitlements.mac.plist",
+    "entitlementsInherit": "electron/entitlements.mac.plist",
+    "icon": "public/icons/icon.icns"
+  },
+  "win": {
+    "target": ["nsis"],
+    "icon": "public/icons/icon.ico"
+  },
+  "linux": {
+    "target": ["AppImage", "deb"],
+    "icon": "public/icons",
+    "category": "Office"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true
+  },
+  "protocols": [{
+    "name": "CyberSage",
+    "schemes": ["cybersage"]
+  }],
+  "publish": [{
+    "provider": "github",
+    "owner": "peeyushacoe-lab",
+    "repo": "workspace"
+  }]
+}

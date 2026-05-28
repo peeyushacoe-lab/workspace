@@ -168,11 +168,17 @@ export async function sendEmail(
 
   const html = renderEmailHtml(subject, body, contact, signature);
   const from = fromEmail || process.env.RESEND_FROM_EMAIL || "CyberSage <noreply@cybersage.uk>";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://cybersage.uk";
   const result = await resend.emails.send({
     from,
     to: contact.email,
     subject,
     html,
+    headers: {
+      "List-Unsubscribe": `<${appUrl}/unsubscribe?email=${encodeURIComponent(contact.email)}>`,
+      "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+      "X-Mailer": "CyberSage Workspace",
+    },
     ...(cc?.length ? { cc } : {}),
     ...(bcc?.length ? { bcc } : {}),
   });

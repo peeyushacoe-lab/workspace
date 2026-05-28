@@ -4,35 +4,20 @@ import { InboxView } from "@/components/InboxView";
 import { DashboardTour } from "@/components/DashboardTour";
 
 export default async function InboxPage() {
-  // getCurrentUser is React.cache()-wrapped — no duplicate HMAC verify vs layout.
   const user = await getCurrentUser();
 
-  // Fetch the first page of threads server-side so InboxView has data
-  // immediately on hydration with zero client-side waterfall on initial load.
   const rawThreads = await prisma.inboxThread.findMany({
     where: {
-      mailbox: {
-        accessLogs: { some: { userId: user?.id ?? "" } },
-      },
+      mailbox: { accessLogs: { some: { userId: user?.id ?? "" } } },
     },
     include: {
-      mailbox: {
-        select: { email: true, displayName: true },
-      },
+      mailbox: { select: { email: true, displayName: true } },
       messages: {
         orderBy: { receivedAt: "desc" },
         take: 1,
-        select: {
-          from: true,
-          subject: true,
-          textBody: true,
-          receivedAt: true,
-          isRead: true,
-        },
+        select: { from: true, subject: true, textBody: true, receivedAt: true, isRead: true },
       },
-      _count: {
-        select: { messages: { where: { isRead: false } } },
-      },
+      _count: { select: { messages: { where: { isRead: false } } } },
     },
     orderBy: { createdAt: "desc" },
     take: 50,
@@ -70,15 +55,7 @@ export default async function InboxPage() {
   return (
     <>
       <DashboardTour />
-      <div className="p-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Workspace Mail</h1>
-          <p className="text-muted mt-2">
-            Secure, centralised communication for {user!.fullName}.
-          </p>
-        </div>
-        <InboxView userRole={user!.role} initialThreads={initialThreads} />
-      </div>
+      <InboxView userRole={user!.role} initialThreads={initialThreads} />
     </>
   );
 }

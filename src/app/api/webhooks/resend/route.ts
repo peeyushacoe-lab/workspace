@@ -3,6 +3,7 @@ import { z } from "zod";
 import { Webhook } from "svix";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { mailRulesQueue } from "@/lib/queues/mail-rules.queue";
 
 const resendWebhookSchema = z.object({
   type: z.string(),
@@ -281,6 +282,17 @@ async function handleInboundEmail(data: InboundEmailPayload) {
 
   // 4. Security Scan (Phase 7)
   await performSecurityScan(inboxMessage.id, data.text || "");
+
+  // 5. Mail Rules evaluation (Phase 19)
+  const mailboxOwner = await prisma.mailboxAccess.findFirst({
+    where: { mailboxId: mailbox.id, role: "OWNER" },
+    select: { userId: true },
+  });
+  mailRulesQueue.add("evaluate", {
+    messageId: inboxMessage.id,
+    mailboxId: mailbox.id,
+    userId: mailboxOwner?.userId ?? null,
+  }).catch(() => {});
 
   return NextResponse.json({ ok: true, threadId: thread.id });
 }

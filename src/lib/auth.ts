@@ -74,14 +74,17 @@ export const portalNavItems: PortalNavItem[] = [
   { href: "/drive",     label: "Drive",      hint: "Files & documents",     roles: ALL_ROLES },
   { href: "/calendar",  label: "Calendar",   hint: "Events & scheduling",   roles: ALL_ROLES },
   { href: "/notes",     label: "Notes",      hint: "Personal notes",        roles: ALL_ROLES },
-  { href: "/docs",      label: "Docs",       hint: "Documents & writing",   roles: ALL_ROLES },
-  { href: "/ai",        label: "AI",         hint: "AI assistant",          roles: ALL_ROLES },
+  { href: "/docs",        label: "Docs",       hint: "Documents & writing",   roles: ALL_ROLES },
+  { href: "/whiteboard", label: "Whiteboard", hint: "Visual canvas",         roles: ALL_ROLES },
+  { href: "/ai",         label: "AI",         hint: "AI assistant",          roles: ALL_ROLES },
   { href: "/contacts",  label: "Contacts",   hint: "Recipient book",        roles: MGMT_ROLES },
   { href: "/users",     label: "Users",      hint: "Manage team accounts",  roles: MGMT_ROLES },
-  { href: "/org",       label: "Org",        hint: "Organization settings", roles: ["ADMIN"] },
+  { href: "/billing",    label: "Billing",     hint: "Plans & usage",          roles: ["ADMIN"] },
+  { href: "/org",       label: "Org",        hint: "Organization settings",  roles: ["ADMIN"] },
   { href: "/admin",     label: "Admin",      hint: "System administration", roles: ["ADMIN"] },
-  { href: "/access",    label: "Access",     hint: "Role-based access control", roles: ["ADMIN", "CISO"] },
-  { href: "/settings",  label: "Settings",   hint: "Signature & security",  roles: ALL_ROLES },
+  { href: "/access",      label: "Access",      hint: "Role-based access control", roles: ["ADMIN", "CISO"] },
+  { href: "/compliance",  label: "Compliance",  hint: "Audit logs & GDPR",         roles: ["ADMIN", "CISO"] },
+  { href: "/settings",    label: "Settings",    hint: "Signature & security",       roles: ALL_ROLES },
 ];
 
 // Explicit access control map — default-deny for anything not listed.
@@ -93,6 +96,7 @@ const pathAccess: Array<{ prefix: string; roles: UserRole[] }> = [
   { prefix: "/calendar",       roles: ALL_ROLES },
   { prefix: "/notes",          roles: ALL_ROLES },
   { prefix: "/docs",           roles: ALL_ROLES },
+  { prefix: "/whiteboard",     roles: ALL_ROLES },
   { prefix: "/ai",             roles: ALL_ROLES },
   { prefix: "/settings",       roles: ALL_ROLES },
   { prefix: "/profile",        roles: ALL_ROLES },
@@ -102,9 +106,11 @@ const pathAccess: Array<{ prefix: string; roles: UserRole[] }> = [
   { prefix: "/dashboard",      roles: MGMT_ROLES },
   { prefix: "/contacts",       roles: MGMT_ROLES },
   { prefix: "/users",          roles: MGMT_ROLES },
+  { prefix: "/billing",        roles: ["ADMIN"] },
   { prefix: "/org",            roles: ["ADMIN"] },
   { prefix: "/admin",          roles: ["ADMIN"] },
   { prefix: "/access",         roles: ["ADMIN", "CISO"] },
+  { prefix: "/compliance",     roles: ["ADMIN", "CISO"] },
 ];
 
 const validRoles = new Set<UserRole>(ALL_ROLES);

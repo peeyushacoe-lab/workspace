@@ -1,20 +1,31 @@
 {
-  "name": "Nexus by CyberSage",
-  "short_name": "Nexus",
-  "description": "Unified workspace for email, chat, drive, and calendar",
-  "start_url": "/",
+  "name": "CyberSage Workspace",
+  "short_name": "CyberSage",
+  "description": "Enterprise workspace — email, chat, drive, calendar, meet, docs, AI",
+  "start_url": "/inbox",
   "display": "standalone",
-  "orientation": "portrait-primary",
-  "background_color": "#111113",
-  "theme_color": "#2563eb",
+  "orientation": "any",
+  "background_color": "#0f1321",
+  "theme_color": "#00d2ff",
   "icons": [
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ],
   "screenshots": [],
-  "categories": ["productivity", "business"],
+  "categories": ["productivity", "business", "communication"],
   "shortcuts": [
-    { "name": "Compose Email", "url": "/?compose=1", "description": "Compose a new email" },
-    { "name": "New Chat", "url": "/chat", "description": "Open chat" }
-  ]
+    { "name": "Inbox", "url": "/inbox", "icons": [{ "src": "/icons/shortcut-inbox.png", "sizes": "96x96" }] },
+    { "name": "Compose", "url": "/inbox?compose=1", "description": "Compose a new email" },
+    { "name": "Chat", "url": "/chat", "description": "Open team chat" },
+    { "name": "Meet", "url": "/meet", "description": "Start a meeting" }
+  ],
+  "share_target": {
+    "action": "/inbox?compose=1",
+    "method": "GET",
+    "params": { "title": "subject", "text": "body", "url": "url" }
+  },
+  "protocol_handlers": [
+    { "protocol": "mailto", "url": "/inbox?compose=1&to=%s" }
+  ],
+  "edge_side_panel": { "preferred_width": 480 }
 }

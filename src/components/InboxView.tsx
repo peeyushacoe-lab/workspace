@@ -598,23 +598,23 @@ export function InboxView({ userRole, initialThreads }: {
   };
 
   return (
-    <div className="flex h-[calc(100vh-130px)] min-h-[400px] bg-[#0f1321] rounded-2xl border border-[rgba(0,255,255,0.08)] shadow-sm overflow-hidden">
+    <div className="flex h-[calc(100vh-44px)] bg-[#0a0e1a] overflow-hidden">
 
       {/* ── Left Sidebar ── */}
-      <div className="hidden md:flex w-48 flex-shrink-0 flex-col bg-[#1b1f2e] border-r border-[rgba(0,255,255,0.08)] overflow-y-auto">
+      <div className="hidden md:flex w-52 flex-shrink-0 flex-col bg-[#0d1120] border-r border-[rgba(0,255,255,0.06)] overflow-y-auto">
         {/* System folders */}
         <div className="p-3 pt-4">
-          <p className="px-2 mb-2 text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider">Mailbox</p>
+          <p className="px-2.5 mb-1.5 text-[10px] font-semibold text-[#3c4f5a] uppercase tracking-widest">Mailbox</p>
           {SYSTEM_FOLDERS.map(({ key, label, Icon }) => {
             const isActive = activeFolder === key && !activeCustomFolder;
             return (
               <button
                 key={key}
                 onClick={() => setSystemFolder(key)}
-                className={`flex w-full items-center gap-2.5 px-2.5 py-2 text-sm font-medium transition-colors ${
+                className={`flex w-full items-center gap-2.5 px-2.5 py-1.5 text-[13px] font-medium rounded-lg transition-all duration-100 ${
                   isActive
-                    ? "bg-[#00d2ff]/10 text-[#00d2ff] rounded-xl font-semibold"
-                    : "text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-lg"
+                    ? "bg-[#00d2ff]/12 text-[#00d2ff] border-l-2 border-[#00d2ff] pl-[9px]"
+                    : "text-[#8fa3ac] hover:bg-[#161b2e] hover:text-[#c8d8de]"
                 }`}
               >
                 <Icon className="h-4 w-4 flex-shrink-0" />
@@ -640,9 +640,9 @@ export function InboxView({ userRole, initialThreads }: {
         </div>
 
         {/* Custom folders */}
-        <div className="mt-1 px-3 border-t border-[rgba(0,255,255,0.08)] pt-3 flex-1">
-          <div className="flex items-center justify-between px-2 mb-2">
-            <p className="text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider">Folders</p>
+        <div className="mt-1 px-3 border-t border-[rgba(0,255,255,0.05)] pt-3 flex-1">
+          <div className="flex items-center justify-between px-2.5 mb-1.5">
+            <p className="text-[10px] font-semibold text-[#3c4f5a] uppercase tracking-widest">Folders</p>
             <button
               onClick={() => setShowNewFolder(true)}
               className="p-0.5 rounded text-[#bbc9cf] hover:text-[#00d2ff] hover:bg-[#262939] transition-colors"
@@ -680,8 +680,8 @@ export function InboxView({ userRole, initialThreads }: {
         </div>
 
         {/* Labels */}
-        <div className="px-3 border-t border-[rgba(0,255,255,0.08)] pt-3 pb-3">
-          <p className="px-2 mb-2 text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider">Labels</p>
+        <div className="px-3 border-t border-[rgba(0,255,255,0.05)] pt-3 pb-3">
+          <p className="px-2.5 mb-1.5 text-[10px] font-semibold text-[#3c4f5a] uppercase tracking-widest">Labels</p>
           {[
             { label: "Work",     color: "bg-blue-500"  },
             { label: "Personal", color: "bg-green-500" },
@@ -701,10 +701,10 @@ export function InboxView({ userRole, initialThreads }: {
       </div>
 
       {/* ── Thread List ── */}
-      <div className={`${selectedThreadId ? "hidden md:flex" : "flex"} w-full md:w-72 flex-shrink-0 bg-[#1b1f2e] border-r border-[rgba(0,255,255,0.08)] flex-col`}>
-        <div className="p-3 border-b border-[rgba(0,255,255,0.08)] space-y-2.5">
+      <div className={`${selectedThreadId ? "hidden md:flex" : "flex"} w-full md:w-[300px] flex-shrink-0 bg-[#0f1321] border-r border-[rgba(0,255,255,0.06)] flex-col`}>
+        <div className="px-3 pt-3 pb-2 border-b border-[rgba(0,255,255,0.06)] space-y-2">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-[#dfe1f6] flex items-center gap-1.5">
+            <h2 className="text-sm font-semibold text-[#c8d8de] flex items-center gap-1.5">
               {activeCustomFolder ? (
                 <>
                   <Folder className="w-4 h-4 text-[#00d2ff]" />
@@ -877,8 +877,10 @@ export function InboxView({ userRole, initialThreads }: {
               <div
                 key={thread.id}
                 onClick={() => loadThreadDetail(thread.id)}
-                className={`group relative bg-[#1b1f2e] hover:bg-[#171b2a] border-b border-[rgba(0,255,255,0.08)] cursor-pointer transition-colors ${
-                  selectedThreadId === thread.id ? "bg-[#00d2ff]/5 border-l-4 border-[#2563eb]" : ""
+                className={`group relative cursor-pointer transition-all duration-100 border-b border-[rgba(0,255,255,0.04)] ${
+                  selectedThreadId === thread.id
+                    ? "bg-[#00d2ff]/8 border-l-2 border-[#00d2ff]"
+                    : "hover:bg-[#161b2e]"
                 }`}
               >
                 {/* Hover action bar */}
@@ -925,50 +927,46 @@ export function InboxView({ userRole, initialThreads }: {
                   )}
                 </div>
 
-                <div className="p-3">
-                  <div className="flex items-center gap-2 mb-1 pr-20">
-                    <span className="text-[10px] font-bold text-[#00d2ff] uppercase tracking-wider truncate">
-                      {thread.mailboxName}
-                    </span>
-                    {/* Priority badge */}
-                    <PriorityBadge priority={thread.priority} />
-                    {/* SLA indicator */}
-                    {thread.slaDeadline && <SlaIndicator deadline={thread.slaDeadline} />}
-                    {/* Snoozed indicator */}
-                    {thread.isSnoozed && <BellOff className="w-2.5 h-2.5 text-[#3c494e]" />}
-                    {/* Assignment indicator */}
-                    {thread.assignedToId && <Users className="w-2.5 h-2.5 text-[#bbc9cf]" />}
-                    <span className={`ml-auto text-xs flex-shrink-0 ${thread.unreadCount > 0 ? "text-[#00d2ff] font-medium" : "text-[#bbc9cf]"}`}>
-                      {thread.lastMessage
-                        ? formatDistanceToNow(new Date(thread.lastMessage.receivedAt), { addSuffix: true })
-                        : ""}
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-2">
+                <div className="px-3 py-2.5">
+                  <div className="flex items-center gap-2 mb-1.5">
                     <SenderAvatar
                       member={memberMap[(thread.lastMessage?.from ?? "").toLowerCase()]}
                       email={thread.lastMessage?.from ?? "?"}
+                      size={7}
                       onClick={() => { const m = memberMap[(thread.lastMessage?.from ?? "").toLowerCase()]; if (m?.id) setProfileUserId(m.id); }}
                     />
                     <div className="flex-1 min-w-0">
-                      <p
-                        className={`truncate cursor-pointer hover:text-cyan-400 transition-colors ${thread.unreadCount > 0 ? "font-bold text-sm text-[#dfe1f6]" : "font-medium text-sm text-[#dfe1f6]"}`}
-                        onClick={() => { const m = memberMap[(thread.lastMessage?.from ?? "").toLowerCase()]; if (m?.id) setProfileUserId(m.id); }}
-                      >
-                        {senderName(memberMap[(thread.lastMessage?.from ?? "").toLowerCase()], thread.lastMessage?.from)}
-                      </p>
-                      <p className={`truncate ${thread.unreadCount > 0 ? "font-bold text-sm text-[#dfe1f6]" : "font-medium text-sm text-[#dfe1f6]"}`}>
-                        {thread.subject}
-                      </p>
-                      <p className="text-xs text-[#bbc9cf] truncate">{thread.lastMessage?.snippet}</p>
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className={`truncate text-[13px] cursor-pointer hover:text-[#00d2ff] transition-colors ${thread.unreadCount > 0 ? "font-semibold text-[#dde4ea]" : "font-medium text-[#8fa3ac]"}`}
+                          onClick={(e) => { e.stopPropagation(); const m = memberMap[(thread.lastMessage?.from ?? "").toLowerCase()]; if (m?.id) setProfileUserId(m.id); }}
+                        >
+                          {senderName(memberMap[(thread.lastMessage?.from ?? "").toLowerCase()], thread.lastMessage?.from)}
+                        </span>
+                        <PriorityBadge priority={thread.priority} />
+                        {thread.slaDeadline && <SlaIndicator deadline={thread.slaDeadline} />}
+                      </div>
                     </div>
-                    <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                    <div className="flex items-center gap-1 flex-shrink-0">
                       {thread.unreadCount > 0 && (
-                        <span className="bg-[#00d2ff] text-[#003543] text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                        <span className="bg-[#00d2ff] text-[#002d38] text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none">
                           {thread.unreadCount}
                         </span>
                       )}
                       {thread.isStarred && <Star className="w-3 h-3 text-[#00d2ff]" fill="currentColor" />}
+                    </div>
+                  </div>
+                  <div className="pl-9">
+                    <p className={`truncate text-[13px] leading-snug ${thread.unreadCount > 0 ? "font-semibold text-[#c8d8de]" : "font-medium text-[#6b7c84]"}`}>
+                      {thread.subject}
+                    </p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <p className="text-[11px] text-[#4a5568] truncate flex-1">{thread.lastMessage?.snippet}</p>
+                      <span className="text-[10px] text-[#3c4f5a] flex-shrink-0">
+                        {thread.lastMessage
+                          ? formatDistanceToNow(new Date(thread.lastMessage.receivedAt), { addSuffix: false })
+                          : ""}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -979,12 +977,16 @@ export function InboxView({ userRole, initialThreads }: {
       </div>
 
       {/* ── Message Detail ── */}
-      <div className={`${selectedThreadId ? "flex" : "hidden md:flex"} flex-1 bg-[#1b1f2e] flex-col min-w-0`}>
+      <div className={`${selectedThreadId ? "flex" : "hidden md:flex"} flex-1 bg-[#0c1019] flex-col min-w-0`}>
         {!selectedThreadId ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-[#bbc9cf] p-8">
-            <Mail className="w-14 h-14 mb-4 opacity-20" />
-            <p className="text-base font-semibold">Select a message to read</p>
-            <p className="text-sm mt-1 text-[#bbc9cf]">Nexus — Your secure workspace</p>
+          <div className="flex-1 flex flex-col items-center justify-center gap-4 text-[#3c4f5a] p-8">
+            <div className="w-16 h-16 rounded-2xl bg-[#0f1321] border border-[rgba(0,255,255,0.06)] flex items-center justify-center">
+              <Mail className="w-7 h-7 opacity-40" />
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-medium text-[#5c6b72]">No message selected</p>
+              <p className="text-xs mt-0.5 text-[#3c4f5a]">Pick a thread from the left to read it</p>
+            </div>
           </div>
         ) : isDetailLoading ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-3 text-[#bbc9cf]">
@@ -994,52 +996,40 @@ export function InboxView({ userRole, initialThreads }: {
         ) : threadDetail ? (
           <>
             {/* Detail Header */}
-            <div className="px-6 py-4 border-b border-[rgba(0,255,255,0.08)] flex items-start justify-between gap-4">
-              <div className="flex items-start gap-3 min-w-0">
-                <button
-                  className="md:hidden flex-shrink-0 p-2 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-full transition-colors"
-                  onClick={() => setSelectedThreadId(null)}
-                  aria-label="Back to inbox"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <div className="min-w-0">
-                  <h3 className="text-xl font-bold text-[#dfe1f6] leading-tight truncate">{threadDetail.subject}</h3>
-                  <div className="flex items-center gap-3 mt-1">
-                    <div className="flex items-center gap-1 text-sm text-[#bbc9cf]">
-                      <Inbox className="w-3 h-3" />
-                      <span>{threads.find(t => t.id === threadDetail.id)?.mailboxName}</span>
-                    </div>
-                    {(() => {
-                      const t = threads.find(th => th.id === threadDetail.id);
-                      if (!t) return null;
-                      const pc = PRIORITY_CONFIG[t.priority];
-                      if (t.priority === "NORMAL") return null;
-                      return (
-                        <span className={`text-xs font-semibold flex items-center gap-1 ${pc.color}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${pc.dot}`} />
-                          {pc.label}
-                        </span>
-                      );
-                    })()}
-                    <div className="hidden sm:flex items-center gap-1 text-sm text-[#bbc9cf]">
-                      <Clock className="w-3 h-3" />
-                      <span>Started {new Date(threadDetail.messages[0]?.receivedAt).toLocaleDateString()}</span>
-                    </div>
-                  </div>
+            <div className="px-5 py-3.5 border-b border-[rgba(0,255,255,0.06)] bg-[#0e1220] flex items-center gap-3">
+              <button
+                className="md:hidden flex-shrink-0 p-1.5 text-[#5c6b72] hover:bg-[#1b1f2e] hover:text-[#bbc9cf] rounded-lg transition-colors"
+                onClick={() => setSelectedThreadId(null)}
+                aria-label="Back to inbox"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-base font-semibold text-[#e8eaf0] leading-tight truncate">{threadDetail.subject}</h3>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-[11px] text-[#4a5568] flex items-center gap-1">
+                    <Inbox className="w-2.5 h-2.5" />
+                    {threads.find(t => t.id === threadDetail.id)?.mailboxName}
+                  </span>
+                  {(() => {
+                    const t = threads.find(th => th.id === threadDetail.id);
+                    if (!t || t.priority === "NORMAL") return null;
+                    const pc = PRIORITY_CONFIG[t.priority];
+                    return <span className={`text-[11px] font-semibold ${pc.color}`}>{pc.label}</span>;
+                  })()}
                 </div>
               </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="flex items-center gap-1.5 flex-shrink-0">
                 <button
                   onClick={() => { setShowSmartReply(v => !v); setShowReply(false); }}
-                  className="bg-[#262939] text-[#bbc9cf] hover:bg-[#00d2ff]/10 hover:text-[#00d2ff] rounded-md px-3 py-1.5 text-xs font-medium border border-[rgba(0,255,255,0.08)] flex items-center gap-1.5 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1a1f2e] text-[#8fa3ac] hover:text-[#00d2ff] border border-[rgba(0,255,255,0.08)] text-xs font-medium transition-colors"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Smart Reply</span>
+                  <span className="hidden sm:inline">AI Reply</span>
                 </button>
                 <button
                   onClick={() => { setShowReply(true); setShowSmartReply(false); }}
-                  className="bg-[#00d2ff] text-[#003543] hover:bg-[#00b8d9] hover:shadow-[0_0_20px_rgba(0,210,255,0.4)] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-1.5"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#00d2ff] text-[#002d38] hover:bg-[#00e8ff] text-xs font-semibold transition-colors"
                 >
                   <Reply className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Reply</span>
@@ -1071,26 +1061,26 @@ export function InboxView({ userRole, initialThreads }: {
             )}
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-5 space-y-4">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {threadDetail.messages.map((msg) => (
-                <div key={msg.id} className="bg-[#1b1f2e] rounded-xl border border-[rgba(0,255,255,0.08)] shadow-sm overflow-hidden">
-                  <div className="px-6 py-4 border-b border-[rgba(0,255,255,0.08)] flex items-center justify-between">
+                <div key={msg.id} className="bg-[#0e1220] rounded-xl border border-[rgba(255,255,255,0.05)] overflow-hidden">
+                  <div className="px-5 py-3.5 border-b border-[rgba(255,255,255,0.04)] flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <SenderAvatar
                         member={memberMap[msg.from.toLowerCase()]}
                         email={msg.from}
-                        size={10}
+                        size={9}
                         onClick={() => { const m = memberMap[msg.from.toLowerCase()]; if (m?.id) setProfileUserId(m.id); }}
                       />
                       <div>
                         <p
-                          className="text-sm font-bold text-[#dfe1f6] cursor-pointer hover:text-cyan-400 transition-colors"
+                          className="text-sm font-semibold text-[#dde4ea] cursor-pointer hover:text-[#00d2ff] transition-colors"
                           onClick={() => { const m = memberMap[msg.from.toLowerCase()]; if (m?.id) setProfileUserId(m.id); }}
                         >
                           {senderName(memberMap[msg.from.toLowerCase()], msg.from)}
                         </p>
-                        <p className="text-xs text-[#7a8fa6]">{msg.from}</p>
-                        <p className="text-sm text-[#bbc9cf]">
+                        <p className="text-[11px] text-[#4a5568] mt-0.5">{msg.from}</p>
+                        <p className="text-[11px] text-[#4a5568]">
                           to {senderName(memberMap[msg.to.toLowerCase()], msg.to)}
                         </p>
                         {(() => {
@@ -1105,10 +1095,10 @@ export function InboxView({ userRole, initialThreads }: {
                         })()}
                       </div>
                     </div>
-                    <span className="text-xs text-[#bbc9cf]">{new Date(msg.receivedAt).toLocaleString()}</span>
+                    <span className="text-[11px] text-[#4a5568]">{new Date(msg.receivedAt).toLocaleString()}</span>
                   </div>
 
-                  <div className="p-5">
+                  <div className="px-5 py-4">
                     {msg.threatScan && msg.threatScan.riskScore > 60 && (
                       <div className="mb-4 p-3 bg-[#ff4d6d]/10 border border-[#ff4d6d]/30 rounded-xl flex items-start gap-3">
                         <ShieldAlert className="w-4 h-4 text-[#ff4d6d] flex-shrink-0 mt-0.5" />

@@ -40,6 +40,7 @@
     "node_modules",
     "scratch",
     "apps",
-    "packages"
+    "packages",
+    "electron"
   ]
 }

@@ -8,6 +8,7 @@ import { createPreviewWorker } from "../src/workers/preview.worker";
 import { createCleanupWorker } from "../src/workers/cleanup.worker";
 import { createIndexingWorker } from "../src/workers/indexing.worker";
 import { createSecuritySyncWorker } from "../src/workers/security-sync.worker";
+import { createMailRulesWorker } from "../src/workers/mail-rules.worker";
 import { processScheduledEmails } from "../src/workers/scheduled-send.worker";
 import { cleanupQueue } from "../src/lib/queues/cleanup.queue";
 import { logger } from "../src/lib/logger";
@@ -16,6 +17,7 @@ logger.info("CyberSage Background Workers Starting...");
 
 const emailWorker        = createEmailWorker();
 const dlpWorker          = createDLPWorker();
+const mailRulesWorker    = createMailRulesWorker();
 const notificationWorker = createNotificationWorker();
 const aiWorker           = createAIWorker();
 const previewWorker      = createPreviewWorker();
@@ -62,6 +64,7 @@ const allWorkers: [Worker, string][] = [
   [cleanupWorker,      "cleanup"],
   [indexingWorker,     "search-indexing"],
   [securitySyncWorker, "security-sync"],
+  [mailRulesWorker,    "mail-rules"],
 ];
 
 for (const [worker, name] of allWorkers) {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getSessionUserFromCookieStore } from "@/lib/auth";
+import { claudeComplete } from "@/lib/claude";
 import { getAIClient, AI_MODEL } from "@/lib/ai";
 import { prisma } from "@/lib/prisma";
 
@@ -25,37 +26,36 @@ ${text.slice(0, 4000)}
 
 Only output valid JSON.`;
 
-  try {
-    const ai = getAIClient();
-    const completion = await ai.chat.completions.create({
-      model: AI_MODEL,
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.3,
-      max_tokens: 600,
-    });
+  let raw: string | null = null;
+  let modelUsed = "claude-sonnet-4-6";
 
-    const raw = completion.choices[0]?.message?.content ?? "{}";
-    let parsed: { summary: string; keyPoints: string[]; actionItems: string[]; sentiment: string };
+  raw = await claudeComplete("You are an expert summarizer. Return only valid JSON.", prompt, 600);
+
+  if (!raw) {
     try {
-      parsed = JSON.parse(raw) as typeof parsed;
+      const ai = getAIClient();
+      const completion = await ai.chat.completions.create({
+        model: AI_MODEL, messages: [{ role: "user", content: prompt }], temperature: 0.3, max_tokens: 600,
+      });
+      raw = completion.choices[0]?.message?.content ?? null;
+      modelUsed = AI_MODEL;
     } catch {
-      parsed = { summary: raw, keyPoints: [], actionItems: [], sentiment: "neutral" };
+      return NextResponse.json({ error: "AI unavailable" }, { status: 503 });
     }
-
-    await prisma.aIInteraction.create({
-      data: {
-        userId: user.id,
-        type: "SUMMARIZE",
-        prompt: text.slice(0, 500),
-        response: raw.slice(0, 2000),
-        model: AI_MODEL,
-        tokens: completion.usage?.total_tokens,
-      },
-    });
-
-    return NextResponse.json(parsed);
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : "AI request failed";
-    return NextResponse.json({ error: msg }, { status: 503 });
   }
+  if (!raw) return NextResponse.json({ error: "AI returned empty response" }, { status: 503 });
+
+  let parsed: { summary: string; keyPoints: string[]; actionItems: string[]; sentiment: string };
+  try {
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    parsed = JSON.parse(jsonMatch?.[0] ?? raw) as typeof parsed;
+  } catch {
+    parsed = { summary: raw, keyPoints: [], actionItems: [], sentiment: "neutral" };
+  }
+
+  await prisma.aIInteraction.create({
+    data: { userId: user.id, type: "SUMMARIZE", prompt: text.slice(0, 500), response: raw.slice(0, 2000), model: modelUsed },
+  }).catch(() => {});
+
+  return NextResponse.json(parsed);
 }

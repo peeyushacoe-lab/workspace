@@ -15,9 +15,12 @@ import {
   User,
   StickyNote,
   Shield,
+  BookOpen,
+  CreditCard,
   Video,
   FileText,
   Building2,
+  PenLine,
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -36,9 +39,12 @@ const icons: Record<string, LucideIcon> = {
   "/notes": StickyNote,
   "/docs": FileText,
   "/ai": Sparkles,
+  "/whiteboard": PenLine,
   "/org": Building2,
   "/admin": User,
   "/access": Shield,
+  "/compliance": BookOpen,
+  "/billing": CreditCard,
 };
 
 export function SidebarNav({
