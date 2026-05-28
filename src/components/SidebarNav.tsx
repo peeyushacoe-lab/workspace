@@ -17,6 +17,7 @@ import {
   Shield,
   Video,
   FileText,
+  Building2,
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -35,6 +36,7 @@ const icons: Record<string, LucideIcon> = {
   "/notes": StickyNote,
   "/docs": FileText,
   "/ai": Sparkles,
+  "/org": Building2,
   "/admin": User,
   "/access": Shield,
 };

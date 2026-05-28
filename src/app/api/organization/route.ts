@@ -30,7 +30,7 @@ export async function PUT(request: Request) {
         data: { ...(body.name && { name: body.name }), ...(body.domain !== undefined && { domain: body.domain || null }), ...(body.plan && { plan: body.plan }), ...(body.settings && { settings: body.settings as never }) },
       })
     : await prisma.organization.create({
-        data: { name: body.name ?? "CyberSage", domain: body.domain ?? null, plan: body.plan ?? "ENTERPRISE", settings: (body.settings ?? undefined) as never },
+        data: { name: body.name ?? "CyberSage", slug: (body.name ?? "cybersage").toLowerCase().replace(/[^a-z0-9-]/g, "-"), domain: body.domain ?? null, plan: body.plan ?? "ENTERPRISE", settings: (body.settings ?? undefined) as never },
       });
 
   return NextResponse.json(org);

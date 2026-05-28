@@ -69,6 +69,10 @@ model User {
   fullName        String
   role            UserRole @default(ADMIN)
   customRole      String?
+  // Multi-tenant
+  organizationId  String?
+  orgRole         String?  @default("MEMBER") // OWNER, ADMIN, MEMBER, GUEST
+  organization    Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
   avatarUrl       String?
   coverUrl        String?
   isActive          Boolean  @default(true)
@@ -172,18 +176,22 @@ model Signature {
 }
 
 model Mailbox {
-  id           String     @id @default(cuid())
-  email        String     @unique
-  displayName  String
-  isShared     Boolean    @default(false)
-  isNoReply    Boolean    @default(false)
-  allowedRoles UserRole[]
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  id             String     @id @default(cuid())
+  email          String     @unique
+  displayName    String
+  isShared       Boolean    @default(false)
+  isNoReply      Boolean    @default(false)
+  allowedRoles   UserRole[]
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
 
   accessLogs   MailboxAccess[]
   threads      InboxThread[]
   folders      MailFolder[]
+
+  @@index([organizationId])
 }
 
 model MailboxAccess {
@@ -376,19 +384,21 @@ model SecurityEvent {
 }
 
 model AuditLog {
-  id          String   @id @default(cuid())
-  actorId     String?
-  action      String
-  targetType  String?
-  targetId    String?
-  metadata    Json?
-  ipAddress   String?
-  createdAt   DateTime @default(now())
+  id             String   @id @default(cuid())
+  actorId        String?
+  action         String
+  targetType     String?
+  targetId       String?
+  metadata       Json?
+  ipAddress      String?
+  organizationId String?
+  createdAt      DateTime @default(now())
 
   @@index([actorId])
   @@index([targetId])
   @@index([action])
   @@index([createdAt])
+  @@index([organizationId])
 }
 
 model ThreatScan {
@@ -494,21 +504,24 @@ model UserPresence {
 }
 
 model ChatChannel {
-  id             String          @id @default(cuid())
-  name           String
-  description    String?
-  type           ChatChannelType @default(CHANNEL)
-  isPrivate      Boolean         @default(false)
-  createdById    String?
+  id              String          @id @default(cuid())
+  name            String
+  description     String?
+  type            ChatChannelType @default(CHANNEL)
+  isPrivate       Boolean         @default(false)
+  createdById     String?
   pinnedMessageId String?
-  topic          String?
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  topic           String?
+  organizationId  String?
+  organization    Organization?   @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
 
   members  ChatMember[]
   messages ChatMessage[]
 
   @@index([type])
+  @@index([organizationId])
 }
 
 model ChatMember {
@@ -662,13 +675,14 @@ model ChatPollVote {
 // ─── Phase 4: Drive / File Storage ───────────────────────────────────────────
 
 model DriveFolder {
-  id        String   @id @default(cuid())
-  name      String
-  parentId  String?
-  ownerId   String
-  isShared  Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String   @id @default(cuid())
+  name           String
+  parentId       String?
+  ownerId        String
+  isShared       Boolean  @default(false)
+  organizationId String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   parent      DriveFolder?  @relation("FolderTree", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   children    DriveFolder[] @relation("FolderTree")
@@ -687,6 +701,7 @@ model DriveFile {
   size           BigInt    @default(0)
   folderId       String?
   ownerId        String
+  organizationId String?
   storageKey     String
   storageUrl     String?
   previewUrl     String?
@@ -799,6 +814,7 @@ model CalendarEvent {
   organizerId    String
   color          String?
   meetingUrl     String?
+  organizationId String?
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 
@@ -959,20 +975,22 @@ model IncidentTimeline {
 // ─── Phase 9: Notes ───────────────────────────────────────────────────────────
 
 model Note {
-  id        String   @id @default(cuid())
-  title     String
-  content   String   @default("")
-  userId    String
-  pinned    Boolean  @default(false)
-  color     String?
-  isDoc     Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String   @id @default(cuid())
+  title          String
+  content        String   @default("")
+  userId         String
+  pinned         Boolean  @default(false)
+  color          String?
+  isDoc          Boolean  @default(false)
+  organizationId String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([userId, pinned, updatedAt])
+  @@index([organizationId])
 }
 
 // ─── Phase 5: Sage Meet ───────────────────────────────────────────────────────
@@ -1003,6 +1021,7 @@ model Meeting {
   isTranscriptionEnabled Boolean @default(false)
   passcode      String?
   calendarEventId String?
+  organizationId String?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
@@ -1012,6 +1031,7 @@ model Meeting {
   @@index([organizerId])
   @@index([status])
   @@index([scheduledAt])
+  @@index([organizationId])
 }
 
 enum ParticipantRole {
@@ -1200,19 +1220,49 @@ model SearchIndex {
   @@index([userId])
 }
 
-// ─── Phase 11: Platform Hardening ────────────────────────────────────────────
+// ─── Phase 18: Multi-Tenant Architecture ─────────────────────────────────────
 
 model Organization {
-  id          String   @id @default(cuid())
-  name        String
-  domain      String?  @unique
-  plan        String   @default("FREE")  // FREE, PRO, ENTERPRISE
-  isActive    Boolean  @default(true)
-  settings    Json?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(cuid())
+  name         String
+  slug         String   @unique // URL-safe identifier, e.g. "cybersage"
+  domain       String?  @unique // custom domain for SSO / mail routing
+  plan         String   @default("FREE") // FREE, STARTER, PRO, ENTERPRISE
+  maxUsers     Int      @default(50)
+  isActive     Boolean  @default(true)
+  logoUrl      String?
+  brandColor   String?  // hex, e.g. "#00d2ff"
+  billingEmail String?
+  trialEndsAt  DateTime?
+  settings     Json?    // feature flags, preferences, etc.
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
+  users     User[]
+  mailboxes Mailbox[]
+  channels  ChatChannel[]
+  invites   OrganizationInvite[]
+
+  @@index([slug])
   @@index([domain])
+}
+
+model OrganizationInvite {
+  id             String    @id @default(cuid())
+  organizationId String
+  email          String
+  orgRole        String    @default("MEMBER") // OWNER, ADMIN, MEMBER, GUEST
+  invitedById    String
+  token          String    @unique @default(cuid())
+  expiresAt      DateTime
+  acceptedAt     DateTime?
+  createdAt      DateTime  @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, email])
+  @@index([token])
+  @@index([organizationId])
 }
 
 model Permission {
@@ -1282,26 +1332,28 @@ enum WorkflowRunStatus {
 }
 
 model Workflow {
-  id          String         @id @default(cuid())
-  name        String
-  description String?
-  status      WorkflowStatus @default(DRAFT)
+  id             String         @id @default(cuid())
+  name           String
+  description    String?
+  status         WorkflowStatus @default(DRAFT)
   // { type: "EMAIL_RECEIVED"|"FILE_UPLOADED"|"CHAT_MESSAGE"|"SCHEDULED"|"MANUAL", conditions: [...] }
-  trigger     Json
+  trigger        Json
   // [{ type: "SEND_EMAIL"|"CREATE_TASK"|"NOTIFY"|"AI_PROCESS"|"WEBHOOK", config: {...} }]
-  actions     Json
-  createdById String
-  runCount    Int            @default(0)
-  lastRunAt   DateTime?
-  isAIPowered Boolean        @default(false)
-  aiPrompt    String?
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  actions        Json
+  createdById    String
+  runCount       Int            @default(0)
+  lastRunAt      DateTime?
+  isAIPowered    Boolean        @default(false)
+  aiPrompt       String?
+  organizationId String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 
   runs WorkflowRun[]
 
   @@index([status])
   @@index([createdById])
+  @@index([organizationId])
 }
 
 model WorkflowRun {
@@ -1456,18 +1508,20 @@ model DocSnapshot {
 // ─── Phase 16: Ecosystem Platform ────────────────────────────────────────────
 
 model APIKey {
-  id         String    @id @default(cuid())
-  userId     String
-  name       String
-  keyHash    String    @unique
-  keyPrefix  String    // first 8 chars — shown in UI
-  scopes     String[]  @default([])
-  lastUsedAt DateTime?
-  expiresAt  DateTime?
-  isActive   Boolean   @default(true)
-  createdAt  DateTime  @default(now())
+  id             String    @id @default(cuid())
+  userId         String
+  name           String
+  keyHash        String    @unique
+  keyPrefix      String    // first 8 chars — shown in UI
+  scopes         String[]  @default([])
+  lastUsedAt     DateTime?
+  expiresAt      DateTime?
+  isActive       Boolean   @default(true)
+  organizationId String?
+  createdAt      DateTime  @default(now())
 
   @@index([userId])
+  @@index([organizationId])
 }
 
 model WebhookEndpoint {
@@ -1479,12 +1533,14 @@ model WebhookEndpoint {
   isActive        Boolean   @default(true)
   failCount       Int       @default(0)
   lastTriggeredAt DateTime?
+  organizationId  String?
   createdAt       DateTime  @default(now())
 
   deliveries WebhookDelivery[]
 
   @@index([userId])
   @@index([isActive])
+  @@index([organizationId])
 }
 
 model WebhookDelivery {

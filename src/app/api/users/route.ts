@@ -29,6 +29,7 @@ export async function GET() {
   }
 
   const users = await prisma.user.findMany({
+    where: currentUser.organizationId ? { organizationId: currentUser.organizationId } : undefined,
     select: {
       id: true,
       email: true,
@@ -104,6 +105,8 @@ export async function POST(request: Request) {
         role,
         mustResetPassword: true,
         invitedBy: currentUser.id,
+        organizationId: currentUser.organizationId ?? undefined,
+        orgRole: "MEMBER",
       },
       select: {
         id: true,

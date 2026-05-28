@@ -8,6 +8,8 @@ export type SessionUser = {
   role: UserRole;
   mustResetPassword?: boolean;
   mfaEnabled?: boolean;
+  organizationId?: string | null;
+  orgRole?: string | null;
 };
 
 export type PortalNavItem = {
@@ -76,6 +78,7 @@ export const portalNavItems: PortalNavItem[] = [
   { href: "/ai",        label: "AI",         hint: "AI assistant",          roles: ALL_ROLES },
   { href: "/contacts",  label: "Contacts",   hint: "Recipient book",        roles: MGMT_ROLES },
   { href: "/users",     label: "Users",      hint: "Manage team accounts",  roles: MGMT_ROLES },
+  { href: "/org",       label: "Org",        hint: "Organization settings", roles: ["ADMIN"] },
   { href: "/admin",     label: "Admin",      hint: "System administration", roles: ["ADMIN"] },
   { href: "/access",    label: "Access",     hint: "Role-based access control", roles: ["ADMIN", "CISO"] },
   { href: "/settings",  label: "Settings",   hint: "Signature & security",  roles: ALL_ROLES },
@@ -99,6 +102,7 @@ const pathAccess: Array<{ prefix: string; roles: UserRole[] }> = [
   { prefix: "/dashboard",      roles: MGMT_ROLES },
   { prefix: "/contacts",       roles: MGMT_ROLES },
   { prefix: "/users",          roles: MGMT_ROLES },
+  { prefix: "/org",            roles: ["ADMIN"] },
   { prefix: "/admin",          roles: ["ADMIN"] },
   { prefix: "/access",         roles: ["ADMIN", "CISO"] },
 ];
@@ -130,6 +134,8 @@ export function parseSessionUser(signedValue: string | undefined): SessionUser |
         fullName: parsed.fullName,
         role: parsed.role as UserRole,
         mustResetPassword: parsed.mustResetPassword === true,
+        organizationId: parsed.organizationId ?? null,
+        orgRole: parsed.orgRole ?? null,
       };
     }
   } catch {

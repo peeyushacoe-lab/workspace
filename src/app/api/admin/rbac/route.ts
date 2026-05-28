@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { logAudit } from "@/lib/audit";
 import { sendRoleGrantEmail } from "@/lib/email";
 
-export const GRANTABLE_ACCESS = [
+const GRANTABLE_ACCESS = [
   "HR",
   "Finance",
   "Legal",
@@ -17,7 +17,7 @@ export const GRANTABLE_ACCESS = [
   "R&D",
 ] as const;
 
-export type GrantableAccess = (typeof GRANTABLE_ACCESS)[number];
+type GrantableAccess = (typeof GRANTABLE_ACCESS)[number];
 
 // GET — list all users with their currently granted roles (CISO + ADMIN)
 export async function GET() {

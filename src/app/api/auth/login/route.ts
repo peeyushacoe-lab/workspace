@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
 
     const user = await prisma.user.findUnique({
       where: { email },
-      select: { id: true, email: true, passwordHash: true, role: true, fullName: true, isActive: true, mustResetPassword: true, mfaEnabled: true },
+      select: { id: true, email: true, passwordHash: true, role: true, fullName: true, isActive: true, mustResetPassword: true, mfaEnabled: true, organizationId: true, orgRole: true },
     });
 
     const hashToCompare = user?.passwordHash ?? DUMMY_HASH;
@@ -109,6 +109,8 @@ export async function POST(request: NextRequest) {
       fullName: user.fullName,
       mustResetPassword: user.mustResetPassword,
       mfaEnabled: user.mfaEnabled,
+      organizationId: user.organizationId,
+      orgRole: user.orgRole,
     };
 
     // Forced password reset takes priority over any requested destination

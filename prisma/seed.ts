@@ -23,15 +23,29 @@ async function main() {
 
   const adminHash = await bcrypt.hash(adminPassword, 10);
 
+  // Bootstrap default organization
+  const org = await prisma.organization.upsert({
+    where: { slug: "cybersage" },
+    update: {},
+    create: {
+      name: "CyberSage",
+      slug: "cybersage",
+      plan: "ENTERPRISE",
+      maxUsers: 500,
+    },
+  });
+
   const admin = await prisma.user.upsert({
     where: { email: adminEmail },
-    update: { passwordHash: adminHash, mustResetPassword: false },
+    update: { passwordHash: adminHash, mustResetPassword: false, organizationId: org.id, orgRole: "OWNER" },
     create: {
       email: adminEmail,
       fullName: "System Administrator",
       passwordHash: adminHash,
       role: "ADMIN",
       mustResetPassword: false,
+      organizationId: org.id,
+      orgRole: "OWNER",
     },
   });
 
