@@ -15,16 +15,19 @@
     "gatekeeperAssess": false,
     "entitlements": "electron/entitlements.mac.plist",
     "entitlementsInherit": "electron/entitlements.mac.plist",
-    "icon": "public/icon-512.png"
+    "icon": "public/icon-512.png",
+    "artifactName": "CyberSage-Mac.${ext}"
   },
   "win": {
     "target": ["nsis"],
-    "icon": "public/icon-512.png"
+    "icon": "public/icon-512.png",
+    "artifactName": "CyberSage-Setup.${ext}"
   },
   "linux": {
     "target": ["AppImage", "deb"],
     "icon": "public/icon-512.png",
-    "category": "Office"
+    "category": "Office",
+    "artifactName": "CyberSage-Linux.${ext}"
   },
   "nsis": {
     "oneClick": false,
