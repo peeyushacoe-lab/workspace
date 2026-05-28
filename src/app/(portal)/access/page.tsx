@@ -55,12 +55,10 @@ function RoleBadge({ role, onRevoke, disabled }: { role: string; onRevoke: () =>
 }
 
 function GrantDropdown({
-  userId,
   currentRoles,
   onGrant,
   disabled,
 }: {
-  userId: string;
   currentRoles: string[];
   onGrant: (role: GrantableAccess) => void;
   disabled: boolean;
@@ -234,7 +232,6 @@ export default function AccessPage() {
                       <span className="text-xs text-[#5c6b72] italic">No additional access granted</span>
                     )}
                     <GrantDropdown
-                      userId={user.id}
                       currentRoles={user.grantedRoles}
                       disabled={saving === user.id}
                       onGrant={(role) => void applyChange(user.id, role, "grant")}

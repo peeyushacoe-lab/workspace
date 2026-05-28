@@ -96,7 +96,7 @@ function useDocCollab(docId: string | null) {
         }
 
         if (msg.type === "INIT" && msg.sessions) {
-          setCollaborators(msg.sessions.map((s) => ({ userId: s.userId, cursorName: s.cursorName })) as { userId: string; name: string }[]);
+          setCollaborators(msg.sessions.map((s) => ({ userId: s.userId, name: s.cursorName })));
         }
 
         if (msg.type === "PRESENCE") {
@@ -140,7 +140,7 @@ export function DocsView() {
   const editor = useEditor(
     {
       extensions: [
-        StarterKit.configure({ history: false }), // history disabled — Yjs handles undo
+        StarterKit,
         Collaboration.configure({ document: ydoc }),
       ],
       editorProps: {
@@ -183,9 +183,9 @@ export function DocsView() {
     // Short delay so TipTap's Yjs binding is ready before we inject HTML
     const t = setTimeout(() => {
       if (activeDoc.content) {
-        editor.commands.setContent(activeDoc.content, false);
+        editor.commands.setContent(activeDoc.content);
       } else {
-        editor.commands.clearContent(false);
+        editor.commands.clearContent();
       }
       setSaveStatus("saved");
     }, 50);

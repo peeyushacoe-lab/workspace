@@ -3,12 +3,12 @@
  * Gracefully returns null when MEILISEARCH_URL is not configured so every
  * caller can fall back to Prisma ILIKE without crashing.
  */
-import type { MeiliSearch, Index } from "meilisearch";
+import type { Meilisearch, Index } from "meilisearch";
 
-let _client: MeiliSearch | null = null;
+let _client: Meilisearch | null = null;
 let _initialized = false;
 
-async function getClient(): Promise<MeiliSearch | null> {
+async function getClient(): Promise<Meilisearch | null> {
   if (_initialized) return _client;
   _initialized = true;
 
@@ -17,8 +17,8 @@ async function getClient(): Promise<MeiliSearch | null> {
   if (!url) return null;
 
   try {
-    const { MeiliSearch } = await import("meilisearch");
-    _client = new MeiliSearch({ host: url, apiKey: key });
+    const { Meilisearch } = await import("meilisearch");
+    _client = new Meilisearch({ host: url, apiKey: key });
     return _client;
   } catch {
     console.warn("[search-engine] meilisearch package not installed — falling back to Prisma");
@@ -62,7 +62,7 @@ const INDEX_SETTINGS: Partial<Record<SearchableResource, object>> = {
   },
 };
 
-async function ensureIndex(client: MeiliSearch, resource: SearchableResource): Promise<Index> {
+async function ensureIndex(client: Meilisearch, resource: SearchableResource): Promise<Index> {
   const name = INDEX_NAMES[resource];
   try {
     return client.index(name);
