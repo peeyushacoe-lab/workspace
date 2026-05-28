@@ -95,9 +95,27 @@ export function LoginForm({ next, error: initialError }: { next: string; error: 
           </div>
         </div>
 
-        {/* Footer */}
+        {/* Desktop app download */}
         <div className="relative z-10">
-          <p className="text-[#bbc9cf]/50 text-xs">
+          <p className="text-[#bbc9cf]/60 text-xs font-medium uppercase tracking-widest mb-3">Download Desktop App</p>
+          <div className="flex flex-col gap-2">
+            {[
+              { label: "Windows (.exe)", icon: "🪟", href: "/download?os=win" },
+              { label: "macOS (.dmg)",   icon: "🍎", href: "/download?os=mac" },
+              { label: "Linux (.AppImage)", icon: "🐧", href: "/download?os=linux" },
+            ].map((d) => (
+              <a
+                key={d.label}
+                href={d.href}
+                className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-[#1b1f2e]/80 border border-[rgba(0,255,255,0.08)] hover:border-[#00d2ff]/30 hover:bg-[#1b1f2e] transition-all text-xs text-[#bbc9cf] hover:text-[#dfe1f6]"
+              >
+                <span>{d.icon}</span>
+                <span>{d.label}</span>
+                <span className="ml-auto text-[#00d2ff] opacity-60">↓</span>
+              </a>
+            ))}
+          </div>
+          <p className="text-[#bbc9cf]/30 text-xs mt-4">
             &copy; {new Date().getFullYear()} CyberSage · Nexus Workspace
           </p>
         </div>
@@ -184,7 +202,24 @@ export function LoginForm({ next, error: initialError }: { next: string; error: 
             </button>
           </form>
 
-          <div className="mt-8 border-t border-[rgba(0,255,255,0.08)] pt-5">
+          <div className="mt-8 border-t border-[rgba(0,255,255,0.08)] pt-5 space-y-4">
+            {/* Download desktop app */}
+            <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-[#1b1f2e] border border-[rgba(0,255,255,0.06)]">
+              <div className="flex items-center gap-2.5">
+                <span className="text-lg">🖥️</span>
+                <div>
+                  <p className="text-xs font-semibold text-[#dfe1f6] leading-none">Desktop App</p>
+                  <p className="text-[10px] text-[#5c6b72] mt-0.5">Windows · macOS · Linux</p>
+                </div>
+              </div>
+              <a
+                href="/download"
+                className="flex-shrink-0 px-3 py-1.5 text-xs font-semibold text-[#003543] bg-[#00d2ff] rounded-md hover:opacity-90 transition-opacity"
+              >
+                ↓ Download
+              </a>
+            </div>
+
             <p className="text-xs text-center text-[#bbc9cf]/50 uppercase tracking-[0.12em] font-medium">
               RBAC Protected Environment
             </p>
