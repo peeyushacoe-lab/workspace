@@ -100,9 +100,9 @@ export function LoginForm({ next, error: initialError }: { next: string; error: 
           <p className="text-[#bbc9cf]/60 text-xs font-medium uppercase tracking-widest mb-3">Download Desktop App</p>
           <div className="flex flex-col gap-2">
             {[
-              { label: "Windows (.exe)", icon: "🪟", href: "/download?os=win" },
-              { label: "macOS (.dmg)",   icon: "🍎", href: "/download?os=mac" },
-              { label: "Linux (.AppImage)", icon: "🐧", href: "/download?os=linux" },
+              { label: "Windows (.exe)",    icon: "🪟", href: "/api/download?os=win" },
+              { label: "macOS (.dmg)",      icon: "🍎", href: "/api/download?os=mac" },
+              { label: "Linux (.AppImage)", icon: "🐧", href: "/api/download?os=linux" },
             ].map((d) => (
               <a
                 key={d.label}
@@ -213,7 +213,7 @@ export function LoginForm({ next, error: initialError }: { next: string; error: 
                 </div>
               </div>
               <a
-                href="/download"
+                href="/api/download?os=win"
                 className="flex-shrink-0 px-3 py-1.5 text-xs font-semibold text-[#003543] bg-[#00d2ff] rounded-md hover:opacity-90 transition-opacity"
               >
                 ↓ Download
