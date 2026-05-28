@@ -9,12 +9,18 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, History, Mail, RefreshCw } from "lucide-react";
+import { Plus, Trash2, History, Mail, RefreshCw, Shield, X, ChevronDown, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { PageHeader } from "@/components/Shell";
 import type { UserRole } from "@/generated/prisma/enums";
 
-// Which roles can be created by a given creator role
+const GRANTABLE_ACCESS = [
+  "HR", "Finance", "Legal", "Marketing", "Security Operations",
+  "Operations", "Executive", "IT", "R&D",
+] as const;
+type GrantableAccess = (typeof GRANTABLE_ACCESS)[number];
+
 const CREATOR_PERMISSIONS: Record<string, string[]> = {
   ADMIN:       ["CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER", "DEVELOPER", "CYBER_SECURITY", "QA", "MARKETING", "RESEARCH", "FINANCE", "OPERATIONS", "SUPPORT"],
   CEO:         ["MARKETING", "FINANCE"],
@@ -65,13 +71,58 @@ interface UserRow {
   mustResetPassword: boolean;
   personalEmail: string | null;
   createdAt: string;
-  signature?: { fullName: string; title: string } | null;
+  grantedRoles: string[];
 }
 
 interface CurrentUser {
   id: string;
   role: string;
   fullName: string;
+}
+
+// ── Inline access-role components ─────────────────────────────────────────
+
+function GrantDropdown({
+  currentRoles,
+  disabled,
+  onGrant,
+}: {
+  currentRoles: string[];
+  disabled: boolean;
+  onGrant: (role: GrantableAccess) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const available = GRANTABLE_ACCESS.filter((r) => !currentRoles.includes(r));
+  if (available.length === 0) return null;
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        disabled={disabled}
+        className="flex items-center gap-1 text-[10px] text-[#5c6b72] hover:text-[#00d2ff] border border-dashed border-[rgba(0,255,255,0.15)] hover:border-[#00d2ff]/40 px-1.5 py-0.5 rounded-full transition-colors disabled:opacity-40"
+      >
+        <Plus className="w-2.5 h-2.5" /> Grant
+        <ChevronDown className="w-2.5 h-2.5" />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute left-0 top-full mt-1 z-20 w-44 bg-[#1b1f2e] border border-[rgba(0,255,255,0.1)] rounded-xl shadow-xl overflow-hidden">
+            {available.map((role) => (
+              <button
+                key={role}
+                onClick={() => { onGrant(role); setOpen(false); }}
+                className="w-full text-left px-3 py-2 text-xs text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] transition-colors"
+              >
+                {role}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
 }
 
 export default function UsersPage() {
@@ -81,11 +132,9 @@ export default function UsersPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [formError, setFormError] = useState("");
+  const [savingAccess, setSavingAccess] = useState<string | null>(null);
   const [form, setForm] = useState({
-    workEmail: "",
-    personalEmail: "",
-    fullName: "",
-    role: "",
+    workEmail: "", personalEmail: "", fullName: "", role: "",
   });
 
   useEffect(() => {
@@ -100,12 +149,43 @@ export default function UsersPage() {
 
   const fetchUsers = async () => {
     setLoading(true);
-    const res = await fetch("/api/users");
-    if (res.ok) setUsers(await res.json());
+    const [usersRes, rbacRes] = await Promise.all([
+      fetch("/api/users"),
+      fetch("/api/admin/rbac"),
+    ]);
+
+    const usersData: Omit<UserRow, "grantedRoles">[] = usersRes.ok ? await usersRes.json() : [];
+    const rbacData: { id: string; grantedRoles: string[] }[] = rbacRes.ok ? await rbacRes.json() : [];
+    const rbacMap = new Map(rbacData.map((u) => [u.id, u.grantedRoles]));
+
+    setUsers(usersData.map((u) => ({ ...u, grantedRoles: rbacMap.get(u.id) ?? [] })));
     setLoading(false);
   };
 
+  const isCisoOrAdmin = currentUser?.role === "CISO" || currentUser?.role === "ADMIN";
   const creatableRoles = currentUser ? (CREATOR_PERMISSIONS[currentUser.role] ?? []) : [];
+
+  const applyAccess = async (userId: string, role: string, action: "grant" | "revoke") => {
+    setSavingAccess(userId);
+    try {
+      const res = await fetch("/api/admin/rbac", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, role, action }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(err.error ?? "Failed");
+      }
+      const { grantedRoles } = await res.json() as { grantedRoles: string[] };
+      setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, grantedRoles } : u));
+      toast.success(action === "grant" ? `${role} access granted` : `${role} access revoked`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to update access");
+    } finally {
+      setSavingAccess(null);
+    }
+  };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -289,6 +369,14 @@ export default function UsersPage() {
                   <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Joined</TableHead>
+                  {isCisoOrAdmin && (
+                    <TableHead>
+                      <div className="flex items-center gap-1.5">
+                        <Shield className="w-3 h-3 text-[#00d2ff]" />
+                        Access Roles
+                      </div>
+                    </TableHead>
+                  )}
                   <TableHead className="w-[100px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -316,6 +404,36 @@ export default function UsersPage() {
                     <TableCell className="text-muted text-sm">
                       {new Date(user.createdAt).toLocaleDateString()}
                     </TableCell>
+
+                    {/* Access roles column — CISO + ADMIN only */}
+                    {isCisoOrAdmin && (
+                      <TableCell>
+                        <div className="flex flex-wrap items-center gap-1">
+                          {user.grantedRoles.map((role) => (
+                            <button
+                              key={role}
+                              onClick={() => void applyAccess(user.id, role, "revoke")}
+                              disabled={savingAccess === user.id}
+                              title={`Click to revoke ${role}`}
+                              className="group flex items-center gap-0.5 bg-[#00d2ff]/10 text-[#a5e7ff] border border-[#00d2ff]/20 px-1.5 py-0.5 rounded-full text-[10px] font-semibold hover:bg-[#ff4d6d]/10 hover:text-[#ff9db0] hover:border-[#ff4d6d]/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                              {role}
+                              <X className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </button>
+                          ))}
+                          {savingAccess === user.id ? (
+                            <Loader2 className="w-3 h-3 animate-spin text-[#bbc9cf]" />
+                          ) : (
+                            <GrantDropdown
+                              currentRoles={user.grantedRoles}
+                              disabled={savingAccess === user.id}
+                              onGrant={(role) => void applyAccess(user.id, role, "grant")}
+                            />
+                          )}
+                        </div>
+                      </TableCell>
+                    )}
+
                     <TableCell>
                       <div className="flex gap-1.5">
                         <Link href={`/users/${user.id}/logins`}>
@@ -340,7 +458,7 @@ export default function UsersPage() {
                 ))}
                 {users.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted py-12">
+                    <TableCell colSpan={isCisoOrAdmin ? 7 : 6} className="text-center text-muted py-12">
                       No team members yet. Use &ldquo;Invite User&rdquo; to get started.
                     </TableCell>
                   </TableRow>

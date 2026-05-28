@@ -14,6 +14,9 @@ import {
   Settings2,
   User,
   StickyNote,
+  Shield,
+  Video,
+  FileText,
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -26,11 +29,14 @@ const icons: Record<string, LucideIcon> = {
   "/users": Users,
   "/inbox": Inbox,
   "/chat": MessageSquare,
+  "/meet": Video,
   "/drive": HardDrive,
   "/calendar": CalendarDays,
   "/notes": StickyNote,
+  "/docs": FileText,
   "/ai": Sparkles,
   "/admin": User,
+  "/access": Shield,
 };
 
 export function SidebarNav({

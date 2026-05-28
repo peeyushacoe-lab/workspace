@@ -1,6 +1,7 @@
 import { Worker, type Job } from "bullmq";
 import { redisConnection } from "@/lib/redis";
 import { INDEXING_QUEUE_NAME, type IndexingJobData } from "@/lib/queues/indexing.queue";
+import { indexDocument, deindexDocument } from "@/lib/search-engine";
 import { logger } from "@/lib/logger";
 
 export function createIndexingWorker() {
@@ -8,25 +9,18 @@ export function createIndexingWorker() {
     INDEXING_QUEUE_NAME,
     async (job: Job<IndexingJobData>) => {
       const { type } = job.data;
-      logger.info({ type, jobId: job.id }, "[indexing-worker] Processing job");
 
-      // Meilisearch / Typesense integration goes here (Phase 4).
-      // For now, log the event so we have a paper trail when the engine is wired.
       if (type === "INDEX") {
-        const { resource, resourceId, content } = job.data;
-        logger.info(
-          { resource, resourceId, contentLength: content.length },
-          "[indexing-worker] INDEX job received — awaiting search engine integration",
-        );
+        const { resource, resourceId, content, metadata } = job.data;
+        logger.info({ resource, resourceId }, "[indexing-worker] Indexing document");
+        await indexDocument(resource, resourceId, { content, ...metadata });
         return;
       }
 
       if (type === "DEINDEX") {
         const { resource, resourceId } = job.data;
-        logger.info(
-          { resource, resourceId },
-          "[indexing-worker] DEINDEX job received — awaiting search engine integration",
-        );
+        logger.info({ resource, resourceId }, "[indexing-worker] De-indexing document");
+        await deindexDocument(resource, resourceId);
         return;
       }
 

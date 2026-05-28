@@ -1,0 +1,99 @@
+version: "3.9"
+
+# ── CyberSage Nexus — Multi-service deployment ────────────────────────────────
+# Services:
+#   web       — Next.js app server
+#   worker    — BullMQ background worker (email, AI, DLP, search indexing, etc.)
+#   redis     — Message broker + pub/sub for SSE real-time events
+#   meilisearch — Full-text search engine (optional but recommended)
+#
+# Usage:
+#   docker compose up          # start all services
+#   docker compose up web      # start only the web app
+#   docker compose logs -f worker  # tail worker logs
+#
+# Required env vars: copy .env.example → .env and fill in values.
+
+services:
+
+  # ── Redis ─────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ── Meilisearch ───────────────────────────────────────────────────────────
+  meilisearch:
+    image: getmeili/meilisearch:latest
+    restart: unless-stopped
+    ports:
+      - "7700:7700"
+    environment:
+      MEILI_MASTER_KEY: ${MEILISEARCH_API_KEY:-changeme}
+      MEILI_NO_ANALYTICS: "true"
+      MEILI_ENV: production
+    volumes:
+      - meili_data:/meili_data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7700/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ── Web (Next.js) ─────────────────────────────────────────────────────────
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      REDIS_URL: redis://redis:6379
+      MEILISEARCH_URL: http://meilisearch:7700
+    depends_on:
+      redis:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── Worker (BullMQ) ───────────────────────────────────────────────────────
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: worker
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      REDIS_URL: redis://redis:6379
+      MEILISEARCH_URL: http://meilisearch:7700
+    depends_on:
+      redis:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
+    deploy:
+      replicas: 2  # Scale workers horizontally for high throughput
+
+volumes:
+  redis_data:
+  meili_data:

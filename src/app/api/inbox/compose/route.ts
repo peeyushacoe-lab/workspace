@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 import { sendEmail } from "@/lib/email";
 import { getTokensForUser, sendExpoPush } from "@/lib/expo-push";
+import { indexingQueue } from "@/lib/queues/indexing.queue";
 
 const composeSchema = z.object({
   to:        z.string().email(),
@@ -122,6 +123,21 @@ export async function POST(request: Request) {
         },
       });
     }
+
+    // Queue email for full-text search indexing — fire-and-forget
+    indexingQueue.add("index-email", {
+      type: "INDEX",
+      resource: "email",
+      resourceId: thread.id,
+      content: `${subject} ${textBody}`,
+      metadata: {
+        threadId: thread.id,
+        subject,
+        fromEmail: fromAddr,
+        toEmail: toAddr,
+        updatedAt: new Date().toISOString(),
+      },
+    }).catch(() => {});
 
     // Fire push notification to recipient (non-fatal)
     void prisma.mailboxAccess.findFirst({

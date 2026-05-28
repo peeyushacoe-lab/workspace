@@ -33,6 +33,10 @@
     "@react-email/components": "^1.0.12",
     "@react-email/render": "^2.0.8",
     "@sentry/nextjs": "^10.52.0",
+    "@tiptap/extension-collaboration": "^3.23.6",
+    "@tiptap/pm": "^3.23.6",
+    "@tiptap/react": "^3.23.6",
+    "@tiptap/starter-kit": "^3.23.6",
     "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
@@ -48,6 +52,7 @@
     "ioredis": "^5.10.1",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^1.14.0",
+    "meilisearch": "^0.58.0",
     "motion": "^12.38.0",
     "next": "^15.5.18",
     "openai": "^6.37.0",
@@ -66,6 +71,7 @@
     "svix": "^1.94.0",
     "tailwind-merge": "^3.5.0",
     "web-push": "^3.6.7",
+    "yjs": "^13.6.30",
     "zod": "^4.4.3"
   },
   "devDependencies": {

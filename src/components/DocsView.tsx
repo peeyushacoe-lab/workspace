@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -18,9 +18,14 @@ import {
   Quote,
   Loader2,
   Save,
+  Users,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Collaboration from "@tiptap/extension-collaboration";
+import * as Y from "yjs";
 
 type Doc = {
   id: string;
@@ -32,12 +37,92 @@ type Doc = {
 };
 
 function docPreview(content: string): string {
-  return content.replace(/\n/g, " ").slice(0, 80) || "Empty document";
+  return content.replace(/<[^>]+>/g, "").replace(/\n/g, " ").slice(0, 80) || "Empty document";
 }
 
-function execFmt(cmd: string, value?: string) {
-  document.execCommand(cmd, false, value);
+// ── Yjs SSE collaboration hook ───────────────────────────────────────────────
+// Syncs a Y.Doc over the existing SSE + POST relay infrastructure.
+// No dedicated WebSocket server needed — works on Vercel.
+
+const REMOTE_ORIGIN = "sse-relay";
+
+function useDocCollab(docId: string | null) {
+  const ydocRef = useRef<Y.Doc | null>(null);
+  const [collaborators, setCollaborators] = useState<{ userId: string; name: string }[]>([]);
+
+  // Create a fresh Y.Doc whenever the selected doc changes
+  if (!ydocRef.current) {
+    ydocRef.current = new Y.Doc();
+  }
+
+  useEffect(() => {
+    if (!docId) return;
+
+    // New Yjs document for this collaboration session
+    const ydoc = new Y.Doc();
+    ydocRef.current = ydoc;
+    setCollaborators([]);
+
+    // Broadcast local updates to the SSE relay
+    const onUpdate = (update: Uint8Array, origin: unknown) => {
+      if (origin === REMOTE_ORIGIN) return; // Don't echo updates we received from the relay
+      const b64 = btoa(String.fromCharCode(...Array.from(update)));
+      fetch(`/api/docs/${docId}/collab`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "YJS_UPDATE", update: b64 }),
+      }).catch(() => {});
+    };
+
+    ydoc.on("update", onUpdate);
+
+    // Subscribe to SSE for incoming updates + presence
+    const es = new EventSource(`/api/docs/${docId}/collab`);
+
+    es.onmessage = (e: MessageEvent) => {
+      try {
+        const msg = JSON.parse(e.data as string) as {
+          type: string;
+          update?: string;
+          userId?: string;
+          name?: string;
+          sessions?: { userId: string; cursorName: string }[];
+          action?: string;
+        };
+
+        if (msg.type === "YJS_UPDATE" && msg.update) {
+          const bytes = Uint8Array.from(atob(msg.update), (c) => c.charCodeAt(0));
+          Y.applyUpdate(ydoc, bytes, REMOTE_ORIGIN);
+        }
+
+        if (msg.type === "INIT" && msg.sessions) {
+          setCollaborators(msg.sessions.map((s) => ({ userId: s.userId, cursorName: s.cursorName })) as { userId: string; name: string }[]);
+        }
+
+        if (msg.type === "PRESENCE") {
+          const { userId, name, action } = msg;
+          if (!userId) return;
+          setCollaborators((prev) => {
+            if (action === "LEAVE") return prev.filter((c) => c.userId !== userId);
+            if (prev.some((c) => c.userId === userId)) return prev;
+            return [...prev, { userId, name: name ?? "" }];
+          });
+        }
+      } catch { /* ignore malformed messages */ }
+    };
+
+    return () => {
+      es.close();
+      ydoc.off("update", onUpdate);
+      ydoc.destroy();
+      ydocRef.current = null;
+    };
+  }, [docId]);
+
+  return { ydoc: ydocRef.current, collaborators };
 }
+
+// ── Main component ────────────────────────────────────────────────────────────
 
 export function DocsView() {
   const [docs, setDocs] = useState<Doc[]>([]);
@@ -47,8 +132,65 @@ export function DocsView() {
   const [title, setTitle] = useState("");
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "unsaved">("saved");
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const editorRef = useRef<HTMLDivElement>(null);
   const activeDoc = docs.find((d) => d.id === selectedId) ?? null;
+  const initializedDocId = useRef<string | null>(null);
+
+  const { ydoc, collaborators } = useDocCollab(selectedId);
+
+  const editor = useEditor(
+    {
+      extensions: [
+        StarterKit.configure({ history: false }), // history disabled — Yjs handles undo
+        Collaboration.configure({ document: ydoc }),
+      ],
+      editorProps: {
+        attributes: {
+          class:
+            "min-h-full outline-none text-sm text-[#dfe1f6] leading-relaxed prose prose-sm max-w-none prose-invert prose-headings:font-bold prose-h1:text-2xl prose-h2:text-xl prose-h3:text-base prose-blockquote:border-l-4 prose-blockquote:border-[#00d2ff]/30 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-[#bbc9cf] prose-pre:bg-[#0f1321] prose-pre:text-[#dfe1f6] prose-pre:rounded-lg prose-pre:p-4 prose-pre:text-xs prose-pre:font-mono prose-a:text-[#00d2ff] prose-a:underline",
+        },
+      },
+      onUpdate: ({ editor: e }) => {
+        if (!selectedId) return;
+        setSaveStatus("unsaved");
+        if (saveTimer.current) clearTimeout(saveTimer.current);
+        saveTimer.current = setTimeout(async () => {
+          setSaveStatus("saving");
+          try {
+            const html = e.getHTML();
+            await fetch(`/api/docs/${selectedId}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ title, content: html }),
+            });
+            setSaveStatus("saved");
+            setDocs((prev) =>
+              prev.map((d) => (d.id === selectedId ? { ...d, content: html, updatedAt: new Date().toISOString() } : d))
+            );
+          } catch {
+            setSaveStatus("unsaved");
+          }
+        }, 800);
+      },
+    },
+    [ydoc], // recreate editor when Yjs doc changes (i.e. on doc selection change)
+  );
+
+  // Load initial HTML content into Yjs when a doc is first opened
+  useEffect(() => {
+    if (!editor || !activeDoc || initializedDocId.current === activeDoc.id) return;
+    initializedDocId.current = activeDoc.id;
+
+    // Short delay so TipTap's Yjs binding is ready before we inject HTML
+    const t = setTimeout(() => {
+      if (activeDoc.content) {
+        editor.commands.setContent(activeDoc.content, false);
+      } else {
+        editor.commands.clearContent(false);
+      }
+      setSaveStatus("saved");
+    }, 50);
+    return () => clearTimeout(t);
+  }, [editor, activeDoc]);
 
   const loadDocs = useCallback(async (q = "") => {
     setLoading(true);
@@ -70,45 +212,32 @@ export function DocsView() {
   }, [search, loadDocs]);
 
   const selectDoc = (doc: Doc) => {
+    initializedDocId.current = null; // Allow re-init for new selection
     setSelectedId(doc.id);
     setTitle(doc.title);
-    if (editorRef.current) editorRef.current.innerHTML = doc.content;
     setSaveStatus("saved");
   };
 
-  const scheduleSave = useCallback((id: string, newTitle: string, newContent: string) => {
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setTitle(val);
+    if (!selectedId || !editor) return;
     setSaveStatus("unsaved");
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
       setSaveStatus("saving");
       try {
-        await fetch(`/api/docs/${id}`, {
+        await fetch(`/api/docs/${selectedId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title: newTitle, content: newContent }),
+          body: JSON.stringify({ title: val, content: editor.getHTML() }),
         });
         setSaveStatus("saved");
-        setDocs((prev) =>
-          prev.map((d) => (d.id === id ? { ...d, title: newTitle, content: newContent, updatedAt: new Date().toISOString() } : d))
-        );
+        setDocs((prev) => prev.map((d) => (d.id === selectedId ? { ...d, title: val } : d)));
       } catch {
         setSaveStatus("unsaved");
       }
     }, 800);
-  }, []);
-
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setTitle(val);
-    if (selectedId && editorRef.current) {
-      scheduleSave(selectedId, val, editorRef.current.innerHTML);
-    }
-  };
-
-  const handleContentInput = () => {
-    if (selectedId && editorRef.current) {
-      scheduleSave(selectedId, title, editorRef.current.innerHTML);
-    }
   };
 
   const handleNew = async () => {
@@ -134,8 +263,9 @@ export function DocsView() {
       setDocs((prev) => prev.filter((d) => d.id !== id));
       if (selectedId === id) {
         setSelectedId(null);
+        initializedDocId.current = null;
         setTitle("");
-        if (editorRef.current) editorRef.current.innerHTML = "";
+        editor?.commands.clearContent();
       }
     } catch {
       toast.error("Could not delete document");
@@ -154,6 +284,12 @@ export function DocsView() {
       toast.error("Could not update document");
     }
   };
+
+  const toolbar = editor ? [
+    { label: "Bold",      action: () => editor.chain().focus().toggleBold().run(),         active: editor.isActive("bold"),        icon: Bold },
+    { label: "Italic",    action: () => editor.chain().focus().toggleItalic().run(),       active: editor.isActive("italic"),      icon: Italic },
+    { label: "Underline", action: () => editor.chain().focus().toggleUnderline?.().run?.(), active: editor.isActive("underline"), icon: Underline },
+  ] : [];
 
   return (
     <div className="flex h-[calc(100vh-3.5rem)] lg:h-screen bg-[#0f1321] overflow-hidden">
@@ -218,7 +354,6 @@ export function DocsView() {
                       {formatDistanceToNow(new Date(doc.updatedAt), { addSuffix: true })}
                     </p>
                   </div>
-                  {/* Row actions on hover */}
                   <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-opacity flex-shrink-0">
                     <button
                       onClick={(e) => { e.stopPropagation(); void handlePin(doc); }}
@@ -264,9 +399,15 @@ export function DocsView() {
               value={title}
               onChange={handleTitleChange}
               placeholder="Untitled Document"
-              className="text-2xl font-bold text-[#dfe1f6] border-none bg-transparent focus:ring-0 outline-none w-full px-6 py-4 placeholder-[#3c494e]"
+              className="text-2xl font-bold text-[#dfe1f6] border-none bg-transparent focus:ring-0 outline-none flex-1 px-6 py-4 placeholder-[#3c494e]"
             />
-            <div className="flex items-center gap-2 ml-4 flex-shrink-0">
+            <div className="flex items-center gap-3 ml-4 flex-shrink-0">
+              {collaborators.length > 0 && (
+                <div className="flex items-center gap-1 text-xs text-[#bbc9cf]">
+                  <Users className="w-3 h-3 text-[#00d2ff]" />
+                  <span>{collaborators.length} editing</span>
+                </div>
+              )}
               {saveStatus === "saving" && (
                 <span className="flex items-center gap-1.5 text-xs text-[#bbc9cf]">
                   <Loader2 className="w-3 h-3 animate-spin" /> Saving…
@@ -285,16 +426,12 @@ export function DocsView() {
 
           {/* Rich text toolbar */}
           <div className="border-b border-[rgba(0,255,255,0.1)] px-4 py-2 bg-[#1b1f2e] flex items-center gap-1 flex-wrap sticky top-0">
-            {[
-              { icon: Bold,         cmd: "bold",           title: "Bold (Ctrl+B)" },
-              { icon: Italic,       cmd: "italic",         title: "Italic (Ctrl+I)" },
-              { icon: Underline,    cmd: "underline",      title: "Underline (Ctrl+U)" },
-            ].map(({ icon: Icon, cmd, title: t }) => (
+            {toolbar.map(({ label, action, active, icon: Icon }) => (
               <button
-                key={cmd}
-                onMouseDown={(e) => { e.preventDefault(); execFmt(cmd); }}
-                title={t}
-                className="p-1.5 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] rounded transition-colors text-sm"
+                key={label}
+                onMouseDown={(e) => { e.preventDefault(); action(); }}
+                title={label}
+                className={`p-1.5 rounded transition-colors text-sm ${active ? "bg-[#00d2ff]/10 text-[#00d2ff]" : "text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6]"}`}
               >
                 <Icon className="w-3.5 h-3.5" />
               </button>
@@ -303,16 +440,16 @@ export function DocsView() {
             <div className="w-px h-5 bg-[#3c494e] mx-1" />
 
             <button
-              onMouseDown={(e) => { e.preventDefault(); execFmt("insertOrderedList"); }}
+              onMouseDown={(e) => { e.preventDefault(); editor?.chain().focus().toggleOrderedList().run(); }}
               title="Ordered list"
-              className="p-1.5 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] rounded transition-colors text-sm"
+              className="p-1.5 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] rounded transition-colors"
             >
               <ListOrdered className="w-3.5 h-3.5" />
             </button>
             <button
-              onMouseDown={(e) => { e.preventDefault(); execFmt("insertUnorderedList"); }}
+              onMouseDown={(e) => { e.preventDefault(); editor?.chain().focus().toggleBulletList().run(); }}
               title="Bullet list"
-              className="p-1.5 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] rounded transition-colors text-sm"
+              className="p-1.5 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] rounded transition-colors"
             >
               <List className="w-3.5 h-3.5" />
             </button>
@@ -323,33 +460,39 @@ export function DocsView() {
               onMouseDown={(e) => {
                 e.preventDefault();
                 const url = prompt("Link URL:");
-                if (url) execFmt("createLink", url);
+                if (url) editor?.chain().focus().setLink({ href: url }).run();
               }}
               title="Insert link"
-              className="p-1.5 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] rounded transition-colors text-sm"
+              className="p-1.5 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] rounded transition-colors"
             >
               <Link className="w-3.5 h-3.5" />
             </button>
             <button
-              onMouseDown={(e) => { e.preventDefault(); execFmt("formatBlock", "pre"); }}
-              title="Code block"
-              className="p-1.5 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] rounded transition-colors text-sm"
+              onMouseDown={(e) => { e.preventDefault(); editor?.chain().focus().toggleCode().run(); }}
+              title="Inline code"
+              className="p-1.5 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] rounded transition-colors"
             >
               <Code className="w-3.5 h-3.5" />
             </button>
             <button
-              onMouseDown={(e) => { e.preventDefault(); execFmt("formatBlock", "blockquote"); }}
+              onMouseDown={(e) => { e.preventDefault(); editor?.chain().focus().toggleBlockquote().run(); }}
               title="Blockquote"
-              className="p-1.5 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] rounded transition-colors text-sm"
+              className="p-1.5 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] rounded transition-colors"
             >
               <Quote className="w-3.5 h-3.5" />
             </button>
 
             <div className="w-px h-5 bg-[#3c494e] mx-1" />
 
-            {/* Heading dropdown */}
             <select
-              onChange={(e) => { execFmt("formatBlock", e.target.value); e.target.value = ""; }}
+              onChange={(e) => {
+                const v = e.target.value;
+                if (v === "h1") editor?.chain().focus().toggleHeading({ level: 1 }).run();
+                else if (v === "h2") editor?.chain().focus().toggleHeading({ level: 2 }).run();
+                else if (v === "h3") editor?.chain().focus().toggleHeading({ level: 3 }).run();
+                else editor?.chain().focus().setParagraph().run();
+                e.target.value = "";
+              }}
               defaultValue=""
               className="text-xs text-[#bbc9cf] bg-transparent border-none outline-none cursor-pointer hover:text-[#dfe1f6] py-1"
             >
@@ -361,20 +504,9 @@ export function DocsView() {
             </select>
           </div>
 
-          {/* Editor body */}
+          {/* TipTap editor body */}
           <div className="flex-1 overflow-y-auto px-8 py-6">
-            <div
-              ref={editorRef}
-              contentEditable
-              suppressContentEditableWarning
-              onInput={handleContentInput}
-              className="min-h-full outline-none text-sm text-[#dfe1f6] leading-relaxed
-                prose prose-sm max-w-none prose-invert
-                prose-headings:font-bold prose-h1:text-2xl prose-h2:text-xl prose-h3:text-base
-                prose-blockquote:border-l-4 prose-blockquote:border-[#00d2ff]/30 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-[#bbc9cf]
-                prose-pre:bg-[#0f1321] prose-pre:text-[#dfe1f6] prose-pre:rounded-lg prose-pre:p-4 prose-pre:text-xs prose-pre:font-mono
-                prose-a:text-[#00d2ff] prose-a:underline"
-            />
+            <EditorContent editor={editor} className="min-h-full" />
           </div>
         </div>
       )}

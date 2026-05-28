@@ -7,6 +7,7 @@ import { emitEvent } from "@/lib/events";
 import { getTokensForUser, sendExpoPush } from "@/lib/expo-push";
 import { sendWebPush } from "@/lib/web-push";
 import type { PushSubscriptionJSON } from "@/lib/web-push";
+import { indexingQueue } from "@/lib/queues/indexing.queue";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -122,6 +123,21 @@ export async function POST(request: Request, { params }: Params) {
     hasAttachment: false,
     content: (content ?? "").trim().slice(0, 200),
   });
+
+  // Queue for full-text search indexing — fire-and-forget
+  if (content?.trim()) {
+    indexingQueue.add("index-chat-message", {
+      type: "INDEX",
+      resource: "chat_message",
+      resourceId: message.id,
+      content: content.trim(),
+      metadata: {
+        channelId,
+        senderName: user.fullName,
+        createdAt: message.createdAt.toISOString(),
+      },
+    }).catch(() => {});
+  }
 
   // Fire push to other channel members (non-fatal)
   void (async () => {
