@@ -23,6 +23,10 @@
     "electron:build:win": "npm run build && npm run electron:compile && electron-builder --win --config electron/builder.config.json",
     "electron:build:mac": "npm run build && npm run electron:compile && electron-builder --mac --config electron/builder.config.json",
     "electron:build:linux": "npm run build && npm run electron:compile && electron-builder --linux --config electron/builder.config.json",
+    "electron:dist": "npm run electron:compile && electron-builder --config electron/builder.config.json",
+    "electron:dist:win": "npm run electron:compile && electron-builder --win --config electron/builder.config.json",
+    "electron:dist:mac": "npm run electron:compile && electron-builder --mac --config electron/builder.config.json",
+    "electron:dist:linux": "npm run electron:compile && electron-builder --linux --config electron/builder.config.json",
     "backup": "tsx scripts/backup.ts"
   },
   "dependencies": {

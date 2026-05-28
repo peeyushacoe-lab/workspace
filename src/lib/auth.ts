@@ -84,6 +84,7 @@ export const portalNavItems: PortalNavItem[] = [
   { href: "/admin",     label: "Admin",      hint: "System administration", roles: ["ADMIN"] },
   { href: "/compliance",  label: "Compliance",  hint: "Audit logs & GDPR",         roles: ["ADMIN", "CISO"] },
   { href: "/settings",    label: "Settings",    hint: "Signature & security",       roles: ALL_ROLES },
+  { href: "/download",    label: "Desktop App", hint: "Download for Windows/Mac/Linux", roles: ALL_ROLES },
 ];
 
 // Explicit access control map — default-deny for anything not listed.
@@ -114,6 +115,7 @@ const pathAccess: Array<{ prefix: string; roles: UserRole[] }> = [
   { prefix: "/admin/deliverability", roles: ["ADMIN"] },
   { prefix: "/onboarding",     roles: ALL_ROLES },
   { prefix: "/status",         roles: ALL_ROLES },
+  { prefix: "/download",       roles: ALL_ROLES },
 ];
 
 const validRoles = new Set<UserRole>(ALL_ROLES);

@@ -78,6 +78,7 @@ export default async function LandingPage() {
           <div className="flex items-center gap-6 text-sm text-[#bbc9cf]">
             <Link href="#features" className="hover:text-[#00d2ff] transition-colors">Features</Link>
             <Link href="#pricing" className="hover:text-[#00d2ff] transition-colors">Pricing</Link>
+            <Link href="/download" className="hover:text-[#00d2ff] transition-colors">Desktop app</Link>
             <Link href="/status" className="hover:text-[#00d2ff] transition-colors">Status</Link>
             <Link href="/login" className="hover:text-[#dfe1f6] transition-colors">Log in</Link>
             <Link
@@ -140,6 +141,27 @@ export default async function LandingPage() {
         </div>
       </section>
 
+      {/* Desktop app banner */}
+      <section className="max-w-6xl mx-auto px-6 pb-4">
+        <div className="bg-gradient-to-r from-[#00d2ff]/10 to-[#0070ff]/10 border border-[#00d2ff]/20 rounded-2xl px-8 py-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-5">
+            <span className="text-4xl">🖥️</span>
+            <div>
+              <p className="font-bold text-white text-lg">Available as a desktop app</p>
+              <p className="text-sm text-[#8899a6] mt-0.5">
+                Windows, macOS, and Linux — system tray, offline mode, native notifications.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/download"
+            className="flex-shrink-0 px-6 py-2.5 bg-[#00d2ff] text-[#003543] font-bold text-sm rounded-xl hover:opacity-90 transition-opacity whitespace-nowrap"
+          >
+            ↓ Download free
+          </Link>
+        </div>
+      </section>
+
       {/* Pricing */}
       <section id="pricing" className="max-w-6xl mx-auto px-6 py-20">
         <h2 className="text-3xl font-bold text-center mb-4 text-white">Simple, transparent pricing</h2>
@@ -194,6 +216,7 @@ export default async function LandingPage() {
         <div className="max-w-6xl mx-auto px-6 py-10 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-[#5c6b72]">
           <span className="font-bold text-[#00d2ff]">CyberSage</span>
           <div className="flex items-center gap-6">
+            <Link href="/download" className="hover:text-[#bbc9cf] transition-colors">Desktop app</Link>
             <Link href="/status" className="hover:text-[#bbc9cf] transition-colors">Status</Link>
             <Link href="/login" className="hover:text-[#bbc9cf] transition-colors">Log in</Link>
             <a href="mailto:hello@cybersage.uk" className="hover:text-[#bbc9cf] transition-colors">Contact</a>

@@ -1,0 +1,114 @@
+name: Electron Desktop Release
+
+# Trigger by pushing a tag: git tag desktop-v1.0.0 && git push origin desktop-v1.0.0
+on:
+  push:
+    tags:
+      - "desktop-v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version tag (e.g. 1.0.0)"
+        required: true
+
+permissions:
+  contents: write   # needed to upload release assets
+
+jobs:
+  # ── Windows installer (.exe via NSIS) ────────────────────────────────────────
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies (skip Prisma generate)
+        run: npm ci --ignore-scripts
+
+      - name: Compile Electron TypeScript
+        run: npm run electron:compile
+
+      - name: Build Windows installer
+        run: npm run electron:dist:win -- --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: dist/desktop/*.exe
+          retention-days: 7
+
+  # ── macOS disk image (.dmg) ──────────────────────────────────────────────────
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies (skip Prisma generate)
+        run: npm ci --ignore-scripts
+
+      - name: Compile Electron TypeScript
+        run: npm run electron:compile
+
+      - name: Build macOS disk image
+        run: npm run electron:dist:mac -- --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          # Uncomment and add secrets to enable code signing:
+          # CSC_LINK: ${{ secrets.MAC_CERT_P12 }}
+          # CSC_KEY_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
+          # APPLE_ID: ${{ secrets.APPLE_ID }}
+          # APPLE_ID_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          # APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-dmg
+          path: dist/desktop/*.dmg
+          retention-days: 7
+
+  # ── Linux AppImage + .deb ────────────────────────────────────────────────────
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install system deps for electron-builder
+        run: sudo apt-get install -y rpm
+
+      - name: Install dependencies (skip Prisma generate)
+        run: npm ci --ignore-scripts
+
+      - name: Compile Electron TypeScript
+        run: npm run electron:compile
+
+      - name: Build Linux packages
+        run: npm run electron:dist:linux -- --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-packages
+          path: |
+            dist/desktop/*.AppImage
+            dist/desktop/*.deb
+          retention-days: 7
