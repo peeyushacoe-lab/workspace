@@ -22,6 +22,8 @@ export async function GET(request: Request) {
     const threads = await prisma.inboxThread.findMany({
       where: {
         AND: [
+          // Never show threads where every message is from a Resend bounce-tracking address
+          { messages: { none: { from: { contains: "@send." } } } },
           viewAll
             ? {}
             : {

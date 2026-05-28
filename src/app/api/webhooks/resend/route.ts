@@ -172,17 +172,31 @@ function extractEmail(raw: string): string {
   return (match ? match[1] : raw).trim().toLowerCase();
 }
 
+const BOUNCE_DOMAIN_RE = /@send\.[^.]+\.[a-z]{2,}$/i;
+
 async function handleInboundEmail(data: InboundEmailPayload) {
   const toArr = Array.isArray(data.to) ? data.to : data.to ? [data.to] : [];
   const recipientEmail = toArr[0] ? extractEmail(toArr[0]) : undefined;
   // Prefer the message From: header over the SMTP envelope from.
   // Resend sets envelope from to a bounce-tracking address (@send.cybersage.uk);
-  // the real sender is in headers["from"].
-  const rawFrom = data.headers?.["from"] ?? data.headers?.["reply-to"] ?? data.from ?? "";
+  // the real sender is in headers["from"]. Also check x-original-from / sender.
+  const rawFrom =
+    data.headers?.["from"] ??
+    data.headers?.["x-original-from"] ??
+    data.headers?.["sender"] ??
+    data.headers?.["reply-to"] ??
+    data.from ??
+    "";
   const senderEmail = rawFrom ? extractEmail(rawFrom) : undefined;
 
   if (!recipientEmail || !senderEmail) {
     return NextResponse.json({ error: "Missing recipient/sender" }, { status: 400 });
+  }
+
+  // Resend bounce/delivery tracking addresses must never appear as inbox senders.
+  if (BOUNCE_DOMAIN_RE.test(senderEmail)) {
+    console.warn("[webhook] dropped inbound — bounce-tracking sender:", senderEmail);
+    return NextResponse.json({ ok: true, ignored: "bounce-tracking sender" });
   }
 
   // Fetch full body from Resend API — inbound webhook only sends metadata
