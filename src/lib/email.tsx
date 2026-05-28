@@ -15,21 +15,32 @@ function splitName(name: string, email: string) {
 }
 
 function getSignatureHtml(signature: SignatureTemplate): string {
-  if (signature.html) {
-    return signature.html;
-  }
+  if (signature.html) return signature.html;
+
+  const company = signature.companyName ?? "CyberSage Workspace";
+  const avatarBlock = signature.avatarUrl
+    ? `<img src="${signature.avatarUrl}" alt="${signature.fullName}" width="52" height="52"
+         style="width:52px;height:52px;border-radius:50%;object-fit:cover;display:block;margin-right:14px;border:2px solid #e2e8f0;" />`
+    : `<div style="width:52px;height:52px;border-radius:50%;background:#0f766e;color:#fff;font-size:18px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-right:14px;flex-shrink:0;">${signature.fullName.charAt(0).toUpperCase()}</div>`;
 
   return `
-<div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #e2e8f0;">
-  <div style="font-weight: 600; color: #0f172a; margin-bottom: 8px;">${signature.fullName}</div>
-  <div style="color: #64748b; font-size: 14px; line-height: 1.5;">
-    ${signature.title}<br>
-    Nexus Mail<br>
-    ${signature.phone ? `<a href="tel:${signature.phone.replace(/\s+/g, '')}" style="color: #0f766e;">${signature.phone}</a><br>` : ''}
-    ${signature.linkedinUrl ? `<a href="${signature.linkedinUrl}" style="color: #0f766e;">LinkedIn</a>` : ''}
-    ${signature.website && signature.linkedinUrl ? ' | ' : ''}
-    ${signature.website ? `<a href="${signature.website}" style="color: #0f766e;">Website</a>` : ''}
-  </div>
+<div style="margin-top:32px;padding-top:20px;border-top:1px solid #e2e8f0;">
+  <table cellpadding="0" cellspacing="0" border="0" style="font-family:system-ui,-apple-system,sans-serif;">
+    <tr>
+      <td style="vertical-align:top;padding-right:14px;">${avatarBlock}</td>
+      <td style="vertical-align:top;">
+        <div style="font-weight:700;color:#0f172a;font-size:15px;margin-bottom:2px;">${signature.fullName}</div>
+        <div style="color:#64748b;font-size:13px;margin-bottom:6px;">${signature.title} · ${company}</div>
+        <div style="font-size:13px;color:#64748b;line-height:1.6;">
+          ${signature.phone ? `<a href="tel:${signature.phone.replace(/\s+/g, "")}" style="color:#0f766e;text-decoration:none;">${signature.phone}</a>` : ""}
+          ${signature.phone && (signature.linkedinUrl ?? signature.website) ? " · " : ""}
+          ${signature.linkedinUrl ? `<a href="${signature.linkedinUrl}" style="color:#0f766e;text-decoration:none;">LinkedIn</a>` : ""}
+          ${signature.linkedinUrl && signature.website ? " · " : ""}
+          ${signature.website ? `<a href="${signature.website}" style="color:#0f766e;text-decoration:none;">Website</a>` : ""}
+        </div>
+      </td>
+    </tr>
+  </table>
 </div>`;
 }
 
@@ -172,12 +183,14 @@ export async function sendEmail(
   const result = await resend.emails.send({
     from,
     to: contact.email,
+    replyTo: from,
     subject,
     html,
     headers: {
-      "List-Unsubscribe": `<${appUrl}/unsubscribe?email=${encodeURIComponent(contact.email)}>`,
+      "List-Unsubscribe": `<${appUrl}/unsubscribe?email=${encodeURIComponent(contact.email)}>, <mailto:unsubscribe@cybersage.uk?subject=unsubscribe>`,
       "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-      "X-Mailer": "CyberSage Workspace",
+      "X-Mailer": "CyberSage Workspace 1.0",
+      "X-Entity-Ref-ID": `cybersage-${Date.now()}`,
     },
     ...(cc?.length ? { cc } : {}),
     ...(bcc?.length ? { bcc } : {}),

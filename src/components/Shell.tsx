@@ -1,6 +1,7 @@
 ﻿import { Send, type LucideIcon } from "lucide-react";
 import { SidebarLayout } from "./SidebarLayout";
 import { getPortalNavForRole, type SessionUser } from "@/lib/auth";
+import { DesktopBridge } from "./DesktopBridge";
 
 export function Shell({
   children,
@@ -13,6 +14,7 @@ export function Shell({
 
   return (
     <SidebarLayout nav={nav} currentUser={currentUser}>
+      <DesktopBridge />
       {children}
     </SidebarLayout>
   );

@@ -109,6 +109,11 @@ const pathAccess: Array<{ prefix: string; roles: UserRole[] }> = [
   { prefix: "/org",            roles: ["ADMIN"] },
   { prefix: "/admin",          roles: ["ADMIN"] },
   { prefix: "/compliance",     roles: ["ADMIN", "CISO"] },
+  { prefix: "/meet/intelligence", roles: ALL_ROLES },
+  { prefix: "/admin/queues",   roles: ["ADMIN"] },
+  { prefix: "/admin/deliverability", roles: ["ADMIN"] },
+  { prefix: "/onboarding",     roles: ALL_ROLES },
+  { prefix: "/status",         roles: ALL_ROLES },
 ];
 
 const validRoles = new Set<UserRole>(ALL_ROLES);

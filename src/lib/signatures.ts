@@ -5,4 +5,6 @@ export type SignatureTemplate = {
   linkedinUrl?: string | null;
   website?: string | null;
   html?: string | null;
+  avatarUrl?: string | null;
+  companyName?: string | null;
 };
