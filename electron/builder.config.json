@@ -2,23 +2,28 @@
   "appId": "uk.cybersage.workspace",
   "productName": "CyberSage",
   "copyright": "Copyright © 2025 CyberSage",
-  "directories": { "output": "dist/desktop" },
-  "files": ["electron/**/*", "public/**/*"],
+  "directories": { "output": "dist/desktop", "buildResources": "build-resources" },
+  "files": [
+    "dist/electron/**/*",
+    "public/**/*",
+    "package.json"
+  ],
+  "extraMetadata": { "main": "dist/electron/main.js" },
   "mac": {
     "category": "public.app-category.productivity",
     "hardenedRuntime": true,
     "gatekeeperAssess": false,
     "entitlements": "electron/entitlements.mac.plist",
     "entitlementsInherit": "electron/entitlements.mac.plist",
-    "icon": "public/icons/icon.icns"
+    "icon": "public/icon-512.png"
   },
   "win": {
     "target": ["nsis"],
-    "icon": "public/icons/icon.ico"
+    "icon": "public/icon-512.png"
   },
   "linux": {
     "target": ["AppImage", "deb"],
-    "icon": "public/icons",
+    "icon": "public/icon-512.png",
     "category": "Office"
   },
   "nsis": {

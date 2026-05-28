@@ -38,6 +38,17 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+
+# electron build output
+/dist/electron
+/dist/desktop
+/build-resources
+
+# mobile
+apps/workspace-mobile/node_modules
+apps/workspace-mobile/.expo
+apps/workspace-mobile/apps
+.expo
 next-env.d.ts
 
 /src/generated/prisma

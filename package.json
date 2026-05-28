@@ -2,6 +2,7 @@
   "name": "cybersage-mail",
   "version": "0.1.0",
   "private": true,
+  "main": "dist/electron/main.js",
   "scripts": {
     "dev": "next dev --turbopack",
     "dev:all": "concurrently -n \"next,worker\" -c \"blue,green\" \"next dev --turbopack\" \"tsx scripts/worker.ts\"",
@@ -15,7 +16,14 @@
     "create-user": "tsx scripts/create-user.ts",
     "worker": "tsx scripts/worker.ts",
     "dashboard": "tsx scripts/dashboard.ts",
-    "mcp": "cd mcp-server && npm start"
+    "mcp": "cd mcp-server && npm start",
+    "electron:compile": "tsc -p electron/tsconfig.json",
+    "electron:dev": "npm run electron:compile && cross-env NODE_ENV=development CYBERSAGE_URL=http://localhost:3000 electron .",
+    "electron:build": "npm run build && npm run electron:compile && electron-builder --config electron/builder.config.json",
+    "electron:build:win": "npm run build && npm run electron:compile && electron-builder --win --config electron/builder.config.json",
+    "electron:build:mac": "npm run build && npm run electron:compile && electron-builder --mac --config electron/builder.config.json",
+    "electron:build:linux": "npm run build && npm run electron:compile && electron-builder --linux --config electron/builder.config.json",
+    "backup": "tsx scripts/backup.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.99.0",
@@ -85,6 +93,7 @@
     "@types/react-dom": "^19",
     "@types/web-push": "^3.6.4",
     "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
     "electron": "^42.3.0",
     "electron-builder": "^26.8.1",
     "electron-store": "^11.0.2",
