@@ -19,6 +19,8 @@ import {
   Eye,
   Sparkles,
   CalendarSearch,
+  Link2,
+  Video,
 } from "lucide-react";
 import {
   format,
@@ -518,6 +520,31 @@ function EventFormFields({
           ))}
         </div>
       </div>
+
+      {/* Meeting URL */}
+      <div>
+        <label className="mb-1 block text-xs font-medium text-[#bbc9cf]">Meeting URL</label>
+        <div className="flex gap-2">
+          <input
+            value={form.meetingUrl}
+            onChange={(e) => setForm((f) => ({ ...f, meetingUrl: e.target.value }))}
+            placeholder="https://… or auto-generate"
+            className="flex-1 bg-[#1b1f2e] border-transparent rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#00d2ff] focus:bg-[#262939] text-[#dfe1f6]"
+          />
+          <button
+            type="button"
+            onClick={() => {
+              const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+              const room = Array.from({ length: 10 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+              setForm((f) => ({ ...f, meetingUrl: `${window.location.origin}/meet/${room}` }));
+            }}
+            className="flex-shrink-0 flex items-center gap-1.5 bg-[#1b1f2e] border border-[rgba(0,255,255,0.1)] rounded-lg px-3 py-2 text-xs font-medium text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] transition-colors"
+          >
+            <Video className="h-3 w-3" />
+            Generate
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -920,6 +947,21 @@ function EventDetailModal({
               <div className="flex items-center gap-2 text-sm text-[#bbc9cf]">
                 <MapPin className="h-4 w-4 text-[#bbc9cf] shrink-0" />
                 {event.location}
+              </div>
+            )}
+            {event.meetingUrl && (
+              <div className="flex items-center gap-2 text-sm">
+                <Link2 className="h-4 w-4 text-[#00d2ff] shrink-0" />
+                <a
+                  href={event.meetingUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#00d2ff] hover:underline truncate"
+                >
+                  {event.meetingUrl.startsWith(window.location.origin)
+                    ? "Join Meeting"
+                    : event.meetingUrl}
+                </a>
               </div>
             )}
             <div className="flex items-center gap-2 text-sm text-[#bbc9cf]">

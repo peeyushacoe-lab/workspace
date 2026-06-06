@@ -178,15 +178,12 @@ export function FilePreviewModal({
 
     async function load() {
       try {
-        const res = await fetch(`/api/drive/files/${file.id}`);
-        if (!res.ok) throw new Error("Failed to load file");
-        const data = await res.json() as { downloadUrl?: string };
-        if (cancelled) return;
+        // Use the proxied download endpoint for all types — avoids direct S3/R2
+        // CORS issues and pre-signed URL expiry problems.
+        const downloadEndpoint = `/api/drive/files/${file.id}/download`;
 
-        const url = data.downloadUrl ?? null;
-
-        if ((previewType === "text" || previewType === "csv") && url) {
-          const textRes = await fetch(url);
+        if (previewType === "text" || previewType === "csv") {
+          const textRes = await fetch(downloadEndpoint);
           if (!textRes.ok) throw new Error("Could not load file content");
           const text = await textRes.text();
           if (cancelled) return;
@@ -195,8 +192,10 @@ export function FilePreviewModal({
           } else {
             setTextContent(text);
           }
-        } else {
-          setPreviewUrl(url);
+        } else if (previewType !== "unsupported") {
+          // For images, PDFs, video, audio — set the URL directly.
+          // The browser follows the server-side redirect to storage.
+          if (!cancelled) setPreviewUrl(downloadEndpoint);
         }
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : "Failed to load preview");

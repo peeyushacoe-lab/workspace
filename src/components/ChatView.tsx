@@ -1871,6 +1871,38 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
       .finally(() => setLoadingMessages(false));
   }, [selectedChannelId]);
 
+  // Polling fallback — fetch new messages every 5 s in case the socket misses events
+  useEffect(() => {
+    if (!selectedChannelId) return;
+
+    const poll = async () => {
+      if (document.visibilityState !== "visible") return;
+      setMessages((current) => {
+        if (current.length === 0) return current;
+        const latest = current.reduce((a, b) =>
+          new Date(a.createdAt) > new Date(b.createdAt) ? a : b
+        );
+        fetch(
+          `/api/chat/channels/${selectedChannelId}/messages?after=${encodeURIComponent(latest.createdAt)}`
+        )
+          .then((r) => r.json())
+          .then((incoming: Message[]) => {
+            if (incoming.length === 0) return;
+            setMessages((prev) => {
+              const ids = new Set(prev.map((m) => m.id));
+              const fresh = incoming.filter((m) => !ids.has(m.id));
+              return fresh.length > 0 ? [...prev, ...fresh] : prev;
+            });
+          })
+          .catch(() => {});
+        return current; // no-op state update — we just needed the ref value
+      });
+    };
+
+    const interval = setInterval(() => void poll(), 5_000);
+    return () => clearInterval(interval);
+  }, [selectedChannelId]);
+
   // Socket.IO channel subscription — join/leave rooms, register event handlers
   useEffect(() => {
     if (!selectedChannelId) return;
@@ -1986,6 +2018,10 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
         }),
       });
       if (!res.ok) throw new Error("Failed");
+
+      // Add sent message to UI immediately (socket may be delayed or unavailable)
+      const newMsg = (await res.json()) as Message;
+      setMessages((prev) => prev.some((m) => m.id === newMsg.id) ? prev : [...prev, newMsg]);
 
       // @CyberSage bot: detect mention and auto-respond
       const botMentionMatch = text.match(/^@CyberSage\s+([\s\S]+)/i);

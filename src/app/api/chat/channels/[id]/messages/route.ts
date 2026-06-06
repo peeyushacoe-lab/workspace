@@ -24,6 +24,7 @@ export async function GET(request: Request, { params }: Params) {
 
   const { searchParams } = new URL(request.url);
   const before = searchParams.get("before");
+  const after = searchParams.get("after");
   const limit = Math.min(parseInt(searchParams.get("limit") ?? "50"), 100);
   const parentId = searchParams.get("parentId");
 
@@ -33,6 +34,7 @@ export async function GET(request: Request, { params }: Params) {
       // Include soft-deleted messages so the client can render "(message deleted)"
       parentId: parentId ?? null,
       ...(before ? { createdAt: { lt: new Date(before) } } : {}),
+      ...(after ? { createdAt: { gt: new Date(after) } } : {}),
     },
     include: {
       user: { select: { id: true, fullName: true, avatarUrl: true, role: true } },

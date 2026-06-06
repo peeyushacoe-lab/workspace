@@ -13,6 +13,7 @@ const createUserSchema = z.object({
   personalEmail: z.string().email("Invalid personal email"),
   fullName:      z.string().min(1, "Full name is required"),
   role:          z.string().min(1, "Role is required"),
+  customRole:    z.string().optional(),
 });
 
 function generateTempPassword(): string {
@@ -103,6 +104,7 @@ export async function POST(request: Request) {
         passwordHash: hashedPassword,
         fullName: validated.fullName,
         role,
+        ...(validated.customRole ? { customRole: validated.customRole } : {}),
         mustResetPassword: true,
         invitedBy: currentUser.id,
         organizationId: currentUser.organizationId ?? undefined,

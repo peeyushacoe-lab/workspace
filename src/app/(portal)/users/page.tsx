@@ -125,21 +125,32 @@ function GrantDropdown({
   );
 }
 
+interface CustomRole {
+  id: string;
+  name: string;
+  description?: string | null;
+}
+
 export default function UsersPage() {
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
+  const [customRoles, setCustomRoles] = useState<CustomRole[]>([]);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [formError, setFormError] = useState("");
   const [savingAccess, setSavingAccess] = useState<string | null>(null);
   const [form, setForm] = useState({
-    workEmail: "", personalEmail: "", fullName: "", role: "",
+    workEmail: "", personalEmail: "", fullName: "", role: "", customRole: "",
   });
 
   useEffect(() => {
     fetchCurrentUser();
     fetchUsers();
+    fetch("/api/admin/roles")
+      .then(r => r.ok ? r.json() : [])
+      .then((roles: CustomRole[]) => setCustomRoles(roles))
+      .catch(() => {});
   }, []);
 
   const fetchCurrentUser = async () => {
@@ -200,7 +211,7 @@ export default function UsersPage() {
       const data = await res.json();
       if (res.ok) {
         setIsCreateOpen(false);
-        setForm({ workEmail: "", personalEmail: "", fullName: "", role: "" });
+        setForm({ workEmail: "", personalEmail: "", fullName: "", role: "", customRole: "" });
         fetchUsers();
       } else {
         setFormError(data.error ?? "Failed to create user");
@@ -337,6 +348,28 @@ export default function UsersPage() {
                         </p>
                       )}
                     </div>
+                    {customRoles.length > 0 && (
+                      <div>
+                        <Label htmlFor="customRole">Custom Role <span className="text-muted font-normal">(optional)</span></Label>
+                        <Select
+                          value={form.customRole}
+                          onValueChange={v => setForm({ ...form, customRole: v === "__none__" ? "" : v })}
+                        >
+                          <SelectTrigger id="customRole">
+                            <SelectValue placeholder="None" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="__none__">None</SelectItem>
+                            {customRoles.map(r => (
+                              <SelectItem key={r.id} value={r.name}>
+                                {r.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted mt-1">Shown as the user&apos;s display role.</p>
+                      </div>
+                    )}
                   </div>
                   <DialogFooter>
                     <Button type="submit" disabled={creating || !form.role}>
