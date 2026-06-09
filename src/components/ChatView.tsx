@@ -835,6 +835,7 @@ function NewChannelModal({
             <input
               value={name}
               onChange={(e) => setName(e.target.value.toLowerCase().replace(/\s+/g, "-"))}
+              onKeyDown={(e) => { if (e.key === "Enter" && name.trim() && !creating) void submit(); }}
               placeholder="e.g. engineering"
               className="w-full px-3 py-2 border border-[rgba(0,255,255,0.1)] rounded-xl text-sm focus:ring-2 focus:ring-[#00d2ff] focus:bg-[#0f1321] outline-none bg-[#0f1321] text-[#dfe1f6] placeholder-[#bbc9cf]"
               autoFocus
@@ -869,7 +870,7 @@ function NewChannelModal({
             Cancel
           </button>
           <button
-            onClick={submit}
+            onClick={() => void submit()}
             disabled={!name.trim() || creating}
             className="flex-1 px-4 py-2 bg-[#00d2ff] text-[#003543] rounded-xl text-sm font-semibold hover:bg-[#47d6ff] disabled:opacity-50"
           >
@@ -936,9 +937,10 @@ function NewGroupDMModal({
       .join(", ");
     try {
       // Dedup: if a DM with this person already exists, open it instead
+      // members.length === 2 ensures we don't accidentally match a GROUP channel
       if (isDirect) {
         const existing = existingDirectChannels.find((c) =>
-          c.members.some((m) => m.userId === memberIds[0])
+          c.members.length === 2 && c.members.some((m) => m.userId === memberIds[0])
         );
         if (existing) { onCreate(existing); onClose(); return; }
       }
@@ -1723,6 +1725,18 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
   // Sidebar search
   const [sidebarSearch, setSidebarSearch] = useState("");
 
+  // Workspace member name map — used to derive correct DM display names
+  const [dmMemberNames, setDmMemberNames] = useState<Map<string, string>>(new Map());
+
+  useEffect(() => {
+    fetch("/api/workspace/members")
+      .then((r) => r.json())
+      .then((data: UserSummary[]) => {
+        setDmMemberNames(new Map(data.map((u) => [u.id, u.fullName])));
+      })
+      .catch(() => {});
+  }, []);
+
   // @mention autocomplete
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionResults, setMentionResults] = useState<{ id: string; fullName: string }[]>([]);
@@ -2352,8 +2366,20 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
 
   // ─── Channel sections ──────────────────────────────────────────────────────
   const publicChannels = channels.filter((c) => c.type === "CHANNEL");
-  const directChannels = channels.filter((c) => c.type === "DIRECT");
   const groupChannels = channels.filter((c) => c.type === "GROUP");
+
+  // For DMs, show the OTHER person's name (not the stored channel name which was
+  // set from the creator's perspective and looks wrong to the recipient)
+  const directChannels = channels
+    .filter((c) => c.type === "DIRECT")
+    .map((c) => {
+      const other = c.members.find((m) => m.userId !== currentUserId);
+      if (other) {
+        const otherName = dmMemberNames.get(other.userId);
+        if (otherName) return { ...c, name: otherName.split(" ")[0] };
+      }
+      return c;
+    });
 
   return (
     <div className="flex h-[calc(100vh-3.5rem)] lg:h-screen bg-[#0f1321] overflow-hidden">
@@ -2814,7 +2840,7 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
       {showNewGroupDM && (
         <NewGroupDMModal
           currentUserId={currentUserId}
-          existingDirectChannels={channels.filter((c) => c.type === "DIRECT" || c.type === "GROUP")}
+          existingDirectChannels={channels.filter((c) => c.type === "DIRECT")}
           onClose={() => setShowNewGroupDM(false)}
           onCreate={(ch) => {
             setChannels((prev) => prev.some((c) => c.id === ch.id) ? prev : [ch, ...prev]);
