@@ -3,9 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Video,
-  VideoOff,
-  Mic,
-  MicOff,
   PhoneOff,
   Plus,
   Users,
@@ -52,19 +49,16 @@ type Meeting = {
 };
 
 type JoinInfo = {
-  token: string;
   roomName: string;
-  wsUrl: string | null;
+  jitsiUrl: string;
+  jitsiDomain: string;
   userId: string;
   userName: string;
-  stub?: boolean;
 };
 
 type InMeetingState = {
   meeting: Meeting;
   joinInfo: JoinInfo;
-  micOn: boolean;
-  cameraOn: boolean;
   elapsed: number;
 };
 
@@ -232,11 +226,9 @@ function InMeetingRoom({
   onEnd: () => void;
   currentUserId: string;
 }) {
-  const { meeting, joinInfo, micOn, cameraOn, elapsed } = state;
+  const { meeting, joinInfo, elapsed } = state;
   const isHost = meeting.organizer.id === currentUserId;
   const [copied, setCopied] = useState(false);
-  const [summary, setSummary] = useState(meeting.aiSummary ?? "");
-  const [generatingSummary, setGeneratingSummary] = useState(false);
 
   const formatElapsed = (s: number) => {
     const m = Math.floor(s / 60);
@@ -245,38 +237,22 @@ function InMeetingRoom({
   };
 
   const copyLink = () => {
-    navigator.clipboard.writeText(`${window.location.origin}/meet/${meeting.roomName}`).then(() => {
+    navigator.clipboard.writeText(joinInfo.jitsiUrl).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
   };
 
-  const generateSummary = async () => {
-    setGeneratingSummary(true);
-    try {
-      const res = await fetch(`/api/meet/${meeting.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ aiSummary: `Meeting "${meeting.title}" — ${meeting.participants.length} participants. ${new Date().toLocaleString()}` }),
-      });
-      if (res.ok) {
-        setSummary(`Meeting "${meeting.title}" — ${meeting.participants.length} participants joined. Meeting duration: ~${Math.floor(elapsed / 60)} minutes.`);
-        toast.success("Summary generated");
-      }
-    } finally {
-      setGeneratingSummary(false);
-    }
-  };
+  // Build Jitsi URL with pre-filled display name and sensible defaults
+  const jitsiSrc = `${joinInfo.jitsiUrl}#userInfo.displayName=${encodeURIComponent(joinInfo.userName)}&config.prejoinPageEnabled=false&config.startWithAudioMuted=false&config.startWithVideoMuted=false&interfaceConfig.SHOW_JITSI_WATERMARK=false&interfaceConfig.TOOLBAR_BUTTONS=["microphone","camera","closedcaptions","desktop","fullscreen","fodeviceselection","hangup","chat","recording","livestreaming","etherpad","sharedvideo","settings","raisehand","videoquality","filmstrip","invite","feedback","stats","shortcuts","tileview","videobackgroundblur","download","help","mute-everyone","security"]`;
 
   return (
     <div className="fixed inset-0 z-50 bg-[#060810] flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 py-3 bg-[#0f1321] border-b border-[rgba(0,255,255,0.08)]">
+      {/* Slim header */}
+      <div className="flex items-center justify-between px-5 py-2.5 bg-[#0f1321] border-b border-[rgba(0,255,255,0.08)] shrink-0">
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-            <span className="text-sm font-semibold text-[#dfe1f6]">{meeting.title}</span>
-          </div>
+          <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+          <span className="text-sm font-semibold text-[#dfe1f6]">{meeting.title}</span>
           <span className="text-xs text-[#7a8899] tabular-nums">{formatElapsed(elapsed)}</span>
         </div>
         <div className="flex items-center gap-2">
@@ -285,100 +261,33 @@ function InMeetingRoom({
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#262939] text-xs text-[#bbc9cf] hover:bg-[#2e3347] transition-colors"
           >
             {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
-            {copied ? "Copied" : "Copy link"}
+            {copied ? "Copied" : "Copy invite link"}
           </button>
-          {joinInfo.stub && (
-            <span className="text-xs px-2 py-1 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30">
-              Dev stub — LiveKit not configured
-            </span>
+          <button
+            onClick={onLeave}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-600 text-white text-xs font-medium hover:bg-rose-500 transition-colors"
+          >
+            <PhoneOff className="w-3.5 h-3.5" />
+            Leave
+          </button>
+          {isHost && (
+            <button
+              onClick={onEnd}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-600/20 border border-rose-500/30 text-rose-400 text-xs font-medium hover:bg-rose-600/30 transition-colors"
+            >
+              End for all
+            </button>
           )}
         </div>
       </div>
 
-      {/* Participant grid */}
-      <div className="flex-1 flex items-center justify-center p-6">
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-4xl">
-          {meeting.participants.map((p) => (
-            <div
-              key={p.id}
-              className="aspect-video bg-[#1b1f2e] rounded-2xl border border-[rgba(0,255,255,0.08)] flex flex-col items-center justify-center gap-3 relative overflow-hidden"
-            >
-              <div className="w-16 h-16 rounded-full bg-[#00d2ff]/10 border-2 border-[#00d2ff]/20 flex items-center justify-center">
-                <span className="text-2xl font-bold text-[#00d2ff]">
-                  {p.user.fullName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
-                </span>
-              </div>
-              <span className="text-sm text-[#dfe1f6] font-medium">{p.user.fullName}</span>
-              {p.role === "HOST" && (
-                <span className="absolute top-2 left-2 text-xs px-1.5 py-0.5 rounded bg-[#00d2ff]/20 text-[#00d2ff]">Host</span>
-              )}
-              <div className="absolute bottom-2 right-2 flex gap-1">
-                <div className="w-6 h-6 rounded-full bg-[#262939] flex items-center justify-center">
-                  <Mic className="w-3 h-3 text-[#bbc9cf]" />
-                </div>
-                <div className="w-6 h-6 rounded-full bg-[#262939] flex items-center justify-center">
-                  <Video className="w-3 h-3 text-[#bbc9cf]" />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* AI Summary strip (if generated) */}
-      {summary && (
-        <div className="mx-6 mb-2 px-4 py-2.5 bg-[#00d2ff]/8 border border-[#00d2ff]/20 rounded-xl flex items-start gap-2">
-          <Sparkles className="w-4 h-4 text-[#00d2ff] flex-shrink-0 mt-0.5" />
-          <p className="text-xs text-[#bbc9cf] leading-relaxed">{summary}</p>
-        </div>
-      )}
-
-      {/* Controls */}
-      <div className="flex items-center justify-center gap-4 px-6 py-4 bg-[#0f1321] border-t border-[rgba(0,255,255,0.08)]">
-        <button
-          onClick={() => state.micOn}
-          className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
-            micOn ? "bg-[#262939] text-[#dfe1f6] hover:bg-[#2e3347]" : "bg-rose-500/20 text-rose-400 border border-rose-500/30"
-          }`}
-        >
-          {micOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
-        </button>
-        <button
-          onClick={() => state.cameraOn}
-          className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
-            cameraOn ? "bg-[#262939] text-[#dfe1f6] hover:bg-[#2e3347]" : "bg-rose-500/20 text-rose-400 border border-rose-500/30"
-          }`}
-        >
-          {cameraOn ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
-        </button>
-
-        {isHost && (
-          <button
-            onClick={generateSummary}
-            disabled={generatingSummary}
-            className="px-4 h-10 rounded-full bg-[#262939] text-[#bbc9cf] text-sm hover:bg-[#2e3347] flex items-center gap-2 transition-colors"
-          >
-            {generatingSummary ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-            AI Summary
-          </button>
-        )}
-
-        <button
-          onClick={onLeave}
-          className="w-12 h-12 rounded-full bg-rose-600 text-white flex items-center justify-center hover:bg-rose-500 transition-colors"
-        >
-          <PhoneOff className="w-5 h-5" />
-        </button>
-
-        {isHost && (
-          <button
-            onClick={onEnd}
-            className="px-4 h-10 rounded-full bg-rose-600/20 border border-rose-500/30 text-rose-400 text-sm hover:bg-rose-600/30 flex items-center gap-2 transition-colors"
-          >
-            End for all
-          </button>
-        )}
-      </div>
+      {/* Jitsi Meet iframe — full remaining height */}
+      <iframe
+        src={jitsiSrc}
+        allow="camera; microphone; fullscreen; display-capture; autoplay; clipboard-write"
+        className="flex-1 border-0 w-full"
+        title={meeting.title}
+      />
     </div>
   );
 }
@@ -437,8 +346,6 @@ export function MeetView({
   const [showNew, setShowNew] = useState(false);
   const [joining, setJoining] = useState<string | null>(null);
   const [inMeeting, setInMeeting] = useState<InMeetingState | null>(null);
-  const [micOn, setMicOn] = useState(true);
-  const [cameraOn, setCameraOn] = useState(true);
   const elapsedRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const loadMeetings = useCallback(async () => {
@@ -479,7 +386,7 @@ export function MeetView({
         setInMeeting((prev) => prev ? { ...prev, elapsed: seconds } : null);
       }, 1000);
 
-      setInMeeting({ meeting, joinInfo, micOn: true, cameraOn: true, elapsed: 0 });
+      setInMeeting({ meeting, joinInfo, elapsed: 0 });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to join meeting");
     } finally {
@@ -523,7 +430,7 @@ export function MeetView({
     <>
       {inMeeting && (
         <InMeetingRoom
-          state={{ ...inMeeting, micOn, cameraOn }}
+          state={inMeeting}
           onLeave={handleLeave}
           onEnd={handleEndMeeting}
           currentUserId={currentUserId}

@@ -136,7 +136,7 @@ app.prepare().then(() => {
 
     // Typing indicator — broadcast directly, no DB/Redis needed
     socket.on("chat:typing", ({ channelId }) => {
-      socket.to(`channel:${channelId}`).emit("chat:typing", { userId, fullName });
+      socket.to(`channel:${channelId}`).emit("chat:typing", { userId, fullName, channelId });
     });
 
     // Announce offline to all joined channel rooms on disconnect

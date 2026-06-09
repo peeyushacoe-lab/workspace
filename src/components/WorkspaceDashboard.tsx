@@ -631,6 +631,21 @@ type RecentLog = {
   createdAt: Date | string;
 };
 
+type MemberInfo = { id: string; email: string; fullName: string; avatarUrl: string | null };
+
+function MemberAvatar({ email, members }: { email: string; members: MemberInfo[] }) {
+  const m = members.find((u) => u.email.toLowerCase() === email.toLowerCase());
+  const label = (m?.fullName ?? email).charAt(0).toUpperCase();
+  if (m?.avatarUrl) {
+    return <img src={m.avatarUrl} alt={label} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />;
+  }
+  return (
+    <div className="w-8 h-8 rounded-full bg-[#00d2ff]/10 flex items-center justify-center text-[#00d2ff] font-bold text-xs flex-shrink-0">
+      {label}
+    </div>
+  );
+}
+
 export function WorkspaceDashboard({
   currentUser,
   recentLogs,
@@ -638,6 +653,13 @@ export function WorkspaceDashboard({
   currentUser: CurrentUser;
   recentLogs: RecentLog[];
 }) {
+  const [members, setMembers] = useState<MemberInfo[]>([]);
+  useEffect(() => {
+    fetch("/api/workspace/members")
+      .then((r) => r.json())
+      .then((data: MemberInfo[]) => setMembers(data))
+      .catch(() => {});
+  }, []);
   return (
     <div className="grid lg:grid-cols-[1fr_350px] gap-8">
       {/* Sent History */}
@@ -671,9 +693,7 @@ export function WorkspaceDashboard({
                   <tr key={log.id} className="border-b border-[rgba(0,255,255,0.07)] hover:bg-[#262939] transition-colors">
                     <td className="px-4 py-3 text-sm text-[#dfe1f6]">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-[#00d2ff]/10 flex items-center justify-center text-[#00d2ff] font-bold text-xs">
-                          {log.recipient.charAt(0).toUpperCase()}
-                        </div>
+                        <MemberAvatar email={log.recipient} members={members} />
                         <span className="text-sm font-medium text-[#dfe1f6]">{log.recipient}</span>
                       </div>
                     </td>

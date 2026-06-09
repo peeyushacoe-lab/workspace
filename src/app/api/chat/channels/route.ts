@@ -13,14 +13,34 @@ export async function GET() {
       members: { some: { userId: user.id } },
     },
     include: {
-      members: { select: { userId: true, role: true } },
+      members: {
+        select: { userId: true, role: true, lastReadAt: true },
+      },
       _count: { select: { messages: true } },
     },
     orderBy: { updatedAt: "desc" },
   });
 
-  return NextResponse.json(channels, {
-    headers: { "Cache-Control": "private, max-age=30, stale-while-revalidate=60" },
+  // Compute unread count for the current user per channel.
+  // When lastReadAt is null the user has never opened the channel — count all messages.
+  // When lastReadAt is set, count only messages after it.
+  const channelsWithUnread = await Promise.all(
+    channels.map(async (ch) => {
+      const membership = ch.members.find((m) => m.userId === user.id);
+      const lastReadAt = membership?.lastReadAt;
+      const unreadCount = await prisma.chatMessage.count({
+        where: {
+          channelId: ch.id,
+          deletedAt: null,
+          ...(lastReadAt ? { createdAt: { gt: lastReadAt } } : {}),
+        },
+      });
+      return { ...ch, unreadCount };
+    })
+  );
+
+  return NextResponse.json(channelsWithUnread, {
+    headers: { "Cache-Control": "private, no-store" },
   });
 }
 

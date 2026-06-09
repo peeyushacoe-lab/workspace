@@ -20,7 +20,7 @@ export async function POST(_request: Request, { params }: Params) {
   // Fire-and-forget — non-fatal if Redis is unavailable
   redis.publish(
     `chat:channel:${channelId}`,
-    JSON.stringify({ type: "typing", data: { userId: user.id, fullName: user.fullName } }),
+    JSON.stringify({ type: "typing", data: { userId: user.id, fullName: user.fullName, channelId } }),
   ).catch((err: Error) => {
     console.error("[chat/typing] Redis publish failed:", err.message);
   });

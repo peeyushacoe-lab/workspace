@@ -39,6 +39,7 @@ import { toast } from "sonner";
 type Member = {
   userId: string;
   role: string;
+  lastReadAt?: string | null;
 };
 
 type Channel = {
@@ -49,6 +50,7 @@ type Channel = {
   isPrivate: boolean;
   members: Member[];
   _count: { messages: number };
+  unreadCount?: number;
 };
 
 type Reaction = {
@@ -1234,14 +1236,16 @@ function ChannelSection({
                 ) : (
                   <Hash className="w-3.5 h-3.5 flex-shrink-0 opacity-70" />
                 )}
-                <span className="truncate flex-1 text-[13px]">{ch.name}</span>
+                <span className={`truncate flex-1 text-[13px] ${!isSelected && (ch.unreadCount ?? 0) > 0 ? "font-semibold text-[#dfe1f6]" : ""}`}>{ch.name}</span>
                 {isSelected && onlineUsers.size > 0 && (
                   <span className="bg-[#00d2ff] text-[#003543] text-xs rounded-full px-1.5 py-0.5 font-bold leading-none">
                     {onlineUsers.size}
                   </span>
                 )}
-                {!isSelected && isDM && (
-                  <span className="w-2 h-2 rounded-full bg-[#00feb2] opacity-0 group-hover:opacity-100 flex-shrink-0" />
+                {!isSelected && (ch.unreadCount ?? 0) > 0 && (
+                  <span className="bg-[#00d2ff] text-[#003543] text-[10px] rounded-full min-w-[16px] h-4 flex items-center justify-center px-1 font-bold leading-none flex-shrink-0">
+                    {(ch.unreadCount ?? 0) > 99 ? "99+" : ch.unreadCount}
+                  </span>
                 )}
               </button>
             );
@@ -1728,6 +1732,10 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
   // Workspace member name map — used to derive correct DM display names
   const [dmMemberNames, setDmMemberNames] = useState<Map<string, string>>(new Map());
 
+  // Local unread count overrides — incremented when socket messages arrive for non-selected channels,
+  // reset to 0 when the channel is opened (cleared by merging into the channels state)
+  const [localUnread, setLocalUnread] = useState<Map<string, number>>(new Map());
+
   useEffect(() => {
     fetch("/api/workspace/members")
       .then((r) => r.json())
@@ -1858,6 +1866,55 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
     };
   }, []);
 
+  // Join ALL channel rooms on load so we can receive messages for unread badge tracking.
+  // We don't set up full message handlers here — just increment localUnread for non-selected channels.
+  useEffect(() => {
+    const socket = socketRef.current;
+    if (!socket || channels.length === 0) return;
+
+    const nonSelected = channels.filter((c) => c.id !== selectedChannelId);
+    nonSelected.forEach((c) => socket.emit("chat:join", { channelId: c.id }));
+
+    const onGlobalMessage = (msg: { channelId?: string; id?: string }) => {
+      const chId = msg.channelId;
+      if (!chId || chId === selectedChannelId) return;
+      setLocalUnread((prev) => {
+        const m = new Map(prev);
+        m.set(chId, (m.get(chId) ?? 0) + 1);
+        return m;
+      });
+    };
+
+    socket.on("chat:message", onGlobalMessage);
+
+    const onSocketReconnect = () => {
+      nonSelected.forEach((c) => socket.emit("chat:join", { channelId: c.id }));
+    };
+    // Re-join on reconnect; if already connected, the emit above is buffered/sent immediately
+    socket.on("connect", onSocketReconnect);
+
+    return () => {
+      socket.off("chat:message", onGlobalMessage);
+      socket.off("connect", onSocketReconnect);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [channels.length, selectedChannelId]);
+
+  // Clear local unread when a channel is selected
+  useEffect(() => {
+    if (!selectedChannelId) return;
+    setLocalUnread((prev) => {
+      if (!prev.has(selectedChannelId)) return prev;
+      const m = new Map(prev);
+      m.delete(selectedChannelId);
+      return m;
+    });
+    // Also clear server-side unreadCount so it resets on next channel load
+    setChannels((prev) =>
+      prev.map((c) => (c.id === selectedChannelId ? { ...c, unreadCount: 0 } : c))
+    );
+  }, [selectedChannelId]);
+
   // Fetch initial presence snapshot (one-time REST, no polling)
   useEffect(() => {
     if (!selectedChannelId) return;
@@ -1925,7 +1982,15 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
 
     socket.emit("chat:join", { channelId: selectedChannelId });
 
+    // Re-join the channel room after socket reconnects (server-side room state is lost on reconnect)
+    const onReconnect = () => {
+      socket.emit("chat:join", { channelId: selectedChannelId });
+    };
+    socket.on("connect", onReconnect);
+
     const onMessage = (msg: Message) => {
+      // Ignore messages from other channel rooms (we joined all rooms for unread tracking)
+      if (msg.channelId !== selectedChannelId) return;
       if (msg.parentId) {
         if (threadParentIdRef.current === msg.parentId) {
           setThreadMessages((prev) => {
@@ -1973,8 +2038,9 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
       });
     };
 
-    const onTyping = ({ userId, fullName }: { userId: string; fullName: string }) => {
+    const onTyping = ({ userId, fullName, channelId: typingChannelId }: { userId: string; fullName: string; channelId?: string }) => {
       if (userId === currentUserId) return;
+      if (typingChannelId && typingChannelId !== selectedChannelId) return;
       const existing = typingTimers.current.get(userId);
       if (existing) clearTimeout(existing);
       setTypingNames((prev) => { const m = new Map(prev); m.set(userId, fullName); return m; });
@@ -1994,6 +2060,7 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
 
     return () => {
       socket.emit("chat:leave", { channelId: selectedChannelId });
+      socket.off("connect", onReconnect);
       socket.off("chat:message", onMessage);
       socket.off("chat:message_updated", onMessageUpdated);
       socket.off("chat:message_deleted", onMessageDeleted);
@@ -2365,8 +2432,14 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
   }
 
   // ─── Channel sections ──────────────────────────────────────────────────────
-  const publicChannels = channels.filter((c) => c.type === "CHANNEL");
-  const groupChannels = channels.filter((c) => c.type === "GROUP");
+  // Merge server unreadCount with local (socket-tracked) unread increments
+  const withUnread = (ch: Channel): Channel => ({
+    ...ch,
+    unreadCount: (ch.unreadCount ?? 0) + (localUnread.get(ch.id) ?? 0),
+  });
+
+  const publicChannels = channels.filter((c) => c.type === "CHANNEL").map(withUnread);
+  const groupChannels = channels.filter((c) => c.type === "GROUP").map(withUnread);
 
   // For DMs, show the OTHER person's name (not the stored channel name which was
   // set from the creator's perspective and looks wrong to the recipient)
@@ -2376,9 +2449,9 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
       const other = c.members.find((m) => m.userId !== currentUserId);
       if (other) {
         const otherName = dmMemberNames.get(other.userId);
-        if (otherName) return { ...c, name: otherName.split(" ")[0] };
+        if (otherName) return withUnread({ ...c, name: otherName.split(" ")[0] });
       }
-      return c;
+      return withUnread(c);
     });
 
   return (

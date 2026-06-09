@@ -851,11 +851,14 @@ export function InboxView({ userRole, initialThreads }: {
                       </span>
                     </div>
                     <div className="flex items-start gap-2">
-                      <div className="w-8 h-8 rounded-full bg-[#00d2ff]/10 text-[#00d2ff] flex items-center justify-center font-bold text-sm flex-shrink-0">
-                        {log.recipient.charAt(0).toUpperCase()}
-                      </div>
+                      <SenderAvatar
+                        member={memberMap[log.recipient.toLowerCase()]}
+                        email={log.recipient}
+                        size={8}
+                        onClick={() => { const m = memberMap[log.recipient.toLowerCase()]; if (m?.id) setProfileUserId(m.id); }}
+                      />
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm text-[#dfe1f6] truncate">{log.recipient}</p>
+                        <p className="font-medium text-sm text-[#dfe1f6] truncate">{log.contact?.name || log.recipient}</p>
                         <p className="text-xs text-[#bbc9cf] truncate">{log.subject}</p>
                         <span className={`text-[10px] font-semibold ${statusColor}`}>{log.status}</span>
                       </div>

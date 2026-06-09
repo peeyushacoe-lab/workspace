@@ -182,8 +182,10 @@ export function FilePreviewModal({
         // CORS issues and pre-signed URL expiry problems.
         const downloadEndpoint = `/api/drive/files/${file.id}/download`;
 
+        const previewEndpoint = `${downloadEndpoint}?preview=1`;
+
         if (previewType === "text" || previewType === "csv") {
-          const textRes = await fetch(downloadEndpoint);
+          const textRes = await fetch(previewEndpoint);
           if (!textRes.ok) throw new Error("Could not load file content");
           const text = await textRes.text();
           if (cancelled) return;
@@ -193,9 +195,9 @@ export function FilePreviewModal({
             setTextContent(text);
           }
         } else if (previewType !== "unsupported") {
-          // For images, PDFs, video, audio — set the URL directly.
-          // The browser follows the server-side redirect to storage.
-          if (!cancelled) setPreviewUrl(downloadEndpoint);
+          // Use ?preview=1 so the server proxies with Content-Disposition: inline,
+          // preventing browsers from downloading instead of displaying the file.
+          if (!cancelled) setPreviewUrl(previewEndpoint);
         }
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : "Failed to load preview");
