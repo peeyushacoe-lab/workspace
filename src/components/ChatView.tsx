@@ -352,6 +352,48 @@ function FileAttachmentCard({ content }: { content: string }) {
       url?: string;
       fileId?: string;
     };
+
+    // Audio files (voice notes, audio uploads) → inline player
+    if (data.mimeType.startsWith("audio/") && data.url) {
+      const previewUrl = data.fileId
+        ? `/api/drive/files/${data.fileId}/download?preview=1`
+        : data.url;
+      return (
+        <div className="mt-1.5 flex items-center gap-2 bg-[#1b1f2e] border border-[rgba(0,255,255,0.1)] rounded-2xl px-3 py-2.5 max-w-sm w-full">
+          <div className="w-7 h-7 rounded-full bg-[#00d2ff]/15 flex items-center justify-center flex-shrink-0">
+            <svg viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5 text-[#00d2ff]">
+              <path d="M10 2a3 3 0 0 1 3 3v5a3 3 0 1 1-6 0V5a3 3 0 0 1 3-3zm-5 8a5 5 0 0 0 10 0h-2a3 3 0 1 1-6 0H5zm5 7v-2h-1v2H7v1h6v-1h-3z" />
+            </svg>
+          </div>
+          <audio
+            src={previewUrl}
+            controls
+            preload="metadata"
+            className="flex-1 h-8 min-w-0"
+            style={{ accentColor: "#00d2ff" }}
+          />
+        </div>
+      );
+    }
+
+    // Image files → inline preview
+    if (data.mimeType.startsWith("image/") && data.url) {
+      const previewUrl = data.fileId
+        ? `/api/drive/files/${data.fileId}/download?preview=1`
+        : data.url;
+      return (
+        <div className="mt-1.5">
+          <img
+            src={previewUrl}
+            alt={data.name}
+            className="rounded-xl max-w-xs max-h-48 object-cover border border-[rgba(0,255,255,0.1)]"
+          />
+          <p className="text-[10px] text-[#7a8899] mt-1">{data.name} · {formatFileSize(data.size)}</p>
+        </div>
+      );
+    }
+
+    // All other files → download card
     return (
       <div className="mt-1.5 inline-flex items-center gap-3 bg-[#1b1f2e] border border-[rgba(0,255,255,0.1)] rounded-xl px-3 py-2.5 max-w-xs">
         <FileText className="w-7 h-7 text-[#a5e7ff] flex-shrink-0" />
