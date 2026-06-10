@@ -209,10 +209,13 @@ export async function sendEmail(
   const from = fromEmail || process.env.RESEND_FROM_EMAIL || "CyberSage <noreply@cybersage.uk>";
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://cybersage.uk";
 
-  const bulkHeaders = options?.isBulk ? {
-    "List-Unsubscribe": `<${appUrl}/unsubscribe?email=${encodeURIComponent(contact.email)}>, <mailto:unsubscribe@cybersage.uk?subject=unsubscribe>`,
-    "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-  } : {};
+  const headers: Record<string, string> = {
+    "X-Entity-Ref-ID": `cybersage-${Date.now()}`,
+  };
+  if (options?.isBulk) {
+    headers["List-Unsubscribe"] = `<${appUrl}/unsubscribe?email=${encodeURIComponent(contact.email)}>, <mailto:unsubscribe@cybersage.uk?subject=unsubscribe>`;
+    headers["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click";
+  }
 
   const result = await resend.emails.send({
     from,
@@ -220,10 +223,7 @@ export async function sendEmail(
     replyTo: from,
     subject,
     html,
-    headers: {
-      ...bulkHeaders,
-      "X-Entity-Ref-ID": `cybersage-${Date.now()}`,
-    },
+    headers,
     ...(cc?.length ? { cc } : {}),
     ...(bcc?.length ? { bcc } : {}),
   });
