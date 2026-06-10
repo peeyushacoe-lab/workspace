@@ -62,7 +62,7 @@ export async function POST(request: Request) {
 
   const sigTemplate = signature ? {
     fullName: signature.fullName ?? user.fullName,
-    title: signature.title ?? undefined,
+    title: signature.title ?? "",
     phone: signature.phone ?? undefined,
     linkedinUrl: signature.linkedinUrl ?? undefined,
     website: signature.website ?? undefined,
