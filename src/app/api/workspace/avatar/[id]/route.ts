@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/session";
 
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const user = await getCurrentUser();
-  if (!user) return new NextResponse(null, { status: 401 });
+  // Avatar endpoint is intentionally public — profile photos are not sensitive
+  // and must be accessible by email clients (Gmail, Outlook) without auth.
 
   const { id } = await params;
   const target = await prisma.user.findUnique({

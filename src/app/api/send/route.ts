@@ -134,11 +134,13 @@ export async function POST(request: Request) {
         where: { id: signatureId, userId: currentUser.id },
       });
       if (dbSignature) {
-        // Also fetch sender's profile pic to include in signature
+        // Fetch sender's profile — use public avatar endpoint URL (not raw DB value)
+        // so email clients can load the image without auth.
         const senderProfile = await prisma.user.findUnique({
           where: { id: currentUser.id },
           select: { avatarUrl: true },
         });
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://nexus.cybersage.uk";
         signature = {
           fullName: dbSignature.fullName,
           title: dbSignature.title,
@@ -146,7 +148,9 @@ export async function POST(request: Request) {
           linkedinUrl: dbSignature.linkedinUrl,
           website: dbSignature.website,
           html: dbSignature.html,
-          avatarUrl: senderProfile?.avatarUrl ?? null,
+          avatarUrl: senderProfile?.avatarUrl
+            ? `${appUrl}/api/workspace/avatar/${currentUser.id}`
+            : null,
         };
       }
     } catch {
