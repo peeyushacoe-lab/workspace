@@ -134,6 +134,11 @@ export async function POST(request: Request) {
         where: { id: signatureId, userId: currentUser.id },
       });
       if (dbSignature) {
+        // Also fetch sender's profile pic to include in signature
+        const senderProfile = await prisma.user.findUnique({
+          where: { id: currentUser.id },
+          select: { avatarUrl: true },
+        });
         signature = {
           fullName: dbSignature.fullName,
           title: dbSignature.title,
@@ -141,6 +146,7 @@ export async function POST(request: Request) {
           linkedinUrl: dbSignature.linkedinUrl,
           website: dbSignature.website,
           html: dbSignature.html,
+          avatarUrl: senderProfile?.avatarUrl ?? null,
         };
       }
     } catch {

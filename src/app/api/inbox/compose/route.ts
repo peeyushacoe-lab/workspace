@@ -38,12 +38,26 @@ export async function POST(request: Request) {
   const toAddr = to.toLowerCase();
   const fromAddr = user.email.toLowerCase();
 
-  let signature: { html?: string | null } | null = null;
+  let signature: { html?: string | null; fullName?: string; title?: string | null; phone?: string | null; linkedinUrl?: string | null; website?: string | null; avatarUrl?: string | null } | null = null;
   if (signatureId) {
-    signature = await prisma.signature.findFirst({
+    const dbSig = await prisma.signature.findFirst({
       where: { id: signatureId, userId: user.id },
-      select: { html: true },
     }).catch(() => null);
+    if (dbSig) {
+      const senderProfile = await prisma.user.findUnique({
+        where: { id: user.id },
+        select: { avatarUrl: true },
+      }).catch(() => null);
+      signature = {
+        html: dbSig.html,
+        fullName: dbSig.fullName,
+        title: dbSig.title,
+        phone: dbSig.phone,
+        linkedinUrl: dbSig.linkedinUrl,
+        website: dbSig.website,
+        avatarUrl: senderProfile?.avatarUrl ?? null,
+      };
+    }
   }
 
   const finalHtml = htmlBody ?? (signature?.html
@@ -164,7 +178,15 @@ export async function POST(request: Request) {
       subject,
       textBody,
       { email: toAddr, name: toAddr.split("@")[0], status: "Direct" },
-      signature ? { fullName: user.fullName, title: "", html: signature.html ?? undefined } : undefined,
+      signature ? {
+        fullName: signature.fullName ?? user.fullName,
+        title: signature.title ?? "",
+        phone: signature.phone ?? undefined,
+        linkedinUrl: signature.linkedinUrl ?? undefined,
+        website: signature.website ?? undefined,
+        avatarUrl: signature.avatarUrl ?? undefined,
+        html: signature.html ?? undefined,
+      } : undefined,
       `${user.fullName} <${fromAddr}>`,
       parsed.data.cc,
       parsed.data.bcc,

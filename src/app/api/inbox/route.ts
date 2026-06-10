@@ -14,23 +14,35 @@ export async function GET(request: Request) {
     const isPrivileged = ["ADMIN", "CEO", "CISO"].includes(user.role);
     const { searchParams } = new URL(request.url);
     const query = searchParams.get("q") || "";
-
+    const folder = searchParams.get("folder") ?? "inbox"; // "inbox" | "sent"
     const cursor = searchParams.get("cursor") ?? undefined;
-
     const viewAll = isPrivileged && searchParams.get("viewAll") === "true";
+    const userEmail = user.email.toLowerCase();
+
+    // Sent folder: threads in the user's own mailbox where every message was sent BY the user
+    // Inbox folder: threads accessible to the user that contain at least one message NOT from the user
+    const folderFilter =
+      folder === "sent"
+        ? {
+            mailbox: { email: userEmail },
+            messages: { some: { from: userEmail } },
+          }
+        : {
+            // Show threads where the mailbox belongs to the user (by email) OR they have explicit access
+            OR: [
+              { mailbox: { email: userEmail } },
+              { mailbox: { accessLogs: { some: { userId: user.id } } } },
+            ] as object[],
+            // Exclude pure sent-copy threads (all messages from self) from the inbox view
+            NOT: { messages: { every: { from: userEmail } } },
+          };
 
     const threads = await prisma.inboxThread.findMany({
       where: {
         AND: [
-          // Never show threads where every message is from a Resend bounce-tracking address
+          // Never show bounce-tracking address threads
           { messages: { none: { from: { contains: "@send." } } } },
-          viewAll
-            ? {}
-            : {
-                mailbox: {
-                  accessLogs: { some: { userId: user.id } },
-                },
-              },
+          viewAll ? {} : folderFilter,
           query
             ? {
                 OR: [

@@ -70,7 +70,7 @@ type ThreadDetail = { id: string; subject: string; mailboxId: string; messages: 
 type WorkspaceMember = { id: string; email: string; fullName: string; displayName: string | null; avatarUrl: string | null };
 
 // Render a sender avatar — shows profile pic if available, falls back to initial
-function SenderAvatar({ member, email, size = 8, onClick }: { member?: WorkspaceMember; email: string; size?: number; onClick?: () => void }) {
+function SenderAvatar({ member, email, size = 8, onClick }: { member?: WorkspaceMember; email: string; size?: number; onClick?: (e?: React.MouseEvent) => void }) {
   const label = (member?.displayName ?? member?.fullName ?? email).charAt(0).toUpperCase();
   const cls = `w-${size} h-${size} rounded-full object-cover flex-shrink-0`;
   const wrap = `cursor-pointer hover:opacity-80 transition-opacity`;
@@ -326,6 +326,9 @@ const SYSTEM_FOLDERS: { key: SystemFolder; label: string; Icon: React.ElementTyp
 type SentLog = {
   id: string; recipient: string; subject: string; status: string;
   createdAt: string; contact?: { name: string; email: string } | null;
+  snippet?: string;
+  isInternalThread?: boolean;
+  threadId?: string;
 };
 
 const CATEGORIES = ["All", "Primary", "Updates"] as const;
@@ -389,7 +392,8 @@ export function InboxView({ userRole, initialThreads }: {
     if (!silent) setIsRefreshing(true);
     try {
       const url = searchQuery ? `/api/inbox?q=${encodeURIComponent(searchQuery)}` : "/api/inbox";
-      const response = await fetch(url);
+      // cache: "no-store" ensures a full reload always gets fresh data, not a stale cached response
+      const response = await fetch(url, { cache: "no-store" });
       if (response.ok) {
         const data = await response.json() as ThreadSummary[];
         // On silent background polls, don't wipe threads if server returns empty
@@ -414,11 +418,31 @@ export function InboxView({ userRole, initialThreads }: {
   useEffect(() => {
     if (activeFolder !== "sent") return;
     setIsSentLoading(true);
-    fetch("/api/email-logs?limit=100")
-      .then(r => r.json())
-      .then(data => setSentLogs(data.logs ?? []))
-      .catch(() => {})
-      .finally(() => setIsSentLoading(false));
+    // Fetch both external email logs and internal sent threads in parallel
+    Promise.all([
+      fetch("/api/email-logs?limit=100").then(r => r.json()).catch(() => ({ logs: [] })),
+      fetch("/api/inbox?folder=sent").then(r => r.json()).catch(() => []),
+    ]).then(([logsData, sentThreads]) => {
+      const externalLogs: SentLog[] = (logsData.logs ?? []);
+      // Convert internal sent threads to SentLog shape for unified rendering
+      const internalLogs: SentLog[] = (Array.isArray(sentThreads) ? sentThreads : []).map((t: {
+        id: string; subject: string; lastMessage?: { from: string; snippet: string; receivedAt: string } | null; createdAt: string;
+      }) => ({
+        id: `thread-${t.id}`,
+        recipient: t.lastMessage?.from ?? "",
+        subject: t.subject,
+        status: "DELIVERED" as const,
+        createdAt: t.lastMessage?.receivedAt ?? t.createdAt,
+        snippet: t.lastMessage?.snippet ?? "",
+        isInternalThread: true,
+        threadId: t.id,
+      }));
+      // Merge and sort by date descending, deduplicate by subject+recipient
+      const merged = [...externalLogs, ...internalLogs].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      setSentLogs(merged);
+    }).finally(() => setIsSentLoading(false));
   }, [activeFolder]);
 
   useEffect(() => {
@@ -838,29 +862,40 @@ export function InboxView({ userRole, initialThreads }: {
               <div className="p-8 text-center text-sm text-[#bbc9cf]">No sent emails yet.</div>
             ) : (
               sentLogs.map(log => {
-                const statusColor = log.status === "SENT" || log.status === "DELIVERED"
+                const statusColor = log.status === "DELIVERED" || log.status === "SENT"
                   ? "text-[#00feb2]" : log.status === "FAILED" ? "text-[#ff4d6d]" : "text-amber-400";
+                const displayName = log.contact?.name || log.recipient;
+                const member = memberMap[log.recipient.toLowerCase()];
                 return (
-                  <div key={log.id} className="p-3 hover:bg-[#171b2a] transition-colors">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-[10px] font-bold text-[#00d2ff] uppercase tracking-wider truncate">
-                        To: {log.contact?.name || log.recipient}
-                      </span>
-                      <span className="ml-auto text-xs text-[#bbc9cf] flex-shrink-0">
-                        {formatDistanceToNow(new Date(log.createdAt), { addSuffix: true })}
-                      </span>
-                    </div>
-                    <div className="flex items-start gap-2">
+                  <div
+                    key={log.id}
+                    className="p-3 hover:bg-[#171b2a] transition-colors cursor-pointer border-b border-[rgba(0,255,255,0.04)]"
+                    onClick={() => { if (log.isInternalThread && log.threadId) loadThreadDetail(log.threadId); }}
+                  >
+                    <div className="flex items-center gap-2 mb-1.5">
                       <SenderAvatar
-                        member={memberMap[log.recipient.toLowerCase()]}
+                        member={member}
                         email={log.recipient}
                         size={8}
-                        onClick={() => { const m = memberMap[log.recipient.toLowerCase()]; if (m?.id) setProfileUserId(m.id); }}
+                        onClick={(e) => { e?.stopPropagation(); if (member?.id) setProfileUserId(member.id); }}
                       />
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm text-[#dfe1f6] truncate">{log.contact?.name || log.recipient}</p>
-                        <p className="text-xs text-[#bbc9cf] truncate">{log.subject}</p>
-                        <span className={`text-[10px] font-semibold ${statusColor}`}>{log.status}</span>
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-sm text-[#dfe1f6] truncate">To: {displayName}</p>
+                          <span className="ml-auto text-xs text-[#7a8899] flex-shrink-0">
+                            {formatDistanceToNow(new Date(log.createdAt), { addSuffix: true })}
+                          </span>
+                        </div>
+                        <p className="text-sm text-[#bbc9cf] truncate font-medium">{log.subject}</p>
+                        {log.snippet && (
+                          <p className="text-xs text-[#7a8899] truncate mt-0.5">{log.snippet}</p>
+                        )}
+                        <div className="flex items-center gap-2 mt-1">
+                          {log.isInternalThread
+                            ? <span className="text-[10px] font-semibold text-[#00feb2]">✓ Delivered</span>
+                            : <span className={`text-[10px] font-semibold ${statusColor}`}>{log.status}</span>
+                          }
+                        </div>
                       </div>
                     </div>
                   </div>

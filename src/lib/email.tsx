@@ -18,26 +18,53 @@ function getSignatureHtml(signature: SignatureTemplate): string {
   if (signature.html) return signature.html;
 
   const company = signature.companyName ?? "CyberSage Workspace";
+
+  // Use <img> for profile pic, or a table-based centered initial (flexbox doesn't work in email clients)
+  const initial = signature.fullName.charAt(0).toUpperCase();
   const avatarBlock = signature.avatarUrl
     ? `<img src="${signature.avatarUrl}" alt="${signature.fullName}" width="52" height="52"
-         style="width:52px;height:52px;border-radius:50%;object-fit:cover;display:block;margin-right:14px;border:2px solid #e2e8f0;" />`
-    : `<div style="width:52px;height:52px;border-radius:50%;background:#0f766e;color:#fff;font-size:18px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-right:14px;flex-shrink:0;">${signature.fullName.charAt(0).toUpperCase()}</div>`;
+         style="width:52px;height:52px;border-radius:50%;object-fit:cover;display:block;border:2px solid #e2e8f0;" />`
+    : `<table cellpadding="0" cellspacing="0" border="0" width="52" height="52"
+         style="width:52px;height:52px;border-radius:50%;background:#0f766e;border-collapse:collapse;">
+        <tr>
+          <td align="center" valign="middle"
+              style="width:52px;height:52px;border-radius:50%;color:#ffffff;font-size:20px;font-weight:700;
+                     font-family:system-ui,-apple-system,sans-serif;text-align:center;line-height:52px;">
+            ${initial}
+          </td>
+        </tr>
+       </table>`;
+
+  // Only show subtitle line if there's something to show
+  const titlePart = signature.title?.trim() ?? "";
+  const subtitleLine = titlePart
+    ? `<div style="color:#64748b;font-size:13px;margin-bottom:6px;">${titlePart} &middot; ${company}</div>`
+    : `<div style="color:#64748b;font-size:13px;margin-bottom:6px;">${company}</div>`;
+
+  // Contact details — only show if at least one exists
+  const contactParts: string[] = [];
+  if (signature.phone) {
+    contactParts.push(`<a href="tel:${signature.phone.replace(/\s+/g, "")}" style="color:#0f766e;text-decoration:none;">${signature.phone}</a>`);
+  }
+  if (signature.linkedinUrl) {
+    contactParts.push(`<a href="${signature.linkedinUrl}" style="color:#0f766e;text-decoration:none;">LinkedIn</a>`);
+  }
+  if (signature.website) {
+    contactParts.push(`<a href="${signature.website}" style="color:#0f766e;text-decoration:none;">Website</a>`);
+  }
+  const contactLine = contactParts.length > 0
+    ? `<div style="font-size:13px;color:#64748b;line-height:1.6;">${contactParts.join(" &middot; ")}</div>`
+    : "";
 
   return `
-<div style="margin-top:32px;padding-top:20px;border-top:1px solid #e2e8f0;">
+<div style="margin-top:32px;padding-top:20px;border-top:2px solid #e2e8f0;">
   <table cellpadding="0" cellspacing="0" border="0" style="font-family:system-ui,-apple-system,sans-serif;">
     <tr>
-      <td style="vertical-align:top;padding-right:14px;">${avatarBlock}</td>
-      <td style="vertical-align:top;">
-        <div style="font-weight:700;color:#0f172a;font-size:15px;margin-bottom:2px;">${signature.fullName}</div>
-        <div style="color:#64748b;font-size:13px;margin-bottom:6px;">${signature.title} · ${company}</div>
-        <div style="font-size:13px;color:#64748b;line-height:1.6;">
-          ${signature.phone ? `<a href="tel:${signature.phone.replace(/\s+/g, "")}" style="color:#0f766e;text-decoration:none;">${signature.phone}</a>` : ""}
-          ${signature.phone && (signature.linkedinUrl ?? signature.website) ? " · " : ""}
-          ${signature.linkedinUrl ? `<a href="${signature.linkedinUrl}" style="color:#0f766e;text-decoration:none;">LinkedIn</a>` : ""}
-          ${signature.linkedinUrl && signature.website ? " · " : ""}
-          ${signature.website ? `<a href="${signature.website}" style="color:#0f766e;text-decoration:none;">Website</a>` : ""}
-        </div>
+      <td style="vertical-align:middle;padding-right:14px;">${avatarBlock}</td>
+      <td style="vertical-align:middle;">
+        <div style="font-weight:700;color:#0f172a;font-size:15px;margin-bottom:3px;">${signature.fullName}</div>
+        ${subtitleLine}
+        ${contactLine}
       </td>
     </tr>
   </table>
