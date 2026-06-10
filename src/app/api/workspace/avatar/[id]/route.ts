@@ -34,6 +34,21 @@ export async function GET(
     });
   }
 
-  // Regular URL — redirect to it
-  return NextResponse.redirect(avatarUrl);
+  // Regular URL (e.g. signed S3/R2) — proxy the image content so email clients
+  // (Gmail, Outlook) get a direct image response instead of following a redirect
+  // to a URL that may have CORS restrictions or expired signatures.
+  try {
+    const upstream = await fetch(avatarUrl);
+    if (!upstream.ok) return new NextResponse(null, { status: 404 });
+    const contentType = upstream.headers.get("content-type") ?? "image/jpeg";
+    const buffer = await upstream.arrayBuffer();
+    return new NextResponse(buffer, {
+      headers: {
+        "Content-Type": contentType,
+        "Cache-Control": "public, max-age=86400, stale-while-revalidate=3600",
+      },
+    });
+  } catch {
+    return new NextResponse(null, { status: 502 });
+  }
 }
