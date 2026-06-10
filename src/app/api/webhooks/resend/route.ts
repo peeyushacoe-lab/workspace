@@ -243,13 +243,15 @@ async function handleInboundEmail(data: InboundEmailPayload) {
     }
   }
 
-  // 2. Fallback to subject matching if no header match
+  // 2. Fallback to subject matching if no header match — skip trashed/archived threads
   if (!thread) {
     thread = await prisma.inboxThread.findFirst({
       where: {
         mailboxId: mailbox.id,
         subject: { contains: cleanSubject, mode: "insensitive" },
-        createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }, // Last 30 days
+        createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
+        isTrashed: false,
+        isArchived: false,
       },
       orderBy: { createdAt: "desc" },
     });

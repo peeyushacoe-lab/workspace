@@ -196,6 +196,7 @@ export async function sendEmail(
   fromEmail?: string,
   cc?: string[],
   bcc?: string[],
+  options?: { isBulk?: boolean },
 ) {
   if (!resend) {
     return {
@@ -207,6 +208,12 @@ export async function sendEmail(
   const html = renderEmailHtml(subject, body, contact, signature);
   const from = fromEmail || process.env.RESEND_FROM_EMAIL || "CyberSage <noreply@cybersage.uk>";
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://cybersage.uk";
+
+  const bulkHeaders = options?.isBulk ? {
+    "List-Unsubscribe": `<${appUrl}/unsubscribe?email=${encodeURIComponent(contact.email)}>, <mailto:unsubscribe@cybersage.uk?subject=unsubscribe>`,
+    "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+  } : {};
+
   const result = await resend.emails.send({
     from,
     to: contact.email,
@@ -214,9 +221,7 @@ export async function sendEmail(
     subject,
     html,
     headers: {
-      "List-Unsubscribe": `<${appUrl}/unsubscribe?email=${encodeURIComponent(contact.email)}>, <mailto:unsubscribe@cybersage.uk?subject=unsubscribe>`,
-      "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-      "X-Mailer": "CyberSage Workspace 1.0",
+      ...bulkHeaders,
       "X-Entity-Ref-ID": `cybersage-${Date.now()}`,
     },
     ...(cc?.length ? { cc } : {}),

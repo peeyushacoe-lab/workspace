@@ -33,6 +33,7 @@ export default {
         html: html ?? null,
         message_id: headers["message-id"] ?? null,
         headers: {
+          "from": headers["from"] ?? "",
           "message-id": headers["message-id"] ?? "",
           "in-reply-to": headers["in-reply-to"] ?? "",
           "references": headers["references"] ?? "",
@@ -80,7 +81,9 @@ function parseMimeParts(raw) {
   const boundaryMatch = raw.match(/boundary="?([^"\r\n;]+)"?/i);
   if (!boundaryMatch) {
     // Not multipart — single body
-    const bodyStart = raw.indexOf("\r\n\r\n") + 4 || raw.indexOf("\n\n") + 2;
+    const crlfIdx = raw.indexOf("\r\n\r\n");
+    const lfIdx = raw.indexOf("\n\n");
+    const bodyStart = crlfIdx !== -1 ? crlfIdx + 4 : lfIdx !== -1 ? lfIdx + 2 : 0;
     const body = raw.slice(bodyStart);
     if (raw.toLowerCase().includes("content-type: text/html")) {
       html = decodeTransferEncoding(body, getEncoding(raw));

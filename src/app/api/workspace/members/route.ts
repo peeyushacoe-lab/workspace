@@ -18,7 +18,7 @@ export async function GET() {
       email: true,
       fullName: true,
       displayName: true,
-      avatarUrl: true,
+      // avatarUrl omitted — served via /api/workspace/avatar/[id] to keep this response light
       role: true,
       customRole: true,
       jobTitle: true,
@@ -33,5 +33,11 @@ export async function GET() {
     orderBy: { fullName: "asc" },
   });
 
-  return NextResponse.json(members);
+  // Attach a stable avatar URL for each member instead of the raw base64 blob
+  const membersWithAvatarUrl = members.map(m => ({
+    ...m,
+    avatarUrl: `/api/workspace/avatar/${m.id}`,
+  }));
+
+  return NextResponse.json(membersWithAvatarUrl);
 }

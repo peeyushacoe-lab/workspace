@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
-import { sendEmail } from "@/lib/email";
+import { sendEmail, renderEmailHtml } from "@/lib/email";
 import { getTokensForUser, sendExpoPush } from "@/lib/expo-push";
 import { indexingQueue } from "@/lib/queues/indexing.queue";
 
@@ -60,9 +60,16 @@ export async function POST(request: Request) {
     }
   }
 
-  const finalHtml = htmlBody ?? (signature?.html
-    ? `<div>${textBody.replace(/\n/g, "<br/>")}</div>${signature.html}`
-    : undefined);
+  const sigTemplate = signature ? {
+    fullName: signature.fullName ?? user.fullName,
+    title: signature.title ?? undefined,
+    phone: signature.phone ?? undefined,
+    linkedinUrl: signature.linkedinUrl ?? undefined,
+    website: signature.website ?? undefined,
+    avatarUrl: signature.avatarUrl ?? undefined,
+    html: signature.html ?? undefined,
+  } : undefined;
+  const finalHtml = htmlBody ?? renderEmailHtml(subject, textBody, { email: toAddr, name: toAddr.split("@")[0], status: "Direct" }, sigTemplate);
 
   if (isInternal(toAddr)) {
     // ── Direct internal delivery ────────────────────────────────────────────
@@ -80,20 +87,22 @@ export async function POST(request: Request) {
     // Try to link to existing thread (reply flow)
     if (replyToThreadId) {
       thread = await prisma.inboxThread.findUnique({ where: { id: replyToThreadId } }).catch(() => null);
+      // Subject-match fallback only when explicitly replying but thread wasn't found
+      if (!thread) {
+        thread = await prisma.inboxThread.findFirst({
+          where: {
+            mailboxId: recipientMailbox.id,
+            subject: { contains: cleanSubject, mode: "insensitive" },
+            createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
+            isTrashed: false,
+            isArchived: false,
+          },
+          orderBy: { createdAt: "desc" },
+        }).catch(() => null);
+      }
     }
 
-    // Subject-match fallback
-    if (!thread) {
-      thread = await prisma.inboxThread.findFirst({
-        where: {
-          mailboxId: recipientMailbox.id,
-          subject: { contains: cleanSubject, mode: "insensitive" },
-          createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
-        },
-        orderBy: { createdAt: "desc" },
-      }).catch(() => null);
-    }
-
+    // New compose (not a reply) — always create a fresh thread
     if (!thread) {
       thread = await prisma.inboxThread.create({
         data: { subject: cleanSubject, mailboxId: recipientMailbox.id },
@@ -115,13 +124,18 @@ export async function POST(request: Request) {
     // Also drop a copy in the sender's Sent mailbox (find or create)
     const senderMailbox = await prisma.mailbox.findUnique({ where: { email: fromAddr } });
     if (senderMailbox) {
-      const sentThread = await prisma.inboxThread.findFirst({
-        where: {
-          mailboxId: senderMailbox.id,
-          subject: { contains: cleanSubject, mode: "insensitive" },
-        },
-        orderBy: { createdAt: "desc" },
-      }) ?? await prisma.inboxThread.create({
+      // Link sent copy to same thread when replying; otherwise create a fresh sent thread
+      const sentThread = (replyToThreadId
+        ? await prisma.inboxThread.findFirst({
+            where: {
+              mailboxId: senderMailbox.id,
+              subject: { contains: cleanSubject, mode: "insensitive" },
+              createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
+            },
+            orderBy: { createdAt: "desc" },
+          }).catch(() => null)
+        : null
+      ) ?? await prisma.inboxThread.create({
         data: { subject: cleanSubject, mailboxId: senderMailbox.id },
       });
 

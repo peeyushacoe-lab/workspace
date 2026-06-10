@@ -1,0 +1,40 @@
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/session";
+
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const user = await getCurrentUser();
+  if (!user) return new NextResponse(null, { status: 401 });
+
+  const { id } = await params;
+  const target = await prisma.user.findUnique({
+    where: { id },
+    select: { avatarUrl: true },
+  });
+
+  if (!target?.avatarUrl) {
+    return new NextResponse(null, { status: 404 });
+  }
+
+  const avatarUrl = target.avatarUrl;
+
+  // If stored as a base64 data URL, extract and serve as image
+  const dataUrlMatch = avatarUrl.match(/^data:([^;]+);base64,(.+)$/s);
+  if (dataUrlMatch) {
+    const mimeType = dataUrlMatch[1];
+    const base64Data = dataUrlMatch[2];
+    const buffer = Buffer.from(base64Data, "base64");
+    return new NextResponse(buffer, {
+      headers: {
+        "Content-Type": mimeType,
+        "Cache-Control": "public, max-age=86400, stale-while-revalidate=3600",
+      },
+    });
+  }
+
+  // Regular URL — redirect to it
+  return NextResponse.redirect(avatarUrl);
+}

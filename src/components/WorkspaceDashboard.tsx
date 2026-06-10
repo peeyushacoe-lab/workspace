@@ -227,6 +227,7 @@ export function SimpleComposer({
   defaultBody = "",
   draftKey,
   draftId: initialDraftId,
+  replyToThreadId,
 }: {
   onSuccess?: () => void;
   userRole?: UserRole;
@@ -236,6 +237,7 @@ export function SimpleComposer({
   defaultBody?: string;
   draftKey?: string;
   draftId?: string;
+  replyToThreadId?: string;
 }) {
   const [recipient, setRecipient] = useState(defaultRecipient);
   const [cc, setCc] = useState("");
@@ -345,6 +347,7 @@ export function SimpleComposer({
       subject,
       body,
       signatureId: selectedSignatureId || undefined,
+      ...(replyToThreadId ? { replyToThreadId } : {}),
       ...(cc.trim()  ? { cc:  parseEmails(cc) }  : {}),
       ...(bcc.trim() ? { bcc: parseEmails(bcc) } : {}),
     };

@@ -230,6 +230,7 @@ export async function POST(request: Request) {
         fromAddress,
         cc,
         bcc,
+        { isBulk: true },
       );
       success += 1;
       if (emailLog) {

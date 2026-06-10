@@ -71,10 +71,21 @@ type WorkspaceMember = { id: string; email: string; fullName: string; displayNam
 
 // Render a sender avatar — shows profile pic if available, falls back to initial
 function SenderAvatar({ member, email, size = 8, onClick }: { member?: WorkspaceMember; email: string; size?: number; onClick?: (e?: React.MouseEvent) => void }) {
+  const [imgFailed, setImgFailed] = useState(false);
   const label = (member?.displayName ?? member?.fullName ?? email).charAt(0).toUpperCase();
   const cls = `w-${size} h-${size} rounded-full object-cover flex-shrink-0`;
   const wrap = `cursor-pointer hover:opacity-80 transition-opacity`;
-  if (member?.avatarUrl) return <img src={member.avatarUrl} alt={label} className={`${cls} ${onClick ? wrap : ""}`} onClick={onClick} />;
+  if (member?.avatarUrl && !imgFailed) {
+    return (
+      <img
+        src={member.avatarUrl}
+        alt={label}
+        className={`${cls} ${onClick ? wrap : ""}`}
+        onClick={onClick}
+        onError={() => setImgFailed(true)}
+      />
+    );
+  }
   return (
     <div className={`${cls} bg-[#00d2ff]/10 text-[#00d2ff] flex items-center justify-center font-bold text-sm ${onClick ? wrap : ""}`} onClick={onClick}>
       {label}
@@ -1312,6 +1323,7 @@ export function InboxView({ userRole, initialThreads }: {
                       defaultRecipient={threadDetail.messages[threadDetail.messages.length - 1]?.from ?? ""}
                       defaultSubject={`Re: ${threadDetail.subject}`}
                       defaultBody={replyDefaultBody}
+                      replyToThreadId={threadDetail.id}
                       onSuccess={() => {
                         setShowReply(false);
                         setReplyDefaultBody("");
