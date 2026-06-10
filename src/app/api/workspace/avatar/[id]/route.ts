@@ -22,7 +22,7 @@ export async function GET(
   const avatarUrl = target.avatarUrl;
 
   // If stored as a base64 data URL, extract and serve as image
-  const dataUrlMatch = avatarUrl.match(/^data:([^;]+);base64,(.+)$/s);
+  const dataUrlMatch = avatarUrl.match(/^data:([^;]+);base64,([A-Za-z0-9+/=]+)$/);
   if (dataUrlMatch) {
     const mimeType = dataUrlMatch[1];
     const base64Data = dataUrlMatch[2];
