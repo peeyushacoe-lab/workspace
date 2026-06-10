@@ -205,6 +205,46 @@ export async function POST(request: Request) {
       parsed.data.cc,
       parsed.data.bcc,
     );
+
+    // Save a sent copy in the sender's mailbox (so it appears in the Sent folder)
+    const senderMailbox = await prisma.mailbox.findUnique({ where: { email: fromAddr } }).catch(() => null);
+    if (senderMailbox) {
+      const cleanSubject = subject.replace(/^(Re|Fwd|Aw|Vw):\s+/i, "");
+      // Reuse existing sent thread for the same subject (reply chain), else create new
+      const sentThread = await prisma.inboxThread.findFirst({
+        where: {
+          mailboxId: senderMailbox.id,
+          subject: { contains: cleanSubject, mode: "insensitive" },
+          ...(replyToThreadId ? {} : { createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } }),
+        },
+        orderBy: { createdAt: "desc" },
+      }).catch(() => null) ?? await prisma.inboxThread.create({
+        data: { subject: cleanSubject, mailboxId: senderMailbox.id },
+      });
+
+      await prisma.inboxMessage.create({
+        data: {
+          threadId: sentThread.id,
+          from:     fromAddr,
+          to:       toAddr,
+          subject,
+          textBody,
+          htmlBody: finalHtml ?? null,
+          isRead:   true,
+        },
+      });
+    }
+
+    // Also log it in EmailLog so it shows in campaign/analytics views
+    await prisma.emailLog.create({
+      data: {
+        recipient: toAddr,
+        subject,
+        status:    "DELIVERED",
+        userId:    user.id,
+      },
+    }).catch(() => {}); // non-fatal
+
     return NextResponse.json({ ok: true, delivery: "external" });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Send failed";

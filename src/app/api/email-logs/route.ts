@@ -25,6 +25,8 @@ export async function GET(request: Request) {
   const where: Prisma.EmailLogWhereInput = {};
   if (campaignId) where.campaignId = campaignId;
   if (status) where.status = status as EmailStatus;
+  // When used as the Sent folder (no campaignId filter), scope to the current user's own sends
+  if (!campaignId) where.userId = currentUser.id;
 
   const logs = await prisma.emailLog.findMany({
     where,
