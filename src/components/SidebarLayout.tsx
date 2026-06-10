@@ -129,13 +129,13 @@ export function SidebarLayout({
               collapsed ? "justify-center px-2" : "gap-2.5 px-4"
             }`}
           >
-            <img src="/nexus.png" alt="Nexus" className="h-8 w-8 flex-shrink-0 rounded-md object-contain" />
+            {collapsed
+              ? <img src="/nexus.png" alt="CyberSage Nexus" className="h-8 w-8 flex-shrink-0 object-contain" />
+              : <img src="/nexusLogo.png" alt="CyberSage Nexus" className="h-8 w-auto flex-shrink-0 object-contain max-w-[140px]" />
+            }
             {!collapsed && (
               <>
-                <div className="flex flex-col flex-1 min-w-0">
-                  <span className="text-sm font-semibold text-[#a5e7ff] leading-tight tracking-tight">Nexus</span>
-                  <span className="text-[9px] text-[#bbc9cf] uppercase tracking-[0.15em] leading-tight">by CyberSage</span>
-                </div>
+                <div className="flex-1" />
                 <button
                   onClick={toggleCollapsed}
                   className="p-1 rounded-md text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] transition-colors flex-shrink-0"
@@ -168,11 +168,8 @@ export function SidebarLayout({
             />
             <aside className="relative z-10 flex w-56 flex-col bg-[#0a0d1c]/90 backdrop-blur-xl shadow-2xl">
               <div className="flex h-12 items-center gap-2.5 border-b border-[rgba(0,255,255,0.08)] px-4">
-                <img src="/nexus.png" alt="Nexus" className="h-8 w-8 rounded-md object-contain" />
-                <div className="flex flex-col flex-1">
-                  <span className="text-sm font-semibold text-[#a5e7ff] leading-tight tracking-tight">Nexus</span>
-                  <span className="text-[9px] text-[#bbc9cf] uppercase tracking-[0.15em] leading-tight">by CyberSage</span>
-                </div>
+                <img src="/nexusLogo.png" alt="CyberSage Nexus" className="h-7 w-auto object-contain max-w-[130px]" />
+                <div className="flex-1" />
                 <button
                   onClick={() => setMobileOpen(false)}
                   className="p-1 rounded-md text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6]"
@@ -194,9 +191,8 @@ export function SidebarLayout({
           >
             <Menu className="h-5 w-5" />
           </button>
-          <div className="flex items-center gap-2">
-            <img src="/nexus.png" alt="Nexus" className="h-7 w-7 rounded-md object-contain" />
-            <span className="font-semibold text-[#a5e7ff] text-sm tracking-tight">Nexus</span>
+          <div className="flex items-center">
+            <img src="/nexusLogo.png" alt="CyberSage Nexus" className="h-7 w-auto object-contain max-w-[120px]" />
           </div>
           {currentUser && (
             <div className="ml-auto flex items-center gap-2">

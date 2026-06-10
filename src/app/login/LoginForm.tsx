@@ -137,10 +137,11 @@ export function LoginForm({ next, error: initialError }: { next: string; error: 
 
         {/* Logo / brand */}
         <div className="relative z-10">
-          <div className="flex items-center gap-3">
-            <img src="/nexus.png" alt="Nexus" className="h-12 w-12 rounded-xl object-contain drop-shadow-[0_0_12px_rgba(0,210,255,0.5)]" />
-            <span className="text-[#a5e7ff] font-semibold text-lg tracking-tight">Nexus</span>
-          </div>
+          <img
+            src="/nexusLogo.png"
+            alt="CyberSage Nexus"
+            className="h-14 w-auto object-contain drop-shadow-[0_0_16px_rgba(0,210,255,0.4)] max-w-[240px]"
+          />
         </div>
 
         {/* Feature list */}
@@ -222,9 +223,8 @@ export function LoginForm({ next, error: initialError }: { next: string; error: 
 
         <div className="relative z-10 w-full max-w-[440px]">
           {/* Mobile logo */}
-          <div className="flex items-center gap-3 mb-8 md:hidden">
-            <img src="/nexus.png" alt="Nexus" className="h-10 w-10 rounded-xl object-contain" />
-            <span className="text-[#a5e7ff] font-semibold text-lg tracking-tight">Nexus</span>
+          <div className="flex items-center mb-8 md:hidden">
+            <img src="/nexusLogo.png" alt="CyberSage Nexus" className="h-10 w-auto object-contain max-w-[200px]" />
           </div>
 
           {/* Heading */}
