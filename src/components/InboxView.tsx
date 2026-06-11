@@ -59,6 +59,15 @@ type Draft = {
 type Attachment = { id: string; filename: string; storageUrl: string; mimeType: string; size?: number };
 type ThreatScan  = { riskScore: number; findings: string[] };
 
+type MailRule = {
+  id: string;
+  name: string;
+  isActive: boolean;
+  conditions: { field: string; op: string; value: string }[];
+  action: string;
+  actionData?: Record<string, unknown> | null;
+};
+
 type Message = {
   id: string; from: string; to: string; subject: string;
   textBody?: string; htmlBody?: string; isRead: boolean; receivedAt: string;
@@ -321,6 +330,249 @@ function NewFolderModal({ onClose, onCreate }: {
   );
 }
 
+// ── Rules modal ───────────────────────────────────────────────────────────────
+function RulesModal({ customFolders, onClose }: {
+  customFolders: CustomFolder[];
+  onClose: () => void;
+}) {
+  const [rules, setRules] = useState<MailRule[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [name, setName] = useState("");
+  const [field, setField] = useState<"from" | "to" | "subject" | "body">("from");
+  const [op, setOp] = useState<"contains" | "equals" | "startsWith" | "endsWith" | "notContains">("contains");
+  const [condValue, setCondValue] = useState("");
+  const [action, setAction] = useState<"MOVE_FOLDER" | "MARK_READ" | "STAR" | "ARCHIVE" | "TRASH">("MOVE_FOLDER");
+  const [folderId, setFolderId] = useState("");
+
+  useEffect(() => {
+    fetch("/api/inbox/rules")
+      .then(r => r.json())
+      .then((data: MailRule[]) => setRules(data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleSave = async () => {
+    if (!name.trim() || !condValue.trim()) return;
+    if (action === "MOVE_FOLDER" && !folderId) { toast.error("Pick a folder"); return; }
+    setSaving(true);
+    try {
+      const res = await fetch("/api/inbox/rules", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim(),
+          conditions: [{ field, op, value: condValue.trim() }],
+          action,
+          actionData: action === "MOVE_FOLDER" ? { folderId } : undefined,
+        }),
+      });
+      const data = await res.json() as MailRule & { error?: string };
+      if (!res.ok) throw new Error(data.error ?? "Failed");
+      setRules(prev => [...prev, data]);
+      setName(""); setCondValue(""); setField("from"); setOp("contains"); setAction("MOVE_FOLDER"); setFolderId("");
+      setShowForm(false);
+      toast.success("Rule created");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to create rule");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleToggle = async (rule: MailRule) => {
+    const updated = await fetch(`/api/inbox/rules/${rule.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isActive: !rule.isActive }),
+    }).then(r => r.json() as Promise<MailRule>).catch(() => null);
+    if (updated) setRules(prev => prev.map(r => r.id === rule.id ? updated : r));
+  };
+
+  const handleDelete = async (id: string) => {
+    await fetch(`/api/inbox/rules/${id}`, { method: "DELETE" }).catch(() => {});
+    setRules(prev => prev.filter(r => r.id !== id));
+    toast.success("Rule deleted");
+  };
+
+  const FIELD_LABELS: Record<string, string> = { from: "From", to: "To", subject: "Subject", body: "Body" };
+  const OP_LABELS: Record<string, string> = { contains: "contains", equals: "equals", startsWith: "starts with", endsWith: "ends with", notContains: "not contains" };
+  const ACTION_LABELS: Record<string, string> = { MOVE_FOLDER: "Move to folder", MARK_READ: "Mark as read", STAR: "Star", ARCHIVE: "Archive", TRASH: "Move to trash" };
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative z-10 w-full max-w-lg bg-[#1b1f2e] border border-[rgba(0,255,255,0.12)] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(0,255,255,0.08)] bg-[#0f1321] flex-shrink-0">
+          <div className="flex items-center gap-2 text-sm font-bold text-[#dfe1f6]">
+            <Zap className="w-4 h-4 text-[#00d2ff]" /> Email Rules
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowForm(v => !v)}
+              className="flex items-center gap-1.5 bg-[#00d2ff]/10 text-[#00d2ff] border border-[rgba(0,255,255,0.2)] px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-[#00d2ff]/20 transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" /> New Rule
+            </button>
+            <button onClick={onClose} className="p-1.5 rounded-lg text-[#bbc9cf] hover:bg-[#262939] transition-colors">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+        <div className="overflow-y-auto flex-1">
+          {showForm && (
+            <div className="p-5 border-b border-[rgba(0,255,255,0.08)] space-y-3 bg-[#151928]">
+              <p className="text-xs font-semibold text-[#00d2ff] uppercase tracking-wider">New Rule</p>
+              <input
+                type="text"
+                placeholder="Rule name (e.g. Move Slack emails)"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                className="w-full bg-[#0f1321] border border-[rgba(0,255,255,0.12)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] focus:outline-none focus:ring-1 focus:ring-[#00d2ff]/40 placeholder:text-[#3c494e]"
+                autoFocus
+              />
+              <div className="grid grid-cols-3 gap-2">
+                <select
+                  value={field}
+                  onChange={e => setField(e.target.value as typeof field)}
+                  className="bg-[#0f1321] border border-[rgba(0,255,255,0.12)] rounded-lg px-2 py-2 text-sm text-[#dfe1f6] focus:outline-none focus:ring-1 focus:ring-[#00d2ff]/40"
+                >
+                  <option value="from">From</option>
+                  <option value="to">To</option>
+                  <option value="subject">Subject</option>
+                  <option value="body">Body</option>
+                </select>
+                <select
+                  value={op}
+                  onChange={e => setOp(e.target.value as typeof op)}
+                  className="bg-[#0f1321] border border-[rgba(0,255,255,0.12)] rounded-lg px-2 py-2 text-sm text-[#dfe1f6] focus:outline-none focus:ring-1 focus:ring-[#00d2ff]/40"
+                >
+                  <option value="contains">contains</option>
+                  <option value="equals">equals</option>
+                  <option value="startsWith">starts with</option>
+                  <option value="endsWith">ends with</option>
+                  <option value="notContains">not contains</option>
+                </select>
+                <input
+                  type="text"
+                  placeholder="Value"
+                  value={condValue}
+                  onChange={e => setCondValue(e.target.value)}
+                  className="bg-[#0f1321] border border-[rgba(0,255,255,0.12)] rounded-lg px-2 py-2 text-sm text-[#dfe1f6] focus:outline-none focus:ring-1 focus:ring-[#00d2ff]/40 placeholder:text-[#3c494e]"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <p className="text-xs text-[#bbc9cf] mb-1">Action</p>
+                  <select
+                    value={action}
+                    onChange={e => setAction(e.target.value as typeof action)}
+                    className="w-full bg-[#0f1321] border border-[rgba(0,255,255,0.12)] rounded-lg px-2 py-2 text-sm text-[#dfe1f6] focus:outline-none focus:ring-1 focus:ring-[#00d2ff]/40"
+                  >
+                    <option value="MOVE_FOLDER">Move to folder</option>
+                    <option value="MARK_READ">Mark as read</option>
+                    <option value="STAR">Star</option>
+                    <option value="ARCHIVE">Archive</option>
+                    <option value="TRASH">Move to trash</option>
+                  </select>
+                </div>
+                {action === "MOVE_FOLDER" && (
+                  <div>
+                    <p className="text-xs text-[#bbc9cf] mb-1">Folder</p>
+                    <select
+                      value={folderId}
+                      onChange={e => setFolderId(e.target.value)}
+                      className="w-full bg-[#0f1321] border border-[rgba(0,255,255,0.12)] rounded-lg px-2 py-2 text-sm text-[#dfe1f6] focus:outline-none focus:ring-1 focus:ring-[#00d2ff]/40"
+                    >
+                      <option value="">Pick folder…</option>
+                      {customFolders.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                    </select>
+                  </div>
+                )}
+              </div>
+              <div className="flex gap-2 pt-1">
+                <button
+                  onClick={() => void handleSave()}
+                  disabled={!name.trim() || !condValue.trim() || saving}
+                  className="flex-1 bg-[#00d2ff] text-[#003543] py-2 rounded-lg text-sm font-bold disabled:opacity-40 flex items-center justify-center gap-2"
+                >
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                  Save Rule
+                </button>
+                <button
+                  onClick={() => setShowForm(false)}
+                  className="px-4 py-2 text-sm text-[#bbc9cf] hover:bg-[#262939] rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+          {loading ? (
+            <div className="p-8 text-center text-sm text-[#bbc9cf]">Loading rules…</div>
+          ) : rules.length === 0 && !showForm ? (
+            <div className="p-8 text-center">
+              <Zap className="w-8 h-8 text-[#3c494e] mx-auto mb-3" />
+              <p className="text-sm text-[#bbc9cf] mb-1">No rules yet</p>
+              <p className="text-xs text-[#3c494e]">Create a rule to automatically sort incoming emails into folders.</p>
+              <button
+                onClick={() => setShowForm(true)}
+                className="mt-4 bg-[#00d2ff]/10 text-[#00d2ff] border border-[rgba(0,255,255,0.2)] px-4 py-2 rounded-lg text-xs font-medium hover:bg-[#00d2ff]/20 transition-colors"
+              >
+                Create your first rule
+              </button>
+            </div>
+          ) : (
+            <div className="divide-y divide-[rgba(0,255,255,0.04)]">
+              {rules.map(rule => {
+                const cond = rule.conditions[0];
+                const folderName = rule.action === "MOVE_FOLDER"
+                  ? customFolders.find(f => f.id === (rule.actionData as Record<string, string> | null)?.folderId)?.name ?? "Unknown folder"
+                  : null;
+                return (
+                  <div key={rule.id} className={`flex items-start gap-3 p-4 transition-colors ${rule.isActive ? "" : "opacity-50"}`}>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-[#dfe1f6] truncate">{rule.name}</p>
+                      {cond && (
+                        <p className="text-xs text-[#7a9199] mt-0.5">
+                          When <span className="text-[#bbc9cf]">{FIELD_LABELS[cond.field] ?? cond.field}</span>{" "}
+                          <span className="text-[#bbc9cf]">{OP_LABELS[cond.op] ?? cond.op}</span>{" "}
+                          <span className="text-[#00d2ff] font-medium">&quot;{cond.value}&quot;</span>
+                        </p>
+                      )}
+                      <p className="text-xs text-[#7a9199] mt-0.5">
+                        → {ACTION_LABELS[rule.action] ?? rule.action}{folderName ? `: ${folderName}` : ""}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0 pt-0.5">
+                      <button
+                        onClick={() => void handleToggle(rule)}
+                        title={rule.isActive ? "Disable rule" : "Enable rule"}
+                        className={`relative w-9 h-5 rounded-full transition-colors ${rule.isActive ? "bg-[#00d2ff]" : "bg-[#3c494e]"}`}
+                      >
+                        <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${rule.isActive ? "translate-x-4" : "translate-x-0.5"}`} />
+                      </button>
+                      <button
+                        onClick={() => void handleDelete(rule.id)}
+                        className="p-1.5 rounded-lg text-[#bbc9cf] hover:bg-[#ff4d6d]/10 hover:text-[#ff4d6d] transition-colors"
+                        title="Delete rule"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── System folder type ────────────────────────────────────────────────────────
 type SystemFolder = "inbox" | "starred" | "sent" | "drafts" | "trash" | "snoozed" | "scheduled";
 
@@ -379,6 +631,7 @@ export function InboxView({ userRole, initialThreads }: {
   const [composerKey, setComposerKey]       = useState(0);
   const [snoozeTargetId, setSnoozeTargetId] = useState<string | null>(null);
   const [showNewFolder, setShowNewFolder]   = useState(false);
+  const [showRules, setShowRules]           = useState(false);
   const [profileUserId, setProfileUserId]   = useState<string | null>(null);
   const rewriteMenuRef = useRef<HTMLDivElement>(null);
 
@@ -733,6 +986,17 @@ export function InboxView({ userRole, initialThreads }: {
             </button>
           ))}
         </div>
+
+        {/* Rules */}
+        <div className="px-3 border-t border-[rgba(0,255,255,0.05)] pt-3 pb-4">
+          <button
+            onClick={() => setShowRules(true)}
+            className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium text-[#8fa3ac] hover:bg-[#161b2e] hover:text-[#c8d8de] transition-colors"
+          >
+            <Zap className="h-3.5 w-3.5 flex-shrink-0 text-[#00d2ff]" />
+            <span className="flex-1 text-left">Email Rules</span>
+          </button>
+        </div>
       </div>
 
       {/* ── Thread List ── */}
@@ -987,7 +1251,7 @@ export function InboxView({ userRole, initialThreads }: {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
                         <span
-                          className={`truncate text-[13px] cursor-pointer hover:text-[#00d2ff] transition-colors ${thread.unreadCount > 0 ? "font-semibold text-[#dde4ea]" : "font-medium text-[#8fa3ac]"}`}
+                          className={`truncate text-[13px] cursor-pointer hover:text-[#00d2ff] transition-colors ${thread.unreadCount > 0 ? "font-semibold text-[#dde4ea]" : "font-medium text-[#b8ccd4]"}`}
                           onClick={(e) => { e.stopPropagation(); const m = memberMap[(thread.lastMessage?.from ?? "").toLowerCase()]; if (m?.id) setProfileUserId(m.id); }}
                         >
                           {senderName(memberMap[(thread.lastMessage?.from ?? "").toLowerCase()], thread.lastMessage?.from)}
@@ -1006,11 +1270,11 @@ export function InboxView({ userRole, initialThreads }: {
                     </div>
                   </div>
                   <div className="pl-9">
-                    <p className={`truncate text-[13px] leading-snug ${thread.unreadCount > 0 ? "font-semibold text-[#c8d8de]" : "font-medium text-[#6b7c84]"}`}>
+                    <p className={`truncate text-[13px] leading-snug ${thread.unreadCount > 0 ? "font-semibold text-[#c8d8de]" : "font-medium text-[#96adb8]"}`}>
                       {thread.subject}
                     </p>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <p className="text-[11px] text-[#4a5568] truncate flex-1">{thread.lastMessage?.snippet}</p>
+                      <p className="text-[11px] text-[#7a9199] truncate flex-1">{thread.lastMessage?.snippet}</p>
                       <span className="text-[10px] text-[#3c4f5a] flex-shrink-0">
                         {thread.lastMessage
                           ? formatDistanceToNow(new Date(thread.lastMessage.receivedAt), { addSuffix: false })
@@ -1353,6 +1617,14 @@ export function InboxView({ userRole, initialThreads }: {
         <NewFolderModal
           onClose={() => setShowNewFolder(false)}
           onCreate={(folder) => setCustomFolders(prev => [...prev, folder])}
+        />
+      )}
+
+      {/* ── Rules Modal ── */}
+      {showRules && (
+        <RulesModal
+          customFolders={customFolders}
+          onClose={() => setShowRules(false)}
         />
       )}
 

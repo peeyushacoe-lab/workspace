@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
-import { sendEmail, renderEmailHtml } from "@/lib/email";
+import { sendEmail, renderComposeHtml } from "@/lib/email";
 import { getTokensForUser, sendExpoPush } from "@/lib/expo-push";
 import { indexingQueue } from "@/lib/queues/indexing.queue";
 
@@ -75,7 +75,7 @@ export async function POST(request: Request) {
     avatarUrl: signature.avatarUrl ?? undefined,
     html: signature.html ?? undefined,
   } : undefined;
-  const finalHtml = htmlBody ?? renderEmailHtml(subject, textBody, { email: toAddr, name: toAddr.split("@")[0], status: "Direct" }, sigTemplate);
+  const finalHtml = htmlBody ?? renderComposeHtml(textBody, { email: toAddr, name: toAddr.split("@")[0], status: "Direct" }, sigTemplate);
 
   if (isInternal(toAddr)) {
     // ── Direct internal delivery ────────────────────────────────────────────

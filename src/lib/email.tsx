@@ -92,6 +92,23 @@ function interpolateTemplate(template: string, contact: ContactInput) {
   return replaced;
 }
 
+// Plain compose/reply email — no branded card, no background colour, no marketing layout.
+// Gmail classifies branded HTML cards as Promotions/spam even from real addresses.
+export function renderComposeHtml(body: string, contact: ContactInput, signature?: SignatureTemplate) {
+  const htmlBody = interpolateTemplate(body, contact);
+  const signatureHtml = signature ? getSignatureHtml(signature) : '';
+  return `<!DOCTYPE html>
+<html lang="en">
+  <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /></head>
+  <body style="margin:0;padding:0;background:#ffffff;color:#1a1a1a;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px;line-height:1.7;">
+    <div style="max-width:640px;padding:24px 24px 8px;">
+      <div>${htmlBody}</div>
+      ${signatureHtml}
+    </div>
+  </body>
+</html>`;
+}
+
 export function renderEmailHtml(subject: string, body: string, contact: ContactInput, signature?: SignatureTemplate) {
   const htmlBody = interpolateTemplate(body, contact);
   const signatureHtml = signature ? getSignatureHtml(signature) : '';
@@ -205,7 +222,9 @@ export async function sendEmail(
     };
   }
 
-  const html = renderEmailHtml(subject, body, contact, signature);
+  const html = options?.isBulk
+    ? renderEmailHtml(subject, body, contact, signature)
+    : renderComposeHtml(body, contact, signature);
   const from = fromEmail || process.env.RESEND_FROM_EMAIL || "CyberSage <noreply@cybersage.uk>";
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://cybersage.uk";
 
