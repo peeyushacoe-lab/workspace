@@ -2,6 +2,11 @@ import { redis } from "@/lib/redis";
 
 type RateLimitResult = { allowed: boolean; retryAfter: number };
 
+// Per-instance in-memory fallback used only when Redis is unreachable.
+// Serverless functions are short-lived so this won't accumulate indefinitely,
+// but it prevents a Redis outage from completely bypassing rate limits.
+const memFallback = new Map<string, { count: number; expires: number }>();
+
 export async function checkRateLimit(
   key: string,
   limit: number,
@@ -19,7 +24,17 @@ export async function checkRateLimit(
     }
     return { allowed: true, retryAfter: 0 };
   } catch {
-    // If Redis is unavailable, fail open to avoid locking everyone out
+    // Redis unavailable — fall back to per-instance memory (best-effort)
+    const now = Date.now();
+    const entry = memFallback.get(fullKey);
+    if (!entry || entry.expires < now) {
+      memFallback.set(fullKey, { count: 1, expires: now + windowSeconds * 1000 });
+      return { allowed: true, retryAfter: 0 };
+    }
+    entry.count += 1;
+    if (entry.count > limit) {
+      return { allowed: false, retryAfter: Math.ceil((entry.expires - now) / 1000) };
+    }
     return { allowed: true, retryAfter: 0 };
   }
 }

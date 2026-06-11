@@ -117,7 +117,8 @@ const ALLOWED_TAGS = new Set([
   "table","tbody","td","tfoot","th","thead","time","tr","u","ul","var","wbr",
 ]);
 const ALLOWED_ATTRS: Record<string, string[]> = {
-  "*": ["class","dir","id","lang","style","title"],
+  // "style" intentionally omitted — CSS expressions/url() can execute JS in some clients
+  "*": ["class","dir","id","lang","title"],
   a: ["href","name","target","rel"],
   blockquote: ["cite"], col: ["span","width"], colgroup: ["span","width"],
   del: ["datetime"], img: ["alt","height","src","width"], ins: ["datetime"],
@@ -1180,10 +1181,16 @@ export function InboxView({ userRole, initialThreads }: {
 
           /* ── Thread list (inbox / starred / snoozed / trash / custom folder) ── */
           ) : isLoading ? (
-            <div className="p-8 text-center text-sm text-[#bbc9cf]">Loading inbox…</div>
+            <div className="p-8 flex flex-col items-center gap-3 text-[#bbc9cf]">
+              <Loader2 className="w-6 h-6 animate-spin text-[#00d2ff]" />
+              <span className="text-sm">Loading…</span>
+            </div>
           ) : visibleThreads.length === 0 ? (
-            <div className="p-8 text-center text-sm text-[#bbc9cf]">
-              {searchQuery ? "No matching messages." : "Nothing here yet."}
+            <div className="p-10 flex flex-col items-center gap-2 text-center">
+              <Inbox className="w-8 h-8 text-[#3c494e]" />
+              <p className="text-sm text-[#bbc9cf] mt-1">
+                {searchQuery ? "No messages match your search." : "All clear — nothing here."}
+              </p>
             </div>
           ) : (
             visibleThreads.map(thread => (

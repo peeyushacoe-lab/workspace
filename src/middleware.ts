@@ -26,7 +26,10 @@ const validRoles = new Set<string>([
   "RESEARCH", "FINANCE", "OPERATIONS", "SUPPORT", "INTERNSHIP",
 ]);
 
-const MFA_ENFORCED_ROLES = new Set<string>(["ADMIN", "CEO", "CISO"]);
+const MFA_ENFORCED_ROLES = new Set<string>([
+  "ADMIN", "CEO", "CISO",
+  "DEVELOPER", "CYBER_SECURITY", "FINANCE", "R_AND_D", "COO", "OPS_MANAGER",
+]);
 
 function fromBase64Url(str: string): Uint8Array<ArrayBuffer> {
   const padded = str.replace(/-/g, "+").replace(/_/g, "/");

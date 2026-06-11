@@ -18,8 +18,7 @@ const resendWebhookSchema = z.object({
       text: z.string().nullish(),
       html: z.string().nullish(),
       headers: z.record(z.string(), z.string()).nullish(),
-    })
-    .passthrough(),
+    }).catchall(z.unknown()),
 });
 
 const statusByEvent: Record<
@@ -41,12 +40,19 @@ export async function POST(request: Request) {
   const svixTimestamp = request.headers.get("svix-timestamp");
   const svixSignature = request.headers.get("svix-signature");
 
-  console.log("[webhook] received", { svixId, svixTimestamp, hasSig: !!svixSignature, bodyLength: body.length });
-
   // Cloudflare Email Worker sends x-worker-secret instead of Svix headers
   const workerSecret = request.headers.get("x-worker-secret");
   const workerSecretEnv = process.env.CF_WORKER_SECRET;
-  if (workerSecret && workerSecretEnv && workerSecret === workerSecretEnv) {
+
+  // Timing-safe comparison to prevent timing-based brute-force of the worker secret
+  function workerSecretValid(a: string, b: string): boolean {
+    if (a.length !== b.length) return false;
+    const aBytes = Buffer.from(a);
+    const bBytes = Buffer.from(b);
+    return require("crypto").timingSafeEqual(aBytes, bBytes);
+  }
+
+  if (workerSecret && workerSecretEnv && workerSecretValid(workerSecret, workerSecretEnv)) {
     let payloadRaw: unknown;
     try { payloadRaw = JSON.parse(body); } catch {
       return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
@@ -55,7 +61,6 @@ export async function POST(request: Request) {
     if (!payload.success) return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
     const { type, data: webhookData } = payload.data;
     if (type === "email.received") {
-      console.log("[webhook] CF worker inbound:", { from: webhookData.from, to: webhookData.to, hasText: !!webhookData.text, hasHtml: !!webhookData.html });
       return handleInboundEmail(webhookData);
     }
     return NextResponse.json({ ok: true });
@@ -76,10 +81,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
   } else {
-    console.warn("[webhook] no svix headers — parsing body without verification");
-    try { payloadRaw = JSON.parse(body); } catch {
-      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-    }
+    // No Svix headers and no valid worker secret — reject to prevent payload forgery
+    return NextResponse.json({ error: "Missing webhook signature" }, { status: 401 });
   }
   const payload = resendWebhookSchema.safeParse(payloadRaw);
 
@@ -91,7 +94,6 @@ export async function POST(request: Request) {
 
   // 1. Handle Inbound Emails
   if (type === "email.received") {
-    console.log("[webhook] inbound fields:", { from: webhookData.from, to: webhookData.to, subject: webhookData.subject, hasText: !!webhookData.text, hasHtml: !!webhookData.html, textLen: webhookData.text?.length, htmlLen: webhookData.html?.length, keys: Object.keys(webhookData) });
     return handleInboundEmail(webhookData);
   }
 
@@ -158,7 +160,7 @@ async function fetchEmailBody(emailId: string): Promise<ResendEmailFull> {
       headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
     });
     const json = await res.json() as Record<string, unknown>;
-    console.log("[webhook] fetchEmailBody status:", res.status, "keys:", Object.keys(json), "hasHtml:", !!json.html, "hasText:", !!json.text);
+    if (!res.ok) console.error("[webhook] fetchEmailBody failed:", res.status);
     if (!res.ok) return {};
     return json as ResendEmailFull;
   } catch (err) {
@@ -196,7 +198,7 @@ async function handleInboundEmail(data: InboundEmailPayload) {
 
   // Resend bounce/delivery tracking addresses must never appear as inbox senders.
   if (BOUNCE_DOMAIN_RE.test(senderEmail)) {
-    console.warn("[webhook] dropped inbound — bounce-tracking sender:", senderEmail);
+    // Drop silently — bounce-tracking sender address, not a real email
     return NextResponse.json({ ok: true, ignored: "bounce-tracking sender" });
   }
 
@@ -223,6 +225,12 @@ async function handleInboundEmail(data: InboundEmailPayload) {
 
   // Thread matching logic — Resend sends message_id at top level, not in headers
   const messageId = data.message_id ?? data.headers?.["message-id"];
+
+  // Deduplicate — Resend retries on non-200, so the same message may arrive twice
+  if (messageId) {
+    const exists = await prisma.inboxMessage.findUnique({ where: { messageId }, select: { id: true } }).catch(() => null);
+    if (exists) return NextResponse.json({ ok: true, deduplicated: true });
+  }
   const inReplyTo = data.headers?.["in-reply-to"];
   const references = data.headers?.["references"];
   
@@ -290,7 +298,8 @@ async function handleInboundEmail(data: InboundEmailPayload) {
     where: { mailboxId: mailbox.id, role: "OWNER" },
     select: { userId: true },
   });
-  mailRulesQueue.add("evaluate", {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (mailRulesQueue as any).add("evaluate", {
     messageId: inboxMessage.id,
     mailboxId: mailbox.id,
     userId: mailboxOwner?.userId ?? null,

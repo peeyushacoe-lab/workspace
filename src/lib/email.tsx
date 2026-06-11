@@ -228,8 +228,12 @@ export async function sendEmail(
   const from = fromEmail || process.env.RESEND_FROM_EMAIL || "CyberSage <noreply@cybersage.uk>";
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://cybersage.uk";
 
+  // Idempotency key: same subject + recipient + minute = same key within a 60s window,
+  // preventing duplicate sends from double-clicks or retries.
+  const idempotencyKey = Buffer.from(`${subject}|${contact.email}|${Math.floor(Date.now() / 60000)}`).toString("base64url");
   const headers: Record<string, string> = {
-    "X-Entity-Ref-ID": `cybersage-${Date.now()}`,
+    "X-Entity-Ref-ID": idempotencyKey,
+    "Idempotency-Key": idempotencyKey,
   };
   if (options?.isBulk) {
     headers["List-Unsubscribe"] = `<${appUrl}/unsubscribe?email=${encodeURIComponent(contact.email)}>, <mailto:unsubscribe@cybersage.uk?subject=unsubscribe>`;
