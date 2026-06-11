@@ -9,6 +9,7 @@ export async function GET() {
   if (!user) return NextResponse.json({ count: 0 });
 
   const cacheKey = `unread:${user.id}`;
+  const userEmail = user.email.toLowerCase();
 
   try {
     const cached = await getCached<{ count: number }>(cacheKey);
@@ -17,10 +18,25 @@ export async function GET() {
     if (cached !== null) {
       count = cached.count;
     } else {
-      count = await prisma.inboxMessage.count({
+      // Count unread THREADS (not messages) so the sidebar badge always agrees
+      // with the inbox folder badge. Mirrors the inbox folder filter exactly:
+      // own mailbox OR delegated access, exclude trashed/archived, exclude
+      // self-sent messages and bounce-tracking addresses.
+      count = await prisma.inboxThread.count({
         where: {
-          isRead: false,
-          thread: { mailbox: { accessLogs: { some: { userId: user.id } } } },
+          isTrashed: false,
+          isArchived: false,
+          OR: [
+            { mailbox: { email: userEmail } },
+            { mailbox: { accessLogs: { some: { userId: user.id } } } },
+          ],
+          messages: {
+            some: {
+              isRead: false,
+              NOT: { from: { equals: userEmail, mode: "insensitive" } },
+              from: { not: { contains: "@send." } },
+            },
+          },
         },
       });
       await setCached(cacheKey, { count }, 15);
@@ -29,7 +45,9 @@ export async function GET() {
     const { notModified, etag } = withETag({ count }, null);
     void notModified;
     const response = NextResponse.json({ count });
-    response.headers.set("Cache-Control", "private, max-age=10, stale-while-revalidate=20");
+    // No browser caching — stale badge counts were sticking after reads.
+    // Freshness is handled by the 15s Redis cache + invalidation on mark-read.
+    response.headers.set("Cache-Control", "no-store");
     response.headers.set("ETag", etag);
     return response;
   } catch {

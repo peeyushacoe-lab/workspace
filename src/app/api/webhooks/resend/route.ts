@@ -4,6 +4,7 @@ import { z } from "zod";
 import { Webhook } from "svix";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { invalidate } from "@/lib/cache";
 import { mailRulesQueue } from "@/lib/queues/mail-rules.queue";
 
 const resendWebhookSchema = z.object({
@@ -290,6 +291,17 @@ async function handleInboundEmail(data: InboundEmailPayload) {
       references: references,
     },
   });
+
+  // Bump the thread so it surfaces at the top of the inbox (list is ordered by
+  // updatedAt), and resurface trashed/archived threads on new replies — Gmail
+  // behaviour. Without this, replies to older threads never appeared.
+  await prisma.inboxThread.update({
+    where: { id: thread.id },
+    data: { isTrashed: false, isArchived: false },
+  });
+
+  // New unread mail — drop cached unread badge counts so they refresh promptly
+  await invalidate("unread:*").catch(() => {});
 
   // 4. Security Scan (Phase 7)
   await performSecurityScan(inboxMessage.id, data.text || "");

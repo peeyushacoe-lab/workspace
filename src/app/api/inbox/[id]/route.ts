@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { invalidate } from "@/lib/cache";
 import { logAudit } from "@/lib/audit";
 
 type Params = { params: Promise<{ id: string }> };
@@ -97,9 +98,11 @@ export async function PUT(request: Request, { params }: Params) {
 
   if (body.markRead === true) {
     await prisma.inboxMessage.updateMany({ where: { threadId: id }, data: { isRead: true } });
+    await invalidate(`unread:${user.id}`).catch(() => {});
   }
   if (body.markRead === false) {
     await prisma.inboxMessage.updateMany({ where: { threadId: id }, data: { isRead: false } });
+    await invalidate(`unread:${user.id}`).catch(() => {});
   }
   if (body.isStarred !== undefined) updateData.isStarred = body.isStarred;
   if (body.isArchived !== undefined) updateData.isArchived = body.isArchived;

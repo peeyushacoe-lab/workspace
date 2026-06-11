@@ -9,7 +9,7 @@ import {
   Folder, BellOff, Zap, Users, MoreHorizontal, Plus, Edit2, Trash,
   Shield, ShieldCheck, ShieldX, Globe, Lock, Eye, Activity,
 } from "lucide-react";
-import { formatDistanceToNow, isPast, isBefore, addHours, addDays, nextMonday } from "date-fns";
+import { formatDistanceToNow, isPast, isBefore, addHours, addDays, nextMonday, format, isToday, isThisYear } from "date-fns";
 import { toast } from "sonner";
 import { SimpleComposer } from "./WorkspaceDashboard";
 import { UserProfileModal } from "./UserProfileModal";
@@ -80,6 +80,30 @@ type ThreadDetail = { id: string; subject: string; mailboxId: string; messages: 
 type WorkspaceMember = { id: string; email: string; fullName: string; displayName: string | null; avatarUrl: string | null };
 
 // Render a sender avatar — shows profile pic if available, falls back to initial
+// Deterministic per-sender avatar tint (Gmail-style) — hash the email into a palette
+const AVATAR_PALETTE = [
+  "bg-[#5b8def]/15 text-[#8fb3f5]",
+  "bg-[#06d6a0]/15 text-[#4fe3bd]",
+  "bg-[#b07ce8]/15 text-[#c9a2f0]",
+  "bg-[#ff9f43]/15 text-[#ffbe7a]",
+  "bg-[#ef5da8]/15 text-[#f590c4]",
+  "bg-[#00d2ff]/15 text-[#5ce0ff]",
+  "bg-[#ffd166]/15 text-[#ffe09e]",
+];
+function avatarTint(email: string): string {
+  let h = 0;
+  for (let i = 0; i < email.length; i++) h = (h * 31 + email.charCodeAt(i)) >>> 0;
+  return AVATAR_PALETTE[h % AVATAR_PALETTE.length];
+}
+
+// Compact Outlook-style timestamp: 14:32 today, "Wed 3 Jun" this year, else date
+function smartTime(date: Date | string): string {
+  const d = new Date(date);
+  if (isToday(d)) return format(d, "HH:mm");
+  if (isThisYear(d)) return format(d, "d MMM");
+  return format(d, "dd/MM/yyyy");
+}
+
 function SenderAvatar({ member, email, size = 8, onClick }: { member?: WorkspaceMember; email: string; size?: number; onClick?: (e?: React.MouseEvent) => void }) {
   const [imgFailed, setImgFailed] = useState(false);
   const label = (member?.displayName ?? member?.fullName ?? email).charAt(0).toUpperCase();
@@ -97,7 +121,7 @@ function SenderAvatar({ member, email, size = 8, onClick }: { member?: Workspace
     );
   }
   return (
-    <div className={`${cls} bg-[#00d2ff]/10 text-[#00d2ff] flex items-center justify-center font-semibold text-sm ${onClick ? wrap : ""}`} onClick={onClick}>
+    <div className={`${cls} ${avatarTint(email.toLowerCase())} flex items-center justify-center font-semibold text-sm ${onClick ? wrap : ""}`} onClick={onClick}>
       {label}
     </div>
   );
@@ -703,6 +727,7 @@ export function InboxView({ userRole, initialThreads }: {
   const [showNewFolder, setShowNewFolder]   = useState(false);
   const [showRules, setShowRules]           = useState(false);
   const [profileUserId, setProfileUserId]   = useState<string | null>(null);
+  const [expandedMsgs, setExpandedMsgs]     = useState<Set<string>>(new Set());
   const rewriteMenuRef = useRef<HTMLDivElement>(null);
 
   // Load custom folders once
@@ -823,7 +848,12 @@ export function InboxView({ userRole, initialThreads }: {
       if (response.ok) {
         const data = await response.json();
         setThreadDetail(data);
-        fetch(`/api/inbox/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ markRead: true }) });
+        // Gmail behaviour: only the newest message starts expanded
+        const msgs = (data as { messages?: { id: string }[] }).messages ?? [];
+        setExpandedMsgs(new Set(msgs.length ? [msgs[msgs.length - 1].id] : []));
+        fetch(`/api/inbox/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ markRead: true }) })
+          .then(() => window.dispatchEvent(new Event("cybersage:unread-refresh")))
+          .catch(() => {});
         setThreads(prev => prev.map(t => t.id === id ? { ...t, unreadCount: 0 } : t));
       }
     } catch {
@@ -1344,51 +1374,52 @@ export function InboxView({ userRole, initialThreads }: {
                   )}
                 </div>
 
-                <div className="px-3 py-2.5">
-                  <div className="flex items-center gap-2 mb-1.5">
+                {/* Unread accent bar — Outlook style */}
+                {thread.unreadCount > 0 && (
+                  <span className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#00d2ff]" />
+                )}
+
+                <div className="flex gap-3 px-3 py-2.5">
+                  <div className="pt-0.5">
                     <SenderAvatar
                       member={memberMap[(thread.lastMessage?.from ?? "").toLowerCase()]}
                       email={thread.lastMessage?.from ?? "?"}
-                      size={7}
+                      size={8}
                       onClick={() => { const m = memberMap[(thread.lastMessage?.from ?? "").toLowerCase()]; if (m?.id) setProfileUserId(m.id); }}
                     />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span
-                          className={`truncate text-[13px] cursor-pointer hover:text-[#00d2ff] transition-colors ${thread.unreadCount > 0 ? "font-semibold text-[#dde4ea]" : "font-medium text-[#b8ccd4]"}`}
-                          onClick={(e) => { e.stopPropagation(); const m = memberMap[(thread.lastMessage?.from ?? "").toLowerCase()]; if (m?.id) setProfileUserId(m.id); }}
-                        >
-                          {senderName(memberMap[(thread.lastMessage?.from ?? "").toLowerCase()], thread.lastMessage?.from)}
-                        </span>
-                        <PriorityBadge priority={thread.priority} />
-                        {thread.slaDeadline && <SlaIndicator deadline={thread.slaDeadline} />}
-                        {isExternalSender(thread.lastMessage?.from ?? "") && (
-                          <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#ffd166]/10 text-[#ffd166] flex-shrink-0" title="External sender">
-                            <Globe className="w-2.5 h-2.5" />Ext
-                          </span>
-                        )}
-                      </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline gap-2">
+                      <span
+                        className={`truncate text-[13px] ${thread.unreadCount > 0 ? "font-semibold text-[#eceef8]" : "text-[#9aa3b8]"}`}
+                        onClick={(e) => { e.stopPropagation(); const m = memberMap[(thread.lastMessage?.from ?? "").toLowerCase()]; if (m?.id) setProfileUserId(m.id); }}
+                      >
+                        {senderName(memberMap[(thread.lastMessage?.from ?? "").toLowerCase()], thread.lastMessage?.from)}
+                      </span>
+                      <span className={`ml-auto flex-shrink-0 text-[11px] tabular-nums ${thread.unreadCount > 0 ? "text-[#00d2ff] font-medium" : "text-[#5d6579]"}`}>
+                        {thread.lastMessage ? smartTime(thread.lastMessage.receivedAt) : ""}
+                      </span>
                     </div>
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      {thread.unreadCount > 0 && (
-                        <span className="bg-[#00d2ff] text-[#002d38] text-[9px] font-semibold px-1.5 py-0.5 rounded-full leading-none">
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <p className={`truncate text-[13px] leading-snug flex-1 ${thread.unreadCount > 0 ? "font-medium text-[#dfe1f6]" : "text-[#8b93a7]"}`}>
+                        {thread.subject}
+                      </p>
+                      <PriorityBadge priority={thread.priority} />
+                      {thread.slaDeadline && <SlaIndicator deadline={thread.slaDeadline} />}
+                      {isExternalSender(thread.lastMessage?.from ?? "") && (
+                        <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#ffd166]/10 text-[#ffd166] flex-shrink-0" title="External sender">
+                          <Globe className="w-2.5 h-2.5" />Ext
+                        </span>
+                      )}
+                      {thread.isStarred && <Star className="w-3 h-3 text-[#ffd166] flex-shrink-0" fill="currentColor" />}
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <p className="text-xs text-[#707a90] truncate flex-1">{thread.lastMessage?.snippet}</p>
+                      {thread.unreadCount > 1 && (
+                        <span className="flex-shrink-0 rounded-full bg-[#00d2ff]/15 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-[#00d2ff] tabular-nums">
                           {thread.unreadCount}
                         </span>
                       )}
-                      {thread.isStarred && <Star className="w-3 h-3 text-[#00d2ff]" fill="currentColor" />}
-                    </div>
-                  </div>
-                  <div className="pl-9">
-                    <p className={`truncate text-[13px] leading-snug ${thread.unreadCount > 0 ? "font-semibold text-[#c8d8de]" : "font-medium text-[#96adb8]"}`}>
-                      {thread.subject}
-                    </p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <p className="text-[11px] text-[#7a9199] truncate flex-1">{thread.lastMessage?.snippet}</p>
-                      <span className="text-[10px] text-[#454e63] flex-shrink-0">
-                        {thread.lastMessage
-                          ? formatDistanceToNow(new Date(thread.lastMessage.receivedAt), { addSuffix: false })
-                          : ""}
-                      </span>
                     </div>
                   </div>
                 </div>
@@ -1514,26 +1545,58 @@ export function InboxView({ userRole, initialThreads }: {
             )}
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {threadDetail.messages.map((msg) => (
+            <div className="flex-1 overflow-y-auto p-4 space-y-2">
+              {threadDetail.messages.map((msg, msgIdx) => {
+                const isLastMsg = msgIdx === threadDetail.messages.length - 1;
+                const isExpanded = isLastMsg || expandedMsgs.has(msg.id);
+                const toggleMsg = () => setExpandedMsgs(prev => {
+                  const next = new Set(prev);
+                  if (next.has(msg.id)) next.delete(msg.id); else next.add(msg.id);
+                  return next;
+                });
+
+                // Collapsed older message — single line, Gmail style
+                if (!isExpanded) return (
+                  <button
+                    key={msg.id}
+                    onClick={toggleMsg}
+                    className="w-full flex items-center gap-3 px-5 py-2.5 bg-[#0e1220]/60 rounded-lg border border-[rgba(255,255,255,0.04)] hover:bg-[#0e1220] hover:border-[rgba(255,255,255,0.08)] transition-colors text-left"
+                  >
+                    <SenderAvatar member={memberMap[msg.from.toLowerCase()]} email={msg.from} size={6} />
+                    <span className="text-[13px] font-medium text-[#9aa3b8] flex-shrink-0 max-w-[160px] truncate">
+                      {senderName(memberMap[msg.from.toLowerCase()], msg.from)}
+                    </span>
+                    <span className="text-xs text-[#5d6579] truncate flex-1">
+                      {(msg.textBody ?? "").slice(0, 110)}
+                    </span>
+                    <span className="text-[11px] text-[#5d6579] flex-shrink-0 tabular-nums">{smartTime(msg.receivedAt)}</span>
+                  </button>
+                );
+
+                return (
                 <div key={msg.id} className="bg-[#0e1220] rounded-xl border border-[rgba(255,255,255,0.05)] overflow-hidden">
-                  <div className="px-5 py-3.5 border-b border-[rgba(255,255,255,0.04)] flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                  <div
+                    className={`px-5 py-3.5 border-b border-[rgba(255,255,255,0.04)] flex items-start justify-between gap-3 ${!isLastMsg ? "cursor-pointer" : ""}`}
+                    onClick={!isLastMsg ? toggleMsg : undefined}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
                       <SenderAvatar
                         member={memberMap[msg.from.toLowerCase()]}
                         email={msg.from}
                         size={9}
-                        onClick={() => { const m = memberMap[msg.from.toLowerCase()]; if (m?.id) setProfileUserId(m.id); }}
+                        onClick={(e) => { e?.stopPropagation(); const m = memberMap[msg.from.toLowerCase()]; if (m?.id) setProfileUserId(m.id); }}
                       />
-                      <div>
-                        <p
-                          className="text-sm font-semibold text-[#dde4ea] cursor-pointer hover:text-[#00d2ff] transition-colors"
-                          onClick={() => { const m = memberMap[msg.from.toLowerCase()]; if (m?.id) setProfileUserId(m.id); }}
-                        >
-                          {senderName(memberMap[msg.from.toLowerCase()], msg.from)}
-                        </p>
-                        <p className="text-[11px] text-[#4a5568] mt-0.5">{msg.from}</p>
-                        <p className="text-[11px] text-[#4a5568]">
+                      <div className="min-w-0">
+                        <div className="flex items-baseline gap-2 min-w-0">
+                          <p
+                            className="text-sm font-semibold text-[#eceef8] cursor-pointer hover:underline truncate"
+                            onClick={(e) => { e.stopPropagation(); const m = memberMap[msg.from.toLowerCase()]; if (m?.id) setProfileUserId(m.id); }}
+                          >
+                            {senderName(memberMap[msg.from.toLowerCase()], msg.from)}
+                          </p>
+                          <p className="text-xs text-[#5d6579] truncate">&lt;{msg.from}&gt;</p>
+                        </div>
+                        <p className="text-xs text-[#707a90] mt-0.5">
                           to {senderName(memberMap[msg.to.toLowerCase()], msg.to)}
                         </p>
                         {(() => {
@@ -1548,7 +1611,9 @@ export function InboxView({ userRole, initialThreads }: {
                         })()}
                       </div>
                     </div>
-                    <span className="text-[11px] text-[#4a5568]">{new Date(msg.receivedAt).toLocaleString()}</span>
+                    <span className="text-[11px] text-[#5d6579] flex-shrink-0 mt-0.5" title={new Date(msg.receivedAt).toLocaleString()}>
+                      {format(new Date(msg.receivedAt), "d MMM yyyy, HH:mm")}
+                    </span>
                   </div>
 
                   <div className="px-5 py-4">
@@ -1587,9 +1652,9 @@ export function InboxView({ userRole, initialThreads }: {
                     )}
 
                     {msg.htmlBody ? (
-                      <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: sanitizeHtml(msg.htmlBody) }} />
+                      <div className="prose prose-sm prose-invert max-w-none prose-a:text-[#00d2ff]" dangerouslySetInnerHTML={{ __html: sanitizeHtml(msg.htmlBody) }} />
                     ) : (
-                      <p className="text-sm text-[#dfe1f6] whitespace-pre-wrap">{msg.textBody}</p>
+                      <p className="text-sm text-[#dfe1f6] whitespace-pre-wrap leading-relaxed">{msg.textBody}</p>
                     )}
 
                     {msg.attachments && msg.attachments.length > 0 && (
@@ -1629,7 +1694,8 @@ export function InboxView({ userRole, initialThreads }: {
                     )}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Draft edit modal */}

@@ -96,10 +96,20 @@ export async function GET(request: Request) {
         },
       },
       orderBy: {
-        createdAt: "desc",
+        // updatedAt is bumped by the inbound webhook on every new message, so
+        // threads with new replies surface at the top (createdAt buried old
+        // threads forever once >50 existed — "disappearing email" bug).
+        updatedAt: "desc",
       },
       take: 50,
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+    });
+
+    // Display order: latest message first (the take-window above is by updatedAt)
+    threads.sort((a, b) => {
+      const aTime = a.messages[0]?.receivedAt ?? a.createdAt;
+      const bTime = b.messages[0]?.receivedAt ?? b.createdAt;
+      return new Date(bTime).getTime() - new Date(aTime).getTime();
     });
 
     // Format for frontend
@@ -133,10 +143,9 @@ export async function GET(request: Request) {
     });
 
     const response = NextResponse.json(formattedThreads);
-    // Short private cache — safe because middleware enforces auth before this runs.
-    // 10s max-age lets the browser skip a round-trip on rapid navigation while
-    // still reflecting new mail within seconds.
-    response.headers.set("Cache-Control", "private, max-age=10, stale-while-revalidate=20");
+    // Never let the browser serve a stale thread list — cached responses made
+    // trashed/sent threads flash back in or freshly-moved threads vanish.
+    response.headers.set("Cache-Control", "no-store");
     return response;
   } catch (error) {
     console.error("Failed to fetch inbox:", error);

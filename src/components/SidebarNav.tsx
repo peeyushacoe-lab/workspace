@@ -58,7 +58,7 @@ export function SidebarNav({
   useEffect(() => {
     const fetchUnread = async () => {
       try {
-        const res = await fetch("/api/inbox/unread-count");
+        const res = await fetch("/api/inbox/unread-count", { cache: "no-store" });
         if (res.ok) {
           const data = await res.json();
           setUnreadCount(data.count);
@@ -68,7 +68,12 @@ export function SidebarNav({
 
     fetchUnread();
     const interval = setInterval(fetchUnread, 30000);
-    return () => clearInterval(interval);
+    const onRefresh = () => fetchUnread();
+    window.addEventListener("cybersage:unread-refresh", onRefresh);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("cybersage:unread-refresh", onRefresh);
+    };
   }, []);
 
   if (collapsed) {
