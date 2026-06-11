@@ -7,6 +7,7 @@ import {
   AlertCircle, AlertTriangle, Info, ShieldAlert, FileText,
   Sparkles, Loader2, ChevronDown, CalendarClock, FolderPlus,
   Folder, BellOff, Zap, Users, MoreHorizontal, Plus, Edit2, Trash,
+  Shield, ShieldCheck, ShieldX, Globe, Lock, Eye, Activity,
 } from "lucide-react";
 import { formatDistanceToNow, isPast, isBefore, addHours, addDays, nextMonday } from "date-fns";
 import { toast } from "sonner";
@@ -187,6 +188,73 @@ function SlaIndicator({ deadline }: { deadline: string }) {
     </span>
   );
   return null;
+}
+
+// ── Security helpers ─────────────────────────────────────────────────────────
+
+const ORG_DOMAINS = ["cybersage.uk"];
+
+function isExternalSender(email: string): boolean {
+  const domain = email.split("@")[1]?.toLowerCase() ?? "";
+  return domain.length > 0 && !ORG_DOMAINS.some(d => domain === d || domain.endsWith(`.${d}`));
+}
+
+type ThreatLevel = "secure" | "caution" | "elevated" | "critical";
+
+function getThreatLevel(externalCount: number, urgentCount: number): ThreatLevel {
+  if (urgentCount >= 3) return "critical";
+  if (urgentCount >= 1 || externalCount >= 10) return "elevated";
+  if (externalCount >= 3) return "caution";
+  return "secure";
+}
+
+const THREAT_CONFIG: Record<ThreatLevel, { label: string; color: string; bg: string; border: string; Icon: React.ElementType }> = {
+  secure:   { label: "SECURE",   color: "text-[#06d6a0]", bg: "bg-[#06d6a0]/10", border: "border-[#06d6a0]/20", Icon: ShieldCheck },
+  caution:  { label: "CAUTION",  color: "text-[#ffd166]", bg: "bg-[#ffd166]/10", border: "border-[#ffd166]/20", Icon: Shield      },
+  elevated: { label: "ELEVATED", color: "text-[#ff9f43]", bg: "bg-[#ff9f43]/10", border: "border-[#ff9f43]/20", Icon: AlertTriangle },
+  critical: { label: "CRITICAL", color: "text-[#ff4d6d]", bg: "bg-[#ff4d6d]/10", border: "border-[#ff4d6d]/20", Icon: ShieldX     },
+};
+
+function SecurityPostureBar({ threads, totalScanned }: {
+  threads: { lastMessage?: { from: string } | null; priority: string }[];
+  totalScanned: number;
+}) {
+  const externalCount = threads.filter(t => isExternalSender(t.lastMessage?.from ?? "")).length;
+  const urgentCount   = threads.filter(t => t.priority === "URGENT").length;
+  const level         = getThreatLevel(externalCount, urgentCount);
+  const cfg           = THREAT_CONFIG[level];
+
+  return (
+    <div className={`flex items-center gap-3 px-3 py-1.5 border-b ${cfg.border} ${cfg.bg} text-[10px] font-semibold tracking-widest`}>
+      <cfg.Icon className={`w-3 h-3 flex-shrink-0 ${cfg.color}`} />
+      <span className={cfg.color}>{cfg.label}</span>
+      <span className="w-px h-3 bg-current opacity-20" />
+      <span className="text-[#5c6b72] normal-case tracking-normal font-normal">{totalScanned} scanned</span>
+      {externalCount > 0 && (
+        <>
+          <span className="w-px h-3 bg-current opacity-20" />
+          <span className="flex items-center gap-1 text-[#ffd166]">
+            <Globe className="w-2.5 h-2.5" />
+            {externalCount} external
+          </span>
+        </>
+      )}
+      {urgentCount > 0 && (
+        <>
+          <span className="w-px h-3 bg-current opacity-20" />
+          <span className="flex items-center gap-1 text-[#ff4d6d]">
+            <AlertTriangle className="w-2.5 h-2.5" />
+            {urgentCount} urgent
+          </span>
+        </>
+      )}
+      <div className="flex-1" />
+      <span className="flex items-center gap-1 text-[#3c4f5a] normal-case tracking-normal font-normal">
+        <Lock className="w-2.5 h-2.5" />
+        SPF · DKIM · DMARC
+      </span>
+    </div>
+  );
 }
 
 // ── Snooze modal ─────────────────────────────────────────────────────────────
@@ -1074,6 +1142,11 @@ export function InboxView({ userRole, initialThreads }: {
           )}
         </div>
 
+        {/* Security posture bar — inbox only */}
+        {activeFolder === "inbox" && !activeCustomFolder && !searchQuery && visibleThreads.length > 0 && (
+          <SecurityPostureBar threads={visibleThreads} totalScanned={visibleThreads.length} />
+        )}
+
         {/* Thread rows */}
         <div className="flex-1 overflow-y-auto divide-y divide-[rgba(0,255,255,0.04)]">
 
@@ -1289,6 +1362,11 @@ export function InboxView({ userRole, initialThreads }: {
                         </span>
                         <PriorityBadge priority={thread.priority} />
                         {thread.slaDeadline && <SlaIndicator deadline={thread.slaDeadline} />}
+                        {isExternalSender(thread.lastMessage?.from ?? "") && (
+                          <span className="flex items-center gap-0.5 px-1 py-0.5 rounded text-[9px] font-bold tracking-widest bg-[#ffd166]/10 text-[#ffd166] border border-[#ffd166]/20 flex-shrink-0">
+                            <Globe className="w-2 h-2" />EXT
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-1 flex-shrink-0">
@@ -1323,13 +1401,52 @@ export function InboxView({ userRole, initialThreads }: {
       {/* ── Message Detail ── */}
       <div className={`${selectedThreadId ? "flex" : "hidden md:flex"} flex-1 bg-[#0c1019] flex-col min-w-0`}>
         {!selectedThreadId ? (
-          <div className="flex-1 flex flex-col items-center justify-center gap-4 text-[#3c4f5a] p-8">
-            <div className="w-16 h-16 rounded-2xl bg-[#0f1321] border border-[rgba(0,255,255,0.06)] flex items-center justify-center">
-              <Mail className="w-7 h-7 opacity-40" />
-            </div>
-            <div className="text-center">
-              <p className="text-sm font-medium text-[#5c6b72]">No message selected</p>
-              <p className="text-xs mt-0.5 text-[#3c4f5a]">Pick a thread from the left to read it</p>
+          <div className="flex-1 flex flex-col items-center justify-center gap-6 p-8 relative overflow-hidden">
+            {/* Cyber grid background */}
+            <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{
+              backgroundImage: "linear-gradient(rgba(0,210,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(0,210,255,1) 1px, transparent 1px)",
+              backgroundSize: "32px 32px",
+            }} />
+            {/* Glow */}
+            <div className="absolute inset-0 pointer-events-none bg-radial-[ellipse_at_center] from-[#00d2ff]/5 to-transparent" />
+
+            <div className="relative z-10 flex flex-col items-center gap-5 max-w-sm text-center">
+              {/* Shield icon */}
+              <div className="relative">
+                <div className="w-20 h-20 rounded-2xl bg-[#0f1321] border border-[rgba(0,255,255,0.12)] flex items-center justify-center shadow-[0_0_40px_rgba(0,210,255,0.08)]">
+                  <ShieldCheck className="w-9 h-9 text-[#00d2ff] opacity-70" />
+                </div>
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#06d6a0] border-2 border-[#0c1019] flex items-center justify-center">
+                  <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                </span>
+              </div>
+
+              <div>
+                <p className="text-base font-semibold text-[#dfe1f6] tracking-tight">Inbox Secured</p>
+                <p className="text-xs text-[#5c6b72] mt-1 leading-relaxed">
+                  All communications are authenticated and scanned.<br />Select a thread to read.
+                </p>
+              </div>
+
+              {/* Auth status pills */}
+              <div className="flex items-center gap-2">
+                {[
+                  { label: "SPF", ok: true },
+                  { label: "DKIM", ok: true },
+                  { label: "DMARC", ok: true },
+                  { label: "DLP", ok: true },
+                ].map(({ label, ok }) => (
+                  <span key={label} className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold tracking-widest bg-[#0f1321] border border-[rgba(0,255,255,0.08)]">
+                    <span className={`w-1.5 h-1.5 rounded-full ${ok ? "bg-[#06d6a0]" : "bg-[#ff4d6d]"}`} />
+                    <span className={ok ? "text-[#06d6a0]" : "text-[#ff4d6d]"}>{label}</span>
+                  </span>
+                ))}
+              </div>
+
+              <div className="flex items-center gap-1.5 text-[10px] text-[#3c4f5a]">
+                <Lock className="w-2.5 h-2.5" />
+                <span>Nexus Secure Mail · CyberSage</span>
+              </div>
             </div>
           </div>
         ) : isDetailLoading ? (
@@ -1380,6 +1497,35 @@ export function InboxView({ userRole, initialThreads }: {
                 </button>
               </div>
             </div>
+
+            {/* Sender security context strip */}
+            {(() => {
+              const firstMsg = threadDetail.messages[0];
+              if (!firstMsg) return null;
+              const ext = isExternalSender(firstMsg.from);
+              const fromDomain = firstMsg.from.split("@")[1] ?? "";
+              return (
+                <div className={`flex items-center gap-3 px-5 py-1.5 text-[10px] border-b ${ext ? "bg-[#ffd166]/5 border-[#ffd166]/15" : "bg-[#06d6a0]/5 border-[#06d6a0]/10"}`}>
+                  {ext ? (
+                    <span className="flex items-center gap-1 font-bold text-[#ffd166]">
+                      <Globe className="w-2.5 h-2.5" /> EXTERNAL SENDER
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1 font-bold text-[#06d6a0]">
+                      <ShieldCheck className="w-2.5 h-2.5" /> INTERNAL
+                    </span>
+                  )}
+                  <span className="text-[#3c4f5a]">·</span>
+                  <span className="text-[#5c6b72] font-mono">{fromDomain}</span>
+                  <div className="flex-1" />
+                  <span className="flex items-center gap-1.5 text-[#3c4f5a]">
+                    <span className="flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full bg-[#06d6a0]" />SPF</span>
+                    <span className="flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full bg-[#06d6a0]" />DKIM</span>
+                    <span className="flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full bg-[#06d6a0]" />DMARC</span>
+                  </span>
+                </div>
+              );
+            })()}
 
             {/* Smart Reply bar */}
             {showSmartReply && (

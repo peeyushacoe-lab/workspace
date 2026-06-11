@@ -17,11 +17,21 @@ import {
   LayoutDashboard,
   ArrowRight,
   Sparkles,
+  Video,
+  StickyNote,
+  Users,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type SearchResultType = "mail" | "chat" | "drive" | "calendar";
+type SearchResultType =
+  | "mail"
+  | "chat"
+  | "drive"
+  | "calendar"
+  | "meeting"
+  | "note"
+  | "people";
 
 type SearchResult = {
   id: string;
@@ -33,7 +43,16 @@ type SearchResult = {
   metadata?: Record<string, string>;
 };
 
-const TYPE_FILTERS = ["all", "mail", "chat", "drive", "calendar"] as const;
+const TYPE_FILTERS = [
+  "all",
+  "mail",
+  "chat",
+  "drive",
+  "calendar",
+  "meeting",
+  "note",
+  "people",
+] as const;
 type TypeFilter = (typeof TYPE_FILTERS)[number];
 
 // ─── Static action list ───────────────────────────────────────────────────────
@@ -160,7 +179,7 @@ const TYPE_META: Record<
     Icon: MessageSquare,
   },
   drive: {
-    label: "Drive",
+    label: "Files",
     color: "text-green-600 dark:text-green-400",
     bg: "bg-green-100 dark:bg-green-500/20",
     Icon: HardDrive,
@@ -170,6 +189,24 @@ const TYPE_META: Record<
     color: "text-amber-600 dark:text-amber-400",
     bg: "bg-amber-100 dark:bg-amber-500/20",
     Icon: CalendarDays,
+  },
+  meeting: {
+    label: "Meetings",
+    color: "text-rose-600 dark:text-rose-400",
+    bg: "bg-rose-100 dark:bg-rose-500/20",
+    Icon: Video,
+  },
+  note: {
+    label: "Notes",
+    color: "text-teal-600 dark:text-teal-400",
+    bg: "bg-teal-100 dark:bg-teal-500/20",
+    Icon: StickyNote,
+  },
+  people: {
+    label: "People",
+    color: "text-cyan-600 dark:text-cyan-400",
+    bg: "bg-cyan-100 dark:bg-cyan-500/20",
+    Icon: Users,
   },
 };
 
@@ -422,7 +459,15 @@ export function GlobalSearch({
     },
     {}
   );
-  const typeOrder: SearchResultType[] = ["mail", "chat", "drive", "calendar"];
+  const typeOrder: SearchResultType[] = [
+    "mail",
+    "chat",
+    "drive",
+    "calendar",
+    "meeting",
+    "note",
+    "people",
+  ];
 
   // For display: track cumulative indices in the flat items array
   // Actions come first, then results grouped by type
@@ -461,19 +506,25 @@ export function GlobalSearch({
         {/* Type filter tabs — shown only when searching */}
         {isSearchMode && (
           <div className="flex gap-1 px-4 py-2 border-b border-[rgba(0,255,255,0.1)] bg-[#0f1321]">
-            {TYPE_FILTERS.map((f) => (
-              <button
-                key={f}
-                onClick={() => setTypeFilter(f)}
-                className={`px-3 py-1 rounded-lg text-xs font-medium capitalize transition-colors ${
-                  typeFilter === f
-                    ? "bg-[#00d2ff] text-[#003543]"
-                    : "text-[#bbc9cf] hover:bg-[#262939]"
-                }`}
-              >
-                {f}
-              </button>
-            ))}
+            {TYPE_FILTERS.map((f) => {
+              const label =
+                f === "all"
+                  ? "All"
+                  : TYPE_META[f as SearchResultType]?.label ?? f;
+              return (
+                <button
+                  key={f}
+                  onClick={() => setTypeFilter(f)}
+                  className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+                    typeFilter === f
+                      ? "bg-[#00d2ff] text-[#003543]"
+                      : "text-[#bbc9cf] hover:bg-[#262939]"
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
           </div>
         )}
 
@@ -558,9 +609,15 @@ export function GlobalSearch({
                               : "hover:bg-[#262939]"
                           }`}
                         >
-                          <div className="w-7 h-7 rounded-md bg-[#262939] flex items-center justify-center text-[#bbc9cf] flex-shrink-0 mt-0.5">
-                            <TypeBadge type={result.type} />
-                          </div>
+                          {(() => {
+                            const meta = TYPE_META[result.type];
+                            const Icon = meta?.Icon;
+                            return (
+                              <div className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5 ${meta?.bg ?? "bg-[#262939]"}`}>
+                                {Icon && <Icon className={`h-3.5 w-3.5 ${meta?.color ?? "text-[#bbc9cf]"}`} />}
+                              </div>
+                            );
+                          })()}
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-[#dfe1f6] truncate">
                               {result.title}
@@ -571,6 +628,9 @@ export function GlobalSearch({
                               </p>
                             )}
                           </div>
+                          {isSelected && (
+                            <ArrowRight className="h-3.5 w-3.5 text-[#bbc9cf] flex-shrink-0" />
+                          )}
                         </button>
                       );
                     })}
