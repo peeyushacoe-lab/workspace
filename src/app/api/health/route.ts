@@ -6,7 +6,8 @@ import { ALL_QUEUE_NAMES } from "@/lib/queues";
 
 async function getQueueMetrics(name: string) {
   try {
-    const q = new Queue(name, { connection: redisConnection });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const q = new Queue(name, { connection: redisConnection as any });
     const [waiting, active, failed, delayed] = await Promise.all([
       q.getWaitingCount(),
       q.getActiveCount(),

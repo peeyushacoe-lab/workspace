@@ -19,21 +19,28 @@ export async function GET(request: Request) {
     const viewAll = isPrivileged && searchParams.get("viewAll") === "true";
     const userEmail = user.email.toLowerCase();
 
-    // Sent folder: threads in the user's own mailbox where every message was sent BY the user
-    // Inbox folder: threads accessible to the user that contain at least one message NOT from the user
+    // Base filter: threads accessible to the user (their mailbox, or explicit access)
+    const userAccessFilter = {
+      OR: [
+        { mailbox: { email: userEmail } },
+        { mailbox: { accessLogs: { some: { userId: user.id } } } },
+      ] as object[],
+    };
+
+    // Folder-specific filters applied server-side so background polls never return
+    // stale trashed/archived threads and overwrite optimistic UI state.
     const folderFilter =
       folder === "sent"
-        ? {
-            mailbox: { email: userEmail },
-            messages: { some: { from: userEmail } },
-          }
+        ? { mailbox: { email: userEmail }, messages: { some: { from: userEmail } } }
+        : folder === "trash"
+        ? { ...userAccessFilter, isTrashed: true }
+        : folder === "archive"
+        ? { ...userAccessFilter, isArchived: true, isTrashed: false }
         : {
-            // Show threads where the mailbox belongs to the user (by email) OR they have explicit access
-            OR: [
-              { mailbox: { email: userEmail } },
-              { mailbox: { accessLogs: { some: { userId: user.id } } } },
-            ] as object[],
-            // Exclude pure sent-copy threads (all messages from self) from the inbox view
+            // "inbox" (default) — exclude trash, archive, and pure sent-copy threads
+            ...userAccessFilter,
+            isTrashed: false,
+            isArchived: false,
             NOT: { messages: { every: { from: userEmail } } },
           };
 

@@ -30,8 +30,10 @@ export function createDedicatedRedis(): Redis {
   return createRedis();
 }
 
-// Alias kept for BullMQ queue files that import redisConnection.
-export const redisConnection: Redis = redis;
+// BullMQ bundles its own ioredis version; the types are structurally incompatible
+// even though they work at runtime. Cast here so queue files don't each need `as any`.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const redisConnection: any = redis;
 
 if (process.env.NODE_ENV !== "production") {
   globalForRedis.redis = redis;

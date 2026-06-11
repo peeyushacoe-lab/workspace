@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { timingSafeEqual } from "crypto";
 import { z } from "zod";
 import { Webhook } from "svix";
 import { Prisma } from "@/generated/prisma/client";
@@ -49,7 +50,7 @@ export async function POST(request: Request) {
     if (a.length !== b.length) return false;
     const aBytes = Buffer.from(a);
     const bBytes = Buffer.from(b);
-    return require("crypto").timingSafeEqual(aBytes, bBytes);
+    return timingSafeEqual(aBytes, bBytes);
   }
 
   if (workerSecret && workerSecretEnv && workerSecretValid(workerSecret, workerSecretEnv)) {

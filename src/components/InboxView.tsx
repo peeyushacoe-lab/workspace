@@ -575,7 +575,7 @@ function RulesModal({ customFolders, onClose }: {
 }
 
 // ── System folder type ────────────────────────────────────────────────────────
-type SystemFolder = "inbox" | "starred" | "sent" | "drafts" | "trash" | "snoozed" | "scheduled";
+type SystemFolder = "inbox" | "starred" | "sent" | "drafts" | "trash" | "archive" | "snoozed" | "scheduled";
 
 const SYSTEM_FOLDERS: { key: SystemFolder; label: string; Icon: React.ElementType }[] = [
   { key: "inbox",     label: "Inbox",     Icon: Inbox       },
@@ -584,6 +584,7 @@ const SYSTEM_FOLDERS: { key: SystemFolder; label: string; Icon: React.ElementTyp
   { key: "drafts",    label: "Drafts",    Icon: FileText    },
   { key: "snoozed",   label: "Snoozed",   Icon: BellOff     },
   { key: "scheduled", label: "Scheduled", Icon: CalendarClock },
+  { key: "archive",   label: "Archive",   Icon: Archive     },
   { key: "trash",     label: "Trash",     Icon: Trash2      },
 ];
 
@@ -656,9 +657,22 @@ export function InboxView({ userRole, initialThreads }: {
   const loadThreads = useCallback(async (silent = false) => {
     if (!silent) setIsRefreshing(true);
     try {
-      const url = searchQuery ? `/api/inbox?q=${encodeURIComponent(searchQuery)}` : "/api/inbox";
-      // cache: "no-store" ensures a full reload always gets fresh data, not a stale cached response
-      const response = await fetch(url, { cache: "no-store" });
+      // Pass the active folder so the server filters server-side.
+      // This prevents background polls from returning stale trashed/archived threads
+      // that would overwrite the optimistic UI state after a delete/archive action.
+      let apiFolder: string;
+      if (searchQuery) {
+        apiFolder = "inbox"; // search always scopes to inbox (non-trashed/archived)
+      } else if (activeFolder === "trash") {
+        apiFolder = "trash";
+      } else if (activeFolder === "archive") {
+        apiFolder = "archive";
+      } else {
+        apiFolder = "inbox"; // inbox, starred, snoozed, custom folders all use inbox data
+      }
+      const params = new URLSearchParams({ folder: apiFolder });
+      if (searchQuery) params.set("q", searchQuery);
+      const response = await fetch(`/api/inbox?${params}`, { cache: "no-store" });
       if (response.ok) {
         const data = await response.json() as ThreadSummary[];
         // On silent background polls, don't wipe threads if server returns empty
@@ -669,7 +683,7 @@ export function InboxView({ userRole, initialThreads }: {
     } finally {
       if (!silent) { setIsLoading(false); setIsRefreshing(false); }
     }
-  }, [searchQuery]);
+  }, [searchQuery, activeFolder]);
 
   useEffect(() => {
     if (!initialThreads?.length) loadThreads();
@@ -868,18 +882,20 @@ export function InboxView({ userRole, initialThreads }: {
   const visibleThreads = threads.filter(t => {
     if (activeCustomFolder) return t.folderId === activeCustomFolder && !t.isTrashed;
     if (activeFolder === "trash")    return t.isTrashed;
+    if (activeFolder === "archive")  return t.isArchived && !t.isTrashed;
     if (activeFolder === "snoozed")  return t.isSnoozed && !t.isTrashed;
     if (t.isTrashed) return false;
+    if (t.isArchived) return false;
     if (t.isSnoozed && activeFolder !== "starred") return false;
     if (activeFolder === "starred")  return t.isStarred;
-    if (activeFolder === "inbox")    return !t.isArchived;
-    return true;
+    return true; // inbox and any unrecognised folder shows all non-trashed non-archived
   });
 
   const unreadCount = threads.filter(t => t.unreadCount > 0 && !t.isTrashed && !t.isArchived).length;
   const snoozedCount = threads.filter(t => t.isSnoozed && !t.isTrashed).length;
 
   const isSpecialFolder = activeFolder === "sent" || activeFolder === "drafts" || activeFolder === "scheduled";
+  const isArchiveFolder = activeFolder === "archive";
 
   const setSystemFolder = (key: SystemFolder) => {
     setActiveFolder(key);
@@ -1209,9 +1225,17 @@ export function InboxView({ userRole, initialThreads }: {
                     <button
                       onClick={(e) => handleRestoreFromTrash(thread.id, e)}
                       className="p-1.5 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-full transition-colors"
-                      title="Restore"
+                      title="Restore to inbox"
                     >
-                      <Archive className="w-3.5 h-3.5" />
+                      <Inbox className="w-3.5 h-3.5" />
+                    </button>
+                  ) : activeFolder === "archive" ? (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); void patchThread(thread.id, { isArchived: false }); toast.success("Moved to inbox"); }}
+                      className="p-1.5 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-full transition-colors"
+                      title="Move to inbox"
+                    >
+                      <Inbox className="w-3.5 h-3.5" />
                     </button>
                   ) : (
                     <>
