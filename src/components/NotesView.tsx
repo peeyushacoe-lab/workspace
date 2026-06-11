@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import {
   useCallback,
@@ -29,7 +29,7 @@ import {
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ── Types ──────────────────────────────────────────────────────────────────────
 
 type Note = {
   id: string;
@@ -41,7 +41,7 @@ type Note = {
   updatedAt: string;
 };
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// ── Constants ──────────────────────────────────────────────────────────────────
 
 const NOTE_COLORS: { label: string; value: string; dot: string; border: string }[] = [
   { label: "None",   value: "",          dot: "bg-[#707a90]",   border: "border-[#707a90]" },
@@ -64,12 +64,7 @@ function getDotClass(color: string | null): string {
   return found ? found.dot : "bg-[#cbd5e1]";
 }
 
-function getEditorBg(color: string | null): string {
-  if (!color) return "";
-  return `[background-color:${color}]`;
-}
-
-// ─── NoteListItem ─────────────────────────────────────────────────────────────
+// ── NoteListItem ───────────────────────────────────────────────────────────────
 
 function NoteListItem({
   note,
@@ -90,7 +85,8 @@ function NoteListItem({
   const [colorOpen, setColorOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const preview = note.content.slice(0, 60).replace(/\n/g, " ") || "No content";
+  // Strip HTML tags for preview
+  const preview = note.content.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, 60) || "No content";
   const when = formatDistanceToNow(new Date(note.updatedAt), { addSuffix: true });
 
   useEffect(() => {
@@ -116,7 +112,6 @@ function NoteListItem({
           : "hover:bg-[#262939]"
       }`}
     >
-      {/* Colored left border */}
       {hasBorder && (
         <div
           className={`absolute left-0 top-0 bottom-0 w-1 rounded-l border-l-4 ${borderClass}`}
@@ -220,7 +215,7 @@ function NoteListItem({
   );
 }
 
-// ─── Formatting toolbar button ─────────────────────────────────────────────────
+// ── Formatting toolbar button ───────────────────────────────────────────────────
 
 function FmtBtn({
   onClick,
@@ -235,7 +230,7 @@ function FmtBtn({
     <button
       type="button"
       onMouseDown={(e) => {
-        e.preventDefault(); // prevent editor blur
+        e.preventDefault(); // keep editor focused
         onClick();
       }}
       title={title}
@@ -246,7 +241,7 @@ function FmtBtn({
   );
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
+// ── Main component ─────────────────────────────────────────────────────────────
 
 export function NotesView() {
   const [notes, setNotes] = useState<Note[]>([]);
@@ -261,17 +256,19 @@ export function NotesView() {
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const colorPickerRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLInputElement>(null);
-  const contentRef = useRef<HTMLTextAreaElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  // Track which note id the editor currently shows so we can re-sync on selection change
+  const editorNoteIdRef = useRef<string | null>(null);
 
   const selected = notes.find((n) => n.id === selectedId) ?? null;
 
-  // ── Filtered notes (client-side search) ───────────────────────────────────
+  // ── Filtered notes ────────────────────────────────────────────────────────
 
   const filteredNotes = query.trim()
     ? notes.filter(
         (n) =>
           n.title.toLowerCase().includes(query.toLowerCase()) ||
-          n.content.toLowerCase().includes(query.toLowerCase())
+          n.content.replace(/<[^>]*>/g, "").toLowerCase().includes(query.toLowerCase())
       )
     : notes;
 
@@ -279,7 +276,7 @@ export function NotesView() {
   const unpinnedNotes = filteredNotes.filter((n) => !n.pinned);
   const hasBothSections = pinnedNotes.length > 0 && unpinnedNotes.length > 0;
 
-  // ── Fetch ──────────────────────────────────────────────────────────────────
+  // ── Fetch ─────────────────────────────────────────────────────────────────
 
   const fetchNotes = useCallback(async () => {
     try {
@@ -309,19 +306,22 @@ export function NotesView() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  // Auto-resize textarea
-  const autoResize = useCallback(() => {
-    if (contentRef.current) {
-      contentRef.current.style.height = "auto";
-      contentRef.current.style.height = `${contentRef.current.scrollHeight}px`;
+  // Sync contentEditable innerHTML when selected note changes
+  useEffect(() => {
+    if (!contentRef.current) return;
+    if (selected && selected.id !== editorNoteIdRef.current) {
+      contentRef.current.innerHTML = selected.content ?? "";
+      editorNoteIdRef.current = selected.id;
+    } else if (!selected) {
+      contentRef.current.innerHTML = "";
+      editorNoteIdRef.current = null;
     }
-  }, []);
+  }, [selected?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Save ───────────────────────────────────────────────────────────────────
+  // ── Save ──────────────────────────────────────────────────────────────────
 
   const scheduleSave = useCallback(
     (id: string, patch: Partial<Pick<Note, "title" | "content" | "pinned" | "color">>) => {
-      // Optimistic update in list
       setNotes((prev) =>
         prev.map((n) =>
           n.id === id ? { ...n, ...patch, updatedAt: new Date().toISOString() } : n
@@ -351,10 +351,8 @@ export function NotesView() {
     []
   );
 
-  // Immediate save (no debounce) for pin and color
   const saveNow = useCallback(
     async (id: string, patch: Partial<Pick<Note, "title" | "content" | "pinned" | "color">>) => {
-      // Optimistic update
       setNotes((prev) =>
         prev.map((n) =>
           n.id === id ? { ...n, ...patch, updatedAt: new Date().toISOString() } : n
@@ -376,16 +374,15 @@ export function NotesView() {
     []
   );
 
-  // ── Search ──────────────────────────────────────────────────────────────────
+  // ── Search ────────────────────────────────────────────────────────────────
 
   const handleSearch = (q: string) => {
     setQuery(q);
     if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
-    // Client-side filtering is instant; server search for accurate results on debounce
     searchDebounceRef.current = setTimeout(() => void fetchNotes(), 400);
   };
 
-  // ── Create ──────────────────────────────────────────────────────────────────
+  // ── Create ────────────────────────────────────────────────────────────────
 
   const handleNew = async () => {
     try {
@@ -398,16 +395,17 @@ export function NotesView() {
       const note = (await res.json()) as Note;
       setNotes((prev) => [note, ...prev]);
       setSelectedId(note.id);
+      editorNoteIdRef.current = note.id;
       setShowEditor(true);
       setSaveStatus("saved");
-      // Focus title after render
+      if (contentRef.current) contentRef.current.innerHTML = "";
       setTimeout(() => titleRef.current?.focus(), 50);
     } catch {
       toast.error("Could not create note");
     }
   };
 
-  // ── Pin toggle ──────────────────────────────────────────────────────────────
+  // ── Pin / Color ────────────────────────────────────────────────────────────
 
   const handlePin = useCallback(
     (id: string, currentPinned: boolean) => {
@@ -415,8 +413,6 @@ export function NotesView() {
     },
     [saveNow]
   );
-
-  // ── Color ───────────────────────────────────────────────────────────────────
 
   const handleColor = useCallback(
     (id: string, color: string) => {
@@ -426,7 +422,7 @@ export function NotesView() {
     [saveNow]
   );
 
-  // ── Delete ──────────────────────────────────────────────────────────────────
+  // ── Delete ─────────────────────────────────────────────────────────────────
 
   const handleDelete = useCallback(
     async (id: string, title: string) => {
@@ -438,6 +434,7 @@ export function NotesView() {
         if (selectedId === id) {
           setSelectedId(null);
           setShowEditor(false);
+          editorNoteIdRef.current = null;
         }
         toast.success("Note deleted");
       } catch {
@@ -447,70 +444,43 @@ export function NotesView() {
     [selectedId]
   );
 
-  // ── Formatting commands (contentEditable fallback) ─────────────────────────
-  // Using textarea — no execCommand needed. Toolbar inserts markdown-style text.
+  // ── WYSIWYG formatting via execCommand ────────────────────────────────────
 
-  const wrapSelection = (before: string, after: string = before) => {
-    const el = contentRef.current;
-    if (!el || !selected) return;
-    const start = el.selectionStart;
-    const end = el.selectionEnd;
-    const text = el.value;
-    const sel = text.slice(start, end);
-    const newText = text.slice(0, start) + before + sel + after + text.slice(end);
-    const patch = { content: newText };
-    setNotes((prev) =>
-      prev.map((n) => (n.id === selected.id ? { ...n, ...patch } : n))
-    );
-    scheduleSave(selected.id, patch);
-    setTimeout(() => {
+  const execFmt = useCallback(
+    (command: string, value?: string) => {
+      const el = contentRef.current;
+      if (!el || !selected) return;
       el.focus();
-      el.setSelectionRange(start + before.length, end + before.length);
-      autoResize();
-    }, 0);
-  };
+      document.execCommand(command, false, value ?? undefined);
+      const html = el.innerHTML;
+      // Don't update editorNoteIdRef here — content hasn't changed note id
+      setNotes((prev) =>
+        prev.map((n) => (n.id === selected.id ? { ...n, content: html } : n))
+      );
+      scheduleSave(selected.id, { content: html });
+    },
+    [selected, scheduleSave]
+  );
 
-  const insertLinePrefix = (prefix: string) => {
-    const el = contentRef.current;
-    if (!el || !selected) return;
-    const start = el.selectionStart;
-    const text = el.value;
-    const lineStart = text.lastIndexOf("\n", start - 1) + 1;
-    const newText = text.slice(0, lineStart) + prefix + text.slice(lineStart);
-    const patch = { content: newText };
-    setNotes((prev) =>
-      prev.map((n) => (n.id === selected.id ? { ...n, ...patch } : n))
-    );
-    scheduleSave(selected.id, patch);
-    setTimeout(() => {
-      el.focus();
-      el.setSelectionRange(start + prefix.length, start + prefix.length);
-      autoResize();
-    }, 0);
-  };
-
-  const insertLink = () => {
+  const insertLink = useCallback(() => {
     const url = prompt("Enter URL:");
     if (!url) return;
+    execFmt("createLink", url);
+  }, [execFmt]);
+
+  // ── Content input handler ──────────────────────────────────────────────────
+
+  const handleContentInput = useCallback(() => {
     const el = contentRef.current;
     if (!el || !selected) return;
-    const start = el.selectionStart;
-    const end = el.selectionEnd;
-    const text = el.value;
-    const sel = text.slice(start, end) || "link text";
-    const newText = text.slice(0, start) + `[${sel}](${url})` + text.slice(end);
-    const patch = { content: newText };
+    const html = el.innerHTML;
     setNotes((prev) =>
-      prev.map((n) => (n.id === selected.id ? { ...n, ...patch } : n))
+      prev.map((n) => (n.id === selected.id ? { ...n, content: html } : n))
     );
-    scheduleSave(selected.id, patch);
-    setTimeout(() => {
-      el.focus();
-      autoResize();
-    }, 0);
-  };
+    scheduleSave(selected.id, { content: html });
+  }, [selected, scheduleSave]);
 
-  // ── Saved timestamp ────────────────────────────────────────────────────────
+  // ── Saved label ────────────────────────────────────────────────────────────
 
   const savedLabel =
     saveStatus === "saving"
@@ -525,11 +495,11 @@ export function NotesView() {
     ? { backgroundColor: selected.color }
     : {};
 
-  // ── Render ──────────────────────────────────────────────────────────────────
+  // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <div className="flex h-full min-h-0 overflow-hidden font-sans bg-[#0f1321]">
-      {/* ── Left: Note list ── */}
+      {/* Left: Note list */}
       <aside
         className={`flex flex-col w-full md:w-72 lg:w-80 shrink-0 bg-[#1b1f2e] border-r border-[rgba(255,255,255,0.08)] ${
           showEditor ? "hidden md:flex" : "flex"
@@ -587,13 +557,10 @@ export function NotesView() {
             </div>
           ) : (
             <>
-              {/* Pinned section */}
               {pinnedNotes.length > 0 && (
                 <>
                   {hasBothSections && (
-                    <div className="text-xs font-semibold text-[#9aa3b8] px-4 py-2">
-                      Pinned
-                    </div>
+                    <div className="text-xs font-semibold text-[#9aa3b8] px-4 py-2">Pinned</div>
                   )}
                   {pinnedNotes.map((note) => (
                     <NoteListItem
@@ -613,13 +580,10 @@ export function NotesView() {
                 </>
               )}
 
-              {/* Other section */}
               {unpinnedNotes.length > 0 && (
                 <>
                   {hasBothSections && (
-                    <div className="text-xs font-semibold text-[#9aa3b8] px-4 py-2">
-                      Other
-                    </div>
+                    <div className="text-xs font-semibold text-[#9aa3b8] px-4 py-2">Other</div>
                   )}
                   {unpinnedNotes.map((note) => (
                     <NoteListItem
@@ -643,7 +607,7 @@ export function NotesView() {
         </div>
       </aside>
 
-      {/* ── Right: Editor ── */}
+      {/* Right: Editor */}
       <main
         style={editorStyle}
         className={`flex flex-col flex-1 min-w-0 transition-colors duration-150 ${
@@ -652,7 +616,7 @@ export function NotesView() {
       >
         {selected ? (
           <>
-            {/* ── Top toolbar ── */}
+            {/* Toolbar */}
             <div className="border-b border-[rgba(255,255,255,0.08)] px-4 py-2 bg-[#1b1f2e] flex items-center gap-1 flex-wrap shrink-0">
               {/* Back (mobile) */}
               <button
@@ -711,44 +675,41 @@ export function NotesView() {
               {/* Divider */}
               <div className="w-px h-5 bg-[#262b3a] mx-1" />
 
-              {/* Formatting toolbar */}
-              <FmtBtn onClick={() => wrapSelection("**")} title="Bold">
+              {/* Formatting */}
+              <FmtBtn onClick={() => execFmt("bold")} title="Bold">
                 <Bold className="w-3.5 h-3.5" />
               </FmtBtn>
-              <FmtBtn onClick={() => wrapSelection("_")} title="Italic">
+              <FmtBtn onClick={() => execFmt("italic")} title="Italic">
                 <Italic className="w-3.5 h-3.5" />
               </FmtBtn>
-              <FmtBtn onClick={() => wrapSelection("__")} title="Underline">
+              <FmtBtn onClick={() => execFmt("underline")} title="Underline">
                 <Underline className="w-3.5 h-3.5" />
               </FmtBtn>
-              <FmtBtn onClick={() => wrapSelection("~~")} title="Strikethrough">
+              <FmtBtn onClick={() => execFmt("strikeThrough")} title="Strikethrough">
                 <Strikethrough className="w-3.5 h-3.5" />
               </FmtBtn>
 
-              {/* Divider */}
               <div className="w-px h-5 bg-[#262b3a] mx-1" />
 
-              <FmtBtn onClick={() => insertLinePrefix("- ")} title="Bullet list">
+              <FmtBtn onClick={() => execFmt("insertUnorderedList")} title="Bullet list">
                 <List className="w-3.5 h-3.5" />
               </FmtBtn>
-              <FmtBtn onClick={() => insertLinePrefix("1. ")} title="Numbered list">
+              <FmtBtn onClick={() => execFmt("insertOrderedList")} title="Numbered list">
                 <ListOrdered className="w-3.5 h-3.5" />
               </FmtBtn>
 
-              {/* Divider */}
               <div className="w-px h-5 bg-[#262b3a] mx-1" />
 
-              <FmtBtn onClick={() => insertLinePrefix("> ")} title="Blockquote">
+              <FmtBtn onClick={() => execFmt("formatBlock", "blockquote")} title="Blockquote">
                 <Quote className="w-3.5 h-3.5" />
               </FmtBtn>
-              <FmtBtn onClick={() => wrapSelection("`")} title="Inline code">
+              <FmtBtn onClick={() => execFmt("formatBlock", "pre")} title="Code block">
                 <Code className="w-3.5 h-3.5" />
               </FmtBtn>
               <FmtBtn onClick={insertLink} title="Insert link">
                 <Link2 className="w-3.5 h-3.5" />
               </FmtBtn>
 
-              {/* Spacer + save status + delete */}
               <div className="flex-1" />
 
               <span className="text-xs text-[#707a90] whitespace-nowrap" aria-label="save status">
@@ -774,29 +735,33 @@ export function NotesView() {
               className="text-xl font-semibold text-[#dfe1f6] border-none bg-transparent focus:ring-0 outline-none w-full px-6 pt-6 pb-2 placeholder-[#262b3a]"
             />
 
-            {/* Content (auto-resizing textarea) */}
-            <textarea
+            {/* WYSIWYG content editor */}
+            <div
               ref={contentRef}
-              value={selected.content}
-              onChange={(e) => {
-                scheduleSave(selected.id, { content: e.target.value });
-                autoResize();
-              }}
-              onFocus={autoResize}
-              placeholder="Start writing…"
-              rows={1}
-              className="text-sm text-[#dfe1f6] leading-relaxed w-full px-6 py-3 bg-transparent border-none outline-none resize-none placeholder-[#262b3a] overflow-hidden"
+              contentEditable
+              suppressContentEditableWarning
+              onInput={handleContentInput}
+              data-placeholder="Start writing…"
+              className="flex-1 text-sm text-[#dfe1f6] leading-relaxed w-full px-6 py-3 bg-transparent outline-none overflow-y-auto
+                [&_b]:font-bold [&_strong]:font-bold
+                [&_i]:italic [&_em]:italic
+                [&_u]:underline
+                [&_s]:line-through [&_strike]:line-through
+                [&_ul]:list-disc [&_ul]:ml-5 [&_ul]:my-1
+                [&_ol]:list-decimal [&_ol]:ml-5 [&_ol]:my-1
+                [&_li]:my-0.5
+                [&_blockquote]:border-l-2 [&_blockquote]:border-[#00d2ff]/40 [&_blockquote]:pl-3 [&_blockquote]:text-[#9aa3b8] [&_blockquote]:my-1
+                [&_pre]:bg-[#161a28] [&_pre]:rounded [&_pre]:px-3 [&_pre]:py-2 [&_pre]:my-1 [&_pre]:font-mono [&_pre]:text-xs [&_pre]:text-[#7dd8f5]
+                [&_a]:text-[#00d2ff] [&_a]:underline
+                empty:before:content-[attr(data-placeholder)] empty:before:text-[#454e63] empty:before:pointer-events-none"
               style={{ minHeight: "200px" }}
             />
           </>
         ) : (
-          /* ── Empty state ── */
           <div className="flex flex-col items-center justify-center flex-1 gap-4 text-center px-8">
             <StickyNote className="w-16 h-16 text-[#262b3a]" />
             <div>
-              <p className="text-[#9aa3b8] text-sm text-center">
-                Select a note or create one
-              </p>
+              <p className="text-[#9aa3b8] text-sm text-center">Select a note or create one</p>
               <p className="text-[#9aa3b8] text-sm text-center mt-1">
                 Pick a note from the list or create a new one.
               </p>
