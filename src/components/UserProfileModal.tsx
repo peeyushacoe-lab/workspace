@@ -87,7 +87,7 @@ export function UserProfileModal({ userId, onClose, onCompose }: Props) {
                 className="w-20 h-20 rounded-full border-4 border-[#111827] object-cover"
               />
             ) : (
-              <div className="w-20 h-20 rounded-full border-4 border-[#111827] bg-cyan-500 flex items-center justify-center text-2xl font-bold text-white">
+              <div className="w-20 h-20 rounded-full border-4 border-[#111827] bg-cyan-500 flex items-center justify-center text-2xl font-semibold text-white">
                 {initials || "?"}
               </div>
             )}
@@ -105,7 +105,7 @@ export function UserProfileModal({ userId, onClose, onCompose }: Props) {
             <>
               <div className="mb-4">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-xl font-bold text-white">{displayName}</h2>
+                  <h2 className="text-xl font-semibold text-white">{displayName}</h2>
                   {profile.pronouns && (
                     <span className="text-xs text-slate-500 font-normal">({profile.pronouns})</span>
                   )}

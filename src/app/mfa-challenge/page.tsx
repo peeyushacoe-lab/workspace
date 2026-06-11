@@ -63,7 +63,7 @@ function MfaChallengeForm() {
             <div className="flex justify-center mb-3">
               <ShieldCheck className="h-8 w-8 text-[#60a5fa]" />
             </div>
-            <h1 className="text-xl font-bold text-[#dfe1f6]">Two-Factor Authentication</h1>
+            <h1 className="text-xl font-semibold text-[#dfe1f6]">Two-Factor Authentication</h1>
             <p className="text-sm text-[#94a3b8] mt-1">
               {useBackup
                 ? "Enter one of your backup codes"
@@ -97,7 +97,7 @@ function MfaChallengeForm() {
             <button
               type="submit"
               disabled={loading || code.trim().length < 6}
-              className="bg-[#00d2ff] text-[#003543] hover:bg-[#00b8d9] hover:shadow-[0_0_20px_rgba(0,210,255,0.4)] w-full py-3 rounded-lg font-semibold flex items-center justify-center gap-2 disabled:opacity-40 transition-colors active:scale-[0.98]"
+              className="bg-[#00d2ff] text-[#003543] hover:bg-[#00b8d9] w-full py-3 rounded-lg font-semibold flex items-center justify-center gap-2 disabled:opacity-40 transition-colors active:scale-[0.98]"
             >
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

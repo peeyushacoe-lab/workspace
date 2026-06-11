@@ -25,8 +25,8 @@ export default async function DashboardPage() {
   return (
     <div className="p-8 min-h-screen">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-[#dfe1f6]">Communication Center</h1>
-        <p className="text-[#bbc9cf] mt-2">
+        <h1 className="text-3xl font-semibold text-[#dfe1f6]">Communication Center</h1>
+        <p className="text-[#9aa3b8] mt-2">
           Send quick messages and track delivery status across the workspace.
         </p>
       </div>

@@ -34,7 +34,7 @@ function Avatar({ name, size = "md" }: { name: string; size?: "sm" | "md" }) {
   const initials = name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
   const sz = size === "sm" ? "w-7 h-7 text-xs" : "w-9 h-9 text-sm";
   return (
-    <div className={`${sz} rounded-full bg-gradient-to-br from-[#00d2ff]/20 to-[#a5e7ff]/10 border border-[rgba(0,210,255,0.2)] flex items-center justify-center font-bold text-[#00d2ff] flex-shrink-0`}>
+    <div className={`${sz} rounded-full bg-gradient-to-br from-[#00d2ff]/20 to-[#7dd8f5]/10 border border-[rgba(0,210,255,0.2)] flex items-center justify-center font-semibold text-[#00d2ff] flex-shrink-0`}>
       {initials}
     </div>
   );
@@ -46,7 +46,7 @@ function RoleBadge({ role, onRevoke, disabled }: { role: string; onRevoke: () =>
       onClick={onRevoke}
       disabled={disabled}
       title={`Click to revoke ${role} access`}
-      className="group flex items-center gap-1 bg-[#00d2ff]/10 text-[#a5e7ff] border border-[#00d2ff]/20 px-2.5 py-1 rounded-full text-xs font-semibold hover:bg-[#ff4d6d]/10 hover:text-[#ff9db0] hover:border-[#ff4d6d]/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+      className="group flex items-center gap-1 bg-[#00d2ff]/10 text-[#7dd8f5] border border-[#00d2ff]/20 px-2.5 py-1 rounded-full text-xs font-semibold hover:bg-[#ff4d6d]/10 hover:text-[#ff9db0] hover:border-[#ff4d6d]/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
     >
       {role}
       <X className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -73,7 +73,7 @@ function GrantDropdown({
       <button
         onClick={() => setOpen((v) => !v)}
         disabled={disabled}
-        className="flex items-center gap-1 text-xs text-[#5c6b72] hover:text-[#00d2ff] border border-dashed border-[rgba(0,255,255,0.15)] hover:border-[#00d2ff]/40 px-2 py-1 rounded-full transition-colors disabled:opacity-40"
+        className="flex items-center gap-1 text-xs text-[#5d6579] hover:text-[#00d2ff] border border-dashed border-[rgba(255,255,255,0.11)] hover:border-[#00d2ff]/40 px-2 py-1 rounded-full transition-colors disabled:opacity-40"
       >
         + Grant access
         <ChevronDown className="w-3 h-3" />
@@ -81,12 +81,12 @@ function GrantDropdown({
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 top-full mt-1 z-20 w-48 bg-[#1b1f2e] border border-[rgba(0,255,255,0.1)] rounded-xl shadow-xl overflow-hidden">
+          <div className="absolute left-0 top-full mt-1 z-20 w-48 bg-[#1b1f2e] border border-[rgba(255,255,255,0.08)] rounded-xl shadow-xl overflow-hidden">
             {available.map((role) => (
               <button
                 key={role}
                 onClick={() => { onGrant(role); setOpen(false); }}
-                className="w-full text-left px-3 py-2 text-sm text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] transition-colors"
+                className="w-full text-left px-3 py-2 text-sm text-[#9aa3b8] hover:bg-[#262939] hover:text-[#dfe1f6] transition-colors"
               >
                 {role}
               </button>
@@ -158,34 +158,34 @@ export default function AccessPage() {
         {/* Info banner */}
         <div className="flex items-start gap-3 bg-[#00d2ff]/5 border border-[#00d2ff]/15 rounded-xl px-4 py-3">
           <Shield className="w-4 h-4 text-[#00d2ff] flex-shrink-0 mt-0.5" />
-          <p className="text-xs text-[#bbc9cf] leading-relaxed">
+          <p className="text-xs text-[#9aa3b8] leading-relaxed">
             Granted roles give users additional access beyond their primary role. Users receive an email when access is granted.
             Click a role badge to revoke it. Use the <strong className="text-[#dfe1f6]">+ Grant access</strong> button to add new access categories.
           </p>
         </div>
 
         {/* Search */}
-        <div className="flex items-center gap-2 bg-[#1b1f2e] border border-[rgba(0,255,255,0.1)] rounded-xl px-4 py-2.5">
-          <Search className="w-4 h-4 text-[#5c6b72]" />
+        <div className="flex items-center gap-2 bg-[#1b1f2e] border border-[rgba(255,255,255,0.08)] rounded-xl px-4 py-2.5">
+          <Search className="w-4 h-4 text-[#5d6579]" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search by name, email, or role…"
-            className="flex-1 bg-transparent text-sm text-[#dfe1f6] placeholder-[#5c6b72] outline-none"
+            className="flex-1 bg-transparent text-sm text-[#dfe1f6] placeholder-[#5d6579] outline-none"
           />
           {query && (
-            <button onClick={() => setQuery("")} className="text-[#5c6b72] hover:text-[#bbc9cf]">
+            <button onClick={() => setQuery("")} className="text-[#5d6579] hover:text-[#9aa3b8]">
               <X className="w-4 h-4" />
             </button>
           )}
         </div>
 
         {/* Access categories legend */}
-        <div className="bg-[#1b1f2e] border border-[rgba(0,255,255,0.08)] rounded-xl p-4">
-          <p className="text-xs font-semibold text-[#5c6b72] uppercase tracking-wider mb-3">Available Access Categories</p>
+        <div className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl p-4">
+          <p className="text-xs font-semibold text-[#5d6579] mb-3">Available Access Categories</p>
           <div className="flex flex-wrap gap-2">
             {GRANTABLE_ACCESS.map((r) => (
-              <span key={r} className="text-xs text-[#bbc9cf] bg-[#262939] border border-[rgba(0,255,255,0.08)] px-2.5 py-1 rounded-full">
+              <span key={r} className="text-xs text-[#9aa3b8] bg-[#262939] border border-[rgba(255,255,255,0.06)] px-2.5 py-1 rounded-full">
                 {r}
               </span>
             ))}
@@ -195,26 +195,26 @@ export default function AccessPage() {
         {/* User list */}
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-6 h-6 animate-spin text-[#bbc9cf]" />
+            <Loader2 className="w-6 h-6 animate-spin text-[#9aa3b8]" />
           </div>
         ) : filtered.length === 0 ? (
-          <p className="text-center text-[#5c6b72] text-sm py-8">No users found</p>
+          <p className="text-center text-[#5d6579] text-sm py-8">No users found</p>
         ) : (
           <div className="space-y-2">
             {filtered.map((user) => (
               <div
                 key={user.id}
-                className="bg-[#1b1f2e] border border-[rgba(0,255,255,0.08)] rounded-xl px-5 py-4 flex items-start gap-4 hover:border-[rgba(0,255,255,0.15)] transition-colors"
+                className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl px-5 py-4 flex items-start gap-4 hover:border-[rgba(255,255,255,0.11)] transition-colors"
               >
                 <Avatar name={user.fullName} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
                     <span className="font-semibold text-sm text-[#dfe1f6]">{user.fullName}</span>
-                    <span className="text-[10px] text-[#5c6b72] bg-[#262939] border border-[rgba(0,255,255,0.08)] px-1.5 py-0.5 rounded-full">
+                    <span className="text-[10px] text-[#5d6579] bg-[#262939] border border-[rgba(255,255,255,0.06)] px-1.5 py-0.5 rounded-full">
                       {roleLabels[user.role] ?? user.role}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1 text-[#5c6b72] text-xs mb-3">
+                  <div className="flex items-center gap-1 text-[#5d6579] text-xs mb-3">
                     <Mail className="w-3 h-3" />
                     <span>{user.email}</span>
                   </div>
@@ -229,14 +229,14 @@ export default function AccessPage() {
                         />
                       ))
                     ) : (
-                      <span className="text-xs text-[#5c6b72] italic">No additional access granted</span>
+                      <span className="text-xs text-[#5d6579] italic">No additional access granted</span>
                     )}
                     <GrantDropdown
                       currentRoles={user.grantedRoles}
                       disabled={saving === user.id}
                       onGrant={(role) => void applyChange(user.id, role, "grant")}
                     />
-                    {saving === user.id && <Loader2 className="w-3.5 h-3.5 animate-spin text-[#bbc9cf]" />}
+                    {saving === user.id && <Loader2 className="w-3.5 h-3.5 animate-spin text-[#9aa3b8]" />}
                   </div>
                 </div>
               </div>

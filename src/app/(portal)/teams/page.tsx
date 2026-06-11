@@ -43,7 +43,7 @@ function AvatarStack({ members, color }: { members: { id: string; fullName: stri
             border: `2px solid #0f1321`,
             color,
           }}
-          className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold uppercase"
+          className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-semibold uppercase"
         >
           {m.fullName.charAt(0)}
         </div>
@@ -51,7 +51,7 @@ function AvatarStack({ members, color }: { members: { id: string; fullName: stri
       {rest > 0 && (
         <div
           style={{ marginLeft: -8, zIndex: 0, background: "rgba(255,255,255,0.06)", border: "2px solid #0f1321" }}
-          className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] text-[#5c6b72] font-bold"
+          className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] text-[#5d6579] font-semibold"
         >
           +{rest}
         </div>
@@ -81,28 +81,28 @@ function ExpandedPanel({ team }: { team: TeamWithMembers }) {
   return (
     <div
       className="mt-4 pt-4 border-t"
-      style={{ borderColor: "rgba(0,255,255,0.08)" }}
+      style={{ borderColor: "rgba(255,255,255,0.06)" }}
     >
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
         {/* Stats */}
         <div className="bg-[#0f1321] rounded-lg p-3 flex flex-col gap-1">
-          <span className="text-[10px] uppercase tracking-widest text-[#5c6b72]">Members</span>
-          <span className="text-lg font-bold" style={{ color: team.color }}>{team.memberCount}</span>
+          <span className="text-[10px] text-[#5d6579]">Members</span>
+          <span className="text-lg font-semibold" style={{ color: team.color }}>{team.memberCount}</span>
         </div>
         <div className="bg-[#0f1321] rounded-lg p-3 flex flex-col gap-1">
-          <span className="text-[10px] uppercase tracking-widest text-[#5c6b72]">Unread messages</span>
-          <span className="text-lg font-bold text-[#dfe1f6]">0</span>
+          <span className="text-[10px] text-[#5d6579]">Unread messages</span>
+          <span className="text-lg font-semibold text-[#dfe1f6]">0</span>
         </div>
         <div className="bg-[#0f1321] rounded-lg p-3 flex flex-col gap-1">
-          <span className="text-[10px] uppercase tracking-widest text-[#5c6b72]">Activity</span>
-          <span className="text-xs text-[#5c6b72]">Activity feed coming soon</span>
+          <span className="text-[10px] text-[#5d6579]">Activity</span>
+          <span className="text-xs text-[#5d6579]">Activity feed coming soon</span>
         </div>
       </div>
 
       {/* Members list */}
       {team.members.length > 0 ? (
         <div className="space-y-1">
-          <p className="text-[10px] uppercase tracking-widest text-[#5c6b72] mb-2">Members</p>
+          <p className="text-[10px] text-[#5d6579] mb-2">Members</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
             {team.members.map((m) => (
               <div
@@ -111,14 +111,14 @@ function ExpandedPanel({ team }: { team: TeamWithMembers }) {
               >
                 {/* Avatar */}
                 <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold uppercase flex-shrink-0"
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold uppercase flex-shrink-0"
                   style={{ background: team.color + "22", color: team.color }}
                 >
                   {m.fullName.charAt(0)}
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm text-[#dfe1f6] truncate leading-tight">{m.fullName}</p>
-                  <p className="text-[10px] text-[#5c6b72] leading-tight truncate">
+                  <p className="text-[10px] text-[#5d6579] leading-tight truncate">
                     {m.role.replace(/_/g, " ")}
                   </p>
                 </div>
@@ -127,7 +127,7 @@ function ExpandedPanel({ team }: { team: TeamWithMembers }) {
           </div>
         </div>
       ) : (
-        <p className="text-sm text-[#5c6b72] text-center py-4">No members yet</p>
+        <p className="text-sm text-[#5d6579] text-center py-4">No members yet</p>
       )}
     </div>
   );
@@ -147,7 +147,7 @@ function TeamCard({
     <div
       className="bg-[#1b1f2e] border rounded-xl overflow-hidden transition-all"
       style={{
-        borderColor: isExpanded ? team.color + "44" : "rgba(0,255,255,0.08)",
+        borderColor: isExpanded ? team.color + "44" : "rgba(255,255,255,0.06)",
         borderLeft: `4px solid ${team.color}`,
       }}
     >
@@ -162,7 +162,7 @@ function TeamCard({
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="text-sm font-semibold text-[#dfe1f6] leading-tight">{team.name}</h3>
-            <p className="text-xs text-[#5c6b72] mt-0.5">
+            <p className="text-xs text-[#5d6579] mt-0.5">
               {team.memberCount} {team.memberCount === 1 ? "member" : "members"}
             </p>
           </div>
@@ -173,7 +173,7 @@ function TeamCard({
         {/* Quick links */}
         <div
           className="flex flex-wrap gap-0.5 mb-3 -mx-1 pb-3 border-b"
-          style={{ borderColor: "rgba(0,255,255,0.06)" }}
+          style={{ borderColor: "rgba(255,255,255,0.05)" }}
         >
           <QuickLink href={`/chat?team=${team.id}`}     icon={MessageSquare} label="Chat"     color="#00d2ff" />
           <QuickLink href={`/drive?team=${team.id}`}    icon={FolderOpen}    label="Files"    color="#8b5cf6" />
@@ -185,7 +185,7 @@ function TeamCard({
         <button
           onClick={onToggle}
           className="flex items-center gap-1.5 text-xs font-medium transition-colors"
-          style={{ color: isExpanded ? team.color : "#5c6b72" }}
+          style={{ color: isExpanded ? team.color : "#5d6579" }}
         >
           {isExpanded ? (
             <><ChevronUp className="w-3.5 h-3.5" /> Collapse Space</>
@@ -217,7 +217,7 @@ function TeamsGrid({
 }) {
   if (teams.length === 0) {
     return (
-      <p className="text-sm text-[#5c6b72] text-center py-6">No teams available.</p>
+      <p className="text-sm text-[#5d6579] text-center py-6">No teams available.</p>
     );
   }
 
@@ -239,8 +239,8 @@ function TeamsGrid({
 function SectionLabel({ label }: { label: string }) {
   return (
     <div className="flex items-center gap-3 mb-3">
-      <span className="text-xs font-semibold uppercase tracking-widest text-[#5c6b72]">{label}</span>
-      <div className="flex-1 h-px bg-[rgba(0,255,255,0.06)]" />
+      <span className="text-xs font-semibold text-[#5d6579]">{label}</span>
+      <div className="flex-1 h-px bg-[rgba(255,255,255,0.05)]" />
     </div>
   );
 }
@@ -286,7 +286,7 @@ export default function TeamsPage() {
 
       <div className="px-6 pb-10 max-w-5xl space-y-8">
         {loading ? (
-          <div className="flex items-center justify-center py-20 gap-2 text-[#5c6b72]">
+          <div className="flex items-center justify-center py-20 gap-2 text-[#5d6579]">
             <Loader2 className="w-5 h-5 animate-spin" />
             <span className="text-sm">Loading team spaces…</span>
           </div>
@@ -311,8 +311,8 @@ export default function TeamsPage() {
             {/* No data at all */}
             {myTeams.length === 0 && otherTeams.length === 0 && (
               <div className="flex flex-col items-center justify-center py-20 gap-3">
-                <Users className="w-10 h-10 text-[#5c6b72]" />
-                <p className="text-sm text-[#5c6b72]">No team spaces found.</p>
+                <Users className="w-10 h-10 text-[#5d6579]" />
+                <p className="text-sm text-[#5d6579]">No team spaces found.</p>
               </div>
             )}
           </>

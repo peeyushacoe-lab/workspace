@@ -77,7 +77,7 @@ function StatusBadge({ status }: { status: MeetingStatus }) {
   const config = {
     LIVE:      { label: "Live",      cls: "bg-green-500/15 text-green-400 border border-green-500/30" },
     SCHEDULED: { label: "Scheduled", cls: "bg-blue-500/15 text-blue-400 border border-blue-500/30" },
-    ENDED:     { label: "Ended",     cls: "bg-[#262939] text-[#7a8899] border border-[rgba(0,255,255,0.08)]" },
+    ENDED:     { label: "Ended",     cls: "bg-[#262939] text-[#7a8899] border border-[rgba(255,255,255,0.06)]" },
     CANCELLED: { label: "Cancelled", cls: "bg-rose-500/15 text-rose-400 border border-rose-500/30" },
   };
   const { label, cls } = config[status];
@@ -124,8 +124,8 @@ function NewMeetingModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-[#1b1f2e] border border-[rgba(0,255,255,0.12)] rounded-2xl w-full max-w-md shadow-2xl">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[rgba(0,255,255,0.08)]">
+      <div className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.09)] rounded-2xl w-full max-w-md shadow-2xl">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[rgba(255,255,255,0.06)]">
           <div className="flex items-center gap-2">
             <Video className="w-5 h-5 text-[#00d2ff]" />
             <h2 className="text-base font-semibold text-[#dfe1f6]">New Meeting</h2>
@@ -143,7 +143,7 @@ function NewMeetingModal({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Weekly sync, design review…"
-              className="w-full bg-[#262939] border border-[rgba(0,255,255,0.08)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] placeholder:text-[#4a5568] outline-none focus:border-[#00d2ff]/40"
+              className="w-full bg-[#262939] border border-[rgba(255,255,255,0.06)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] placeholder:text-[#4a5568] outline-none focus:border-[#00d2ff]/40"
             />
           </div>
 
@@ -154,7 +154,7 @@ function NewMeetingModal({
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
               placeholder="Agenda, notes…"
-              className="w-full bg-[#262939] border border-[rgba(0,255,255,0.08)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] placeholder:text-[#4a5568] outline-none focus:border-[#00d2ff]/40 resize-none"
+              className="w-full bg-[#262939] border border-[rgba(255,255,255,0.06)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] placeholder:text-[#4a5568] outline-none focus:border-[#00d2ff]/40 resize-none"
             />
           </div>
 
@@ -164,7 +164,7 @@ function NewMeetingModal({
               className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
                 isInstant
                   ? "bg-[#00d2ff]/15 border-[#00d2ff]/40 text-[#00d2ff]"
-                  : "bg-[#262939] border-[rgba(0,255,255,0.08)] text-[#bbc9cf] hover:border-[#00d2ff]/20"
+                  : "bg-[#262939] border-[rgba(255,255,255,0.06)] text-[#9aa3b8] hover:border-[#00d2ff]/20"
               }`}
             >
               <Video className="w-4 h-4" /> Start now
@@ -174,7 +174,7 @@ function NewMeetingModal({
               className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
                 !isInstant
                   ? "bg-[#00d2ff]/15 border-[#00d2ff]/40 text-[#00d2ff]"
-                  : "bg-[#262939] border-[rgba(0,255,255,0.08)] text-[#bbc9cf] hover:border-[#00d2ff]/20"
+                  : "bg-[#262939] border-[rgba(255,255,255,0.06)] text-[#9aa3b8] hover:border-[#00d2ff]/20"
               }`}
             >
               <Calendar className="w-4 h-4" /> Schedule
@@ -188,7 +188,7 @@ function NewMeetingModal({
                 type="datetime-local"
                 value={scheduledAt}
                 onChange={(e) => setScheduledAt(e.target.value)}
-                className="w-full bg-[#262939] border border-[rgba(0,255,255,0.08)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] outline-none focus:border-[#00d2ff]/40"
+                className="w-full bg-[#262939] border border-[rgba(255,255,255,0.06)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] outline-none focus:border-[#00d2ff]/40"
               />
             </div>
           )}
@@ -197,14 +197,14 @@ function NewMeetingModal({
         <div className="px-6 pb-6 flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2 rounded-lg bg-[#262939] text-[#bbc9cf] text-sm font-medium hover:bg-[#2e3347] transition-colors"
+            className="flex-1 px-4 py-2 rounded-lg bg-[#262939] text-[#9aa3b8] text-sm font-medium hover:bg-[#2e3347] transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleCreate}
             disabled={saving}
-            className="flex-1 px-4 py-2 rounded-lg bg-[#00d2ff] text-[#003543] text-sm font-semibold hover:bg-[#a5e7ff] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            className="flex-1 px-4 py-2 rounded-lg bg-[#00d2ff] text-[#003543] text-sm font-semibold hover:bg-[#7dd8f5] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Video className="w-4 h-4" />}
             {isInstant ? "Start meeting" : "Schedule"}
@@ -249,7 +249,7 @@ function InMeetingRoom({
   return (
     <div className="fixed inset-0 z-50 bg-[#060810] flex flex-col">
       {/* Slim header */}
-      <div className="flex items-center justify-between px-5 py-2.5 bg-[#0f1321] border-b border-[rgba(0,255,255,0.08)] shrink-0">
+      <div className="flex items-center justify-between px-5 py-2.5 bg-[#0f1321] border-b border-[rgba(255,255,255,0.06)] shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
           <span className="text-sm font-semibold text-[#dfe1f6]">{meeting.title}</span>
@@ -258,7 +258,7 @@ function InMeetingRoom({
         <div className="flex items-center gap-2">
           <button
             onClick={copyLink}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#262939] text-xs text-[#bbc9cf] hover:bg-[#2e3347] transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#262939] text-xs text-[#9aa3b8] hover:bg-[#2e3347] transition-colors"
           >
             {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
             {copied ? "Copied" : "Copy invite link"}
@@ -310,7 +310,7 @@ function MeetingCard({
       className={`w-full text-left p-3.5 rounded-xl border transition-colors ${
         selected
           ? "bg-[#00d2ff]/8 border-[#00d2ff]/30"
-          : "bg-[#1b1f2e] border-[rgba(0,255,255,0.06)] hover:border-[rgba(0,255,255,0.12)]"
+          : "bg-[#1b1f2e] border-[rgba(255,255,255,0.05)] hover:border-[rgba(255,255,255,0.09)]"
       }`}
     >
       <div className="flex items-start justify-between gap-2 mb-1.5">
@@ -451,8 +451,8 @@ export function MeetView({
 
       <div className="flex h-[calc(100vh-56px)] bg-[#0f1321]">
         {/* Sidebar */}
-        <div className="w-72 flex flex-col border-r border-[rgba(0,255,255,0.08)] bg-[#0f1321]">
-          <div className="px-4 py-4 border-b border-[rgba(0,255,255,0.08)]">
+        <div className="w-72 flex flex-col border-r border-[rgba(255,255,255,0.06)] bg-[#0f1321]">
+          <div className="px-4 py-4 border-b border-[rgba(255,255,255,0.06)]">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <MonitorPlay className="w-4 h-4 text-[#00d2ff]" />
@@ -467,7 +467,7 @@ export function MeetView({
                 </button>
                 <button
                   onClick={() => setShowNew(true)}
-                  className="p-1.5 bg-[#00d2ff] text-[#003543] rounded-lg hover:bg-[#a5e7ff] transition-colors"
+                  className="p-1.5 bg-[#00d2ff] text-[#003543] rounded-lg hover:bg-[#7dd8f5] transition-colors"
                 >
                   <Plus className="w-3.5 h-3.5" />
                 </button>
@@ -536,7 +536,7 @@ export function MeetView({
               </div>
               <button
                 onClick={() => setShowNew(true)}
-                className="flex items-center gap-2 px-5 py-2.5 bg-[#00d2ff] text-[#003543] font-semibold text-sm rounded-xl hover:bg-[#a5e7ff] transition-colors"
+                className="flex items-center gap-2 px-5 py-2.5 bg-[#00d2ff] text-[#003543] font-semibold text-sm rounded-xl hover:bg-[#7dd8f5] transition-colors"
               >
                 <Plus className="w-4 h-4" /> New meeting
               </button>
@@ -547,7 +547,7 @@ export function MeetView({
               <div className="flex items-start justify-between mb-6">
                 <div>
                   <div className="flex items-center gap-3 mb-1">
-                    <h1 className="text-2xl font-bold text-[#dfe1f6]">{selected.title}</h1>
+                    <h1 className="text-2xl font-semibold text-[#dfe1f6]">{selected.title}</h1>
                     <StatusBadge status={selected.status} />
                   </div>
                   {selected.description && (
@@ -568,15 +568,15 @@ export function MeetView({
 
               {/* Info grid */}
               <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="bg-[#1b1f2e] rounded-xl p-4 border border-[rgba(0,255,255,0.06)]">
-                  <p className="text-xs text-[#7a8899] mb-1 font-medium uppercase tracking-wide">Host</p>
+                <div className="bg-[#1b1f2e] rounded-xl p-4 border border-[rgba(255,255,255,0.05)]">
+                  <p className="text-xs text-[#7a8899] mb-1 font-medium">Host</p>
                   <div className="flex items-center gap-2">
                     <Avatar name={selected.organizer.fullName} url={selected.organizer.avatarUrl} size="sm" />
                     <span className="text-sm text-[#dfe1f6]">{selected.organizer.fullName}</span>
                   </div>
                 </div>
-                <div className="bg-[#1b1f2e] rounded-xl p-4 border border-[rgba(0,255,255,0.06)]">
-                  <p className="text-xs text-[#7a8899] mb-1 font-medium uppercase tracking-wide">
+                <div className="bg-[#1b1f2e] rounded-xl p-4 border border-[rgba(255,255,255,0.05)]">
+                  <p className="text-xs text-[#7a8899] mb-1 font-medium">
                     {selected.scheduledAt ? "Scheduled" : "Created"}
                   </p>
                   <div className="flex items-center gap-2">
@@ -596,7 +596,7 @@ export function MeetView({
                   <button
                     onClick={() => handleJoin(selected.id)}
                     disabled={joining === selected.id}
-                    className="flex items-center gap-2.5 px-6 py-3 bg-[#00d2ff] text-[#003543] font-semibold text-sm rounded-xl hover:bg-[#a5e7ff] transition-colors disabled:opacity-60"
+                    className="flex items-center gap-2.5 px-6 py-3 bg-[#00d2ff] text-[#003543] font-semibold text-sm rounded-xl hover:bg-[#7dd8f5] transition-colors disabled:opacity-60"
                   >
                     {joining === selected.id ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -609,7 +609,7 @@ export function MeetView({
               )}
 
               {/* Join link */}
-              <div className="mb-6 flex items-center gap-2 p-3 bg-[#1b1f2e] rounded-xl border border-[rgba(0,255,255,0.06)]">
+              <div className="mb-6 flex items-center gap-2 p-3 bg-[#1b1f2e] rounded-xl border border-[rgba(255,255,255,0.05)]">
                 <ExternalLink className="w-4 h-4 text-[#7a8899] flex-shrink-0" />
                 <span className="text-xs text-[#7a8899] truncate flex-1">{`${typeof window !== "undefined" ? window.location.origin : ""}/meet/${selected.roomName}`}</span>
                 <button
@@ -630,7 +630,7 @@ export function MeetView({
                   {selected.participants.map((p) => (
                     <div
                       key={p.id}
-                      className="flex items-center gap-3 p-3 bg-[#1b1f2e] rounded-xl border border-[rgba(0,255,255,0.06)]"
+                      className="flex items-center gap-3 p-3 bg-[#1b1f2e] rounded-xl border border-[rgba(255,255,255,0.05)]"
                     >
                       <Avatar name={p.user.fullName} url={p.user.avatarUrl} size="sm" />
                       <div className="flex-1 min-w-0">
@@ -655,7 +655,7 @@ export function MeetView({
                     <Sparkles className="w-4 h-4 text-[#00d2ff]" />
                     <span className="text-sm font-medium text-[#00d2ff]">AI Summary</span>
                   </div>
-                  <p className="text-sm text-[#bbc9cf] leading-relaxed">{selected.aiSummary}</p>
+                  <p className="text-sm text-[#9aa3b8] leading-relaxed">{selected.aiSummary}</p>
                 </div>
               )}
             </div>

@@ -48,7 +48,7 @@ const TYPE_CONFIG: Record<NotificationType, {
   DLP_VIOLATION:     { label: "DLP Violation",    Icon: AlertTriangle,color: "text-orange-400",  bg: "bg-orange-400/10",  border: "border-orange-400/20" },
   NEW_MESSAGE:       { label: "New Message",      Icon: Mail,         color: "text-emerald-400", bg: "bg-emerald-400/10", border: "border-emerald-400/20" },
   FILE_SHARED:       { label: "File Shared",      Icon: FileText,     color: "text-sky-400",     bg: "bg-sky-400/10",     border: "border-sky-400/20" },
-  SYSTEM:            { label: "System",           Icon: Settings,     color: "text-[#5c6b72]",   bg: "bg-[#5c6b72]/10",  border: "border-[#5c6b72]/20" },
+  SYSTEM:            { label: "System",           Icon: Settings,     color: "text-[#5d6579]",   bg: "bg-[#5d6579]/10",  border: "border-[#5d6579]/20" },
 };
 
 const ALL_TYPES = Object.keys(TYPE_CONFIG) as NotificationType[];
@@ -126,15 +126,15 @@ function NotificationRow({
       {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-start gap-2 flex-wrap">
-          <span className={`text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full ${cfg.color} ${cfg.bg} border ${cfg.border}`}>
+          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${cfg.color} ${cfg.bg} border ${cfg.border}`}>
             {cfg.label}
           </span>
-          <span className="text-[10px] text-[#5c6b72] ml-auto">{timeAgo(notification.createdAt)}</span>
+          <span className="text-[10px] text-[#5d6579] ml-auto">{timeAgo(notification.createdAt)}</span>
         </div>
-        <p className={`text-sm font-medium mt-1 leading-snug ${notification.read ? "text-[#bbc9cf]" : "text-[#dfe1f6]"}`}>
+        <p className={`text-sm font-medium mt-1 leading-snug ${notification.read ? "text-[#9aa3b8]" : "text-[#dfe1f6]"}`}>
           {notification.title}
         </p>
-        <p className="text-xs text-[#5c6b72] mt-0.5 line-clamp-2">{notification.body}</p>
+        <p className="text-xs text-[#5d6579] mt-0.5 line-clamp-2">{notification.body}</p>
       </div>
 
       {/* Actions — revealed on hover */}
@@ -142,7 +142,7 @@ function NotificationRow({
         {!notification.read && (
           <button
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); onMarkRead(notification.id); }}
-            className="p-1.5 rounded text-[#5c6b72] hover:text-emerald-400 hover:bg-[#0f1321] transition-colors"
+            className="p-1.5 rounded text-[#5d6579] hover:text-emerald-400 hover:bg-[#0f1321] transition-colors"
             title="Mark as read"
           >
             <Check className="w-3.5 h-3.5" />
@@ -150,7 +150,7 @@ function NotificationRow({
         )}
         <button
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(notification.id); }}
-          className="p-1.5 rounded text-[#5c6b72] hover:text-red-400 hover:bg-[#0f1321] transition-colors"
+          className="p-1.5 rounded text-[#5d6579] hover:text-red-400 hover:bg-[#0f1321] transition-colors"
           title="Delete"
         >
           <Trash2 className="w-3.5 h-3.5" />
@@ -296,7 +296,7 @@ export default function NotificationsPage() {
               "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors",
               unreadOnly
                 ? "bg-[#00d2ff]/10 text-[#00d2ff] border-[#00d2ff]/20"
-                : "bg-[#1b1f2e] text-[#5c6b72] border-[rgba(0,255,255,0.08)] hover:text-[#bbc9cf]",
+                : "bg-[#1b1f2e] text-[#5d6579] border-[rgba(255,255,255,0.06)] hover:text-[#9aa3b8]",
             ].join(" ")}
           >
             <Filter className="w-3 h-3" />
@@ -307,7 +307,7 @@ export default function NotificationsPage() {
           <button
             onClick={() => void load()}
             disabled={loading}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#1b1f2e] text-[#5c6b72] border border-[rgba(0,255,255,0.08)] hover:text-[#bbc9cf] transition-colors disabled:opacity-50 ml-auto"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#1b1f2e] text-[#5d6579] border border-[rgba(255,255,255,0.06)] hover:text-[#9aa3b8] transition-colors disabled:opacity-50 ml-auto"
           >
             <RefreshCw className={`w-3 h-3 ${loading ? "animate-spin" : ""}`} />
             Refresh
@@ -331,12 +331,12 @@ export default function NotificationsPage() {
                   "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors",
                   active
                     ? "bg-[#00d2ff]/15 text-[#00d2ff] border-[#00d2ff]/30"
-                    : "bg-[#1b1f2e] text-[#5c6b72] border-[rgba(0,255,255,0.08)] hover:text-[#bbc9cf] hover:border-[rgba(0,255,255,0.2)]",
+                    : "bg-[#1b1f2e] text-[#5d6579] border-[rgba(255,255,255,0.06)] hover:text-[#9aa3b8] hover:border-[rgba(255,255,255,0.14)]",
                 ].join(" ")}
               >
                 {label}
                 {count > 0 && (
-                  <span className={`px-1 min-w-[16px] text-center rounded-full text-[9px] font-bold ${active ? "bg-[#00d2ff]/20 text-[#00d2ff]" : "bg-[#262939] text-[#5c6b72]"}`}>
+                  <span className={`px-1 min-w-[16px] text-center rounded-full text-[9px] font-semibold ${active ? "bg-[#00d2ff]/20 text-[#00d2ff]" : "bg-[#262939] text-[#5d6579]"}`}>
                     {count}
                   </span>
                 )}
@@ -347,20 +347,20 @@ export default function NotificationsPage() {
 
         {/* Notification list */}
         {loading ? (
-          <div className="flex items-center justify-center py-20 gap-2 text-[#5c6b72]">
+          <div className="flex items-center justify-center py-20 gap-2 text-[#5d6579]">
             <Loader2 className="w-5 h-5 animate-spin" />
             <span className="text-sm">Loading notifications…</span>
           </div>
         ) : groups.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-[#1b1f2e] border border-[rgba(0,255,255,0.08)] flex items-center justify-center">
-              <BellOff className="w-6 h-6 text-[#3c4f5a]" />
+            <div className="w-14 h-14 rounded-2xl bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] flex items-center justify-center">
+              <BellOff className="w-6 h-6 text-[#454e63]" />
             </div>
             <div className="text-center">
-              <p className="text-sm font-medium text-[#bbc9cf]">
+              <p className="text-sm font-medium text-[#9aa3b8]">
                 {unreadOnly ? "No unread notifications" : "All quiet"}
               </p>
-              <p className="text-xs text-[#5c6b72] mt-1">
+              <p className="text-xs text-[#5d6579] mt-1">
                 {unreadOnly ? "Switch to 'Show all' to see past notifications." : "You're up to date."}
               </p>
             </div>
@@ -371,12 +371,12 @@ export default function NotificationsPage() {
               <div key={label}>
                 {/* Date group header */}
                 <div className="flex items-center gap-3 mb-1 px-4">
-                  <span className="text-[10px] font-semibold uppercase tracking-widest text-[#3c4f5a]">{label}</span>
-                  <div className="flex-1 h-px bg-[rgba(0,255,255,0.05)]" />
+                  <span className="text-[10px] font-semibold text-[#454e63]">{label}</span>
+                  <div className="flex-1 h-px bg-[rgba(255,255,255,0.04)]" />
                 </div>
 
                 {/* Card */}
-                <div className="bg-[#1b1f2e] border border-[rgba(0,255,255,0.08)] rounded-xl overflow-hidden divide-y divide-[rgba(0,255,255,0.04)]">
+                <div className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl overflow-hidden divide-y divide-[rgba(255,255,255,0.04)]">
                   {items.map((n) => (
                     <NotificationRow
                       key={n.id}
@@ -393,7 +393,7 @@ export default function NotificationsPage() {
 
         {/* Count summary */}
         {!loading && notifications.length > 0 && (
-          <p className="text-center text-xs text-[#3c4f5a] pt-2">
+          <p className="text-center text-xs text-[#454e63] pt-2">
             {filtered.length} of {notifications.length} notifications shown
           </p>
         )}

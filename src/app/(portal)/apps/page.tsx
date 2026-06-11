@@ -51,7 +51,7 @@ const CATEGORY_COLOURS: Record<string, string> = {
 };
 
 function CategoryBadge({ category }: { category: string }) {
-  const cls = CATEGORY_COLOURS[category] ?? "bg-[#5c6b72]/20 text-[#5c6b72] border-[#5c6b72]/20";
+  const cls = CATEGORY_COLOURS[category] ?? "bg-[#5d6579]/20 text-[#5d6579] border-[#5d6579]/20";
   return (
     <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${cls}`}>
       {category}
@@ -90,10 +90,10 @@ function AppCard({
         "group relative flex flex-col gap-4 rounded-xl p-5",
         "bg-[#1b1f2e] border transition-all duration-200",
         isComingSoon
-          ? "opacity-60 border-[rgba(0,255,255,0.08)]"
+          ? "opacity-60 border-[rgba(255,255,255,0.06)]"
           : isEnabled
-            ? "border-emerald-500/30 hover:border-emerald-400/60 hover:shadow-[0_0_16px_rgba(52,211,153,0.08)]"
-            : "border-[rgba(0,255,255,0.08)] hover:border-[rgba(0,255,255,0.35)] hover:shadow-[0_0_16px_rgba(0,210,255,0.07)]",
+            ? "border-emerald-500/30 hover:border-emerald-400/60"
+            : "border-[rgba(255,255,255,0.06)] hover:border-[rgba(255,255,255,0.22)]",
       ].join(" ")}
     >
       {/* Active glow strip */}
@@ -118,7 +118,7 @@ function AppCard({
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-semibold text-[#dfe1f6]">{app.name}</span>
             {isEnabled && (
-              <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+              <span className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
                 <CheckCircle2 className="h-2.5 w-2.5" />
                 Active
               </span>
@@ -131,14 +131,14 @@ function AppCard({
       </div>
 
       {/* Description */}
-      <p className="text-xs leading-relaxed text-[#5c6b72] flex-1">
+      <p className="text-xs leading-relaxed text-[#5d6579] flex-1">
         {app.description}
       </p>
 
       {/* Action row */}
       <div className="flex items-center justify-between gap-2">
         {isComingSoon ? (
-          <span className="text-[11px] font-medium px-3 py-1.5 rounded-lg bg-[#5c6b72]/10 text-[#5c6b72] border border-[#5c6b72]/20 cursor-default">
+          <span className="text-[11px] font-medium px-3 py-1.5 rounded-lg bg-[#5d6579]/10 text-[#5d6579] border border-[#5d6579]/20 cursor-default">
             Coming Soon
           </span>
         ) : isAdmin ? (
@@ -161,7 +161,7 @@ function AppCard({
           </button>
         ) : (
           <button
-            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#5c6b72]/10 text-[#5c6b72] border border-[#5c6b72]/20 hover:bg-[#5c6b72]/20 transition-colors"
+            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#5d6579]/10 text-[#5d6579] border border-[#5d6579]/20 hover:bg-[#5d6579]/20 transition-colors"
           >
             Request
           </button>
@@ -252,7 +252,7 @@ export default function AppsPage() {
 
         {/* Stats strip */}
         {!loading && enabledCount > 0 && (
-          <div className="flex items-center gap-2 text-xs text-[#5c6b72]">
+          <div className="flex items-center gap-2 text-xs text-[#5d6579]">
             <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
             <span>
               <span className="font-semibold text-emerald-400">{enabledCount}</span>{" "}
@@ -271,7 +271,7 @@ export default function AppsPage() {
                 "px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors",
                 activeTab === cat
                   ? "bg-[#00d2ff]/15 text-[#00d2ff] border-[#00d2ff]/30"
-                  : "bg-[#1b1f2e] text-[#5c6b72] border-[rgba(0,255,255,0.08)] hover:text-[#bbc9cf] hover:border-[rgba(0,255,255,0.2)]",
+                  : "bg-[#1b1f2e] text-[#5d6579] border-[rgba(255,255,255,0.06)] hover:text-[#9aa3b8] hover:border-[rgba(255,255,255,0.14)]",
               ].join(" ")}
             >
               {cat}
@@ -281,14 +281,14 @@ export default function AppsPage() {
 
         {/* Grid */}
         {loading ? (
-          <div className="flex items-center justify-center py-24 gap-3 text-[#5c6b72]">
+          <div className="flex items-center justify-center py-24 gap-3 text-[#5d6579]">
             <Loader2 className="h-5 w-5 animate-spin" />
             <span className="text-sm">Loading integrations…</span>
           </div>
         ) : sorted.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 gap-2">
-            <Code className="h-10 w-10 text-[#3c4f5a]" />
-            <p className="text-sm text-[#5c6b72]">No integrations found</p>
+            <Code className="h-10 w-10 text-[#454e63]" />
+            <p className="text-sm text-[#5d6579]">No integrations found</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -9,16 +9,17 @@ button, a { touch-action: manipulation; }
 input, textarea, select { font-size: 16px; }
 
 :root {
-  /* Cyber-Sentry design system — typography & effect tokens */
-  --font-geist: "Geist", "Geist Mono", ui-monospace, monospace;
-  --glow-primary: 0 0 20px rgba(0, 210, 255, 0.35), 0 0 40px rgba(0, 210, 255, 0.12);
-  --glow-primary-sm: 0 0 12px rgba(0, 210, 255, 0.25);
-  --glow-danger: 0 0 20px rgba(255, 77, 109, 0.35), 0 0 40px rgba(255, 77, 109, 0.12);
-  --glow-danger-sm: 0 0 12px rgba(255, 77, 109, 0.25);
-  --glow-secondary: 0 0 20px rgba(0, 254, 178, 0.3);
-  --card-border: rgba(0, 255, 255, 0.08);
-  --glass-bg: rgba(27, 31, 46, 0.65);
-  --glass-blur: blur(20px);
+  /* Refined-dark design system — typography & effect tokens */
+  --font-geist: var(--font-dm, "DM Sans", ui-sans-serif, system-ui, sans-serif);
+  /* Legacy glow tokens — neutralized to soft elevation shadows */
+  --glow-primary: 0 4px 16px rgba(0, 0, 0, 0.3);
+  --glow-primary-sm: 0 2px 8px rgba(0, 0, 0, 0.25);
+  --glow-danger: 0 4px 16px rgba(0, 0, 0, 0.3);
+  --glow-danger-sm: 0 2px 8px rgba(0, 0, 0, 0.25);
+  --glow-secondary: 0 4px 16px rgba(0, 0, 0, 0.3);
+  --card-border: rgba(255, 255, 255, 0.06);
+  --glass-bg: #141828;
+  --glass-blur: none;
 
   /* Content surfaces — light mode */
   --background: #fafafa;
@@ -78,14 +79,14 @@ input, textarea, select { font-size: 16px; }
   --surface: #1b1f2e;
   --surface-sunken: #0a0d1c;
   --foreground: #dfe1f6;
-  --muted: #bbc9cf;
-  --subtle: #859399;
-  --placeholder: #859399;
-  --border: #3c494e;
-  --border-strong: #859399;
+  --muted: #9aa3b8;
+  --subtle: #707a90;
+  --placeholder: #707a90;
+  --border: #262b3a;
+  --border-strong: #707a90;
 
   --accent: #00d2ff;
-  --accent-hover: #a5e7ff;
+  --accent-hover: #7dd8f5;
   --accent-soft: #00d2ff1a;
   --accent-foreground: #003543;
   --ring: rgba(0, 210, 255, 0.25);
@@ -95,12 +96,12 @@ input, textarea, select { font-size: 16px; }
   --popover-foreground: #dfe1f6;
   --card: #1b1f2e;
   --card-foreground: #dfe1f6;
-  --input: #3c494e;
+  --input: #262b3a;
   --primary: #00d2ff;
   --primary-foreground: #003543;
   --secondary: #262939;
   --secondary-foreground: #dfe1f6;
-  --muted-foreground: #bbc9cf;
+  --muted-foreground: #9aa3b8;
   --destructive: #ffb4ab;
   --destructive-foreground: #690005;
 }
@@ -161,12 +162,6 @@ input, textarea, select { font-size: 16px; }
 html,
 body {
   background-color: #0f1321;
-  /* Cyber grid overlay — 5% opacity per Stitch design system spec */
-  background-image:
-    linear-gradient(rgba(0, 210, 255, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 210, 255, 0.04) 1px, transparent 1px);
-  background-size: 40px 40px;
-  background-attachment: fixed;
   color: #dfe1f6;
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
@@ -174,7 +169,6 @@ body {
   transition: background-color 150ms ease-out, color 150ms ease-out;
 }
 
-/* Geist label font — monospaced technical feel for chips, metadata, badges */
 ::placeholder {
   color: rgba(255, 255, 255, 0.3);
   opacity: 1;
@@ -189,8 +183,7 @@ textarea {
 }
 
 ::selection {
-  background: var(--accent);
-  color: #fff;
+  background: rgba(0, 210, 255, 0.25);
 }
 
 *::-webkit-scrollbar {
@@ -198,92 +191,86 @@ textarea {
   height: 6px;
 }
 *::-webkit-scrollbar-thumb {
-  background: var(--border-strong);
+  background: rgba(255, 255, 255, 0.14);
   border-radius: 999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.22);
 }
 *::-webkit-scrollbar-track {
   background: transparent;
 }
 
 /* =========================================================
-   Cyber-Sentry Design System — utility classes
-   Glassmorphism, neon glows, Geist labels
+   Refined-dark design system — utility classes
+   Solid surfaces, soft elevation, no neon
    ========================================================= */
 
-/* Glass panels — primary floating surfaces */
+/* Panels — primary floating surfaces (solid, soft shadow) */
 @utility glass-panel {
-  background: rgba(11, 18, 32, 0.65);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-color: rgba(0, 255, 255, 0.08) !important;
+  background: #141828;
+  border-color: rgba(255, 255, 255, 0.06) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
-/* Glass surface — secondary containers inside panels */
+/* Secondary containers inside panels */
 @utility glass-surface {
-  background: rgba(27, 31, 46, 0.7);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-color: rgba(0, 255, 255, 0.08) !important;
+  background: #1b1f2e;
+  border-color: rgba(255, 255, 255, 0.06) !important;
 }
 
-/* Neon glow — cyan (primary actions, active states) */
+/* Legacy glow utilities — neutralized to soft elevation */
 @utility glow-cyan {
-  box-shadow: var(--glow-primary);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 @utility glow-cyan-sm {
-  box-shadow: var(--glow-primary-sm);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
-
-/* Neon glow — danger red (alerts, destructive) */
 @utility glow-danger {
-  box-shadow: var(--glow-danger);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 @utility glow-danger-sm {
-  box-shadow: var(--glow-danger-sm);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
-
-/* Neon glow — secondary green (success, health) */
 @utility glow-secondary {
-  box-shadow: var(--glow-secondary);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
-/* Label typography — Geist for chips, badges, metadata */
+/* Label typography — inherits the UI sans, slightly tightened */
 @utility font-label {
-  font-family: var(--font-geist);
-  letter-spacing: 0.02em;
+  font-family: var(--font-sans);
+  letter-spacing: 0;
 }
 
-/* Cyan card border per design system spec (rgba(0,255,255,0.08)) */
+/* Neutral card border */
 @utility border-card {
-  border-color: rgba(0, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.06);
 }
 
-/* Primary button — cyan bg with hover glow */
+/* Primary button — solid cyan, no glow */
 .btn-primary {
   background-color: #00d2ff;
   color: #003543;
-  transition: background-color 150ms ease, box-shadow 200ms ease;
+  transition: background-color 150ms ease;
 }
 .btn-primary:hover:not(:disabled) {
-  background-color: #00b8d9;
-  box-shadow: var(--glow-primary);
+  background-color: #33dbff;
 }
 .btn-primary:disabled {
   opacity: 0.5;
 }
 
-/* Danger button — red bg with hover glow */
+/* Danger button — solid red, no glow */
 .btn-danger {
   background-color: #ff4d6d;
   color: #ffffff;
-  transition: background-color 150ms ease, box-shadow 200ms ease;
+  transition: background-color 150ms ease;
 }
 .btn-danger:hover:not(:disabled) {
   background-color: #e8344f;
-  box-shadow: var(--glow-danger);
 }
 
-/* Active nav item glow */
+/* Active nav item — flat */
 .nav-active {
-  box-shadow: inset 0 0 16px rgba(0, 210, 255, 0.08);
+  box-shadow: none;
 }

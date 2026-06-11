@@ -9,7 +9,7 @@ export default function CalendarLoading() {
       </div>
       <div className="grid grid-cols-7 gap-2">
         {[...Array(35)].map((_, i) => (
-          <div key={i} className="h-24 bg-[#1b1f2e] rounded-lg border border-[rgba(0,255,255,0.08)]" />
+          <div key={i} className="h-24 bg-[#1b1f2e] rounded-lg border border-[rgba(255,255,255,0.06)]" />
         ))}
       </div>
     </div>

@@ -113,23 +113,23 @@ type SuppressionEntry = {
 };
 
 const ROLE_COLORS: Record<string, string> = {
-  ADMIN: "bg-[#00d2ff]/10 text-[#a5e7ff] border-[#00d2ff]/20",
+  ADMIN: "bg-[#00d2ff]/10 text-[#7dd8f5] border-[#00d2ff]/20",
   CEO: "bg-purple-500/10 text-purple-300 border-purple-500/20",
   CISO: "bg-orange-500/10 text-orange-300 border-orange-500/20",
-  MARKETING: "bg-[#262939] text-[#bbc9cf] border-[rgba(0,255,255,0.1)]",
-  INTERNSHIP: "bg-[#262939] text-[#bbc9cf] border-[rgba(0,255,255,0.1)]",
-  R_AND_D: "bg-[#262939] text-[#bbc9cf] border-[rgba(0,255,255,0.1)]",
+  MARKETING: "bg-[#262939] text-[#9aa3b8] border-[rgba(255,255,255,0.08)]",
+  INTERNSHIP: "bg-[#262939] text-[#9aa3b8] border-[rgba(255,255,255,0.08)]",
+  R_AND_D: "bg-[#262939] text-[#9aa3b8] border-[rgba(255,255,255,0.08)]",
 };
 
 const REASON_COLORS: Record<string, string> = {
   BOUNCE: "bg-orange-500/10 text-orange-300 border-orange-500/20",
   SPAM: "bg-[#ff4d6d]/10 text-[#ff4d6d] border-[#ff4d6d]/20",
-  MANUAL: "bg-[#262939] text-[#bbc9cf] border-[rgba(0,255,255,0.1)]",
+  MANUAL: "bg-[#262939] text-[#9aa3b8] border-[rgba(255,255,255,0.08)]",
 };
 
 const ACTION_COLORS: Record<string, string> = {
-  LOGIN: "bg-[#00feb2]/10 text-[#00feb2] border-[#00feb2]/20",
-  LOGOUT: "bg-[#262939] text-[#bbc9cf] border-[rgba(0,255,255,0.1)]",
+  LOGIN: "bg-[#06d6a0]/10 text-[#06d6a0] border-[#06d6a0]/20",
+  LOGOUT: "bg-[#262939] text-[#9aa3b8] border-[rgba(255,255,255,0.08)]",
   EMAIL_QUEUED: "bg-[#00d2ff]/10 text-[#00d2ff] border-[#00d2ff]/20",
 };
 
@@ -137,7 +137,7 @@ const SEVERITY_COLORS: Record<string, string> = {
   CRITICAL: "text-[#ff4d6d] bg-[#ff4d6d]/10",
   HIGH: "text-orange-300 bg-orange-500/10",
   MEDIUM: "text-yellow-300 bg-yellow-500/10",
-  LOW: "text-[#00feb2] bg-[#00feb2]/10",
+  LOW: "text-[#06d6a0] bg-[#06d6a0]/10",
 };
 
 function SkeletonRow({ cols }: { cols: number }) {
@@ -154,7 +154,7 @@ function SkeletonRow({ cols }: { cols: number }) {
 
 function EmptyState({ icon: Icon, message }: { icon: React.ElementType; message: string }) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 text-[#bbc9cf]">
+    <div className="flex flex-col items-center justify-center py-16 text-[#9aa3b8]">
       <Icon className="w-12 h-12 mb-3 opacity-20" />
       <p className="text-sm">{message}</p>
     </div>
@@ -184,12 +184,12 @@ function StatCard({
   sub?: string;
 }) {
   return (
-    <div className="bg-[#1b1f2e] border border-[rgba(0,255,255,0.1)] rounded-xl p-5">
+    <div className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.08)] rounded-xl p-5">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm font-medium text-[#bbc9cf]">{label}</p>
-          <p className="text-2xl font-bold text-[#dfe1f6] mt-1">{typeof value === "number" ? value.toLocaleString() : value}</p>
-          {sub && <p className="text-xs text-[#bbc9cf] mt-1">{sub}</p>}
+          <p className="text-sm font-medium text-[#9aa3b8]">{label}</p>
+          <p className="text-2xl font-semibold text-[#dfe1f6] mt-1">{typeof value === "number" ? value.toLocaleString() : value}</p>
+          {sub && <p className="text-xs text-[#9aa3b8] mt-1">{sub}</p>}
         </div>
         <div className={`p-3 rounded-xl ${iconColor}`}>
           <Icon className="w-5 h-5" />
@@ -201,9 +201,9 @@ function StatCard({
 
 function RateBar({ label, rate, color }: { label: string; rate: number; color: string }) {
   return (
-    <div className="flex-1 bg-[#1b1f2e] border border-[rgba(0,255,255,0.1)] rounded-xl p-5">
-      <p className="text-sm font-medium text-[#bbc9cf] mb-1">{label}</p>
-      <p className={`text-2xl font-bold text-[#dfe1f6] mt-1 ${color}`}>{rate}%</p>
+    <div className="flex-1 bg-[#1b1f2e] border border-[rgba(255,255,255,0.08)] rounded-xl p-5">
+      <p className="text-sm font-medium text-[#9aa3b8] mb-1">{label}</p>
+      <p className={`text-2xl font-semibold text-[#dfe1f6] mt-1 ${color}`}>{rate}%</p>
       <div className="mt-3 bg-[#262939] rounded-full h-2 flex-1 overflow-hidden">
         <div
           className={`bg-[#00d2ff] h-2 rounded-full transition-all`}
@@ -261,7 +261,7 @@ function OverviewTab() {
           label="Active Users"
           value={stats.users.active}
           icon={TrendingUp}
-          iconColor="bg-[#00feb2]/10 text-[#00feb2]"
+          iconColor="bg-[#06d6a0]/10 text-[#06d6a0]"
         />
         <StatCard
           label="Total Mailboxes"
@@ -273,7 +273,7 @@ function OverviewTab() {
           label="Emails Today"
           value={stats.emails.today}
           icon={BarChart3}
-          iconColor="bg-[#00d2ff]/10 text-[#a5e7ff]"
+          iconColor="bg-[#00d2ff]/10 text-[#7dd8f5]"
           sub={`${stats.emails.total} total`}
         />
         <StatCard
@@ -304,38 +304,38 @@ function OverviewTab() {
           label="Drive Files"
           value={stats.drive.files}
           icon={HardDrive}
-          iconColor="bg-[#00feb2]/10 text-[#00feb2]"
+          iconColor="bg-[#06d6a0]/10 text-[#06d6a0]"
         />
       </div>
 
       {/* Email stats last 30 days */}
       {es && (
-        <div className="bg-[#1b1f2e] border border-[rgba(0,255,255,0.1)] rounded-xl overflow-hidden">
-          <div className="px-5 py-4 border-b border-[rgba(0,255,255,0.1)]">
+        <div className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.08)] rounded-xl overflow-hidden">
+          <div className="px-5 py-4 border-b border-[rgba(255,255,255,0.08)]">
             <h3 className="font-semibold text-[#dfe1f6] text-sm">Email Performance — Last 30 Days</h3>
-            <p className="text-xs text-[#bbc9cf] mt-0.5">{es.sent.toLocaleString()} emails sent</p>
+            <p className="text-xs text-[#9aa3b8] mt-0.5">{es.sent.toLocaleString()} emails sent</p>
           </div>
           <div className="p-5">
             <div className="grid grid-cols-4 gap-4 mb-4">
               <div className="text-center">
-                <p className="text-2xl font-bold text-[#dfe1f6]">{es.sent.toLocaleString()}</p>
-                <p className="text-xs font-medium text-[#bbc9cf] uppercase tracking-wider mt-1">Sent</p>
+                <p className="text-2xl font-semibold text-[#dfe1f6]">{es.sent.toLocaleString()}</p>
+                <p className="text-xs font-medium text-[#9aa3b8] mt-1">Sent</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-bold text-[#00feb2]">{es.delivered.toLocaleString()}</p>
-                <p className="text-xs font-medium text-[#bbc9cf] uppercase tracking-wider mt-1">Delivered</p>
+                <p className="text-2xl font-semibold text-[#06d6a0]">{es.delivered.toLocaleString()}</p>
+                <p className="text-xs font-medium text-[#9aa3b8] mt-1">Delivered</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-bold text-[#ff4d6d]">{es.bounced.toLocaleString()}</p>
-                <p className="text-xs font-medium text-[#bbc9cf] uppercase tracking-wider mt-1">Bounced</p>
+                <p className="text-2xl font-semibold text-[#ff4d6d]">{es.bounced.toLocaleString()}</p>
+                <p className="text-xs font-medium text-[#9aa3b8] mt-1">Bounced</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-bold text-[#00d2ff]">{es.opened.toLocaleString()}</p>
-                <p className="text-xs font-medium text-[#bbc9cf] uppercase tracking-wider mt-1">Opened</p>
+                <p className="text-2xl font-semibold text-[#00d2ff]">{es.opened.toLocaleString()}</p>
+                <p className="text-xs font-medium text-[#9aa3b8] mt-1">Opened</p>
               </div>
             </div>
             <div className="flex gap-4">
-              <RateBar label="Delivery Rate" rate={es.deliveryRate} color="text-[#00feb2]" />
+              <RateBar label="Delivery Rate" rate={es.deliveryRate} color="text-[#06d6a0]" />
               <RateBar label="Bounce Rate" rate={es.bounceRate} color="text-[#ff4d6d]" />
               <RateBar label="Open Rate" rate={es.openRate} color="text-[#00d2ff]" />
             </div>
@@ -414,13 +414,13 @@ function CsvImportModal({ onClose, onImported }: { onClose: () => void; onImport
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60" />
-      <div className="relative z-10 bg-[#1b1f2e] rounded-xl shadow-2xl w-full max-w-xl border border-[rgba(0,255,255,0.1)] max-h-[85vh] overflow-hidden flex flex-col">
-        <div className="px-6 py-4 border-b border-[rgba(0,255,255,0.1)] flex items-center justify-between">
+      <div className="relative z-10 bg-[#1b1f2e] rounded-xl shadow-2xl w-full max-w-xl border border-[rgba(255,255,255,0.08)] max-h-[85vh] overflow-hidden flex flex-col">
+        <div className="px-6 py-4 border-b border-[rgba(255,255,255,0.08)] flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Upload className="h-5 w-5 text-[#00d2ff]" />
             <h2 className="font-semibold text-[#dfe1f6]">Import Users from CSV</h2>
           </div>
-          <button onClick={onClose} className="p-1.5 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-md transition-colors">
+          <button onClick={onClose} className="p-1.5 text-[#9aa3b8] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-md transition-colors">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -428,23 +428,23 @@ function CsvImportModal({ onClose, onImported }: { onClose: () => void; onImport
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {!results ? (
             <>
-              <p className="text-sm text-[#bbc9cf]">
+              <p className="text-sm text-[#9aa3b8]">
                 Upload or paste a CSV with columns: <code className="bg-[#262939] px-1 rounded text-xs font-mono text-[#00d2ff]">email, fullName, role</code>
               </p>
-              <p className="text-xs text-[#bbc9cf]">
+              <p className="text-xs text-[#9aa3b8]">
                 Valid roles: ADMIN, CEO, CISO, DEVELOPER, MARKETING, FINANCE, SUPPORT, OPERATIONS, QA, RESEARCH, CYBER_SECURITY, R_AND_D, COO, OPS_MANAGER, INTERNSHIP
               </p>
 
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => fileRef.current?.click()}
-                  className="bg-[#262939] text-[#bbc9cf] hover:bg-[#303444] border border-[rgba(0,255,255,0.1)] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2"
+                  className="bg-[#262939] text-[#9aa3b8] hover:bg-[#303444] border border-[rgba(255,255,255,0.08)] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2"
                 >
                   <FileText className="w-4 h-4" />
                   Choose CSV file
                 </button>
                 <input ref={fileRef} type="file" accept=".csv,text/csv" onChange={handleFile} className="hidden" />
-                <span className="text-xs text-[#bbc9cf]">or paste below</span>
+                <span className="text-xs text-[#9aa3b8]">or paste below</span>
               </div>
 
               <textarea
@@ -452,33 +452,33 @@ function CsvImportModal({ onClose, onImported }: { onClose: () => void; onImport
                 onChange={(e) => handleTextChange(e.target.value)}
                 placeholder={"email,fullName,role\nalice@company.com,Alice Smith,DEVELOPER\nbob@company.com,Bob Jones,MARKETING"}
                 rows={6}
-                className="w-full text-xs font-mono border border-[rgba(0,255,255,0.1)] bg-[#0f1321] text-[#dfe1f6] rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-[#00d2ff] outline-none resize-none placeholder:text-[#859399]"
+                className="w-full text-xs font-mono border border-[rgba(255,255,255,0.08)] bg-[#0f1321] text-[#dfe1f6] rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-[#00d2ff] outline-none resize-none placeholder:text-[#707a90]"
               />
 
               {parseError && <p className="text-sm text-[#ff4d6d]">{parseError}</p>}
 
               {parsed.length > 0 && (
                 <div>
-                  <p className="text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider mb-2">{parsed.length} users ready to import</p>
-                  <div className="bg-[#0f1321] border border-[rgba(0,255,255,0.1)] rounded-xl overflow-hidden max-h-48 overflow-y-auto">
+                  <p className="text-xs font-semibold text-[#9aa3b8] mb-2">{parsed.length} users ready to import</p>
+                  <div className="bg-[#0f1321] border border-[rgba(255,255,255,0.08)] rounded-xl overflow-hidden max-h-48 overflow-y-auto">
                     <table className="w-full text-xs">
-                      <thead className="bg-[#262939] border-b border-[rgba(0,255,255,0.1)] sticky top-0">
+                      <thead className="bg-[#262939] border-b border-[rgba(255,255,255,0.08)] sticky top-0">
                         <tr>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider">Email</th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider">Name</th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider">Role</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-[#9aa3b8]">Email</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-[#9aa3b8]">Name</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-[#9aa3b8]">Role</th>
                         </tr>
                       </thead>
                       <tbody>
                         {parsed.slice(0, 20).map((row, i) => (
-                          <tr key={i} className="border-b border-[rgba(0,255,255,0.1)] hover:bg-[#1b1f2e] transition-colors">
+                          <tr key={i} className="border-b border-[rgba(255,255,255,0.08)] hover:bg-[#1b1f2e] transition-colors">
                             <td className="px-4 py-3 text-sm text-[#dfe1f6]">{row.email}</td>
                             <td className="px-4 py-3 text-sm text-[#dfe1f6]">{row.fullName}</td>
-                            <td className="px-4 py-3 text-sm text-[#bbc9cf]">{row.role}</td>
+                            <td className="px-4 py-3 text-sm text-[#9aa3b8]">{row.role}</td>
                           </tr>
                         ))}
                         {parsed.length > 20 && (
-                          <tr><td colSpan={3} className="px-4 py-3 text-[#bbc9cf] text-center text-xs">…and {parsed.length - 20} more</td></tr>
+                          <tr><td colSpan={3} className="px-4 py-3 text-[#9aa3b8] text-center text-xs">…and {parsed.length - 20} more</td></tr>
                         )}
                       </tbody>
                     </table>
@@ -489,18 +489,18 @@ function CsvImportModal({ onClose, onImported }: { onClose: () => void; onImport
           ) : (
             <div>
               <p className="text-sm font-semibold text-[#dfe1f6] mb-3">Import Results</p>
-              <div className="bg-[#0f1321] border border-[rgba(0,255,255,0.1)] rounded-xl overflow-hidden max-h-80 overflow-y-auto">
+              <div className="bg-[#0f1321] border border-[rgba(255,255,255,0.08)] rounded-xl overflow-hidden max-h-80 overflow-y-auto">
                 <table className="w-full text-xs">
-                  <thead className="bg-[#262939] border-b border-[rgba(0,255,255,0.1)] sticky top-0">
+                  <thead className="bg-[#262939] border-b border-[rgba(255,255,255,0.08)] sticky top-0">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider">Email</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider">Status</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider">Temp Password / Note</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-[#9aa3b8]">Email</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-[#9aa3b8]">Status</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-[#9aa3b8]">Temp Password / Note</th>
                     </tr>
                   </thead>
                   <tbody>
                     {results.map((r, i) => (
-                      <tr key={i} className={r.status === "error" ? "bg-[#ff4d6d]/10 text-[#ff4d6d]" : r.status === "skipped" ? "bg-amber-500/10 text-amber-300" : "bg-[#00feb2]/10 text-[#00feb2]"}>
+                      <tr key={i} className={r.status === "error" ? "bg-[#ff4d6d]/10 text-[#ff4d6d]" : r.status === "skipped" ? "bg-amber-500/10 text-amber-300" : "bg-[#06d6a0]/10 text-[#06d6a0]"}>
                         <td className="px-3 py-1.5 font-mono">{r.email}</td>
                         <td className="px-3 py-1.5">
                           <span className={`inline-flex items-center gap-1 font-semibold`}>
@@ -514,19 +514,19 @@ function CsvImportModal({ onClose, onImported }: { onClose: () => void; onImport
                   </tbody>
                 </table>
               </div>
-              <p className="text-xs text-[#bbc9cf] mt-2">Share temp passwords with users — they must reset on first login.</p>
+              <p className="text-xs text-[#9aa3b8] mt-2">Share temp passwords with users — they must reset on first login.</p>
             </div>
           )}
         </div>
 
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[rgba(0,255,255,0.1)]">
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[rgba(255,255,255,0.08)]">
           {results ? (
             <button onClick={onImported} className="bg-[#00d2ff] text-[#003543] hover:bg-[#47d6ff] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2">
               Done
             </button>
           ) : (
             <>
-              <button onClick={onClose} className="bg-[#262939] text-[#bbc9cf] hover:bg-[#303444] border border-[rgba(0,255,255,0.1)] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2">
+              <button onClick={onClose} className="bg-[#262939] text-[#9aa3b8] hover:bg-[#303444] border border-[rgba(255,255,255,0.08)] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2">
                 Cancel
               </button>
               <button
@@ -616,19 +616,19 @@ function UsersTab() {
       u.email?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const avatarColors = ["bg-[#00d2ff]/20", "bg-purple-500/20", "bg-[#00feb2]/20", "bg-[#ff4d6d]/20"];
+  const avatarColors = ["bg-[#00d2ff]/20", "bg-purple-500/20", "bg-[#06d6a0]/20", "bg-[#ff4d6d]/20"];
 
   return (
     <div className="flex h-full">
       <div className="flex-1 overflow-auto">
-        <div className="flex items-center gap-3 mb-4 p-4 border-b border-[rgba(0,255,255,0.1)] bg-[#1b1f2e] sticky top-0 z-10">
+        <div className="flex items-center gap-3 mb-4 p-4 border-b border-[rgba(255,255,255,0.08)] bg-[#1b1f2e] sticky top-0 z-10">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#bbc9cf]" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9aa3b8]" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by name or email..."
-              className="w-full bg-[#0f1321] border border-[rgba(0,255,255,0.1)] text-[#dfe1f6] rounded-lg pl-9 py-2 text-sm focus:ring-2 focus:ring-[#00d2ff] outline-none placeholder:text-[#859399]"
+              className="w-full bg-[#0f1321] border border-[rgba(255,255,255,0.08)] text-[#dfe1f6] rounded-lg pl-9 py-2 text-sm focus:ring-2 focus:ring-[#00d2ff] outline-none placeholder:text-[#707a90]"
             />
           </div>
           <button
@@ -658,16 +658,16 @@ function UsersTab() {
         {error ? (
           <ErrorState message={error} />
         ) : (
-          <div className="overflow-x-auto bg-[#1b1f2e] border border-[rgba(0,255,255,0.1)] rounded-xl overflow-hidden">
+          <div className="overflow-x-auto bg-[#1b1f2e] border border-[rgba(255,255,255,0.08)] rounded-xl overflow-hidden">
           <table className="w-full text-sm min-w-[640px]">
-            <thead className="bg-[#262939] border-b border-[rgba(0,255,255,0.1)]">
+            <thead className="bg-[#262939] border-b border-[rgba(255,255,255,0.08)]">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider">Name</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider">Email</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider">Role</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider">Joined</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider">Last Login</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#9aa3b8]">Name</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#9aa3b8]">Email</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#9aa3b8]">Role</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#9aa3b8]">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#9aa3b8]">Joined</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#9aa3b8]">Last Login</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -692,25 +692,25 @@ function UsersTab() {
                     <tr
                       key={u.id}
                       onClick={() => setSelectedUser(u.id === selectedUser?.id ? null : u)}
-                      className={`border-b border-[rgba(0,255,255,0.1)] hover:bg-[#262939] transition-colors cursor-pointer ${selectedUser?.id === u.id ? "bg-[#00d2ff]/5" : ""}`}
+                      className={`border-b border-[rgba(255,255,255,0.08)] hover:bg-[#262939] transition-colors cursor-pointer ${selectedUser?.id === u.id ? "bg-[#00d2ff]/5" : ""}`}
                     >
                       <td className="px-4 py-3 text-sm text-[#dfe1f6]">
                         <div className="flex items-center gap-3">
                           <div
-                            className={`w-8 h-8 rounded-full ${avatarColor} flex items-center justify-center text-[#dfe1f6] text-xs font-bold flex-shrink-0`}
+                            className={`w-8 h-8 rounded-full ${avatarColor} flex items-center justify-center text-[#dfe1f6] text-xs font-semibold flex-shrink-0`}
                           >
                             {(u.fullName ?? u.email ?? "?").charAt(0).toUpperCase()}
                           </div>
                           <span className="font-semibold text-[#dfe1f6]">{u.fullName ?? "—"}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-[#bbc9cf]">{u.email}</td>
+                      <td className="px-4 py-3 text-sm text-[#9aa3b8]">{u.email}</td>
                       <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-2">
                           <select
                             value={currentPendingRole}
                             onChange={(e) => handleRoleChange(u.id, e.target.value)}
-                            className="bg-[#0f1321] border border-[rgba(0,255,255,0.1)] rounded-md px-3 py-2 text-sm text-[#dfe1f6] focus:ring-2 focus:ring-[#00d2ff] outline-none"
+                            className="bg-[#0f1321] border border-[rgba(255,255,255,0.08)] rounded-md px-3 py-2 text-sm text-[#dfe1f6] focus:ring-2 focus:ring-[#00d2ff] outline-none"
                             disabled={isSaving}
                           >
                             {["ADMIN", "CEO", "CISO", "MARKETING", "INTERNSHIP", "R_AND_D"].map((r) => (
@@ -730,8 +730,8 @@ function UsersTab() {
                       </td>
                       <td className="px-4 py-3">
                         {u.isActive ? (
-                          <span className="flex items-center gap-1.5 text-[#00feb2] text-xs font-medium">
-                            <span className="w-2 h-2 rounded-full bg-[#00feb2]" />
+                          <span className="flex items-center gap-1.5 text-[#06d6a0] text-xs font-medium">
+                            <span className="w-2 h-2 rounded-full bg-[#06d6a0]" />
                             Active
                           </span>
                         ) : (
@@ -741,10 +741,10 @@ function UsersTab() {
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-sm text-[#bbc9cf]">
+                      <td className="px-4 py-3 text-sm text-[#9aa3b8]">
                         {u.createdAt ? format(parseISO(u.createdAt), "MMM d, yyyy") : "—"}
                       </td>
-                      <td className="px-4 py-3 text-sm text-[#bbc9cf]">
+                      <td className="px-4 py-3 text-sm text-[#9aa3b8]">
                         {u.lastLogin ? format(parseISO(u.lastLogin), "MMM d, yyyy HH:mm") : "Never"}
                       </td>
                       <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
@@ -752,7 +752,7 @@ function UsersTab() {
                           onClick={() => toggleSuspend(u)}
                           disabled={isSaving}
                           title={u.isActive ? "Suspend user" : "Unsuspend user"}
-                          className={`p-1.5 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-md transition-colors disabled:opacity-50`}
+                          className={`p-1.5 text-[#9aa3b8] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-md transition-colors disabled:opacity-50`}
                         >
                           {isSaving
                             ? <Loader2 className="w-4 h-4 animate-spin" />
@@ -771,34 +771,34 @@ function UsersTab() {
       </div>
 
       {selectedUser && (
-        <div className="w-72 border-l border-[rgba(0,255,255,0.1)] flex flex-col flex-shrink-0 bg-[#0f1321]">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[rgba(0,255,255,0.1)] bg-[#1b1f2e]">
+        <div className="w-72 border-l border-[rgba(255,255,255,0.08)] flex flex-col flex-shrink-0 bg-[#0f1321]">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-[rgba(255,255,255,0.08)] bg-[#1b1f2e]">
             <span className="text-sm font-semibold text-[#dfe1f6]">User Details</span>
-            <button onClick={() => setSelectedUser(null)} className="p-1.5 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-md transition-colors">
+            <button onClick={() => setSelectedUser(null)} className="p-1.5 text-[#9aa3b8] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-md transition-colors">
               <X className="w-4 h-4" />
             </button>
           </div>
           <div className="p-5 space-y-4 flex-1 overflow-y-auto text-sm">
             <div className="flex flex-col items-center gap-3 pt-2">
               <div
-                className={`w-14 h-14 rounded-full ${avatarColors[(selectedUser.fullName?.charCodeAt(0) ?? 0) % avatarColors.length]} flex items-center justify-center text-[#dfe1f6] text-xl font-bold`}
+                className={`w-14 h-14 rounded-full ${avatarColors[(selectedUser.fullName?.charCodeAt(0) ?? 0) % avatarColors.length]} flex items-center justify-center text-[#dfe1f6] text-xl font-semibold`}
               >
                 {selectedUser.fullName.charAt(0).toUpperCase()}
               </div>
               <div className="text-center">
-                <p className="font-bold text-[#dfe1f6]">{selectedUser.fullName}</p>
-                <p className="text-xs text-[#bbc9cf]">{selectedUser.email}</p>
+                <p className="font-semibold text-[#dfe1f6]">{selectedUser.fullName}</p>
+                <p className="text-xs text-[#9aa3b8]">{selectedUser.email}</p>
               </div>
             </div>
             <div className="space-y-1">
               {([
-                ["Role", <span key="role" className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border ${ROLE_COLORS[selectedUser.role] ?? "bg-[#262939] text-[#bbc9cf] border-[rgba(0,255,255,0.1)]"}`}>{selectedUser.role}</span>],
-                ["Status", <span key="status" className={selectedUser.isActive ? "text-[#00feb2] font-semibold" : "text-[#ff4d6d] font-semibold"}>{selectedUser.isActive ? "Active" : "Suspended"}</span>],
+                ["Role", <span key="role" className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border ${ROLE_COLORS[selectedUser.role] ?? "bg-[#262939] text-[#9aa3b8] border-[rgba(255,255,255,0.08)]"}`}>{selectedUser.role}</span>],
+                ["Status", <span key="status" className={selectedUser.isActive ? "text-[#06d6a0] font-semibold" : "text-[#ff4d6d] font-semibold"}>{selectedUser.isActive ? "Active" : "Suspended"}</span>],
                 ["Joined", format(parseISO(selectedUser.createdAt), "MMM d, yyyy")],
                 ["Last Login", selectedUser.lastLogin ? format(parseISO(selectedUser.lastLogin), "MMM d, yyyy HH:mm") : "Never"],
               ] as [string, React.ReactNode][]).map(([label, val]) => (
-                <div key={label} className="flex justify-between py-2 border-b border-[rgba(0,255,255,0.1)]">
-                  <span className="text-[#bbc9cf]">{label}</span>
+                <div key={label} className="flex justify-between py-2 border-b border-[rgba(255,255,255,0.08)]">
+                  <span className="text-[#9aa3b8]">{label}</span>
                   <span className="text-[#dfe1f6]">{val}</span>
                 </div>
               ))}
@@ -853,32 +853,32 @@ function NewMailboxModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/40" />
-      <div className="relative z-10 bg-[#1b1f2e] rounded-xl shadow-2xl border border-[rgba(0,255,255,0.1)] p-6 w-full max-w-md mx-4">
+      <div className="relative z-10 bg-[#1b1f2e] rounded-xl shadow-2xl border border-[rgba(255,255,255,0.08)] p-6 w-full max-w-md mx-4">
         <div className="flex items-center justify-between mb-5">
           <h2 className="font-semibold text-[#dfe1f6]">New Mailbox</h2>
-          <button onClick={onClose} className="p-1.5 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-md transition-colors">
+          <button onClick={onClose} className="p-1.5 text-[#9aa3b8] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-md transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider mb-1.5">Email Address</label>
+            <label className="block text-xs font-semibold text-[#9aa3b8] mb-1.5">Email Address</label>
             <input
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="e.g. support@cybersage.io"
               type="email"
-              className="w-full px-3 py-2.5 border border-[rgba(0,255,255,0.1)] rounded-lg text-sm text-[#dfe1f6] bg-[#0f1321] focus:ring-2 focus:ring-[#00d2ff] outline-none"
+              className="w-full px-3 py-2.5 border border-[rgba(255,255,255,0.08)] rounded-lg text-sm text-[#dfe1f6] bg-[#0f1321] focus:ring-2 focus:ring-[#00d2ff] outline-none"
               autoFocus
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider mb-1.5">Display Name</label>
+            <label className="block text-xs font-semibold text-[#9aa3b8] mb-1.5">Display Name</label>
             <input
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="e.g. Support Team"
-              className="w-full px-3 py-2.5 border border-[rgba(0,255,255,0.1)] rounded-lg text-sm text-[#dfe1f6] bg-[#0f1321] focus:ring-2 focus:ring-[#00d2ff] outline-none"
+              className="w-full px-3 py-2.5 border border-[rgba(255,255,255,0.08)] rounded-lg text-sm text-[#dfe1f6] bg-[#0f1321] focus:ring-2 focus:ring-[#00d2ff] outline-none"
             />
           </div>
           <div className="space-y-3 pt-1">
@@ -889,7 +889,7 @@ function NewMailboxModal({
               <label key={label} className="flex items-center gap-3 cursor-pointer">
                 <div
                   onClick={() => set((v) => !v)}
-                  className={`w-10 h-6 rounded-full transition-colors relative ${val ? "bg-[#00d2ff]" : "bg-[#3c494e]"}`}
+                  className={`w-10 h-6 rounded-full transition-colors relative ${val ? "bg-[#00d2ff]" : "bg-[#262b3a]"}`}
                 >
                   <span className={`absolute top-1 w-4 h-4 bg-[#dfe1f6] rounded-full shadow transition-transform ${val ? "translate-x-5" : "translate-x-1"}`} />
                 </div>
@@ -899,7 +899,7 @@ function NewMailboxModal({
           </div>
         </div>
         <div className="flex gap-3 mt-6">
-          <button onClick={onClose} className="flex-1 bg-[#1b1f2e] text-[#bbc9cf] hover:bg-[#262939] border border-[rgba(0,255,255,0.1)] rounded-md px-4 py-2 text-sm font-medium">
+          <button onClick={onClose} className="flex-1 bg-[#1b1f2e] text-[#9aa3b8] hover:bg-[#262939] border border-[rgba(255,255,255,0.08)] rounded-md px-4 py-2 text-sm font-medium">
             Cancel
           </button>
           <button
@@ -957,15 +957,15 @@ function MailboxesTab() {
   };
 
   const typeColor = (type: string) => {
-    if (type === "No-Reply") return "bg-[#262939] text-[#bbc9cf] border-[rgba(0,255,255,0.1)]";
-    if (type === "Shared") return "bg-[#00d2ff]/10 text-[#a5e7ff] border-[#00d2ff]/20";
-    return "bg-[#00feb2]/10 text-[#00feb2] border-[#00feb2]/20";
+    if (type === "No-Reply") return "bg-[#262939] text-[#9aa3b8] border-[rgba(255,255,255,0.08)]";
+    if (type === "Shared") return "bg-[#00d2ff]/10 text-[#7dd8f5] border-[#00d2ff]/20";
+    return "bg-[#06d6a0]/10 text-[#06d6a0] border-[#06d6a0]/20";
   };
 
   return (
     <div>
-      <div className="flex items-center justify-between p-4 border-b border-[rgba(0,255,255,0.1)] bg-[#1b1f2e] sticky top-0 z-10">
-        <span className="text-sm text-[#bbc9cf]">{mailboxes.length} mailbox{mailboxes.length !== 1 ? "es" : ""}</span>
+      <div className="flex items-center justify-between p-4 border-b border-[rgba(255,255,255,0.08)] bg-[#1b1f2e] sticky top-0 z-10">
+        <span className="text-sm text-[#9aa3b8]">{mailboxes.length} mailbox{mailboxes.length !== 1 ? "es" : ""}</span>
         <button
           onClick={() => setShowModal(true)}
           className="bg-[#00d2ff] text-[#003543] hover:bg-[#47d6ff] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2"
@@ -980,13 +980,13 @@ function MailboxesTab() {
       ) : (
         <div className="overflow-x-auto">
         <table className="w-full text-sm min-w-[640px]">
-          <thead className="bg-[#0f1321] border-b border-[rgba(0,255,255,0.1)]">
+          <thead className="bg-[#0f1321] border-b border-[rgba(255,255,255,0.08)]">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider">Email</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider">Display Name</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider">Type</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider">Threads</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider">Members</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#9aa3b8]">Email</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#9aa3b8]">Display Name</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#9aa3b8]">Type</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#9aa3b8]">Threads</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#9aa3b8]">Members</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
@@ -1004,7 +1004,7 @@ function MailboxesTab() {
               : mailboxes.map((m) => {
                 const type = mailboxType(m);
                 return (
-                  <tr key={m.id} className="border-b border-[rgba(0,255,255,0.1)] hover:bg-[#262939] transition-colors">
+                  <tr key={m.id} className="border-b border-[rgba(255,255,255,0.08)] hover:bg-[#262939] transition-colors">
                     <td className="px-4 py-3 text-sm text-[#dfe1f6] font-mono">{m.email}</td>
                     <td className="px-4 py-3 text-sm font-semibold text-[#dfe1f6]">{m.displayName}</td>
                     <td className="px-4 py-3">
@@ -1012,12 +1012,12 @@ function MailboxesTab() {
                         {type}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-[#bbc9cf]">{m._count?.threads ?? 0}</td>
-                    <td className="px-4 py-3 text-sm text-[#bbc9cf]">{m.accessLogs?.length ?? 0}</td>
+                    <td className="px-4 py-3 text-sm text-[#9aa3b8]">{m._count?.threads ?? 0}</td>
+                    <td className="px-4 py-3 text-sm text-[#9aa3b8]">{m.accessLogs?.length ?? 0}</td>
                     <td className="px-4 py-3 text-right">
                       {confirmDeleteId === m.id ? (
                         <div className="flex items-center gap-2 justify-end">
-                          <span className="text-xs text-[#bbc9cf]">Delete?</span>
+                          <span className="text-xs text-[#9aa3b8]">Delete?</span>
                           <button
                             onClick={() => void handleDelete(m.id)}
                             disabled={deletingId === m.id}
@@ -1027,7 +1027,7 @@ function MailboxesTab() {
                           </button>
                           <button
                             onClick={() => setConfirmDeleteId(null)}
-                            className="px-2.5 py-1 bg-[#1b1f2e] text-[#bbc9cf] hover:bg-[#262939] border border-[rgba(0,255,255,0.1)] rounded-md text-xs font-semibold"
+                            className="px-2.5 py-1 bg-[#1b1f2e] text-[#9aa3b8] hover:bg-[#262939] border border-[rgba(255,255,255,0.08)] rounded-md text-xs font-semibold"
                           >
                             No
                           </button>
@@ -1035,7 +1035,7 @@ function MailboxesTab() {
                       ) : (
                         <button
                           onClick={() => setConfirmDeleteId(m.id)}
-                          className="p-1.5 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-md transition-colors"
+                          className="p-1.5 text-[#9aa3b8] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-md transition-colors"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -1139,9 +1139,9 @@ function AuditLogsTab() {
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const actionBadge = (action: string) => {
-    const color = ACTION_COLORS[action] ?? "bg-[#262939] text-[#bbc9cf] border-[rgba(0,255,255,0.08)]";
+    const color = ACTION_COLORS[action] ?? "bg-[#262939] text-[#9aa3b8] border-[rgba(255,255,255,0.06)]";
     return (
-      <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-bold border ${color}`}>
+      <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold border ${color}`}>
         {action}
       </span>
     );
@@ -1149,35 +1149,35 @@ function AuditLogsTab() {
 
   return (
     <div>
-      <div className="p-4 border-b border-[rgba(0,255,255,0.1)] bg-[#1b1f2e] sticky top-0 z-10">
+      <div className="p-4 border-b border-[rgba(255,255,255,0.08)] bg-[#1b1f2e] sticky top-0 z-10">
         <div className="flex items-center gap-3 mb-4 flex-wrap">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#859399]" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#707a90]" />
             <input
               value={actionFilter}
               onChange={(e) => setActionFilter(e.target.value)}
               placeholder="Filter by action..."
-              className="bg-[#0f1321] border border-[rgba(0,255,255,0.1)] rounded-lg pl-9 py-2 text-sm text-[#dfe1f6] focus:ring-2 focus:ring-[#00d2ff] outline-none w-44"
+              className="bg-[#0f1321] border border-[rgba(255,255,255,0.08)] rounded-lg pl-9 py-2 text-sm text-[#dfe1f6] focus:ring-2 focus:ring-[#00d2ff] outline-none w-44"
             />
           </div>
           <input
             type="date"
             value={fromDate}
             onChange={(e) => setFromDate(e.target.value)}
-            className="bg-[#0f1321] border border-[rgba(0,255,255,0.1)] rounded-md px-3 py-2 text-sm text-[#dfe1f6] focus:ring-2 focus:ring-[#00d2ff] outline-none"
+            className="bg-[#0f1321] border border-[rgba(255,255,255,0.08)] rounded-md px-3 py-2 text-sm text-[#dfe1f6] focus:ring-2 focus:ring-[#00d2ff] outline-none"
           />
-          <span className="text-[#bbc9cf] text-sm">to</span>
+          <span className="text-[#9aa3b8] text-sm">to</span>
           <input
             type="date"
             value={toDate}
             onChange={(e) => setToDate(e.target.value)}
-            className="bg-[#0f1321] border border-[rgba(0,255,255,0.1)] rounded-md px-3 py-2 text-sm text-[#dfe1f6] focus:ring-2 focus:ring-[#00d2ff] outline-none"
+            className="bg-[#0f1321] border border-[rgba(255,255,255,0.08)] rounded-md px-3 py-2 text-sm text-[#dfe1f6] focus:ring-2 focus:ring-[#00d2ff] outline-none"
           />
-          <span className="text-xs text-[#bbc9cf] ml-auto">{total} total logs</span>
+          <span className="text-xs text-[#9aa3b8] ml-auto">{total} total logs</span>
           <button
             onClick={() => exportAuditCsv(logs)}
             disabled={logs.length === 0}
-            className="bg-[#1b1f2e] text-[#bbc9cf] hover:bg-[#262939] border border-[rgba(0,255,255,0.1)] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2 disabled:opacity-40"
+            className="bg-[#1b1f2e] text-[#9aa3b8] hover:bg-[#262939] border border-[rgba(255,255,255,0.08)] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2 disabled:opacity-40"
           >
             <Download className="w-4 h-4" />
             Export CSV
@@ -1191,14 +1191,14 @@ function AuditLogsTab() {
         <>
           <div className="overflow-x-auto">
           <table className="w-full text-sm min-w-[640px]">
-            <thead className="bg-[#0f1321] border-b border-[rgba(0,255,255,0.1)]">
+            <thead className="bg-[#0f1321] border-b border-[rgba(255,255,255,0.08)]">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider">Timestamp</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider">Actor</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider">Action</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider">Target Type</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider">Target ID</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider">IP Address</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#9aa3b8]">Timestamp</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#9aa3b8]">Actor</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#9aa3b8]">Action</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#9aa3b8]">Target Type</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#9aa3b8]">Target ID</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#9aa3b8]">IP Address</th>
               </tr>
             </thead>
             <tbody>
@@ -1213,15 +1213,15 @@ function AuditLogsTab() {
                   </tr>
                 )
                 : logs.map((log) => (
-                  <tr key={log.id} className="border-b border-[rgba(0,255,255,0.1)] hover:bg-[#262939] transition-colors">
-                    <td className="px-4 py-3 text-sm text-[#bbc9cf] whitespace-nowrap">
+                  <tr key={log.id} className="border-b border-[rgba(255,255,255,0.08)] hover:bg-[#262939] transition-colors">
+                    <td className="px-4 py-3 text-sm text-[#9aa3b8] whitespace-nowrap">
                       {format(parseISO(log.createdAt), "MMM d, yyyy HH:mm:ss")}
                     </td>
                     <td className="px-4 py-3 font-mono text-sm text-[#dfe1f6]">{log.actorId ?? "—"}</td>
                     <td className="px-4 py-3">{actionBadge(log.action)}</td>
                     <td className="px-4 py-3 text-sm text-[#dfe1f6]">{log.targetType ?? "—"}</td>
-                    <td className="px-4 py-3 font-mono text-sm text-[#bbc9cf]">{log.targetId ?? "—"}</td>
-                    <td className="px-4 py-3 font-mono text-sm text-[#bbc9cf]">{log.ipAddress ?? "—"}</td>
+                    <td className="px-4 py-3 font-mono text-sm text-[#9aa3b8]">{log.targetId ?? "—"}</td>
+                    <td className="px-4 py-3 font-mono text-sm text-[#9aa3b8]">{log.ipAddress ?? "—"}</td>
                   </tr>
                 ))}
             </tbody>
@@ -1229,21 +1229,21 @@ function AuditLogsTab() {
           </div>
 
           {!loading && totalPages > 1 && (
-            <div className="flex items-center gap-2 mt-4 text-sm text-[#bbc9cf] justify-center py-3">
+            <div className="flex items-center gap-2 mt-4 text-sm text-[#9aa3b8] justify-center py-3">
               <button
                 onClick={() => void goToPage(page - 1)}
                 disabled={page <= 1}
-                className="px-3 py-1.5 bg-[#1b1f2e] border border-[rgba(0,255,255,0.1)] rounded-md text-sm text-[#bbc9cf] hover:bg-[#262939] disabled:opacity-40"
+                className="px-3 py-1.5 bg-[#1b1f2e] border border-[rgba(255,255,255,0.08)] rounded-md text-sm text-[#9aa3b8] hover:bg-[#262939] disabled:opacity-40"
               >
                 Previous
               </button>
-              <span className="text-sm text-[#bbc9cf]">
+              <span className="text-sm text-[#9aa3b8]">
                 Page {page} of {totalPages}
               </span>
               <button
                 onClick={() => void goToPage(page + 1)}
                 disabled={page >= totalPages}
-                className="px-3 py-1.5 bg-[#1b1f2e] border border-[rgba(0,255,255,0.1)] rounded-md text-sm text-[#bbc9cf] hover:bg-[#262939] disabled:opacity-40"
+                className="px-3 py-1.5 bg-[#1b1f2e] border border-[rgba(255,255,255,0.08)] rounded-md text-sm text-[#9aa3b8] hover:bg-[#262939] disabled:opacity-40"
               >
                 Next
               </button>
@@ -1319,8 +1319,8 @@ function SuppressionTab() {
 
   return (
     <div>
-      <div className="flex items-center justify-between p-4 border-b border-[rgba(0,255,255,0.1)] bg-[#1b1f2e] sticky top-0 z-10">
-        <span className="text-sm text-[#bbc9cf]">{entries.length} suppressed address{entries.length !== 1 ? "es" : ""}</span>
+      <div className="flex items-center justify-between p-4 border-b border-[rgba(255,255,255,0.08)] bg-[#1b1f2e] sticky top-0 z-10">
+        <span className="text-sm text-[#9aa3b8]">{entries.length} suppressed address{entries.length !== 1 ? "es" : ""}</span>
         <button
           onClick={() => setShowAdd((v) => !v)}
           className="bg-[#00d2ff] text-[#003543] hover:bg-[#47d6ff] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2"
@@ -1331,7 +1331,7 @@ function SuppressionTab() {
       </div>
 
       {showAdd && (
-        <div className="p-4 border-b border-[rgba(0,255,255,0.1)] bg-[#00d2ff]/5">
+        <div className="p-4 border-b border-[rgba(255,255,255,0.08)] bg-[#00d2ff]/5">
           <div className="flex items-center gap-3 max-w-lg">
             <input
               value={newEmail}
@@ -1340,7 +1340,7 @@ function SuppressionTab() {
               placeholder="Enter email to suppress..."
               type="email"
               autoFocus
-              className="flex-1 bg-[#0f1321] border border-[rgba(0,255,255,0.1)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] focus:ring-2 focus:ring-[#00d2ff] outline-none"
+              className="flex-1 bg-[#0f1321] border border-[rgba(255,255,255,0.08)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] focus:ring-2 focus:ring-[#00d2ff] outline-none"
             />
             <button
               onClick={() => void handleAdd()}
@@ -1352,7 +1352,7 @@ function SuppressionTab() {
             </button>
             <button
               onClick={() => { setShowAdd(false); setNewEmail(""); }}
-              className="p-1.5 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-md transition-colors"
+              className="p-1.5 text-[#9aa3b8] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-md transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -1365,11 +1365,11 @@ function SuppressionTab() {
       ) : (
         <div className="overflow-x-auto">
         <table className="w-full text-sm min-w-[640px]">
-          <thead className="bg-[#0f1321] border-b border-[rgba(0,255,255,0.1)]">
+          <thead className="bg-[#0f1321] border-b border-[rgba(255,255,255,0.08)]">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider">Email</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider">Reason</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider">Added</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#9aa3b8]">Email</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#9aa3b8]">Reason</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#9aa3b8]">Added</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
@@ -1385,14 +1385,14 @@ function SuppressionTab() {
                 </tr>
               )
               : entries.map((entry) => (
-                <tr key={entry.id} className="border-b border-[rgba(0,255,255,0.1)] hover:bg-[#262939] transition-colors">
+                <tr key={entry.id} className="border-b border-[rgba(255,255,255,0.08)] hover:bg-[#262939] transition-colors">
                   <td className="px-4 py-3 text-sm text-[#dfe1f6] font-mono">{entry.email}</td>
                   <td className="px-4 py-3">
-                    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border ${REASON_COLORS[entry.reason] ?? "bg-[#262939] text-[#bbc9cf] border-[rgba(0,255,255,0.1)]"}`}>
+                    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border ${REASON_COLORS[entry.reason] ?? "bg-[#262939] text-[#9aa3b8] border-[rgba(255,255,255,0.08)]"}`}>
                       {entry.reason}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-sm text-[#bbc9cf]">
+                  <td className="px-4 py-3 text-sm text-[#9aa3b8]">
                     {format(parseISO(entry.createdAt), "MMM d, yyyy HH:mm")}
                   </td>
                   <td className="px-4 py-3 text-right">
@@ -1456,28 +1456,28 @@ function SecurityTab() {
     <div className="p-6 space-y-6">
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-[#ff4d6d]/10 border border-[#ff4d6d]/20 rounded-xl p-4">
-          <p className="text-sm font-medium text-[#bbc9cf]">Open Incidents</p>
-          <p className="text-2xl font-bold text-[#dfe1f6] mt-1">{openIncidents}</p>
-          <p className="text-xs text-[#bbc9cf] mt-1">Needs attention</p>
+          <p className="text-sm font-medium text-[#9aa3b8]">Open Incidents</p>
+          <p className="text-2xl font-semibold text-[#dfe1f6] mt-1">{openIncidents}</p>
+          <p className="text-xs text-[#9aa3b8] mt-1">Needs attention</p>
         </div>
         <div className="bg-[#ff4d6d]/5 border border-[#ff4d6d]/10 rounded-xl p-4">
-          <p className="text-sm font-medium text-[#bbc9cf]">DLP Violations</p>
-          <p className="text-2xl font-bold text-[#dfe1f6] mt-1">{stats.dlpViolations}</p>
-          <p className="text-xs text-[#bbc9cf] mt-1">Policy breaches</p>
+          <p className="text-sm font-medium text-[#9aa3b8]">DLP Violations</p>
+          <p className="text-2xl font-semibold text-[#dfe1f6] mt-1">{stats.dlpViolations}</p>
+          <p className="text-xs text-[#9aa3b8] mt-1">Policy breaches</p>
         </div>
         <div className="bg-[#ff4d6d]/5 border border-[#ff4d6d]/10 rounded-xl p-4">
-          <p className="text-sm font-medium text-[#bbc9cf]">High-Risk Threats</p>
-          <p className="text-2xl font-bold text-[#dfe1f6] mt-1">{stats.highRiskThreats}</p>
-          <p className="text-xs text-[#bbc9cf] mt-1">Score &ge; 50</p>
+          <p className="text-sm font-medium text-[#9aa3b8]">High-Risk Threats</p>
+          <p className="text-2xl font-semibold text-[#dfe1f6] mt-1">{stats.highRiskThreats}</p>
+          <p className="text-xs text-[#9aa3b8] mt-1">Score &ge; 50</p>
         </div>
       </div>
 
       {/* DLP incidents by severity — horizontal bar chart */}
       {stats.incidents.bySeverity.length > 0 && (
-        <div className="bg-[#1b1f2e] border border-[rgba(0,255,255,0.1)] rounded-xl overflow-hidden">
-          <div className="px-5 py-4 border-b border-[rgba(0,255,255,0.1)]">
+        <div className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.08)] rounded-xl overflow-hidden">
+          <div className="px-5 py-4 border-b border-[rgba(255,255,255,0.08)]">
             <h3 className="font-semibold text-[#dfe1f6] text-sm">Incidents by Severity</h3>
-            <p className="text-xs text-[#bbc9cf] mt-0.5">DLP & threat incident distribution</p>
+            <p className="text-xs text-[#9aa3b8] mt-0.5">DLP & threat incident distribution</p>
           </div>
           <div className="p-5 space-y-3">
             {(() => {
@@ -1488,14 +1488,14 @@ function SecurityTab() {
               };
               return stats.incidents.bySeverity.map((s) => (
                 <div key={s.severity} className="flex items-center gap-3">
-                  <span className="text-xs font-semibold text-[#bbc9cf] w-16 flex-shrink-0">{s.severity}</span>
-                  <div className="bg-[#3c494e] rounded-full h-2 flex-1">
+                  <span className="text-xs font-semibold text-[#9aa3b8] w-16 flex-shrink-0">{s.severity}</span>
+                  <div className="bg-[#262b3a] rounded-full h-2 flex-1">
                     <div
-                      className={`h-2 rounded-full transition-all ${colors[s.severity] ?? "bg-[#bbc9cf]"}`}
+                      className={`h-2 rounded-full transition-all ${colors[s.severity] ?? "bg-[#9aa3b8]"}`}
                       style={{ width: `${Math.round((s._count / maxVal) * 100)}%` }}
                     />
                   </div>
-                  <span className="text-xs font-bold text-[#dfe1f6] w-8 text-right flex-shrink-0">{s._count}</span>
+                  <span className="text-xs font-semibold text-[#dfe1f6] w-8 text-right flex-shrink-0">{s._count}</span>
                 </div>
               ));
             })()}
@@ -1503,17 +1503,17 @@ function SecurityTab() {
         </div>
       )}
 
-      <div className="bg-[#1b1f2e] border border-[rgba(0,255,255,0.1)] rounded-xl overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(0,255,255,0.1)]">
+      <div className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.08)] rounded-xl overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(255,255,255,0.08)]">
           <h3 className="font-semibold text-[#dfe1f6] text-sm">Recent Security Events</h3>
-          <span className="text-[10px] text-[#859399] italic">Managed by CyberSage Sentinel</span>
+          <span className="text-[10px] text-[#707a90] italic">Managed by CyberSage Sentinel</span>
         </div>
         {stats.recentSecurityEvents.length === 0 ? (
           <EmptyState icon={ShieldAlert} message="No recent security events." />
         ) : (
-          <div className="divide-y divide-[#3c494e]">
+          <div className="divide-y divide-[#262b3a]">
             {stats.recentSecurityEvents.map((evt) => {
-              const sc = SEVERITY_COLORS[evt.severity] ?? "text-[#bbc9cf] bg-[#262939]";
+              const sc = SEVERITY_COLORS[evt.severity] ?? "text-[#9aa3b8] bg-[#262939]";
               return (
                 <div key={evt.id} className="flex items-center gap-4 px-5 py-3 hover:bg-[#262939] transition-colors">
                   <div className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${sc}`}>
@@ -1522,12 +1522,12 @@ function SecurityTab() {
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-[#dfe1f6] text-sm">{evt.type}</p>
                     {evt.metadata && (
-                      <p className="text-xs text-[#bbc9cf] truncate">
+                      <p className="text-xs text-[#9aa3b8] truncate">
                         {JSON.stringify(evt.metadata).slice(0, 80)}
                       </p>
                     )}
                   </div>
-                  <span className="text-xs text-[#bbc9cf] whitespace-nowrap">
+                  <span className="text-xs text-[#9aa3b8] whitespace-nowrap">
                     {format(parseISO(evt.createdAt), "MMM d, HH:mm")}
                   </span>
                 </div>
@@ -1626,8 +1626,8 @@ function LegalHoldTab() {
 
   return (
     <div>
-      <div className="flex items-center justify-between p-4 border-b border-[rgba(0,255,255,0.1)] bg-[#1b1f2e] sticky top-0 z-10">
-        <span className="text-sm text-[#bbc9cf]">
+      <div className="flex items-center justify-between p-4 border-b border-[rgba(255,255,255,0.08)] bg-[#1b1f2e] sticky top-0 z-10">
+        <span className="text-sm text-[#9aa3b8]">
           {activeHolds.length} active hold{activeHolds.length !== 1 ? "s" : ""}
         </span>
         <button
@@ -1642,14 +1642,14 @@ function LegalHoldTab() {
       {error ? <ErrorState message={error} /> : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm min-w-[640px]">
-            <thead className="bg-[#0f1321] border-b border-[rgba(0,255,255,0.1)]">
+            <thead className="bg-[#0f1321] border-b border-[rgba(255,255,255,0.08)]">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider">User</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider">Email</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider">Hold Placed</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider">Placed By</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider">Reason</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#9aa3b8]">User</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#9aa3b8]">Email</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#9aa3b8]">Hold Placed</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#9aa3b8]">Placed By</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#9aa3b8]">Reason</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#9aa3b8]">Status</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -1665,19 +1665,19 @@ function LegalHoldTab() {
                   </tr>
                 )
                 : holds.map((h) => (
-                  <tr key={h.id} className="border-b border-[rgba(0,255,255,0.1)] hover:bg-[#262939] transition-colors">
+                  <tr key={h.id} className="border-b border-[rgba(255,255,255,0.08)] hover:bg-[#262939] transition-colors">
                     <td className="px-4 py-3 text-sm font-semibold text-[#dfe1f6]">{h.userName}</td>
-                    <td className="px-4 py-3 font-mono text-sm text-[#bbc9cf]">{h.userEmail}</td>
-                    <td className="px-4 py-3 text-sm text-[#bbc9cf] whitespace-nowrap">
+                    <td className="px-4 py-3 font-mono text-sm text-[#9aa3b8]">{h.userEmail}</td>
+                    <td className="px-4 py-3 text-sm text-[#9aa3b8] whitespace-nowrap">
                       {format(parseISO(h.placedAt), "MMM d, yyyy HH:mm")}
                     </td>
-                    <td className="px-4 py-3 text-sm text-[#bbc9cf]">{h.placedBy}</td>
-                    <td className="px-4 py-3 text-sm text-[#bbc9cf] max-w-[200px] truncate">{h.reason}</td>
+                    <td className="px-4 py-3 text-sm text-[#9aa3b8]">{h.placedBy}</td>
+                    <td className="px-4 py-3 text-sm text-[#9aa3b8] max-w-[200px] truncate">{h.reason}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border ${
                         h.status === "Active"
                           ? "bg-[#ff4d6d]/10 text-[#ff4d6d] border-[#ff4d6d]/20"
-                          : "bg-[#262939] text-[#bbc9cf] border-[rgba(0,255,255,0.1)]"
+                          : "bg-[#262939] text-[#9aa3b8] border-[rgba(255,255,255,0.08)]"
                       }`}>
                         {h.status}
                       </span>
@@ -1707,20 +1707,20 @@ function LegalHoldTab() {
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/60" />
-          <div className="relative z-10 bg-[#1b1f2e] rounded-xl shadow-2xl border border-[rgba(0,255,255,0.1)] p-6 w-full max-w-md mx-4">
+          <div className="relative z-10 bg-[#1b1f2e] rounded-xl shadow-2xl border border-[rgba(255,255,255,0.08)] p-6 w-full max-w-md mx-4">
             <div className="flex items-center justify-between mb-5">
               <h2 className="font-semibold text-[#dfe1f6]">Place Legal Hold</h2>
-              <button onClick={() => setShowModal(false)} className="p-1.5 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-md transition-colors">
+              <button onClick={() => setShowModal(false)} className="p-1.5 text-[#9aa3b8] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-md transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider mb-1.5">User</label>
+                <label className="block text-xs font-semibold text-[#9aa3b8] mb-1.5">User</label>
                 <select
                   value={selectedUserId}
                   onChange={(e) => setSelectedUserId(e.target.value)}
-                  className="w-full bg-[#0f1321] border border-[rgba(0,255,255,0.1)] rounded-md px-3 py-2.5 text-sm text-[#dfe1f6] focus:ring-2 focus:ring-[#00d2ff] outline-none"
+                  className="w-full bg-[#0f1321] border border-[rgba(255,255,255,0.08)] rounded-md px-3 py-2.5 text-sm text-[#dfe1f6] focus:ring-2 focus:ring-[#00d2ff] outline-none"
                 >
                   <option value="">Select a user…</option>
                   {users.map(u => (
@@ -1729,7 +1729,7 @@ function LegalHoldTab() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-semibold text-[#9aa3b8] mb-1.5">
                   Reason <span className="text-[#ff4d6d]">*</span>
                 </label>
                 <textarea
@@ -1737,14 +1737,14 @@ function LegalHoldTab() {
                   onChange={(e) => setReason(e.target.value)}
                   placeholder="Legal basis or investigation reason…"
                   rows={3}
-                  className="w-full px-3 py-2.5 border border-[rgba(0,255,255,0.1)] bg-[#0f1321] text-[#dfe1f6] rounded-lg text-sm focus:ring-2 focus:ring-[#00d2ff] outline-none resize-none"
+                  className="w-full px-3 py-2.5 border border-[rgba(255,255,255,0.08)] bg-[#0f1321] text-[#dfe1f6] rounded-lg text-sm focus:ring-2 focus:ring-[#00d2ff] outline-none resize-none"
                 />
               </div>
             </div>
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setShowModal(false)}
-                className="flex-1 bg-[#1b1f2e] text-[#bbc9cf] hover:bg-[#262939] border border-[rgba(0,255,255,0.1)] rounded-md px-4 py-2 text-sm font-medium"
+                className="flex-1 bg-[#1b1f2e] text-[#9aa3b8] hover:bg-[#262939] border border-[rgba(255,255,255,0.08)] rounded-md px-4 py-2 text-sm font-medium"
               >
                 Cancel
               </button>
@@ -1815,7 +1815,7 @@ function GdprExportTab() {
     <div className="p-6 max-w-lg">
       <div className="bg-[#ff4d6d]/5 border border-[#ff4d6d]/20 rounded-xl p-4 mb-6 flex items-start gap-3">
         <AlertTriangle className="w-4 h-4 text-[#ff4d6d] flex-shrink-0 mt-0.5" />
-        <p className="text-sm text-[#bbc9cf]">
+        <p className="text-sm text-[#9aa3b8]">
           GDPR data exports contain sensitive personal data. Only perform exports for legitimate legal requests and log all access appropriately.
         </p>
       </div>
@@ -1823,14 +1823,14 @@ function GdprExportTab() {
       {error ? <ErrorState message={error} /> : (
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider mb-1.5">Select User</label>
+            <label className="block text-xs font-semibold text-[#9aa3b8] mb-1.5">Select User</label>
             {loading ? (
               <div className="h-10 bg-[#262939] rounded-lg animate-pulse" />
             ) : (
               <select
                 value={selectedUserId}
                 onChange={(e) => setSelectedUserId(e.target.value)}
-                className="w-full bg-[#0f1321] border border-[rgba(0,255,255,0.1)] rounded-md px-3 py-2.5 text-sm text-[#dfe1f6] focus:ring-2 focus:ring-[#00d2ff] outline-none"
+                className="w-full bg-[#0f1321] border border-[rgba(255,255,255,0.08)] rounded-md px-3 py-2.5 text-sm text-[#dfe1f6] focus:ring-2 focus:ring-[#00d2ff] outline-none"
               >
                 <option value="">Choose a user…</option>
                 {users.map(u => (
@@ -1853,9 +1853,9 @@ function GdprExportTab() {
             </button>
           </div>
 
-          <div className="mt-6 bg-[#0f1321] border border-[rgba(0,255,255,0.1)] rounded-xl p-4">
-            <p className="text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider mb-3">Export includes</p>
-            <ul className="space-y-1.5 text-sm text-[#bbc9cf]">
+          <div className="mt-6 bg-[#0f1321] border border-[rgba(255,255,255,0.08)] rounded-xl p-4">
+            <p className="text-xs font-semibold text-[#9aa3b8] mb-3">Export includes</p>
+            <ul className="space-y-1.5 text-sm text-[#9aa3b8]">
               {[
                 "User profile and account details",
                 "Inbox messages (up to 1,000)",
@@ -1941,40 +1941,40 @@ function SecurityStatsTab() {
       {/* Stat cards */}
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-[#ff4d6d]/10 border border-[#ff4d6d]/30 rounded-xl p-4">
-          <p className="text-sm font-medium text-[#bbc9cf]">Failed Logins (24h)</p>
-          <p className="text-2xl font-bold text-[#ff4d6d] mt-1">{stats.failedLogins24h.toLocaleString()}</p>
-          <p className="text-xs text-[#bbc9cf] mt-1">Unsuccessful attempts</p>
+          <p className="text-sm font-medium text-[#9aa3b8]">Failed Logins (24h)</p>
+          <p className="text-2xl font-semibold text-[#ff4d6d] mt-1">{stats.failedLogins24h.toLocaleString()}</p>
+          <p className="text-xs text-[#9aa3b8] mt-1">Unsuccessful attempts</p>
         </div>
         <div className="bg-amber-400/10 border border-amber-400/30 rounded-xl p-4">
-          <p className="text-sm font-medium text-[#bbc9cf]">Failed Logins (7d)</p>
-          <p className="text-2xl font-bold text-amber-400 mt-1">{stats.failedLogins7d.toLocaleString()}</p>
-          <p className="text-xs text-[#bbc9cf] mt-1">Last 7 days total</p>
+          <p className="text-sm font-medium text-[#9aa3b8]">Failed Logins (7d)</p>
+          <p className="text-2xl font-semibold text-amber-400 mt-1">{stats.failedLogins7d.toLocaleString()}</p>
+          <p className="text-xs text-[#9aa3b8] mt-1">Last 7 days total</p>
         </div>
-        <div className="bg-[#1b1f2e]/80 backdrop-blur-sm border border-[rgba(0,255,255,0.08)] rounded-xl p-4">
-          <p className="text-sm font-medium text-[#bbc9cf]">Active Sessions</p>
-          <p className="text-2xl font-bold text-[#dfe1f6] mt-1">{stats.activeSessions.toLocaleString()}</p>
-          <p className="text-xs text-[#bbc9cf] mt-1">Currently valid</p>
+        <div className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl p-4">
+          <p className="text-sm font-medium text-[#9aa3b8]">Active Sessions</p>
+          <p className="text-2xl font-semibold text-[#dfe1f6] mt-1">{stats.activeSessions.toLocaleString()}</p>
+          <p className="text-xs text-[#9aa3b8] mt-1">Currently valid</p>
         </div>
-        <div className="bg-[#1b1f2e]/80 backdrop-blur-sm border border-[rgba(0,255,255,0.08)] rounded-xl p-4">
-          <p className="text-sm font-medium text-[#bbc9cf]">Users on Legal Hold</p>
-          <p className="text-2xl font-bold text-[#dfe1f6] mt-1">{stats.usersOnHold.toLocaleString()}</p>
-          <p className="text-xs text-[#bbc9cf] mt-1">Active holds only</p>
+        <div className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl p-4">
+          <p className="text-sm font-medium text-[#9aa3b8]">Users on Legal Hold</p>
+          <p className="text-2xl font-semibold text-[#dfe1f6] mt-1">{stats.usersOnHold.toLocaleString()}</p>
+          <p className="text-xs text-[#9aa3b8] mt-1">Active holds only</p>
         </div>
       </div>
 
       {/* Top 5 failed logins table with inline bar chart */}
-      <div className="bg-[#1b1f2e]/80 backdrop-blur-sm border border-[rgba(0,255,255,0.08)] rounded-xl overflow-hidden">
-        <div className="px-5 py-4 border-b border-[rgba(0,255,255,0.08)]">
+      <div className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-[rgba(255,255,255,0.06)]">
           <h3 className="font-semibold text-[#dfe1f6] text-sm">Top 5 Users — Failed Logins (Last 7 Days)</h3>
-          <p className="text-xs text-[#bbc9cf] mt-0.5">Accounts with most authentication failures</p>
+          <p className="text-xs text-[#9aa3b8] mt-0.5">Accounts with most authentication failures</p>
         </div>
         {stats.topFailedLogins.length === 0 ? (
           <EmptyState icon={Activity} message="No failed login events in last 7 days." />
         ) : (
-          <div className="divide-y divide-[#3c494e]/40">
+          <div className="divide-y divide-[#262b3a]/40">
             {stats.topFailedLogins.map((row, i) => (
               <div key={row.email} className="flex items-center gap-4 px-5 py-3">
-                <span className="text-xs font-semibold text-[#bbc9cf] w-5 flex-shrink-0">{i + 1}</span>
+                <span className="text-xs font-semibold text-[#9aa3b8] w-5 flex-shrink-0">{i + 1}</span>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-[#dfe1f6] truncate">{row.email}</p>
                   <div className="mt-1.5 bg-[#e2e8f0] rounded-full h-2 flex-1 overflow-hidden">
@@ -1984,7 +1984,7 @@ function SecurityStatsTab() {
                     />
                   </div>
                 </div>
-                <span className="text-sm font-bold text-red-600 flex-shrink-0">{row.count}</span>
+                <span className="text-sm font-semibold text-red-600 flex-shrink-0">{row.count}</span>
               </div>
             ))}
           </div>
@@ -1997,7 +1997,7 @@ function SecurityStatsTab() {
           <ShieldAlert className="h-4 w-4 text-[#ff4d6d] flex-shrink-0" />
           <div>
             <h3 className="font-semibold text-[#dfe1f6] text-sm">Login Anomalies — Brute Force Candidates</h3>
-            <p className="text-xs text-[#bbc9cf] mt-0.5">Accounts with 5+ failed attempts in the last 24 hours and no successful login</p>
+            <p className="text-xs text-[#9aa3b8] mt-0.5">Accounts with 5+ failed attempts in the last 24 hours and no successful login</p>
           </div>
           {stats.loginAnomalies.length > 0 && (
             <span className="ml-auto bg-[#ff4d6d]/20 text-[#ff4d6d] text-xs font-semibold px-2 py-0.5 rounded-full">
@@ -2023,13 +2023,13 @@ function SecurityStatsTab() {
                     <p className="font-semibold text-[#dfe1f6] text-sm truncate">{row.email}</p>
                     <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5">
                       <span className="text-xs text-red-600 font-medium">{row.count} attempts</span>
-                      <span className="text-xs text-[#bbc9cf]">{rate}/min avg rate</span>
-                      <span className="text-xs text-[#bbc9cf]">
+                      <span className="text-xs text-[#9aa3b8]">{rate}/min avg rate</span>
+                      <span className="text-xs text-[#9aa3b8]">
                         First: {format(first, "HH:mm")} · Last: {format(last, "HH:mm")}
                       </span>
                     </div>
                   </div>
-                  <span className="flex-shrink-0 mt-1 inline-block bg-[#ff4d6d] text-white text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                  <span className="flex-shrink-0 mt-1 inline-block bg-[#ff4d6d] text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">
                     Alert
                   </span>
                 </div>
@@ -2045,7 +2045,7 @@ function SecurityStatsTab() {
           <AlertTriangle className="h-4 w-4 text-amber-500 flex-shrink-0" />
           <div>
             <h3 className="font-semibold text-[#dfe1f6] text-sm">Locked-Out Accounts (Last 24h)</h3>
-            <p className="text-xs text-[#bbc9cf] mt-0.5">Failed logins with zero successful logins — may be locked out or compromised</p>
+            <p className="text-xs text-[#9aa3b8] mt-0.5">Failed logins with zero successful logins — may be locked out or compromised</p>
           </div>
           {stats.noSuccessUsers.length > 0 && (
             <span className="ml-auto bg-amber-100 text-amber-700 text-xs font-semibold px-2 py-0.5 rounded-full">
@@ -2068,7 +2068,7 @@ function SecurityStatsTab() {
                     />
                   </div>
                 </div>
-                <span className="text-sm font-bold text-amber-600 flex-shrink-0">{row.count}×</span>
+                <span className="text-sm font-semibold text-amber-600 flex-shrink-0">{row.count}×</span>
               </div>
             ))}
           </div>
@@ -2077,12 +2077,12 @@ function SecurityStatsTab() {
 
       {/* DLP Trend Sparkline (last 30 days) */}
       {stats.dlpTrends.length > 0 && (
-        <div className="bg-[#1b1f2e]/80 backdrop-blur-sm border border-[rgba(0,255,255,0.08)] rounded-xl overflow-hidden">
-          <div className="px-5 py-4 border-b border-[rgba(0,255,255,0.08)] flex items-center gap-2">
+        <div className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl overflow-hidden">
+          <div className="px-5 py-4 border-b border-[rgba(255,255,255,0.06)] flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-[#00d2ff] flex-shrink-0" />
             <div>
               <h3 className="font-semibold text-[#dfe1f6] text-sm">DLP Violation Trend (Last 30 Days)</h3>
-              <p className="text-xs text-[#bbc9cf] mt-0.5">Daily count of DLP policy violations</p>
+              <p className="text-xs text-[#9aa3b8] mt-0.5">Daily count of DLP policy violations</p>
             </div>
           </div>
           <div className="px-5 py-4">
@@ -2092,7 +2092,7 @@ function SecurityStatsTab() {
                 <div className="space-y-1.5">
                   {stats.dlpTrends.slice(-14).map((d) => (
                     <div key={d.date} className="flex items-center gap-3">
-                      <span className="text-[11px] text-[#bbc9cf] w-20 flex-shrink-0">
+                      <span className="text-[11px] text-[#9aa3b8] w-20 flex-shrink-0">
                         {format(parseISO(d.date), "MMM d")}
                       </span>
                       <div className="bg-[#262939] rounded-full h-2 flex-1 overflow-hidden">
@@ -2130,7 +2130,7 @@ type RetentionPolicy = {
 const MODULES = ["Mail", "Chat", "Drive", "Calendar"] as const;
 const MODULE_COLORS: Record<string, string> = {
   Mail: "bg-[#00d2ff]/15 text-[#00d2ff]",
-  Chat: "bg-[#00feb2]/15 text-[#00feb2]",
+  Chat: "bg-[#06d6a0]/15 text-[#06d6a0]",
   Drive: "bg-amber-400/15 text-amber-400",
   Calendar: "bg-violet-400/15 text-violet-400",
 };
@@ -2213,11 +2213,11 @@ function RetentionTab() {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="font-semibold text-[#dfe1f6] text-sm">Retention Policies</h3>
-          <p className="text-xs text-[#bbc9cf] mt-0.5">Automatically delete or archive data after a set period.</p>
+          <p className="text-xs text-[#9aa3b8] mt-0.5">Automatically delete or archive data after a set period.</p>
         </div>
         <button
           onClick={() => setShowForm((v) => !v)}
-          className="bg-[#00d2ff] text-[#003543] hover:bg-[#00b8d9] hover:shadow-[0_0_20px_rgba(0,210,255,0.4)] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2"
+          className="bg-[#00d2ff] text-[#003543] hover:bg-[#00b8d9] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2"
         >
           <Plus className="w-3.5 h-3.5" />
           New Policy
@@ -2226,36 +2226,36 @@ function RetentionTab() {
 
       {/* Create form */}
       {showForm && (
-        <div className="bg-[#262939] border border-[rgba(0,255,255,0.08)] rounded-xl p-4 space-y-3">
-          <p className="text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider">New Retention Policy</p>
+        <div className="bg-[#262939] border border-[rgba(255,255,255,0.06)] rounded-xl p-4 space-y-3">
+          <p className="text-xs font-semibold text-[#9aa3b8]">New Retention Policy</p>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-[#bbc9cf] mb-1">Module</label>
+              <label className="block text-xs font-medium text-[#9aa3b8] mb-1">Module</label>
               <select
                 value={form.module}
                 onChange={(e) => setForm((f) => ({ ...f, module: e.target.value as RetentionPolicy["module"] }))}
-                className="w-full bg-[#262939] border border-[rgba(0,255,255,0.08)] rounded-md px-3 py-2 text-sm text-[#dfe1f6] outline-none focus:ring-2 focus:ring-[#00d2ff]/30"
+                className="w-full bg-[#262939] border border-[rgba(255,255,255,0.06)] rounded-md px-3 py-2 text-sm text-[#dfe1f6] outline-none focus:ring-2 focus:ring-[#00d2ff]/30"
               >
                 {MODULES.map((m) => <option key={m} value={m}>{m}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-[#bbc9cf] mb-1">Retain for (days)</label>
+              <label className="block text-xs font-medium text-[#9aa3b8] mb-1">Retain for (days)</label>
               <input
                 type="number"
                 min={1}
                 max={36500}
                 value={form.days}
                 onChange={(e) => setForm((f) => ({ ...f, days: Number(e.target.value) }))}
-                className="w-full bg-[#262939] border border-[rgba(0,255,255,0.08)] rounded-md px-3 py-2 text-sm text-[#dfe1f6] outline-none focus:ring-2 focus:ring-[#00d2ff]/30"
+                className="w-full bg-[#262939] border border-[rgba(255,255,255,0.06)] rounded-md px-3 py-2 text-sm text-[#dfe1f6] outline-none focus:ring-2 focus:ring-[#00d2ff]/30"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-[#bbc9cf] mb-1">Action after period</label>
+              <label className="block text-xs font-medium text-[#9aa3b8] mb-1">Action after period</label>
               <select
                 value={form.action}
                 onChange={(e) => setForm((f) => ({ ...f, action: e.target.value as RetentionPolicy["action"] }))}
-                className="w-full bg-[#262939] border border-[rgba(0,255,255,0.08)] rounded-md px-3 py-2 text-sm text-[#dfe1f6] outline-none focus:ring-2 focus:ring-[#00d2ff]/30"
+                className="w-full bg-[#262939] border border-[rgba(255,255,255,0.06)] rounded-md px-3 py-2 text-sm text-[#dfe1f6] outline-none focus:ring-2 focus:ring-[#00d2ff]/30"
               >
                 <option value="Archive">Archive</option>
                 <option value="Delete">Delete</option>
@@ -2277,14 +2277,14 @@ function RetentionTab() {
             <button
               onClick={handleCreate}
               disabled={saving}
-              className="bg-[#00d2ff] text-[#003543] hover:bg-[#00b8d9] hover:shadow-[0_0_20px_rgba(0,210,255,0.4)] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2 disabled:opacity-60"
+              className="bg-[#00d2ff] text-[#003543] hover:bg-[#00b8d9] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2 disabled:opacity-60"
             >
               {saving && <Loader2 className="w-3 h-3 animate-spin" />}
               Save Policy
             </button>
             <button
               onClick={() => setShowForm(false)}
-              className="bg-[#262939] text-[#bbc9cf] hover:bg-[#303444] border border-[rgba(0,255,255,0.08)] rounded-md px-4 py-2 text-sm font-medium"
+              className="bg-[#262939] text-[#9aa3b8] hover:bg-[#303444] border border-[rgba(255,255,255,0.06)] rounded-md px-4 py-2 text-sm font-medium"
             >
               Cancel
             </button>
@@ -2294,7 +2294,7 @@ function RetentionTab() {
 
       {/* Policy list */}
       {policies.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-[#bbc9cf]">
+        <div className="flex flex-col items-center justify-center py-12 text-[#9aa3b8]">
           <Timer className="w-10 h-10 mb-3 opacity-30" />
           <p className="text-sm">No retention policies configured</p>
           <p className="text-xs mt-1">Add a policy to automatically manage old data</p>
@@ -2302,33 +2302,33 @@ function RetentionTab() {
       ) : (
         <div className="space-y-2">
           {policies.map((p) => (
-            <div key={p.id} className="flex items-center gap-4 bg-[#1b1f2e]/80 backdrop-blur-sm border border-[rgba(0,255,255,0.08)] rounded-xl px-5 py-4">
-              <span className={`px-2.5 py-1 rounded-lg text-xs font-medium flex-shrink-0 ${MODULE_COLORS[p.module] ?? "bg-[#262939] text-[#bbc9cf]"}`}>
+            <div key={p.id} className="flex items-center gap-4 bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl px-5 py-4">
+              <span className={`px-2.5 py-1 rounded-lg text-xs font-medium flex-shrink-0 ${MODULE_COLORS[p.module] ?? "bg-[#262939] text-[#9aa3b8]"}`}>
                 {p.module}
               </span>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-[#dfe1f6]">
                   Retain {p.days} days, then {p.action === "Delete" ? "delete" : "archive"}
                 </p>
-                <p className="text-xs text-[#bbc9cf]">Updated {new Date(p.updatedAt).toLocaleDateString()}</p>
+                <p className="text-xs text-[#9aa3b8]">Updated {new Date(p.updatedAt).toLocaleDateString()}</p>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <button
                   onClick={() => handleToggle(p)}
-                  className={`flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${p.active ? "border-[#00feb2]/40 text-[#00feb2] bg-[#00feb2]/10" : "border-[rgba(0,255,255,0.08)] text-[#bbc9cf] bg-[#262939]"}`}
+                  className={`flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${p.active ? "border-[#06d6a0]/40 text-[#06d6a0] bg-[#06d6a0]/10" : "border-[rgba(255,255,255,0.06)] text-[#9aa3b8] bg-[#262939]"}`}
                   title={p.active ? "Disable" : "Enable"}
                 >
                   {p.active ? <ToggleRight className="w-3.5 h-3.5" /> : <ToggleLeft className="w-3.5 h-3.5" />}
                   {p.active ? "Active" : "Inactive"}
                 </button>
                 {p.action === "Archive" ? (
-                  <Archive className="w-4 h-4 text-[#bbc9cf] flex-shrink-0" />
+                  <Archive className="w-4 h-4 text-[#9aa3b8] flex-shrink-0" />
                 ) : (
-                  <Trash2 className="w-4 h-4 text-[#bbc9cf] flex-shrink-0" />
+                  <Trash2 className="w-4 h-4 text-[#9aa3b8] flex-shrink-0" />
                 )}
                 <button
                   onClick={() => handleDelete(p.id)}
-                  className="p-1.5 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-md transition-colors"
+                  className="p-1.5 text-[#9aa3b8] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-md transition-colors"
                   title="Delete policy"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -2422,14 +2422,14 @@ function SSOTab() {
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-[#00d2ff] text-[#003543] text-xs font-semibold rounded-lg hover:bg-[#a5e7ff] transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-[#00d2ff] text-[#003543] text-xs font-semibold rounded-lg hover:bg-[#7dd8f5] transition-colors"
         >
           <Plus className="w-3.5 h-3.5" /> Add Provider
         </button>
       </div>
 
       {showForm && (
-        <div className="bg-[#1b1f2e] border border-[rgba(0,255,255,0.08)] rounded-xl p-5 space-y-4">
+        <div className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl p-5 space-y-4">
           <h4 className="text-sm font-semibold text-[#dfe1f6]">New SSO Provider</h4>
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -2437,7 +2437,7 @@ function SSOTab() {
               <select
                 value={form.provider}
                 onChange={(e) => setForm({ ...form, provider: e.target.value as SSOConfig["provider"] })}
-                className="w-full bg-[#262939] border border-[rgba(0,255,255,0.08)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] outline-none"
+                className="w-full bg-[#262939] border border-[rgba(255,255,255,0.06)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] outline-none"
               >
                 {PROVIDERS.map((p) => <option key={p}>{p}</option>)}
               </select>
@@ -2447,7 +2447,7 @@ function SSOTab() {
               <input
                 value={form.defaultRole}
                 onChange={(e) => setForm({ ...form, defaultRole: e.target.value })}
-                className="w-full bg-[#262939] border border-[rgba(0,255,255,0.08)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] outline-none"
+                className="w-full bg-[#262939] border border-[rgba(255,255,255,0.06)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] outline-none"
               />
             </div>
           </div>
@@ -2459,7 +2459,7 @@ function SSOTab() {
                   value={form.metadataUrl}
                   onChange={(e) => setForm({ ...form, metadataUrl: e.target.value })}
                   placeholder="https://idp.example.com/metadata.xml"
-                  className="w-full bg-[#262939] border border-[rgba(0,255,255,0.08)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] placeholder:text-[#4a5568] outline-none"
+                  className="w-full bg-[#262939] border border-[rgba(255,255,255,0.06)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] placeholder:text-[#4a5568] outline-none"
                 />
               </div>
               <div>
@@ -2468,7 +2468,7 @@ function SSOTab() {
                   value={form.entityId}
                   onChange={(e) => setForm({ ...form, entityId: e.target.value })}
                   placeholder="https://app.cybersage.io/sso/saml"
-                  className="w-full bg-[#262939] border border-[rgba(0,255,255,0.08)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] placeholder:text-[#4a5568] outline-none"
+                  className="w-full bg-[#262939] border border-[rgba(255,255,255,0.06)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] placeholder:text-[#4a5568] outline-none"
                 />
               </div>
             </>
@@ -2479,7 +2479,7 @@ function SSOTab() {
                 <input
                   value={form.clientId}
                   onChange={(e) => setForm({ ...form, clientId: e.target.value })}
-                  className="w-full bg-[#262939] border border-[rgba(0,255,255,0.08)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] outline-none"
+                  className="w-full bg-[#262939] border border-[rgba(255,255,255,0.06)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] outline-none"
                 />
               </div>
               <div>
@@ -2488,7 +2488,7 @@ function SSOTab() {
                   type="password"
                   value={form.clientSecret}
                   onChange={(e) => setForm({ ...form, clientSecret: e.target.value })}
-                  className="w-full bg-[#262939] border border-[rgba(0,255,255,0.08)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] outline-none"
+                  className="w-full bg-[#262939] border border-[rgba(255,255,255,0.06)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] outline-none"
                 />
               </div>
             </>
@@ -2499,7 +2499,7 @@ function SSOTab() {
               value={form.callbackUrl}
               onChange={(e) => setForm({ ...form, callbackUrl: e.target.value })}
               placeholder="https://app.cybersage.io/api/auth/sso/callback"
-              className="w-full bg-[#262939] border border-[rgba(0,255,255,0.08)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] placeholder:text-[#4a5568] outline-none"
+              className="w-full bg-[#262939] border border-[rgba(255,255,255,0.06)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] placeholder:text-[#4a5568] outline-none"
             />
           </div>
           <div className="flex items-center gap-6">
@@ -2510,7 +2510,7 @@ function SSOTab() {
                 onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
                 className="rounded"
               />
-              <span className="text-sm text-[#bbc9cf]">Active</span>
+              <span className="text-sm text-[#9aa3b8]">Active</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -2519,12 +2519,12 @@ function SSOTab() {
                 onChange={(e) => setForm({ ...form, autoProvision: e.target.checked })}
                 className="rounded"
               />
-              <span className="text-sm text-[#bbc9cf]">Auto-provision new users</span>
+              <span className="text-sm text-[#9aa3b8]">Auto-provision new users</span>
             </label>
           </div>
           <div className="flex gap-3">
-            <button onClick={() => setShowForm(false)} className="px-4 py-2 rounded-lg bg-[#262939] text-[#bbc9cf] text-sm hover:bg-[#2e3347]">Cancel</button>
-            <button onClick={handleSave} disabled={saving} className="px-4 py-2 rounded-lg bg-[#00d2ff] text-[#003543] text-sm font-semibold hover:bg-[#a5e7ff] disabled:opacity-50 flex items-center gap-2">
+            <button onClick={() => setShowForm(false)} className="px-4 py-2 rounded-lg bg-[#262939] text-[#9aa3b8] text-sm hover:bg-[#2e3347]">Cancel</button>
+            <button onClick={handleSave} disabled={saving} className="px-4 py-2 rounded-lg bg-[#00d2ff] text-[#003543] text-sm font-semibold hover:bg-[#7dd8f5] disabled:opacity-50 flex items-center gap-2">
               {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />} Save
             </button>
           </div>
@@ -2538,7 +2538,7 @@ function SSOTab() {
       ) : (
         <div className="space-y-3">
           {configs.map((c) => (
-            <div key={c.id} className="flex items-center gap-4 p-4 bg-[#1b1f2e] border border-[rgba(0,255,255,0.06)] rounded-xl">
+            <div key={c.id} className="flex items-center gap-4 p-4 bg-[#1b1f2e] border border-[rgba(255,255,255,0.05)] rounded-xl">
               <div className="w-10 h-10 rounded-xl bg-[#262939] flex items-center justify-center flex-shrink-0">
                 <ShieldAlert className="w-5 h-5 text-[#00d2ff]" />
               </div>
@@ -2624,7 +2624,7 @@ function SentinelTab() {
     CRITICAL: "bg-rose-500/15 text-rose-400 border border-rose-500/30",
     HIGH:     "bg-orange-500/15 text-orange-400 border border-orange-500/30",
     MEDIUM:   "bg-amber-500/15 text-amber-400 border border-amber-500/30",
-    LOW:      "bg-[#262939] text-[#7a8899] border border-[rgba(0,255,255,0.08)]",
+    LOW:      "bg-[#262939] text-[#7a8899] border border-[rgba(255,255,255,0.06)]",
   };
 
   return (
@@ -2659,7 +2659,7 @@ function SentinelTab() {
       ) : (
         <div className="space-y-2">
           {alerts.map((a) => (
-            <div key={a.id} className={`p-4 rounded-xl border ${a.acknowledged ? "bg-[#1b1f2e] border-[rgba(0,255,255,0.04)]" : "bg-[#1b1f2e] border-[rgba(0,255,255,0.08)]"}`}>
+            <div key={a.id} className={`p-4 rounded-xl border ${a.acknowledged ? "bg-[#1b1f2e] border-[rgba(255,255,255,0.04)]" : "bg-[#1b1f2e] border-[rgba(255,255,255,0.06)]"}`}>
               <div className="flex items-start gap-3">
                 <AlertTriangle className={`w-4 h-4 mt-0.5 flex-shrink-0 ${a.severity === "CRITICAL" ? "text-rose-400" : a.severity === "HIGH" ? "text-orange-400" : "text-amber-400"}`} />
                 <div className="flex-1 min-w-0">
@@ -2668,7 +2668,7 @@ function SentinelTab() {
                     <span className={`text-xs px-1.5 py-0.5 rounded-full ${severityConfig[a.severity]}`}>{a.severity}</span>
                     {a.acknowledged && <span className="text-xs text-[#7a8899]">Acknowledged</span>}
                   </div>
-                  <p className="text-xs text-[#bbc9cf] leading-relaxed mb-1.5">{a.description}</p>
+                  <p className="text-xs text-[#9aa3b8] leading-relaxed mb-1.5">{a.description}</p>
                   <p className="text-xs text-[#7a8899]">
                     {a.targetType}/{a.targetId} · {format(parseISO(a.createdAt), "MMM d, h:mm a")}
                   </p>
@@ -2677,7 +2677,7 @@ function SentinelTab() {
                   <div className="flex gap-1.5 flex-shrink-0">
                     <button
                       onClick={() => ack(a.id)}
-                      className="text-xs px-2.5 py-1 rounded-lg bg-[#262939] text-[#bbc9cf] hover:bg-[#2e3347] transition-colors"
+                      className="text-xs px-2.5 py-1 rounded-lg bg-[#262939] text-[#9aa3b8] hover:bg-[#2e3347] transition-colors"
                     >
                       Ack
                     </button>
@@ -2720,12 +2720,12 @@ export function AdminConsoleView(_props: { currentUserId: string }) {
 
   return (
     <div className="bg-[#0f1321] min-h-screen">
-      <div className="flex h-[calc(100vh-160px)] min-h-[400px] bg-[#1b1f2e]/80 backdrop-blur-sm border border-[rgba(0,255,255,0.08)] rounded-xl overflow-hidden">
+      <div className="flex h-[calc(100vh-160px)] min-h-[400px] bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl overflow-hidden">
         <div className="w-52 bg-[#111113] flex flex-col flex-shrink-0">
-          <div className="px-6 py-4 border-b border-[rgba(0,255,255,0.08)]/10">
+          <div className="px-6 py-4 border-b border-[rgba(255,255,255,0.06)]/10">
             <div className="flex items-center gap-2">
               <ShieldAlert className="w-5 h-5 text-[#00d2ff]" />
-              <span className="text-white font-bold text-sm">Admin Console</span>
+              <span className="text-white font-semibold text-sm">Admin Console</span>
             </div>
           </div>
           <nav className="flex-1 p-3 space-y-1">
@@ -2737,8 +2737,8 @@ export function AdminConsoleView(_props: { currentUserId: string }) {
                   onClick={() => setActiveTab(tab.id)}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-left transition-colors ${
                     activeTab === tab.id
-                      ? "bg-[#00d2ff]/15 text-[#00d2ff] border-l-2 border-[#00d2ff]"
-                      : "text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6]"
+                      ? "bg-white/[0.07] text-[#eceef8]"
+                      : "text-[#9aa3b8] hover:bg-white/[0.04] hover:text-[#dfe1f6]"
                   }`}
                 >
                   <Icon className="w-4 h-4 flex-shrink-0" />
@@ -2750,10 +2750,10 @@ export function AdminConsoleView(_props: { currentUserId: string }) {
         </div>
 
         <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="px-6 py-4 border-b border-[rgba(0,255,255,0.08)] bg-[#1b1f2e] flex items-center justify-between flex-shrink-0">
+          <div className="px-6 py-4 border-b border-[rgba(255,255,255,0.06)] bg-[#1b1f2e] flex items-center justify-between flex-shrink-0">
             <div>
-              <h1 className="text-xl font-bold text-[#dfe1f6]">{activeTabMeta?.label}</h1>
-              <p className="text-xs text-[#bbc9cf] mt-0.5">{activeTabMeta?.description}</p>
+              <h1 className="text-xl font-semibold text-[#dfe1f6]">{activeTabMeta?.label}</h1>
+              <p className="text-xs text-[#9aa3b8] mt-0.5">{activeTabMeta?.description}</p>
             </div>
           </div>
 

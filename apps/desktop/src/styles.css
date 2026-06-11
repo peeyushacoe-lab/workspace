@@ -1,0 +1,69 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Scrollbar — thin, branded */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0,210,255,0.15); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,210,255,0.3); }
+
+/* Selection */
+::selection { background: rgba(0,210,255,0.25); color: #dfe1f6; }
+
+/* Focus ring */
+*:focus-visible { outline: 2px solid rgba(0,210,255,0.6); outline-offset: 1px; border-radius: 3px; }
+
+/* Disable text selection in non-content areas */
+.no-select { user-select: none; -webkit-user-select: none; }
+
+/* macOS traffic-light drag region */
+.drag-region { -webkit-app-region: drag; }
+.no-drag { -webkit-app-region: no-drag; }
+
+/* Transitions */
+.transition-fast { transition: all 0.1s ease; }
+.transition-smooth { transition: all 0.2s ease; }
+
+/* Skeleton loader */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, #1b1f2e 25%, #262939 50%, #1b1f2e 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+
+/* Rendered HTML email body */
+.email-body { word-break: break-word; }
+.email-body a { color: #00d2ff; text-decoration: underline; }
+.email-body a:hover { color: #66e3ff; }
+.email-body p { margin: 0 0 0.75em; line-height: 1.6; }
+.email-body p:last-child { margin-bottom: 0; }
+.email-body h1, .email-body h2, .email-body h3, .email-body h4 { color: #dfe1f6; margin: 1em 0 0.5em; font-weight: 600; }
+.email-body h1 { font-size: 1.4em; }
+.email-body h2 { font-size: 1.25em; }
+.email-body h3 { font-size: 1.1em; }
+.email-body ul, .email-body ol { padding-left: 1.5em; margin: 0.5em 0; }
+.email-body li { margin: 0.25em 0; }
+.email-body blockquote {
+  border-left: 3px solid rgba(0,210,255,0.3);
+  padding: 0.25em 0 0.25em 1em;
+  margin: 0.5em 0;
+  color: #a4a8c2;
+}
+.email-body pre, .email-body code {
+  background: rgba(0,0,0,0.3);
+  border-radius: 4px;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.9em;
+}
+.email-body pre { padding: 0.75em; overflow-x: auto; }
+.email-body code { padding: 0.15em 0.4em; }
+.email-body img { max-width: 100%; height: auto; border-radius: 4px; }
+.email-body table { border-collapse: collapse; max-width: 100%; }
+.email-body td, .email-body th { padding: 0.4em 0.6em; border: 1px solid rgba(255,255,255,0.08); }
+.email-body hr { border: none; border-top: 1px solid rgba(255,255,255,0.08); margin: 1em 0; }

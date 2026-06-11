@@ -14,7 +14,7 @@ const STATUS_CONFIG: Record<
   busy:       { color: "#ff4d6d", label: "Busy" },
   in_meeting: { color: "#a855f7", label: "In Meeting" },
   dnd:        { color: "#ff4d6d", label: "Do Not Disturb", strikethrough: true },
-  offline:    { color: "#5c6b72", label: "Offline" },
+  offline:    { color: "#5d6579", label: "Offline" },
 };
 
 // ─── PresenceDot — pure visual, no data fetching ─────────────────────────────

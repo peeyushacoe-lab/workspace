@@ -63,12 +63,12 @@ export function ShareFileViewer({ file }: { file: SharedFile }) {
   return (
     <div className="flex min-h-screen flex-col bg-[#0f1321]" style={{ fontFamily: "DM Sans, sans-serif" }}>
       {/* Top bar */}
-      <header className="flex items-center gap-4 border-b border-[rgba(0,255,255,0.1)] bg-[#1b1f2e] px-6 py-3">
+      <header className="flex items-center gap-4 border-b border-[rgba(255,255,255,0.08)] bg-[#1b1f2e] px-6 py-3">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <Icon className="h-6 w-6 text-[#00d2ff] shrink-0" />
           <div className="min-w-0">
             <h1 className="truncate text-base font-semibold text-[#dfe1f6]">{file.name}</h1>
-            <p className="text-xs text-[#bbc9cf]">{formatFileSize(file.size)} · {file.mimeType}</p>
+            <p className="text-xs text-[#9aa3b8]">{formatFileSize(file.size)} · {file.mimeType}</p>
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -91,8 +91,8 @@ export function ShareFileViewer({ file }: { file: SharedFile }) {
       {/* Preview area */}
       <main className="flex-1 flex items-center justify-center p-6 overflow-auto">
         {!file.downloadUrl ? (
-          <div className="flex flex-col items-center gap-3 text-[#bbc9cf]">
-            <AlertCircle className="h-12 w-12 text-[#bbc9cf]" />
+          <div className="flex flex-col items-center gap-3 text-[#9aa3b8]">
+            <AlertCircle className="h-12 w-12 text-[#9aa3b8]" />
             <p className="text-sm">File preview unavailable</p>
           </div>
         ) : previewType === "image" ? (
@@ -107,20 +107,20 @@ export function ShareFileViewer({ file }: { file: SharedFile }) {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setZoom((z) => Math.max(0.25, z - 0.25))}
-                className="bg-[#1b1f2e] text-[#bbc9cf] hover:bg-[#262939] border border-[rgba(0,255,255,0.1)] rounded-md px-3 py-1.5 text-sm font-medium transition-colors"
+                className="bg-[#1b1f2e] text-[#9aa3b8] hover:bg-[#262939] border border-[rgba(255,255,255,0.08)] rounded-md px-3 py-1.5 text-sm font-medium transition-colors"
               >
                 −
               </button>
-              <span className="text-sm text-[#bbc9cf] w-16 text-center">{Math.round(zoom * 100)}%</span>
+              <span className="text-sm text-[#9aa3b8] w-16 text-center">{Math.round(zoom * 100)}%</span>
               <button
                 onClick={() => setZoom((z) => Math.min(4, z + 0.25))}
-                className="bg-[#1b1f2e] text-[#bbc9cf] hover:bg-[#262939] border border-[rgba(0,255,255,0.1)] rounded-md px-3 py-1.5 text-sm font-medium transition-colors"
+                className="bg-[#1b1f2e] text-[#9aa3b8] hover:bg-[#262939] border border-[rgba(255,255,255,0.08)] rounded-md px-3 py-1.5 text-sm font-medium transition-colors"
               >
                 +
               </button>
               <button
                 onClick={() => setZoom(1)}
-                className="bg-[#1b1f2e] text-[#bbc9cf] hover:bg-[#262939] border border-[rgba(0,255,255,0.1)] rounded-md px-3 py-1.5 text-sm font-medium transition-colors"
+                className="bg-[#1b1f2e] text-[#9aa3b8] hover:bg-[#262939] border border-[rgba(255,255,255,0.08)] rounded-md px-3 py-1.5 text-sm font-medium transition-colors"
               >
                 Reset
               </button>
@@ -143,7 +143,7 @@ export function ShareFileViewer({ file }: { file: SharedFile }) {
             Your browser does not support video playback.
           </video>
         ) : previewType === "audio" ? (
-          <div className="w-full max-w-lg rounded-2xl bg-[#1b1f2e] p-10 shadow-md text-center border border-[rgba(0,255,255,0.1)]">
+          <div className="w-full max-w-lg rounded-2xl bg-[#1b1f2e] p-10 shadow-md text-center border border-[rgba(255,255,255,0.08)]">
             <File className="h-16 w-16 text-[#00d2ff] mx-auto mb-4" />
             <p className="text-sm font-medium text-[#dfe1f6] mb-6">{file.name}</p>
             <audio src={file.downloadUrl} controls className="w-full">
@@ -151,10 +151,10 @@ export function ShareFileViewer({ file }: { file: SharedFile }) {
             </audio>
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-4 text-[#bbc9cf]">
-            <File className="h-16 w-16 text-[#bbc9cf]" />
+          <div className="flex flex-col items-center gap-4 text-[#9aa3b8]">
+            <File className="h-16 w-16 text-[#9aa3b8]" />
             <p className="text-base font-medium text-[#dfe1f6]">Preview not available</p>
-            <p className="text-sm text-[#bbc9cf]">{file.mimeType}</p>
+            <p className="text-sm text-[#9aa3b8]">{file.mimeType}</p>
             {file.downloadUrl && (
               <button
                 onClick={handleDownload}
@@ -168,7 +168,7 @@ export function ShareFileViewer({ file }: { file: SharedFile }) {
         )}
       </main>
 
-      <footer className="border-t border-[rgba(0,255,255,0.1)] bg-[#1b1f2e] px-6 py-3 text-center text-xs text-[#bbc9cf]">
+      <footer className="border-t border-[rgba(255,255,255,0.08)] bg-[#1b1f2e] px-6 py-3 text-center text-xs text-[#9aa3b8]">
         Shared via CyberSage Drive
       </footer>
     </div>

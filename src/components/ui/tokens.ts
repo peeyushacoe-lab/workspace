@@ -15,7 +15,7 @@ export const colors = {
 
   // Text
   textPrimary:   "#dfe1f6",
-  textSecondary: "#bbc9cf",
+  textSecondary: "#9aa3b8",
   textMuted:     "rgba(187,201,207,0.5)",
 
   // Status
@@ -69,7 +69,7 @@ export const tw = {
   bgElevated: "bg-[#262939]",
   accent:    "text-[#00d2ff]",
   textPrimary:   "text-[#dfe1f6]",
-  textSecondary: "text-[#bbc9cf]",
+  textSecondary: "text-[#9aa3b8]",
   border:    "border-white/[0.07]",
   ring:      "ring-[#00d2ff]",
 } as const;

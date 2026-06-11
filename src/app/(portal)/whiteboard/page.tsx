@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/Shell";
 type Tool = "pen" | "eraser" | "line" | "rect" | "ellipse";
 type DrawEvent = { type: "draw" | "clear"; tool: Tool; color: string; size: number; points?: [number, number][]; from?: [number, number]; to?: [number, number] };
 
-const COLORS = ["#00d2ff", "#a5e7ff", "#dfe1f6", "#ff4d6d", "#ffd166", "#06d6a0", "#ffffff", "#000000"];
+const COLORS = ["#00d2ff", "#7dd8f5", "#dfe1f6", "#ff4d6d", "#ffd166", "#06d6a0", "#ffffff", "#000000"];
 
 export default function WhiteboardPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -118,14 +118,14 @@ export default function WhiteboardPage() {
       />
 
       {/* Toolbar */}
-      <div className="flex items-center gap-3 px-6 py-3 bg-[#1b1f2e] border-b border-[rgba(0,255,255,0.08)]">
+      <div className="flex items-center gap-3 px-6 py-3 bg-[#1b1f2e] border-b border-[rgba(255,255,255,0.06)]">
         {/* Tools */}
         <div className="flex items-center gap-1 bg-[#262939] rounded-lg p-1">
           {TOOLS.map(({ id, Icon }) => (
             <button
               key={id}
               onClick={() => setTool(id)}
-              className={`p-2 rounded-md transition-colors ${tool === id ? "bg-[#00d2ff]/20 text-[#00d2ff]" : "text-[#5c6b72] hover:text-[#bbc9cf]"}`}
+              className={`p-2 rounded-md transition-colors ${tool === id ? "bg-[#00d2ff]/20 text-[#00d2ff]" : "text-[#5d6579] hover:text-[#9aa3b8]"}`}
               title={id}
             >
               <Icon className="w-4 h-4" />
@@ -147,22 +147,22 @@ export default function WhiteboardPage() {
 
         {/* Size */}
         <input type="range" min={1} max={20} value={size} onChange={(e) => setSize(Number(e.target.value))} className="w-24 accent-[#00d2ff]" />
-        <span className="text-xs text-[#5c6b72] w-6">{size}px</span>
+        <span className="text-xs text-[#5d6579] w-6">{size}px</span>
 
         <div className="flex-1" />
 
         {/* Collaborators */}
         {collaborators.length > 0 && (
-          <div className="flex items-center gap-1 text-xs text-[#5c6b72]">
+          <div className="flex items-center gap-1 text-xs text-[#5d6579]">
             <Users className="w-3.5 h-3.5" />
             {collaborators.length} online
           </div>
         )}
 
-        <button onClick={handleDownload} className="p-2 text-[#5c6b72] hover:text-[#bbc9cf]" title="Download">
+        <button onClick={handleDownload} className="p-2 text-[#5d6579] hover:text-[#9aa3b8]" title="Download">
           <Download className="w-4 h-4" />
         </button>
-        <button onClick={handleClear} className="p-2 text-[#5c6b72] hover:text-[#ff4d6d]" title="Clear">
+        <button onClick={handleClear} className="p-2 text-[#5d6579] hover:text-[#ff4d6d]" title="Clear">
           <Trash2 className="w-4 h-4" />
         </button>
       </div>

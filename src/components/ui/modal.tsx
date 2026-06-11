@@ -95,12 +95,12 @@ export function Modal({
                 </h2>
               )}
               {description && (
-                <p className="mt-0.5 text-xs text-[#bbc9cf]">{description}</p>
+                <p className="mt-0.5 text-xs text-[#9aa3b8]">{description}</p>
               )}
             </div>
             <button
               onClick={onClose}
-              className="flex-shrink-0 p-1 rounded-md text-[#bbc9cf] hover:text-[#dfe1f6] hover:bg-white/[0.08] transition-colors"
+              className="flex-shrink-0 p-1 rounded-md text-[#9aa3b8] hover:text-[#dfe1f6] hover:bg-white/[0.08] transition-colors"
               aria-label="Close"
             >
               <X className="h-4 w-4" />
@@ -161,7 +161,7 @@ export function ConfirmModal({
           <button
             onClick={onClose}
             disabled={loading}
-            className="px-4 py-2 text-sm rounded-lg text-[#bbc9cf] hover:bg-white/[0.08] transition-colors disabled:opacity-50"
+            className="px-4 py-2 text-sm rounded-lg text-[#9aa3b8] hover:bg-white/[0.08] transition-colors disabled:opacity-50"
           >
             {cancelLabel}
           </button>

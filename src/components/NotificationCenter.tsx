@@ -2,6 +2,16 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  AtSign,
+  CalendarDays,
+  Siren,
+  Shield,
+  MessageSquare,
+  Folder,
+  Info,
+  type LucideIcon,
+} from "lucide-react";
 import type { NotificationType } from "@/generated/prisma/enums";
 
 type Notification = {
@@ -16,16 +26,21 @@ type Notification = {
 
 type Toast = Omit<Notification, "read">;
 
-const TYPE_ICON: Record<NotificationType, string> = {
-  MENTION: "🔔",
-  CALENDAR_INVITE: "📅",
-  CALENDAR_REMINDER: "📅",
-  SOC_ALERT: "🚨",
-  DLP_VIOLATION: "🛡",
-  NEW_MESSAGE: "💬",
-  FILE_SHARED: "📁",
-  SYSTEM: "ℹ️",
+const TYPE_ICON: Record<NotificationType, LucideIcon> = {
+  MENTION: AtSign,
+  CALENDAR_INVITE: CalendarDays,
+  CALENDAR_REMINDER: CalendarDays,
+  SOC_ALERT: Siren,
+  DLP_VIOLATION: Shield,
+  NEW_MESSAGE: MessageSquare,
+  FILE_SHARED: Folder,
+  SYSTEM: Info,
 };
+
+function TypeIcon({ type }: { type: NotificationType }) {
+  const Icon = TYPE_ICON[type];
+  return <Icon className="h-3.5 w-3.5" />;
+}
 
 const TYPE_COLOR: Record<NotificationType, string> = {
   MENTION: "bg-[#00d2ff]/10 text-[#00d2ff]",
@@ -33,9 +48,9 @@ const TYPE_COLOR: Record<NotificationType, string> = {
   CALENDAR_REMINDER: "bg-purple-500/10 text-purple-300",
   SOC_ALERT: "bg-[#ff4d6d]/10 text-[#ff4d6d]",
   DLP_VIOLATION: "bg-orange-500/10 text-orange-300",
-  NEW_MESSAGE: "bg-[#00feb2]/10 text-[#00feb2]",
+  NEW_MESSAGE: "bg-[#06d6a0]/10 text-[#06d6a0]",
   FILE_SHARED: "bg-yellow-500/10 text-yellow-300",
-  SYSTEM: "bg-[#262939] text-[#bbc9cf]",
+  SYSTEM: "bg-[#262939] text-[#9aa3b8]",
 };
 
 function timeAgo(iso: string): string {
@@ -178,7 +193,7 @@ export function NotificationCenter({ userId, dark = false }: { userId: string; d
       <div className="relative" ref={panelRef}>
         <button
           onClick={() => setOpen((o) => !o)}
-          className="relative p-2 text-[#bbc9cf] hover:text-[#dfe1f6] hover:bg-[#262939] rounded-full transition-colors"
+          className="relative p-2 text-[#9aa3b8] hover:text-[#dfe1f6] hover:bg-[#262939] rounded-full transition-colors"
           aria-label="Notifications"
         >
           <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -195,8 +210,8 @@ export function NotificationCenter({ userId, dark = false }: { userId: string; d
         </button>
 
         {open && (
-          <div className="absolute right-0 top-10 bg-[#1b1f2e] border border-[rgba(0,255,255,0.1)] rounded-xl shadow-xl w-80 z-50">
-            <div className="px-4 py-3 border-b border-[rgba(0,255,255,0.1)] flex items-center justify-between">
+          <div className="absolute right-0 top-10 bg-[#1b1f2e] border border-[rgba(255,255,255,0.08)] rounded-xl shadow-xl w-80 z-50">
+            <div className="px-4 py-3 border-b border-[rgba(255,255,255,0.08)] flex items-center justify-between">
               <h2 className="font-semibold text-[#dfe1f6] text-sm">Notifications</h2>
               {unreadCount > 0 && (
                 <button
@@ -208,7 +223,7 @@ export function NotificationCenter({ userId, dark = false }: { userId: string; d
               )}
             </div>
 
-            <div className="flex border-b border-[rgba(0,255,255,0.1)]">
+            <div className="flex border-b border-[rgba(255,255,255,0.08)]">
               {(["all", "unread"] as const).map((t) => (
                 <button
                   key={t}
@@ -216,7 +231,7 @@ export function NotificationCenter({ userId, dark = false }: { userId: string; d
                   className={`flex-1 py-2 text-xs font-medium transition-colors capitalize ${
                     tab === t
                       ? "border-b-2 border-[#00d2ff] text-[#00d2ff]"
-                      : "text-[#bbc9cf] hover:text-[#dfe1f6]"
+                      : "text-[#9aa3b8] hover:text-[#dfe1f6]"
                   }`}
                 >
                   {t}
@@ -226,7 +241,7 @@ export function NotificationCenter({ userId, dark = false }: { userId: string; d
 
             <div className="max-h-96 overflow-y-auto">
               {displayed.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-[#bbc9cf]">
+                <div className="flex flex-col items-center justify-center py-12 text-[#9aa3b8]">
                   <span className="text-3xl mb-2">🔔</span>
                   <p className="text-sm">No notifications</p>
                 </div>
@@ -234,32 +249,32 @@ export function NotificationCenter({ userId, dark = false }: { userId: string; d
                 Object.entries(groups).map(([label, items]) =>
                   items.length === 0 ? null : (
                     <div key={label}>
-                      <div className="sticky top-0 px-4 py-1.5 text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider bg-[#262939] border-b border-[rgba(0,255,255,0.1)]">
+                      <div className="sticky top-0 px-4 py-1.5 text-xs font-semibold text-[#9aa3b8] bg-[#262939] border-b border-[rgba(255,255,255,0.08)]">
                         {label}
                       </div>
                       {items.map((n) => (
                         <button
                           key={n.id}
                           onClick={() => handleClick(n)}
-                          className={`px-4 py-3 border-b border-[rgba(0,255,255,0.1)] hover:bg-[#262939] cursor-pointer transition-colors flex gap-3 w-full text-left ${
+                          className={`px-4 py-3 border-b border-[rgba(255,255,255,0.08)] hover:bg-[#262939] cursor-pointer transition-colors flex gap-3 w-full text-left ${
                             !n.read ? "bg-[#00d2ff]/5" : ""
                           }`}
                         >
                           <span
-                            className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm ${TYPE_COLOR[n.type]}`}
+                            className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${TYPE_COLOR[n.type]}`}
                           >
-                            {TYPE_ICON[n.type]}
+                            <TypeIcon type={n.type} />
                           </span>
                           <div className="min-w-0 flex-1">
                             <div className="flex items-start justify-between gap-2">
                               <p className="text-sm font-medium text-[#dfe1f6] leading-tight truncate">
                                 {n.title}
                               </p>
-                              <span className="shrink-0 text-xs text-[#bbc9cf] mt-0.5">
+                              <span className="shrink-0 text-xs text-[#9aa3b8] mt-0.5">
                                 {timeAgo(n.createdAt)}
                               </span>
                             </div>
-                            <p className="text-xs text-[#bbc9cf] line-clamp-2">{n.body}</p>
+                            <p className="text-xs text-[#9aa3b8] line-clamp-2">{n.body}</p>
                           </div>
                           {!n.read && (
                             <span className="w-2 h-2 rounded-full bg-[#00d2ff] flex-shrink-0 mt-1" />
@@ -279,16 +294,16 @@ export function NotificationCenter({ userId, dark = false }: { userId: string; d
         {toasts.map((t) => (
           <div
             key={t.id}
-            className="pointer-events-auto flex items-start gap-3 rounded-xl border border-[rgba(0,255,255,0.1)] bg-[#1b1f2e] p-4 shadow-lg w-80 animate-in slide-in-from-bottom-2 fade-in duration-200"
+            className="pointer-events-auto flex items-start gap-3 rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#1b1f2e] p-4 shadow-lg w-80 animate-in slide-in-from-bottom-2 fade-in duration-200"
           >
             <span
-              className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm ${TYPE_COLOR[t.type]}`}
+              className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${TYPE_COLOR[t.type]}`}
             >
-              {TYPE_ICON[t.type]}
+              <TypeIcon type={t.type} />
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-xs font-semibold text-[#dfe1f6] truncate">{t.title}</p>
-              <p className="mt-0.5 text-xs text-[#bbc9cf] line-clamp-2">{t.body}</p>
+              <p className="mt-0.5 text-xs text-[#9aa3b8] line-clamp-2">{t.body}</p>
             </div>
           </div>
         ))}

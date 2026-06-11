@@ -116,19 +116,19 @@ export function VersionHistoryPanel({ fileId, fileName, onClose, onRestored }: P
       />
 
       {/* Slide-over panel */}
-      <div className="fixed right-0 top-0 z-50 flex h-full w-full max-w-sm flex-col bg-[#1b1f2e] border border-[rgba(0,255,255,0.08)] shadow-2xl">
+      <div className="fixed right-0 top-0 z-50 flex h-full w-full max-w-sm flex-col bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] shadow-2xl">
         {/* Header */}
-        <div className="px-4 py-3 border-b border-[rgba(0,255,255,0.08)] flex items-center justify-between">
+        <div className="px-4 py-3 border-b border-[rgba(255,255,255,0.06)] flex items-center justify-between">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <History className="h-5 w-5 text-[#00d2ff] shrink-0" />
             <div className="min-w-0">
               <h2 className="font-semibold text-[#dfe1f6] text-sm">Version History</h2>
-              <p className="truncate text-xs text-[#bbc9cf] mt-0.5">{fileName}</p>
+              <p className="truncate text-xs text-[#9aa3b8] mt-0.5">{fileName}</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-md transition-colors"
+            className="p-1.5 text-[#9aa3b8] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-md transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
@@ -141,7 +141,7 @@ export function VersionHistoryPanel({ fileId, fileName, onClose, onRestored }: P
               <Loader2 className="h-7 w-7 animate-spin text-[#00d2ff]" />
             </div>
           ) : versions.length === 0 ? (
-            <div className="flex h-48 flex-col items-center justify-center gap-2 text-[#bbc9cf]">
+            <div className="flex h-48 flex-col items-center justify-center gap-2 text-[#9aa3b8]">
               <History className="h-10 w-10 text-[#e2e8f0]" />
               <p className="text-sm">No version history yet</p>
             </div>
@@ -150,7 +150,7 @@ export function VersionHistoryPanel({ fileId, fileName, onClose, onRestored }: P
               {versions.map((v) => (
                 <div
                   key={v.id}
-                  className="border-b border-[rgba(0,255,255,0.08)] px-4 py-3 flex items-center justify-between hover:bg-[#262939]"
+                  className="border-b border-[rgba(255,255,255,0.06)] px-4 py-3 flex items-center justify-between hover:bg-[#262939]"
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
@@ -164,10 +164,10 @@ export function VersionHistoryPanel({ fileId, fileName, onClose, onRestored }: P
                         </span>
                       )}
                     </div>
-                    <p className="mt-1 text-xs text-[#bbc9cf] truncate">
+                    <p className="mt-1 text-xs text-[#9aa3b8] truncate">
                       by {v.uploaderName}
                     </p>
-                    <div className="mt-1.5 flex items-center gap-2 text-xs text-[#bbc9cf]">
+                    <div className="mt-1.5 flex items-center gap-2 text-xs text-[#9aa3b8]">
                       <Clock className="h-3 w-3 shrink-0" />
                       <span>
                         {formatDistanceToNow(new Date(v.createdAt), { addSuffix: true })}
@@ -212,8 +212,8 @@ export function VersionHistoryPanel({ fileId, fileName, onClose, onRestored }: P
         </div>
 
         {/* Footer */}
-        <div className="border-t border-[rgba(0,255,255,0.08)] px-4 py-3">
-          <p className="text-xs text-[#bbc9cf] text-center">
+        <div className="border-t border-[rgba(255,255,255,0.06)] px-4 py-3">
+          <p className="text-xs text-[#9aa3b8] text-center">
             {versions.length} version{versions.length !== 1 ? "s" : ""} stored
           </p>
         </div>

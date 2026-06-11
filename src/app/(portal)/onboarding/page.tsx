@@ -53,13 +53,13 @@ export default function OnboardingPage() {
       <div className="w-full max-w-lg">
         {/* Header */}
         <div className="text-center mb-10">
-          <h1 className="text-3xl font-bold text-white mb-2">Welcome to CyberSage</h1>
+          <h1 className="text-3xl font-semibold text-white mb-2">Welcome to CyberSage</h1>
           <p className="text-[#8899a6]">Let&apos;s get you set up in just a few steps.</p>
         </div>
 
         {/* Progress bar */}
         <div className="mb-8">
-          <div className="flex justify-between text-xs text-[#5c6b72] mb-1.5">
+          <div className="flex justify-between text-xs text-[#5d6579] mb-1.5">
             <span>Step {current + 1} of {STEPS.length}</span>
             <span>{progress}% complete</span>
           </div>
@@ -86,7 +86,7 @@ export default function OnboardingPage() {
                     ? "bg-[#1b1f2e] border-[#00d2ff]/30 shadow-lg shadow-[#00d2ff]/5"
                     : done
                     ? "bg-[#141920] border-emerald-500/20"
-                    : "bg-[#141920] border-[rgba(0,255,255,0.06)] opacity-50"
+                    : "bg-[#141920] border-[rgba(255,255,255,0.05)] opacity-50"
                 }`}
               >
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
@@ -95,17 +95,17 @@ export default function OnboardingPage() {
                   {done ? (
                     <CheckCircle className="w-5 h-5 text-emerald-400" />
                   ) : (
-                    <Icon className={`w-5 h-5 ${active ? "text-[#00d2ff]" : "text-[#5c6b72]"}`} />
+                    <Icon className={`w-5 h-5 ${active ? "text-[#00d2ff]" : "text-[#5d6579]"}`} />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className={`font-semibold text-sm ${done ? "text-emerald-400" : active ? "text-white" : "text-[#5c6b72]"}`}>
+                  <p className={`font-semibold text-sm ${done ? "text-emerald-400" : active ? "text-white" : "text-[#5d6579]"}`}>
                     {s.title}
                   </p>
                   {active && <p className="text-xs text-[#8899a6] mt-0.5 leading-relaxed">{s.description}</p>}
                 </div>
                 {!future && !done && !active && (
-                  <ChevronRight className="w-4 h-4 text-[#5c6b72] flex-shrink-0 mt-1" />
+                  <ChevronRight className="w-4 h-4 text-[#5d6579] flex-shrink-0 mt-1" />
                 )}
               </div>
             );
@@ -117,7 +117,7 @@ export default function OnboardingPage() {
           <button
             onClick={markComplete}
             disabled={loading}
-            className="flex-1 flex items-center justify-center gap-2 py-3 bg-[#00d2ff] text-[#003543] font-bold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-60"
+            className="flex-1 flex items-center justify-center gap-2 py-3 bg-[#00d2ff] text-[#003543] font-semibold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-60"
           >
             {loading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -129,13 +129,13 @@ export default function OnboardingPage() {
           </button>
           <button
             onClick={skip}
-            className="px-5 py-3 text-sm text-[#5c6b72] hover:text-[#bbc9cf] transition-colors rounded-xl border border-[rgba(0,255,255,0.08)] hover:bg-[#ffffff05]"
+            className="px-5 py-3 text-sm text-[#5d6579] hover:text-[#9aa3b8] transition-colors rounded-xl border border-[rgba(255,255,255,0.06)] hover:bg-[#ffffff05]"
           >
             {isLast ? "Go to inbox" : "Skip"}
           </button>
         </div>
 
-        <p className="text-center text-xs text-[#5c6b72] mt-6">
+        <p className="text-center text-xs text-[#5d6579] mt-6">
           You can always update these later in{" "}
           <a href="/settings" className="text-[#00d2ff] hover:underline">Settings</a>.
         </p>

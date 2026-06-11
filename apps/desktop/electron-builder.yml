@@ -1,0 +1,67 @@
+appId: uk.cybersage.nexus
+productName: Nexus
+copyright: Copyright © 2025 CyberSage
+
+directories:
+  output: release
+  buildResources: assets
+
+files:
+  - dist/electron/**/*
+  - assets/**/*
+  - package.json
+
+extraResources:
+  - from: dist/renderer
+    to: renderer
+    filter:
+      - "**/*"
+
+extraMetadata:
+  main: dist/electron/main.js
+
+asar: false
+
+win:
+  target:
+    - portable
+  icon: assets/icons/icon.png
+  artifactName: Nexus.${ext}
+
+portable:
+  artifactName: Nexus-Portable.exe
+
+mac:
+  category: public.app-category.productivity
+  target:
+    - target: dmg
+      arch:
+        - x64
+        - arm64
+    - target: zip
+      arch:
+        - x64
+        - arm64
+  hardenedRuntime: false
+  gatekeeperAssess: false
+  identity: null
+  icon: assets/icons/icon.png
+  artifactName: Nexus-Mac-${arch}.${ext}
+
+linux:
+  target:
+    - AppImage
+    - deb
+  icon: assets/icons
+  category: Office
+  artifactName: Nexus-Linux.${ext}
+
+protocols:
+  - name: Nexus
+    schemes:
+      - nexus
+
+publish:
+  - provider: github
+    owner: peeyushacoe-lab
+    repo: workspace

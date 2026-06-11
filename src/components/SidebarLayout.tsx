@@ -59,7 +59,7 @@ export function SidebarLayout({
 
       {currentUser && (
         <div
-          className={`mt-auto border-t border-[rgba(0,255,255,0.08)] p-3 ${
+          className={`mt-auto border-t border-[rgba(255,255,255,0.06)] p-3 ${
             collapsed && !isMobile ? "flex flex-col items-center gap-2" : ""
           }`}
         >
@@ -77,14 +77,14 @@ export function SidebarLayout({
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-[#dfe1f6] truncate leading-tight">{currentUser.fullName}</p>
-                <p className="text-xs text-[#bbc9cf] leading-tight">{roleLabels[currentUser.role]}</p>
+                <p className="text-xs text-[#9aa3b8] leading-tight">{roleLabels[currentUser.role]}</p>
               </div>
             </div>
           )}
           <a
             href="/settings"
             title="Settings"
-            className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] transition-colors duration-150 ${
+            className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium text-[#9aa3b8] hover:bg-[#262939] hover:text-[#dfe1f6] transition-colors duration-150 ${
               collapsed && !isMobile ? "justify-center w-9 px-0 self-center" : "w-full"
             }`}
           >
@@ -99,7 +99,7 @@ export function SidebarLayout({
           >
             <button
               title={collapsed && !isMobile ? "Sign out" : undefined}
-              className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium text-[#bbc9cf] hover:bg-red-500/10 hover:text-red-400 transition-colors ${
+              className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium text-[#9aa3b8] hover:bg-red-500/10 hover:text-red-400 transition-colors ${
                 collapsed && !isMobile ? "justify-center w-9 px-0" : "w-full"
               }`}
             >
@@ -119,13 +119,13 @@ export function SidebarLayout({
     <div className="min-h-screen">
       <div className="flex min-h-screen">
 
-        {/* Desktop Sidebar — glassmorphism with cyan border per design system */}
+        {/* Desktop Sidebar */}
         <aside
-          className={`hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 bg-[#0a0d1c]/85 backdrop-blur-xl border-r border-[rgba(0,255,255,0.08)] transition-all duration-200 z-30 ${desktopWidth}`}
+          className={`hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 bg-[#0c0f1b] border-r border-[rgba(255,255,255,0.06)] transition-all duration-200 z-30 ${desktopWidth}`}
         >
           {/* Header */}
           <div
-            className={`flex h-14 flex-shrink-0 items-center border-b border-[rgba(0,255,255,0.08)] ${
+            className={`flex h-14 flex-shrink-0 items-center border-b border-[rgba(255,255,255,0.06)] ${
               collapsed ? "justify-center px-2" : "gap-2.5 px-4"
             }`}
           >
@@ -138,7 +138,7 @@ export function SidebarLayout({
                 <div className="flex-1" />
                 <button
                   onClick={toggleCollapsed}
-                  className="p-1 rounded-md text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] transition-colors flex-shrink-0"
+                  className="p-1 rounded-md text-[#9aa3b8] hover:bg-[#262939] hover:text-[#dfe1f6] transition-colors flex-shrink-0"
                   title="Collapse sidebar"
                 >
                   <ChevronLeft className="h-3.5 w-3.5" />
@@ -148,7 +148,7 @@ export function SidebarLayout({
             {collapsed && (
               <button
                 onClick={toggleCollapsed}
-                className="absolute -right-3 top-4 flex h-6 w-6 items-center justify-center rounded-full bg-[#0a0d1c] border border-[rgba(0,255,255,0.08)] text-[#bbc9cf] hover:text-[#dfe1f6] transition-colors z-10"
+                className="absolute -right-3 top-4 flex h-6 w-6 items-center justify-center rounded-full bg-[#0a0d1c] border border-[rgba(255,255,255,0.06)] text-[#9aa3b8] hover:text-[#dfe1f6] transition-colors z-10"
                 title="Expand sidebar"
               >
                 <ChevronRight className="h-3 w-3" />
@@ -166,13 +166,13 @@ export function SidebarLayout({
               className="absolute inset-0 bg-black/60 backdrop-blur-sm"
               onClick={() => setMobileOpen(false)}
             />
-            <aside className="relative z-10 flex w-56 flex-col bg-[#0a0d1c]/90 backdrop-blur-xl shadow-2xl">
-              <div className="flex h-12 items-center gap-2.5 border-b border-[rgba(0,255,255,0.08)] px-4">
+            <aside className="relative z-10 flex w-56 flex-col bg-[#0c0f1b] shadow-2xl">
+              <div className="flex h-12 items-center gap-2.5 border-b border-[rgba(255,255,255,0.06)] px-4">
                 <img src="/nexusLogo.png" alt="CyberSage Nexus" className="h-7 w-auto object-contain max-w-[130px]" />
                 <div className="flex-1" />
                 <button
                   onClick={() => setMobileOpen(false)}
-                  className="p-1 rounded-md text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6]"
+                  className="p-1 rounded-md text-[#9aa3b8] hover:bg-[#262939] hover:text-[#dfe1f6]"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -183,10 +183,10 @@ export function SidebarLayout({
         )}
 
         {/* Mobile Top Bar */}
-        <div className="lg:hidden fixed top-0 inset-x-0 z-40 flex h-12 items-center gap-3 bg-[#0a0d1c]/85 backdrop-blur-xl border-b border-[rgba(0,255,255,0.08)] px-4">
+        <div className="lg:hidden fixed top-0 inset-x-0 z-40 flex h-12 items-center gap-3 bg-[#0c0f1b] border-b border-[rgba(255,255,255,0.06)] px-4">
           <button
             onClick={() => setMobileOpen(true)}
-            className="p-1.5 rounded-md text-[#bbc9cf] hover:bg-[#1b1f2e] transition-colors"
+            className="p-1.5 rounded-md text-[#9aa3b8] hover:bg-[#1b1f2e] transition-colors"
             aria-label="Open menu"
           >
             <Menu className="h-5 w-5" />

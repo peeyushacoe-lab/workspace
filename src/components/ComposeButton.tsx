@@ -85,10 +85,10 @@ function ComposeModal({
         onClick={onClose}
       />
       <div
-        className="relative z-10 w-full max-w-lg bg-[#1b1f2e] rounded-xl shadow-2xl border border-[rgba(0,255,255,0.12)]"
+        className="relative z-10 w-full max-w-lg bg-[#1b1f2e] rounded-xl shadow-2xl border border-[rgba(255,255,255,0.09)]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-[rgba(0,255,255,0.1)] px-5 py-3.5">
+        <div className="flex items-center justify-between border-b border-[rgba(255,255,255,0.08)] px-5 py-3.5">
           <div className="flex items-center gap-2.5">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#00d2ff]">
               <Send className="h-3 w-3 text-[#003543]" />
@@ -98,7 +98,7 @@ function ComposeModal({
           <div className="flex items-center gap-1">
             <button
               onClick={expandToFullPage}
-              className="rounded-md p-1.5 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] transition-colors"
+              className="rounded-md p-1.5 text-[#9aa3b8] hover:bg-[#262939] hover:text-[#dfe1f6] transition-colors"
               aria-label="Expand to full page"
               title="Full-page compose"
             >
@@ -106,7 +106,7 @@ function ComposeModal({
             </button>
             <button
               onClick={onClose}
-              className="rounded-md p-1.5 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] transition-colors"
+              className="rounded-md p-1.5 text-[#9aa3b8] hover:bg-[#262939] hover:text-[#dfe1f6] transition-colors"
               aria-label="Close"
             >
               <X className="h-4 w-4" />

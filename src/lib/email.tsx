@@ -285,19 +285,19 @@ export async function sendRoleGrantEmail({
       </div>
       <div style="padding:32px;">
         <h1 style="font-size:22px;font-weight:700;color:#dfe1f6;margin:0 0 8px;">${accessRole} Access Granted</h1>
-        <p style="color:#bbc9cf;line-height:1.7;margin:0 0 24px;">
+        <p style="color:#9aa3b8;line-height:1.7;margin:0 0 24px;">
           Hi <strong style="color:#dfe1f6;">${firstName}</strong>,
         </p>
-        <p style="color:#bbc9cf;line-height:1.7;margin:0 0 24px;">
-          You have been granted <strong style="color:#a5e7ff;">${accessRole}</strong> access in CyberSage Workspace.
-          Welcome to the <strong style="color:#a5e7ff;">${accessRole} team</strong>!
+        <p style="color:#9aa3b8;line-height:1.7;margin:0 0 24px;">
+          You have been granted <strong style="color:#7dd8f5;">${accessRole}</strong> access in CyberSage Workspace.
+          Welcome to the <strong style="color:#7dd8f5;">${accessRole} team</strong>!
         </p>
         <div style="background:rgba(0,210,255,0.06);border:1px solid rgba(0,210,255,0.15);border-radius:12px;padding:20px;margin:0 0 24px;">
-          <div style="font-size:12px;color:#5c6b72;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;">Access Level</div>
+          <div style="font-size:12px;color:#5d6579;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;">Access Level</div>
           <div style="color:#00d2ff;font-weight:700;font-size:18px;">${accessRole}</div>
-          <div style="font-size:12px;color:#bbc9cf;margin-top:4px;">Granted by ${grantedByName} · CISO</div>
+          <div style="font-size:12px;color:#9aa3b8;margin-top:4px;">Granted by ${grantedByName} · CISO</div>
         </div>
-        <p style="color:#5c6b72;font-size:13px;line-height:1.6;margin:0;">
+        <p style="color:#5d6579;font-size:13px;line-height:1.6;margin:0;">
           You now have access to ${accessRole}-related features and resources in the workspace.
           If you have any questions about your new access, reach out to the CISO.
         </p>

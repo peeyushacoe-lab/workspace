@@ -53,7 +53,7 @@ export function InstallPrompt() {
   return (
     <div
       role="banner"
-      className="fixed bottom-4 right-4 z-50 bg-[#1b1f2e] border border-[rgba(0,255,255,0.12)] rounded-xl shadow-2xl p-4 w-72 flex flex-col gap-3"
+      className="fixed bottom-4 right-4 z-50 bg-[#1b1f2e] border border-[rgba(255,255,255,0.09)] rounded-xl shadow-2xl p-4 w-72 flex flex-col gap-3"
     >
       <div className="flex items-center gap-3 min-w-0">
         <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-[#2563eb] flex items-center justify-center">
@@ -75,7 +75,7 @@ export function InstallPrompt() {
           <p className="font-semibold text-[#dfe1f6] text-sm truncate">
             Install Nexus for offline access
           </p>
-          <p className="text-xs text-[#bbc9cf] truncate">
+          <p className="text-xs text-[#9aa3b8] truncate">
             Add to home screen for faster access
           </p>
         </div>
@@ -90,7 +90,7 @@ export function InstallPrompt() {
         <button
           onClick={handleDismiss}
           aria-label="Dismiss install prompt"
-          className="p-1 text-[#bbc9cf] hover:text-[#dfe1f6] hover:bg-[#262939] rounded-md transition-colors"
+          className="p-1 text-[#9aa3b8] hover:text-[#dfe1f6] hover:bg-[#262939] rounded-md transition-colors"
         >
           &#x2715;
         </button>

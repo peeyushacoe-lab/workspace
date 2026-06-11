@@ -18,13 +18,13 @@ export function FormField({ label, hint, error, required, children, className }:
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
       {label && (
-        <label className="text-xs font-medium text-[#bbc9cf]">
+        <label className="text-xs font-medium text-[#9aa3b8]">
           {label}
           {required && <span className="text-red-400 ml-0.5">*</span>}
         </label>
       )}
       {children}
-      {hint && !error && <p className="text-[11px] text-[#bbc9cf]/60">{hint}</p>}
+      {hint && !error && <p className="text-[11px] text-[#9aa3b8]/60">{hint}</p>}
       {error && <p className="text-[11px] text-red-400">{error}</p>}
     </div>
   );
@@ -41,7 +41,7 @@ export const TextInput = forwardRef<HTMLInputElement, TextInputProps>(
   ({ error, icon, className, ...props }, ref) => (
     <div className="relative">
       {icon && (
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#bbc9cf]">
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9aa3b8]">
           {icon}
         </span>
       )}
@@ -49,7 +49,7 @@ export const TextInput = forwardRef<HTMLInputElement, TextInputProps>(
         ref={ref}
         className={cn(
           "w-full rounded-lg border bg-[#262939] px-3 py-2 text-sm text-[#dfe1f6]",
-          "placeholder:text-[#bbc9cf]/60",
+          "placeholder:text-[#9aa3b8]/60",
           "focus:outline-none focus:ring-1 transition-colors",
           error
             ? "border-red-500/50 focus:ring-red-500/50"
@@ -76,7 +76,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
       ref={ref}
       className={cn(
         "w-full rounded-lg border bg-[#262939] px-3 py-2 text-sm text-[#dfe1f6]",
-        "placeholder:text-[#bbc9cf]/60 resize-y min-h-[80px]",
+        "placeholder:text-[#9aa3b8]/60 resize-y min-h-[80px]",
         "focus:outline-none focus:ring-1 transition-colors",
         error
           ? "border-red-500/50 focus:ring-red-500/50"
@@ -146,7 +146,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
         )}
         {...props}
       />
-      {label && <span className="text-sm text-[#bbc9cf]">{label}</span>}
+      {label && <span className="text-sm text-[#9aa3b8]">{label}</span>}
     </label>
   ),
 );
@@ -176,7 +176,7 @@ export function FormSection({
       {(title || description) && (
         <div className="border-b border-white/[0.07] pb-3">
           {title && <p className="text-sm font-semibold text-[#dfe1f6]">{title}</p>}
-          {description && <p className="text-xs text-[#bbc9cf] mt-0.5">{description}</p>}
+          {description && <p className="text-xs text-[#9aa3b8] mt-0.5">{description}</p>}
         </div>
       )}
       {children}

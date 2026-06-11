@@ -6,13 +6,13 @@ export default function ComposeLoading() {
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-12 bg-[#1b1f2e] rounded-xl border border-[rgba(0,255,255,0.08)]" />
+              <div key={i} className="h-12 bg-[#1b1f2e] rounded-xl border border-[rgba(255,255,255,0.06)]" />
             ))}
           </div>
-          <div className="h-64 bg-[#1b1f2e] rounded-xl border border-[rgba(0,255,255,0.08)]" />
+          <div className="h-64 bg-[#1b1f2e] rounded-xl border border-[rgba(255,255,255,0.06)]" />
           <div className="h-10 w-36 bg-[#1b1f2e] rounded-lg" />
         </div>
-        <div className="h-96 bg-[#1b1f2e] rounded-xl border border-[rgba(0,255,255,0.08)]" />
+        <div className="h-96 bg-[#1b1f2e] rounded-xl border border-[rgba(255,255,255,0.06)]" />
       </div>
     </div>
   );

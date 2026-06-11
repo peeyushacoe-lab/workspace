@@ -31,7 +31,7 @@ function CopyButton({ value }: { value: string }) {
     navigator.clipboard.writeText(value).then(() => toast.success("Copied")).catch(() => {});
   };
   return (
-    <button onClick={copy} className="p-1 text-[#5c6b72] hover:text-[#00d2ff] transition-colors flex-shrink-0">
+    <button onClick={copy} className="p-1 text-[#5d6579] hover:text-[#00d2ff] transition-colors flex-shrink-0">
       <Copy className="w-3.5 h-3.5" />
     </button>
   );
@@ -72,10 +72,10 @@ export default function DeliverabilityPage() {
             { label: "From Address", value: data?.fromEmail ?? "—", sub: "Outgoing sender" },
             { label: "DNS Records", value: loading ? "…" : `${okCount} / ${totalCount}`, sub: `${okCount === totalCount ? "All configured ✓" : "Action required"}` },
           ].map(({ label, value, sub }) => (
-            <div key={label} className="bg-[#1b1f2e] border border-[rgba(0,255,255,0.08)] rounded-xl p-4">
-              <p className="text-[10px] text-[#5c6b72] uppercase tracking-widest mb-1">{label}</p>
+            <div key={label} className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl p-4">
+              <p className="text-[10px] text-[#5d6579] mb-1">{label}</p>
               <p className="font-mono text-sm text-[#00d2ff] truncate">{value}</p>
-              <p className="text-[11px] text-[#5c6b72] mt-1">{sub}</p>
+              <p className="text-[11px] text-[#5d6579] mt-1">{sub}</p>
             </div>
           ))}
         </div>
@@ -95,25 +95,25 @@ export default function DeliverabilityPage() {
         </div>
 
         {/* DNS Records */}
-        <div className="bg-[#1b1f2e] border border-[rgba(0,255,255,0.08)] rounded-xl overflow-hidden">
-          <div className="flex items-center gap-3 px-4 py-3 border-b border-[rgba(0,255,255,0.08)]">
+        <div className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl overflow-hidden">
+          <div className="flex items-center gap-3 px-4 py-3 border-b border-[rgba(255,255,255,0.06)]">
             <Shield className="w-4 h-4 text-[#00d2ff]" />
             <span className="text-sm font-medium">Required DNS Records</span>
             <div className="flex-1" />
-            <button onClick={load} className="p-1.5 text-[#5c6b72] hover:text-[#bbc9cf]">
+            <button onClick={load} className="p-1.5 text-[#5d6579] hover:text-[#9aa3b8]">
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
             </button>
           </div>
 
-          <div className="divide-y divide-[rgba(0,255,255,0.04)]">
+          <div className="divide-y divide-[rgba(255,255,255,0.04)]">
             {loading ? (
-              <div className="py-10 text-center text-[#5c6b72] text-sm">Checking DNS…</div>
+              <div className="py-10 text-center text-[#5d6579] text-sm">Checking DNS…</div>
             ) : data?.records.map((record) => (
               <div key={record.host} className="px-4 py-4 flex items-start gap-3">
                 <StatusIcon status={record.status} />
                 <div className="flex-1 min-w-0 space-y-1.5">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs font-mono bg-[#262939] text-[#a5e7ff] px-2 py-0.5 rounded">{record.type}</span>
+                    <span className="text-xs font-mono bg-[#262939] text-[#7dd8f5] px-2 py-0.5 rounded">{record.type}</span>
                     <span className="text-sm font-medium text-[#dfe1f6] truncate">{record.host}</span>
                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
                       record.status === "ok" ? "bg-emerald-500/10 text-emerald-400" :
@@ -123,9 +123,9 @@ export default function DeliverabilityPage() {
                       {record.status === "ok" ? "Configured" : record.status === "missing" ? "Missing" : "Unverified"}
                     </span>
                   </div>
-                  <p className="text-xs text-[#5c6b72]">{record.description}</p>
+                  <p className="text-xs text-[#5d6579]">{record.description}</p>
                   <div className="flex items-center gap-2 bg-[#0c0e1a] rounded-lg px-3 py-2 mt-1">
-                    <code className="text-xs text-[#a5e7ff] font-mono flex-1 truncate">{record.value}</code>
+                    <code className="text-xs text-[#7dd8f5] font-mono flex-1 truncate">{record.value}</code>
                     <CopyButton value={record.value} />
                   </div>
                 </div>
@@ -135,11 +135,11 @@ export default function DeliverabilityPage() {
         </div>
 
         {/* Avatar/Signature guide */}
-        <div className="bg-[#1b1f2e] border border-[rgba(0,255,255,0.08)] rounded-xl p-5 space-y-4">
+        <div className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl p-5 space-y-4">
           <h3 className="text-sm font-semibold flex items-center gap-2">
             <span className="text-base">👤</span> Sender Avatar in Gmail &amp; Outlook
           </h3>
-          <p className="text-xs text-[#bbc9cf] leading-relaxed">
+          <p className="text-xs text-[#9aa3b8] leading-relaxed">
             The avatar shown next to your name in Gmail is pulled from the <strong className="text-[#dfe1f6]">sender&apos;s Google profile</strong> or
             from a <strong className="text-[#dfe1f6]">BIMI record</strong> (Brand Indicators for Message Identification).
             Your email signature image is separate and requires the recipient to <em>load remote images</em> (off by default in Gmail).
@@ -151,7 +151,7 @@ export default function DeliverabilityPage() {
             ].map(({ title, steps }) => (
               <div key={title} className="bg-[#0c0e1a] rounded-lg p-3 space-y-2">
                 <p className="font-semibold text-[#dfe1f6]">{title}</p>
-                <ol className="space-y-1 list-decimal list-inside text-[#bbc9cf]">
+                <ol className="space-y-1 list-decimal list-inside text-[#9aa3b8]">
                   {steps.map((s, i) => <li key={i}>{s}</li>)}
                 </ol>
               </div>

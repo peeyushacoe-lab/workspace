@@ -10,7 +10,7 @@ export default function ProfileLoading() {
         </div>
       </div>
       {[...Array(3)].map((_, i) => (
-        <div key={i} className="h-32 bg-[#1b1f2e] rounded-xl border border-[rgba(0,255,255,0.08)]" />
+        <div key={i} className="h-32 bg-[#1b1f2e] rounded-xl border border-[rgba(255,255,255,0.06)]" />
       ))}
     </div>
   );

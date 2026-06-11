@@ -24,10 +24,10 @@ type SignatureFormData = {
 };
 
 const inputClass =
-  "block w-full py-2.5 border border-[rgba(0,255,255,0.1)] rounded-md bg-[#0f1321] text-[#dfe1f6] placeholder-[#bbc9cf] focus:ring-2 focus:ring-[#00d2ff] focus:border-[#00d2ff] text-sm px-3 outline-none transition";
+  "block w-full py-2.5 border border-[rgba(255,255,255,0.08)] rounded-md bg-[#0f1321] text-[#dfe1f6] placeholder-[#9aa3b8] focus:ring-2 focus:ring-[#00d2ff] focus:border-[#00d2ff] text-sm px-3 outline-none transition";
 
 const textareaClass =
-  "block w-full py-2.5 border border-[rgba(0,255,255,0.1)] rounded-md bg-[#0f1321] text-[#dfe1f6] placeholder-[#bbc9cf] focus:ring-2 focus:ring-[#00d2ff] focus:border-[#00d2ff] text-sm px-3 outline-none transition min-h-[120px]";
+  "block w-full py-2.5 border border-[rgba(255,255,255,0.08)] rounded-md bg-[#0f1321] text-[#dfe1f6] placeholder-[#9aa3b8] focus:ring-2 focus:ring-[#00d2ff] focus:border-[#00d2ff] text-sm px-3 outline-none transition min-h-[120px]";
 
 const labelTextClass = "text-sm font-medium text-[#dfe1f6] mb-1.5 block";
 
@@ -35,7 +35,7 @@ const primaryButtonClass =
   "inline-flex h-11 items-center justify-center gap-2 rounded-md bg-[#00d2ff] px-5 text-sm font-medium text-[#003543] transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60";
 
 const secondaryButtonClass =
-  "inline-flex h-11 items-center justify-center gap-2 rounded-md border border-[rgba(0,255,255,0.1)] bg-[#1b1f2e] px-4 text-sm font-medium text-[#bbc9cf] transition hover:bg-[#262939] disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex h-11 items-center justify-center gap-2 rounded-md border border-[rgba(255,255,255,0.08)] bg-[#1b1f2e] px-4 text-sm font-medium text-[#9aa3b8] transition hover:bg-[#262939] disabled:cursor-not-allowed disabled:opacity-50";
 
 export function ProfileSettings({
   userName,
@@ -180,7 +180,7 @@ export function ProfileSettings({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px] bg-[#1b1f2e] rounded-xl border border-[rgba(0,255,255,0.1)]">
+      <div className="flex items-center justify-center min-h-[400px] bg-[#1b1f2e] rounded-xl border border-[rgba(255,255,255,0.08)]">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00d2ff]"></div>
       </div>
     );
@@ -188,11 +188,11 @@ export function ProfileSettings({
 
   return (
     <div className="space-y-8">
-      <div className="rounded-xl border border-[rgba(0,255,255,0.1)] bg-[#1b1f2e] p-8">
+      <div className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#1b1f2e] p-8">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h1 className="text-xl font-bold text-[#dfe1f6]">Profile settings</h1>
-            <p className="mt-2 text-sm text-[#bbc9cf]">
+            <h1 className="text-xl font-semibold text-[#dfe1f6]">Profile settings</h1>
+            <p className="mt-2 text-sm text-[#9aa3b8]">
               Update your display name, reset your password, and manage your sender signature.
             </p>
           </div>
@@ -206,9 +206,9 @@ export function ProfileSettings({
 
         <div className="mt-8 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
           {/* Account security */}
-          <div className="rounded-xl border border-[rgba(0,255,255,0.1)] bg-[#0f1321] p-6">
-            <h2 className="text-sm font-medium text-[#bbc9cf]">Account security</h2>
-            <p className="mt-2 text-sm text-[#bbc9cf]">Change your display name or password for your CyberSage account.</p>
+          <div className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0f1321] p-6">
+            <h2 className="text-sm font-medium text-[#9aa3b8]">Account security</h2>
+            <p className="mt-2 text-sm text-[#9aa3b8]">Change your display name or password for your CyberSage account.</p>
 
             <form onSubmit={handleAccountSave} className="mt-6 space-y-4">
               <div>
@@ -274,9 +274,9 @@ export function ProfileSettings({
           </div>
 
           {/* Sender identity */}
-          <div className="rounded-xl border border-[rgba(0,255,255,0.1)] bg-[#1b1f2e] p-6">
-            <h2 className="text-sm font-medium text-[#bbc9cf]">Sender identity</h2>
-            <p className="mt-2 text-sm text-[#bbc9cf]">Manage your signature template and email identity.</p>
+          <div className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#1b1f2e] p-6">
+            <h2 className="text-sm font-medium text-[#9aa3b8]">Sender identity</h2>
+            <p className="mt-2 text-sm text-[#9aa3b8]">Manage your signature template and email identity.</p>
 
             {isEditing ? (
               <form onSubmit={handleSubmit} className="mt-6 space-y-6">
@@ -285,7 +285,7 @@ export function ProfileSettings({
                     <h3 className="text-base font-semibold text-[#dfe1f6]">
                       {signature ? "Edit signature" : "Create signature"}
                     </h3>
-                    <p className="text-sm text-[#bbc9cf]">Customize the outgoing sender identity.</p>
+                    <p className="text-sm text-[#9aa3b8]">Customize the outgoing sender identity.</p>
                   </div>
                   <button type="button" onClick={() => setIsEditing(false)} className={secondaryButtonClass}>
                     Cancel
@@ -361,14 +361,14 @@ export function ProfileSettings({
                 </button>
               </form>
             ) : signature ? (
-              <div className="mt-6 bg-[#0f1321] border border-[rgba(0,255,255,0.1)] rounded-xl p-4">
+              <div className="mt-6 bg-[#0f1321] border border-[rgba(255,255,255,0.08)] rounded-xl p-4">
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <h3 className="font-semibold text-[#dfe1f6]">{signature.fullName}</h3>
-                    <p className="text-sm text-[#bbc9cf]">{signature.title}</p>
+                    <p className="text-sm text-[#9aa3b8]">{signature.title}</p>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={handleEdit} className="p-2 text-[#bbc9cf] hover:text-[#00d2ff] transition" title="Edit">
+                    <button onClick={handleEdit} className="p-2 text-[#9aa3b8] hover:text-[#00d2ff] transition" title="Edit">
                       <Edit2 className="h-4 w-4" />
                     </button>
                     <button onClick={handleDelete} className="text-red-400 hover:text-red-300 hover:bg-red-400/10 text-xs px-2 py-1 rounded-md transition-colors" title="Delete">
@@ -376,20 +376,20 @@ export function ProfileSettings({
                     </button>
                   </div>
                 </div>
-                <div className="text-sm text-[#bbc9cf] space-y-2">
+                <div className="text-sm text-[#9aa3b8] space-y-2">
                   {signature.phone && <p><strong>Phone:</strong> {signature.phone}</p>}
                   {signature.linkedinUrl && <p><strong>LinkedIn:</strong> {signature.linkedinUrl}</p>}
                   {signature.website && <p><strong>Website:</strong> {signature.website}</p>}
                 </div>
                 {signature.html && (
-                  <div className="mt-4 border border-[rgba(0,255,255,0.1)] rounded-xl p-4 inline-block bg-[#1b1f2e] text-sm w-full">
-                    <p className="text-sm text-[#bbc9cf] mb-2">Custom HTML preview</p>
+                  <div className="mt-4 border border-[rgba(255,255,255,0.08)] rounded-xl p-4 inline-block bg-[#1b1f2e] text-sm w-full">
+                    <p className="text-sm text-[#9aa3b8] mb-2">Custom HTML preview</p>
                     <div dangerouslySetInnerHTML={{ __html: signature.html }} />
                   </div>
                 )}
               </div>
             ) : (
-              <div className="mt-6 text-sm text-[#bbc9cf]">
+              <div className="mt-6 text-sm text-[#9aa3b8]">
                 Click &quot;Add Signature&quot; to create your sender identity for emails.
               </div>
             )}

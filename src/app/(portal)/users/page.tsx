@@ -52,12 +52,12 @@ const ROLE_COLORS: Record<string, string> = {
   R_AND_D: "bg-indigo-500/10 text-indigo-300",
   COO: "bg-violet-500/10 text-violet-300",
   OPS_MANAGER: "bg-orange-500/10 text-orange-300",
-  DEVELOPER: "bg-[#00d2ff]/10 text-[#a5e7ff]",
+  DEVELOPER: "bg-[#00d2ff]/10 text-[#7dd8f5]",
   CYBER_SECURITY: "bg-[#ff4d6d]/10 text-[#ff4d6d]",
   QA: "bg-yellow-500/10 text-yellow-300",
-  MARKETING: "bg-[#00feb2]/10 text-[#00feb2]",
+  MARKETING: "bg-[#06d6a0]/10 text-[#06d6a0]",
   RESEARCH: "bg-teal-500/10 text-teal-300",
-  FINANCE: "bg-[#00feb2]/10 text-[#00feb2]",
+  FINANCE: "bg-[#06d6a0]/10 text-[#06d6a0]",
   OPERATIONS: "bg-amber-500/10 text-amber-300",
   SUPPORT: "bg-sky-500/10 text-sky-300",
 };
@@ -100,7 +100,7 @@ function GrantDropdown({
       <button
         onClick={() => setOpen((v) => !v)}
         disabled={disabled}
-        className="flex items-center gap-1 text-[10px] text-[#5c6b72] hover:text-[#00d2ff] border border-dashed border-[rgba(0,255,255,0.15)] hover:border-[#00d2ff]/40 px-1.5 py-0.5 rounded-full transition-colors disabled:opacity-40"
+        className="flex items-center gap-1 text-[10px] text-[#5d6579] hover:text-[#00d2ff] border border-dashed border-[rgba(255,255,255,0.11)] hover:border-[#00d2ff]/40 px-1.5 py-0.5 rounded-full transition-colors disabled:opacity-40"
       >
         <Plus className="w-2.5 h-2.5" /> Grant
         <ChevronDown className="w-2.5 h-2.5" />
@@ -108,12 +108,12 @@ function GrantDropdown({
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 top-full mt-1 z-20 w-44 bg-[#1b1f2e] border border-[rgba(0,255,255,0.1)] rounded-xl shadow-xl overflow-hidden">
+          <div className="absolute left-0 top-full mt-1 z-20 w-44 bg-[#1b1f2e] border border-[rgba(255,255,255,0.08)] rounded-xl shadow-xl overflow-hidden">
             {available.map((role) => (
               <button
                 key={role}
                 onClick={() => { onGrant(role); setOpen(false); }}
-                className="w-full text-left px-3 py-2 text-xs text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] transition-colors"
+                className="w-full text-left px-3 py-2 text-xs text-[#9aa3b8] hover:bg-[#262939] hover:text-[#dfe1f6] transition-colors"
               >
                 {role}
               </button>
@@ -448,14 +448,14 @@ export default function UsersPage() {
                               onClick={() => void applyAccess(user.id, role, "revoke")}
                               disabled={savingAccess === user.id}
                               title={`Click to revoke ${role}`}
-                              className="group flex items-center gap-0.5 bg-[#00d2ff]/10 text-[#a5e7ff] border border-[#00d2ff]/20 px-1.5 py-0.5 rounded-full text-[10px] font-semibold hover:bg-[#ff4d6d]/10 hover:text-[#ff9db0] hover:border-[#ff4d6d]/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                              className="group flex items-center gap-0.5 bg-[#00d2ff]/10 text-[#7dd8f5] border border-[#00d2ff]/20 px-1.5 py-0.5 rounded-full text-[10px] font-semibold hover:bg-[#ff4d6d]/10 hover:text-[#ff9db0] hover:border-[#ff4d6d]/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                             >
                               {role}
                               <X className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
                             </button>
                           ))}
                           {savingAccess === user.id ? (
-                            <Loader2 className="w-3 h-3 animate-spin text-[#bbc9cf]" />
+                            <Loader2 className="w-3 h-3 animate-spin text-[#9aa3b8]" />
                           ) : (
                             <GrantDropdown
                               currentRoles={user.grantedRoles}

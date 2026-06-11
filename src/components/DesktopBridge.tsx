@@ -59,7 +59,7 @@ export function DesktopBridge() {
       >
         Restart &amp; update
       </button>
-      <button onClick={() => setUpdateVersion(null)} className="text-[#5c6b72] hover:text-[#bbc9cf] text-xs">
+      <button onClick={() => setUpdateVersion(null)} className="text-[#5d6579] hover:text-[#9aa3b8] text-xs">
         Later
       </button>
     </div>

@@ -101,16 +101,16 @@ type CustomRole = {
 // ─── Shared primitives ────────────────────────────────────────────────────────
 
 const inputClass =
-  "block w-full py-2.5 border border-[rgba(0,255,255,0.1)] rounded-lg bg-[#0f1321] text-[#dfe1f6] placeholder-[#5c6b72] focus:ring-2 focus:ring-[#00d2ff]/40 focus:border-[#00d2ff]/50 text-sm px-3 outline-none transition";
+  "block w-full py-2.5 border border-[rgba(255,255,255,0.08)] rounded-lg bg-[#0f1321] text-[#dfe1f6] placeholder-[#5d6579] focus:ring-2 focus:ring-[#00d2ff]/40 focus:border-[#00d2ff]/50 text-sm px-3 outline-none transition";
 
 const selectClass =
-  "rounded-lg border border-[rgba(0,255,255,0.08)] bg-[#262939] px-3 py-1.5 text-sm text-[#dfe1f6] focus:ring-2 focus:ring-[#00d2ff]/30 focus:border-[#00d2ff]/50 outline-none";
+  "rounded-lg border border-[rgba(255,255,255,0.06)] bg-[#262939] px-3 py-1.5 text-sm text-[#dfe1f6] focus:ring-2 focus:ring-[#00d2ff]/30 focus:border-[#00d2ff]/50 outline-none";
 
 const btnPrimary =
   "inline-flex items-center justify-center gap-2 rounded-lg bg-[#00d2ff] px-5 py-2 text-sm font-semibold text-[#003543] hover:bg-[#47d6ff] transition disabled:opacity-50 disabled:cursor-not-allowed";
 
 const btnSecondary =
-  "inline-flex items-center justify-center gap-2 rounded-lg border border-[rgba(0,255,255,0.1)] bg-[#1b1f2e] px-4 py-2 text-sm font-medium text-[#bbc9cf] hover:bg-[#262939] transition disabled:opacity-50";
+  "inline-flex items-center justify-center gap-2 rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#1b1f2e] px-4 py-2 text-sm font-medium text-[#9aa3b8] hover:bg-[#262939] transition disabled:opacity-50";
 
 function SectionCard({
   title,
@@ -122,10 +122,10 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-[#1b1f2e] border border-[rgba(0,255,255,0.08)] rounded-xl overflow-hidden mb-6">
-      <div className="px-6 py-4 border-b border-[rgba(0,255,255,0.08)]">
+    <div className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl overflow-hidden mb-6">
+      <div className="px-6 py-4 border-b border-[rgba(255,255,255,0.06)]">
         <h3 className="text-sm font-semibold text-[#dfe1f6]">{title}</h3>
-        {description && <p className="text-xs text-[#bbc9cf] mt-0.5">{description}</p>}
+        {description && <p className="text-xs text-[#9aa3b8] mt-0.5">{description}</p>}
       </div>
       <div className="p-6">{children}</div>
     </div>
@@ -142,10 +142,10 @@ function SettingRow({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between py-3 border-b border-[rgba(0,255,255,0.06)] last:border-0">
+    <div className="flex items-center justify-between py-3 border-b border-[rgba(255,255,255,0.05)] last:border-0">
       <div className="flex-1 mr-6">
         <p className="text-sm font-medium text-[#dfe1f6]">{label}</p>
-        {description && <p className="text-xs text-[#bbc9cf] mt-0.5">{description}</p>}
+        {description && <p className="text-xs text-[#9aa3b8] mt-0.5">{description}</p>}
       </div>
       <div className="flex-shrink-0">{children}</div>
     </div>
@@ -157,7 +157,7 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
     <button
       onClick={() => onChange(!value)}
       className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${
-        value ? "bg-[#00d2ff]" : "bg-[#3c494e]"
+        value ? "bg-[#00d2ff]" : "bg-[#262b3a]"
       }`}
       role="switch"
       aria-checked={value}
@@ -329,11 +329,11 @@ function ProfileTab({ userId }: { userId: string }) {
         {/* Avatar */}
         <div className="flex items-center gap-5">
           <div className="relative group">
-            <div className="h-20 w-20 rounded-full overflow-hidden border-2 border-[rgba(0,255,255,0.15)] bg-[#262939] flex items-center justify-center">
+            <div className="h-20 w-20 rounded-full overflow-hidden border-2 border-[rgba(255,255,255,0.11)] bg-[#262939] flex items-center justify-center">
               {profile.avatarUrl ? (
                 <img src={profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
               ) : (
-                <span className="text-2xl font-bold text-[#00d2ff]">
+                <span className="text-2xl font-semibold text-[#00d2ff]">
                   {profile.fullName?.[0]?.toUpperCase() ?? "?"}
                 </span>
               )}
@@ -359,14 +359,14 @@ function ProfileTab({ userId }: { userId: string }) {
           </div>
           <div>
             <p className="text-sm font-semibold text-[#dfe1f6]">{profile.fullName}</p>
-            <p className="text-xs text-[#bbc9cf]">{profile.email}</p>
+            <p className="text-xs text-[#9aa3b8]">{profile.email}</p>
             <p className="text-xs text-[#00d2ff] mt-0.5 font-medium">{profile.jobTitle || profile.role}</p>
           </div>
         </div>
 
         {/* Status */}
         <div className="mt-4">
-          <p className="text-xs font-medium text-[#bbc9cf] mb-2">Status</p>
+          <p className="text-xs font-medium text-[#9aa3b8] mb-2">Status</p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {([
               { emoji: "🟢", message: "Available" },
@@ -387,7 +387,7 @@ function ProfileTab({ userId }: { userId: string }) {
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition ${
                     active
                       ? "border-[#00d2ff] bg-[#00d2ff]/10 text-[#00d2ff] font-medium"
-                      : "border-[rgba(0,255,255,0.1)] bg-[#0f1321] text-[#bbc9cf] hover:border-[#00d2ff]/40 hover:text-[#dfe1f6]"
+                      : "border-[rgba(255,255,255,0.08)] bg-[#0f1321] text-[#9aa3b8] hover:border-[#00d2ff]/40 hover:text-[#dfe1f6]"
                   }`}
                 >
                   <span>{emoji}</span>
@@ -399,7 +399,7 @@ function ProfileTab({ userId }: { userId: string }) {
           {/* Show active status or allow clearing */}
           {(profile.statusEmoji || profile.statusMessage) && (
             <div className="flex items-center justify-between mt-2">
-              <span className="text-xs text-[#bbc9cf]">
+              <span className="text-xs text-[#9aa3b8]">
                 Current: {profile.statusEmoji} {profile.statusMessage}
               </span>
               <button
@@ -418,19 +418,19 @@ function ProfileTab({ userId }: { userId: string }) {
       <SectionCard title="Personal Information">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="text-xs font-medium text-[#bbc9cf] mb-1 block">Full Name</label>
+            <label className="text-xs font-medium text-[#9aa3b8] mb-1 block">Full Name</label>
             <input value={profile.fullName ?? ""} onChange={(e) => update("fullName", e.target.value)} className={inputClass} placeholder="Your full name" />
           </div>
           <div>
-            <label className="text-xs font-medium text-[#bbc9cf] mb-1 block">Display Name</label>
+            <label className="text-xs font-medium text-[#9aa3b8] mb-1 block">Display Name</label>
             <input value={profile.displayName ?? ""} onChange={(e) => update("displayName", e.target.value)} className={inputClass} placeholder="How you appear to others" />
           </div>
           <div>
-            <label className="text-xs font-medium text-[#bbc9cf] mb-1 block">Pronouns</label>
+            <label className="text-xs font-medium text-[#9aa3b8] mb-1 block">Pronouns</label>
             <input value={profile.pronouns ?? ""} onChange={(e) => update("pronouns", e.target.value)} className={inputClass} placeholder="e.g. he/him, she/her" />
           </div>
           <div>
-            <label className="text-xs font-medium text-[#bbc9cf] mb-1 block">Birthday</label>
+            <label className="text-xs font-medium text-[#9aa3b8] mb-1 block">Birthday</label>
             <input
               type="date"
               value={profile.birthday ? new Date(profile.birthday).toISOString().slice(0, 10) : ""}
@@ -440,7 +440,7 @@ function ProfileTab({ userId }: { userId: string }) {
           </div>
         </div>
         <div className="mt-4">
-          <label className="text-xs font-medium text-[#bbc9cf] mb-1 block">Bio</label>
+          <label className="text-xs font-medium text-[#9aa3b8] mb-1 block">Bio</label>
           <textarea
             value={profile.bio ?? ""}
             onChange={(e) => update("bio", e.target.value)}
@@ -449,7 +449,7 @@ function ProfileTab({ userId }: { userId: string }) {
             className={`${inputClass} min-h-[80px] resize-y`}
             maxLength={500}
           />
-          <p className="text-[10px] text-[#5c6b72] mt-1 text-right">{(profile.bio ?? "").length}/500</p>
+          <p className="text-[10px] text-[#5d6579] mt-1 text-right">{(profile.bio ?? "").length}/500</p>
         </div>
       </SectionCard>
 
@@ -457,37 +457,37 @@ function ProfileTab({ userId }: { userId: string }) {
       <SectionCard title="Work Information">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="text-xs font-medium text-[#bbc9cf] mb-1 block flex items-center gap-1">
+            <label className="text-xs font-medium text-[#9aa3b8] mb-1 block flex items-center gap-1">
               <Briefcase className="h-3 w-3" /> Job Title
             </label>
             <input value={profile.jobTitle ?? ""} onChange={(e) => update("jobTitle", e.target.value)} className={inputClass} placeholder="e.g. Senior Developer" />
           </div>
           <div>
-            <label className="text-xs font-medium text-[#bbc9cf] mb-1 block flex items-center gap-1">
+            <label className="text-xs font-medium text-[#9aa3b8] mb-1 block flex items-center gap-1">
               <Building2 className="h-3 w-3" /> Company
             </label>
             <input value={profile.company ?? ""} onChange={(e) => update("company", e.target.value)} className={inputClass} placeholder="Organisation name" />
           </div>
           <div>
-            <label className="text-xs font-medium text-[#bbc9cf] mb-1 block flex items-center gap-1">
+            <label className="text-xs font-medium text-[#9aa3b8] mb-1 block flex items-center gap-1">
               <Users className="h-3 w-3" /> Department
             </label>
             <input value={profile.department ?? ""} onChange={(e) => update("department", e.target.value)} className={inputClass} placeholder="e.g. Engineering" />
           </div>
           <div>
-            <label className="text-xs font-medium text-[#bbc9cf] mb-1 block flex items-center gap-1">
+            <label className="text-xs font-medium text-[#9aa3b8] mb-1 block flex items-center gap-1">
               <Phone className="h-3 w-3" /> Phone
             </label>
             <input value={profile.phone ?? ""} onChange={(e) => update("phone", e.target.value)} className={inputClass} placeholder="+44 7700 000000" type="tel" />
           </div>
           <div>
-            <label className="text-xs font-medium text-[#bbc9cf] mb-1 block flex items-center gap-1">
+            <label className="text-xs font-medium text-[#9aa3b8] mb-1 block flex items-center gap-1">
               <Link2 className="h-3 w-3" /> Website
             </label>
             <input value={profile.website ?? ""} onChange={(e) => update("website", e.target.value)} className={inputClass} placeholder="https://yoursite.com" type="url" />
           </div>
           <div>
-            <label className="text-xs font-medium text-[#bbc9cf] mb-1 block flex items-center gap-1">
+            <label className="text-xs font-medium text-[#9aa3b8] mb-1 block flex items-center gap-1">
               <MapPin className="h-3 w-3" /> Location
             </label>
             <input value={profile.location ?? ""} onChange={(e) => update("location", e.target.value)} className={inputClass} placeholder="City, Country" />
@@ -569,7 +569,7 @@ function SignatureTab({ userName }: { userName: string }) {
       {!isEditing && signature ? (
         <SectionCard title="Your Signature" description="Appended automatically to outgoing emails">
           <div
-            className="p-4 rounded-lg bg-[#0f1321] border border-[rgba(0,255,255,0.08)] mb-4 text-sm"
+            className="p-4 rounded-lg bg-[#0f1321] border border-[rgba(255,255,255,0.06)] mb-4 text-sm"
             dangerouslySetInnerHTML={{ __html: signature.html ?? generatedHtml }}
           />
           <div className="flex gap-2">
@@ -583,29 +583,29 @@ function SignatureTab({ userName }: { userName: string }) {
         <SectionCard title={signature ? "Edit Signature" : "Create Signature"}>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             <div>
-              <label className="text-xs text-[#bbc9cf] mb-1 block">Full Name</label>
+              <label className="text-xs text-[#9aa3b8] mb-1 block">Full Name</label>
               <input value={form.fullName} onChange={(e) => updateField("fullName", e.target.value)} className={inputClass} />
             </div>
             <div>
-              <label className="text-xs text-[#bbc9cf] mb-1 block">Title / Role</label>
+              <label className="text-xs text-[#9aa3b8] mb-1 block">Title / Role</label>
               <input value={form.title} onChange={(e) => updateField("title", e.target.value)} className={inputClass} placeholder="e.g. Security Engineer" />
             </div>
             <div>
-              <label className="text-xs text-[#bbc9cf] mb-1 block">Phone</label>
+              <label className="text-xs text-[#9aa3b8] mb-1 block">Phone</label>
               <input value={form.phone} onChange={(e) => updateField("phone", e.target.value)} className={inputClass} placeholder="+44 7700 000000" />
             </div>
             <div>
-              <label className="text-xs text-[#bbc9cf] mb-1 block">Website</label>
+              <label className="text-xs text-[#9aa3b8] mb-1 block">Website</label>
               <input value={form.website} onChange={(e) => updateField("website", e.target.value)} className={inputClass} placeholder="https://..." />
             </div>
             <div className="sm:col-span-2">
-              <label className="text-xs text-[#bbc9cf] mb-1 block">LinkedIn URL</label>
+              <label className="text-xs text-[#9aa3b8] mb-1 block">LinkedIn URL</label>
               <input value={form.linkedinUrl} onChange={(e) => updateField("linkedinUrl", e.target.value)} className={inputClass} placeholder="https://linkedin.com/in/..." />
             </div>
           </div>
 
           <div className="mb-4">
-            <label className="text-xs text-[#bbc9cf] mb-1 block">Custom HTML (optional — overrides generated)</label>
+            <label className="text-xs text-[#9aa3b8] mb-1 block">Custom HTML (optional — overrides generated)</label>
             <textarea
               value={form.html}
               onChange={(e) => updateField("html", e.target.value)}
@@ -616,9 +616,9 @@ function SignatureTab({ userName }: { userName: string }) {
           </div>
 
           <div className="mb-4">
-            <p className="text-xs text-[#bbc9cf] mb-2">Preview</p>
+            <p className="text-xs text-[#9aa3b8] mb-2">Preview</p>
             <div
-              className="p-4 rounded-lg bg-[#0f1321] border border-[rgba(0,255,255,0.08)]"
+              className="p-4 rounded-lg bg-[#0f1321] border border-[rgba(255,255,255,0.06)]"
               dangerouslySetInnerHTML={{ __html: form.html || generatedHtml }}
             />
           </div>
@@ -636,8 +636,8 @@ function SignatureTab({ userName }: { userName: string }) {
       {!signature && !isEditing && (
         <SectionCard title="No Signature Yet">
           <div className="flex flex-col items-center py-8 text-center">
-            <FileSignature className="h-10 w-10 text-[#3c494e] mb-3" />
-            <p className="text-sm text-[#bbc9cf] mb-4">Create a professional signature for your outgoing emails.</p>
+            <FileSignature className="h-10 w-10 text-[#262b3a] mb-3" />
+            <p className="text-sm text-[#9aa3b8] mb-4">Create a professional signature for your outgoing emails.</p>
             <button onClick={() => setIsEditing(true)} className={btnPrimary}>
               <Plus className="h-4 w-4" /> Create Signature
             </button>
@@ -679,9 +679,9 @@ function AppearanceTab() {
             const active = theme === val;
             return (
               <button key={val} onClick={() => applyTheme(val)}
-                className={`flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all ${active ? "border-[#00d2ff] bg-[#00d2ff]/10" : "border-[rgba(0,255,255,0.08)] hover:border-[#bbc9cf]"}`}>
-                <Icon className={`h-6 w-6 ${active ? "text-[#00d2ff]" : "text-[#bbc9cf]"}`} />
-                <span className={`text-sm font-medium ${active ? "text-[#a5e7ff]" : "text-[#bbc9cf]"}`}>{label}</span>
+                className={`flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all ${active ? "border-[#00d2ff] bg-[#00d2ff]/10" : "border-[rgba(255,255,255,0.06)] hover:border-[#9aa3b8]"}`}>
+                <Icon className={`h-6 w-6 ${active ? "text-[#00d2ff]" : "text-[#9aa3b8]"}`} />
+                <span className={`text-sm font-medium ${active ? "text-[#7dd8f5]" : "text-[#9aa3b8]"}`}>{label}</span>
                 {active && <Check className="h-4 w-4 text-[#00d2ff]" />}
               </button>
             );
@@ -761,8 +761,8 @@ function NotificationsTab() {
         <SettingRow label="Enable quiet hours"><Toggle value={prefs.quietHoursEnabled} onChange={(v) => update("quietHoursEnabled", v)} /></SettingRow>
         {prefs.quietHoursEnabled && (
           <div className="flex items-center gap-4 mt-4">
-            <div><label className="text-xs text-[#bbc9cf]">From</label><input type="time" value={prefs.quietStart} onChange={(e) => update("quietStart", e.target.value)} className={`block mt-1 ${selectClass}`} /></div>
-            <div><label className="text-xs text-[#bbc9cf]">To</label><input type="time" value={prefs.quietEnd} onChange={(e) => update("quietEnd", e.target.value)} className={`block mt-1 ${selectClass}`} /></div>
+            <div><label className="text-xs text-[#9aa3b8]">From</label><input type="time" value={prefs.quietStart} onChange={(e) => update("quietStart", e.target.value)} className={`block mt-1 ${selectClass}`} /></div>
+            <div><label className="text-xs text-[#9aa3b8]">To</label><input type="time" value={prefs.quietEnd} onChange={(e) => update("quietEnd", e.target.value)} className={`block mt-1 ${selectClass}`} /></div>
           </div>
         )}
       </SectionCard>
@@ -836,7 +836,7 @@ function LanguageTab() {
         <SettingRow label="Time format">
           <div className="flex gap-3">
             {(["12h","24h"] as const).map(v => (
-              <label key={v} className="flex items-center gap-1.5 text-sm text-[#bbc9cf]">
+              <label key={v} className="flex items-center gap-1.5 text-sm text-[#9aa3b8]">
                 <input type="radio" name="timeFormat" value={v} checked={timeFormat === v} onChange={() => setTimeFormat(v)} className="accent-[#00d2ff]" />
                 {v}
               </label>
@@ -1050,31 +1050,31 @@ function APITokensTab() {
     <>
       {newToken && (
         <div className="mb-6 bg-[#00d2ff]/10 border border-[#00d2ff]/30 rounded-xl p-4">
-          <p className="text-sm font-semibold text-[#a5e7ff] mb-2">Token created — copy it now, it won&apos;t be shown again</p>
+          <p className="text-sm font-semibold text-[#7dd8f5] mb-2">Token created — copy it now, it won&apos;t be shown again</p>
           <div className="flex items-center gap-2">
             <code className="flex-1 bg-[#0f1321] px-3 py-2 rounded-lg text-xs text-[#dfe1f6] font-mono truncate">
               {revealed ? newToken : newToken.slice(0, 12) + "•".repeat(24)}
             </code>
-            <button onClick={() => setRevealed(r => !r)} className="p-2 text-[#bbc9cf] hover:text-[#dfe1f6]">
+            <button onClick={() => setRevealed(r => !r)} className="p-2 text-[#9aa3b8] hover:text-[#dfe1f6]">
               {revealed ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
-            <button onClick={() => { void navigator.clipboard.writeText(newToken); toast.success("Copied!"); }} className="p-2 text-[#bbc9cf] hover:text-[#dfe1f6]">
+            <button onClick={() => { void navigator.clipboard.writeText(newToken); toast.success("Copied!"); }} className="p-2 text-[#9aa3b8] hover:text-[#dfe1f6]">
               <Copy className="h-4 w-4" />
             </button>
           </div>
-          <button onClick={() => setNewToken(null)} className="mt-2 text-xs text-[#bbc9cf] hover:text-[#dfe1f6]">Dismiss</button>
+          <button onClick={() => setNewToken(null)} className="mt-2 text-xs text-[#9aa3b8] hover:text-[#dfe1f6]">Dismiss</button>
         </div>
       )}
 
       <div className="flex items-center justify-between mb-4">
-        <p className="text-sm text-[#bbc9cf]">{tokens.length} token{tokens.length !== 1 ? "s" : ""}</p>
+        <p className="text-sm text-[#9aa3b8]">{tokens.length} token{tokens.length !== 1 ? "s" : ""}</p>
         <button onClick={() => setShowNew(v => !v)} className={btnPrimary}>
           <Plus className="h-4 w-4" /> New Token
         </button>
       </div>
 
       {showNew && (
-        <div className="bg-[#1b1f2e] border border-[rgba(0,255,255,0.1)] rounded-xl p-4 mb-6">
+        <div className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.08)] rounded-xl p-4 mb-6">
           <div className="flex gap-2">
             <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Token name (e.g. CI/CD Pipeline)" className={`flex-1 ${inputClass}`} onKeyDown={(e) => { if (e.key === "Enter") void create(); }} />
             <button onClick={() => void create()} disabled={creating} className={btnPrimary}>
@@ -1089,23 +1089,23 @@ function APITokensTab() {
         <div className="text-center py-8"><Loader2 className="h-5 w-5 animate-spin text-[#00d2ff] mx-auto" /></div>
       ) : tokens.length === 0 ? (
         <div className="text-center py-12">
-          <Key className="h-10 w-10 text-[#3c494e] mx-auto mb-3" />
-          <p className="text-sm text-[#bbc9cf]">No API tokens yet. Create one to integrate with external tools.</p>
+          <Key className="h-10 w-10 text-[#262b3a] mx-auto mb-3" />
+          <p className="text-sm text-[#9aa3b8]">No API tokens yet. Create one to integrate with external tools.</p>
         </div>
       ) : (
         <div className="space-y-3">
           {tokens.map(t => (
-            <div key={t.id} className="bg-[#1b1f2e] border border-[rgba(0,255,255,0.08)] rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+            <div key={t.id} className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl px-4 py-3 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
                 <Key className="h-4 w-4 text-[#00d2ff] flex-shrink-0" />
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-[#dfe1f6] truncate">{t.name}</p>
-                  <p className="text-xs text-[#bbc9cf] font-mono">{t.keyPrefix}••••••••••••••••</p>
+                  <p className="text-xs text-[#9aa3b8] font-mono">{t.keyPrefix}••••••••••••••••</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 flex-shrink-0">
-                {t.lastUsedAt && <span className="text-xs text-[#bbc9cf]">Last used {new Date(t.lastUsedAt).toLocaleDateString()}</span>}
-                <button onClick={() => void revoke(t.id)} className="p-1.5 text-[#bbc9cf] hover:text-[#ff4d6d] hover:bg-[#ff4d6d]/10 rounded-lg transition-colors" title="Revoke">
+                {t.lastUsedAt && <span className="text-xs text-[#9aa3b8]">Last used {new Date(t.lastUsedAt).toLocaleDateString()}</span>}
+                <button onClick={() => void revoke(t.id)} className="p-1.5 text-[#9aa3b8] hover:text-[#ff4d6d] hover:bg-[#ff4d6d]/10 rounded-lg transition-colors" title="Revoke">
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
@@ -1157,41 +1157,41 @@ function CustomRolesTab() {
 
   return (
     <>
-      <div className="mb-4 p-4 bg-[#262939] rounded-xl border border-[rgba(0,255,255,0.08)]">
-        <p className="text-xs text-[#bbc9cf]">
+      <div className="mb-4 p-4 bg-[#262939] rounded-xl border border-[rgba(255,255,255,0.06)]">
+        <p className="text-xs text-[#9aa3b8]">
           Custom roles supplement the built-in roles (CEO, CISO, Developer, etc.). Mark a role as <strong className="text-[#dfe1f6]">singleton</strong> if only one person in the org can hold it (like a CEO).
         </p>
       </div>
 
       <div className="flex items-center justify-between mb-4">
-        <p className="text-sm text-[#bbc9cf]">{roles.length} custom role{roles.length !== 1 ? "s" : ""}</p>
+        <p className="text-sm text-[#9aa3b8]">{roles.length} custom role{roles.length !== 1 ? "s" : ""}</p>
         <button onClick={() => setShowNew(v => !v)} className={btnPrimary}><Plus className="h-4 w-4" /> New Role</button>
       </div>
 
       {showNew && (
-        <div className="bg-[#1b1f2e] border border-[rgba(0,255,255,0.1)] rounded-xl p-5 mb-6 space-y-3">
+        <div className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.08)] rounded-xl p-5 mb-6 space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-[#bbc9cf] mb-1 block">Role Name *</label>
+              <label className="text-xs text-[#9aa3b8] mb-1 block">Role Name *</label>
               <input value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} className={inputClass} placeholder="e.g. Lead Auditor" />
             </div>
             <div>
-              <label className="text-xs text-[#bbc9cf] mb-1 block">Badge Colour</label>
+              <label className="text-xs text-[#9aa3b8] mb-1 block">Badge Colour</label>
               <div className="flex items-center gap-2">
-                <input type="color" value={form.color} onChange={(e) => setForm(f => ({ ...f, color: e.target.value }))} className="h-9 w-14 rounded border border-[rgba(0,255,255,0.1)] bg-transparent cursor-pointer" />
-                <span className="text-xs text-[#bbc9cf]" style={{ color: form.color }}>{form.name || "Preview"}</span>
+                <input type="color" value={form.color} onChange={(e) => setForm(f => ({ ...f, color: e.target.value }))} className="h-9 w-14 rounded border border-[rgba(255,255,255,0.08)] bg-transparent cursor-pointer" />
+                <span className="text-xs text-[#9aa3b8]" style={{ color: form.color }}>{form.name || "Preview"}</span>
               </div>
             </div>
           </div>
           <div>
-            <label className="text-xs text-[#bbc9cf] mb-1 block">Description</label>
+            <label className="text-xs text-[#9aa3b8] mb-1 block">Description</label>
             <input value={form.description} onChange={(e) => setForm(f => ({ ...f, description: e.target.value }))} className={inputClass} placeholder="Brief description of this role" />
           </div>
           <label className="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" checked={form.isSingleton} onChange={(e) => setForm(f => ({ ...f, isSingleton: e.target.checked }))} className="accent-[#00d2ff]" />
             <div>
               <p className="text-sm font-medium text-[#dfe1f6]">Singleton role</p>
-              <p className="text-xs text-[#bbc9cf]">Only one user in the org can be assigned this role at a time</p>
+              <p className="text-xs text-[#9aa3b8]">Only one user in the org can be assigned this role at a time</p>
             </div>
           </label>
           <div className="flex gap-2">
@@ -1205,21 +1205,21 @@ function CustomRolesTab() {
         <div className="text-center py-8"><Loader2 className="h-5 w-5 animate-spin text-[#00d2ff] mx-auto" /></div>
       ) : roles.length === 0 ? (
         <div className="text-center py-12">
-          <Tag className="h-10 w-10 text-[#3c494e] mx-auto mb-3" />
-          <p className="text-sm text-[#bbc9cf]">No custom roles yet.</p>
+          <Tag className="h-10 w-10 text-[#262b3a] mx-auto mb-3" />
+          <p className="text-sm text-[#9aa3b8]">No custom roles yet.</p>
         </div>
       ) : (
         <div className="space-y-3">
           {roles.map(r => (
-            <div key={r.id} className="bg-[#1b1f2e] border border-[rgba(0,255,255,0.08)] rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+            <div key={r.id} className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl px-4 py-3 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ backgroundColor: `${r.color ?? "#00d2ff"}20`, color: r.color ?? "#00d2ff" }}>
                   {r.name}
                 </span>
                 {r.isSingleton && <span className="text-[10px] bg-purple-500/20 text-purple-300 px-1.5 py-0.5 rounded-full font-medium">SINGLETON</span>}
-                {r.description && <p className="text-xs text-[#bbc9cf] truncate max-w-xs">{r.description}</p>}
+                {r.description && <p className="text-xs text-[#9aa3b8] truncate max-w-xs">{r.description}</p>}
               </div>
-              <button onClick={() => void del(r.id)} className="p-1.5 text-[#bbc9cf] hover:text-[#ff4d6d] hover:bg-[#ff4d6d]/10 rounded-lg transition-colors">
+              <button onClick={() => void del(r.id)} className="p-1.5 text-[#9aa3b8] hover:text-[#ff4d6d] hover:bg-[#ff4d6d]/10 rounded-lg transition-colors">
                 <Trash2 className="h-4 w-4" />
               </button>
             </div>
@@ -1289,23 +1289,23 @@ function MailRulesTab() {
   return (
     <>
       <div className="flex items-center justify-between mb-4">
-        <p className="text-sm text-[#bbc9cf]">{rules.length} rule{rules.length !== 1 ? "s" : ""}</p>
+        <p className="text-sm text-[#9aa3b8]">{rules.length} rule{rules.length !== 1 ? "s" : ""}</p>
         <button onClick={() => setShowForm(v => !v)} className={btnPrimary}><Plus className="h-4 w-4" /> New Rule</button>
       </div>
 
       {showForm && (
-        <div className="bg-[#1b1f2e] border border-[rgba(0,255,255,0.12)] rounded-xl p-5 mb-6 space-y-4">
+        <div className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.09)] rounded-xl p-5 mb-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h4 className="text-sm font-bold text-[#dfe1f6]">New Rule</h4>
-            <button onClick={() => setShowForm(false)} className="p-1 text-[#bbc9cf] hover:text-[#dfe1f6] rounded"><X className="w-4 h-4" /></button>
+            <h4 className="text-sm font-semibold text-[#dfe1f6]">New Rule</h4>
+            <button onClick={() => setShowForm(false)} className="p-1 text-[#9aa3b8] hover:text-[#dfe1f6] rounded"><X className="w-4 h-4" /></button>
           </div>
           <div>
-            <label className="text-xs text-[#bbc9cf] mb-1 block">Rule name</label>
+            <label className="text-xs text-[#9aa3b8] mb-1 block">Rule name</label>
             <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Move newsletters" className={inputClass} />
           </div>
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-xs text-[#bbc9cf]">When…</label>
+              <label className="text-xs text-[#9aa3b8]">When…</label>
               <button onClick={() => setConditions(p => [...p, { field: "from", op: "contains", value: "" }])} className="text-xs text-[#00d2ff] hover:underline flex items-center gap-1"><Plus className="w-3 h-3" /> Add condition</button>
             </div>
             <div className="space-y-2">
@@ -1314,13 +1314,13 @@ function MailRulesTab() {
                   <select value={cond.field} onChange={e => setConditions(p => p.map((c,idx) => idx===i ? {...c,field:e.target.value}:c))} className={`${selectClass} text-xs`}>{CONDITION_FIELDS.map(f => <option key={f} value={f}>{f}</option>)}</select>
                   <select value={cond.op} onChange={e => setConditions(p => p.map((c,idx) => idx===i ? {...c,op:e.target.value}:c))} className={`${selectClass} text-xs`}>{CONDITION_OPS.map(o => <option key={o} value={o}>{o}</option>)}</select>
                   <input value={cond.value} onChange={e => setConditions(p => p.map((c,idx) => idx===i ? {...c,value:e.target.value}:c))} placeholder="value" className={`flex-1 ${inputClass} text-xs py-1.5`} />
-                  {conditions.length > 1 && <button onClick={() => setConditions(p => p.filter((_,idx) => idx!==i))} className="p-1 text-[#bbc9cf] hover:text-[#ff4d6d]"><X className="w-3.5 h-3.5" /></button>}
+                  {conditions.length > 1 && <button onClick={() => setConditions(p => p.filter((_,idx) => idx!==i))} className="p-1 text-[#9aa3b8] hover:text-[#ff4d6d]"><X className="w-3.5 h-3.5" /></button>}
                 </div>
               ))}
             </div>
           </div>
           <div>
-            <label className="text-xs text-[#bbc9cf] mb-1 block">Then…</label>
+            <label className="text-xs text-[#9aa3b8] mb-1 block">Then…</label>
             <div className="flex gap-2">
               <select value={action} onChange={e => { setAction(e.target.value); setActionVal(""); }} className={selectClass}>{RULE_ACTIONS.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}</select>
               {needsValue && <input value={actionVal} onChange={e => setActionVal(e.target.value)} placeholder={action==="LABEL"?"Label name":action==="FORWARD"?"email@example.com":"Value"} className={`flex-1 ${inputClass}`} />}
@@ -1333,25 +1333,25 @@ function MailRulesTab() {
       )}
 
       {loading ? (
-        <div className="text-center py-8 text-[#bbc9cf] text-sm">Loading…</div>
+        <div className="text-center py-8 text-[#9aa3b8] text-sm">Loading…</div>
       ) : rules.length === 0 ? (
         <div className="text-center py-12">
-          <Filter className="w-10 h-10 text-[#3c494e] mx-auto mb-3" />
-          <p className="text-sm text-[#bbc9cf]">No rules yet. Create one to auto-sort your inbox.</p>
+          <Filter className="w-10 h-10 text-[#262b3a] mx-auto mb-3" />
+          <p className="text-sm text-[#9aa3b8]">No rules yet. Create one to auto-sort your inbox.</p>
         </div>
       ) : (
         <div className="space-y-3">
           {rules.map(rule => (
-            <div key={rule.id} className={`bg-[#1b1f2e] border rounded-xl p-4 transition-opacity ${rule.isActive ? "border-[rgba(0,255,255,0.12)]" : "border-[rgba(0,255,255,0.04)] opacity-60"}`}>
+            <div key={rule.id} className={`bg-[#1b1f2e] border rounded-xl p-4 transition-opacity ${rule.isActive ? "border-[rgba(255,255,255,0.09)]" : "border-[rgba(255,255,255,0.04)] opacity-60"}`}>
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-[#dfe1f6] truncate">{rule.name}</p>
-                  <p className="text-xs text-[#bbc9cf] mt-0.5">{rule.conditions.map(c => `${c.field} ${c.op} "${c.value}"`).join(" AND ")}</p>
+                  <p className="text-xs text-[#9aa3b8] mt-0.5">{rule.conditions.map(c => `${c.field} ${c.op} "${c.value}"`).join(" AND ")}</p>
                   <p className="text-xs text-[#00d2ff] mt-0.5">→ {RULE_ACTIONS.find(a => a.value === rule.action)?.label ?? rule.action}</p>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
-                  <button onClick={async () => { setRules(p => p.map(r => r.id===rule.id ? {...r,isActive:!r.isActive}:r)); await fetch(`/api/inbox/rules/${rule.id}`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({isActive:!rule.isActive})}).catch(()=>{}); }} className={`p-1.5 rounded-lg ${rule.isActive?"text-[#00d2ff]":"text-[#3c494e]"} hover:bg-[#262939]`}><ToggleRight className="w-4 h-4" /></button>
-                  <button onClick={async () => { setRules(p => p.filter(r => r.id!==rule.id)); await fetch(`/api/inbox/rules/${rule.id}`,{method:"DELETE"}).catch(()=>{}); toast.success("Rule deleted"); }} className="p-1.5 rounded-lg text-[#bbc9cf] hover:text-[#ff4d6d] hover:bg-[#ff4d6d]/10"><Trash2 className="w-4 h-4" /></button>
+                  <button onClick={async () => { setRules(p => p.map(r => r.id===rule.id ? {...r,isActive:!r.isActive}:r)); await fetch(`/api/inbox/rules/${rule.id}`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({isActive:!rule.isActive})}).catch(()=>{}); }} className={`p-1.5 rounded-lg ${rule.isActive?"text-[#00d2ff]":"text-[#262b3a]"} hover:bg-[#262939]`}><ToggleRight className="w-4 h-4" /></button>
+                  <button onClick={async () => { setRules(p => p.filter(r => r.id!==rule.id)); await fetch(`/api/inbox/rules/${rule.id}`,{method:"DELETE"}).catch(()=>{}); toast.success("Rule deleted"); }} className="p-1.5 rounded-lg text-[#9aa3b8] hover:text-[#ff4d6d] hover:bg-[#ff4d6d]/10"><Trash2 className="w-4 h-4" /></button>
                 </div>
               </div>
             </div>
@@ -1385,7 +1385,7 @@ export function SettingsView({
         <div className="flex flex-col lg:flex-row gap-6">
 
           {/* Sidebar */}
-          <aside className="bg-[#1b1f2e] border border-[rgba(0,255,255,0.08)] w-56 flex-shrink-0 rounded-xl self-start">
+          <aside className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] w-56 flex-shrink-0 rounded-xl self-start">
             <nav className="space-y-0.5 p-2">
               {visibleTabs.map((tab) => {
                 const Icon = tab.icon;
@@ -1395,7 +1395,7 @@ export function SettingsView({
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
                     className={`w-full flex items-center gap-3 text-left rounded-lg px-3 py-2 text-sm transition-all ${
-                      active ? "bg-[#00d2ff]/15 text-[#00d2ff] font-semibold" : "text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6]"
+                      active ? "bg-[#00d2ff]/15 text-[#00d2ff] font-semibold" : "text-[#9aa3b8] hover:bg-[#262939] hover:text-[#dfe1f6]"
                     }`}
                   >
                     <Icon className="h-4 w-4 flex-shrink-0" />
@@ -1413,8 +1413,8 @@ export function SettingsView({
               const tab = visibleTabs.find(t => t.id === activeTab);
               return (
                 <div>
-                  <h2 className="text-xl font-bold text-[#dfe1f6] mb-1">{tab?.label}</h2>
-                  <p className="text-sm text-[#bbc9cf] mb-6">{tab?.description}</p>
+                  <h2 className="text-xl font-semibold text-[#dfe1f6] mb-1">{tab?.label}</h2>
+                  <p className="text-sm text-[#9aa3b8] mb-6">{tab?.description}</p>
                 </div>
               );
             })()}
@@ -1432,12 +1432,12 @@ export function SettingsView({
                     <Mail className="h-4 w-4 text-[#00d2ff]" />
                     <div>
                       <p className="text-sm font-medium text-[#dfe1f6]">{user.email}</p>
-                      <p className="text-xs text-[#00d2ff] uppercase tracking-wider font-medium">Primary · Owner</p>
+                      <p className="text-xs text-[#00d2ff] font-medium">Primary · Owner</p>
                     </div>
                   </div>
                   <span className="h-2 w-2 rounded-full bg-emerald-500" />
                 </div>
-                <p className="text-xs text-[#bbc9cf] text-center mt-4">Additional shared mailboxes are assigned by your administrator.</p>
+                <p className="text-xs text-[#9aa3b8] text-center mt-4">Additional shared mailboxes are assigned by your administrator.</p>
               </SectionCard>
             )}
 
@@ -1452,24 +1452,24 @@ export function SettingsView({
                 <SectionCard title="Recent Login Activity" description="Last 10 sign-in attempts">
                   <div className="space-y-2">
                     {recentLogins.length === 0 ? (
-                      <p className="text-sm text-center text-[#bbc9cf] py-4">No login history.</p>
+                      <p className="text-sm text-center text-[#9aa3b8] py-4">No login history.</p>
                     ) : recentLogins.map(login => (
-                      <div key={login.id} className="bg-[#262939] border border-[rgba(0,255,255,0.08)] rounded-xl px-4 py-3 flex items-center justify-between">
+                      <div key={login.id} className="bg-[#262939] border border-[rgba(255,255,255,0.06)] rounded-xl px-4 py-3 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <span className={`h-2 w-2 rounded-full flex-shrink-0 ${login.success ? "bg-emerald-500" : "bg-red-500"}`} />
                           <div>
                             <p className={`text-xs font-semibold ${login.success ? "text-emerald-400" : "text-red-400"}`}>{login.success ? "Successful" : "Failed"}</p>
-                            <p className="text-xs text-[#bbc9cf]">{login.ip ?? "Unknown IP"} · {login.userAgent?.split(" ")[0] ?? "Unknown"}</p>
+                            <p className="text-xs text-[#9aa3b8]">{login.ip ?? "Unknown IP"} · {login.userAgent?.split(" ")[0] ?? "Unknown"}</p>
                           </div>
                         </div>
-                        <p className="text-xs text-[#bbc9cf]">{new Date(login.createdAt).toLocaleString()}</p>
+                        <p className="text-xs text-[#9aa3b8]">{new Date(login.createdAt).toLocaleString()}</p>
                       </div>
                     ))}
                   </div>
                 </SectionCard>
                 <SectionCard title="Password">
                   <div className="flex items-center justify-between">
-                    <div><p className="text-sm text-[#dfe1f6]">••••••••••••</p><p className="text-xs text-[#bbc9cf]">Change via reset link</p></div>
+                    <div><p className="text-sm text-[#dfe1f6]">••••••••••••</p><p className="text-xs text-[#9aa3b8]">Change via reset link</p></div>
                     <a href="/reset-password" className="text-sm font-medium text-[#00d2ff] hover:text-[#47d6ff] transition">Change password →</a>
                   </div>
                 </SectionCard>
@@ -1481,8 +1481,8 @@ export function SettingsView({
             {activeTab === "ai"       && <AITab />}
             {activeTab === "api-tokens" && (
               <>
-                <div className="mb-4 p-4 bg-[#262939] rounded-xl border border-[rgba(0,255,255,0.08)]">
-                  <p className="text-xs text-[#bbc9cf]">Personal access tokens allow external tools to interact with the CyberSage API on your behalf. Treat them like passwords — never share or commit them.</p>
+                <div className="mb-4 p-4 bg-[#262939] rounded-xl border border-[rgba(255,255,255,0.06)]">
+                  <p className="text-xs text-[#9aa3b8]">Personal access tokens allow external tools to interact with the CyberSage API on your behalf. Treat them like passwords — never share or commit them.</p>
                 </div>
                 <APITokensTab />
               </>

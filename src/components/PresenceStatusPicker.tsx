@@ -162,7 +162,7 @@ export function PresenceStatusPicker({
         <PresenceDot status={presence.status} size="sm" />
         <span>{currentOption.label}</span>
         <svg
-          className={`h-3.5 w-3.5 text-[#5c6b72] transition-transform ${isOpen ? "rotate-180" : ""}`}
+          className={`h-3.5 w-3.5 text-[#5d6579] transition-transform ${isOpen ? "rotate-180" : ""}`}
           viewBox="0 0 16 16"
           fill="none"
           stroke="currentColor"
@@ -181,7 +181,7 @@ export function PresenceStatusPicker({
           className="absolute left-0 top-full mt-1.5 z-50 w-72 rounded-xl border border-[rgba(0,210,255,0.12)] bg-[#1b1f2e] shadow-2xl shadow-black/50 overflow-hidden"
         >
           <div className="px-3 pt-3 pb-1">
-            <p className="text-xs font-semibold text-[#5c6b72] uppercase tracking-widest mb-2">
+            <p className="text-xs font-semibold text-[#5d6579] mb-2">
               Set Status
             </p>
 
@@ -192,7 +192,7 @@ export function PresenceStatusPicker({
               onChange={(e) => setCustomMessage(e.target.value)}
               placeholder="What are you working on?"
               maxLength={200}
-              className="w-full rounded-md bg-[#0f1321] border border-[rgba(0,210,255,0.1)] px-2.5 py-1.5 text-sm text-[#dfe1f6] placeholder-[#5c6b72] focus:outline-none focus:border-[rgba(0,210,255,0.35)] transition-colors"
+              className="w-full rounded-md bg-[#0f1321] border border-[rgba(0,210,255,0.1)] px-2.5 py-1.5 text-sm text-[#dfe1f6] placeholder-[#5d6579] focus:outline-none focus:border-[rgba(0,210,255,0.35)] transition-colors"
             />
           </div>
 
@@ -210,13 +210,13 @@ export function PresenceStatusPicker({
                     className={`flex w-full items-center gap-3 px-3 py-2 text-sm transition-colors ${
                       isSelected
                         ? "bg-[rgba(0,210,255,0.08)] text-[#dfe1f6]"
-                        : "text-[#bbc9cf] hover:bg-[rgba(0,210,255,0.05)] hover:text-[#dfe1f6]"
+                        : "text-[#9aa3b8] hover:bg-[rgba(0,210,255,0.05)] hover:text-[#dfe1f6]"
                     } disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     <PresenceDot status={opt.value} size="md" />
                     <div className="flex-1 text-left">
                       <span className="font-medium">{opt.label}</span>
-                      <span className="block text-xs text-[#5c6b72]">
+                      <span className="block text-xs text-[#5d6579]">
                         {opt.description}
                       </span>
                     </div>

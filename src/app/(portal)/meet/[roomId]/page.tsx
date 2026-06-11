@@ -54,11 +54,11 @@ export default function MeetRoomPage() {
         <div className="flex items-center gap-2">
           <Phone className="w-4 h-4 text-[#00d2ff]" />
           <span className="text-sm font-semibold text-[#dfe1f6]">CyberSage Meet</span>
-          <span className="text-xs text-[#5c6b72] font-mono">{roomId}</span>
+          <span className="text-xs text-[#5d6579] font-mono">{roomId}</span>
         </div>
         <button
           onClick={() => router.back()}
-          className="text-xs text-[#bbc9cf] hover:text-[#dfe1f6] px-3 py-1.5 rounded-lg border border-[rgba(0,255,255,0.1)] hover:bg-[#262939] transition-colors"
+          className="text-xs text-[#9aa3b8] hover:text-[#dfe1f6] px-3 py-1.5 rounded-lg border border-[rgba(255,255,255,0.08)] hover:bg-[#262939] transition-colors"
         >
           Leave call
         </button>

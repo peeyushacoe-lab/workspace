@@ -105,7 +105,7 @@ export function SessionManager() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-[#bbc9cf]">
+        <p className="text-sm text-[#9aa3b8]">
           {sessions.length} active session{sessions.length !== 1 ? "s" : ""}
         </p>
         {otherSessionCount > 0 && (
@@ -127,13 +127,13 @@ export function SessionManager() {
           <div className="flex gap-3">
             <button
               onClick={revokeAll}
-              className="bg-[#00d2ff] text-[#003543] hover:bg-[#00b8d9] hover:shadow-[0_0_20px_rgba(0,210,255,0.4)] rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50 transition-colors"
+              className="bg-[#00d2ff] text-[#003543] hover:bg-[#00b8d9] rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50 transition-colors"
             >
               Yes, revoke all
             </button>
             <button
               onClick={() => setConfirmRevokeAll(false)}
-              className="bg-[#262939] text-[#bbc9cf] hover:bg-[#303444] border border-[rgba(0,255,255,0.08)] rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+              className="bg-[#262939] text-[#9aa3b8] hover:bg-[#303444] border border-[rgba(255,255,255,0.06)] rounded-lg px-4 py-2 text-sm font-medium transition-colors"
             >
               Cancel
             </button>
@@ -147,7 +147,7 @@ export function SessionManager() {
           return (
             <div
               key={session.id}
-              className="bg-[#262939] border border-[rgba(0,255,255,0.08)] rounded-xl px-4 py-3 flex items-center justify-between"
+              className="bg-[#262939] border border-[rgba(255,255,255,0.06)] rounded-xl px-4 py-3 flex items-center justify-between"
             >
               <div className="flex items-start gap-3">
                 <span className="text-2xl mt-0.5" aria-hidden>
@@ -164,10 +164,10 @@ export function SessionManager() {
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-[#bbc9cf] mt-0.5">
+                  <p className="text-xs text-[#9aa3b8] mt-0.5">
                     {session.ipAddress ?? "Unknown IP"} · Last seen {timeAgo(session.lastSeenAt)}
                   </p>
-                  <p className="text-xs text-[#bbc9cf] mt-0.5">
+                  <p className="text-xs text-[#9aa3b8] mt-0.5">
                     Started {new Date(session.createdAt).toLocaleDateString(undefined, {
                       year: "numeric",
                       month: "short",
@@ -191,7 +191,7 @@ export function SessionManager() {
         })}
 
         {sessions.length === 0 && (
-          <div className="p-8 text-center text-sm text-[#bbc9cf]">
+          <div className="p-8 text-center text-sm text-[#9aa3b8]">
             No active sessions found.
           </div>
         )}

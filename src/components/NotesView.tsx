@@ -44,14 +44,14 @@ type Note = {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const NOTE_COLORS: { label: string; value: string; dot: string; border: string }[] = [
-  { label: "None",   value: "",          dot: "bg-[#859399]",   border: "border-[#859399]" },
+  { label: "None",   value: "",          dot: "bg-[#707a90]",   border: "border-[#707a90]" },
   { label: "Cyan",   value: "#00d2ff1a", dot: "bg-[#00d2ff]",   border: "border-[#00d2ff]" },
-  { label: "Green",  value: "#00feb21a", dot: "bg-[#00feb2]",   border: "border-[#00feb2]" },
-  { label: "Blue",   value: "#a5e7ff1a", dot: "bg-[#a5e7ff]",   border: "border-[#a5e7ff]" },
+  { label: "Green",  value: "#06d6a01a", dot: "bg-[#06d6a0]",   border: "border-[#06d6a0]" },
+  { label: "Blue",   value: "#7dd8f51a", dot: "bg-[#7dd8f5]",   border: "border-[#7dd8f5]" },
   { label: "Pink",   value: "#ff4d6d1a", dot: "bg-[#ff4d6d]",   border: "border-[#ff4d6d]" },
   { label: "Purple", value: "#c084fc1a", dot: "bg-purple-400",   border: "border-purple-400" },
   { label: "Red",    value: "#ffb4ab1a", dot: "bg-[#ffb4ab]",   border: "border-[#ffb4ab]" },
-  { label: "Grey",   value: "#3c494e1a", dot: "bg-[#859399]",   border: "border-[#859399]" },
+  { label: "Grey",   value: "#262b3a1a", dot: "bg-[#707a90]",   border: "border-[#707a90]" },
 ];
 
 function getBorderColor(color: string | null): string {
@@ -112,7 +112,7 @@ function NoteListItem({
     <div
       className={`relative group transition-colors duration-150 ${
         selected
-          ? "bg-[#00d2ff]/10 text-[#a5e7ff] font-medium"
+          ? "bg-[#00d2ff]/10 text-[#7dd8f5] font-medium"
           : "hover:bg-[#262939]"
       }`}
     >
@@ -124,7 +124,7 @@ function NoteListItem({
       )}
       <button
         onClick={onClick}
-        className={`w-full text-left px-4 py-3 border-b border-[rgba(0,255,255,0.1)] cursor-pointer transition-colors ${hasBorder ? "pl-5" : ""}`}
+        className={`w-full text-left px-4 py-3 border-b border-[rgba(255,255,255,0.08)] cursor-pointer transition-colors ${hasBorder ? "pl-5" : ""}`}
       >
         <div className="flex items-center gap-2 mb-0.5">
           <span className={`w-2 h-2 rounded-full shrink-0 ${getDotClass(note.color)}`} />
@@ -132,11 +132,11 @@ function NoteListItem({
             {note.title || "Untitled"}
           </span>
           {note.pinned && (
-            <Pin className="w-3 h-3 text-[#a5e7ff] shrink-0" />
+            <Pin className="w-3 h-3 text-[#7dd8f5] shrink-0" />
           )}
         </div>
-        <p className="text-xs text-[#bbc9cf] truncate ml-4">{preview}</p>
-        <p className="text-xs text-[#859399] ml-4 mt-0.5">{when}</p>
+        <p className="text-xs text-[#9aa3b8] truncate ml-4">{preview}</p>
+        <p className="text-xs text-[#707a90] ml-4 mt-0.5">{when}</p>
       </button>
 
       {/* 3-dot menu */}
@@ -152,14 +152,14 @@ function NoteListItem({
             setMenuOpen((v) => !v);
             setColorOpen(false);
           }}
-          className="p-1 rounded-md hover:bg-[#3c494e] text-[#bbc9cf]"
+          className="p-1 rounded-md hover:bg-[#262b3a] text-[#9aa3b8]"
           aria-label="Note options"
         >
           <MoreVertical className="w-3.5 h-3.5" />
         </button>
 
         {menuOpen && (
-          <div className="absolute right-0 top-full mt-1 z-30 bg-[#1b1f2e] rounded-xl shadow-lg border border-[rgba(0,255,255,0.1)] py-1 min-w-[140px]">
+          <div className="absolute right-0 top-full mt-1 z-30 bg-[#1b1f2e] rounded-xl shadow-lg border border-[rgba(255,255,255,0.08)] py-1 min-w-[140px]">
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -184,7 +184,7 @@ function NoteListItem({
               <Palette className="w-3.5 h-3.5" /> Color
             </button>
             {colorOpen && (
-              <div className="px-3 py-2 flex flex-wrap gap-1.5 border-t border-[rgba(0,255,255,0.1)]">
+              <div className="px-3 py-2 flex flex-wrap gap-1.5 border-t border-[rgba(255,255,255,0.08)]">
                 {NOTE_COLORS.map((c) => (
                   <button
                     key={c.value}
@@ -202,7 +202,7 @@ function NoteListItem({
                 ))}
               </div>
             )}
-            <div className="border-t border-[rgba(0,255,255,0.1)] mt-1" />
+            <div className="border-t border-[rgba(255,255,255,0.08)] mt-1" />
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -239,7 +239,7 @@ function FmtBtn({
         onClick();
       }}
       title={title}
-      className="p-1.5 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] rounded transition-colors text-sm"
+      className="p-1.5 text-[#9aa3b8] hover:bg-[#262939] hover:text-[#dfe1f6] rounded transition-colors text-sm"
     >
       {children}
     </button>
@@ -531,14 +531,14 @@ export function NotesView() {
     <div className="flex h-full min-h-0 overflow-hidden font-sans bg-[#0f1321]">
       {/* ── Left: Note list ── */}
       <aside
-        className={`flex flex-col w-full md:w-72 lg:w-80 shrink-0 bg-[#1b1f2e] border-r border-[rgba(0,255,255,0.1)] ${
+        className={`flex flex-col w-full md:w-72 lg:w-80 shrink-0 bg-[#1b1f2e] border-r border-[rgba(255,255,255,0.08)] ${
           showEditor ? "hidden md:flex" : "flex"
         }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[rgba(0,255,255,0.1)]">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[rgba(255,255,255,0.08)]">
           <div className="flex items-center gap-2">
-            <StickyNote className="w-5 h-5 text-[#a5e7ff]" />
+            <StickyNote className="w-5 h-5 text-[#7dd8f5]" />
             <h1 className="font-semibold text-[#dfe1f6] text-sm">Notes</h1>
           </div>
           <button
@@ -551,15 +551,15 @@ export function NotesView() {
         </div>
 
         {/* Search */}
-        <div className="px-3 py-2 border-b border-[rgba(0,255,255,0.1)]">
+        <div className="px-3 py-2 border-b border-[rgba(255,255,255,0.08)]">
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#bbc9cf]" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#9aa3b8]" />
             <input
               type="search"
               placeholder="Search notes…"
               value={query}
               onChange={(e) => handleSearch(e.target.value)}
-              className="bg-[#0f1321] border border-[rgba(0,255,255,0.1)] text-[#dfe1f6] placeholder-[#bbc9cf] rounded-lg pl-9 py-2 text-sm focus:ring-2 focus:ring-[#00d2ff] w-full outline-none"
+              className="bg-[#0f1321] border border-[rgba(255,255,255,0.08)] text-[#dfe1f6] placeholder-[#9aa3b8] rounded-lg pl-9 py-2 text-sm focus:ring-2 focus:ring-[#00d2ff] w-full outline-none"
             />
           </div>
         </div>
@@ -567,13 +567,13 @@ export function NotesView() {
         {/* List */}
         <div className="flex-1 overflow-y-auto">
           {loading ? (
-            <div className="flex items-center justify-center h-32 text-[#bbc9cf] text-sm">
+            <div className="flex items-center justify-center h-32 text-[#9aa3b8] text-sm">
               Loading…
             </div>
           ) : filteredNotes.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-48 gap-3 px-6 text-center">
-              <StickyNote className="w-10 h-10 text-[#3c494e]" />
-              <p className="text-[#bbc9cf] text-sm text-center">
+              <StickyNote className="w-10 h-10 text-[#262b3a]" />
+              <p className="text-[#9aa3b8] text-sm text-center">
                 {query ? "No notes match your search." : "No notes yet. Create your first note."}
               </p>
               {!query && (
@@ -591,7 +591,7 @@ export function NotesView() {
               {pinnedNotes.length > 0 && (
                 <>
                   {hasBothSections && (
-                    <div className="text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider px-4 py-2">
+                    <div className="text-xs font-semibold text-[#9aa3b8] px-4 py-2">
                       Pinned
                     </div>
                   )}
@@ -617,7 +617,7 @@ export function NotesView() {
               {unpinnedNotes.length > 0 && (
                 <>
                   {hasBothSections && (
-                    <div className="text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider px-4 py-2">
+                    <div className="text-xs font-semibold text-[#9aa3b8] px-4 py-2">
                       Other
                     </div>
                   )}
@@ -653,11 +653,11 @@ export function NotesView() {
         {selected ? (
           <>
             {/* ── Top toolbar ── */}
-            <div className="border-b border-[rgba(0,255,255,0.1)] px-4 py-2 bg-[#1b1f2e] flex items-center gap-1 flex-wrap shrink-0">
+            <div className="border-b border-[rgba(255,255,255,0.08)] px-4 py-2 bg-[#1b1f2e] flex items-center gap-1 flex-wrap shrink-0">
               {/* Back (mobile) */}
               <button
                 onClick={() => setShowEditor(false)}
-                className="md:hidden p-1.5 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] rounded transition-colors text-sm mr-1"
+                className="md:hidden p-1.5 text-[#9aa3b8] hover:bg-[#262939] hover:text-[#dfe1f6] rounded transition-colors text-sm mr-1"
                 aria-label="Back to list"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -669,8 +669,8 @@ export function NotesView() {
                 title={selected.pinned ? "Unpin" : "Pin"}
                 className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors duration-150 ${
                   selected.pinned
-                    ? "bg-[#00d2ff]/10 text-[#a5e7ff] rounded p-1.5 text-sm"
-                    : "p-1.5 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] rounded transition-colors text-sm"
+                    ? "bg-[#00d2ff]/10 text-[#7dd8f5] rounded p-1.5 text-sm"
+                    : "p-1.5 text-[#9aa3b8] hover:bg-[#262939] hover:text-[#dfe1f6] rounded transition-colors text-sm"
                 }`}
               >
                 {selected.pinned ? (
@@ -685,13 +685,13 @@ export function NotesView() {
                 <button
                   onClick={() => setShowColorPicker((v) => !v)}
                   title="Note color"
-                  className="p-1.5 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] rounded transition-colors text-sm flex items-center gap-1.5"
+                  className="p-1.5 text-[#9aa3b8] hover:bg-[#262939] hover:text-[#dfe1f6] rounded transition-colors text-sm flex items-center gap-1.5"
                 >
                   <Palette className="w-3.5 h-3.5" />
                   Color
                 </button>
                 {showColorPicker && (
-                  <div className="absolute top-full left-0 mt-1 z-20 bg-[#1b1f2e] rounded-xl shadow-lg border border-[rgba(0,255,255,0.1)] p-2 flex gap-1.5">
+                  <div className="absolute top-full left-0 mt-1 z-20 bg-[#1b1f2e] rounded-xl shadow-lg border border-[rgba(255,255,255,0.08)] p-2 flex gap-1.5">
                     {NOTE_COLORS.map((c) => (
                       <button
                         key={c.value}
@@ -709,7 +709,7 @@ export function NotesView() {
               </div>
 
               {/* Divider */}
-              <div className="w-px h-5 bg-[#3c494e] mx-1" />
+              <div className="w-px h-5 bg-[#262b3a] mx-1" />
 
               {/* Formatting toolbar */}
               <FmtBtn onClick={() => wrapSelection("**")} title="Bold">
@@ -726,7 +726,7 @@ export function NotesView() {
               </FmtBtn>
 
               {/* Divider */}
-              <div className="w-px h-5 bg-[#3c494e] mx-1" />
+              <div className="w-px h-5 bg-[#262b3a] mx-1" />
 
               <FmtBtn onClick={() => insertLinePrefix("- ")} title="Bullet list">
                 <List className="w-3.5 h-3.5" />
@@ -736,7 +736,7 @@ export function NotesView() {
               </FmtBtn>
 
               {/* Divider */}
-              <div className="w-px h-5 bg-[#3c494e] mx-1" />
+              <div className="w-px h-5 bg-[#262b3a] mx-1" />
 
               <FmtBtn onClick={() => insertLinePrefix("> ")} title="Blockquote">
                 <Quote className="w-3.5 h-3.5" />
@@ -751,7 +751,7 @@ export function NotesView() {
               {/* Spacer + save status + delete */}
               <div className="flex-1" />
 
-              <span className="text-xs text-[#859399] whitespace-nowrap" aria-label="save status">
+              <span className="text-xs text-[#707a90] whitespace-nowrap" aria-label="save status">
                 {savedLabel}
               </span>
 
@@ -771,7 +771,7 @@ export function NotesView() {
               value={selected.title}
               onChange={(e) => scheduleSave(selected.id, { title: e.target.value })}
               placeholder="Untitled"
-              className="text-xl font-bold text-[#dfe1f6] border-none bg-transparent focus:ring-0 outline-none w-full px-6 pt-6 pb-2 placeholder-[#3c494e]"
+              className="text-xl font-semibold text-[#dfe1f6] border-none bg-transparent focus:ring-0 outline-none w-full px-6 pt-6 pb-2 placeholder-[#262b3a]"
             />
 
             {/* Content (auto-resizing textarea) */}
@@ -785,19 +785,19 @@ export function NotesView() {
               onFocus={autoResize}
               placeholder="Start writing…"
               rows={1}
-              className="text-sm text-[#dfe1f6] leading-relaxed w-full px-6 py-3 bg-transparent border-none outline-none resize-none placeholder-[#3c494e] overflow-hidden"
+              className="text-sm text-[#dfe1f6] leading-relaxed w-full px-6 py-3 bg-transparent border-none outline-none resize-none placeholder-[#262b3a] overflow-hidden"
               style={{ minHeight: "200px" }}
             />
           </>
         ) : (
           /* ── Empty state ── */
           <div className="flex flex-col items-center justify-center flex-1 gap-4 text-center px-8">
-            <StickyNote className="w-16 h-16 text-[#3c494e]" />
+            <StickyNote className="w-16 h-16 text-[#262b3a]" />
             <div>
-              <p className="text-[#bbc9cf] text-sm text-center">
+              <p className="text-[#9aa3b8] text-sm text-center">
                 Select a note or create one
               </p>
-              <p className="text-[#bbc9cf] text-sm text-center mt-1">
+              <p className="text-[#9aa3b8] text-sm text-center mt-1">
                 Pick a note from the list or create a new one.
               </p>
             </div>

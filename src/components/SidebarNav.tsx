@@ -85,12 +85,12 @@ export function SidebarNav({
               href={item.href}
               title={item.label}
               className={`relative flex h-8 w-8 mx-auto items-center justify-center rounded-md transition-colors ${
-                active ? "bg-[#00d2ff]/15 border-l-2 border-[#00d2ff]" : "hover:bg-[#262939]"
+                active ? "bg-white/[0.08]" : "hover:bg-[#262939]"
               }`}
             >
-              <Icon className={`h-4 w-4 ${active ? "text-[#00d2ff]" : "text-[#bbc9cf]"}`} />
+              <Icon className={`h-4 w-4 ${active ? "text-[#eceef8]" : "text-[#9aa3b8]"}`} />
               {showBadge && (
-                <span className="absolute -top-0.5 -right-0.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-[#00d2ff] text-[8px] font-bold text-[#003543] px-0.5">
+                <span className="absolute -top-0.5 -right-0.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-[#00d2ff] text-[8px] font-semibold text-[#003543] px-0.5">
                   {unreadCount > 99 ? "99+" : unreadCount}
                 </span>
               )}
@@ -112,30 +112,25 @@ export function SidebarNav({
           <Link
             key={item.href}
             href={item.href}
-            className={`group flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm transition-colors duration-150 ${
+            className={`group flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-sm transition-colors duration-150 ${
               active
-                ? "bg-[#00d2ff]/10 text-[#00d2ff] border-l-2 border-[#00d2ff] shadow-[0_0_12px_rgba(0,210,255,0.15)]"
-                : "text-[#bbc9cf] hover:bg-[#262939]/60 hover:text-[#dfe1f6]"
+                ? "bg-white/[0.07] text-[#eceef8]"
+                : "text-[#9aa3b8] hover:bg-white/[0.04] hover:text-[#dfe1f6]"
             }`}
           >
             <Icon
               className={`h-4 w-4 flex-shrink-0 transition-colors ${
                 active
-                  ? "text-[#00d2ff]"
-                  : "text-[#bbc9cf] group-hover:text-[#dfe1f6]"
+                  ? "text-[#eceef8]"
+                  : "text-[#707a90] group-hover:text-[#dfe1f6]"
               }`}
             />
-            <div className="flex flex-col flex-1 min-w-0">
-              <div className="flex items-center justify-between">
-                <span className="truncate font-medium text-[13px] font-[family-name:var(--font-geist)]">{item.label}</span>
-                {showBadge && (
-                  <span className="bg-[#00d2ff]/20 text-[#00d2ff] text-[9px] font-bold px-1.5 py-0.5 rounded-full ml-1 leading-none">
-                    {unreadCount > 99 ? "99+" : unreadCount}
-                  </span>
-                )}
-              </div>
-              {item.hint && (
-                <span className="text-[10px] text-[#bbc9cf]/60 font-normal truncate leading-tight">{item.hint}</span>
+            <div className="flex flex-1 min-w-0 items-center justify-between">
+              <span className="truncate text-[13px] font-medium">{item.label}</span>
+              {showBadge && (
+                <span className="ml-1 rounded-full bg-[#00d2ff]/15 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-[#00d2ff] tabular-nums">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
               )}
             </div>
           </Link>

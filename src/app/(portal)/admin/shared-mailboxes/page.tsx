@@ -78,13 +78,13 @@ function AvatarStack({ members, max = 3 }: { members: { id: string; fullName: st
         <div
           key={m.id}
           title={m.fullName}
-          className={`w-7 h-7 rounded-full border-2 border-[#1b1f2e] flex items-center justify-center text-[10px] font-bold text-white ${avatarColor(m.id)}`}
+          className={`w-7 h-7 rounded-full border-2 border-[#1b1f2e] flex items-center justify-center text-[10px] font-semibold text-white ${avatarColor(m.id)}`}
         >
           {initials(m.fullName)}
         </div>
       ))}
       {overflow > 0 && (
-        <div className="w-7 h-7 rounded-full border-2 border-[#1b1f2e] bg-[#2a3044] flex items-center justify-center text-[10px] font-medium text-[#bbc9cf]">
+        <div className="w-7 h-7 rounded-full border-2 border-[#1b1f2e] bg-[#2a3044] flex items-center justify-center text-[10px] font-medium text-[#9aa3b8]">
           +{overflow}
         </div>
       )}
@@ -154,32 +154,32 @@ function MemberPanel({
   const nonMembers = allMembers.filter((m) => !currentIds.has(m.id));
 
   return (
-    <div className="border-t border-[rgba(0,255,255,0.08)] bg-[#12162a] px-5 py-4">
+    <div className="border-t border-[rgba(255,255,255,0.06)] bg-[#12162a] px-5 py-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Current members */}
         <div>
-          <p className="text-[11px] text-[#5c6b72] uppercase tracking-widest mb-2 font-semibold">
+          <p className="text-[11px] text-[#5d6579] mb-2 font-semibold">
             Current Members ({currentMembers.length})
           </p>
           {currentMembers.length === 0 ? (
-            <p className="text-xs text-[#3c4f5a] italic">No members yet.</p>
+            <p className="text-xs text-[#454e63] italic">No members yet.</p>
           ) : (
             <ul className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
               {currentMembers.map((m) => (
                 <li key={m.id} className="flex items-center gap-2.5">
                   <div
-                    className={`w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-[9px] font-bold text-white ${avatarColor(m.id)}`}
+                    className={`w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-[9px] font-semibold text-white ${avatarColor(m.id)}`}
                   >
                     {initials(m.fullName)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-[#dfe1f6] truncate">{m.fullName}</p>
-                    <p className="text-[10px] text-[#5c6b72] truncate">{m.email}</p>
+                    <p className="text-[10px] text-[#5d6579] truncate">{m.email}</p>
                   </div>
                   <button
                     onClick={() => toggle(m.id)}
                     title="Remove member"
-                    className="p-1 text-[#5c6b72] hover:text-red-400 transition-colors"
+                    className="p-1 text-[#5d6579] hover:text-red-400 transition-colors"
                   >
                     <UserMinus className="w-3.5 h-3.5" />
                   </button>
@@ -191,30 +191,30 @@ function MemberPanel({
 
         {/* Add members */}
         <div>
-          <p className="text-[11px] text-[#5c6b72] uppercase tracking-widest mb-2 font-semibold">
+          <p className="text-[11px] text-[#5d6579] mb-2 font-semibold">
             Add Member
           </p>
           <div className="relative mb-2">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#5c6b72]" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#5d6579]" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search users…"
-              className="w-full pl-8 pr-3 py-1.5 text-xs bg-[#0f1321] border border-[rgba(0,255,255,0.1)] rounded-lg text-[#dfe1f6] placeholder-[#3c4f5a] focus:outline-none focus:border-[#00d2ff]/40"
+              className="w-full pl-8 pr-3 py-1.5 text-xs bg-[#0f1321] border border-[rgba(255,255,255,0.08)] rounded-lg text-[#dfe1f6] placeholder-[#454e63] focus:outline-none focus:border-[#00d2ff]/40"
             />
           </div>
           <ul className="space-y-1 max-h-44 overflow-y-auto pr-1">
             {filteredAll.filter((m) => !currentIds.has(m.id)).map((m) => (
               <li key={m.id} className="flex items-center gap-2.5">
                 <div
-                  className={`w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-[9px] font-bold text-white ${avatarColor(m.id)}`}
+                  className={`w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-[9px] font-semibold text-white ${avatarColor(m.id)}`}
                 >
                   {initials(m.fullName)}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-[#dfe1f6] truncate">{m.fullName}</p>
-                  <p className="text-[10px] text-[#5c6b72] truncate">{m.email}</p>
+                  <p className="text-[10px] text-[#5d6579] truncate">{m.email}</p>
                 </div>
                 <button
                   onClick={() => {
@@ -243,14 +243,14 @@ function MemberPanel({
                     })();
                   }}
                   title="Add member"
-                  className="p-1 text-[#5c6b72] hover:text-[#00d2ff] transition-colors"
+                  className="p-1 text-[#5d6579] hover:text-[#00d2ff] transition-colors"
                 >
                   <UserPlus className="w-3.5 h-3.5" />
                 </button>
               </li>
             ))}
             {filteredAll.filter((m) => !currentIds.has(m.id)).length === 0 && (
-              <li className="text-xs text-[#3c4f5a] italic py-1">
+              <li className="text-xs text-[#454e63] italic py-1">
                 {search ? "No users match your search." : "All users are already members."}
               </li>
             )}
@@ -258,7 +258,7 @@ function MemberPanel({
         </div>
       </div>
 
-      <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-[rgba(0,255,255,0.06)]">
+      <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-[rgba(255,255,255,0.05)]">
         <button
           onClick={save}
           disabled={saving}
@@ -341,14 +341,14 @@ function CreateModal({
       onClick={onClose}
     >
       <div
-        className="bg-[#1b1f2e] border border-[rgba(0,255,255,0.12)] rounded-xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh]"
+        className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.09)] rounded-xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-[rgba(0,255,255,0.08)]">
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-[rgba(255,255,255,0.06)]">
           <Mail className="w-4 h-4 text-[#00d2ff] flex-shrink-0" />
           <p className="flex-1 text-sm font-semibold text-[#dfe1f6]">New Shared Mailbox</p>
-          <button onClick={onClose} className="p-1 text-[#5c6b72] hover:text-[#bbc9cf]">
+          <button onClick={onClose} className="p-1 text-[#5d6579] hover:text-[#9aa3b8]">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -357,7 +357,7 @@ function CreateModal({
         <div className="overflow-y-auto flex-1 px-5 py-4 space-y-4">
           {/* Email */}
           <div>
-            <label className="block text-[11px] text-[#5c6b72] uppercase tracking-widest mb-1.5 font-semibold">
+            <label className="block text-[11px] text-[#5d6579] mb-1.5 font-semibold">
               Email address
             </label>
             <input
@@ -365,13 +365,13 @@ function CreateModal({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="support@cybersage.uk"
-              className="w-full px-3 py-2 text-sm bg-[#0f1321] border border-[rgba(0,255,255,0.1)] rounded-lg text-[#dfe1f6] placeholder-[#3c4f5a] font-mono focus:outline-none focus:border-[#00d2ff]/40"
+              className="w-full px-3 py-2 text-sm bg-[#0f1321] border border-[rgba(255,255,255,0.08)] rounded-lg text-[#dfe1f6] placeholder-[#454e63] font-mono focus:outline-none focus:border-[#00d2ff]/40"
             />
           </div>
 
           {/* Display name */}
           <div>
-            <label className="block text-[11px] text-[#5c6b72] uppercase tracking-widest mb-1.5 font-semibold">
+            <label className="block text-[11px] text-[#5d6579] mb-1.5 font-semibold">
               Display name
             </label>
             <input
@@ -379,40 +379,40 @@ function CreateModal({
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="Support Team"
-              className="w-full px-3 py-2 text-sm bg-[#0f1321] border border-[rgba(0,255,255,0.1)] rounded-lg text-[#dfe1f6] placeholder-[#3c4f5a] focus:outline-none focus:border-[#00d2ff]/40"
+              className="w-full px-3 py-2 text-sm bg-[#0f1321] border border-[rgba(255,255,255,0.08)] rounded-lg text-[#dfe1f6] placeholder-[#454e63] focus:outline-none focus:border-[#00d2ff]/40"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-[11px] text-[#5c6b72] uppercase tracking-widest mb-1.5 font-semibold">
-              Description <span className="normal-case text-[#3c4f5a]">(optional)</span>
+            <label className="block text-[11px] text-[#5d6579] mb-1.5 font-semibold">
+              Description <span className="normal-case text-[#454e63]">(optional)</span>
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Handles inbound customer support requests."
               rows={2}
-              className="w-full px-3 py-2 text-sm bg-[#0f1321] border border-[rgba(0,255,255,0.1)] rounded-lg text-[#dfe1f6] placeholder-[#3c4f5a] focus:outline-none focus:border-[#00d2ff]/40 resize-none"
+              className="w-full px-3 py-2 text-sm bg-[#0f1321] border border-[rgba(255,255,255,0.08)] rounded-lg text-[#dfe1f6] placeholder-[#454e63] focus:outline-none focus:border-[#00d2ff]/40 resize-none"
             />
           </div>
 
           {/* Members */}
           <div>
-            <label className="block text-[11px] text-[#5c6b72] uppercase tracking-widest mb-1.5 font-semibold">
+            <label className="block text-[11px] text-[#5d6579] mb-1.5 font-semibold">
               Members ({selectedIds.size} selected)
             </label>
             <div className="relative mb-2">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#5c6b72]" />
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#5d6579]" />
               <input
                 type="text"
                 value={memberSearch}
                 onChange={(e) => setMemberSearch(e.target.value)}
                 placeholder="Filter users…"
-                className="w-full pl-8 pr-3 py-1.5 text-xs bg-[#0f1321] border border-[rgba(0,255,255,0.1)] rounded-lg text-[#dfe1f6] placeholder-[#3c4f5a] focus:outline-none focus:border-[#00d2ff]/40"
+                className="w-full pl-8 pr-3 py-1.5 text-xs bg-[#0f1321] border border-[rgba(255,255,255,0.08)] rounded-lg text-[#dfe1f6] placeholder-[#454e63] focus:outline-none focus:border-[#00d2ff]/40"
               />
             </div>
-            <ul className="space-y-1 max-h-44 overflow-y-auto border border-[rgba(0,255,255,0.06)] rounded-lg p-1.5 bg-[#0f1321]">
+            <ul className="space-y-1 max-h-44 overflow-y-auto border border-[rgba(255,255,255,0.05)] rounded-lg p-1.5 bg-[#0f1321]">
               {filtered.map((m) => {
                 const selected = selectedIds.has(m.id);
                 return (
@@ -422,13 +422,13 @@ function CreateModal({
                     className={`flex items-center gap-2.5 px-2 py-1.5 rounded-lg cursor-pointer transition-colors ${selected ? "bg-[#00d2ff]/10" : "hover:bg-[#1b1f2e]"}`}
                   >
                     <div
-                      className={`w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-[9px] font-bold text-white ${avatarColor(m.id)}`}
+                      className={`w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-[9px] font-semibold text-white ${avatarColor(m.id)}`}
                     >
                       {initials(m.fullName)}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-[#dfe1f6] truncate">{m.fullName}</p>
-                      <p className="text-[10px] text-[#5c6b72] truncate">{m.email}</p>
+                      <p className="text-[10px] text-[#5d6579] truncate">{m.email}</p>
                     </div>
                     {selected && (
                       <CheckCircle2 className="w-3.5 h-3.5 text-[#00d2ff] flex-shrink-0" />
@@ -437,14 +437,14 @@ function CreateModal({
                 );
               })}
               {filtered.length === 0 && (
-                <li className="text-xs text-[#3c4f5a] italic py-2 text-center">No users found.</li>
+                <li className="text-xs text-[#454e63] italic py-2 text-center">No users found.</li>
               )}
             </ul>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="flex items-center gap-2 px-5 py-3 border-t border-[rgba(0,255,255,0.08)]">
+        <div className="flex items-center gap-2 px-5 py-3 border-t border-[rgba(255,255,255,0.06)]">
           <button
             onClick={() => void submit()}
             disabled={saving}
@@ -455,7 +455,7 @@ function CreateModal({
           </button>
           <button
             onClick={onClose}
-            className="px-4 py-2 text-xs text-[#5c6b72] hover:text-[#bbc9cf] transition-colors"
+            className="px-4 py-2 text-xs text-[#5d6579] hover:text-[#9aa3b8] transition-colors"
           >
             Cancel
           </button>
@@ -504,7 +504,7 @@ function MailboxCard({
   };
 
   return (
-    <div className="bg-[#1b1f2e] border border-[rgba(0,255,255,0.08)] rounded-xl overflow-hidden">
+    <div className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl overflow-hidden">
       {/* Card header */}
       <div className="px-5 py-4 flex items-center gap-4">
         {/* Icon */}
@@ -515,7 +515,7 @@ function MailboxCard({
         {/* Info */}
         <div className="flex-1 min-w-0">
           <p className="text-sm font-mono font-semibold text-[#dfe1f6] truncate">{mailbox.email}</p>
-          <p className="text-xs text-[#5c6b72] truncate mt-0.5">{mailbox.displayName}</p>
+          <p className="text-xs text-[#5d6579] truncate mt-0.5">{mailbox.displayName}</p>
         </div>
 
         {/* Member stack */}
@@ -523,9 +523,9 @@ function MailboxCard({
           {members.length > 0 ? (
             <AvatarStack members={members} max={3} />
           ) : (
-            <span className="text-xs text-[#3c4f5a]">No members</span>
+            <span className="text-xs text-[#454e63]">No members</span>
           )}
-          <span className="text-[11px] text-[#5c6b72]">
+          <span className="text-[11px] text-[#5d6579]">
             {members.length} {members.length === 1 ? "member" : "members"}
           </span>
         </div>
@@ -534,7 +534,7 @@ function MailboxCard({
         <div className="flex items-center gap-1.5 flex-shrink-0">
           <button
             onClick={() => setExpanded((v) => !v)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#262939] text-[#bbc9cf] hover:text-[#dfe1f6] hover:bg-[#2e3348] transition-colors border border-[rgba(0,255,255,0.06)]"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#262939] text-[#9aa3b8] hover:text-[#dfe1f6] hover:bg-[#2e3348] transition-colors border border-[rgba(255,255,255,0.05)]"
           >
             <Users className="w-3.5 h-3.5" />
             Manage Members
@@ -548,7 +548,7 @@ function MailboxCard({
             onClick={() => void handleDelete()}
             disabled={deleting}
             title="Remove shared designation"
-            className="p-2 text-[#5c6b72] hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-40"
+            className="p-2 text-[#5d6579] hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-40"
           >
             {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
           </button>
@@ -634,10 +634,10 @@ export default function SharedMailboxesPage() {
           ].map(({ label, value, color }) => (
             <div
               key={label}
-              className="bg-[#1b1f2e] border border-[rgba(0,255,255,0.08)] rounded-xl p-4 flex items-center gap-3"
+              className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl p-4 flex items-center gap-3"
             >
               <div>
-                <p className="text-[10px] text-[#5c6b72] uppercase tracking-widest">{label}</p>
+                <p className="text-[10px] text-[#5d6579]">{label}</p>
                 <p className={`font-semibold text-lg ${color}`}>{value}</p>
               </div>
             </div>
@@ -646,7 +646,7 @@ export default function SharedMailboxesPage() {
 
         {/* Content */}
         {loading ? (
-          <div className="flex items-center justify-center py-24 gap-3 text-[#5c6b72]">
+          <div className="flex items-center justify-center py-24 gap-3 text-[#5d6579]">
             <Loader2 className="w-5 h-5 animate-spin" />
             <span className="text-sm">Loading shared mailboxes…</span>
           </div>
@@ -657,11 +657,11 @@ export default function SharedMailboxesPage() {
               <Mail className="w-7 h-7 text-[#00d2ff]/60" />
             </div>
             <div>
-              <p className="text-[#bbc9cf] font-medium">No shared mailboxes yet.</p>
-              <p className="text-sm text-[#5c6b72] mt-1 max-w-sm">
-                Create one for <span className="font-mono text-[#bbc9cf]">support@</span>,{" "}
-                <span className="font-mono text-[#bbc9cf]">sales@</span>, or{" "}
-                <span className="font-mono text-[#bbc9cf]">billing@</span> to let your team
+              <p className="text-[#9aa3b8] font-medium">No shared mailboxes yet.</p>
+              <p className="text-sm text-[#5d6579] mt-1 max-w-sm">
+                Create one for <span className="font-mono text-[#9aa3b8]">support@</span>,{" "}
+                <span className="font-mono text-[#9aa3b8]">sales@</span>, or{" "}
+                <span className="font-mono text-[#9aa3b8]">billing@</span> to let your team
                 collaborate on a shared inbox.
               </p>
             </div>
@@ -675,16 +675,16 @@ export default function SharedMailboxesPage() {
           </div>
         ) : mailboxes.length > 5 ? (
           /* Table layout for many mailboxes */
-          <div className="bg-[#1b1f2e] border border-[rgba(0,255,255,0.08)] rounded-xl overflow-hidden">
-            <div className="flex items-center gap-3 px-5 py-3 border-b border-[rgba(0,255,255,0.08)]">
+          <div className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl overflow-hidden">
+            <div className="flex items-center gap-3 px-5 py-3 border-b border-[rgba(255,255,255,0.06)]">
               <Mail className="w-4 h-4 text-[#00d2ff]" />
               <span className="text-sm font-medium">Shared Mailboxes</span>
-              <span className="ml-auto text-xs text-[#5c6b72]">{mailboxes.length} total</span>
+              <span className="ml-auto text-xs text-[#5d6579]">{mailboxes.length} total</span>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-[rgba(0,255,255,0.05)] text-[#5c6b72] text-xs">
+                  <tr className="border-b border-[rgba(255,255,255,0.04)] text-[#5d6579] text-xs">
                     <th className="text-left px-5 py-2.5 font-medium">Address</th>
                     <th className="text-left px-5 py-2.5 font-medium hidden sm:table-cell">Display Name</th>
                     <th className="text-left px-5 py-2.5 font-medium">Members</th>
@@ -700,14 +700,14 @@ export default function SharedMailboxesPage() {
                     return (
                       <tr
                         key={mb.id}
-                        className="border-b border-[rgba(0,255,255,0.03)] hover:bg-[#262939]/30"
+                        className="border-b border-[rgba(255,255,255,0.03)] hover:bg-[#262939]/30"
                       >
                         <td className="px-5 py-3 font-mono text-xs text-[#dfe1f6]">{mb.email}</td>
-                        <td className="px-5 py-3 text-xs text-[#bbc9cf] hidden sm:table-cell">{mb.displayName}</td>
+                        <td className="px-5 py-3 text-xs text-[#9aa3b8] hidden sm:table-cell">{mb.displayName}</td>
                         <td className="px-5 py-3">
                           <div className="flex items-center gap-2">
                             <AvatarStack members={members} max={3} />
-                            <span className="text-xs text-[#5c6b72]">{members.length}</span>
+                            <span className="text-xs text-[#5d6579]">{members.length}</span>
                           </div>
                         </td>
                         <td className="px-5 py-3 text-right">
@@ -717,7 +717,7 @@ export default function SharedMailboxesPage() {
                                 // Scroll to expand — simpler: just render a modal approach
                                 toast.info("Use card view for member management.");
                               }}
-                              className="px-2.5 py-1 text-[10px] font-semibold rounded bg-[#262939] text-[#bbc9cf] hover:text-[#dfe1f6] border border-[rgba(0,255,255,0.06)] transition-colors"
+                              className="px-2.5 py-1 text-[10px] font-semibold rounded bg-[#262939] text-[#9aa3b8] hover:text-[#dfe1f6] border border-[rgba(255,255,255,0.05)] transition-colors"
                             >
                               Members
                             </button>
@@ -736,7 +736,7 @@ export default function SharedMailboxesPage() {
                                   }
                                 })();
                               }}
-                              className="p-1 text-[#5c6b72] hover:text-red-400 transition-colors"
+                              className="p-1 text-[#5d6579] hover:text-red-400 transition-colors"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>

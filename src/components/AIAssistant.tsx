@@ -77,7 +77,7 @@ function CopyButton({ text }: { text: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="bg-[#1b1f2e] text-[#bbc9cf] hover:bg-[#262939] border border-[rgba(0,255,255,0.08)] rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2"
+      className="bg-[#1b1f2e] text-[#9aa3b8] hover:bg-[#262939] border border-[rgba(255,255,255,0.06)] rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2"
     >
       {copied ? (
         <>
@@ -118,14 +118,14 @@ function Spinner() {
 function StatusBar({ status }: { status: AIStatus | null }) {
   if (!status) return null;
   return (
-    <div className="flex items-center gap-3 px-4 py-2.5 bg-[#1b1f2e] border-b border-[rgba(0,255,255,0.08)] text-xs">
+    <div className="flex items-center gap-3 px-4 py-2.5 bg-[#1b1f2e] border-b border-[rgba(255,255,255,0.06)] text-xs">
       <Bot className="w-4 h-4 text-[#00d2ff]" />
-      <span className="text-[#bbc9cf]">Provider:</span>
-      <span className="text-[#dfe1f6] font-semibold uppercase tracking-wide">{status.provider}</span>
-      <span className="text-[#bbc9cf]">|</span>
-      <span className="text-[#bbc9cf]">Model:</span>
+      <span className="text-[#9aa3b8]">Provider:</span>
+      <span className="text-[#dfe1f6] font-semibold">{status.provider}</span>
+      <span className="text-[#9aa3b8]">|</span>
+      <span className="text-[#9aa3b8]">Model:</span>
       <span className="text-[#00d2ff] font-mono">{status.model}</span>
-      <span className="text-[#bbc9cf]">|</span>
+      <span className="text-[#9aa3b8]">|</span>
       <span className="flex items-center gap-1.5">
         {status.available ? (
           <>
@@ -189,7 +189,7 @@ function EmailDraftTab() {
   return (
     <div className="space-y-5">
       <div>
-        <label className="block text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider mb-1.5">
+        <label className="block text-xs font-semibold text-[#9aa3b8] mb-1.5">
           Subject (optional)
         </label>
         <input
@@ -201,7 +201,7 @@ function EmailDraftTab() {
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider mb-1.5">
+        <label className="block text-xs font-semibold text-[#9aa3b8] mb-1.5">
           Context / Instructions <span className="text-red-500">*</span>
         </label>
         <textarea
@@ -215,7 +215,7 @@ function EmailDraftTab() {
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider mb-1.5">
+          <label className="block text-xs font-semibold text-[#9aa3b8] mb-1.5">
             Recipient (optional)
           </label>
           <input
@@ -226,7 +226,7 @@ function EmailDraftTab() {
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider mb-1.5">
+          <label className="block text-xs font-semibold text-[#9aa3b8] mb-1.5">
             Tone
           </label>
           <div className="relative">
@@ -239,13 +239,13 @@ function EmailDraftTab() {
                 <option key={t} value={t}>{t}</option>
               ))}
             </select>
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#bbc9cf] pointer-events-none" />
+            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9aa3b8] pointer-events-none" />
           </div>
         </div>
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider mb-1.5">
+        <label className="block text-xs font-semibold text-[#9aa3b8] mb-1.5">
           Language (optional)
         </label>
         <input
@@ -259,7 +259,7 @@ function EmailDraftTab() {
       <button
         onClick={generate}
         disabled={loading}
-        className="bg-[#00d2ff] text-[#003543] hover:bg-[#00b8d9] hover:shadow-[0_0_20px_rgba(0,210,255,0.4)] rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2 disabled:opacity-50"
+        className="bg-[#00d2ff] text-[#003543] hover:bg-[#00b8d9] rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2 disabled:opacity-50"
       >
         {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
         Generate Draft
@@ -271,7 +271,7 @@ function EmailDraftTab() {
       {draft && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider">Generated Draft</span>
+            <span className="text-xs font-semibold text-[#9aa3b8]">Generated Draft</span>
             <CopyButton text={draft} />
           </div>
           <textarea
@@ -328,7 +328,7 @@ function SmartReplyTab() {
   return (
     <div className="space-y-5">
       <div>
-        <label className="block text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider mb-1.5">
+        <label className="block text-xs font-semibold text-[#9aa3b8] mb-1.5">
           Original Email
         </label>
         <textarea
@@ -343,7 +343,7 @@ function SmartReplyTab() {
       <button
         onClick={generate}
         disabled={loading}
-        className="bg-[#00d2ff] text-[#003543] hover:bg-[#00b8d9] hover:shadow-[0_0_20px_rgba(0,210,255,0.4)] rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2 disabled:opacity-50"
+        className="bg-[#00d2ff] text-[#003543] hover:bg-[#00b8d9] rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2 disabled:opacity-50"
       >
         {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageSquareReply className="w-4 h-4" />}
         Generate Replies
@@ -355,10 +355,10 @@ function SmartReplyTab() {
       {replies.length > 0 && (
         <div className="space-y-4">
           {replies.map((r, i) => (
-            <div key={i} className="bg-[#1b1f2e]/80 backdrop-blur-sm border border-[rgba(0,255,255,0.08)] rounded-xl p-4">
-              <div className="flex items-center justify-between px-0 pb-2.5 mb-2 border-b border-[rgba(0,255,255,0.08)]">
+            <div key={i} className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl p-4">
+              <div className="flex items-center justify-between px-0 pb-2.5 mb-2 border-b border-[rgba(255,255,255,0.06)]">
                 <span
-                  className={`text-xs font-bold px-2.5 py-1 rounded-full border capitalize ${toneColors[r.tone.toLowerCase()] ?? "bg-[#262939] text-[#bbc9cf] border-[rgba(0,255,255,0.08)]"}`}
+                  className={`text-xs font-semibold px-2.5 py-1 rounded-full border capitalize ${toneColors[r.tone.toLowerCase()] ?? "bg-[#262939] text-[#9aa3b8] border-[rgba(255,255,255,0.06)]"}`}
                 >
                   {r.tone}
                 </span>
@@ -383,7 +383,7 @@ function SummarizeTab() {
 
   const sentimentConfig = {
     positive: { label: "Positive", className: "bg-green-100 text-green-700 border-green-200" },
-    neutral: { label: "Neutral", className: "bg-[#262939] text-[#bbc9cf] border-[rgba(0,255,255,0.08)]" },
+    neutral: { label: "Neutral", className: "bg-[#262939] text-[#9aa3b8] border-[rgba(255,255,255,0.06)]" },
     negative: { label: "Negative", className: "bg-red-100 text-red-700 border-red-200" },
   };
 
@@ -432,7 +432,7 @@ function SummarizeTab() {
     <div className="space-y-5">
       <div className="grid grid-cols-4 gap-4">
         <div className="col-span-3">
-          <label className="block text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider mb-1.5">
+          <label className="block text-xs font-semibold text-[#9aa3b8] mb-1.5">
             Text / Thread to Summarize
           </label>
           <textarea
@@ -444,7 +444,7 @@ function SummarizeTab() {
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider mb-1.5">
+          <label className="block text-xs font-semibold text-[#9aa3b8] mb-1.5">
             Type
           </label>
           <div className="relative">
@@ -458,7 +458,7 @@ function SummarizeTab() {
               <option value="document">Document</option>
               <option value="meeting">Meeting</option>
             </select>
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#bbc9cf] pointer-events-none" />
+            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9aa3b8] pointer-events-none" />
           </div>
         </div>
       </div>
@@ -466,7 +466,7 @@ function SummarizeTab() {
       <button
         onClick={summarize}
         disabled={loading}
-        className="bg-[#00d2ff] text-[#003543] hover:bg-[#00b8d9] hover:shadow-[0_0_20px_rgba(0,210,255,0.4)] rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2 disabled:opacity-50"
+        className="bg-[#00d2ff] text-[#003543] hover:bg-[#00b8d9] rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2 disabled:opacity-50"
       >
         {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
         Summarize
@@ -477,11 +477,11 @@ function SummarizeTab() {
 
       {result && (
         <div className="space-y-4">
-          <div className="bg-[#1b1f2e]/80 backdrop-blur-sm border border-[rgba(0,255,255,0.08)] rounded-xl p-4">
+          <div className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider">Summary</span>
+              <span className="text-xs font-semibold text-[#9aa3b8]">Summary</span>
               {sentiment && (
-                <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${sentiment.className}`}>
+                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${sentiment.className}`}>
                   {sentiment.label}
                 </span>
               )}
@@ -490,8 +490,8 @@ function SummarizeTab() {
           </div>
 
           {result.keyPoints.length > 0 && (
-            <div className="bg-[#1b1f2e]/80 backdrop-blur-sm border border-[rgba(0,255,255,0.08)] rounded-xl p-4">
-              <p className="text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider mb-3">Key Points</p>
+            <div className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl p-4">
+              <p className="text-xs font-semibold text-[#9aa3b8] mb-3">Key Points</p>
               <ul className="space-y-2">
                 {result.keyPoints.map((pt, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm text-[#dfe1f6]">
@@ -504,8 +504,8 @@ function SummarizeTab() {
           )}
 
           {result.actionItems.length > 0 && (
-            <div className="bg-[#1b1f2e]/80 backdrop-blur-sm border border-[rgba(0,255,255,0.08)] rounded-xl p-4">
-              <p className="text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider mb-3">Action Items</p>
+            <div className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl p-4">
+              <p className="text-xs font-semibold text-[#9aa3b8] mb-3">Action Items</p>
               <ul className="space-y-2">
                 {result.actionItems.map((item, i) => (
                   <li key={i} className="flex items-start gap-3">
@@ -514,14 +514,14 @@ function SummarizeTab() {
                       className={`w-4 h-4 mt-0.5 flex-shrink-0 rounded border-2 flex items-center justify-center transition-colors ${
                         checkedItems.has(i)
                           ? "bg-[#00d2ff] border-[#00d2ff]"
-                          : "border-[rgba(0,255,255,0.08)] hover:border-[#00d2ff]"
+                          : "border-[rgba(255,255,255,0.06)] hover:border-[#00d2ff]"
                       }`}
                     >
                       {checkedItems.has(i) && <Check className="w-2.5 h-2.5 text-white" />}
                     </button>
                     <span
                       className={`text-sm transition-colors ${
-                        checkedItems.has(i) ? "text-[#bbc9cf] line-through" : "text-[#dfe1f6]"
+                        checkedItems.has(i) ? "text-[#9aa3b8] line-through" : "text-[#dfe1f6]"
                       }`}
                     >
                       {item}
@@ -574,7 +574,7 @@ function TranslateTab() {
   return (
     <div className="space-y-5">
       <div>
-        <label className="block text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider mb-1.5">
+        <label className="block text-xs font-semibold text-[#9aa3b8] mb-1.5">
           Source Text
         </label>
         <textarea
@@ -587,7 +587,7 @@ function TranslateTab() {
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider mb-1.5">
+        <label className="block text-xs font-semibold text-[#9aa3b8] mb-1.5">
           Target Language
         </label>
         <div className="relative w-64">
@@ -600,14 +600,14 @@ function TranslateTab() {
               <option key={l} value={l}>{l}</option>
             ))}
           </select>
-          <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#bbc9cf] pointer-events-none" />
+          <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9aa3b8] pointer-events-none" />
         </div>
       </div>
 
       <button
         onClick={translate}
         disabled={loading}
-        className="bg-[#00d2ff] text-[#003543] hover:bg-[#00b8d9] hover:shadow-[0_0_20px_rgba(0,210,255,0.4)] rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2 disabled:opacity-50"
+        className="bg-[#00d2ff] text-[#003543] hover:bg-[#00b8d9] rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2 disabled:opacity-50"
       >
         {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Languages className="w-4 h-4" />}
         Translate
@@ -619,7 +619,7 @@ function TranslateTab() {
       {translated && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider">
+            <span className="text-xs font-semibold text-[#9aa3b8]">
               Translation ({targetLanguage})
             </span>
             <CopyButton text={translated} />
@@ -668,19 +668,19 @@ function AIStatusTab({ onStatus }: { onStatus: (s: AIStatus) => void }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-4">
-        <div className="bg-[#1b1f2e]/80 backdrop-blur-sm border border-[rgba(0,255,255,0.08)] rounded-xl p-4">
-          <p className="text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider mb-2">Provider</p>
-          <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#00d2ff] text-[#003543] text-sm font-bold rounded-lg uppercase tracking-wide">
+        <div className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl p-4">
+          <p className="text-xs font-semibold text-[#9aa3b8] mb-2">Provider</p>
+          <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#00d2ff] text-[#003543] text-sm font-semibold rounded-lg">
             <Bot className="w-4 h-4" />
             {status.provider}
           </span>
         </div>
-        <div className="bg-[#1b1f2e]/80 backdrop-blur-sm border border-[rgba(0,255,255,0.08)] rounded-xl p-4">
-          <p className="text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider mb-2">Model</p>
+        <div className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl p-4">
+          <p className="text-xs font-semibold text-[#9aa3b8] mb-2">Model</p>
           <span className="text-sm font-mono text-[#dfe1f6] font-semibold">{status.model}</span>
         </div>
-        <div className="bg-[#1b1f2e]/80 backdrop-blur-sm border border-[rgba(0,255,255,0.08)] rounded-xl p-4 col-span-2">
-          <p className="text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider mb-2">Availability</p>
+        <div className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl p-4 col-span-2">
+          <p className="text-xs font-semibold text-[#9aa3b8] mb-2">Availability</p>
           <div className="flex items-center gap-3">
             {status.available ? (
               <>
@@ -704,7 +704,7 @@ function AIStatusTab({ onStatus }: { onStatus: (s: AIStatus) => void }) {
 
       {status.models && status.models.length > 0 && (
         <div>
-          <p className="text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider mb-3">
+          <p className="text-xs font-semibold text-[#9aa3b8] mb-3">
             Available Models ({status.models.length})
           </p>
           <div className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
@@ -713,14 +713,14 @@ function AIStatusTab({ onStatus }: { onStatus: (s: AIStatus) => void }) {
                 key={m}
                 className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm border ${
                   m === status.model
-                    ? "bg-[#00d2ff]/10 text-[#a5e7ff] border-[#00d2ff]/30 font-semibold"
-                    : "bg-[#262939] border-[rgba(0,255,255,0.08)] text-[#bbc9cf]"
+                    ? "bg-[#00d2ff]/10 text-[#7dd8f5] border-[#00d2ff]/30 font-semibold"
+                    : "bg-[#262939] border-[rgba(255,255,255,0.06)] text-[#9aa3b8]"
                 }`}
               >
                 <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${m === status.model ? "bg-[#00d2ff]" : "bg-[#e2e8f0]"}`} />
                 <span className="font-mono">{m}</span>
                 {m === status.model && (
-                  <span className="ml-auto text-[10px] font-bold text-[#00d2ff] uppercase tracking-wider">Active</span>
+                  <span className="ml-auto text-[10px] font-semibold text-[#00d2ff]">Active</span>
                 )}
               </div>
             ))}
@@ -730,7 +730,7 @@ function AIStatusTab({ onStatus }: { onStatus: (s: AIStatus) => void }) {
 
       <button
         onClick={fetchStatus}
-        className="bg-[#1b1f2e] text-[#bbc9cf] hover:bg-[#262939] border border-[rgba(0,255,255,0.08)] rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2"
+        className="bg-[#1b1f2e] text-[#9aa3b8] hover:bg-[#262939] border border-[rgba(255,255,255,0.06)] rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2"
       >
         <Activity className="w-4 h-4" />
         Refresh Status
@@ -827,18 +827,18 @@ function MemoryTab() {
           onChange={(e) => setContent(e.target.value)}
           rows={2}
           placeholder="Store a memory…"
-          className="w-full bg-[#262939] border border-[rgba(0,255,255,0.08)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] placeholder:text-[#4a5568] outline-none focus:border-[#00d2ff]/40 resize-none"
+          className="w-full bg-[#262939] border border-[rgba(255,255,255,0.06)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] placeholder:text-[#4a5568] outline-none focus:border-[#00d2ff]/40 resize-none"
         />
         <input
           value={context}
           onChange={(e) => setContext(e.target.value)}
           placeholder="Context (optional)"
-          className="w-full bg-[#262939] border border-[rgba(0,255,255,0.08)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] placeholder:text-[#4a5568] outline-none focus:border-[#00d2ff]/40"
+          className="w-full bg-[#262939] border border-[rgba(255,255,255,0.06)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] placeholder:text-[#4a5568] outline-none focus:border-[#00d2ff]/40"
         />
         <button
           onClick={handleStore}
           disabled={saving || !content.trim()}
-          className="flex items-center gap-2 px-4 py-2 bg-[#00d2ff] text-[#003543] text-sm font-semibold rounded-lg hover:bg-[#a5e7ff] disabled:opacity-50 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-[#00d2ff] text-[#003543] text-sm font-semibold rounded-lg hover:bg-[#7dd8f5] disabled:opacity-50 transition-colors"
         >
           {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
           Store Memory
@@ -851,9 +851,9 @@ function MemoryTab() {
           onChange={(e) => setQ(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && void load()}
           placeholder="Search memories…"
-          className="flex-1 bg-[#262939] border border-[rgba(0,255,255,0.08)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] placeholder:text-[#4a5568] outline-none focus:border-[#00d2ff]/40"
+          className="flex-1 bg-[#262939] border border-[rgba(255,255,255,0.06)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] placeholder:text-[#4a5568] outline-none focus:border-[#00d2ff]/40"
         />
-        <button onClick={load} className="px-3 py-2 bg-[#262939] text-[#bbc9cf] rounded-lg hover:bg-[#2e3347] text-sm">Search</button>
+        <button onClick={load} className="px-3 py-2 bg-[#262939] text-[#9aa3b8] rounded-lg hover:bg-[#2e3347] text-sm">Search</button>
       </div>
 
       {loading ? (
@@ -866,7 +866,7 @@ function MemoryTab() {
             <div key={m.id} className="flex items-start gap-3 p-3 bg-[#262939] rounded-xl">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${typeColors[m.type] ?? "text-[#bbc9cf]"}`}>{m.type}</span>
+                  <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${typeColors[m.type] ?? "text-[#9aa3b8]"}`}>{m.type}</span>
                   {m.context && <span className="text-xs text-[#7a8899]">{m.context}</span>}
                 </div>
                 <p className="text-sm text-[#dfe1f6]">{m.content}</p>
@@ -964,11 +964,11 @@ function AgentsTab() {
             <button
               key={a.id}
               onClick={() => { setSelected(a); setLastRun(null); }}
-              className={`w-full text-left p-3 rounded-xl border transition-colors ${selected?.id === a.id ? "bg-[#00d2ff]/8 border-[#00d2ff]/30" : "bg-[#262939] border-[rgba(0,255,255,0.06)] hover:border-[rgba(0,255,255,0.12)]"}`}
+              className={`w-full text-left p-3 rounded-xl border transition-colors ${selected?.id === a.id ? "bg-[#00d2ff]/8 border-[#00d2ff]/30" : "bg-[#262939] border-[rgba(255,255,255,0.05)] hover:border-[rgba(255,255,255,0.09)]"}`}
             >
               <div className="flex items-center justify-between gap-2 mb-1">
                 <span className="text-sm font-medium text-[#dfe1f6]">{a.name}</span>
-                <span className={`text-xs px-1.5 py-0.5 rounded ${typeColors[a.type] ?? "text-[#bbc9cf] bg-[#262939]"}`}>{a.type}</span>
+                <span className={`text-xs px-1.5 py-0.5 rounded ${typeColors[a.type] ?? "text-[#9aa3b8] bg-[#262939]"}`}>{a.type}</span>
               </div>
               {a.description && <p className="text-xs text-[#7a8899]">{a.description}</p>}
               {a._count && <p className="text-xs text-[#4a5568] mt-0.5">{a._count.runs} runs</p>}
@@ -978,19 +978,19 @@ function AgentsTab() {
       )}
 
       {selected && (
-        <div className="border-t border-[rgba(0,255,255,0.08)] pt-4 space-y-3">
+        <div className="border-t border-[rgba(255,255,255,0.06)] pt-4 space-y-3">
           <h4 className="text-sm font-semibold text-[#dfe1f6]">Run: {selected.name}</h4>
           <textarea
             value={runInput}
             onChange={(e) => setRunInput(e.target.value)}
             rows={3}
             placeholder={`Input for ${selected.type} agent (plain text or JSON)…`}
-            className="w-full bg-[#262939] border border-[rgba(0,255,255,0.08)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] placeholder:text-[#4a5568] outline-none focus:border-[#00d2ff]/40 resize-none font-mono"
+            className="w-full bg-[#262939] border border-[rgba(255,255,255,0.06)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] placeholder:text-[#4a5568] outline-none focus:border-[#00d2ff]/40 resize-none font-mono"
           />
           <button
             onClick={handleRun}
             disabled={running || !runInput.trim()}
-            className="flex items-center gap-2 px-4 py-2 bg-[#00d2ff] text-[#003543] text-sm font-semibold rounded-lg hover:bg-[#a5e7ff] disabled:opacity-50 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-[#00d2ff] text-[#003543] text-sm font-semibold rounded-lg hover:bg-[#7dd8f5] disabled:opacity-50 transition-colors"
           >
             {running ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
             {running ? "Running…" : "Run Agent"}
@@ -1003,7 +1003,7 @@ function AgentsTab() {
               </div>
               {lastRun.error && <p className="text-rose-300">{lastRun.error}</p>}
               {lastRun.output && (
-                <pre className="text-[#bbc9cf] whitespace-pre-wrap break-all">
+                <pre className="text-[#9aa3b8] whitespace-pre-wrap break-all">
                   {JSON.stringify(lastRun.output, null, 2)}
                 </pre>
               )}
@@ -1027,17 +1027,17 @@ export function AIAssistant(_props: { currentUserId: string }) {
   }, []);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-160px)] bg-[#1b1f2e] rounded-xl border border-[rgba(0,255,255,0.08)] overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-160px)] bg-[#1b1f2e] rounded-xl border border-[rgba(255,255,255,0.06)] overflow-hidden">
       <StatusBar status={globalStatus} />
 
       <div className="flex flex-1 overflow-hidden">
-        <div className="w-52 bg-[#1b1f2e] border-r border-[rgba(0,255,255,0.08)] flex flex-col flex-shrink-0">
-          <div className="p-4 border-b border-[rgba(0,255,255,0.08)]">
+        <div className="w-52 bg-[#1b1f2e] border-r border-[rgba(255,255,255,0.06)] flex flex-col flex-shrink-0">
+          <div className="p-4 border-b border-[rgba(255,255,255,0.06)]">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-[#00d2ff]/10 flex items-center justify-center text-[#00d2ff] flex-shrink-0">
                 <Bot className="w-4 h-4" />
               </div>
-              <span className="text-[#dfe1f6] font-bold text-sm">AI Assistant</span>
+              <span className="text-[#dfe1f6] font-semibold text-sm">AI Assistant</span>
             </div>
           </div>
           <nav className="flex-1 p-3 space-y-1">
@@ -1047,8 +1047,8 @@ export function AIAssistant(_props: { currentUserId: string }) {
                 onClick={() => setActiveTab(tab.id)}
                 className={`w-full flex items-center gap-3 text-left transition-colors ${
                   activeTab === tab.id
-                    ? "bg-[#00d2ff]/10 text-[#a5e7ff] rounded-lg px-3 py-2 text-sm font-medium"
-                    : "text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-lg px-3 py-2 text-sm transition-colors"
+                    ? "bg-[#00d2ff]/10 text-[#7dd8f5] rounded-lg px-3 py-2 text-sm font-medium"
+                    : "text-[#9aa3b8] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-lg px-3 py-2 text-sm transition-colors"
                 }`}
               >
                 {tab.icon}
@@ -1061,10 +1061,10 @@ export function AIAssistant(_props: { currentUserId: string }) {
         <div className="flex-1 overflow-y-auto p-6 bg-[#1b1f2e]">
           <div className="max-w-3xl mx-auto">
             <div className="mb-6">
-              <h2 className="text-xl font-bold text-[#dfe1f6]">
+              <h2 className="text-xl font-semibold text-[#dfe1f6]">
                 {TABS.find((t) => t.id === activeTab)?.label}
               </h2>
-              <p className="text-sm text-[#bbc9cf] mt-0.5">
+              <p className="text-sm text-[#9aa3b8] mt-0.5">
                 {activeTab === "draft" && "Generate a professional email draft using AI."}
                 {activeTab === "reply" && "Get three tailored reply options for any email."}
                 {activeTab === "summarize" && "Extract key points, action items, and sentiment."}
@@ -1075,7 +1075,7 @@ export function AIAssistant(_props: { currentUserId: string }) {
               </p>
             </div>
 
-            <div className="bg-[#1b1f2e]/80 backdrop-blur-sm border border-[rgba(0,255,255,0.08)] rounded-xl p-4">
+            <div className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl p-4">
               {activeTab === "draft" && <EmailDraftTab />}
               {activeTab === "reply" && <SmartReplyTab />}
               {activeTab === "summarize" && <SummarizeTab />}

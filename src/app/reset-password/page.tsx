@@ -10,10 +10,10 @@ export default async function ResetPasswordPage() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="text-xs font-bold text-accent tracking-widest uppercase mb-4">
+          <div className="text-xs font-medium text-muted mb-4">
             Nexus
           </div>
-          <h1 className="text-2xl font-bold text-foreground mb-2">
+          <h1 className="text-2xl font-semibold text-foreground mb-2">
             {user.mustResetPassword ? "Set Your Password" : "Change Password"}
           </h1>
           <p className="text-muted text-sm">

@@ -267,31 +267,31 @@ export function FilePreviewModal({
       {allFiles && hasPrev && (
         <button
           onClick={goPrev}
-          className="absolute left-4 top-1/2 -translate-y-1/2 z-60 rounded-full bg-[#262939]/90 p-2.5 shadow-lg hover:bg-[#262939] transition-colors border border-[rgba(0,255,255,0.1)]"
+          className="absolute left-4 top-1/2 -translate-y-1/2 z-60 rounded-full bg-[#262939]/90 p-2.5 shadow-lg hover:bg-[#262939] transition-colors border border-[rgba(255,255,255,0.08)]"
           title="Previous file"
         >
-          <ChevronLeft className="h-5 w-5 text-[#bbc9cf]" />
+          <ChevronLeft className="h-5 w-5 text-[#9aa3b8]" />
         </button>
       )}
       {allFiles && hasNext && (
         <button
           onClick={goNext}
-          className="absolute right-4 top-1/2 -translate-y-1/2 z-60 rounded-full bg-[#262939]/90 p-2.5 shadow-lg hover:bg-[#262939] transition-colors border border-[rgba(0,255,255,0.1)]"
+          className="absolute right-4 top-1/2 -translate-y-1/2 z-60 rounded-full bg-[#262939]/90 p-2.5 shadow-lg hover:bg-[#262939] transition-colors border border-[rgba(255,255,255,0.08)]"
           title="Next file"
         >
-          <ChevronRight className="h-5 w-5 text-[#bbc9cf]" />
+          <ChevronRight className="h-5 w-5 text-[#9aa3b8]" />
         </button>
       )}
 
       {/* Modal container */}
-      <div className="relative flex h-full max-h-[90vh] w-full max-w-5xl mx-auto my-auto flex-col rounded-2xl bg-[#1b1f2e] shadow-2xl overflow-hidden border border-[rgba(0,255,255,0.1)]">
+      <div className="relative flex h-full max-h-[90vh] w-full max-w-5xl mx-auto my-auto flex-col rounded-2xl bg-[#1b1f2e] shadow-2xl overflow-hidden border border-[rgba(255,255,255,0.08)]">
         {/* Header */}
-        <div className="bg-[#1b1f2e] border-b border-[rgba(0,255,255,0.1)] px-6 py-3 flex items-center justify-between shrink-0">
+        <div className="bg-[#1b1f2e] border-b border-[rgba(255,255,255,0.08)] px-6 py-3 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <FileText className="h-5 w-5 text-[#00d2ff] shrink-0" />
             <div className="min-w-0">
               <h2 className="font-medium text-[#dfe1f6] text-sm truncate">{file.name}</h2>
-              <div className="flex items-center gap-3 text-xs text-[#bbc9cf] mt-0.5">
+              <div className="flex items-center gap-3 text-xs text-[#9aa3b8] mt-0.5">
                 <span>{formatFileSize(file.size)}</span>
                 <span>·</span>
                 <span>Modified {formatDistanceToNow(new Date(file.updatedAt), { addSuffix: true })}</span>
@@ -307,28 +307,28 @@ export function FilePreviewModal({
           <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
             {/* Zoom controls for images */}
             {previewType === "image" && !loading && !error && previewUrl && (
-              <div className="flex items-center gap-1 rounded-md border border-[rgba(0,255,255,0.1)] p-0.5 mr-1">
+              <div className="flex items-center gap-1 rounded-md border border-[rgba(255,255,255,0.08)] p-0.5 mr-1">
                 <button
                   onClick={handleZoomOut}
                   title="Zoom out"
-                  className="p-1.5 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-md transition-colors"
+                  className="p-1.5 text-[#9aa3b8] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-md transition-colors"
                 >
                   <ZoomOut className="h-3.5 w-3.5" />
                 </button>
-                <span className="text-xs text-[#bbc9cf] w-10 text-center">
+                <span className="text-xs text-[#9aa3b8] w-10 text-center">
                   {Math.round(imgState.scale * 100)}%
                 </span>
                 <button
                   onClick={handleZoomIn}
                   title="Zoom in"
-                  className="p-1.5 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-md transition-colors"
+                  className="p-1.5 text-[#9aa3b8] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-md transition-colors"
                 >
                   <ZoomIn className="h-3.5 w-3.5" />
                 </button>
                 <button
                   onClick={handleZoomReset}
                   title="Reset zoom"
-                  className="p-1.5 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-md transition-colors"
+                  className="p-1.5 text-[#9aa3b8] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-md transition-colors"
                 >
                   <RotateCcw className="h-3.5 w-3.5" />
                 </button>
@@ -337,7 +337,7 @@ export function FilePreviewModal({
             <button
               onClick={onShowVersions}
               title="Version history"
-              className="bg-[#1b1f2e] text-[#bbc9cf] hover:bg-[#262939] border border-[rgba(0,255,255,0.1)] rounded-md px-3 py-1.5 text-sm font-medium transition-colors flex items-center gap-1.5"
+              className="bg-[#1b1f2e] text-[#9aa3b8] hover:bg-[#262939] border border-[rgba(255,255,255,0.08)] rounded-md px-3 py-1.5 text-sm font-medium transition-colors flex items-center gap-1.5"
             >
               <History className="h-3.5 w-3.5" />
               History
@@ -346,7 +346,7 @@ export function FilePreviewModal({
               <button
                 onClick={onShare}
                 title="Share"
-                className="bg-[#1b1f2e] text-[#bbc9cf] hover:bg-[#262939] border border-[rgba(0,255,255,0.1)] rounded-md px-3 py-1.5 text-sm font-medium transition-colors flex items-center gap-1.5"
+                className="bg-[#1b1f2e] text-[#9aa3b8] hover:bg-[#262939] border border-[rgba(255,255,255,0.08)] rounded-md px-3 py-1.5 text-sm font-medium transition-colors flex items-center gap-1.5"
               >
                 <Share2 className="h-3.5 w-3.5" />
                 Share
@@ -373,7 +373,7 @@ export function FilePreviewModal({
             <button
               onClick={onClose}
               title="Close"
-              className="p-2 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-md transition-colors ml-1"
+              className="p-2 text-[#9aa3b8] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-md transition-colors ml-1"
             >
               <X className="h-5 w-5" />
             </button>
@@ -387,8 +387,8 @@ export function FilePreviewModal({
               <Loader2 className="h-8 w-8 animate-spin text-[#00d2ff]" />
             </div>
           ) : error ? (
-            <div className="flex h-full flex-col items-center justify-center gap-3 text-[#bbc9cf]">
-              <AlertCircle className="h-12 w-12 text-[#bbc9cf]" />
+            <div className="flex h-full flex-col items-center justify-center gap-3 text-[#9aa3b8]">
+              <AlertCircle className="h-12 w-12 text-[#9aa3b8]" />
               <p className="text-sm">{error}</p>
               <button
                 onClick={onDownload}
@@ -439,7 +439,7 @@ export function FilePreviewModal({
             </div>
           ) : previewType === "audio" && previewUrl ? (
             <div className="flex h-full items-center justify-center">
-              <div className="w-full max-w-lg rounded-2xl bg-[#1b1f2e] p-8 shadow-md text-center border border-[rgba(0,255,255,0.1)]">
+              <div className="w-full max-w-lg rounded-2xl bg-[#1b1f2e] p-8 shadow-md text-center border border-[rgba(255,255,255,0.08)]">
                 <File className="h-16 w-16 text-[#00d2ff] mx-auto mb-4" />
                 <p className="text-sm font-medium text-[#dfe1f6] mb-4">{file.name}</p>
                 <audio src={previewUrl} controls className="w-full">
@@ -449,14 +449,14 @@ export function FilePreviewModal({
             </div>
           ) : previewType === "csv" && csvData ? (
             <div className="h-full overflow-auto w-full">
-              <div className="rounded-lg border border-[rgba(0,255,255,0.1)] bg-[#1b1f2e] overflow-auto shadow-2xl">
+              <div className="rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#1b1f2e] overflow-auto shadow-2xl">
                 <table className="text-sm w-full">
                   <thead>
-                    <tr className="border-b border-[rgba(0,255,255,0.1)] bg-[#0f1321]">
+                    <tr className="border-b border-[rgba(255,255,255,0.08)] bg-[#0f1321]">
                       {csvData[0]?.map((cell, i) => (
                         <th
                           key={i}
-                          className="py-2.5 px-4 text-left font-semibold text-[#dfe1f6] whitespace-nowrap text-xs uppercase tracking-wider"
+                          className="py-2.5 px-4 text-left font-semibold text-[#dfe1f6] whitespace-nowrap text-xs"
                         >
                           {cell}
                         </th>
@@ -465,9 +465,9 @@ export function FilePreviewModal({
                   </thead>
                   <tbody>
                     {csvData.slice(1).map((row, ri) => (
-                      <tr key={ri} className="border-b border-[rgba(0,255,255,0.1)] hover:bg-[#0f1321] transition-colors">
+                      <tr key={ri} className="border-b border-[rgba(255,255,255,0.08)] hover:bg-[#0f1321] transition-colors">
                         {row.map((cell, ci) => (
-                          <td key={ci} className="py-2 px-4 text-[#bbc9cf] whitespace-nowrap text-sm">
+                          <td key={ci} className="py-2 px-4 text-[#9aa3b8] whitespace-nowrap text-sm">
                             {cell}
                           </td>
                         ))}
@@ -480,7 +480,7 @@ export function FilePreviewModal({
           ) : previewType === "text" && textContent !== null ? (
             <div className="h-full overflow-auto w-full">
               <pre
-                className="rounded-lg bg-[#1b1f2e] text-[#dfe1f6] p-5 text-xs leading-relaxed overflow-auto font-mono whitespace-pre-wrap break-words shadow-2xl border border-[rgba(0,255,255,0.1)]"
+                className="rounded-lg bg-[#1b1f2e] text-[#dfe1f6] p-5 text-xs leading-relaxed overflow-auto font-mono whitespace-pre-wrap break-words shadow-2xl border border-[rgba(255,255,255,0.08)]"
                 style={{
                   tabSize: 2,
                   minHeight: "300px",
@@ -491,10 +491,10 @@ export function FilePreviewModal({
             </div>
           ) : (
             // Unsupported or no URL
-            <div className="flex h-full flex-col items-center justify-center gap-4 text-[#bbc9cf]">
-              <File className="h-16 w-16 text-[#bbc9cf]" />
+            <div className="flex h-full flex-col items-center justify-center gap-4 text-[#9aa3b8]">
+              <File className="h-16 w-16 text-[#9aa3b8]" />
               <p className="text-base font-medium text-[#dfe1f6]">Preview not available</p>
-              <p className="text-sm text-[#bbc9cf]">{file.mimeType}</p>
+              <p className="text-sm text-[#9aa3b8]">{file.mimeType}</p>
               <button
                 onClick={onDownload}
                 className="bg-[#00d2ff] text-[#003543] hover:opacity-90 rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2 transition-opacity"

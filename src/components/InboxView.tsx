@@ -97,7 +97,7 @@ function SenderAvatar({ member, email, size = 8, onClick }: { member?: Workspace
     );
   }
   return (
-    <div className={`${cls} bg-[#00d2ff]/10 text-[#00d2ff] flex items-center justify-center font-bold text-sm ${onClick ? wrap : ""}`} onClick={onClick}>
+    <div className={`${cls} bg-[#00d2ff]/10 text-[#00d2ff] flex items-center justify-center font-semibold text-sm ${onClick ? wrap : ""}`} onClick={onClick}>
       {label}
     </div>
   );
@@ -162,8 +162,8 @@ function sanitizeHtml(html: string): string {
 const PRIORITY_CONFIG: Record<ThreadPriority, { label: string; color: string; dot: string }> = {
   URGENT: { label: "Urgent", color: "text-[#ff4d6d]",   dot: "bg-[#ff4d6d]" },
   HIGH:   { label: "High",   color: "text-amber-400",    dot: "bg-amber-400" },
-  NORMAL: { label: "Normal", color: "text-[#bbc9cf]",    dot: "bg-[#bbc9cf]" },
-  LOW:    { label: "Low",    color: "text-[#3c494e]",    dot: "bg-[#3c494e]" },
+  NORMAL: { label: "Normal", color: "text-[#9aa3b8]",    dot: "bg-[#9aa3b8]" },
+  LOW:    { label: "Low",    color: "text-[#262b3a]",    dot: "bg-[#262b3a]" },
 };
 
 function PriorityBadge({ priority }: { priority: ThreadPriority }) {
@@ -178,12 +178,12 @@ function SlaIndicator({ deadline }: { deadline: string }) {
   const soonMs = 2 * 60 * 60 * 1000;
   const soon = !overdue && (d.getTime() - Date.now()) < soonMs;
   if (overdue) return (
-    <span className="text-[10px] font-bold text-[#ff4d6d] flex items-center gap-0.5">
+    <span className="text-[10px] font-semibold text-[#ff4d6d] flex items-center gap-0.5">
       <Zap className="w-2.5 h-2.5" />SLA
     </span>
   );
   if (soon) return (
-    <span className="text-[10px] font-bold text-amber-400 flex items-center gap-0.5">
+    <span className="text-[10px] font-semibold text-amber-400 flex items-center gap-0.5">
       <Clock className="w-2.5 h-2.5" />SLA
     </span>
   );
@@ -209,10 +209,10 @@ function getThreatLevel(externalCount: number, urgentCount: number): ThreatLevel
 }
 
 const THREAT_CONFIG: Record<ThreatLevel, { label: string; color: string; bg: string; border: string; Icon: React.ElementType }> = {
-  secure:   { label: "SECURE",   color: "text-[#06d6a0]", bg: "bg-[#06d6a0]/10", border: "border-[#06d6a0]/20", Icon: ShieldCheck },
-  caution:  { label: "CAUTION",  color: "text-[#ffd166]", bg: "bg-[#ffd166]/10", border: "border-[#ffd166]/20", Icon: Shield      },
-  elevated: { label: "ELEVATED", color: "text-[#ff9f43]", bg: "bg-[#ff9f43]/10", border: "border-[#ff9f43]/20", Icon: AlertTriangle },
-  critical: { label: "CRITICAL", color: "text-[#ff4d6d]", bg: "bg-[#ff4d6d]/10", border: "border-[#ff4d6d]/20", Icon: ShieldX     },
+  secure:   { label: "Secure",   color: "text-[#06d6a0]", bg: "bg-transparent",   border: "border-[rgba(255,255,255,0.06)]", Icon: ShieldCheck },
+  caution:  { label: "Caution",  color: "text-[#ffd166]", bg: "bg-[#ffd166]/[0.04]", border: "border-[#ffd166]/15", Icon: Shield      },
+  elevated: { label: "Elevated", color: "text-[#ff9f43]", bg: "bg-[#ff9f43]/[0.05]", border: "border-[#ff9f43]/15", Icon: AlertTriangle },
+  critical: { label: "Critical", color: "text-[#ff4d6d]", bg: "bg-[#ff4d6d]/[0.06]", border: "border-[#ff4d6d]/20", Icon: ShieldX     },
 };
 
 function SecurityPostureBar({ threads, totalScanned }: {
@@ -225,11 +225,11 @@ function SecurityPostureBar({ threads, totalScanned }: {
   const cfg           = THREAT_CONFIG[level];
 
   return (
-    <div className={`flex items-center gap-3 px-3 py-1.5 border-b ${cfg.border} ${cfg.bg} text-[10px] font-semibold tracking-widest`}>
+    <div className={`flex items-center gap-3 px-3 py-1.5 border-b ${cfg.border} ${cfg.bg} text-[11px] font-medium`}>
       <cfg.Icon className={`w-3 h-3 flex-shrink-0 ${cfg.color}`} />
       <span className={cfg.color}>{cfg.label}</span>
       <span className="w-px h-3 bg-current opacity-20" />
-      <span className="text-[#5c6b72] normal-case tracking-normal font-normal">{totalScanned} scanned</span>
+      <span className="text-[#5d6579] font-normal">{totalScanned} scanned</span>
       {externalCount > 0 && (
         <>
           <span className="w-px h-3 bg-current opacity-20" />
@@ -249,7 +249,7 @@ function SecurityPostureBar({ threads, totalScanned }: {
         </>
       )}
       <div className="flex-1" />
-      <span className="flex items-center gap-1 text-[#3c4f5a] normal-case tracking-normal font-normal">
+      <span className="flex items-center gap-1 text-[#454e63] font-normal">
         <Lock className="w-2.5 h-2.5" />
         SPF · DKIM · DMARC
       </span>
@@ -275,12 +275,12 @@ function SnoozeModal({ onClose, onSnooze }: {
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-72 bg-[#1b1f2e] border border-[rgba(0,255,255,0.12)] rounded-2xl shadow-2xl overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[rgba(0,255,255,0.08)] bg-[#0f1321]">
-          <div className="flex items-center gap-2 text-sm font-bold text-[#dfe1f6]">
+      <div className="relative z-10 w-72 bg-[#1b1f2e] border border-[rgba(255,255,255,0.09)] rounded-2xl shadow-2xl overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[rgba(255,255,255,0.06)] bg-[#0f1321]">
+          <div className="flex items-center gap-2 text-sm font-semibold text-[#dfe1f6]">
             <BellOff className="w-4 h-4 text-[#00d2ff]" /> Snooze until…
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] transition-colors">
+          <button onClick={onClose} className="p-1.5 rounded-lg text-[#9aa3b8] hover:bg-[#262939] hover:text-[#dfe1f6] transition-colors">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -296,7 +296,7 @@ function SnoozeModal({ onClose, onSnooze }: {
           ))}
           <button
             onClick={() => setCustom(v => !v)}
-            className="w-full text-left px-3 py-2.5 text-sm text-[#bbc9cf] hover:bg-[#262939] rounded-lg transition-colors flex items-center gap-2"
+            className="w-full text-left px-3 py-2.5 text-sm text-[#9aa3b8] hover:bg-[#262939] rounded-lg transition-colors flex items-center gap-2"
           >
             <Plus className="w-3.5 h-3.5" /> Custom time
           </button>
@@ -306,12 +306,12 @@ function SnoozeModal({ onClose, onSnooze }: {
                 type="datetime-local"
                 value={customVal}
                 onChange={e => setCustomVal(e.target.value)}
-                className="flex-1 bg-[#0f1321] border border-[rgba(0,255,255,0.12)] rounded-lg px-2.5 py-1.5 text-xs text-[#dfe1f6] focus:outline-none focus:ring-1 focus:ring-[#00d2ff]/40"
+                className="flex-1 bg-[#0f1321] border border-[rgba(255,255,255,0.09)] rounded-lg px-2.5 py-1.5 text-xs text-[#dfe1f6] focus:outline-none focus:ring-1 focus:ring-[#00d2ff]/40"
               />
               <button
                 onClick={() => { if (customVal) { onSnooze(new Date(customVal)); onClose(); } }}
                 disabled={!customVal}
-                className="bg-[#00d2ff] text-[#003543] px-3 rounded-lg text-xs font-bold disabled:opacity-40"
+                className="bg-[#00d2ff] text-[#003543] px-3 rounded-lg text-xs font-semibold disabled:opacity-40"
               >
                 Set
               </button>
@@ -352,15 +352,15 @@ function NewFolderModal({ onClose, onCreate }: {
     }
   };
 
-  const COLORS = ["#00d2ff","#00feb2","#ff4d6d","#a78bfa","#f59e0b","#3b82f6","#10b981","#ec4899"];
+  const COLORS = ["#00d2ff","#06d6a0","#ff4d6d","#a78bfa","#f59e0b","#3b82f6","#10b981","#ec4899"];
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-72 bg-[#1b1f2e] border border-[rgba(0,255,255,0.12)] rounded-2xl shadow-2xl overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[rgba(0,255,255,0.08)] bg-[#0f1321]">
-          <span className="text-sm font-bold text-[#dfe1f6]">New Folder</span>
-          <button onClick={onClose} className="p-1.5 rounded-lg text-[#bbc9cf] hover:bg-[#262939] transition-colors"><X className="w-4 h-4" /></button>
+      <div className="relative z-10 w-72 bg-[#1b1f2e] border border-[rgba(255,255,255,0.09)] rounded-2xl shadow-2xl overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[rgba(255,255,255,0.06)] bg-[#0f1321]">
+          <span className="text-sm font-semibold text-[#dfe1f6]">New Folder</span>
+          <button onClick={onClose} className="p-1.5 rounded-lg text-[#9aa3b8] hover:bg-[#262939] transition-colors"><X className="w-4 h-4" /></button>
         </div>
         <div className="p-4 space-y-4">
           <input
@@ -369,11 +369,11 @@ function NewFolderModal({ onClose, onCreate }: {
             value={name}
             onChange={e => setName(e.target.value)}
             onKeyDown={e => e.key === "Enter" && void handle()}
-            className="w-full bg-[#0f1321] border border-[rgba(0,255,255,0.12)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] focus:outline-none focus:ring-1 focus:ring-[#00d2ff]/40"
+            className="w-full bg-[#0f1321] border border-[rgba(255,255,255,0.09)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] focus:outline-none focus:ring-1 focus:ring-[#00d2ff]/40"
             autoFocus
           />
           <div>
-            <p className="text-xs text-[#bbc9cf] mb-2">Color</p>
+            <p className="text-xs text-[#9aa3b8] mb-2">Color</p>
             <div className="flex gap-2 flex-wrap">
               {COLORS.map(c => (
                 <button
@@ -388,7 +388,7 @@ function NewFolderModal({ onClose, onCreate }: {
           <button
             onClick={() => void handle()}
             disabled={!name.trim() || loading}
-            className="w-full bg-[#00d2ff] text-[#003543] py-2 rounded-lg text-sm font-bold disabled:opacity-40 flex items-center justify-center gap-2"
+            className="w-full bg-[#00d2ff] text-[#003543] py-2 rounded-lg text-sm font-semibold disabled:opacity-40 flex items-center justify-center gap-2"
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
             Create Folder
@@ -473,40 +473,40 @@ function RulesModal({ customFolders, onClose }: {
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-lg bg-[#1b1f2e] border border-[rgba(0,255,255,0.12)] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(0,255,255,0.08)] bg-[#0f1321] flex-shrink-0">
-          <div className="flex items-center gap-2 text-sm font-bold text-[#dfe1f6]">
+      <div className="relative z-10 w-full max-w-lg bg-[#1b1f2e] border border-[rgba(255,255,255,0.09)] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(255,255,255,0.06)] bg-[#0f1321] flex-shrink-0">
+          <div className="flex items-center gap-2 text-sm font-semibold text-[#dfe1f6]">
             <Zap className="w-4 h-4 text-[#00d2ff]" /> Email Rules
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowForm(v => !v)}
-              className="flex items-center gap-1.5 bg-[#00d2ff]/10 text-[#00d2ff] border border-[rgba(0,255,255,0.2)] px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-[#00d2ff]/20 transition-colors"
+              className="flex items-center gap-1.5 bg-[#00d2ff]/10 text-[#00d2ff] border border-[rgba(255,255,255,0.14)] px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-[#00d2ff]/20 transition-colors"
             >
               <Plus className="w-3.5 h-3.5" /> New Rule
             </button>
-            <button onClick={onClose} className="p-1.5 rounded-lg text-[#bbc9cf] hover:bg-[#262939] transition-colors">
+            <button onClick={onClose} className="p-1.5 rounded-lg text-[#9aa3b8] hover:bg-[#262939] transition-colors">
               <X className="w-4 h-4" />
             </button>
           </div>
         </div>
         <div className="overflow-y-auto flex-1">
           {showForm && (
-            <div className="p-5 border-b border-[rgba(0,255,255,0.08)] space-y-3 bg-[#151928]">
-              <p className="text-xs font-semibold text-[#00d2ff] uppercase tracking-wider">New Rule</p>
+            <div className="p-5 border-b border-[rgba(255,255,255,0.06)] space-y-3 bg-[#151928]">
+              <p className="text-[13px] font-medium text-[#dfe1f6]">New rule</p>
               <input
                 type="text"
                 placeholder="Rule name (e.g. Move Slack emails)"
                 value={name}
                 onChange={e => setName(e.target.value)}
-                className="w-full bg-[#0f1321] border border-[rgba(0,255,255,0.12)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] focus:outline-none focus:ring-1 focus:ring-[#00d2ff]/40 placeholder:text-[#3c494e]"
+                className="w-full bg-[#0f1321] border border-[rgba(255,255,255,0.09)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] focus:outline-none focus:ring-1 focus:ring-[#00d2ff]/40 placeholder:text-[#262b3a]"
                 autoFocus
               />
               <div className="grid grid-cols-3 gap-2">
                 <select
                   value={field}
                   onChange={e => setField(e.target.value as typeof field)}
-                  className="bg-[#0f1321] border border-[rgba(0,255,255,0.12)] rounded-lg px-2 py-2 text-sm text-[#dfe1f6] focus:outline-none focus:ring-1 focus:ring-[#00d2ff]/40"
+                  className="bg-[#0f1321] border border-[rgba(255,255,255,0.09)] rounded-lg px-2 py-2 text-sm text-[#dfe1f6] focus:outline-none focus:ring-1 focus:ring-[#00d2ff]/40"
                 >
                   <option value="from">From</option>
                   <option value="to">To</option>
@@ -516,7 +516,7 @@ function RulesModal({ customFolders, onClose }: {
                 <select
                   value={op}
                   onChange={e => setOp(e.target.value as typeof op)}
-                  className="bg-[#0f1321] border border-[rgba(0,255,255,0.12)] rounded-lg px-2 py-2 text-sm text-[#dfe1f6] focus:outline-none focus:ring-1 focus:ring-[#00d2ff]/40"
+                  className="bg-[#0f1321] border border-[rgba(255,255,255,0.09)] rounded-lg px-2 py-2 text-sm text-[#dfe1f6] focus:outline-none focus:ring-1 focus:ring-[#00d2ff]/40"
                 >
                   <option value="contains">contains</option>
                   <option value="equals">equals</option>
@@ -529,16 +529,16 @@ function RulesModal({ customFolders, onClose }: {
                   placeholder="Value"
                   value={condValue}
                   onChange={e => setCondValue(e.target.value)}
-                  className="bg-[#0f1321] border border-[rgba(0,255,255,0.12)] rounded-lg px-2 py-2 text-sm text-[#dfe1f6] focus:outline-none focus:ring-1 focus:ring-[#00d2ff]/40 placeholder:text-[#3c494e]"
+                  className="bg-[#0f1321] border border-[rgba(255,255,255,0.09)] rounded-lg px-2 py-2 text-sm text-[#dfe1f6] focus:outline-none focus:ring-1 focus:ring-[#00d2ff]/40 placeholder:text-[#262b3a]"
                 />
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <p className="text-xs text-[#bbc9cf] mb-1">Action</p>
+                  <p className="text-xs text-[#9aa3b8] mb-1">Action</p>
                   <select
                     value={action}
                     onChange={e => setAction(e.target.value as typeof action)}
-                    className="w-full bg-[#0f1321] border border-[rgba(0,255,255,0.12)] rounded-lg px-2 py-2 text-sm text-[#dfe1f6] focus:outline-none focus:ring-1 focus:ring-[#00d2ff]/40"
+                    className="w-full bg-[#0f1321] border border-[rgba(255,255,255,0.09)] rounded-lg px-2 py-2 text-sm text-[#dfe1f6] focus:outline-none focus:ring-1 focus:ring-[#00d2ff]/40"
                   >
                     <option value="MOVE_FOLDER">Move to folder</option>
                     <option value="MARK_READ">Mark as read</option>
@@ -549,11 +549,11 @@ function RulesModal({ customFolders, onClose }: {
                 </div>
                 {action === "MOVE_FOLDER" && (
                   <div>
-                    <p className="text-xs text-[#bbc9cf] mb-1">Folder</p>
+                    <p className="text-xs text-[#9aa3b8] mb-1">Folder</p>
                     <select
                       value={folderId}
                       onChange={e => setFolderId(e.target.value)}
-                      className="w-full bg-[#0f1321] border border-[rgba(0,255,255,0.12)] rounded-lg px-2 py-2 text-sm text-[#dfe1f6] focus:outline-none focus:ring-1 focus:ring-[#00d2ff]/40"
+                      className="w-full bg-[#0f1321] border border-[rgba(255,255,255,0.09)] rounded-lg px-2 py-2 text-sm text-[#dfe1f6] focus:outline-none focus:ring-1 focus:ring-[#00d2ff]/40"
                     >
                       <option value="">Pick folder…</option>
                       {customFolders.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
@@ -565,14 +565,14 @@ function RulesModal({ customFolders, onClose }: {
                 <button
                   onClick={() => void handleSave()}
                   disabled={!name.trim() || !condValue.trim() || saving}
-                  className="flex-1 bg-[#00d2ff] text-[#003543] py-2 rounded-lg text-sm font-bold disabled:opacity-40 flex items-center justify-center gap-2"
+                  className="flex-1 bg-[#00d2ff] text-[#003543] py-2 rounded-lg text-sm font-semibold disabled:opacity-40 flex items-center justify-center gap-2"
                 >
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                   Save Rule
                 </button>
                 <button
                   onClick={() => setShowForm(false)}
-                  className="px-4 py-2 text-sm text-[#bbc9cf] hover:bg-[#262939] rounded-lg transition-colors"
+                  className="px-4 py-2 text-sm text-[#9aa3b8] hover:bg-[#262939] rounded-lg transition-colors"
                 >
                   Cancel
                 </button>
@@ -580,21 +580,21 @@ function RulesModal({ customFolders, onClose }: {
             </div>
           )}
           {loading ? (
-            <div className="p-8 text-center text-sm text-[#bbc9cf]">Loading rules…</div>
+            <div className="p-8 text-center text-sm text-[#9aa3b8]">Loading rules…</div>
           ) : rules.length === 0 && !showForm ? (
             <div className="p-8 text-center">
-              <Zap className="w-8 h-8 text-[#3c494e] mx-auto mb-3" />
-              <p className="text-sm text-[#bbc9cf] mb-1">No rules yet</p>
-              <p className="text-xs text-[#3c494e]">Create a rule to automatically sort incoming emails into folders.</p>
+              <Zap className="w-8 h-8 text-[#262b3a] mx-auto mb-3" />
+              <p className="text-sm text-[#9aa3b8] mb-1">No rules yet</p>
+              <p className="text-xs text-[#262b3a]">Create a rule to automatically sort incoming emails into folders.</p>
               <button
                 onClick={() => setShowForm(true)}
-                className="mt-4 bg-[#00d2ff]/10 text-[#00d2ff] border border-[rgba(0,255,255,0.2)] px-4 py-2 rounded-lg text-xs font-medium hover:bg-[#00d2ff]/20 transition-colors"
+                className="mt-4 bg-[#00d2ff]/10 text-[#00d2ff] border border-[rgba(255,255,255,0.14)] px-4 py-2 rounded-lg text-xs font-medium hover:bg-[#00d2ff]/20 transition-colors"
               >
                 Create your first rule
               </button>
             </div>
           ) : (
-            <div className="divide-y divide-[rgba(0,255,255,0.04)]">
+            <div className="divide-y divide-[rgba(255,255,255,0.04)]">
               {rules.map(rule => {
                 const cond = rule.conditions[0];
                 const folderName = rule.action === "MOVE_FOLDER"
@@ -606,8 +606,8 @@ function RulesModal({ customFolders, onClose }: {
                       <p className="text-sm font-semibold text-[#dfe1f6] truncate">{rule.name}</p>
                       {cond && (
                         <p className="text-xs text-[#7a9199] mt-0.5">
-                          When <span className="text-[#bbc9cf]">{FIELD_LABELS[cond.field] ?? cond.field}</span>{" "}
-                          <span className="text-[#bbc9cf]">{OP_LABELS[cond.op] ?? cond.op}</span>{" "}
+                          When <span className="text-[#9aa3b8]">{FIELD_LABELS[cond.field] ?? cond.field}</span>{" "}
+                          <span className="text-[#9aa3b8]">{OP_LABELS[cond.op] ?? cond.op}</span>{" "}
                           <span className="text-[#00d2ff] font-medium">&quot;{cond.value}&quot;</span>
                         </p>
                       )}
@@ -619,13 +619,13 @@ function RulesModal({ customFolders, onClose }: {
                       <button
                         onClick={() => void handleToggle(rule)}
                         title={rule.isActive ? "Disable rule" : "Enable rule"}
-                        className={`relative w-9 h-5 rounded-full transition-colors ${rule.isActive ? "bg-[#00d2ff]" : "bg-[#3c494e]"}`}
+                        className={`relative w-9 h-5 rounded-full transition-colors ${rule.isActive ? "bg-[#00d2ff]" : "bg-[#262b3a]"}`}
                       >
                         <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${rule.isActive ? "translate-x-4" : "translate-x-0.5"}`} />
                       </button>
                       <button
                         onClick={() => void handleDelete(rule.id)}
-                        className="p-1.5 rounded-lg text-[#bbc9cf] hover:bg-[#ff4d6d]/10 hover:text-[#ff4d6d] transition-colors"
+                        className="p-1.5 rounded-lg text-[#9aa3b8] hover:bg-[#ff4d6d]/10 hover:text-[#ff4d6d] transition-colors"
                         title="Delete rule"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -974,36 +974,36 @@ export function InboxView({ userRole, initialThreads }: {
     <div className="flex h-[calc(100vh-44px)] bg-[#0a0e1a] overflow-hidden">
 
       {/* ── Left Sidebar ── */}
-      <div className="hidden md:flex w-52 flex-shrink-0 flex-col bg-[#0d1120] border-r border-[rgba(0,255,255,0.06)] overflow-y-auto">
+      <div className="hidden md:flex w-52 flex-shrink-0 flex-col bg-[#0d1120] border-r border-[rgba(255,255,255,0.05)] overflow-y-auto">
         {/* System folders */}
         <div className="p-3 pt-4">
-          <p className="px-2.5 mb-1.5 text-[10px] font-semibold text-[#3c4f5a] uppercase tracking-widest">Mailbox</p>
+          <p className="px-2.5 mb-1.5 text-[11px] font-medium text-[#5d6579]">Mailbox</p>
           {SYSTEM_FOLDERS.map(({ key, label, Icon }) => {
             const isActive = activeFolder === key && !activeCustomFolder;
             return (
               <button
                 key={key}
                 onClick={() => setSystemFolder(key)}
-                className={`flex w-full items-center gap-2.5 px-2.5 py-1.5 text-[13px] font-medium rounded-lg transition-all duration-100 ${
+                className={`flex w-full items-center gap-2.5 px-2.5 py-1.5 text-[13px] font-medium rounded-md transition-colors duration-100 ${
                   isActive
-                    ? "bg-[#00d2ff]/12 text-[#00d2ff] border-l-2 border-[#00d2ff] pl-[9px]"
-                    : "text-[#8fa3ac] hover:bg-[#161b2e] hover:text-[#c8d8de]"
+                    ? "bg-white/[0.07] text-[#eceef8]"
+                    : "text-[#8b93a7] hover:bg-white/[0.04] hover:text-[#dfe1f6]"
                 }`}
               >
                 <Icon className="h-4 w-4 flex-shrink-0" />
                 <span className="flex-1 text-left">{label}</span>
                 {key === "inbox" && unreadCount > 0 && (
-                  <span className="bg-[#00d2ff] text-[#003543] text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                  <span className="bg-[#00d2ff] text-[#003543] text-[10px] font-semibold px-1.5 py-0.5 rounded-full leading-none">
                     {unreadCount > 99 ? "99+" : unreadCount}
                   </span>
                 )}
                 {key === "snoozed" && snoozedCount > 0 && (
-                  <span className="bg-[#3c494e] text-[#dfe1f6] text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                  <span className="bg-[#262b3a] text-[#dfe1f6] text-[10px] font-semibold px-1.5 py-0.5 rounded-full leading-none">
                     {snoozedCount}
                   </span>
                 )}
                 {key === "drafts" && drafts.length > 0 && (
-                  <span className="bg-[#3c494e] text-[#dfe1f6] text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                  <span className="bg-[#262b3a] text-[#dfe1f6] text-[10px] font-semibold px-1.5 py-0.5 rounded-full leading-none">
                     {drafts.length}
                   </span>
                 )}
@@ -1013,12 +1013,12 @@ export function InboxView({ userRole, initialThreads }: {
         </div>
 
         {/* Custom folders */}
-        <div className="mt-1 px-3 border-t border-[rgba(0,255,255,0.05)] pt-3 flex-1">
+        <div className="mt-1 px-3 border-t border-[rgba(255,255,255,0.04)] pt-3 flex-1">
           <div className="flex items-center justify-between px-2.5 mb-1.5">
-            <p className="text-[10px] font-semibold text-[#3c4f5a] uppercase tracking-widest">Folders</p>
+            <p className="text-[11px] font-medium text-[#5d6579]">Folders</p>
             <button
               onClick={() => setShowNewFolder(true)}
-              className="p-0.5 rounded text-[#bbc9cf] hover:text-[#00d2ff] hover:bg-[#262939] transition-colors"
+              className="p-0.5 rounded text-[#9aa3b8] hover:text-[#00d2ff] hover:bg-[#262939] transition-colors"
               title="New folder"
             >
               <FolderPlus className="w-3.5 h-3.5" />
@@ -1027,7 +1027,7 @@ export function InboxView({ userRole, initialThreads }: {
           {customFolders.length === 0 ? (
             <button
               onClick={() => setShowNewFolder(true)}
-              className="w-full text-left px-2.5 py-2 text-xs text-[#3c494e] hover:text-[#bbc9cf] rounded-lg transition-colors"
+              className="w-full text-left px-2.5 py-2 text-xs text-[#262b3a] hover:text-[#9aa3b8] rounded-lg transition-colors"
             >
               + Create a folder
             </button>
@@ -1036,16 +1036,16 @@ export function InboxView({ userRole, initialThreads }: {
               <button
                 key={folder.id}
                 onClick={() => { setActiveCustomFolder(folder.id); setActiveFolder("inbox"); }}
-                className={`flex w-full items-center gap-2.5 px-2.5 py-2 text-sm font-medium transition-colors rounded-lg ${
+                className={`flex w-full items-center gap-2.5 px-2.5 py-2 text-sm font-medium transition-colors rounded-md ${
                   activeCustomFolder === folder.id
-                    ? "bg-[#00d2ff]/10 text-[#00d2ff]"
-                    : "text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6]"
+                    ? "bg-white/[0.07] text-[#eceef8]"
+                    : "text-[#9aa3b8] hover:bg-white/[0.04] hover:text-[#dfe1f6]"
                 }`}
               >
-                <Folder className="h-3.5 w-3.5 flex-shrink-0" style={{ color: folder.color ?? "#bbc9cf" }} />
+                <Folder className="h-3.5 w-3.5 flex-shrink-0" style={{ color: folder.color ?? "#9aa3b8" }} />
                 <span className="flex-1 text-left truncate">{folder.name}</span>
                 {(folder._count?.threads ?? 0) > 0 && (
-                  <span className="text-[10px] text-[#bbc9cf]">{folder._count?.threads}</span>
+                  <span className="text-[10px] text-[#9aa3b8]">{folder._count?.threads}</span>
                 )}
               </button>
             ))
@@ -1053,8 +1053,8 @@ export function InboxView({ userRole, initialThreads }: {
         </div>
 
         {/* Labels */}
-        <div className="px-3 border-t border-[rgba(0,255,255,0.05)] pt-3 pb-3">
-          <p className="px-2.5 mb-1.5 text-[10px] font-semibold text-[#3c4f5a] uppercase tracking-widest">Labels</p>
+        <div className="px-3 border-t border-[rgba(255,255,255,0.04)] pt-3 pb-3">
+          <p className="px-2.5 mb-1.5 text-[11px] font-medium text-[#5d6579]">Labels</p>
           {[
             { label: "Work",     color: "bg-blue-500"  },
             { label: "Personal", color: "bg-green-500" },
@@ -1063,7 +1063,7 @@ export function InboxView({ userRole, initialThreads }: {
           ].map(({ label, color }) => (
             <button
               key={label}
-              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] transition-colors"
+              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm text-[#9aa3b8] hover:bg-[#262939] hover:text-[#dfe1f6] transition-colors"
             >
               <Tag className="h-3.5 w-3.5 flex-shrink-0" />
               <span className="flex-1 text-left">{label}</span>
@@ -1073,7 +1073,7 @@ export function InboxView({ userRole, initialThreads }: {
         </div>
 
         {/* Rules */}
-        <div className="px-3 border-t border-[rgba(0,255,255,0.05)] pt-3 pb-4">
+        <div className="px-3 border-t border-[rgba(255,255,255,0.04)] pt-3 pb-4">
           <button
             onClick={() => setShowRules(true)}
             className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium text-[#8fa3ac] hover:bg-[#161b2e] hover:text-[#c8d8de] transition-colors"
@@ -1085,8 +1085,8 @@ export function InboxView({ userRole, initialThreads }: {
       </div>
 
       {/* ── Thread List ── */}
-      <div className={`${selectedThreadId ? "hidden md:flex" : "flex"} w-full md:w-[300px] flex-shrink-0 bg-[#0f1321] border-r border-[rgba(0,255,255,0.06)] flex-col`}>
-        <div className="px-3 pt-3 pb-2 border-b border-[rgba(0,255,255,0.06)] space-y-2">
+      <div className={`${selectedThreadId ? "hidden md:flex" : "flex"} w-full md:w-[300px] flex-shrink-0 bg-[#0f1321] border-r border-[rgba(255,255,255,0.05)] flex-col`}>
+        <div className="px-3 pt-3 pb-2 border-b border-[rgba(255,255,255,0.05)] space-y-2">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-[#c8d8de] flex items-center gap-1.5">
               {activeCustomFolder ? (
@@ -1106,7 +1106,7 @@ export function InboxView({ userRole, initialThreads }: {
               disabled={isRefreshing}
               className="p-1.5 hover:bg-[#262939] rounded-lg transition-colors disabled:opacity-50"
             >
-              <RefreshCw className={`w-3.5 h-3.5 text-[#bbc9cf] ${isRefreshing ? "animate-spin" : ""}`} />
+              <RefreshCw className={`w-3.5 h-3.5 text-[#9aa3b8] ${isRefreshing ? "animate-spin" : ""}`} />
             </button>
           </div>
 
@@ -1118,8 +1118,8 @@ export function InboxView({ userRole, initialThreads }: {
                   onClick={() => setActiveCategory(cat)}
                   className={`transition-colors ${
                     activeCategory === cat
-                      ? "bg-[#00d2ff]/10 text-[#00d2ff] rounded-full border border-[rgba(0,255,255,0.08)] px-3 py-1 text-xs font-medium"
-                      : "bg-[#1b1f2e] text-[#bbc9cf] rounded-full border border-[rgba(0,255,255,0.08)] px-3 py-1 text-xs hover:bg-[#262939]"
+                      ? "bg-[#00d2ff]/10 text-[#00d2ff] rounded-full border border-[rgba(255,255,255,0.06)] px-3 py-1 text-xs font-medium"
+                      : "bg-[#1b1f2e] text-[#9aa3b8] rounded-full border border-[rgba(255,255,255,0.06)] px-3 py-1 text-xs hover:bg-[#262939]"
                   }`}
                 >
                   {cat}
@@ -1130,7 +1130,7 @@ export function InboxView({ userRole, initialThreads }: {
 
           {!isSpecialFolder && (
             <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#859399]" />
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#707a90]" />
               <input
                 type="text"
                 placeholder="Search…"
@@ -1148,29 +1148,29 @@ export function InboxView({ userRole, initialThreads }: {
         )}
 
         {/* Thread rows */}
-        <div className="flex-1 overflow-y-auto divide-y divide-[rgba(0,255,255,0.04)]">
+        <div className="flex-1 overflow-y-auto divide-y divide-[rgba(255,255,255,0.04)]">
 
           {/* ── Scheduled tab ── */}
           {activeFolder === "scheduled" ? (
             isScheduledLoading ? (
-              <div className="p-8 text-center text-sm text-[#bbc9cf]">Loading scheduled emails…</div>
+              <div className="p-8 text-center text-sm text-[#9aa3b8]">Loading scheduled emails…</div>
             ) : scheduledEmails.length === 0 ? (
-              <div className="p-8 text-center text-sm text-[#bbc9cf]">No scheduled emails.</div>
+              <div className="p-8 text-center text-sm text-[#9aa3b8]">No scheduled emails.</div>
             ) : (
               scheduledEmails.map(s => (
-                <div key={s.id} className="group p-3 hover:bg-[#171b2a] transition-colors border-b border-[rgba(0,255,255,0.08)]">
+                <div key={s.id} className="group p-3 hover:bg-[#171b2a] transition-colors border-b border-[rgba(255,255,255,0.06)]">
                   <div className="flex items-center gap-2 mb-1">
                     <CalendarClock className="w-3.5 h-3.5 text-[#00d2ff] flex-shrink-0" />
                     <span className="text-xs font-semibold text-[#dfe1f6] truncate flex-1">{s.subject}</span>
                     <button
                       onClick={() => void handleCancelScheduled(s.id)}
-                      className="hidden group-hover:flex p-1 rounded hover:bg-[#ff4d6d]/10 text-[#bbc9cf] hover:text-[#ff4d6d] transition-colors"
+                      className="hidden group-hover:flex p-1 rounded hover:bg-[#ff4d6d]/10 text-[#9aa3b8] hover:text-[#ff4d6d] transition-colors"
                       title="Cancel scheduled send"
                     >
                       <X className="w-3 h-3" />
                     </button>
                   </div>
-                  <p className="text-xs text-[#bbc9cf] truncate pl-5">To: {s.toAddresses.join(", ")}</p>
+                  <p className="text-xs text-[#9aa3b8] truncate pl-5">To: {s.toAddresses.join(", ")}</p>
                   <p className="text-[11px] text-[#00d2ff] pl-5 mt-0.5">
                     Sends {formatDistanceToNow(new Date(s.scheduledAt), { addSuffix: true })}
                   </p>
@@ -1181,27 +1181,27 @@ export function InboxView({ userRole, initialThreads }: {
           /* ── Drafts tab ── */
           ) : activeFolder === "drafts" ? (
             isDraftsLoading ? (
-              <div className="p-8 text-center text-sm text-[#bbc9cf]">Loading drafts…</div>
+              <div className="p-8 text-center text-sm text-[#9aa3b8]">Loading drafts…</div>
             ) : drafts.length === 0 ? (
-              <div className="p-8 text-center text-sm text-[#bbc9cf]">No drafts saved.</div>
+              <div className="p-8 text-center text-sm text-[#9aa3b8]">No drafts saved.</div>
             ) : (
               drafts.map(draft => (
                 <div
                   key={draft.id}
                   onClick={() => setEditingDraft(draft)}
-                  className="group relative p-3 cursor-pointer hover:bg-[#171b2a] transition-colors border-b border-[rgba(0,255,255,0.08)]"
+                  className="group relative p-3 cursor-pointer hover:bg-[#171b2a] transition-colors border-b border-[rgba(255,255,255,0.06)]"
                 >
                   <div className="flex items-center gap-2 mb-1 pr-8">
-                    <FileText className="w-3 h-3 text-[#bbc9cf] flex-shrink-0" />
+                    <FileText className="w-3 h-3 text-[#9aa3b8] flex-shrink-0" />
                     <span className="text-xs font-semibold text-[#dfe1f6] truncate">
                       {draft.subject || "(no subject)"}
                     </span>
-                    <span className="ml-auto text-xs text-[#bbc9cf] flex-shrink-0">
+                    <span className="ml-auto text-xs text-[#9aa3b8] flex-shrink-0">
                       {formatDistanceToNow(new Date(draft.savedAt), { addSuffix: true })}
                     </span>
                   </div>
-                  <p className="text-xs text-[#bbc9cf] truncate pl-5">{draft.to ? `To: ${draft.to}` : "(no recipient)"}</p>
-                  <p className="text-[11px] text-[#bbc9cf] truncate pl-5 mt-0.5">{draft.body?.slice(0, 80) || ""}</p>
+                  <p className="text-xs text-[#9aa3b8] truncate pl-5">{draft.to ? `To: ${draft.to}` : "(no recipient)"}</p>
+                  <p className="text-[11px] text-[#9aa3b8] truncate pl-5 mt-0.5">{draft.body?.slice(0, 80) || ""}</p>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -1210,7 +1210,7 @@ export function InboxView({ userRole, initialThreads }: {
                         toast.success("Draft deleted");
                       }).catch(() => toast.error("Failed to delete draft"));
                     }}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 hidden group-hover:flex p-1.5 rounded hover:bg-[#ff4d6d]/10 text-[#bbc9cf] hover:text-[#ff4d6d] transition-colors"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 hidden group-hover:flex p-1.5 rounded hover:bg-[#ff4d6d]/10 text-[#9aa3b8] hover:text-[#ff4d6d] transition-colors"
                     title="Delete draft"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -1222,19 +1222,19 @@ export function InboxView({ userRole, initialThreads }: {
           /* ── Sent tab ── */
           ) : activeFolder === "sent" ? (
             isSentLoading ? (
-              <div className="p-8 text-center text-sm text-[#bbc9cf]">Loading sent…</div>
+              <div className="p-8 text-center text-sm text-[#9aa3b8]">Loading sent…</div>
             ) : sentLogs.length === 0 ? (
-              <div className="p-8 text-center text-sm text-[#bbc9cf]">No sent emails yet.</div>
+              <div className="p-8 text-center text-sm text-[#9aa3b8]">No sent emails yet.</div>
             ) : (
               sentLogs.map(log => {
                 const statusColor = log.status === "DELIVERED" || log.status === "SENT"
-                  ? "text-[#00feb2]" : log.status === "FAILED" ? "text-[#ff4d6d]" : "text-amber-400";
+                  ? "text-[#06d6a0]" : log.status === "FAILED" ? "text-[#ff4d6d]" : "text-amber-400";
                 const displayName = log.contact?.name || log.recipient;
                 const member = memberMap[log.recipient.toLowerCase()];
                 return (
                   <div
                     key={log.id}
-                    className="p-3 hover:bg-[#171b2a] transition-colors cursor-pointer border-b border-[rgba(0,255,255,0.04)]"
+                    className="p-3 hover:bg-[#171b2a] transition-colors cursor-pointer border-b border-[rgba(255,255,255,0.04)]"
                     onClick={() => { if (log.isInternalThread && log.threadId) loadThreadDetail(log.threadId); }}
                   >
                     <div className="flex items-center gap-2 mb-1.5">
@@ -1251,13 +1251,13 @@ export function InboxView({ userRole, initialThreads }: {
                             {formatDistanceToNow(new Date(log.createdAt), { addSuffix: true })}
                           </span>
                         </div>
-                        <p className="text-sm text-[#bbc9cf] truncate font-medium">{log.subject}</p>
+                        <p className="text-sm text-[#9aa3b8] truncate font-medium">{log.subject}</p>
                         {log.snippet && (
                           <p className="text-xs text-[#7a8899] truncate mt-0.5">{log.snippet}</p>
                         )}
                         <div className="flex items-center gap-2 mt-1">
                           {log.isInternalThread
-                            ? <span className="text-[10px] font-semibold text-[#00feb2]">✓ Delivered</span>
+                            ? <span className="text-[10px] font-semibold text-[#06d6a0]">✓ Delivered</span>
                             : <span className={`text-[10px] font-semibold ${statusColor}`}>{log.status}</span>
                           }
                         </div>
@@ -1270,14 +1270,14 @@ export function InboxView({ userRole, initialThreads }: {
 
           /* ── Thread list (inbox / starred / snoozed / trash / custom folder) ── */
           ) : isLoading ? (
-            <div className="p-8 flex flex-col items-center gap-3 text-[#bbc9cf]">
+            <div className="p-8 flex flex-col items-center gap-3 text-[#9aa3b8]">
               <Loader2 className="w-6 h-6 animate-spin text-[#00d2ff]" />
               <span className="text-sm">Loading…</span>
             </div>
           ) : visibleThreads.length === 0 ? (
             <div className="p-10 flex flex-col items-center gap-2 text-center">
-              <Inbox className="w-8 h-8 text-[#3c494e]" />
-              <p className="text-sm text-[#bbc9cf] mt-1">
+              <Inbox className="w-8 h-8 text-[#262b3a]" />
+              <p className="text-sm text-[#9aa3b8] mt-1">
                 {searchQuery ? "No messages match your search." : "All clear — nothing here."}
               </p>
             </div>
@@ -1286,18 +1286,18 @@ export function InboxView({ userRole, initialThreads }: {
               <div
                 key={thread.id}
                 onClick={() => loadThreadDetail(thread.id)}
-                className={`group relative cursor-pointer transition-all duration-100 border-b border-[rgba(0,255,255,0.04)] ${
+                className={`group relative cursor-pointer transition-all duration-100 border-b border-[rgba(255,255,255,0.04)] ${
                   selectedThreadId === thread.id
-                    ? "bg-[#00d2ff]/8 border-l-2 border-[#00d2ff]"
-                    : "hover:bg-[#161b2e]"
+                    ? "bg-white/[0.06]"
+                    : "hover:bg-white/[0.03]"
                 }`}
               >
                 {/* Hover action bar */}
-                <div className="absolute right-1 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-0.5 bg-[#1b1f2e]/95 backdrop-blur-sm border border-[rgba(0,255,255,0.08)] shadow-md rounded-lg px-1 py-1 z-10">
+                <div className="absolute right-1 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-0.5 bg-[#1f2433] border border-[rgba(255,255,255,0.08)] shadow-lg rounded-lg px-1 py-1 z-10">
                   {activeFolder === "trash" ? (
                     <button
                       onClick={(e) => handleRestoreFromTrash(thread.id, e)}
-                      className="p-1.5 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-full transition-colors"
+                      className="p-1.5 text-[#9aa3b8] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-full transition-colors"
                       title="Restore to inbox"
                     >
                       <Inbox className="w-3.5 h-3.5" />
@@ -1305,7 +1305,7 @@ export function InboxView({ userRole, initialThreads }: {
                   ) : activeFolder === "archive" ? (
                     <button
                       onClick={(e) => { e.stopPropagation(); void patchThread(thread.id, { isArchived: false }); toast.success("Moved to inbox"); }}
-                      className="p-1.5 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-full transition-colors"
+                      className="p-1.5 text-[#9aa3b8] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-full transition-colors"
                       title="Move to inbox"
                     >
                       <Inbox className="w-3.5 h-3.5" />
@@ -1314,28 +1314,28 @@ export function InboxView({ userRole, initialThreads }: {
                     <>
                       <button
                         onClick={(e) => { e.stopPropagation(); setSnoozeTargetId(thread.id); }}
-                        className="p-1.5 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-full transition-colors"
+                        className="p-1.5 text-[#9aa3b8] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-full transition-colors"
                         title="Snooze"
                       >
                         <BellOff className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={(e) => toggleStar(thread.id, e)}
-                        className={`p-1.5 rounded-full transition-colors ${thread.isStarred ? "text-[#00d2ff]" : "text-[#bbc9cf] hover:text-[#dfe1f6]"}`}
+                        className={`p-1.5 rounded-full transition-colors ${thread.isStarred ? "text-[#00d2ff]" : "text-[#9aa3b8] hover:text-[#dfe1f6]"}`}
                         title={thread.isStarred ? "Unstar" : "Star"}
                       >
                         <Star className="w-3.5 h-3.5" fill={thread.isStarred ? "currentColor" : "none"} />
                       </button>
                       <button
                         onClick={(e) => handleArchive(thread.id, e)}
-                        className="p-1.5 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-full transition-colors"
+                        className="p-1.5 text-[#9aa3b8] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-full transition-colors"
                         title="Archive"
                       >
                         <Archive className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={(e) => handleDelete(thread.id, e)}
-                        className="p-1.5 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#ff4d6d] rounded-full transition-colors"
+                        className="p-1.5 text-[#9aa3b8] hover:bg-[#262939] hover:text-[#ff4d6d] rounded-full transition-colors"
                         title="Trash"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -1363,15 +1363,15 @@ export function InboxView({ userRole, initialThreads }: {
                         <PriorityBadge priority={thread.priority} />
                         {thread.slaDeadline && <SlaIndicator deadline={thread.slaDeadline} />}
                         {isExternalSender(thread.lastMessage?.from ?? "") && (
-                          <span className="flex items-center gap-0.5 px-1 py-0.5 rounded text-[9px] font-bold tracking-widest bg-[#ffd166]/10 text-[#ffd166] border border-[#ffd166]/20 flex-shrink-0">
-                            <Globe className="w-2 h-2" />EXT
+                          <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#ffd166]/10 text-[#ffd166] flex-shrink-0" title="External sender">
+                            <Globe className="w-2.5 h-2.5" />Ext
                           </span>
                         )}
                       </div>
                     </div>
                     <div className="flex items-center gap-1 flex-shrink-0">
                       {thread.unreadCount > 0 && (
-                        <span className="bg-[#00d2ff] text-[#002d38] text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                        <span className="bg-[#00d2ff] text-[#002d38] text-[9px] font-semibold px-1.5 py-0.5 rounded-full leading-none">
                           {thread.unreadCount}
                         </span>
                       )}
@@ -1384,7 +1384,7 @@ export function InboxView({ userRole, initialThreads }: {
                     </p>
                     <div className="flex items-center gap-2 mt-0.5">
                       <p className="text-[11px] text-[#7a9199] truncate flex-1">{thread.lastMessage?.snippet}</p>
-                      <span className="text-[10px] text-[#3c4f5a] flex-shrink-0">
+                      <span className="text-[10px] text-[#454e63] flex-shrink-0">
                         {thread.lastMessage
                           ? formatDistanceToNow(new Date(thread.lastMessage.receivedAt), { addSuffix: false })
                           : ""}
@@ -1401,65 +1401,28 @@ export function InboxView({ userRole, initialThreads }: {
       {/* ── Message Detail ── */}
       <div className={`${selectedThreadId ? "flex" : "hidden md:flex"} flex-1 bg-[#0c1019] flex-col min-w-0`}>
         {!selectedThreadId ? (
-          <div className="flex-1 flex flex-col items-center justify-center gap-6 p-8 relative overflow-hidden">
-            {/* Cyber grid background */}
-            <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{
-              backgroundImage: "linear-gradient(rgba(0,210,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(0,210,255,1) 1px, transparent 1px)",
-              backgroundSize: "32px 32px",
-            }} />
-            {/* Glow */}
-            <div className="absolute inset-0 pointer-events-none bg-radial-[ellipse_at_center] from-[#00d2ff]/5 to-transparent" />
-
-            <div className="relative z-10 flex flex-col items-center gap-5 max-w-sm text-center">
-              {/* Shield icon */}
-              <div className="relative">
-                <div className="w-20 h-20 rounded-2xl bg-[#0f1321] border border-[rgba(0,255,255,0.12)] flex items-center justify-center shadow-[0_0_40px_rgba(0,210,255,0.08)]">
-                  <ShieldCheck className="w-9 h-9 text-[#00d2ff] opacity-70" />
-                </div>
-                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#06d6a0] border-2 border-[#0c1019] flex items-center justify-center">
-                  <span className="w-1.5 h-1.5 rounded-full bg-white" />
-                </span>
-              </div>
-
-              <div>
-                <p className="text-base font-semibold text-[#dfe1f6] tracking-tight">Inbox Secured</p>
-                <p className="text-xs text-[#5c6b72] mt-1 leading-relaxed">
-                  All communications are authenticated and scanned.<br />Select a thread to read.
-                </p>
-              </div>
-
-              {/* Auth status pills */}
-              <div className="flex items-center gap-2">
-                {[
-                  { label: "SPF", ok: true },
-                  { label: "DKIM", ok: true },
-                  { label: "DMARC", ok: true },
-                  { label: "DLP", ok: true },
-                ].map(({ label, ok }) => (
-                  <span key={label} className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold tracking-widest bg-[#0f1321] border border-[rgba(0,255,255,0.08)]">
-                    <span className={`w-1.5 h-1.5 rounded-full ${ok ? "bg-[#06d6a0]" : "bg-[#ff4d6d]"}`} />
-                    <span className={ok ? "text-[#06d6a0]" : "text-[#ff4d6d]"}>{label}</span>
-                  </span>
-                ))}
-              </div>
-
-              <div className="flex items-center gap-1.5 text-[10px] text-[#3c4f5a]">
-                <Lock className="w-2.5 h-2.5" />
-                <span>Nexus Secure Mail · CyberSage</span>
-              </div>
+          <div className="flex-1 flex flex-col items-center justify-center gap-4 p-8">
+            <div className="w-12 h-12 rounded-xl bg-white/[0.04] border border-[rgba(255,255,255,0.06)] flex items-center justify-center">
+              <Inbox className="w-5 h-5 text-[#5d6579]" />
+            </div>
+            <div className="max-w-xs text-center">
+              <p className="text-sm font-medium text-[#9aa3b8]">No conversation selected</p>
+              <p className="text-[13px] text-[#5d6579] mt-1 leading-relaxed">
+                Choose a thread from the list to read it here.
+              </p>
             </div>
           </div>
         ) : isDetailLoading ? (
-          <div className="flex-1 flex flex-col items-center justify-center gap-3 text-[#bbc9cf]">
+          <div className="flex-1 flex flex-col items-center justify-center gap-3 text-[#9aa3b8]">
             <RefreshCw className="w-7 h-7 animate-spin text-[#00d2ff]" />
             <span className="text-sm">Loading conversation…</span>
           </div>
         ) : threadDetail ? (
           <>
             {/* Detail Header */}
-            <div className="px-5 py-3.5 border-b border-[rgba(0,255,255,0.06)] bg-[#0e1220] flex items-center gap-3">
+            <div className="px-5 py-3.5 border-b border-[rgba(255,255,255,0.05)] bg-[#0e1220] flex items-center gap-3">
               <button
-                className="md:hidden flex-shrink-0 p-1.5 text-[#5c6b72] hover:bg-[#1b1f2e] hover:text-[#bbc9cf] rounded-lg transition-colors"
+                className="md:hidden flex-shrink-0 p-1.5 text-[#5d6579] hover:bg-[#1b1f2e] hover:text-[#9aa3b8] rounded-lg transition-colors"
                 onClick={() => setSelectedThreadId(null)}
                 aria-label="Back to inbox"
               >
@@ -1483,7 +1446,7 @@ export function InboxView({ userRole, initialThreads }: {
               <div className="flex items-center gap-1.5 flex-shrink-0">
                 <button
                   onClick={() => { setShowSmartReply(v => !v); setShowReply(false); }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1a1f2e] text-[#8fa3ac] hover:text-[#00d2ff] border border-[rgba(0,255,255,0.08)] text-xs font-medium transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1a1f2e] text-[#8fa3ac] hover:text-[#00d2ff] border border-[rgba(255,255,255,0.06)] text-xs font-medium transition-colors"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">AI Reply</span>
@@ -1505,20 +1468,20 @@ export function InboxView({ userRole, initialThreads }: {
               const ext = isExternalSender(firstMsg.from);
               const fromDomain = firstMsg.from.split("@")[1] ?? "";
               return (
-                <div className={`flex items-center gap-3 px-5 py-1.5 text-[10px] border-b ${ext ? "bg-[#ffd166]/5 border-[#ffd166]/15" : "bg-[#06d6a0]/5 border-[#06d6a0]/10"}`}>
+                <div className={`flex items-center gap-3 px-5 py-1.5 text-[11px] border-b ${ext ? "bg-[#ffd166]/[0.04] border-[#ffd166]/15" : "bg-transparent border-[rgba(255,255,255,0.05)]"}`}>
                   {ext ? (
-                    <span className="flex items-center gap-1 font-bold text-[#ffd166]">
-                      <Globe className="w-2.5 h-2.5" /> EXTERNAL SENDER
+                    <span className="flex items-center gap-1 font-medium text-[#ffd166]">
+                      <Globe className="w-2.5 h-2.5" /> External sender
                     </span>
                   ) : (
-                    <span className="flex items-center gap-1 font-bold text-[#06d6a0]">
-                      <ShieldCheck className="w-2.5 h-2.5" /> INTERNAL
+                    <span className="flex items-center gap-1 font-medium text-[#06d6a0]">
+                      <ShieldCheck className="w-2.5 h-2.5" /> Internal
                     </span>
                   )}
-                  <span className="text-[#3c4f5a]">·</span>
-                  <span className="text-[#5c6b72] font-mono">{fromDomain}</span>
+                  <span className="text-[#454e63]">·</span>
+                  <span className="text-[#5d6579] font-mono">{fromDomain}</span>
                   <div className="flex-1" />
-                  <span className="flex items-center gap-1.5 text-[#3c4f5a]">
+                  <span className="flex items-center gap-1.5 text-[#454e63]">
                     <span className="flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full bg-[#06d6a0]" />SPF</span>
                     <span className="flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full bg-[#06d6a0]" />DKIM</span>
                     <span className="flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full bg-[#06d6a0]" />DMARC</span>
@@ -1529,8 +1492,8 @@ export function InboxView({ userRole, initialThreads }: {
 
             {/* Smart Reply bar */}
             {showSmartReply && (
-              <div className="bg-[#00d2ff]/10 border-b border-[rgba(0,255,255,0.08)] px-5 py-3 flex items-center gap-3 flex-wrap">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-[#00d2ff]">
+              <div className="bg-[#00d2ff]/10 border-b border-[rgba(255,255,255,0.06)] px-5 py-3 flex items-center gap-3 flex-wrap">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-[#00d2ff]">
                   <Sparkles className="w-3.5 h-3.5" /> AI Smart Reply
                 </div>
                 {(["friendly", "professional", "brief"] as const).map((tone) => (
@@ -1538,13 +1501,13 @@ export function InboxView({ userRole, initialThreads }: {
                     key={tone}
                     onClick={() => void handleSmartReply(tone)}
                     disabled={smartReplyLoading !== null}
-                    className="bg-[#262939] text-[#bbc9cf] hover:bg-[#00d2ff]/10 hover:text-[#00d2ff] rounded-md px-3 py-1.5 text-xs font-medium border border-[rgba(0,255,255,0.08)] flex items-center gap-1.5 transition-colors disabled:opacity-50 capitalize"
+                    className="bg-[#262939] text-[#9aa3b8] hover:bg-[#00d2ff]/10 hover:text-[#00d2ff] rounded-md px-3 py-1.5 text-xs font-medium border border-[rgba(255,255,255,0.06)] flex items-center gap-1.5 transition-colors disabled:opacity-50 capitalize"
                   >
                     {smartReplyLoading === tone ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
                     {tone}
                   </button>
                 ))}
-                <button onClick={() => setShowSmartReply(false)} className="ml-auto p-2 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-full transition-colors">
+                <button onClick={() => setShowSmartReply(false)} className="ml-auto p-2 text-[#9aa3b8] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-full transition-colors">
                   <X className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -1593,7 +1556,7 @@ export function InboxView({ userRole, initialThreads }: {
                       <div className="mb-4 p-3 bg-[#ff4d6d]/10 border border-[#ff4d6d]/30 rounded-xl flex items-start gap-3">
                         <ShieldAlert className="w-4 h-4 text-[#ff4d6d] flex-shrink-0 mt-0.5" />
                         <div>
-                          <p className="text-sm font-bold text-[#ff4d6d]">Phishing Warning</p>
+                          <p className="text-sm font-semibold text-[#ff4d6d]">Phishing Warning</p>
                           <p className="text-xs text-[#ff4d6d]/80 mt-0.5">This email shows strong indicators of a phishing attempt. Do not click links or open attachments.</p>
                           <ul className="mt-1.5 list-disc list-inside text-[11px] text-[#ff4d6d]/70 space-y-0.5">
                             {msg.threatScan.findings.map((f, i) => <li key={i}>{f}</li>)}
@@ -1605,7 +1568,7 @@ export function InboxView({ userRole, initialThreads }: {
                       <div className="mb-4 p-3 bg-amber-400/10 border border-amber-400/30 rounded-xl flex items-start gap-3">
                         <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
                         <div>
-                          <p className="text-sm font-bold text-amber-300">Suspicious Email</p>
+                          <p className="text-sm font-semibold text-amber-300">Suspicious Email</p>
                           <p className="text-xs text-amber-400/80 mt-0.5">This email has been flagged as potentially suspicious. Proceed with caution.</p>
                           <ul className="mt-1.5 list-disc list-inside text-[11px] text-amber-400/70 space-y-0.5">
                             {msg.threatScan.findings.map((f, i) => <li key={i}>{f}</li>)}
@@ -1617,7 +1580,7 @@ export function InboxView({ userRole, initialThreads }: {
                       <div className="mb-4 p-3 bg-[#00d2ff]/10 border border-[#00d2ff]/30 rounded-xl flex items-start gap-3">
                         <Info className="w-4 h-4 text-[#00d2ff] flex-shrink-0 mt-0.5" />
                         <div>
-                          <p className="text-sm font-semibold text-[#a5e7ff]">Security Notice</p>
+                          <p className="text-sm font-semibold text-[#7dd8f5]">Security Notice</p>
                           <p className="text-xs text-[#00d2ff]/80 mt-0.5">Minor anomalies detected. Review the sender and content before responding.</p>
                         </div>
                       </div>
@@ -1630,9 +1593,9 @@ export function InboxView({ userRole, initialThreads }: {
                     )}
 
                     {msg.attachments && msg.attachments.length > 0 && (
-                      <div className="mt-5 pt-5 border-t border-[rgba(0,255,255,0.08)]">
-                        <p className="text-xs font-semibold text-[#bbc9cf] uppercase tracking-wider mb-2">
-                          Attachments ({msg.attachments.length})
+                      <div className="mt-5 pt-5 border-t border-[rgba(255,255,255,0.06)]">
+                        <p className="text-xs font-medium text-[#8b93a7] mb-2">
+                          {msg.attachments.length} {msg.attachments.length === 1 ? "attachment" : "attachments"}
                         </p>
                         <div className="flex flex-wrap gap-2">
                           {msg.attachments.map((att) => {
@@ -1645,7 +1608,7 @@ export function InboxView({ userRole, initialThreads }: {
                                 href={att.storageUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className={`border rounded-lg px-3 py-2 flex items-center gap-2 text-sm transition-colors group ${isRisky ? "bg-[#ff4d6d]/10 border-[#ff4d6d]/30 hover:bg-[#ff4d6d]/20" : "bg-[#0f1321] border-[rgba(0,255,255,0.08)] hover:bg-[#262939]"}`}
+                                className={`border rounded-lg px-3 py-2 flex items-center gap-2 text-sm transition-colors group ${isRisky ? "bg-[#ff4d6d]/10 border-[#ff4d6d]/30 hover:bg-[#ff4d6d]/20" : "bg-[#0f1321] border-[rgba(255,255,255,0.06)] hover:bg-[#262939]"}`}
                               >
                                 {isRisky ? (
                                   <AlertCircle className="w-4 h-4 text-[#ff4d6d] flex-shrink-0" />
@@ -1654,8 +1617,8 @@ export function InboxView({ userRole, initialThreads }: {
                                 )}
                                 <div className="min-w-0">
                                   <p className={`text-xs font-medium truncate max-w-[160px] ${isRisky ? "text-[#ff4d6d]" : "text-[#dfe1f6]"}`}>{att.filename}</p>
-                                  <p className={`text-[10px] uppercase ${isRisky ? "text-[#ff4d6d] font-semibold" : "text-[#bbc9cf]"}`}>
-                                    {isRisky ? "⚠ Potentially dangerous" : att.mimeType.split("/")[1]}
+                                  <p className={`text-[10px] ${isRisky ? "text-[#ff4d6d] font-medium" : "text-[#707a90]"}`}>
+                                    {isRisky ? "Potentially dangerous" : att.mimeType.split("/")[1]?.toUpperCase()}
                                   </p>
                                 </div>
                               </a>
@@ -1674,17 +1637,17 @@ export function InboxView({ userRole, initialThreads }: {
               <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
                 <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setEditingDraft(null)} />
                 <div className="relative z-10 w-full max-w-lg overflow-hidden rounded-2xl bg-[#1b1f2e] shadow-2xl" onClick={(e) => e.stopPropagation()}>
-                  <div className="flex items-center justify-between border-b border-[rgba(0,255,255,0.08)] bg-[#0f1321] px-5 py-4">
+                  <div className="flex items-center justify-between border-b border-[rgba(255,255,255,0.06)] bg-[#0f1321] px-5 py-4">
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md bg-[#00d2ff]">
                         <FileText className="h-3.5 w-3.5 text-[#003543]" />
                       </div>
                       <div className="min-w-0">
-                        <h2 className="text-sm font-bold text-[#dfe1f6]">Edit Draft</h2>
-                        <p className="text-sm text-[#bbc9cf] truncate max-w-[300px]">{editingDraft.subject || "(no subject)"}</p>
+                        <h2 className="text-sm font-semibold text-[#dfe1f6]">Edit Draft</h2>
+                        <p className="text-sm text-[#9aa3b8] truncate max-w-[300px]">{editingDraft.subject || "(no subject)"}</p>
                       </div>
                     </div>
-                    <button onClick={() => setEditingDraft(null)} className="rounded-lg p-1.5 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] transition-colors flex-shrink-0">
+                    <button onClick={() => setEditingDraft(null)} className="rounded-lg p-1.5 text-[#9aa3b8] hover:bg-[#262939] hover:text-[#dfe1f6] transition-colors flex-shrink-0">
                       <X className="h-5 w-5" />
                     </button>
                   </div>
@@ -1713,14 +1676,14 @@ export function InboxView({ userRole, initialThreads }: {
                   onClick={() => { setShowReply(false); setReplyDefaultBody(""); setRewriteBody(""); }}
                 />
                 <div className="relative z-10 w-full max-w-lg overflow-hidden rounded-2xl bg-[#1b1f2e] shadow-2xl" onClick={(e) => e.stopPropagation()}>
-                  <div className="flex items-center justify-between border-b border-[rgba(0,255,255,0.08)] bg-[#0f1321] px-5 py-4">
+                  <div className="flex items-center justify-between border-b border-[rgba(255,255,255,0.06)] bg-[#0f1321] px-5 py-4">
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md bg-[#00d2ff]">
                         <Send className="h-3.5 w-3.5 text-[#003543]" />
                       </div>
                       <div className="min-w-0">
-                        <h2 className="text-sm font-bold text-[#dfe1f6]">Reply</h2>
-                        <p className="text-sm text-[#bbc9cf] truncate max-w-[300px]">{threadDetail.subject}</p>
+                        <h2 className="text-sm font-semibold text-[#dfe1f6]">Reply</h2>
+                        <p className="text-sm text-[#9aa3b8] truncate max-w-[300px]">{threadDetail.subject}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
@@ -1728,19 +1691,19 @@ export function InboxView({ userRole, initialThreads }: {
                         <button
                           onClick={() => setShowRewriteMenu(v => !v)}
                           disabled={rewriteLoading}
-                          className="bg-[#262939] text-[#bbc9cf] hover:bg-[#00d2ff]/10 hover:text-[#00d2ff] rounded-md px-3 py-1.5 text-xs font-medium border border-[rgba(0,255,255,0.08)] flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                          className="bg-[#262939] text-[#9aa3b8] hover:bg-[#00d2ff]/10 hover:text-[#00d2ff] rounded-md px-3 py-1.5 text-xs font-medium border border-[rgba(255,255,255,0.06)] flex items-center gap-1.5 transition-colors disabled:opacity-50"
                         >
                           {rewriteLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-[#00d2ff]" />}
                           Rewrite
                           <ChevronDown className="w-3 h-3" />
                         </button>
                         {showRewriteMenu && (
-                          <div className="absolute right-0 top-full mt-1 w-40 bg-[#1b1f2e]/80 backdrop-blur-sm border border-[rgba(0,255,255,0.08)] rounded-xl shadow-lg z-20 py-1 overflow-hidden">
+                          <div className="absolute right-0 top-full mt-1 w-40 bg-[#1f2433] border border-[rgba(255,255,255,0.08)] rounded-lg shadow-xl z-20 py-1 overflow-hidden">
                             {(["formal", "casual", "concise", "expand"] as const).map((style) => (
                               <button
                                 key={style}
                                 onClick={() => void handleRewrite(style)}
-                                className="w-full text-left px-3 py-2 text-xs font-medium text-[#bbc9cf] hover:bg-[#00d2ff]/10 hover:text-[#00d2ff] transition-colors capitalize"
+                                className="w-full text-left px-3 py-2 text-xs font-medium text-[#9aa3b8] hover:bg-[#00d2ff]/10 hover:text-[#00d2ff] transition-colors capitalize"
                               >
                                 Make {style.charAt(0).toUpperCase() + style.slice(1)}
                               </button>
@@ -1750,7 +1713,7 @@ export function InboxView({ userRole, initialThreads }: {
                       </div>
                       <button
                         onClick={() => { setShowReply(false); setReplyDefaultBody(""); setRewriteBody(""); }}
-                        className="p-2 text-[#bbc9cf] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-full transition-colors"
+                        className="p-2 text-[#9aa3b8] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-full transition-colors"
                       >
                         <X className="h-5 w-5" />
                       </button>

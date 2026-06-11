@@ -8,8 +8,8 @@ export default function DashboardLoading() {
       <div className="grid lg:grid-cols-[1fr_350px] gap-8">
         <div className="space-y-4">
           <div className="h-7 w-40 bg-[#1b1f2e] rounded" />
-          <div className="bg-[#1b1f2e] rounded-xl border border-[rgba(0,255,255,0.08)] overflow-hidden">
-            <div className="divide-y divide-[rgba(0,255,255,0.06)]">
+          <div className="bg-[#1b1f2e] rounded-xl border border-[rgba(255,255,255,0.06)] overflow-hidden">
+            <div className="divide-y divide-[rgba(255,255,255,0.05)]">
               {[...Array(6)].map((_, i) => (
                 <div key={i} className="px-6 py-4 flex items-center gap-4">
                   <div className="h-8 w-8 rounded-full bg-[#262939] flex-shrink-0" />
@@ -26,7 +26,7 @@ export default function DashboardLoading() {
         </div>
         <div className="space-y-4">
           <div className="h-7 w-36 bg-[#1b1f2e] rounded" />
-          <div className="bg-[#1b1f2e] rounded-xl border border-[rgba(0,255,255,0.08)] h-96" />
+          <div className="bg-[#1b1f2e] rounded-xl border border-[rgba(255,255,255,0.06)] h-96" />
         </div>
       </div>
     </div>

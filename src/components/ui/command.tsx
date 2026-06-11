@@ -103,20 +103,20 @@ export function CommandPalette({
       <div className="relative z-10 w-full max-w-lg rounded-xl border border-white/[0.1] bg-[#1b1f2e] shadow-[0_8px_32px_rgba(0,0,0,0.7)] overflow-hidden">
         {/* Search bar */}
         <div className="flex items-center gap-3 px-4 py-3 border-b border-white/[0.07]">
-          <Search className="h-4 w-4 text-[#bbc9cf] flex-shrink-0" />
+          <Search className="h-4 w-4 text-[#9aa3b8] flex-shrink-0" />
           <input
             ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={placeholder}
-            className="flex-1 bg-transparent text-sm text-[#dfe1f6] placeholder:text-[#bbc9cf]/60 focus:outline-none"
+            className="flex-1 bg-transparent text-sm text-[#dfe1f6] placeholder:text-[#9aa3b8]/60 focus:outline-none"
           />
           {query && (
-            <button onClick={() => setQuery("")} className="text-[#bbc9cf] hover:text-[#dfe1f6]">
+            <button onClick={() => setQuery("")} className="text-[#9aa3b8] hover:text-[#dfe1f6]">
               <X className="h-3.5 w-3.5" />
             </button>
           )}
-          <kbd className="text-[10px] text-[#bbc9cf]/60 border border-white/[0.1] rounded px-1.5 py-0.5">
+          <kbd className="text-[10px] text-[#9aa3b8]/60 border border-white/[0.1] rounded px-1.5 py-0.5">
             ESC
           </kbd>
         </div>
@@ -124,13 +124,13 @@ export function CommandPalette({
         {/* Results */}
         <div ref={listRef} className="max-h-80 overflow-y-auto py-1.5">
           {flat.length === 0 ? (
-            <p className="px-4 py-8 text-center text-sm text-[#bbc9cf]">No results found</p>
+            <p className="px-4 py-8 text-center text-sm text-[#9aa3b8]">No results found</p>
           ) : (
             Object.entries(grouped).map(([group, groupItems]) => {
               const groupStart = flat.indexOf(groupItems[0]!);
               return (
                 <div key={group}>
-                  <p className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[#bbc9cf]/50">
+                  <p className="px-4 py-1.5 text-[10px] font-semibold text-[#9aa3b8]/50">
                     {group}
                   </p>
                   {groupItems.map((item) => {
@@ -145,7 +145,7 @@ export function CommandPalette({
                           "w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors",
                           idx === activeIndex
                             ? "bg-[#00d2ff]/10 text-[#dfe1f6]"
-                            : "text-[#bbc9cf] hover:bg-white/[0.04]",
+                            : "text-[#9aa3b8] hover:bg-white/[0.04]",
                         )}
                       >
                         {item.icon && (
@@ -156,13 +156,13 @@ export function CommandPalette({
                         <div className="flex-1 min-w-0">
                           <span className="text-sm font-medium truncate block">{item.label}</span>
                           {item.description && (
-                            <span className="text-[11px] text-[#bbc9cf]/60 truncate block">
+                            <span className="text-[11px] text-[#9aa3b8]/60 truncate block">
                               {item.description}
                             </span>
                           )}
                         </div>
                         {item.shortcut && (
-                          <kbd className="text-[10px] text-[#bbc9cf]/50 border border-white/[0.1] rounded px-1.5 py-0.5 flex-shrink-0">
+                          <kbd className="text-[10px] text-[#9aa3b8]/50 border border-white/[0.1] rounded px-1.5 py-0.5 flex-shrink-0">
                             {item.shortcut}
                           </kbd>
                         )}
@@ -178,7 +178,7 @@ export function CommandPalette({
           )}
         </div>
 
-        <div className="px-4 py-2 border-t border-white/[0.07] flex items-center gap-4 text-[10px] text-[#bbc9cf]/50">
+        <div className="px-4 py-2 border-t border-white/[0.07] flex items-center gap-4 text-[10px] text-[#9aa3b8]/50">
           <span><kbd className="border border-white/[0.1] rounded px-1">↑↓</kbd> navigate</span>
           <span><kbd className="border border-white/[0.1] rounded px-1">↵</kbd> select</span>
           <span><kbd className="border border-white/[0.1] rounded px-1">ESC</kbd> close</span>

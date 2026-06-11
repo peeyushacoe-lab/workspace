@@ -85,12 +85,12 @@ export function DataTable<T extends Record<string, unknown>>({
     <div className={cn("flex flex-col gap-3", className)}>
       {searchable && (
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#bbc9cf]" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#9aa3b8]" />
           <input
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             placeholder={searchPlaceholder}
-            className="w-full pl-9 pr-4 py-2 rounded-lg bg-[#262939] border border-white/[0.07] text-sm text-[#dfe1f6] placeholder:text-[#bbc9cf]/60 focus:outline-none focus:border-[#00d2ff]/50 transition-colors"
+            className="w-full pl-9 pr-4 py-2 rounded-lg bg-[#262939] border border-white/[0.07] text-sm text-[#dfe1f6] placeholder:text-[#9aa3b8]/60 focus:outline-none focus:border-[#00d2ff]/50 transition-colors"
           />
         </div>
       )}
@@ -104,7 +104,7 @@ export function DataTable<T extends Record<string, unknown>>({
                   <th
                     key={col.key}
                     className={cn(
-                      "px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[#bbc9cf]",
+                      "px-4 py-3 text-left text-[11px] font-semibold text-[#9aa3b8]",
                       col.width,
                       col.sortable && "cursor-pointer select-none hover:text-[#dfe1f6]",
                     )}
@@ -131,7 +131,7 @@ export function DataTable<T extends Record<string, unknown>>({
                 ))
               ) : paginated.length === 0 ? (
                 <tr>
-                  <td colSpan={columns.length} className="px-4 py-10 text-center text-[#bbc9cf] text-sm">
+                  <td colSpan={columns.length} className="px-4 py-10 text-center text-[#9aa3b8] text-sm">
                     {emptyMessage}
                   </td>
                 </tr>
@@ -161,7 +161,7 @@ export function DataTable<T extends Record<string, unknown>>({
       </div>
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-between text-xs text-[#bbc9cf]">
+        <div className="flex items-center justify-between text-xs text-[#9aa3b8]">
           <span>
             {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, sorted.length)} of {sorted.length}
           </span>
