@@ -1,97 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, Lock, Loader2, Zap, Users, Monitor } from "lucide-react";
-
-// Direct GitHub "latest release" download URLs — browser downloads the file immediately.
-// These work as soon as a release exists on GitHub with these exact filenames.
-const DOWNLOADS = [
-  {
-    os: "win",
-    label: "Windows",
-    hint: "Windows 10/11 · 64-bit",
-    icon: "🪟",
-    url: "https://github.com/peeyushacoe-lab/workspace/releases/latest/download/CyberSage-Setup.exe",
-  },
-  {
-    os: "mac",
-    label: "macOS",
-    hint: "macOS 12+ · Intel & Apple Silicon",
-    icon: "🍎",
-    url: "https://github.com/peeyushacoe-lab/workspace/releases/latest/download/CyberSage-Mac.dmg",
-  },
-  {
-    os: "linux",
-    label: "Linux",
-    hint: "AppImage · any distro",
-    icon: "🐧",
-    url: "https://github.com/peeyushacoe-lab/workspace/releases/latest/download/CyberSage-Linux.AppImage",
-  },
-];
-
-function detectOs(): "win" | "mac" | "linux" {
-  if (typeof navigator === "undefined") return "win";
-  const ua = navigator.userAgent.toLowerCase();
-  if (ua.includes("win")) return "win";
-  if (ua.includes("mac")) return "mac";
-  return "linux";
-}
-
-function DownloadCard() {
-  const [expanded, setExpanded] = useState(false);
-  const detectedOs = detectOs();
-  const primary = DOWNLOADS.find((d) => d.os === detectedOs) ?? DOWNLOADS[0]!;
-  const others = DOWNLOADS.filter((d) => d.os !== detectedOs);
-
-  return (
-    <div className="rounded-lg bg-[#1b1f2e] border border-[rgba(0,255,255,0.06)] overflow-hidden">
-      <div className="flex items-center justify-between gap-3 p-3">
-        <div className="flex items-center gap-2.5">
-          <Monitor className="w-4 h-4 text-[#00d2ff] flex-shrink-0" />
-          <div>
-            <p className="text-xs font-semibold text-[#dfe1f6] leading-none">Desktop App</p>
-            <p className="text-[10px] text-[#5c6b72] mt-0.5">{primary.icon} {primary.label} · {primary.hint}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {/* Direct file download — no redirects through our server */}
-          <a
-            href={primary.url}
-            download
-            className="px-3 py-1.5 text-xs font-semibold text-[#003543] bg-[#00d2ff] rounded-md hover:opacity-90 transition-opacity"
-          >
-            ↓ Download
-          </a>
-          <button
-            onClick={() => setExpanded((p) => !p)}
-            className="px-2 py-1.5 text-[10px] text-[#5c6b72] hover:text-[#bbc9cf] transition-colors"
-            title="Other platforms"
-          >
-            {expanded ? "▲" : "▼"}
-          </button>
-        </div>
-      </div>
-
-      {expanded && (
-        <div className="border-t border-[rgba(0,255,255,0.06)] px-3 pb-2 pt-2 flex flex-col gap-1">
-          {others.map((d) => (
-            <a
-              key={d.os}
-              href={d.url}
-              download
-              className="flex items-center gap-2 py-1.5 text-[11px] text-[#5c6b72] hover:text-[#bbc9cf] transition-colors"
-            >
-              <span>{d.icon}</span>
-              <span>{d.label}</span>
-              <span className="text-[#3d4f59] ml-1">{d.hint}</span>
-              <span className="ml-auto text-[#00d2ff]/60">↓</span>
-            </a>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
+import { Mail, Lock, Loader2, Zap, Users } from "lucide-react";
 
 export function LoginForm({ next, error: initialError }: { next: string; error: boolean }) {
   const [isPending, setIsPending] = useState(false);
@@ -186,28 +96,8 @@ export function LoginForm({ next, error: initialError }: { next: string; error: 
           </div>
         </div>
 
-        {/* Desktop app download */}
         <div className="relative z-10">
-          <p className="text-[#bbc9cf]/60 text-xs font-medium uppercase tracking-widest mb-3">Download Desktop App</p>
-          <div className="flex flex-col gap-2">
-            {[
-              { label: "Windows (.exe)",    icon: "🪟", href: "https://github.com/peeyushacoe-lab/workspace/releases/latest/download/CyberSage-Setup.exe" },
-              { label: "macOS (.dmg)",      icon: "🍎", href: "https://github.com/peeyushacoe-lab/workspace/releases/latest/download/CyberSage-Mac.dmg" },
-              { label: "Linux (.AppImage)", icon: "🐧", href: "https://github.com/peeyushacoe-lab/workspace/releases/latest/download/CyberSage-Linux.AppImage" },
-            ].map((d) => (
-              <a
-                key={d.label}
-                href={d.href}
-                download
-                className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-[#1b1f2e]/80 border border-[rgba(0,255,255,0.08)] hover:border-[#00d2ff]/30 hover:bg-[#1b1f2e] transition-all text-xs text-[#bbc9cf] hover:text-[#dfe1f6]"
-              >
-                <span>{d.icon}</span>
-                <span>{d.label}</span>
-                <span className="ml-auto text-[#00d2ff] opacity-60">↓</span>
-              </a>
-            ))}
-          </div>
-          <p className="text-[#bbc9cf]/30 text-xs mt-4">
+          <p className="text-[#bbc9cf]/30 text-xs">
             &copy; {new Date().getFullYear()} CyberSage · Nexus Workspace
           </p>
         </div>
@@ -293,10 +183,7 @@ export function LoginForm({ next, error: initialError }: { next: string; error: 
             </button>
           </form>
 
-          <div className="mt-8 border-t border-[rgba(0,255,255,0.08)] pt-5 space-y-4">
-            {/* Download desktop app */}
-            <DownloadCard />
-
+          <div className="mt-8 border-t border-[rgba(0,255,255,0.08)] pt-5">
             <p className="text-xs text-center text-[#bbc9cf]/50 uppercase tracking-[0.12em] font-medium">
               RBAC Protected Environment
             </p>
