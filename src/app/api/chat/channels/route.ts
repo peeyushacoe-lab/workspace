@@ -66,6 +66,7 @@ export async function POST(request: Request) {
     description?: string;
     type?: ChatChannelType;
     isPrivate?: boolean;
+    isBroadcast?: boolean;
     memberIds?: string[];
   };
 
@@ -81,6 +82,7 @@ export async function POST(request: Request) {
       description: body.description,
       type: body.type ?? "CHANNEL",
       isPrivate: body.isPrivate ?? false,
+      isBroadcast: body.isBroadcast ?? false,
       createdById: user.id,
       members: {
         create: memberIds.map((id) => ({

@@ -68,10 +68,15 @@ export async function POST(request: Request, { params }: Params) {
 
   const { id: channelId } = await params;
 
-  const membership = await prisma.chatMember.findUnique({
-    where: { channelId_userId: { channelId, userId: user.id } },
-  });
+  const [membership, channel] = await Promise.all([
+    prisma.chatMember.findUnique({ where: { channelId_userId: { channelId, userId: user.id } } }),
+    prisma.chatChannel.findUnique({ where: { id: channelId }, select: { isBroadcast: true } }),
+  ]);
   if (!membership) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  // Broadcast channels: only ADMIN members (the creator) can post
+  if (channel?.isBroadcast && membership.role !== "ADMIN") {
+    return NextResponse.json({ error: "Only the channel owner can post in a broadcast channel" }, { status: 403 });
+  }
 
   const { content, parentId, isUrgent, attachmentUrl, attachmentMime, attachmentName } = (await request.json()) as {
     content?: string;

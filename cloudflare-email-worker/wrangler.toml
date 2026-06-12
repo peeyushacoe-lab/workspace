@@ -1,0 +1,7 @@
+name = "cybersage-email-worker"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+[vars]
+# Set these as secrets via: wrangler secret put WEBHOOK_URL
+# wrangler secret put WEBHOOK_SECRET

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowRight, Shield, Mail, Sparkles, AlertCircle } from "lucide-react";
 
 export function LoginForm({ next, error: initialError }: { next: string; error: boolean }) {
   const [isPending, setIsPending] = useState(false);
@@ -13,120 +13,147 @@ export function LoginForm({ next, error: initialError }: { next: string; error: 
     setError(false);
 
     const formData = new FormData(e.currentTarget);
-
     try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        body: formData,
-      });
-
+      const res = await fetch("/api/auth/login", { method: "POST", body: formData });
       if (res.ok) {
         const data = (await res.json()) as { redirectTo: string };
         window.location.href = data.redirectTo ?? next;
         return;
       }
-    } catch {
-      // network failure — fall through to show error
-    }
-
+    } catch {}
     setError(true);
     setIsPending(false);
   }
 
   return (
-    <div className="flex h-screen">
-      {/* Left panel — brand */}
-      <div className="w-5/12 hidden md:flex bg-[#0c0f1b] flex-col justify-between p-12 border-r border-[rgba(255,255,255,0.06)]">
+    <div className="min-h-screen flex bg-[#f8fafd]">
+
+      {/* ── Left brand panel (desktop only) ─────────────────── */}
+      <div className="hidden lg:flex w-[44%] bg-gradient-to-br from-[#0f1d40] via-[#1a3568] to-[#122c5e] flex-col justify-between p-14 relative overflow-hidden">
+
+        {/* Subtle dot grid */}
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)",
+            backgroundSize: "28px 28px",
+          }}
+        />
+
+        {/* Top glow */}
+        <div className="absolute -top-32 -left-32 w-72 h-72 rounded-full bg-[#3b82f6]/20 blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 right-0 w-96 h-96 rounded-full bg-[#1a56db]/15 blur-3xl pointer-events-none" />
+
         <img
           src="/nexusLogo.png"
           alt="CyberSage Nexus"
-          className="h-12 w-auto self-start object-contain max-w-[220px]"
+          className="relative h-9 w-auto object-contain max-w-[180px] brightness-0 invert"
         />
 
-        <div>
-          <p className="text-[#eceef8] text-3xl font-semibold tracking-tight leading-snug max-w-sm">
-            The workspace for everything Cybersage.
-          </p>
-          <p className="text-[#8b93a7] text-sm mt-4 max-w-sm leading-relaxed">
-            Mail, chat, meetings, files and security operations — in one place.
-          </p>
+        <div className="relative space-y-10">
+          {/* Feature pills */}
+          <div className="space-y-4">
+            {[
+              { icon: Mail,      text: "Unified mail, chat & meetings"         },
+              { icon: Shield,    text: "Built-in security operations centre"   },
+              { icon: Sparkles,  text: "AI-powered workspace intelligence"     },
+            ].map(({ icon: Icon, text }) => (
+              <div key={text} className="flex items-center gap-3.5">
+                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-white/10 backdrop-blur-sm">
+                  <Icon className="h-4 w-4 text-white/75" />
+                </div>
+                <span className="text-white/75 text-[14.5px] font-medium">{text}</span>
+              </div>
+            ))}
+          </div>
+
+          <div>
+            <h2 className="text-white text-2xl font-semibold leading-snug tracking-tight">
+              The workspace for<br />everything Cybersage.
+            </h2>
+            <p className="text-white/45 text-sm mt-3 leading-relaxed max-w-[300px]">
+              Mail, chat, meetings, files and security — all in one place.
+            </p>
+          </div>
         </div>
 
-        <p className="text-[#5d6579] text-xs">
-          &copy; {new Date().getFullYear()} CyberSage
+        <p className="relative text-white/25 text-xs">
+          © {new Date().getFullYear()} CyberSage. All rights reserved.
         </p>
       </div>
 
-      {/* Right panel — login form */}
-      <div className="flex-1 bg-[#0f1321] flex flex-col justify-center items-center p-6 sm:p-12">
+      {/* ── Right form panel ─────────────────────────────────── */}
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-14">
+
+        {/* Mobile logo */}
+        <div className="lg:hidden mb-10">
+          <img src="/nexusLogo.png" alt="CyberSage Nexus" className="h-9 w-auto object-contain max-w-[180px]" />
+        </div>
+
         <div className="w-full max-w-[400px]">
-          {/* Mobile logo */}
-          <div className="flex items-center mb-8 md:hidden">
-            <img src="/nexusLogo.png" alt="CyberSage Nexus" className="h-10 w-auto object-contain max-w-[200px]" />
-          </div>
 
-          {/* Heading */}
-          <div className="mb-8">
-            <h1 className="text-2xl font-semibold text-[#eceef8] tracking-tight">Sign in</h1>
-            <p className="text-[#8b93a7] text-sm mt-1.5">Use your Cybersage account.</p>
-          </div>
+          {/* Card */}
+          <div className="bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06),_0_8px_32px_rgba(0,0,0,0.08)] border border-[#eaecf0] px-8 py-9 sm:px-10">
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {error && (
-              <div className="p-4 bg-[#ff4d6d]/10 border border-[#ff4d6d]/30 rounded-lg">
-                <p className="text-sm text-[#ff4d6d] font-medium text-center">
-                  Invalid email or password. Please try again.
-                </p>
-              </div>
-            )}
-
-            <div>
-              <label className="block text-[13px] font-medium text-[#c3c8d8] mb-1.5">
-                Email
-              </label>
-              <input
-                name="email"
-                type="email"
-                required
-                placeholder="you@cybersage.uk"
-                suppressHydrationWarning
-                className="block w-full px-3.5 py-2.5 border border-[rgba(255,255,255,0.1)] rounded-lg bg-[#161a28] text-[#eceef8] placeholder:text-[#5d6579] focus:border-[#00d2ff]/60 focus:ring-2 focus:ring-[#00d2ff]/20 transition-colors text-sm outline-none"
-              />
+            <div className="mb-7">
+              <h1 className="text-[22px] font-semibold text-[#101828] tracking-tight">Sign in to Nexus</h1>
+              <p className="text-[#667085] text-[13.5px] mt-1.5">Use your Cybersage credentials to continue.</p>
             </div>
 
-            <div>
-              <label className="block text-[13px] font-medium text-[#c3c8d8] mb-1.5">
-                Password
-              </label>
-              <input
-                name="password"
-                type="password"
-                required
-                placeholder="Your password"
-                suppressHydrationWarning
-                className="block w-full px-3.5 py-2.5 border border-[rgba(255,255,255,0.1)] rounded-lg bg-[#161a28] text-[#eceef8] placeholder:text-[#5d6579] focus:border-[#00d2ff]/60 focus:ring-2 focus:ring-[#00d2ff]/20 transition-colors text-sm outline-none"
-              />
-            </div>
+            <form onSubmit={handleSubmit} className="space-y-5">
 
-            <button
-              disabled={isPending}
-              suppressHydrationWarning
-              className="w-full flex justify-center py-2.5 px-4 rounded-lg text-sm font-semibold text-[#003543] bg-[#00d2ff] hover:bg-[#33dbff] focus:ring-2 focus:ring-[#00d2ff]/30 transition-colors disabled:opacity-70 items-center gap-2 mt-1"
-            >
-              {isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Signing in...
-                </>
-              ) : (
-                "Sign In"
+              {error && (
+                <div className="flex items-start gap-2.5 p-3.5 bg-[#fef3f2] border border-[#fecdca] rounded-xl">
+                  <AlertCircle className="h-4 w-4 text-[#d92d20] flex-shrink-0 mt-0.5" />
+                  <p className="text-[13px] text-[#b42318] font-medium leading-snug">
+                    Invalid email or password. Please try again.
+                  </p>
+                </div>
               )}
-            </button>
-          </form>
 
-          <p className="mt-8 text-[13px] text-[#707a90]">
-            Trouble signing in? Contact your administrator.
+              <div className="space-y-1.5">
+                <label className="block text-[13px] font-medium text-[#344054]">Email address</label>
+                <input
+                  name="email"
+                  type="email"
+                  required
+                  autoComplete="email"
+                  placeholder="you@cybersage.uk"
+                  suppressHydrationWarning
+                  className="w-full px-3.5 py-2.5 bg-white border border-[#d0d5dd] rounded-xl text-[14px] text-[#101828] placeholder:text-[#98a2b3] focus:outline-none focus:border-[#1a56db] focus:ring-2 focus:ring-[#1a56db]/12 transition-all"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-[13px] font-medium text-[#344054]">Password</label>
+                <input
+                  name="password"
+                  type="password"
+                  required
+                  autoComplete="current-password"
+                  placeholder="••••••••"
+                  suppressHydrationWarning
+                  className="w-full px-3.5 py-2.5 bg-white border border-[#d0d5dd] rounded-xl text-[14px] text-[#101828] placeholder:text-[#98a2b3] focus:outline-none focus:border-[#1a56db] focus:ring-2 focus:ring-[#1a56db]/12 transition-all"
+                />
+              </div>
+
+              <button
+                disabled={isPending}
+                suppressHydrationWarning
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-5 mt-1 bg-[#1a56db] hover:bg-[#1447c0] active:bg-[#1040b0] text-white text-[14px] font-semibold rounded-xl transition-colors shadow-[0_1px_3px_rgba(26,86,219,0.3)] disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {isPending ? (
+                  <><Loader2 className="h-4 w-4 animate-spin" /> Signing in…</>
+                ) : (
+                  <><span>Sign in</span><ArrowRight className="h-4 w-4" /></>
+                )}
+              </button>
+            </form>
+          </div>
+
+          <p className="mt-5 text-center text-[13px] text-[#98a2b3]">
+            Having trouble?{" "}
+            <span className="text-[#667085]">Contact your administrator.</span>
           </p>
         </div>
       </div>

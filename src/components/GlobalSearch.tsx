@@ -734,9 +734,9 @@ export function SearchTrigger({ variant = "light" }: { variant?: "light" | "dark
         <button
           onClick={() => setOpen(true)}
           title="Search (Ctrl+K)"
-          className="flex h-8 w-8 items-center justify-center rounded-md text-[#707a90] hover:bg-[#262939] hover:text-[#dfe1f6] transition-colors"
+          className="flex h-9 w-9 items-center justify-center rounded-xl text-[#80868b] hover:bg-[#f1f3f4] hover:text-[#5f6368] transition-colors"
         >
-          <Search className="h-4 w-4" />
+          <Search className="h-[17px] w-[17px]" />
         </button>
         {open && <GlobalSearch onClose={() => setOpen(false)} />}
       </>
@@ -744,14 +744,10 @@ export function SearchTrigger({ variant = "light" }: { variant?: "light" | "dark
   }
 
   const btnClass =
-    variant === "dark"
-      ? "flex items-center gap-2 w-full px-2.5 py-1.5 rounded-md bg-[#262939]/60 hover:bg-[#262939] text-[13px] text-[#707a90] hover:text-[#dfe1f6] transition-colors"
-      : "flex items-center gap-2 w-full px-3 py-2 rounded-lg bg-[#1b1f2e] hover:bg-[#262939] text-sm text-[#9aa3b8] transition-colors";
+    "flex items-center gap-2 w-full px-3 py-2 rounded-xl bg-[#f1f3f4] hover:bg-[#e8eaed] text-[13px] text-[#80868b] hover:text-[#5f6368] transition-colors";
 
   const kbdClass =
-    variant === "dark"
-      ? "hidden sm:inline-block text-[10px] font-mono bg-[#0f1321]/60 text-[#707a90] px-1.5 py-0.5 rounded"
-      : "hidden sm:inline-block text-[10px] font-mono bg-[#262939] text-[#9aa3b8] px-1.5 py-0.5 rounded";
+    "hidden sm:inline-block text-[10px] font-mono bg-white border border-[#e8eaed] text-[#9aa0a6] px-1.5 py-0.5 rounded";
 
   return (
     <>

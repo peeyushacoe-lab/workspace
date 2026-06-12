@@ -1,13 +1,28 @@
-﻿"use client";
+"use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { LogOut, ChevronLeft, ChevronRight, Menu, X, Settings } from "lucide-react";
+import { LogOut, ChevronLeft, ChevronRight, Menu, X, Settings, Bell } from "lucide-react";
 import { SidebarNav } from "./SidebarNav";
 import { SearchTrigger } from "./GlobalSearch";
 import { NotificationCenter } from "./NotificationCenter";
 import { ComposeButton } from "./ComposeButton";
 import { roleLabels, type SessionUser } from "@/lib/auth";
 import type { PortalNavItem } from "@/lib/auth";
+
+/* ── Avatar colour palette ─────────────────────────────────────── */
+const AVATAR_COLORS = [
+  { bg: "bg-blue-100",   text: "text-blue-700"   },
+  { bg: "bg-violet-100", text: "text-violet-700"  },
+  { bg: "bg-emerald-100",text: "text-emerald-700" },
+  { bg: "bg-amber-100",  text: "text-amber-700"   },
+  { bg: "bg-rose-100",   text: "text-rose-700"    },
+  { bg: "bg-cyan-100",   text: "text-cyan-700"    },
+];
+function avatarColor(name: string) {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+  return AVATAR_COLORS[h % AVATAR_COLORS.length];
+}
 
 export function SidebarLayout({
   nav,
@@ -37,108 +52,118 @@ export function SidebarLayout({
     });
   };
 
-  const sidebarContent = (isMobile: boolean) => (
-    <div className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
-      {(!collapsed || isMobile) && (
-        <>
-          <div className="px-3 pt-3 pb-1">
-            <SearchTrigger variant="dark" />
+  /* ── Sidebar content (shared desktop/mobile) ──────────────────── */
+  const sidebarContent = (isMobile: boolean) => {
+    const color = currentUser ? avatarColor(currentUser.fullName) : AVATAR_COLORS[0];
+
+    return (
+      <div className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
+
+        {/* Search + Compose */}
+        {(!collapsed || isMobile) && (
+          <div className="px-3 pt-3 pb-1 space-y-1">
+            <SearchTrigger variant="light" />
+            {currentUser && <ComposeButton userRole={currentUser.role} collapsed={false} />}
           </div>
-          {currentUser && <ComposeButton userRole={currentUser.role} collapsed={false} />}
-        </>
-      )}
+        )}
+        {collapsed && !isMobile && (
+          <div className="flex flex-col items-center gap-1.5 py-3 px-1.5">
+            <SearchTrigger variant="collapsed" />
+            {currentUser && <ComposeButton userRole={currentUser.role} collapsed={true} />}
+          </div>
+        )}
 
-      {collapsed && !isMobile && (
-        <div className="flex flex-col items-center gap-1 py-2">
-          <SearchTrigger variant="collapsed" />
-          {currentUser && <ComposeButton userRole={currentUser.role} collapsed={true} />}
-        </div>
-      )}
+        {/* Nav links */}
+        <SidebarNav nav={nav} collapsed={collapsed && !isMobile} />
 
-      <SidebarNav nav={nav} collapsed={collapsed && !isMobile} />
-
-      {currentUser && (
-        <div
-          className={`mt-auto border-t border-[rgba(255,255,255,0.06)] p-3 ${
-            collapsed && !isMobile ? "flex flex-col items-center gap-2" : ""
-          }`}
-        >
-          {collapsed && !isMobile ? (
-            <div
-              className="flex h-8 w-8 items-center justify-center rounded-md bg-[#262939] text-[#dfe1f6] text-xs font-semibold"
-              title={currentUser.fullName}
-            >
-              {currentUser.fullName.charAt(0).toUpperCase()}
-            </div>
-          ) : (
-            <div className="flex items-center gap-2.5 mb-2">
-              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md bg-[#262939] text-[#dfe1f6] text-xs font-semibold">
-                {currentUser.fullName.charAt(0).toUpperCase()}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-[#dfe1f6] truncate leading-tight">{currentUser.fullName}</p>
-                <p className="text-xs text-[#9aa3b8] leading-tight">{roleLabels[currentUser.role]}</p>
-              </div>
-            </div>
-          )}
-          <a
-            href="/settings"
-            title="Settings"
-            className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium text-[#9aa3b8] hover:bg-[#262939] hover:text-[#dfe1f6] transition-colors duration-150 ${
-              collapsed && !isMobile ? "justify-center w-9 px-0 self-center" : "w-full"
+        {/* Footer */}
+        {currentUser && (
+          <div
+            className={`mt-auto border-t border-[#f0f0f0] px-3 py-3 space-y-1 ${
+              collapsed && !isMobile ? "flex flex-col items-center gap-1 space-y-0" : ""
             }`}
           >
-            <Settings className="h-3.5 w-3.5 flex-shrink-0" />
-            {(!collapsed || isMobile) && "Settings"}
-          </a>
+            {/* User row */}
+            {collapsed && !isMobile ? (
+              <div
+                className={`flex h-8 w-8 items-center justify-center rounded-xl ${color.bg} ${color.text} text-xs font-semibold`}
+                title={currentUser.fullName}
+              >
+                {currentUser.fullName.charAt(0).toUpperCase()}
+              </div>
+            ) : (
+              <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl hover:bg-[#f1f3f4] transition-colors cursor-default">
+                <div className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl ${color.bg} ${color.text} text-xs font-semibold`}>
+                  {currentUser.fullName.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-semibold text-[#202124] truncate leading-tight">{currentUser.fullName}</p>
+                  <p className="text-[11.5px] text-[#80868b] leading-tight truncate">{roleLabels[currentUser.role]}</p>
+                </div>
+              </div>
+            )}
 
-          <form
-            action="/api/auth/logout"
-            method="post"
-            className={collapsed && !isMobile ? "w-full flex justify-center" : ""}
-          >
-            <button
-              title={collapsed && !isMobile ? "Sign out" : undefined}
-              className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium text-[#9aa3b8] hover:bg-red-500/10 hover:text-red-400 transition-colors ${
-                collapsed && !isMobile ? "justify-center w-9 px-0" : "w-full"
+            {/* Settings */}
+            <a
+              href="/settings"
+              title="Settings"
+              className={`flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13px] text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124] transition-colors ${
+                collapsed && !isMobile ? "justify-center w-9 px-0" : ""
               }`}
             >
-              <LogOut className="h-3.5 w-3.5 flex-shrink-0" />
-              {(!collapsed || isMobile) && "Sign out"}
-            </button>
-          </form>
-        </div>
-      )}
-    </div>
-  );
+              <Settings className="h-[15px] w-[15px] flex-shrink-0" />
+              {(!collapsed || isMobile) && "Settings"}
+            </a>
 
-  const desktopWidth = mounted && collapsed ? "lg:w-12" : "lg:w-56";
-  const contentPad = mounted && collapsed ? "lg:pl-12" : "lg:pl-56";
+            {/* Sign out */}
+            <form
+              action="/api/auth/logout"
+              method="post"
+              className={collapsed && !isMobile ? "w-full flex justify-center" : ""}
+            >
+              <button
+                title={collapsed && !isMobile ? "Sign out" : undefined}
+                className={`flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13px] text-[#5f6368] hover:bg-red-50 hover:text-red-600 transition-colors w-full ${
+                  collapsed && !isMobile ? "justify-center w-9 px-0" : ""
+                }`}
+              >
+                <LogOut className="h-[15px] w-[15px] flex-shrink-0" />
+                {(!collapsed || isMobile) && "Sign out"}
+              </button>
+            </form>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const desktopWidth = mounted && collapsed ? "lg:w-[56px]" : "lg:w-[228px]";
+  const contentPad   = mounted && collapsed ? "lg:pl-[56px]" : "lg:pl-[228px]";
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[#f8fafd]">
       <div className="flex min-h-screen">
 
-        {/* Desktop Sidebar */}
+        {/* ── Desktop sidebar ───────────────────────────────── */}
         <aside
-          className={`hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 bg-[#0c0f1b] border-r border-[rgba(255,255,255,0.06)] transition-all duration-200 z-30 ${desktopWidth}`}
+          className={`hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 bg-white border-r border-[#e8eaed] transition-all duration-200 z-30 ${desktopWidth}`}
         >
-          {/* Header */}
+          {/* Logo header */}
           <div
-            className={`flex h-14 flex-shrink-0 items-center border-b border-[rgba(255,255,255,0.06)] ${
+            className={`flex h-[56px] flex-shrink-0 items-center border-b border-[#f0f0f0] ${
               collapsed ? "justify-center px-2" : "gap-2.5 px-4"
             }`}
           >
             {collapsed
-              ? <img src="/nexus.png" alt="CyberSage Nexus" className="h-8 w-8 flex-shrink-0 object-contain" />
-              : <img src="/nexusLogo.png" alt="CyberSage Nexus" className="h-8 w-auto flex-shrink-0 object-contain max-w-[140px]" />
+              ? <img src="/nexus.png" alt="Nexus" className="h-8 w-8 flex-shrink-0 object-contain" />
+              : <img src="/nexusLogo.png" alt="CyberSage Nexus" className="h-[26px] w-auto flex-shrink-0 object-contain max-w-[140px]" />
             }
             {!collapsed && (
               <>
                 <div className="flex-1" />
                 <button
                   onClick={toggleCollapsed}
-                  className="p-1 rounded-md text-[#9aa3b8] hover:bg-[#262939] hover:text-[#dfe1f6] transition-colors flex-shrink-0"
+                  className="p-1.5 rounded-lg text-[#80868b] hover:bg-[#f1f3f4] hover:text-[#5f6368] transition-colors"
                   title="Collapse sidebar"
                 >
                   <ChevronLeft className="h-3.5 w-3.5" />
@@ -148,7 +173,7 @@ export function SidebarLayout({
             {collapsed && (
               <button
                 onClick={toggleCollapsed}
-                className="absolute -right-3 top-4 flex h-6 w-6 items-center justify-center rounded-full bg-[#0a0d1c] border border-[rgba(255,255,255,0.06)] text-[#9aa3b8] hover:text-[#dfe1f6] transition-colors z-10"
+                className="absolute -right-3 top-5 flex h-6 w-6 items-center justify-center rounded-full bg-white border border-[#e8eaed] shadow-sm text-[#80868b] hover:text-[#5f6368] transition-colors z-10"
                 title="Expand sidebar"
               >
                 <ChevronRight className="h-3 w-3" />
@@ -159,20 +184,20 @@ export function SidebarLayout({
           {sidebarContent(false)}
         </aside>
 
-        {/* Mobile Overlay Drawer */}
+        {/* ── Mobile overlay drawer ─────────────────────────── */}
         {mobileOpen && (
           <div className="lg:hidden fixed inset-0 z-50 flex">
             <div
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/40"
               onClick={() => setMobileOpen(false)}
             />
-            <aside className="relative z-10 flex w-56 flex-col bg-[#0c0f1b] shadow-2xl">
-              <div className="flex h-12 items-center gap-2.5 border-b border-[rgba(255,255,255,0.06)] px-4">
-                <img src="/nexusLogo.png" alt="CyberSage Nexus" className="h-7 w-auto object-contain max-w-[130px]" />
+            <aside className="relative z-10 flex w-[228px] flex-col bg-white shadow-xl border-r border-[#e8eaed]">
+              <div className="flex h-[52px] items-center gap-2.5 border-b border-[#f0f0f0] px-4">
+                <img src="/nexusLogo.png" alt="CyberSage Nexus" className="h-[24px] w-auto object-contain max-w-[130px]" />
                 <div className="flex-1" />
                 <button
                   onClick={() => setMobileOpen(false)}
-                  className="p-1 rounded-md text-[#9aa3b8] hover:bg-[#262939] hover:text-[#dfe1f6]"
+                  className="p-1.5 rounded-lg text-[#80868b] hover:bg-[#f1f3f4]"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -182,34 +207,37 @@ export function SidebarLayout({
           </div>
         )}
 
-        {/* Mobile Top Bar */}
-        <div className="lg:hidden fixed top-0 inset-x-0 z-40 flex h-12 items-center gap-3 bg-[#0c0f1b] border-b border-[rgba(255,255,255,0.06)] px-4">
+        {/* ── Mobile top bar ────────────────────────────────── */}
+        <div className="lg:hidden fixed top-0 inset-x-0 z-40 flex h-[52px] items-center gap-3 bg-white border-b border-[#e8eaed] px-4 shadow-[0_1px_0_#e8eaed]">
           <button
             onClick={() => setMobileOpen(true)}
-            className="p-1.5 rounded-md text-[#9aa3b8] hover:bg-[#1b1f2e] transition-colors"
+            className="p-1.5 rounded-lg text-[#5f6368] hover:bg-[#f1f3f4] transition-colors"
             aria-label="Open menu"
           >
             <Menu className="h-5 w-5" />
           </button>
-          <div className="flex items-center">
-            <img src="/nexusLogo.png" alt="CyberSage Nexus" className="h-7 w-auto object-contain max-w-[120px]" />
-          </div>
+          <img src="/nexusLogo.png" alt="CyberSage Nexus" className="h-[22px] w-auto object-contain max-w-[110px]" />
           {currentUser && (
-            <div className="ml-auto flex items-center gap-2">
+            <div className="ml-auto flex items-center gap-1.5">
               <Suspense fallback={null}>
                 <NotificationCenter userId={currentUser.id} />
               </Suspense>
-              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-[#262939] text-[#dfe1f6] text-xs font-semibold">
-                {currentUser.fullName.charAt(0).toUpperCase()}
-              </div>
+              {(() => {
+                const color = avatarColor(currentUser.fullName);
+                return (
+                  <div className={`flex h-7 w-7 items-center justify-center rounded-full ${color.bg} ${color.text} text-xs font-semibold`}>
+                    {currentUser.fullName.charAt(0).toUpperCase()}
+                  </div>
+                );
+              })()}
             </div>
           )}
         </div>
 
-        {/* Desktop top-right notification bar */}
-        <div className={`hidden lg:flex fixed top-0 right-0 z-20 h-11 items-center px-4 gap-2 transition-all duration-200 ${contentPad}`}>
+        {/* ── Desktop top-right notification bar ───────────── */}
+        <div className={`hidden lg:flex fixed top-0 right-0 z-20 h-[56px] items-center px-5 gap-2 transition-all duration-200 ${contentPad}`}>
           {currentUser && (
-            <div className="ml-auto flex items-center gap-2">
+            <div className="ml-auto flex items-center gap-1.5">
               <Suspense fallback={null}>
                 <NotificationCenter userId={currentUser.id} />
               </Suspense>
@@ -217,8 +245,8 @@ export function SidebarLayout({
           )}
         </div>
 
-        {/* Main Content */}
-        <div className={`flex-1 transition-[padding] duration-200 pt-12 lg:pt-11 ${contentPad}`}>
+        {/* ── Main content ──────────────────────────────────── */}
+        <div className={`flex-1 transition-[padding] duration-200 pt-[52px] lg:pt-[56px] ${contentPad}`}>
           <main className="min-h-screen">{children}</main>
         </div>
 

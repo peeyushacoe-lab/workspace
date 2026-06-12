@@ -30,6 +30,7 @@ import {
   Square,
   Phone,
   Video,
+  Megaphone,
 } from "lucide-react";
 import { formatDistanceToNow, isToday, isYesterday, format } from "date-fns";
 import { toast } from "sonner";
@@ -48,6 +49,8 @@ type Channel = {
   description?: string;
   type: "CHANNEL" | "DIRECT" | "GROUP";
   isPrivate: boolean;
+  isBroadcast: boolean;
+  createdById?: string | null;
   members: Member[];
   _count: { messages: number };
   unreadCount?: number;
@@ -840,6 +843,7 @@ function NewChannelModal({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [isPrivate, setIsPrivate] = useState(false);
+  const [isBroadcast, setIsBroadcast] = useState(false);
   const [creating, setCreating] = useState(false);
 
   const submit = async () => {
@@ -849,7 +853,7 @@ function NewChannelModal({
       const res = await fetch("/api/chat/channels", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), description, isPrivate }),
+        body: JSON.stringify({ name: name.trim(), description, isPrivate, isBroadcast }),
       });
       if (!res.ok) throw new Error("Failed");
       const ch = (await res.json()) as Channel;
@@ -904,6 +908,21 @@ function NewChannelModal({
               className="rounded"
             />
             <span className="text-sm text-[#dfe1f6]">Private channel</span>
+          </label>
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={isBroadcast}
+              onChange={(e) => setIsBroadcast(e.target.checked)}
+              className="rounded mt-0.5"
+            />
+            <div>
+              <span className="text-sm text-[#dfe1f6] flex items-center gap-1.5">
+                <Megaphone className="w-3.5 h-3.5 text-[#9aa3b8]" />
+                Broadcast channel
+              </span>
+              <p className="text-[11px] text-[#707a90] mt-0.5">Only you can post. Everyone can follow and read.</p>
+            </div>
           </label>
         </div>
         <div className="flex gap-3 mt-6">
@@ -1275,6 +1294,8 @@ function ChannelSection({
               >
                 {isDM || isGroup ? (
                   <Users className="w-3.5 h-3.5 flex-shrink-0 opacity-70" />
+                ) : ch.isBroadcast ? (
+                  <Megaphone className="w-3.5 h-3.5 flex-shrink-0 opacity-70" />
                 ) : (
                   <Hash className="w-3.5 h-3.5 flex-shrink-0 opacity-70" />
                 )}
@@ -2619,6 +2640,8 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
                 <div className="flex items-center gap-2">
                   {selectedChannel?.type === "DIRECT" || selectedChannel?.type === "GROUP" ? (
                     <Users className="w-5 h-5 text-[#9aa3b8]" />
+                  ) : selectedChannel?.isBroadcast ? (
+                    <Megaphone className="w-5 h-5 text-[#9aa3b8]" />
                   ) : (
                     <Hash className="w-5 h-5 text-[#9aa3b8]" />
                   )}
@@ -2628,6 +2651,9 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
                   )}
                   {selectedChannel?.type === "GROUP" && (
                     <span className="text-[10px] font-semibold text-[#5d6579] bg-[#262939] border border-[rgba(255,255,255,0.06)] px-1.5 py-0.5 rounded-full">Group</span>
+                  )}
+                  {selectedChannel?.isBroadcast && (
+                    <span className="text-[10px] font-semibold text-[#9aa3b8] bg-[#262939] border border-[rgba(255,255,255,0.06)] px-1.5 py-0.5 rounded-full">Broadcast</span>
                   )}
                 </div>
                 {selectedChannel?.type === "DIRECT" ? (
@@ -2765,6 +2791,16 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
               )}
             </div>
 
+            {/* Broadcast read-only notice for non-admin members */}
+            {selectedChannel?.isBroadcast && selectedChannel.members.find(m => m.userId === currentUserId)?.role !== "ADMIN" ? (
+              <div className="px-4 py-4 border-t border-[rgba(255,255,255,0.08)] bg-[#1b1f2e] flex-shrink-0 flex items-center justify-center gap-3">
+                <Megaphone className="w-4 h-4 text-[#9aa3b8] shrink-0" />
+                <p className="text-sm text-[#9aa3b8]">
+                  This is a broadcast channel — only the owner can post.
+                </p>
+              </div>
+            ) : (
+            <>
             {/* Composer */}
             <div className="px-4 py-3 border-t border-[rgba(255,255,255,0.08)] bg-[#1b1f2e] flex-shrink-0">
               {/* Voice note preview */}
@@ -2858,6 +2894,8 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
                 Enter to send · Shift+Enter for new line · Drag files to attach · @ to mention · ⌘K to navigate
               </p>
             </div>
+            </>
+            )}
           </div>
 
           {/* Thread panel */}

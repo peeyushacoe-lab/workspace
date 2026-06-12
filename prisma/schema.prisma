@@ -509,6 +509,7 @@ model ChatChannel {
   description     String?
   type            ChatChannelType @default(CHANNEL)
   isPrivate       Boolean         @default(false)
+  isBroadcast     Boolean         @default(false)
   createdById     String?
   pinnedMessageId String?
   topic           String?
