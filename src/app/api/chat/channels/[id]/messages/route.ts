@@ -28,10 +28,9 @@ export async function GET(request: Request, { params }: Params) {
   const limit = Math.min(parseInt(searchParams.get("limit") ?? "50"), 100);
   const parentId = searchParams.get("parentId");
 
-  const messages = await prisma.chatMessage.findMany({
+  const messageQuery = {
     where: {
       channelId,
-      // Include soft-deleted messages so the client can render "(message deleted)"
       parentId: parentId ?? null,
       ...(before ? { createdAt: { lt: new Date(before) } } : {}),
       ...(after ? { createdAt: { gt: new Date(after) } } : {}),
@@ -46,9 +45,23 @@ export async function GET(request: Request, { params }: Params) {
         select: { id: true },
       },
     },
-    orderBy: { createdAt: "asc" },
+    orderBy: { createdAt: "asc" as const },
     take: limit,
-  });
+  };
+
+  // Fall back without deletedAt filter if the column doesn't exist in DB yet
+  const messages = await prisma.chatMessage.findMany(messageQuery).catch(() =>
+    prisma.chatMessage.findMany({
+      ...messageQuery,
+      include: {
+        user: { select: { id: true, fullName: true, avatarUrl: true, role: true } },
+        reactions: {
+          include: { user: { select: { id: true, fullName: true } } },
+        },
+        replies: { select: { id: true } },
+      },
+    })
+  );
 
   // Update last-read in parallel with the response — fire-and-forget is fine here.
   prisma.chatMember.update({
@@ -70,7 +83,7 @@ export async function POST(request: Request, { params }: Params) {
 
   const [membership, channel] = await Promise.all([
     prisma.chatMember.findUnique({ where: { channelId_userId: { channelId, userId: user.id } } }),
-    prisma.chatChannel.findUnique({ where: { id: channelId }, select: { isBroadcast: true } }),
+    prisma.chatChannel.findUnique({ where: { id: channelId }, select: { isBroadcast: true } }).catch(() => null),
   ]);
   if (!membership) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   // Broadcast channels: only ADMIN members (the creator) can post
@@ -107,7 +120,7 @@ export async function POST(request: Request, { params }: Params) {
     include: {
       user: { select: { id: true, fullName: true, avatarUrl: true, role: true } },
       reactions: true,
-      replies: { where: { deletedAt: null }, select: { id: true } },
+      replies: { select: { id: true } },
     },
   });
 

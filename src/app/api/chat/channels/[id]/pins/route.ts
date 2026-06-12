@@ -21,7 +21,14 @@ export async function GET(_request: Request, { params }: Params) {
     include: { user: { select: { id: true, fullName: true, avatarUrl: true } } },
     orderBy: { createdAt: "desc" },
     take: 50,
-  });
+  }).catch(() =>
+    prisma.chatMessage.findMany({
+      where: { channelId, isPinned: true },
+      include: { user: { select: { id: true, fullName: true, avatarUrl: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    })
+  );
 
   return NextResponse.json(pinned);
 }

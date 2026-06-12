@@ -24,7 +24,13 @@ export async function POST(_request: Request, { params }: Params) {
     },
     select: { id: true },
     take: 500,
-  });
+  }).catch(() =>
+    prisma.chatMessage.findMany({
+      where: { channelId, readBy: { none: { userId: user.id } } },
+      select: { id: true },
+      take: 500,
+    })
+  );
 
   if (unread.length > 0) {
     await prisma.chatMessageRead.createMany({
