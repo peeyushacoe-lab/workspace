@@ -8,6 +8,19 @@ export async function GET() {
   const user = getSessionUserFromCookieStore(await cookies());
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  // Auto-add user to any non-private channels they're not yet a member of
+  const allPublic = await prisma.chatChannel.findMany({
+    where: { isPrivate: false },
+    select: { id: true },
+  });
+  for (const ch of allPublic) {
+    await prisma.chatMember.upsert({
+      where: { channelId_userId: { channelId: ch.id, userId: user.id } },
+      update: {},
+      create: { channelId: ch.id, userId: user.id, role: "MEMBER" },
+    }).catch(() => {});
+  }
+
   const channels = await prisma.chatChannel.findMany({
     where: {
       members: { some: { userId: user.id } },

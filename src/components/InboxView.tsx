@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Inbox, Search, RefreshCw, Clock, ChevronLeft, ChevronRight,
-  Mail, Reply, Trash2, Star, Archive, X, Send, Tag,
+  Mail, Reply, Forward, Trash2, Star, Archive, X, Send, Tag,
   AlertCircle, AlertTriangle, Info, ShieldAlert, FileText,
   Sparkles, Loader2, ChevronDown, CalendarClock, FolderPlus,
   Folder, BellOff, Zap, Users, MoreHorizontal, Plus, Edit2, Trash,
@@ -706,6 +706,7 @@ export function InboxView({ userRole, initialThreads }: {
   const [isRefreshing, setIsRefreshing]     = useState(false);
   const [searchQuery, setSearchQuery]       = useState("");
   const [showReply, setShowReply]           = useState(false);
+  const [showForward, setShowForward]       = useState(false);
   const [activeFolder, setActiveFolder]     = useState<SystemFolder>("inbox");
   const [activeCustomFolder, setActiveCustomFolder] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<Category>("All");
@@ -1546,7 +1547,14 @@ export function InboxView({ userRole, initialThreads }: {
                   <span className="hidden sm:inline">AI Reply</span>
                 </button>
                 <button
-                  onClick={() => { setShowReply(true); setShowSmartReply(false); }}
+                  onClick={() => { setShowForward(true); setShowReply(false); setShowSmartReply(false); }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1a1f2e] text-[#8fa3ac] hover:text-[#dfe1f6] border border-[rgba(255,255,255,0.06)] text-xs font-medium transition-colors"
+                >
+                  <Forward className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Forward</span>
+                </button>
+                <button
+                  onClick={() => { setShowReply(true); setShowSmartReply(false); setShowForward(false); }}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#00d2ff] text-[#002d38] hover:bg-[#00e8ff] text-xs font-semibold transition-colors"
                 >
                   <Reply className="w-3.5 h-3.5" />
@@ -1863,6 +1871,51 @@ export function InboxView({ userRole, initialThreads }: {
                         setRewriteBody("");
                         setComposerKey(0);
                         void loadThreadDetail(threadDetail.id);
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Forward Modal */}
+            {showForward && (
+              <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                <div
+                  className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+                  onClick={() => setShowForward(false)}
+                />
+                <div className="relative z-10 w-full max-w-lg overflow-hidden rounded-2xl bg-[#1b1f2e] shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center justify-between border-b border-[rgba(255,255,255,0.06)] bg-[#0f1321] px-5 py-4">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md bg-[#262939]">
+                        <Forward className="h-3.5 w-3.5 text-[#9aa3b8]" />
+                      </div>
+                      <div className="min-w-0">
+                        <h2 className="text-sm font-semibold text-[#dfe1f6]">Forward</h2>
+                        <p className="text-sm text-[#9aa3b8] truncate max-w-[300px]">{threadDetail.subject}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setShowForward(false)}
+                      className="p-2 text-[#9aa3b8] hover:bg-[#262939] hover:text-[#dfe1f6] rounded-full transition-colors"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+                  <div className="max-h-[80vh] overflow-y-auto">
+                    <SimpleComposer
+                      bare
+                      userRole={userRole}
+                      defaultSubject={`Fwd: ${threadDetail.subject}`}
+                      defaultBody={(() => {
+                        const orig = threadDetail.messages[0];
+                        if (!orig) return "";
+                        return `\n\n-------- Forwarded message --------\nFrom: ${orig.from}\nDate: ${new Date(orig.receivedAt).toLocaleString()}\nSubject: ${threadDetail.subject}\n\n${(orig.textBody ?? "").slice(0, 2000)}`;
+                      })()}
+                      onSuccess={() => {
+                        setShowForward(false);
+                        toast.success("Message forwarded");
                       }}
                     />
                   </div>

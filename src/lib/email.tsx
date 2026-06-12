@@ -214,6 +214,7 @@ export async function sendEmail(
   cc?: string[],
   bcc?: string[],
   options?: { isBulk?: boolean },
+  attachments?: Array<{ filename: string; content: Buffer }>,
 ) {
   if (!resend) {
     return {
@@ -249,6 +250,7 @@ export async function sendEmail(
     headers,
     ...(cc?.length ? { cc } : {}),
     ...(bcc?.length ? { bcc } : {}),
+    ...(attachments?.length ? { attachments } : {}),
   });
 
   if (result.error) {

@@ -1,7 +1,7 @@
 ﻿"use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Send, User, Loader2, CheckCircle2, AlertCircle, Sparkles, X, ChevronDown } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Send, User, Loader2, CheckCircle2, AlertCircle, Sparkles, X, ChevronDown, Paperclip } from "lucide-react";
 import { toast } from "sonner";
 import { getAllowedSendersForRole, type EmailAddressConfig } from "@/lib/email-config";
 import type { UserRole } from "@/generated/prisma/enums";
@@ -256,6 +256,24 @@ export function SimpleComposer({
   const [draftId, setDraftId] = useState<string | undefined>(initialDraftId);
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [draftSaveStatus, setDraftSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    const MAX = 10 * 1024 * 1024; // 10 MB per file
+    const valid = files.filter(f => {
+      if (f.size > MAX) { toast.error(`${f.name} exceeds 10 MB limit`); return false; }
+      return true;
+    });
+    setAttachments(prev => {
+      const names = new Set(prev.map(f => f.name));
+      return [...prev, ...valid.filter(f => !names.has(f.name))];
+    });
+    // Reset so the same file can be re-selected after removal
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }, []);
 
   // Restore draft on mount from localStorage (legacy/offline)
   useEffect(() => {
@@ -327,12 +345,23 @@ export function SimpleComposer({
     loadSignatures();
   }, []);
 
-  const doActualSend = async (payload: { to: string; subject: string; body: string; signatureId?: string; cc?: string[]; bcc?: string[] }) => {
-    const response = await fetch("/api/inbox/compose", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+  const doActualSend = async (payload: { to: string; subject: string; body: string; signatureId?: string; cc?: string[]; bcc?: string[]; replyToThreadId?: string }) => {
+    let requestInit: RequestInit;
+    if (attachments.length > 0) {
+      const fd = new FormData();
+      fd.append("to", payload.to);
+      fd.append("subject", payload.subject);
+      fd.append("body", payload.body);
+      if (payload.signatureId) fd.append("signatureId", payload.signatureId);
+      if (payload.replyToThreadId) fd.append("replyToThreadId", payload.replyToThreadId);
+      if (payload.cc?.length) fd.append("cc", JSON.stringify(payload.cc));
+      if (payload.bcc?.length) fd.append("bcc", JSON.stringify(payload.bcc));
+      for (const file of attachments) fd.append("attachments", file);
+      requestInit = { method: "POST", body: fd };
+    } else {
+      requestInit = { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) };
+    }
+    const response = await fetch("/api/inbox/compose", requestInit);
     const data = await response.json() as { ok?: boolean; error?: string };
     if (!response.ok || !data.ok) throw new Error(data.error ?? "Failed to send");
   };
@@ -378,6 +407,7 @@ export function SimpleComposer({
             toast.success("Email sent", { id: toastId });
             setRecipient(""); setCc(""); setBcc(""); setShowCc(false); setShowBcc(false);
             setSubject(""); setBody(""); setHasDraft(false); setDraftSaveStatus("idle");
+            setAttachments([]);
             if (draftKey) { try { localStorage.removeItem(draftKey); } catch {} }
             if (draftId) { fetch(`/api/drafts/${draftId}`, { method: "DELETE" }).catch(() => {}); setDraftId(undefined); }
             if (onSuccess) onSuccess();
@@ -575,6 +605,43 @@ export function SimpleComposer({
         />
       </div>
 
+      {/* Attachments */}
+      <div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          className="hidden"
+          onChange={handleFileSelect}
+        />
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="flex items-center gap-1.5 text-xs font-medium text-[#9aa3b8] hover:text-[#dfe1f6] transition-colors"
+        >
+          <Paperclip className="w-3.5 h-3.5" />
+          Attach files
+        </button>
+        {attachments.length > 0 && (
+          <ul className="mt-2 space-y-1">
+            {attachments.map((f) => (
+              <li key={f.name} className="flex items-center gap-2 rounded-md bg-[#1e2233] border border-[rgba(255,255,255,0.06)] px-3 py-1.5">
+                <Paperclip className="w-3 h-3 text-[#707a90] shrink-0" />
+                <span className="text-xs text-[#dfe1f6] flex-1 truncate">{f.name}</span>
+                <span className="text-[10px] text-[#707a90] shrink-0">{(f.size / 1024).toFixed(0)} KB</span>
+                <button
+                  type="button"
+                  onClick={() => setAttachments(prev => prev.filter(a => a.name !== f.name))}
+                  className="text-[#707a90] hover:text-[#ff4d6d] transition-colors"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
       <button
         disabled={isPending}
         className="w-full bg-[#00d2ff] text-[#003543] font-medium py-3 rounded-md hover:bg-[#7dd8f5] transition-colors active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
@@ -587,7 +654,7 @@ export function SimpleComposer({
         ) : (
           <>
             <Send className="w-4 h-4" />
-            Send
+            {attachments.length > 0 ? `Send (${attachments.length} attachment${attachments.length > 1 ? "s" : ""})` : "Send"}
           </>
         )}
       </button>

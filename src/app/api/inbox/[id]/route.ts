@@ -7,13 +7,14 @@ import { logAudit } from "@/lib/audit";
 
 type Params = { params: Promise<{ id: string }> };
 
-async function checkThreadAccess(threadId: string, userId: string, role: string) {
+async function checkThreadAccess(threadId: string, userId: string, role: string, userEmail?: string) {
   const thread = await prisma.inboxThread.findUnique({
     where: { id: threadId },
     select: {
       id: true,
       mailbox: {
         select: {
+          email: true,
           accessLogs: { where: { userId }, select: { userId: true }, take: 1 },
         },
       },
@@ -21,7 +22,9 @@ async function checkThreadAccess(threadId: string, userId: string, role: string)
   });
   if (!thread) return null;
   const isPrivileged = ["ADMIN", "CEO", "CISO"].includes(role);
-  const isAssigned = (thread.mailbox.accessLogs.length ?? 0) > 0;
+  // User owns this mailbox (their email matches mailbox email) OR has an explicit MailboxAccess entry
+  const isOwner = !!userEmail && thread.mailbox.email === userEmail;
+  const isAssigned = isOwner || (thread.mailbox.accessLogs.length ?? 0) > 0;
   if (!isPrivileged && !isAssigned) return null;
   return thread;
 }
@@ -75,7 +78,7 @@ export async function PUT(request: Request, { params }: Params) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const access = await checkThreadAccess(id, user.id, user.role);
+  const access = await checkThreadAccess(id, user.id, user.role, user.email);
   if (!access) return NextResponse.json({ error: "Not found or forbidden" }, { status: 404 });
 
   const body = (await request.json()) as {

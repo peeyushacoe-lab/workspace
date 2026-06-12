@@ -27,8 +27,35 @@ export async function POST(request: Request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await request.json() as unknown;
-  const parsed = composeSchema.safeParse(body);
+  // Support both JSON and multipart/form-data (when attachments are included)
+  let rawBody: unknown;
+  let attachmentFiles: Array<{ filename: string; content: Buffer }> = [];
+
+  const contentType = request.headers.get("content-type") ?? "";
+  if (contentType.includes("multipart/form-data")) {
+    const formData = await request.formData();
+    rawBody = {
+      to: formData.get("to"),
+      subject: formData.get("subject"),
+      body: formData.get("body"),
+      htmlBody: formData.get("htmlBody") ?? undefined,
+      cc: formData.get("cc") ? JSON.parse(formData.get("cc") as string) as string[] : undefined,
+      bcc: formData.get("bcc") ? JSON.parse(formData.get("bcc") as string) as string[] : undefined,
+      replyToThreadId: formData.get("replyToThreadId") ?? undefined,
+      signatureId: formData.get("signatureId") ?? undefined,
+    };
+    const files = formData.getAll("attachments") as File[];
+    attachmentFiles = await Promise.all(
+      files.map(async (f) => ({
+        filename: f.name,
+        content: Buffer.from(await f.arrayBuffer()),
+      }))
+    );
+  } else {
+    rawBody = await request.json() as unknown;
+  }
+
+  const parsed = composeSchema.safeParse(rawBody);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid" }, { status: 400 });
   }
@@ -210,6 +237,8 @@ export async function POST(request: Request) {
       `${user.fullName} <${fromAddr}>`,
       parsed.data.cc,
       parsed.data.bcc,
+      undefined,
+      attachmentFiles.length ? attachmentFiles : undefined,
     );
 
     // Save a sent copy in the sender's mailbox (so it appears in the Sent folder)

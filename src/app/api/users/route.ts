@@ -152,6 +152,18 @@ export async function POST(request: Request) {
       invitedByName: currentUser.fullName,
     }).catch(err => console.error("[invite email]", err));
 
+    // Auto-join new user to all non-private channels so they can access team chat
+    prisma.chatChannel.findMany({ where: { isPrivate: false }, select: { id: true } })
+      .then(async (channels) => {
+        for (const ch of channels) {
+          await prisma.chatMember.upsert({
+            where: { channelId_userId: { channelId: ch.id, userId: user.id } },
+            update: {},
+            create: { channelId: ch.id, userId: user.id, role: "MEMBER" },
+          }).catch(() => {});
+        }
+      }).catch(err => console.error("[chat auto-join]", err));
+
     // Deliver welcome message directly to their Nexus inbox — fire-and-forget
     sendWelcomeInboxMessage({
       userId: user.id,
