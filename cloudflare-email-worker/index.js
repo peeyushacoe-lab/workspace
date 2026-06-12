@@ -30,15 +30,27 @@ export default {
     const inReplyTo   = message.headers.get("in-reply-to") ?? "";
     const references  = message.headers.get("references") ?? "";
 
-    // Build attachment list (metadata only — large binaries skipped if >5MB)
+    // Build attachment list — include base64 content for files ≤ 5 MB so the
+    // Nexus webhook can upload them to R2 and make them downloadable.
     const attachments = (parsed.attachments ?? [])
-      .filter((a) => (a.content?.byteLength ?? 0) < 5 * 1024 * 1024)
-      .map((a) => ({
-        filename:    a.filename ?? "attachment",
-        mimeType:    a.mimeType ?? "application/octet-stream",
-        size:        a.content?.byteLength ?? 0,
-        contentId:   a.contentId ?? null,
-      }));
+      .filter((a) => (a.content?.byteLength ?? 0) <= 5 * 1024 * 1024)
+      .map((a) => {
+        let content64 = null;
+        if (a.content) {
+          // Convert ArrayBuffer → base64 string without Node.js Buffer (Workers runtime)
+          const bytes = new Uint8Array(a.content);
+          let binary = "";
+          for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+          content64 = btoa(binary);
+        }
+        return {
+          filename:  a.filename ?? "attachment",
+          mimeType:  a.mimeType ?? "application/octet-stream",
+          size:      a.content?.byteLength ?? 0,
+          contentId: a.contentId ?? null,
+          content:   content64,   // base64-encoded bytes, null if empty
+        };
+      });
 
     const payload = {
       type: "email.received",

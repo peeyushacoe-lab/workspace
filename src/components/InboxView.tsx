@@ -1759,29 +1759,52 @@ export function InboxView({ userRole, initialThreads }: {
                         </p>
                         <div className="flex flex-wrap gap-2">
                           {msg.attachments.map((att) => {
-                            const riskyExts = [".exe",".bat",".cmd",".vbs",".js",".jar",".ps1",".msi",".scr",".dll"];
+                            const riskyExts = [".exe",".bat",".cmd",".vbs",".jar",".ps1",".msi",".scr",".dll"];
                             const ext = att.filename.slice(att.filename.lastIndexOf(".")).toLowerCase();
                             const isRisky = riskyExts.includes(ext);
-                            return (
+                            const hasFile = !!att.storageUrl;
+
+                            const inner = (
+                              <>
+                                {isRisky ? (
+                                  <AlertCircle className="w-4 h-4 text-[#ff4d6d] flex-shrink-0" />
+                                ) : hasFile ? (
+                                  <ChevronRight className="w-4 h-4 text-[#1a56db] group-hover:translate-x-0.5 transition-transform" />
+                                ) : (
+                                  <ChevronRight className="w-4 h-4 text-[#80868b] flex-shrink-0" />
+                                )}
+                                <div className="min-w-0">
+                                  <p className={`text-xs font-medium truncate max-w-[160px] ${isRisky ? "text-[#ff4d6d]" : hasFile ? "text-[#202124]" : "text-[#80868b]"}`}>
+                                    {att.filename}
+                                  </p>
+                                  <p className={`text-[10px] ${isRisky ? "text-[#ff4d6d] font-medium" : "text-[#80868b]"}`}>
+                                    {isRisky ? "Potentially dangerous" : !hasFile ? "Not stored" : att.mimeType.split("/")[1]?.toUpperCase()}
+                                  </p>
+                                </div>
+                              </>
+                            );
+
+                            const baseClass = `border rounded-lg px-3 py-2 flex items-center gap-2 text-sm transition-colors group`;
+                            const colorClass = isRisky
+                              ? "bg-[#ff4d6d]/10 border-[#ff4d6d]/30 hover:bg-[#ff4d6d]/20"
+                              : hasFile
+                              ? "bg-white border-[#e8eaed] hover:bg-[#f1f3f4] cursor-pointer"
+                              : "bg-[#f8f9fa] border-[#e8eaed] cursor-not-allowed opacity-60";
+
+                            return hasFile ? (
                               <a
                                 key={att.id}
                                 href={att.storageUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className={`border rounded-lg px-3 py-2 flex items-center gap-2 text-sm transition-colors group ${isRisky ? "bg-[#ff4d6d]/10 border-[#ff4d6d]/30 hover:bg-[#ff4d6d]/20" : "bg-white border-[#e8eaed] hover:bg-[#f1f3f4]"}`}
+                                className={`${baseClass} ${colorClass}`}
                               >
-                                {isRisky ? (
-                                  <AlertCircle className="w-4 h-4 text-[#ff4d6d] flex-shrink-0" />
-                                ) : (
-                                  <ChevronRight className="w-4 h-4 text-[#1a56db] group-hover:translate-x-0.5 transition-transform" />
-                                )}
-                                <div className="min-w-0">
-                                  <p className={`text-xs font-medium truncate max-w-[160px] ${isRisky ? "text-[#ff4d6d]" : "text-[#202124]"}`}>{att.filename}</p>
-                                  <p className={`text-[10px] ${isRisky ? "text-[#ff4d6d] font-medium" : "text-[#80868b]"}`}>
-                                    {isRisky ? "Potentially dangerous" : att.mimeType.split("/")[1]?.toUpperCase()}
-                                  </p>
-                                </div>
+                                {inner}
                               </a>
+                            ) : (
+                              <div key={att.id} title="File content not available" className={`${baseClass} ${colorClass}`}>
+                                {inner}
+                              </div>
                             );
                           })}
                         </div>

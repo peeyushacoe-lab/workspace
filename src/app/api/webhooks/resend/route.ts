@@ -6,12 +6,14 @@ import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { invalidate } from "@/lib/cache";
 import { mailRulesQueue } from "@/lib/queues/mail-rules.queue";
+import { isS3Configured, uploadToR2 } from "@/lib/s3";
 
 const attachmentSchema = z.object({
   filename: z.string().optional(),
   mimeType: z.string().optional(),
   size: z.number().optional(),
   contentId: z.string().nullish(),
+  content: z.string().nullish(), // base64-encoded bytes from Cloudflare worker
 });
 
 const resendWebhookSchema = z.object({
@@ -159,6 +161,7 @@ type InboundAttachment = {
   mimeType?: string;
   size?: number;
   contentId?: string | null;
+  content?: string | null; // base64-encoded bytes
 };
 
 type InboundEmailPayload = {
@@ -315,19 +318,34 @@ async function handleInboundEmail(data: InboundEmailPayload) {
     },
   });
 
-  // Persist attachment metadata from the Cloudflare Email Worker
+  // Persist attachments from the Cloudflare Email Worker — upload binary content
+  // to R2 so the file is downloadable; fall back to metadata-only if no content.
   const inboundAttachments = data.attachments ?? [];
-  if (inboundAttachments.length > 0) {
-    await prisma.emailAttachment.createMany({
-      data: inboundAttachments.map((a) => ({
+  for (const a of inboundAttachments) {
+    let storageUrl: string | null = null;
+    let savedKey: string | null = null;
+    try {
+      if (a.content && isS3Configured()) {
+        const buf = Buffer.from(a.content, "base64");
+        const safeFilename = (a.filename ?? "attachment").replace(/[^a-zA-Z0-9._-]/g, "_");
+        const key = `attachments/${inboxMessage.id}/${Date.now()}-${safeFilename}`;
+        const result = await uploadToR2(buf, key, a.mimeType ?? "application/octet-stream");
+        storageUrl = result.url || null;
+        savedKey = result.key;
+      }
+    } catch (uploadErr) {
+      console.error("[webhook] attachment upload failed:", uploadErr);
+    }
+    await prisma.emailAttachment.create({
+      data: {
         messageId: inboxMessage.id,
         filename: a.filename ?? "attachment",
         mimeType: a.mimeType ?? "application/octet-stream",
         size: a.size ?? 0,
-        storageUrl: null,
-        key: null,
+        storageUrl,
+        key: savedKey,
         bucket: null,
-      })),
+      },
     });
   }
 
