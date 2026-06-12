@@ -21,7 +21,7 @@ export async function GET() {
   // We store share data as doc:share:sheet:{noteId} hash
   // To find what's shared with user: scan keys matching doc:share:sheet:*
   // and check if user.id is a field. We'll do a pattern scan.
-  let sharedSheets: typeof ownSheets = [];
+  const sharedSheets: typeof ownSheets = [];
   try {
     const keys = await redis.keys(`doc:share:sheet:*`);
     for (const key of keys) {

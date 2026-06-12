@@ -48,7 +48,7 @@ export async function POST(request: Request, { params }: Params) {
   const body = (await request.json()) as { email?: string; userId?: string; role?: string };
   const role = body.role ?? "viewer";
 
-  let targetUser = body.userId
+  const targetUser = body.userId
     ? await prisma.user.findFirst({ where: { id: body.userId }, select: { id: true, fullName: true, email: true } })
     : body.email
     ? await prisma.user.findFirst({ where: { email: body.email }, select: { id: true, fullName: true, email: true } })

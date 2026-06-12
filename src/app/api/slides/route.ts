@@ -27,7 +27,7 @@ export async function GET() {
     select: { id: true, title: true, pinned: true, createdAt: true, updatedAt: true, userId: true },
   });
 
-  let sharedPres: typeof ownPres = [];
+  const sharedPres: typeof ownPres = [];
   try {
     const keys = await redis.keys(`doc:share:pres:*`);
     for (const key of keys) {
