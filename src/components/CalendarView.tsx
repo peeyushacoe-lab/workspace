@@ -928,6 +928,16 @@ function EventDetailModal({
                   <Edit3 className="h-4 w-4" />
                 </button>
               )}
+              {/* Non-organizer attendees see "Edit RSVP" */}
+              {!isOrganizer && currentAttendee && (
+                <button
+                  onClick={() => onRSVP(event.id, currentAttendee.status === "ACCEPTED" ? "DECLINED" : "ACCEPTED")}
+                  className="rounded-lg p-1.5 hover:bg-white/20 transition-colors text-white"
+                  title="Toggle RSVP"
+                >
+                  <Check className="h-4 w-4" />
+                </button>
+              )}
               <button
                 onClick={onClose}
                 className="rounded-lg p-1.5 hover:bg-white/20 transition-colors"
@@ -993,7 +1003,7 @@ function EventDetailModal({
             {/* RSVP section for attendees */}
             {!isOrganizer && currentAttendee && (
               <div className="rounded-2xl bg-[#1a56db]/10 p-4">
-                <p className="mb-2 text-xs font-semibold text-[#7dd8f5]">Your RSVP</p>
+                <p className="mb-2 text-xs font-semibold text-[#1a56db]">Your RSVP</p>
                 <div className="flex gap-2">
                   {[
                     {
@@ -1034,12 +1044,12 @@ function EventDetailModal({
             )}
           </div>
 
-          {isOrganizer && (
+          {(isOrganizer || currentAttendee) && (
             <div className="mt-6 flex justify-end">
               <button
                 onClick={handleDelete}
                 disabled={deleting}
-                className="flex items-center gap-2 rounded-lg border border-red-700 px-3 py-2 text-sm font-medium text-red-400 hover:bg-red-950/30 transition-colors disabled:opacity-60"
+                className="flex items-center gap-2 rounded-lg border border-[#ea4335]/50 px-3 py-2 text-sm font-medium text-[#ea4335] hover:bg-[#ea4335]/10 transition-colors disabled:opacity-60"
               >
                 {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                 Delete Event

@@ -705,6 +705,7 @@ export function InboxView({ userRole, initialThreads }: {
   const [isDetailLoading, setIsDetailLoading] = useState(false);
   const [isRefreshing, setIsRefreshing]     = useState(false);
   const [searchQuery, setSearchQuery]       = useState("");
+  const [showUnreadOnly, setShowUnreadOnly]  = useState(false);
   const [showReply, setShowReply]           = useState(false);
   const [showForward, setShowForward]       = useState(false);
   const [activeFolder, setActiveFolder]     = useState<SystemFolder>("inbox");
@@ -785,12 +786,14 @@ export function InboxView({ userRole, initialThreads }: {
   }, [searchQuery, activeFolder]);
 
   useEffect(() => {
-    if (!initialThreads?.length) loadThreads();
+    // Always call loadThreads when deps change (searchQuery, activeFolder), not
+    // just when initialThreads is empty — otherwise search never fires on
+    // pre-populated inboxes because the guard short-circuits.
+    loadThreads();
     const interval = setInterval(() => {
       if (document.visibilityState === "visible") loadThreads(true);
-    }, 30000);
+    }, 8000); // 8s feels near-realtime without hammering the DB
     return () => clearInterval(interval);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadThreads]);
 
   useEffect(() => {
@@ -1036,6 +1039,7 @@ export function InboxView({ userRole, initialThreads }: {
     if (t.isArchived) return false;
     if (t.isSnoozed && activeFolder !== "starred") return false;
     if (activeFolder === "starred")  return t.isStarred;
+    if (showUnreadOnly && t.unreadCount === 0) return false;
     return true; // inbox and any unrecognised folder shows all non-trashed non-archived
   });
 
@@ -1216,15 +1220,24 @@ export function InboxView({ userRole, initialThreads }: {
           )}
 
           {!isSpecialFolder && (
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#80868b]" />
-              <input
-                type="text"
-                placeholder="Search…"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#f1f3f4] border-transparent rounded-lg pl-10 py-2 text-sm focus:ring-2 focus:ring-[#1a56db]/20 focus:bg-white outline-none"
-              />
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#80868b]" />
+                <input
+                  type="text"
+                  placeholder="Search…"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-[#f1f3f4] border-transparent rounded-lg pl-10 py-2 text-sm focus:ring-2 focus:ring-[#1a56db]/20 focus:bg-white outline-none"
+                />
+              </div>
+              <button
+                onClick={() => setShowUnreadOnly(v => !v)}
+                title={showUnreadOnly ? "Show all" : "Show unread only"}
+                className={`flex-shrink-0 px-2.5 py-1.5 text-xs font-semibold rounded-lg border transition-colors ${showUnreadOnly ? "bg-[#e8f0fe] text-[#1a56db] border-[#1a56db]/30" : "bg-white text-[#5f6368] border-[#e8eaed] hover:bg-[#f1f3f4]"}`}
+              >
+                Unread
+              </button>
             </div>
           )}
         </div>

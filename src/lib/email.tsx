@@ -15,7 +15,9 @@ function splitName(name: string, email: string) {
 }
 
 function getSignatureHtml(signature: SignatureTemplate): string {
-  if (signature.html) return signature.html;
+  // When the user has an avatar, always render via the full template so the
+  // photo appears in email clients. Only use saved HTML for text-only signatures.
+  if (signature.html && !signature.avatarUrl) return signature.html;
 
   const company = signature.companyName ?? "CyberSage Workspace";
 
@@ -184,9 +186,11 @@ export async function sendInviteEmail({
             <div style="font-family:monospace;font-weight:700;color:#2563eb;font-size:20px;letter-spacing:.05em;">${tempPassword}</div>
           </div>
         </div>
-        <a href="${appUrl}/login" style="display:inline-block;background:#2563eb;color:#fff;font-weight:600;font-size:14px;padding:12px 28px;border-radius:8px;text-decoration:none;margin-bottom:24px;">Sign in to CyberSage</a>
+        <a href="${appUrl}/login" style="display:inline-block;background:#2563eb;color:#fff;font-weight:600;font-size:14px;padding:12px 28px;border-radius:8px;text-decoration:none;margin-bottom:16px;">Sign in to Nexus →</a>
+        <p style="color:#3f3f46;font-size:13px;margin:0 0 16px;">Or copy this link into your browser:</p>
+        <p style="font-family:monospace;font-size:13px;color:#2563eb;word-break:break-all;margin:0 0 20px;">${appUrl}/login</p>
         <p style="color:#71717a;font-size:13px;line-height:1.6;margin:0;">
-          You&apos;ll be asked to set a new password when you first sign in. Keep this email safe and do not share your temporary password.
+          You will be asked to set a new password on first sign-in. Do not share your temporary password.
         </p>
       </div>
     </div>

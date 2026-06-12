@@ -786,14 +786,22 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: newFolderName.trim(), parentId: currentFolderId }),
       });
-      if (!res.ok) throw new Error("Failed");
+      if (!res.ok) {
+        let errMsg = "Could not create folder";
+        try {
+          const d = await res.json() as { error?: string };
+          if (d.error) errMsg = d.error;
+        } catch { /* ignore */ }
+        toast.error(errMsg);
+        return;
+      }
       toast.success("Folder created");
       setCreatingFolder(false);
       setNewFolderName("");
       fetchContent();
       fetchSidebarFolders();
-    } catch {
-      toast.error("Could not create folder");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not create folder");
     }
   };
 

@@ -37,17 +37,26 @@ const ALLOWED_MIME_TYPES = new Set([
   "application/octet-stream",
 ]);
 
+// Only truly dangerous executables are blocked — code/text files are allowed for developer workspace
 const BLOCKED_EXTENSIONS = new Set([
-  ".exe", ".dll", ".bat", ".cmd", ".sh", ".ps1", ".msi", ".vbs", ".js",
-  ".jsx", ".ts", ".tsx", ".php", ".py", ".rb", ".pl", ".jar", ".class",
-  ".scr", ".com", ".pif", ".reg", ".inf",
+  ".exe", ".dll", ".bat", ".cmd", ".sh", ".ps1", ".msi", ".vbs",
+  ".scr", ".com", ".pif", ".reg", ".inf", ".jar", ".class",
+]);
+
+// Code/text files that should always be allowed regardless of MIME type
+const TEXT_EXTENSIONS = new Set([
+  ".js", ".jsx", ".ts", ".tsx", ".py", ".rb", ".pl", ".php",
+  ".go", ".rs", ".java", ".c", ".cpp", ".h", ".cs", ".swift",
+  ".kt", ".sql", ".env", ".yaml", ".yml", ".toml", ".ini", ".cfg",
 ]);
 
 function isAllowedFile(fileName: string, mimeType: string): string | null {
-  const ext = "." + fileName.split(".").pop()?.toLowerCase();
+  const ext = "." + (fileName.split(".").pop()?.toLowerCase() ?? "");
   if (BLOCKED_EXTENSIONS.has(ext)) {
     return `File type ${ext} is not allowed for security reasons`;
   }
+  // Text/code files are always allowed
+  if (TEXT_EXTENSIONS.has(ext)) return null;
   const effectiveMime = mimeType || "application/octet-stream";
   if (!ALLOWED_MIME_TYPES.has(effectiveMime)) {
     return `MIME type '${effectiveMime}' is not permitted`;

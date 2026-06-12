@@ -7,6 +7,13 @@ import { prisma } from "@/lib/prisma";
 import { invalidate } from "@/lib/cache";
 import { mailRulesQueue } from "@/lib/queues/mail-rules.queue";
 
+const attachmentSchema = z.object({
+  filename: z.string().optional(),
+  mimeType: z.string().optional(),
+  size: z.number().optional(),
+  contentId: z.string().nullish(),
+});
+
 const resendWebhookSchema = z.object({
   type: z.string(),
   created_at: z.string().optional(),
@@ -20,6 +27,10 @@ const resendWebhookSchema = z.object({
       text: z.string().nullish(),
       html: z.string().nullish(),
       headers: z.record(z.string(), z.string()).nullish(),
+      attachments: z.array(attachmentSchema).nullish(),
+      message_id: z.string().nullish(),
+      cc: z.array(z.string()).nullish(),
+      bcc: z.array(z.string()).nullish(),
     }).catchall(z.unknown()),
 });
 
@@ -143,6 +154,13 @@ export async function POST(request: Request) {
   return NextResponse.json({ ok: true });
 }
 
+type InboundAttachment = {
+  filename?: string;
+  mimeType?: string;
+  size?: number;
+  contentId?: string | null;
+};
+
 type InboundEmailPayload = {
   email_id?: string | null;
   message_id?: string | null;
@@ -152,6 +170,7 @@ type InboundEmailPayload = {
   text?: string | null;
   html?: string | null;
   headers?: Record<string, string> | null;
+  attachments?: InboundAttachment[] | null;
 };
 
 type ResendEmailFull = { html?: string | null; text?: string | null };
@@ -295,6 +314,22 @@ async function handleInboundEmail(data: InboundEmailPayload) {
       references: references,
     },
   });
+
+  // Persist attachment metadata from the Cloudflare Email Worker
+  const inboundAttachments = data.attachments ?? [];
+  if (inboundAttachments.length > 0) {
+    await prisma.emailAttachment.createMany({
+      data: inboundAttachments.map((a) => ({
+        messageId: inboxMessage.id,
+        filename: a.filename ?? "attachment",
+        mimeType: a.mimeType ?? "application/octet-stream",
+        size: a.size ?? 0,
+        storageUrl: null,
+        key: null,
+        bucket: null,
+      })),
+    });
+  }
 
   // Bump the thread so it surfaces at the top of the inbox (list is ordered by
   // updatedAt), and resurface trashed/archived threads on new replies — Gmail

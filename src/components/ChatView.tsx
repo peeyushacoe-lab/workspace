@@ -31,6 +31,7 @@ import {
   Phone,
   Video,
   Megaphone,
+  Paperclip,
 } from "lucide-react";
 import { formatDistanceToNow, isToday, isYesterday, format } from "date-fns";
 import { toast } from "sonner";
@@ -1772,6 +1773,7 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
   // Drag-drop state
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
+  const chatFileInputRef = useRef<HTMLInputElement>(null);
   const dragCounterRef = useRef(0);
 
   // AI Summarize state
@@ -2266,23 +2268,41 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
     setShowPins(true);
   };
 
-  // Voice recording
+  // Voice recording — use the first MIME type the browser supports
+  const getAudioMime = () => {
+    const types = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus", "audio/mp4"];
+    return types.find(t => MediaRecorder.isTypeSupported(t)) ?? "";
+  };
+
   const startRecording = async () => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      toast.error("Audio recording is not supported in this browser");
+      return;
+    }
+    if (typeof MediaRecorder === "undefined") {
+      toast.error("Audio recording is not supported in this browser");
+      return;
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mr = new MediaRecorder(stream);
+      const mime = getAudioMime();
+      const mr = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
       mediaRecorderRef.current = mr;
       audioChunksRef.current = [];
       mr.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
       mr.onstop = () => {
-        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        const blob = new Blob(audioChunksRef.current, { type: mr.mimeType || "audio/webm" });
         setAudioBlob(blob);
         stream.getTracks().forEach(t => t.stop());
       };
-      mr.start();
+      mr.start(100); // collect chunks every 100ms for reliability
       setRecording(true);
-    } catch {
-      toast.error("Microphone access denied");
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "NotAllowedError") {
+        toast.error("Microphone permission denied. Allow microphone access and try again.");
+      } else {
+        toast.error("Could not start recording. Check microphone permissions.");
+      }
     }
   };
 
@@ -2296,7 +2316,8 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
     setUploadingFile(true);
     try {
       const formData = new FormData();
-      formData.append("file", audioBlob, "voice-note.webm");
+      const ext = audioBlob.type.includes("mp4") ? "mp4" : audioBlob.type.includes("ogg") ? "ogg" : "webm";
+      formData.append("file", audioBlob, `voice-note.${ext}`);
       const uploadRes = await fetch("/api/drive/upload", { method: "POST", body: formData });
       if (!uploadRes.ok) throw new Error("Upload failed");
       const fileRecord = await uploadRes.json() as { id: string; name: string; size: string; mimeType: string; storageUrl?: string };
@@ -2374,6 +2395,41 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
+  };
+
+  const handleChatFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedChannelId) return;
+    if (chatFileInputRef.current) chatFileInputRef.current.value = "";
+    setUploadingFile(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const uploadRes = await fetch("/api/drive/upload", { method: "POST", body: formData });
+      if (!uploadRes.ok) throw new Error("Upload failed");
+      const fileRecord = (await uploadRes.json()) as { id: string; name: string; size: string; mimeType: string; storageUrl?: string };
+      const attachmentContent = "[FILE_ATTACHMENT] " + JSON.stringify({ name: fileRecord.name, size: parseInt(fileRecord.size, 10), mimeType: fileRecord.mimeType, url: fileRecord.storageUrl, fileId: fileRecord.id });
+      await fetch(`/api/chat/channels/${selectedChannelId}/messages`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ content: attachmentContent }) });
+      toast.success(`${file.name} shared`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploadingFile(false);
+    }
+  };
+
+  const handleDeleteChannel = async () => {
+    if (!selectedChannelId || !selectedChannel) return;
+    if (!confirm(`Delete #${selectedChannel.name}? This cannot be undone.`)) return;
+    try {
+      const res = await fetch(`/api/chat/channels/${selectedChannelId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed");
+      setChannels(prev => prev.filter(c => c.id !== selectedChannelId));
+      setSelectedChannelId(null);
+      toast.success("Channel deleted");
+    } catch {
+      toast.error("Could not delete channel");
+    }
   };
 
   const handleDrop = async (e: React.DragEvent) => {
@@ -2743,6 +2799,17 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
                   <Users className="w-4 h-4" />
                   <span>{selectedChannel?.members.length ?? 0} members</span>
                 </div>
+              {/* Delete channel — only visible to channel admins */}
+              {selectedChannel?.type !== "DIRECT" && selectedChannel?.members?.find(m => m.userId === currentUserId)?.role === "ADMIN" && (
+                <button
+                  onClick={() => void handleDeleteChannel()}
+                  title="Delete channel"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-[#ea4335]/40 text-[#ea4335] hover:bg-[#ea4335]/10 transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Delete</span>
+                </button>
+              )}
               </div>
             </div>
 
@@ -2859,6 +2926,17 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
                     className="flex-1 bg-transparent resize-none text-sm text-[#202124] placeholder-[#9aa3b8] outline-none max-h-32 overflow-y-auto"
                     style={{ minHeight: "1.5rem" }}
                   />
+                  {/* Hidden file input for attachments */}
+                  <input ref={chatFileInputRef} type="file" className="hidden" onChange={(e) => void handleChatFileSelect(e)} />
+                  {/* File attach button */}
+                  <button
+                    onClick={() => chatFileInputRef.current?.click()}
+                    disabled={uploadingFile}
+                    title="Attach file"
+                    className="p-2 rounded-lg transition-colors flex-shrink-0 text-[#5f6368] hover:text-[#202124] hover:bg-[#f1f3f4] disabled:opacity-40"
+                  >
+                    {uploadingFile ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
+                  </button>
                   {/* Emoji insert */}
                   <button onClick={() => { setMediaPickerTab("emoji"); setShowGifPicker(true); }} title="Insert emoji" className="p-2 rounded-lg transition-colors flex-shrink-0 text-sm text-[#9aa0a6] hover:text-[#5f6368] hover:bg-[#f1f3f4]">😊</button>
                   {/* Sticker */}
