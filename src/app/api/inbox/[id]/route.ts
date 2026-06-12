@@ -50,7 +50,7 @@ export async function GET(request: Request, { params }: Params) {
           htmlBody: true,
           isRead: true,
           receivedAt: true,
-          attachments: { select: { id: true, filename: true, storageUrl: true, mimeType: true, size: true } },
+          attachments: { select: { id: true, filename: true, storageUrl: true, key: true, mimeType: true, size: true } },
           threatScan: { select: { riskScore: true, findings: true } },
         },
       },

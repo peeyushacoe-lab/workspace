@@ -57,7 +57,7 @@ type Draft = {
   subject: string; body: string; signatureId: string | null; savedAt: string;
 };
 
-type Attachment = { id: string; filename: string; storageUrl: string; mimeType: string; size?: number };
+type Attachment = { id: string; filename: string; storageUrl: string | null; key?: string | null; mimeType: string; size?: number };
 type ThreatScan  = { riskScore: number; findings: string[] };
 
 type MailRule = {
@@ -1762,7 +1762,11 @@ export function InboxView({ userRole, initialThreads }: {
                             const riskyExts = [".exe",".bat",".cmd",".vbs",".jar",".ps1",".msi",".scr",".dll"];
                             const ext = att.filename.slice(att.filename.lastIndexOf(".")).toLowerCase();
                             const isRisky = riskyExts.includes(ext);
-                            const hasFile = !!att.storageUrl;
+                            // Use the server-side proxy — avoids relative-path R2 URLs and
+                            // handles signing. A file is "available" if it has a storageUrl
+                            // OR a key (the proxy will sign it).
+                            const hasFile = !!(att.storageUrl || att.key);
+                            const downloadUrl = `/api/attachments/${att.id}`;
 
                             const inner = (
                               <>
@@ -1794,7 +1798,7 @@ export function InboxView({ userRole, initialThreads }: {
                             return hasFile ? (
                               <a
                                 key={att.id}
-                                href={att.storageUrl}
+                                href={downloadUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className={`${baseClass} ${colorClass}`}
