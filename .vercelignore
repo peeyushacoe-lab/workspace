@@ -1,5 +1,5 @@
 node_modules/
-apps/
+/apps/
 packages/
 scripts/
 scratch/
