@@ -3,8 +3,7 @@ import { cookies } from "next/headers";
 import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redis } from "@/lib/redis";
-
-export const SLIDE_MARKER = "presentation";
+import { SLIDE_MARKER } from "@/lib/doc-markers";
 
 const defaultSlide = {
   id: "slide-1",

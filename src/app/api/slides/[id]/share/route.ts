@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redis } from "@/lib/redis";
-import { SLIDE_MARKER } from "../../route";
+import { SLIDE_MARKER } from "@/lib/doc-markers";
 
 type Params = { params: Promise<{ id: string }> };
 
