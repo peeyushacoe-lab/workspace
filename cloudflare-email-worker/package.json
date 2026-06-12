@@ -1,0 +1,9 @@
+{
+  "name": "cybersage-email-worker",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.js",
+  "dependencies": {
+    "postal-mime": "^2.3.0"
+  }
+}

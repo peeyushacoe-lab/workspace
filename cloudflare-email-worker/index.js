@@ -1,7 +1,8 @@
 /**
  * CyberSage Inbound Email Worker
- * Uses native message.headers API — no raw stream parsing.
+ * Parses full email body (text + HTML) via PostalMime, then POSTs to Nexus webhook.
  */
+import PostalMime from "postal-mime";
 
 export default {
   async email(message, env) {
@@ -13,12 +14,31 @@ export default {
       return;
     }
 
-    // Use the native Headers API — no raw stream needed
-    const subject     = message.headers.get("subject") ?? "(No Subject)";
+    // Read raw email stream into ArrayBuffer and parse with PostalMime
+    let parsed = { text: null, html: null, subject: null, attachments: [], cc: [], bcc: [] };
+    try {
+      const rawBuffer = await new Response(message.raw).arrayBuffer();
+      const parser = new PostalMime();
+      parsed = await parser.parse(rawBuffer);
+    } catch (err) {
+      console.error("[email-worker] PostalMime parse failed:", err);
+    }
+
+    const subject     = parsed.subject ?? message.headers.get("subject") ?? "(No Subject)";
     const fromHeader  = message.headers.get("from") ?? message.from;
     const messageId   = message.headers.get("message-id") ?? null;
     const inReplyTo   = message.headers.get("in-reply-to") ?? "";
     const references  = message.headers.get("references") ?? "";
+
+    // Build attachment list (metadata only — large binaries skipped if >5MB)
+    const attachments = (parsed.attachments ?? [])
+      .filter((a) => (a.content?.byteLength ?? 0) < 5 * 1024 * 1024)
+      .map((a) => ({
+        filename:    a.filename ?? "attachment",
+        mimeType:    a.mimeType ?? "application/octet-stream",
+        size:        a.content?.byteLength ?? 0,
+        contentId:   a.contentId ?? null,
+      }));
 
     const payload = {
       type: "email.received",
@@ -26,8 +46,8 @@ export default {
         from:       message.from,
         to:         [message.to],
         subject,
-        text:       null,
-        html:       null,
+        text:       parsed.text   ?? null,
+        html:       parsed.html   ?? null,
         message_id: messageId,
         headers: {
           "from":        fromHeader,
@@ -35,13 +55,13 @@ export default {
           "in-reply-to": inReplyTo,
           "references":  references,
         },
-        attachments: [],
-        bcc: [],
-        cc:  [],
+        attachments,
+        cc:  (parsed.cc  ?? []).map((a) => a.address).filter(Boolean),
+        bcc: (parsed.bcc ?? []).map((a) => a.address).filter(Boolean),
       },
     };
 
-    console.log(`[email-worker] from=${message.from} to=${message.to} subject="${subject}"`);
+    console.log(`[email-worker] from=${message.from} to=${message.to} subject="${subject}" text=${parsed.text?.length ?? 0}chars html=${parsed.html?.length ?? 0}chars`);
 
     try {
       const response = await fetch(webhookUrl, {
