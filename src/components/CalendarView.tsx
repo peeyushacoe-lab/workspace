@@ -1175,8 +1175,14 @@ function TimeGrid({
 
         {/* Day columns */}
         {days.map((day) => {
+          const _dayStart = startOfDay(day);
+          const _dayEnd = endOfDay(day);
           const dayEvs = events.filter((e) => {
-            try { return isSameDay(parseISO(e.startAt), day); } catch { return false; }
+            try {
+              const evStart = parseISO(e.startAt);
+              const evEnd = parseISO(e.endAt);
+              return evStart <= _dayEnd && evEnd > _dayStart;
+            } catch { return false; }
           });
           const isCurrentDay = isToday(day);
 
@@ -1458,8 +1464,15 @@ export function CalendarView({ currentUserId }: { currentUserId: string }) {
               <div className="flex-1 overflow-y-auto">
                 <div className="grid grid-cols-7" style={{ gridAutoRows: "minmax(100px, 1fr)" }}>
                   {calDays.map((day) => {
+                    const dayStart = startOfDay(day);
+                    const dayEnd = endOfDay(day);
                     const dayEvents = events.filter((e) => {
-                      try { return isSameDay(parseISO(e.startAt), day); } catch { return false; }
+                      try {
+                        const evStart = parseISO(e.startAt);
+                        const evEnd = parseISO(e.endAt);
+                        // Show on every day the event spans (startAt ≤ dayEnd AND endAt > dayStart)
+                        return evStart <= dayEnd && evEnd > dayStart;
+                      } catch { return false; }
                     });
                     const inMonth = isSameMonth(day, currentDate);
                     const today = isToday(day);

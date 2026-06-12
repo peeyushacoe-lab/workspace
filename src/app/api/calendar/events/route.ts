@@ -77,8 +77,12 @@ export async function GET(request: Request) {
       AND: [
         {
           OR: [
+            // Own events (any visibility)
             { organizerId: user.id },
+            // Events where user is an attendee
             { attendees: { some: { userId: user.id } } },
+            // Public events from anyone else
+            { visibility: "PUBLIC" },
           ],
         },
         { status: { not: "CANCELLED" } },

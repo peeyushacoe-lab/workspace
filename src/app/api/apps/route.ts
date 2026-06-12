@@ -23,13 +23,19 @@ export type AppEntry = {
 };
 
 const APP_REGISTRY: Omit<AppEntry, "enabled">[] = [
+  // ── Built-in productivity apps ──────────────────────────────────────────────
+  { id: "sheets",      name: "Sheets",      description: "Create and collaborate on spreadsheets",         category: "Productivity",         icon: "file-spreadsheet", status: "available"  },
+  { id: "slides",      name: "Slides",      description: "Build presentations with real-time collaboration",category: "Productivity",         icon: "presentation",    status: "available"   },
+  { id: "docs",        name: "Docs",        description: "Write rich documents with live collaboration",    category: "Productivity",         icon: "file-text",       status: "available"   },
+  { id: "notes",       name: "Notes",       description: "Personal notes with rich text formatting",        category: "Productivity",         icon: "notebook",        status: "available"   },
+  // ── Integrations ───────────────────────────────────────────────────────────
   { id: "github",      name: "GitHub",      description: "Link pull requests and issues to messages",      category: "Developer",            icon: "github",          status: "available"   },
   { id: "linear",      name: "Linear",      description: "Track issues and projects from your inbox",      category: "Project Management",   icon: "layers",          status: "available"   },
   { id: "jira",        name: "Jira",        description: "Connect Jira tickets to email threads",          category: "Project Management",   icon: "trello",          status: "coming_soon" },
   { id: "slack",       name: "Slack",       description: "Forward emails to Slack channels",               category: "Communication",        icon: "message-square",  status: "coming_soon" },
   { id: "salesforce",  name: "Salesforce",  description: "CRM contact enrichment for emails",             category: "CRM",                  icon: "briefcase",       status: "coming_soon" },
   { id: "zapier",      name: "Zapier",      description: "Connect Nexus to 5000+ apps",                   category: "Automation",           icon: "zap",             status: "available"   },
-  { id: "webhook",     name: "Webhooks",    description: "Send real-time events to your endpoints",        category: "Developer",            icon: "webhook",         status: "available"   },
+  { id: "webhook",     name: "Webhooks",    description: "Send real-time events to your endpoints",        category: "Developer",            icon: "link",            status: "available"   },
   { id: "api",         name: "REST API",    description: "Build custom integrations with the Nexus API",   category: "Developer",            icon: "code",            status: "available"   },
 ];
 
