@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, UserPlus, Trash2, Crown, Eye, Edit3, Loader2, Search } from "lucide-react";
+import { X, UserPlus, Trash2, Loader2, Search } from "lucide-react";
 import { toast } from "sonner";
 
 type ShareEntry = {
@@ -20,7 +20,7 @@ type Props = {
 export function DocShareModal({ docId, docType, onClose }: Props) {
   const apiBase = docType === "sheet" ? `/api/sheets/${docId}/share` : `/api/slides/${docId}/share`;
   const [shares, setShares] = useState<ShareEntry[]>([]);
-  const [ownerId, setOwnerId] = useState<string>("");
+  const [_ownerId, setOwnerId] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"viewer" | "editor">("editor");

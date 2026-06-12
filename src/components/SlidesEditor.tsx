@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Plus, Trash2, Download, Upload, Users, X, Loader2,
   Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight,
-  ChevronUp, ChevronDown, Copy, Share2, Type, Square, Image as ImageIcon,
+  ChevronUp, ChevronDown, Copy, Share2, Type, Square,
 } from "lucide-react";
 import { toast } from "sonner";
 import { DocShareModal } from "./DocShareModal";
@@ -265,7 +265,7 @@ function DragResizeWrapper({ el, onUpdate, children }: {
   children: React.ReactNode;
 }) {
   const [dragging, setDragging] = useState(false);
-  const [resizing, setResizing] = useState(false);
+  const [_resizing, setResizing] = useState(false);
   const startRef = useRef({ mx: 0, my: 0, x: 0, y: 0, w: 0, h: 0 });
 
   function onMouseDown(e: React.MouseEvent) {
