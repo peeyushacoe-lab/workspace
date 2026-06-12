@@ -15,9 +15,21 @@ const protectedRoutes = [
   "/admin",
   "/settings",
   "/notes",
+  "/docs",
   "/reset-password",
   "/mfa-challenge",
   "/compose",
+  "/apps",
+  "/meet",
+  "/people",
+  "/teams",
+  "/tasks",
+  "/whiteboard",
+  "/billing",
+  "/org",
+  "/compliance",
+  "/notifications",
+  "/download",
 ];
 
 const validRoles = new Set<string>([
