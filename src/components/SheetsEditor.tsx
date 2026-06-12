@@ -7,7 +7,13 @@ import {
   Loader2, Share2,
 } from "lucide-react";
 import { toast } from "sonner";
-import * as XLSX from "xlsx";
+// xlsx loaded dynamically to avoid webpack Node-built-in issues at build time
+type XLSXType = typeof import("xlsx");
+let _xlsx: XLSXType | null = null;
+async function getXLSX(): Promise<XLSXType> {
+  if (!_xlsx) _xlsx = await import("xlsx");
+  return _xlsx;
+}
 import { DocShareModal } from "./DocShareModal";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -387,8 +393,9 @@ export function SheetsEditor({ sheetId }: { sheetId: string }) {
   }
 
   // ── Import/Export ──────────────────────────────────────────────────────────
-  function exportXLSX() {
+  async function exportXLSX() {
     if (!doc) return;
+    const XLSX = await getXLSX();
     const wb = XLSX.utils.book_new();
     for (const sheet of doc.sheets) {
       const aoa: (string | number)[][] = [];
@@ -410,8 +417,9 @@ export function SheetsEditor({ sheetId }: { sheetId: string }) {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => {
+    reader.onload = async (ev) => {
       try {
+        const XLSX = await getXLSX();
         const data = ev.target?.result;
         const wb = XLSX.read(data, { type: "array" });
         const newSheets: SheetTab[] = wb.SheetNames.map((name, idx) => {
