@@ -73,8 +73,6 @@ export const portalNavItems: PortalNavItem[] = [
   { href: "/meet",      label: "Meet",       hint: "Video meetings",        roles: ALL_ROLES },
   { href: "/drive",     label: "Drive",      hint: "Files & documents",     roles: ALL_ROLES },
   { href: "/calendar",  label: "Calendar",   hint: "Events & scheduling",   roles: ALL_ROLES },
-  { href: "/notes",     label: "Notes",      hint: "Personal notes",        roles: ALL_ROLES },
-  { href: "/docs",        label: "Docs",       hint: "Documents & writing",   roles: ALL_ROLES },
   { href: "/whiteboard", label: "Whiteboard", hint: "Visual canvas",         roles: ALL_ROLES },
   { href: "/ai",         label: "AI",         hint: "AI assistant",          roles: ALL_ROLES },
   { href: "/notifications", label: "Notifications", hint: "Activity & alerts",   roles: ALL_ROLES },
