@@ -253,12 +253,16 @@ async function handleInboundEmail(data: InboundEmailPayload) {
     }
   }
 
-  // 2. Fallback to subject matching if no header match — skip trashed/archived threads
-  if (!thread) {
+  // 2. Fallback to exact subject matching — only when original subject was a Re:/Fwd:
+  //    (i.e. cleanSubject differs from subject, meaning a reply prefix was stripped).
+  //    Using `contains` previously caused unrelated emails with similar subjects to
+  //    collapse into the same thread. Exact match prevents false grouping.
+  const isReply = cleanSubject !== subject;
+  if (!thread && isReply) {
     thread = await prisma.inboxThread.findFirst({
       where: {
         mailboxId: mailbox.id,
-        subject: { contains: cleanSubject, mode: "insensitive" },
+        subject: { equals: cleanSubject, mode: "insensitive" },
         createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
         isTrashed: false,
         isArchived: false,

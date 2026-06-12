@@ -1443,48 +1443,59 @@ export function InboxView({ userRole, initialThreads }: {
                   <span className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#1a56db]" />
                 )}
 
-                <div className="flex gap-3 px-3 py-2.5">
-                  <div className="pt-0.5">
+                <div className="flex gap-3 px-4 py-3">
+                  {/* Avatar */}
+                  <div className="flex-shrink-0 pt-0.5">
                     <SenderAvatar
                       member={memberMap[(thread.lastMessage?.from ?? "").toLowerCase()]}
                       email={thread.lastMessage?.from ?? "?"}
-                      size={8}
+                      size={9}
                       onClick={() => { const m = memberMap[(thread.lastMessage?.from ?? "").toLowerCase()]; if (m?.id) setProfileUserId(m.id); }}
                     />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-baseline gap-2">
+
+                  <div className="flex-1 min-w-0 space-y-[3px]">
+
+                    {/* Row 1 — Sender + time */}
+                    <div className="flex items-center gap-2">
                       <span
-                        className={`truncate text-[13px] ${thread.unreadCount > 0 ? "font-semibold text-[#202124]" : "text-[#5f6368]"}`}
+                        className={`flex-1 truncate text-[13px] leading-none ${thread.unreadCount > 0 ? "font-semibold text-[#202124]" : "font-medium text-[#202124]"}`}
                         onClick={(e) => { e.stopPropagation(); const m = memberMap[(thread.lastMessage?.from ?? "").toLowerCase()]; if (m?.id) setProfileUserId(m.id); }}
                       >
                         {senderName(memberMap[(thread.lastMessage?.from ?? "").toLowerCase()], thread.lastMessage?.from)}
                       </span>
-                      <span className={`ml-auto flex-shrink-0 text-[11px] tabular-nums ${thread.unreadCount > 0 ? "text-[#1a56db] font-medium" : "text-[#9aa0a6]"}`}>
-                        {thread.lastMessage ? smartTime(thread.lastMessage.receivedAt) : ""}
-                      </span>
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        {isExternalSender(thread.lastMessage?.from ?? "") && (
+                          <span className="flex items-center gap-0.5 px-1 py-0.5 rounded text-[9px] font-semibold bg-amber-50 text-amber-600 border border-amber-200" title="External sender">
+                            <Globe className="w-2 h-2" />EXT
+                          </span>
+                        )}
+                        <span className={`text-[11px] tabular-nums ${thread.unreadCount > 0 ? "text-[#1a56db] font-semibold" : "text-[#9aa0a6]"}`}>
+                          {thread.lastMessage ? smartTime(thread.lastMessage.receivedAt) : ""}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      <p className={`truncate text-[13px] leading-snug flex-1 ${thread.unreadCount > 0 ? "font-medium text-[#202124]" : "text-[#5f6368]"}`}>
-                        {thread.subject}
+
+                    {/* Row 2 — Subject */}
+                    <div className="flex items-center gap-1.5">
+                      <p className={`flex-1 truncate text-[13px] leading-snug ${thread.unreadCount > 0 ? "font-semibold text-[#202124]" : "font-normal text-[#202124]"}`}>
+                        {thread.subject || "(No Subject)"}
                       </p>
                       <PriorityBadge priority={thread.priority} />
                       {thread.slaDeadline && <SlaIndicator deadline={thread.slaDeadline} />}
-                      {isExternalSender(thread.lastMessage?.from ?? "") && (
-                        <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#ffd166]/10 text-[#ffd166] flex-shrink-0" title="External sender">
-                          <Globe className="w-2.5 h-2.5" />Ext
-                        </span>
-                      )}
-                      {thread.isStarred && <Star className="w-3 h-3 text-[#ffd166] flex-shrink-0" fill="currentColor" />}
-                    </div>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <p className="text-xs text-[#80868b] truncate flex-1">{thread.lastMessage?.snippet}</p>
+                      {thread.isStarred && <Star className="w-3 h-3 text-amber-400 flex-shrink-0" fill="currentColor" />}
                       {thread.unreadCount > 1 && (
-                        <span className="flex-shrink-0 rounded-full bg-[#1a56db]/15 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-[#1a56db] tabular-nums">
+                        <span className="flex-shrink-0 rounded-full bg-[#1a56db] px-1.5 py-0.5 text-[9px] font-semibold leading-none text-white tabular-nums">
                           {thread.unreadCount}
                         </span>
                       )}
                     </div>
+
+                    {/* Row 3 — Snippet */}
+                    <p className="text-[12px] text-[#80868b] truncate leading-snug">
+                      {thread.lastMessage?.snippet || "No preview available"}
+                    </p>
+
                   </div>
                 </div>
               </div>
