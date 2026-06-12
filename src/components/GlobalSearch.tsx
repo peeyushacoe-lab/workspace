@@ -480,7 +480,7 @@ export function GlobalSearch({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-[#1b1f2e] rounded-xl shadow-2xl border border-[rgba(255,255,255,0.08)] w-full max-w-xl overflow-hidden flex flex-col max-h-[70vh]">
+      <div className="bg-white rounded-xl shadow-2xl border border-[rgba(255,255,255,0.08)] w-full max-w-xl overflow-hidden flex flex-col max-h-[70vh]">
 
         {/* Search input */}
         <div className="px-4 py-3 border-b border-[rgba(255,255,255,0.08)] flex items-center gap-3">
@@ -505,7 +505,7 @@ export function GlobalSearch({
 
         {/* Type filter tabs — shown only when searching */}
         {isSearchMode && (
-          <div className="flex gap-1 px-4 py-2 border-b border-[rgba(255,255,255,0.08)] bg-[#0f1321]">
+          <div className="flex gap-1 px-4 py-2 border-b border-[rgba(255,255,255,0.08)] bg-[#f8fafd]">
             {TYPE_FILTERS.map((f) => {
               const label =
                 f === "all"
@@ -517,7 +517,7 @@ export function GlobalSearch({
                   onClick={() => setTypeFilter(f)}
                   className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
                     typeFilter === f
-                      ? "bg-[#00d2ff] text-[#003543]"
+                      ? "bg-[#f8fafd] text-[#003543]"
                       : "text-[#9aa3b8] hover:bg-[#262939]"
                   }`}
                 >
@@ -535,12 +535,12 @@ export function GlobalSearch({
           {filteredActions.length > 0 && (
             <div>
               {isSearchMode && (
-                <div className="px-4 py-1.5 text-xs font-semibold text-[#9aa3b8] bg-[#0f1321]">
+                <div className="px-4 py-1.5 text-xs font-semibold text-[#9aa3b8] bg-[#f8fafd]">
                   Actions
                 </div>
               )}
               {!isSearchMode && (
-                <div className="px-4 py-1.5 text-xs font-semibold text-[#9aa3b8] bg-[#0f1321]">
+                <div className="px-4 py-1.5 text-xs font-semibold text-[#9aa3b8] bg-[#f8fafd]">
                   Quick Actions
                 </div>
               )}
@@ -554,7 +554,7 @@ export function GlobalSearch({
                     onMouseEnter={() => setSelectedIndex(idx)}
                     className={`w-full text-left px-4 py-2.5 flex items-center gap-3 transition-colors ${
                       isSelected
-                        ? "bg-[#00d2ff]/10"
+                        ? "bg-[#f8fafd]/10"
                         : "hover:bg-[#262939]"
                     }`}
                   >
@@ -591,7 +591,7 @@ export function GlobalSearch({
                 .filter((t) => grouped[t]?.length)
                 .map((t) => (
                   <div key={t}>
-                    <div className="px-4 py-1.5 text-xs font-semibold text-[#9aa3b8] bg-[#0f1321]">
+                    <div className="px-4 py-1.5 text-xs font-semibold text-[#9aa3b8] bg-[#f8fafd]">
                       {TYPE_META[t].label}
                     </div>
                     {grouped[t]!.map((result) => {
@@ -605,7 +605,7 @@ export function GlobalSearch({
                           onMouseEnter={() => setSelectedIndex(flatIndex)}
                           className={`w-full text-left px-4 py-2.5 flex items-center gap-3 cursor-pointer transition-colors ${
                             isSelected
-                              ? "bg-[#00d2ff]/10"
+                              ? "bg-[#f8fafd]/10"
                               : "hover:bg-[#262939]"
                           }`}
                         >
@@ -652,7 +652,7 @@ export function GlobalSearch({
             const isSelected = selectedIndex === aiIdx;
             return (
               <div>
-                <div className="px-4 py-1.5 text-xs font-semibold text-[#7dd8f5] bg-[#00d2ff]/5 border-t border-[#00d2ff]/20 flex items-center gap-1.5">
+                <div className="px-4 py-1.5 text-xs font-semibold text-[#7dd8f5] bg-[#f8fafd]/5 border-t border-[#00d2ff]/20 flex items-center gap-1.5">
                   <Sparkles className="h-3 w-3" />
                   AI Command
                 </div>
@@ -661,11 +661,11 @@ export function GlobalSearch({
                   onMouseEnter={() => setSelectedIndex(aiIdx)}
                   className={`w-full text-left px-4 py-2.5 flex items-center gap-3 transition-colors ${
                     isSelected
-                      ? "bg-[#00d2ff]/10"
+                      ? "bg-[#f8fafd]/10"
                       : "hover:bg-[#262939]"
                   }`}
                 >
-                  <div className="w-7 h-7 rounded-md bg-[#00d2ff]/10 flex items-center justify-center text-[#00d2ff] flex-shrink-0">
+                  <div className="w-7 h-7 rounded-md bg-[#f8fafd]/10 flex items-center justify-center text-[#00d2ff] flex-shrink-0">
                     {aiLoading
                       ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       : <Sparkles className="h-3.5 w-3.5" />
@@ -689,7 +689,7 @@ export function GlobalSearch({
         </div>
 
         {/* Footer hint */}
-        <div className="px-4 py-2 border-t border-[rgba(255,255,255,0.08)] bg-[#0f1321] flex items-center gap-4 text-[11px] text-[#9aa3b8]">
+        <div className="px-4 py-2 border-t border-[rgba(255,255,255,0.08)] bg-[#f8fafd] flex items-center gap-4 text-[11px] text-[#9aa3b8]">
           <span>
             <kbd className="text-xs text-[#9aa3b8] bg-[#262939] px-1.5 py-0.5 rounded border border-[rgba(255,255,255,0.08)]">↑↓</kbd>{" "}
             navigate

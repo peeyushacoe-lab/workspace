@@ -39,7 +39,7 @@ const ORG_ROLE_ICONS: Record<string, typeof Crown> = {
 function Avatar({ name }: { name: string }) {
   const initials = name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
   return (
-    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#00d2ff]/20 to-[#7dd8f5]/10 border border-[rgba(0,210,255,0.2)] flex items-center justify-center font-semibold text-[#00d2ff] text-sm flex-shrink-0">
+    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#1a56db]/15 to-[#7dd8f5]/10 border border-[rgba(0,210,255,0.2)] flex items-center justify-center font-semibold text-[#1a56db] text-sm flex-shrink-0">
       {initials}
     </div>
   );
@@ -119,22 +119,22 @@ export default function OrgPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0f1321] flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-[#9aa3b8]" />
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-[#5f6368]" />
       </div>
     );
   }
 
   if (!org) {
     return (
-      <div className="min-h-screen bg-[#0f1321] flex items-center justify-center">
-        <p className="text-[#5d6579]">No organization found.</p>
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <p className="text-[#9aa0a6]">No organization found.</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0f1321] text-[#dfe1f6]">
+    <div className="min-h-screen bg-white text-[#202124]">
       <PageHeader
         eyebrow="Admin · Organization"
         title="Organization Settings"
@@ -143,12 +143,12 @@ export default function OrgPage() {
 
       <div className="max-w-5xl mx-auto px-6 py-6 space-y-6">
         {/* Plan badge */}
-        <div className="flex items-center gap-3 bg-[#00d2ff]/5 border border-[#00d2ff]/15 rounded-xl px-4 py-3">
-          <Building2 className="w-4 h-4 text-[#00d2ff] flex-shrink-0" />
-          <div className="flex-1 text-xs text-[#9aa3b8]">
-            <span className="font-semibold text-[#dfe1f6]">{org.name}</span>
+        <div className="flex items-center gap-3 bg-[#1a56db]/5 border border-[#1a56db]/15 rounded-xl px-4 py-3">
+          <Building2 className="w-4 h-4 text-[#1a56db] flex-shrink-0" />
+          <div className="flex-1 text-xs text-[#5f6368]">
+            <span className="font-semibold text-[#202124]">{org.name}</span>
             {" · "}
-            <span className="text-[#00d2ff] font-semibold">{org.plan}</span>
+            <span className="text-[#1a56db] font-semibold">{org.plan}</span>
             {" plan · "}
             {org._count.users} / {org.maxUsers} users
             {" · slug: "}
@@ -158,38 +158,38 @@ export default function OrgPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* General settings */}
-          <div className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl p-5 space-y-4">
-            <p className="text-xs font-semibold text-[#5d6579]">General</p>
+          <div className="bg-white border border-[#e8eaed] rounded-xl p-5 space-y-4">
+            <p className="text-xs font-semibold text-[#9aa0a6]">General</p>
 
             <div className="space-y-3">
               <div>
-                <label className="text-xs text-[#5d6579] mb-1 block">Organization name</label>
+                <label className="text-xs text-[#9aa0a6] mb-1 block">Organization name</label>
                 <input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-[#262939] border border-[rgba(255,255,255,0.08)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] outline-none focus:border-[#00d2ff]/40"
+                  className="w-full bg-[#f1f3f4] border border-[#e8eaed] rounded-lg px-3 py-2 text-sm text-[#202124] outline-none focus:border-[#1a56db]/40"
                 />
               </div>
               <div>
-                <label className="text-xs text-[#5d6579] mb-1 block">Logo URL</label>
+                <label className="text-xs text-[#9aa0a6] mb-1 block">Logo URL</label>
                 <input
                   value={logoUrl}
                   onChange={(e) => setLogoUrl(e.target.value)}
                   placeholder="https://..."
-                  className="w-full bg-[#262939] border border-[rgba(255,255,255,0.08)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] outline-none focus:border-[#00d2ff]/40 placeholder-[#5d6579]"
+                  className="w-full bg-[#f1f3f4] border border-[#e8eaed] rounded-lg px-3 py-2 text-sm text-[#202124] outline-none focus:border-[#1a56db]/40 placeholder-[#5d6579]"
                 />
               </div>
               <div>
-                <label className="text-xs text-[#5d6579] mb-1 block">Billing email</label>
+                <label className="text-xs text-[#9aa0a6] mb-1 block">Billing email</label>
                 <input
                   type="email"
                   value={billingEmail}
                   onChange={(e) => setBillingEmail(e.target.value)}
-                  className="w-full bg-[#262939] border border-[rgba(255,255,255,0.08)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] outline-none focus:border-[#00d2ff]/40"
+                  className="w-full bg-[#f1f3f4] border border-[#e8eaed] rounded-lg px-3 py-2 text-sm text-[#202124] outline-none focus:border-[#1a56db]/40"
                 />
               </div>
               <div>
-                <label className="text-xs text-[#5d6579] mb-1 block">Brand color</label>
+                <label className="text-xs text-[#9aa0a6] mb-1 block">Brand color</label>
                 <div className="flex items-center gap-2">
                   <input
                     type="color"
@@ -201,9 +201,9 @@ export default function OrgPage() {
                     value={brandColor}
                     onChange={(e) => setBrandColor(e.target.value)}
                     placeholder="#00d2ff"
-                    className="flex-1 bg-[#262939] border border-[rgba(255,255,255,0.08)] rounded-lg px-3 py-2 text-sm text-[#dfe1f6] outline-none focus:border-[#00d2ff]/40 font-mono placeholder-[#5d6579]"
+                    className="flex-1 bg-[#f1f3f4] border border-[#e8eaed] rounded-lg px-3 py-2 text-sm text-[#202124] outline-none focus:border-[#1a56db]/40 font-mono placeholder-[#5d6579]"
                   />
-                  <Palette className="w-4 h-4 text-[#5d6579]" />
+                  <Palette className="w-4 h-4 text-[#9aa0a6]" />
                 </div>
               </div>
             </div>
@@ -211,7 +211,7 @@ export default function OrgPage() {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex items-center gap-2 bg-[#00d2ff]/15 hover:bg-[#00d2ff]/25 border border-[#00d2ff]/30 text-[#00d2ff] text-sm font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 bg-[#1a56db]/15 hover:bg-[#1a56db]/25 border border-[#1a56db]/30 text-[#1a56db] text-sm font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               Save changes
@@ -219,26 +219,26 @@ export default function OrgPage() {
           </div>
 
           {/* Invite member */}
-          <div className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl p-5 space-y-4">
-            <p className="text-xs font-semibold text-[#5d6579] flex items-center gap-2">
+          <div className="bg-white border border-[#e8eaed] rounded-xl p-5 space-y-4">
+            <p className="text-xs font-semibold text-[#9aa0a6] flex items-center gap-2">
               <Users className="w-3.5 h-3.5" /> Invite member
             </p>
-            <p className="text-xs text-[#9aa3b8]">
+            <p className="text-xs text-[#5f6368]">
               Send an invitation link to onboard a new team member. They will receive an email with a 7-day invite link.
             </p>
             <div className="flex gap-2">
-              <div className="flex-1 flex items-center gap-2 bg-[#262939] border border-[rgba(255,255,255,0.08)] rounded-lg px-3 py-2">
-                <Mail className="w-4 h-4 text-[#5d6579] flex-shrink-0" />
+              <div className="flex-1 flex items-center gap-2 bg-[#f1f3f4] border border-[#e8eaed] rounded-lg px-3 py-2">
+                <Mail className="w-4 h-4 text-[#9aa0a6] flex-shrink-0" />
                 <input
                   type="email"
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") void handleInvite(); }}
                   placeholder="colleague@example.com"
-                  className="flex-1 bg-transparent text-sm text-[#dfe1f6] outline-none placeholder-[#5d6579]"
+                  className="flex-1 bg-transparent text-sm text-[#202124] outline-none placeholder-[#5d6579]"
                 />
                 {inviteEmail && (
-                  <button onClick={() => setInviteEmail("")} className="text-[#5d6579] hover:text-[#9aa3b8]">
+                  <button onClick={() => setInviteEmail("")} className="text-[#9aa0a6] hover:text-[#5f6368]">
                     <X className="w-3.5 h-3.5" />
                   </button>
                 )}
@@ -246,7 +246,7 @@ export default function OrgPage() {
               <button
                 onClick={handleInvite}
                 disabled={inviting || !inviteEmail.trim()}
-                className="flex items-center gap-1.5 bg-[#00d2ff]/15 hover:bg-[#00d2ff]/25 border border-[#00d2ff]/30 text-[#00d2ff] text-sm font-semibold px-3 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-1.5 bg-[#1a56db]/15 hover:bg-[#1a56db]/25 border border-[#1a56db]/30 text-[#1a56db] text-sm font-semibold px-3 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {inviting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                 Invite
@@ -256,8 +256,8 @@ export default function OrgPage() {
         </div>
 
         {/* Member list */}
-        <div className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl p-5">
-          <p className="text-xs font-semibold text-[#5d6579] mb-4 flex items-center gap-2">
+        <div className="bg-white border border-[#e8eaed] rounded-xl p-5">
+          <p className="text-xs font-semibold text-[#9aa0a6] mb-4 flex items-center gap-2">
             <Users className="w-3.5 h-3.5" /> Members ({members.length})
           </p>
           <div className="space-y-2">
@@ -266,19 +266,19 @@ export default function OrgPage() {
               return (
                 <div
                   key={member.id}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#262939]/60 transition-colors"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#f1f3f4]/60 transition-colors"
                 >
                   <Avatar name={member.fullName} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-semibold text-[#dfe1f6] truncate">{member.fullName}</span>
-                      <span className="text-[10px] text-[#5d6579] bg-[#262939] border border-[rgba(255,255,255,0.06)] px-1.5 py-0.5 rounded-full">
+                      <span className="text-sm font-semibold text-[#202124] truncate">{member.fullName}</span>
+                      <span className="text-[10px] text-[#9aa0a6] bg-[#f1f3f4] border border-[#e8eaed] px-1.5 py-0.5 rounded-full">
                         {member.role}
                       </span>
                     </div>
-                    <span className="text-xs text-[#5d6579]">{member.email}</span>
+                    <span className="text-xs text-[#9aa0a6]">{member.email}</span>
                   </div>
-                  <div className="flex items-center gap-1 text-xs text-[#5d6579]">
+                  <div className="flex items-center gap-1 text-xs text-[#9aa0a6]">
                     <OrgIcon className="w-3.5 h-3.5" />
                     {member.orgRole ?? "MEMBER"}
                   </div>
@@ -286,7 +286,7 @@ export default function OrgPage() {
               );
             })}
             {members.length === 0 && (
-              <p className="text-xs text-[#5d6579] italic text-center py-4">No members yet</p>
+              <p className="text-xs text-[#9aa0a6] italic text-center py-4">No members yet</p>
             )}
           </div>
         </div>

@@ -18,13 +18,13 @@ export function FormField({ label, hint, error, required, children, className }:
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
       {label && (
-        <label className="text-xs font-medium text-[#9aa3b8]">
+        <label className="text-xs font-medium text-[#5f6368]">
           {label}
           {required && <span className="text-red-400 ml-0.5">*</span>}
         </label>
       )}
       {children}
-      {hint && !error && <p className="text-[11px] text-[#9aa3b8]/60">{hint}</p>}
+      {hint && !error && <p className="text-[11px] text-[#5f6368]/60">{hint}</p>}
       {error && <p className="text-[11px] text-red-400">{error}</p>}
     </div>
   );
@@ -41,19 +41,19 @@ export const TextInput = forwardRef<HTMLInputElement, TextInputProps>(
   ({ error, icon, className, ...props }, ref) => (
     <div className="relative">
       {icon && (
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9aa3b8]">
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5f6368]">
           {icon}
         </span>
       )}
       <input
         ref={ref}
         className={cn(
-          "w-full rounded-lg border bg-[#262939] px-3 py-2 text-sm text-[#dfe1f6]",
-          "placeholder:text-[#9aa3b8]/60",
+          "w-full rounded-lg border bg-[#f1f3f4] px-3 py-2 text-sm text-[#202124]",
+          "placeholder:text-[#5f6368]/60",
           "focus:outline-none focus:ring-1 transition-colors",
           error
             ? "border-red-500/50 focus:ring-red-500/50"
-            : "border-white/[0.07] focus:border-[#00d2ff]/50 focus:ring-[#00d2ff]/30",
+            : "border-white/[0.07] focus:border-[#1a56db]/50 focus:ring-[#1a56db]/20",
           icon && "pl-9",
           className,
         )}
@@ -75,12 +75,12 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     <textarea
       ref={ref}
       className={cn(
-        "w-full rounded-lg border bg-[#262939] px-3 py-2 text-sm text-[#dfe1f6]",
-        "placeholder:text-[#9aa3b8]/60 resize-y min-h-[80px]",
+        "w-full rounded-lg border bg-[#f1f3f4] px-3 py-2 text-sm text-[#202124]",
+        "placeholder:text-[#5f6368]/60 resize-y min-h-[80px]",
         "focus:outline-none focus:ring-1 transition-colors",
         error
           ? "border-red-500/50 focus:ring-red-500/50"
-          : "border-white/[0.07] focus:border-[#00d2ff]/50 focus:ring-[#00d2ff]/30",
+          : "border-white/[0.07] focus:border-[#1a56db]/50 focus:ring-[#1a56db]/20",
         className,
       )}
       {...props}
@@ -102,11 +102,11 @@ export const SelectInput = forwardRef<HTMLSelectElement, SelectInputProps>(
     <select
       ref={ref}
       className={cn(
-        "w-full rounded-lg border bg-[#262939] px-3 py-2 text-sm text-[#dfe1f6]",
+        "w-full rounded-lg border bg-[#f1f3f4] px-3 py-2 text-sm text-[#202124]",
         "focus:outline-none focus:ring-1 transition-colors",
         error
           ? "border-red-500/50 focus:ring-red-500/50"
-          : "border-white/[0.07] focus:border-[#00d2ff]/50 focus:ring-[#00d2ff]/30",
+          : "border-white/[0.07] focus:border-[#1a56db]/50 focus:ring-[#1a56db]/20",
         className,
       )}
       {...props}
@@ -117,7 +117,7 @@ export const SelectInput = forwardRef<HTMLSelectElement, SelectInputProps>(
         </option>
       )}
       {options.map((o) => (
-        <option key={o.value} value={o.value} className="bg-[#1b1f2e]">
+        <option key={o.value} value={o.value} className="bg-white">
           {o.label}
         </option>
       ))}
@@ -139,14 +139,14 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
         ref={ref}
         type="checkbox"
         className={cn(
-          "h-4 w-4 rounded border border-white/[0.2] bg-[#262939]",
-          "checked:bg-[#00d2ff] checked:border-[#00d2ff]",
-          "focus:outline-none focus:ring-2 focus:ring-[#00d2ff]/30 transition-colors",
+          "h-4 w-4 rounded border border-white/[0.2] bg-[#f1f3f4]",
+          "checked:bg-[#1a56db] checked:border-[#1a56db]",
+          "focus:outline-none focus:ring-2 focus:ring-[#1a56db]/20 transition-colors",
           className,
         )}
         {...props}
       />
-      {label && <span className="text-sm text-[#9aa3b8]">{label}</span>}
+      {label && <span className="text-sm text-[#5f6368]">{label}</span>}
     </label>
   ),
 );
@@ -175,8 +175,8 @@ export function FormSection({
     <div className={cn("flex flex-col gap-4", className)}>
       {(title || description) && (
         <div className="border-b border-white/[0.07] pb-3">
-          {title && <p className="text-sm font-semibold text-[#dfe1f6]">{title}</p>}
-          {description && <p className="text-xs text-[#9aa3b8] mt-0.5">{description}</p>}
+          {title && <p className="text-sm font-semibold text-[#202124]">{title}</p>}
+          {description && <p className="text-xs text-[#5f6368] mt-0.5">{description}</p>}
         </div>
       )}
       {children}

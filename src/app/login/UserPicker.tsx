@@ -8,19 +8,19 @@ import { roleLabels } from "@/lib/auth";
 const roleTileColors: Record<UserRole, string> = {
   ADMIN:         "bg-[#ff4d6d]/10 text-[#ff4d6d]",
   CEO:           "bg-purple-500/10 text-purple-300",
-  CISO:          "bg-[#00d2ff]/10 text-[#00d2ff]",
+  CISO:          "bg-[#1a56db]/10 text-[#1a56db]",
   R_AND_D:       "bg-indigo-500/10 text-indigo-300",
   COO:           "bg-violet-500/10 text-violet-300",
   OPS_MANAGER:   "bg-orange-500/10 text-orange-300",
-  DEVELOPER:     "bg-[#00d2ff]/10 text-[#7dd8f5]",
+  DEVELOPER:     "bg-[#1a56db]/10 text-[#7dd8f5]",
   CYBER_SECURITY:"bg-[#ff4d6d]/10 text-[#ff4d6d]",
   QA:            "bg-yellow-500/10 text-yellow-300",
-  MARKETING:     "bg-[#06d6a0]/10 text-[#06d6a0]",
+  MARKETING:     "bg-[#f8fafd]/10 text-[#06d6a0]",
   RESEARCH:      "bg-teal-500/10 text-teal-300",
-  FINANCE:       "bg-[#06d6a0]/10 text-[#06d6a0]",
+  FINANCE:       "bg-[#f8fafd]/10 text-[#06d6a0]",
   OPERATIONS:    "bg-amber-500/10 text-amber-300",
   SUPPORT:       "bg-sky-500/10 text-sky-300",
-  INTERNSHIP:    "bg-[#262939] text-[#9aa3b8]",
+  INTERNSHIP:    "bg-[#f1f3f4] text-[#5f6368]",
 };
 
 export type LoginUser = {
@@ -65,13 +65,13 @@ export function UserPicker({
         {users.length > 6 && (
           <div className="mb-6">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#9aa3b8]" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#5f6368]" />
               <input
                 type="search"
                 placeholder="Search by name, email, or role"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 border border-[rgba(255,255,255,0.08)] rounded-lg text-sm text-[#dfe1f6] bg-[#1b1f2e] focus:ring-2 focus:ring-[#00d2ff] focus:border-[#00d2ff] outline-none"
+                className="w-full pl-9 pr-4 py-2.5 border border-[#e8eaed] rounded-lg text-sm text-[#202124] bg-white focus:ring-2 focus:ring-[#1a56db] focus:border-[#1a56db] outline-none"
               />
             </div>
           </div>
@@ -80,7 +80,7 @@ export function UserPicker({
         <div className="grid grid-cols-1 gap-3">
           {filtered.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-[#9aa3b8]">
+              <p className="text-[#5f6368]">
                 {users.length === 0
                   ? "No users exist yet. Contact an administrator."
                   : "No users match your search."}
@@ -92,14 +92,14 @@ export function UserPicker({
                 key={u.id}
                 type="button"
                 onClick={() => setSelectedUser(u)}
-                className="flex items-center gap-4 p-4 border border-[rgba(255,255,255,0.08)] rounded-xl hover:border-[#00d2ff]/40 hover:shadow-md hover:bg-[#262939] transition-all text-left"
+                className="flex items-center gap-4 p-4 border border-[#e8eaed] rounded-xl hover:border-[#1a56db]/40 hover:shadow-md hover:bg-[#f1f3f4] transition-all text-left"
               >
                 <div className={`flex h-10 w-10 items-center justify-center rounded-full font-semibold text-base ${roleTileColors[u.role]}`}>
                   {u.fullName.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold text-[#dfe1f6] text-sm">{u.fullName}</p>
-                  <p className="text-xs text-[#9aa3b8]">{u.email}</p>
+                  <p className="font-semibold text-[#202124] text-sm">{u.fullName}</p>
+                  <p className="text-xs text-[#5f6368]">{u.email}</p>
                   <span className={`inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded-full ${roleTileColors[u.role]}`}>
                     {roleLabels[u.role]}
                   </span>
@@ -117,19 +117,19 @@ export function UserPicker({
       <button
         type="button"
         onClick={() => setSelectedUser(null)}
-        className="flex items-center gap-2 text-sm text-[#00d2ff] hover:text-[#47d6ff] mb-6 transition-colors"
+        className="flex items-center gap-2 text-sm text-[#1a56db] hover:text-[#47d6ff] mb-6 transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />
         Choose different account
       </button>
 
-      <div className="flex items-center gap-4 mb-6 p-4 bg-[#262939] border border-[rgba(255,255,255,0.08)] rounded-xl">
+      <div className="flex items-center gap-4 mb-6 p-4 bg-[#f1f3f4] border border-[#e8eaed] rounded-xl">
         <div className={`flex h-12 w-12 items-center justify-center rounded-full font-semibold text-lg ${roleTileColors[selectedUser.role]}`}>
           {selectedUser.fullName.charAt(0).toUpperCase()}
         </div>
         <div>
-          <p className="font-semibold text-[#dfe1f6]">{selectedUser.fullName}</p>
-          <p className="text-sm text-[#9aa3b8]">{selectedUser.email}</p>
+          <p className="font-semibold text-[#202124]">{selectedUser.fullName}</p>
+          <p className="text-sm text-[#5f6368]">{selectedUser.email}</p>
           <span className={`inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded-full ${roleTileColors[selectedUser.role]}`}>
             {roleLabels[selectedUser.role]}
           </span>
@@ -140,13 +140,13 @@ export function UserPicker({
       <input type="hidden" name="email" value={selectedUser.email} />
 
       <div className="mb-5">
-        <label className="block text-sm font-medium text-[#dfe1f6] mb-1.5">Password</label>
+        <label className="block text-sm font-medium text-[#202124] mb-1.5">Password</label>
         <input
           name="password"
           type="password"
           autoFocus
           required
-          className="block w-full py-2.5 px-3 border border-[rgba(255,255,255,0.08)] rounded-md bg-[#1b1f2e] text-[#dfe1f6] focus:ring-2 focus:ring-[#00d2ff] focus:border-[#00d2ff] text-sm outline-none"
+          className="block w-full py-2.5 px-3 border border-[#e8eaed] rounded-md bg-white text-[#202124] focus:ring-2 focus:ring-[#1a56db] focus:border-[#1a56db] text-sm outline-none"
         />
       </div>
 
@@ -156,7 +156,7 @@ export function UserPicker({
         </div>
       )}
 
-      <button className="w-full flex justify-center py-2.5 px-4 rounded-md shadow-sm text-sm font-semibold text-[#003543] bg-[#00d2ff] hover:bg-[#47d6ff] transition-all active:scale-[0.98]">
+      <button className="w-full flex justify-center py-2.5 px-4 rounded-md shadow-sm text-sm font-semibold text-white bg-[#1a56db] hover:bg-[#1447c0] transition-all active:scale-[0.98]">
         Sign in as {selectedUser.fullName}
       </button>
     </form>

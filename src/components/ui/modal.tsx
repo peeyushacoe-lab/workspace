@@ -70,7 +70,7 @@ export function Modal({
       }}
     >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" aria-hidden />
+      <div className="absolute inset-0 bg-black/60 " aria-hidden />
 
       {/* Panel */}
       <div
@@ -79,7 +79,7 @@ export function Modal({
         aria-labelledby={title ? "modal-title" : undefined}
         className={cn(
           "relative z-10 w-full rounded-xl border border-white/[0.07]",
-          "bg-[#1b1f2e] shadow-[0_8px_32px_rgba(0,0,0,0.6)]",
+          "bg-white shadow-[0_8px_32px_rgba(0,0,0,0.6)]",
           "flex flex-col max-h-[90vh]",
           sizeClasses[size],
           className,
@@ -90,17 +90,17 @@ export function Modal({
           <div className="flex items-start justify-between gap-3 px-5 pt-5 pb-4 border-b border-white/[0.07]">
             <div>
               {title && (
-                <h2 id="modal-title" className="text-[15px] font-semibold text-[#dfe1f6]">
+                <h2 id="modal-title" className="text-[15px] font-semibold text-[#202124]">
                   {title}
                 </h2>
               )}
               {description && (
-                <p className="mt-0.5 text-xs text-[#9aa3b8]">{description}</p>
+                <p className="mt-0.5 text-xs text-[#5f6368]">{description}</p>
               )}
             </div>
             <button
               onClick={onClose}
-              className="flex-shrink-0 p-1 rounded-md text-[#9aa3b8] hover:text-[#dfe1f6] hover:bg-white/[0.08] transition-colors"
+              className="flex-shrink-0 p-1 rounded-md text-[#5f6368] hover:text-[#202124] hover:bg-[#e8f0fe] transition-colors"
               aria-label="Close"
             >
               <X className="h-4 w-4" />
@@ -161,7 +161,7 @@ export function ConfirmModal({
           <button
             onClick={onClose}
             disabled={loading}
-            className="px-4 py-2 text-sm rounded-lg text-[#9aa3b8] hover:bg-white/[0.08] transition-colors disabled:opacity-50"
+            className="px-4 py-2 text-sm rounded-lg text-[#5f6368] hover:bg-[#e8f0fe] transition-colors disabled:opacity-50"
           >
             {cancelLabel}
           </button>
@@ -172,7 +172,7 @@ export function ConfirmModal({
               "px-4 py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-50",
               destructive
                 ? "bg-red-500/20 text-red-400 hover:bg-red-500/30"
-                : "bg-[#00d2ff]/15 text-[#00d2ff] hover:bg-[#00d2ff]/25",
+                : "bg-[#1a56db]/15 text-[#1a56db] hover:bg-[#1a56db]/25",
             )}
           >
             {loading ? "Please wait…" : confirmLabel}

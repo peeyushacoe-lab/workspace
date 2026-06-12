@@ -47,17 +47,17 @@ function MfaChallengeForm() {
   };
 
   return (
-    <div className="bg-[#0f172a] min-h-screen flex items-center justify-center px-4">
+    <div className="bg-[#f8fafd] min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="flex justify-center mb-8">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#00d2ff] shadow-lg shadow-blue-500/30">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f8fafd] shadow-lg shadow-blue-500/30">
             <Sparkles className="h-6 w-6 text-[#003543]" />
           </div>
         </div>
 
         {/* Card */}
-        <div className="bg-[#1e293b] border border-[#334155] rounded-xl p-8 w-full max-w-sm shadow-2xl">
+        <div className="bg-white border border-[#334155] rounded-xl p-8 w-full max-w-sm shadow-2xl">
           {/* Header */}
           <div className="text-center mb-6">
             <div className="flex justify-center mb-3">
@@ -84,7 +84,7 @@ function MfaChallengeForm() {
                 onChange={(e) => setCode(e.target.value)}
                 placeholder={useBackup ? "xxxxxxxx" : "000000"}
                 maxLength={useBackup ? 8 : 6}
-                className="w-full text-4xl text-center font-mono text-[#003543] bg-[#0f172a] border border-[#334155] rounded-md focus:ring-2 focus:ring-[#00d2ff]/30 focus:border-transparent px-4 py-3 tracking-[0.4em] placeholder:text-[#334155] focus:outline-none transition"
+                className="w-full text-4xl text-center font-mono text-[#003543] bg-[#f8fafd] border border-[#334155] rounded-md focus:ring-2 focus:ring-[#00d2ff]/30 focus:border-transparent px-4 py-3 tracking-[0.4em] placeholder:text-[#334155] focus:outline-none transition"
                 disabled={loading}
                 autoComplete="one-time-code"
               />
@@ -97,7 +97,7 @@ function MfaChallengeForm() {
             <button
               type="submit"
               disabled={loading || code.trim().length < 6}
-              className="bg-[#00d2ff] text-[#003543] hover:bg-[#00b8d9] w-full py-3 rounded-lg font-semibold flex items-center justify-center gap-2 disabled:opacity-40 transition-colors active:scale-[0.98]"
+              className="bg-[#f8fafd] text-[#003543] hover:bg-[#f8fafd] w-full py-3 rounded-lg font-semibold flex items-center justify-center gap-2 disabled:opacity-40 transition-colors active:scale-[0.98]"
             >
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

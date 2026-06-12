@@ -77,16 +77,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${dmSans.variable} ${inter.variable} dark h-full antialiased`} suppressHydrationWarning>
+    <html lang="en" className={`${dmSans.variable} ${inter.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
-        {/* Inline script to set dark class before first paint â€" prevents flash */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('theme');var d=window.matchMedia('(prefers-color-scheme: dark)').matches;if(t==='dark'||(t===null&&d)){document.documentElement.classList.add('dark');}}catch(e){}})();`,
-          }}
-        />
+        {/* Light theme by default — no dark class injected */}
       </head>
-      <body className="min-h-full bg-[#0f1321] text-[#dfe1f6] font-sans" suppressHydrationWarning>
+      <body className="min-h-full bg-white text-[#202124] font-sans" suppressHydrationWarning>
         <div className="min-h-screen flex flex-col">
           {children}
         </div>

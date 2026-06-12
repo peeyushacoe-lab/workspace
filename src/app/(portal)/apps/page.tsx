@@ -43,7 +43,7 @@ function AppIcon({ name, className }: { name: string; className?: string }) {
 // ─── Category colours ────────────────────────────────────────────────────────
 
 const CATEGORY_COLOURS: Record<string, string> = {
-  Developer:            "bg-[#00d2ff]/10 text-[#00d2ff] border-[#00d2ff]/20",
+  Developer:            "bg-[#1a56db]/10 text-[#1a56db] border-[#1a56db]/20",
   "Project Management": "bg-violet-500/10 text-violet-300 border-violet-500/20",
   Communication:        "bg-sky-500/10 text-sky-300 border-sky-500/20",
   CRM:                  "bg-amber-500/10 text-amber-300 border-amber-500/20",
@@ -51,7 +51,7 @@ const CATEGORY_COLOURS: Record<string, string> = {
 };
 
 function CategoryBadge({ category }: { category: string }) {
-  const cls = CATEGORY_COLOURS[category] ?? "bg-[#5d6579]/20 text-[#5d6579] border-[#5d6579]/20";
+  const cls = CATEGORY_COLOURS[category] ?? "bg-[#5d6579]/20 text-[#9aa0a6] border-[#5d6579]/20";
   return (
     <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${cls}`}>
       {category}
@@ -88,12 +88,12 @@ function AppCard({
     <div
       className={[
         "group relative flex flex-col gap-4 rounded-xl p-5",
-        "bg-[#1b1f2e] border transition-all duration-200",
+        "bg-white border transition-all duration-200",
         isComingSoon
-          ? "opacity-60 border-[rgba(255,255,255,0.06)]"
+          ? "opacity-60 border-[#e8eaed]"
           : isEnabled
             ? "border-emerald-500/30 hover:border-emerald-400/60"
-            : "border-[rgba(255,255,255,0.06)] hover:border-[rgba(255,255,255,0.22)]",
+            : "border-[#e8eaed] hover:border-[rgba(255,255,255,0.22)]",
       ].join(" ")}
     >
       {/* Active glow strip */}
@@ -108,7 +108,7 @@ function AppCard({
             "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg",
             isEnabled
               ? "bg-emerald-500/10 text-emerald-400"
-              : "bg-[#00d2ff]/10 text-[#00d2ff]",
+              : "bg-[#1a56db]/10 text-[#1a56db]",
           ].join(" ")}
         >
           <AppIcon name={app.icon} className="h-5 w-5" />
@@ -116,7 +116,7 @@ function AppCard({
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-semibold text-[#dfe1f6]">{app.name}</span>
+            <span className="text-sm font-semibold text-[#202124]">{app.name}</span>
             {isEnabled && (
               <span className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
                 <CheckCircle2 className="h-2.5 w-2.5" />
@@ -131,14 +131,14 @@ function AppCard({
       </div>
 
       {/* Description */}
-      <p className="text-xs leading-relaxed text-[#5d6579] flex-1">
+      <p className="text-xs leading-relaxed text-[#9aa0a6] flex-1">
         {app.description}
       </p>
 
       {/* Action row */}
       <div className="flex items-center justify-between gap-2">
         {isComingSoon ? (
-          <span className="text-[11px] font-medium px-3 py-1.5 rounded-lg bg-[#5d6579]/10 text-[#5d6579] border border-[#5d6579]/20 cursor-default">
+          <span className="text-[11px] font-medium px-3 py-1.5 rounded-lg bg-[#5d6579]/10 text-[#9aa0a6] border border-[#5d6579]/20 cursor-default">
             Coming Soon
           </span>
         ) : isAdmin ? (
@@ -149,7 +149,7 @@ function AppCard({
               "flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors disabled:opacity-50",
               isEnabled
                 ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20"
-                : "bg-[#00d2ff]/10 text-[#00d2ff] border-[#00d2ff]/20 hover:bg-[#00d2ff]/20",
+                : "bg-[#1a56db]/10 text-[#1a56db] border-[#1a56db]/20 hover:bg-[#1a56db]/20",
             ].join(" ")}
           >
             {busy ? (
@@ -161,7 +161,7 @@ function AppCard({
           </button>
         ) : (
           <button
-            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#5d6579]/10 text-[#5d6579] border border-[#5d6579]/20 hover:bg-[#5d6579]/20 transition-colors"
+            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#5d6579]/10 text-[#9aa0a6] border border-[#5d6579]/20 hover:bg-[#5d6579]/20 transition-colors"
           >
             Request
           </button>
@@ -241,7 +241,7 @@ export default function AppsPage() {
   const enabledCount = apps.filter((a) => a.enabled).length;
 
   return (
-    <div className="min-h-screen bg-[#0f1321] text-[#dfe1f6]">
+    <div className="min-h-screen bg-white text-[#202124]">
       <PageHeader
         eyebrow="Workspace"
         title="App Marketplace"
@@ -252,7 +252,7 @@ export default function AppsPage() {
 
         {/* Stats strip */}
         {!loading && enabledCount > 0 && (
-          <div className="flex items-center gap-2 text-xs text-[#5d6579]">
+          <div className="flex items-center gap-2 text-xs text-[#9aa0a6]">
             <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
             <span>
               <span className="font-semibold text-emerald-400">{enabledCount}</span>{" "}
@@ -270,8 +270,8 @@ export default function AppsPage() {
               className={[
                 "px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors",
                 activeTab === cat
-                  ? "bg-[#00d2ff]/15 text-[#00d2ff] border-[#00d2ff]/30"
-                  : "bg-[#1b1f2e] text-[#5d6579] border-[rgba(255,255,255,0.06)] hover:text-[#9aa3b8] hover:border-[rgba(255,255,255,0.14)]",
+                  ? "bg-[#1a56db]/15 text-[#1a56db] border-[#1a56db]/30"
+                  : "bg-white text-[#9aa0a6] border-[#e8eaed] hover:text-[#5f6368] hover:border-[#d0d5dd]",
               ].join(" ")}
             >
               {cat}
@@ -281,14 +281,14 @@ export default function AppsPage() {
 
         {/* Grid */}
         {loading ? (
-          <div className="flex items-center justify-center py-24 gap-3 text-[#5d6579]">
+          <div className="flex items-center justify-center py-24 gap-3 text-[#9aa0a6]">
             <Loader2 className="h-5 w-5 animate-spin" />
             <span className="text-sm">Loading integrations…</span>
           </div>
         ) : sorted.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 gap-2">
-            <Code className="h-10 w-10 text-[#454e63]" />
-            <p className="text-sm text-[#5d6579]">No integrations found</p>
+            <Code className="h-10 w-10 text-[#bdc1c6]" />
+            <p className="text-sm text-[#9aa0a6]">No integrations found</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

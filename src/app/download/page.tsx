@@ -67,19 +67,19 @@ export default async function DownloadPage() {
   const hasRelease = assets.length > 0;
 
   return (
-    <div className="min-h-screen bg-[#0a0d1a] text-[#dfe1f6]">
+    <div className="min-h-screen bg-[#f8fafd] text-[#202124]">
       {/* Nav */}
-      <nav className="border-b border-[rgba(255,255,255,0.06)]">
+      <nav className="border-b border-[#e8eaed]">
         <div className="max-w-4xl mx-auto flex items-center justify-between px-6 py-4">
-          <Link href="/" className="text-xl font-semibold text-[#00d2ff]">CyberSage</Link>
-          <Link href="/login" className="text-sm text-[#5d6579] hover:text-[#9aa3b8] transition-colors">Sign in →</Link>
+          <Link href="/" className="text-xl font-semibold text-[#1a56db]">CyberSage</Link>
+          <Link href="/login" className="text-sm text-[#9aa0a6] hover:text-[#5f6368] transition-colors">Sign in →</Link>
         </div>
       </nav>
 
       <div className="max-w-4xl mx-auto px-6 py-16">
         {/* Hero */}
         <div className="text-center mb-14">
-          <div className="inline-flex items-center gap-2 bg-[#00d2ff]/10 border border-[#00d2ff]/20 rounded-full px-4 py-1.5 text-xs text-[#7dd8f5] mb-6">
+          <div className="inline-flex items-center gap-2 bg-[#1a56db]/10 border border-[#1a56db]/20 rounded-full px-4 py-1.5 text-xs text-[#7dd8f5] mb-6">
             Desktop app · Free for all plans
           </div>
           <h1 className="text-4xl font-semibold text-white mb-4 tracking-tight">
@@ -90,15 +90,15 @@ export default async function DownloadPage() {
             access, and auto-updates. No browser required.
           </p>
           {version && (
-            <p className="mt-3 text-xs text-[#5d6579]">Latest version: <span className="text-[#00d2ff]">{version}</span></p>
+            <p className="mt-3 text-xs text-[#9aa0a6]">Latest version: <span className="text-[#1a56db]">{version}</span></p>
           )}
         </div>
 
         {/* How it works */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-12">
           {STEPS.map((s) => (
-            <div key={s.n} className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl p-5">
-              <div className="w-8 h-8 rounded-lg bg-[#00d2ff]/15 text-[#00d2ff] font-semibold text-sm flex items-center justify-center mb-3">{s.n}</div>
+            <div key={s.n} className="bg-white border border-[#e8eaed] rounded-xl p-5">
+              <div className="w-8 h-8 rounded-lg bg-[#1a56db]/15 text-[#1a56db] font-semibold text-sm flex items-center justify-center mb-3">{s.n}</div>
               <p className="font-semibold text-white text-sm mb-1">{s.title}</p>
               <p className="text-xs text-[#8899a6] leading-relaxed">{s.desc}</p>
             </div>
@@ -107,17 +107,17 @@ export default async function DownloadPage() {
 
         {/* Download cards */}
         {!hasRelease ? (
-          <div className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-2xl p-10 text-center">
+          <div className="bg-white border border-[#e8eaed] rounded-2xl p-10 text-center">
             <p className="text-2xl mb-3">🚧</p>
             <p className="font-semibold text-white mb-2">Desktop app coming soon</p>
             <p className="text-sm text-[#8899a6] mb-6">
               We&apos;re finishing the first release. In the meantime,{" "}
-              <Link href="/login" className="text-[#00d2ff] hover:underline">use the web app</Link>{" "}
+              <Link href="/login" className="text-[#1a56db] hover:underline">use the web app</Link>{" "}
               — it works great in your browser.
             </p>
             <Link
               href="/login"
-              className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#00d2ff] text-[#003543] font-semibold rounded-xl hover:opacity-90 transition-opacity text-sm"
+              className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#1a56db] text-white font-semibold rounded-xl hover:opacity-90 transition-opacity text-sm"
             >
               Open web app →
             </Link>
@@ -129,18 +129,18 @@ export default async function DownloadPage() {
               return (
                 <div
                   key={p.key}
-                  className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl p-6 hover:border-[#00d2ff]/20 transition-colors"
+                  className="bg-white border border-[#e8eaed] rounded-xl p-6 hover:border-[#1a56db]/20 transition-colors"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
                       <span className="text-3xl">{p.icon}</span>
                       <div>
                         <p className="font-semibold text-white">{p.label}</p>
-                        <p className="text-xs text-[#5d6579]">{p.hint}</p>
+                        <p className="text-xs text-[#9aa0a6]">{p.hint}</p>
                       </div>
                     </div>
                     {p.badge && (
-                      <span className="text-[10px] text-[#00d2ff] bg-[#00d2ff]/10 px-2 py-0.5 rounded-full font-medium">
+                      <span className="text-[10px] text-[#1a56db] bg-[#1a56db]/10 px-2 py-0.5 rounded-full font-medium">
                         {p.badge}
                       </span>
                     )}
@@ -148,12 +148,12 @@ export default async function DownloadPage() {
                   {asset ? (
                     <a
                       href={asset.browser_download_url}
-                      className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#00d2ff] text-[#003543] font-semibold text-sm rounded-lg hover:opacity-90 transition-opacity"
+                      className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#1a56db] text-white font-semibold text-sm rounded-lg hover:opacity-90 transition-opacity"
                     >
                       ↓ Download · {formatSize(asset.size)}
                     </a>
                   ) : (
-                    <div className="flex items-center justify-center w-full py-2.5 bg-[#262939] text-[#5d6579] text-sm rounded-lg">
+                    <div className="flex items-center justify-center w-full py-2.5 bg-[#f1f3f4] text-[#9aa0a6] text-sm rounded-lg">
                       Not available in this release
                     </div>
                   )}
@@ -164,25 +164,25 @@ export default async function DownloadPage() {
         )}
 
         {/* All releases link */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl px-5 py-4 text-sm">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white border border-[#e8eaed] rounded-xl px-5 py-4 text-sm">
           <div>
             <p className="font-medium text-white">Need an older version?</p>
-            <p className="text-[#5d6579] text-xs mt-0.5">All releases with changelogs are on GitHub.</p>
+            <p className="text-[#9aa0a6] text-xs mt-0.5">All releases with changelogs are on GitHub.</p>
           </div>
           <a
             href={`https://github.com/${REPO}/releases`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[#00d2ff] hover:underline flex-shrink-0"
+            className="text-[#1a56db] hover:underline flex-shrink-0"
           >
             View all releases →
           </a>
         </div>
 
         {/* Already have account */}
-        <p className="text-center text-sm text-[#5d6579] mt-10">
+        <p className="text-center text-sm text-[#9aa0a6] mt-10">
           Don&apos;t have an account yet?{" "}
-          <Link href="/register" className="text-[#00d2ff] hover:underline">Create one free</Link>
+          <Link href="/register" className="text-[#1a56db] hover:underline">Create one free</Link>
           {" "}— it takes 30 seconds.
         </p>
       </div>

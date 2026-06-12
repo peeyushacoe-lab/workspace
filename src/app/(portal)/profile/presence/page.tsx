@@ -104,41 +104,41 @@ export default function PresenceSettingsPage() {
   const [activeSection, setActiveSection] = useState<"picker" | "reference" | "history">("picker");
 
   return (
-    <div className="min-h-screen bg-[#0f1321] text-[#dfe1f6]">
+    <div className="min-h-screen bg-white text-[#202124]">
       <div className="max-w-3xl mx-auto px-4 py-8 sm:px-6">
 
         {/* ── Header ── */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[rgba(0,210,255,0.08)] border border-[rgba(0,210,255,0.15)]">
-              <svg className="h-4.5 w-4.5 text-[#00d2ff]" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
+              <svg className="h-4.5 w-4.5 text-[#1a56db]" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
                 <circle cx="10" cy="10" r="3.5" />
                 <path fillRule="evenodd" d="M10 1.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17ZM0 10a10 10 0 1 1 20 0A10 10 0 0 1 0 10Z" clipRule="evenodd" />
               </svg>
             </div>
             <div>
-              <h1 className="text-xl font-semibold text-[#dfe1f6] leading-tight">Presence &amp; Status</h1>
-              <p className="text-sm text-[#5d6579]">Let your team know what you&apos;re up to</p>
+              <h1 className="text-xl font-semibold text-[#202124] leading-tight">Presence &amp; Status</h1>
+              <p className="text-sm text-[#9aa0a6]">Let your team know what you&apos;re up to</p>
             </div>
           </div>
         </div>
 
         {/* ── Set Status Card ── */}
-        <section className="rounded-xl border border-[rgba(0,210,255,0.1)] bg-[#1b1f2e] p-6 mb-6">
-          <h2 className="text-sm font-semibold text-[#5d6579] mb-4">
+        <section className="rounded-xl border border-[rgba(0,210,255,0.1)] bg-white p-6 mb-6">
+          <h2 className="text-sm font-semibold text-[#9aa0a6] mb-4">
             Your Current Status
           </h2>
           <div className="flex flex-col sm:flex-row sm:items-start gap-4">
             <div className="flex-1">
-              <p className="text-sm text-[#9aa3b8] mb-3">
+              <p className="text-sm text-[#5f6368] mb-3">
                 Your presence is stored in Redis with a 5-minute TTL and refreshed automatically
                 every 4 minutes while you&apos;re active. If you close the app, you&apos;ll appear
                 offline after 5 minutes.
               </p>
               <PresenceStatusPicker />
             </div>
-            <div className="rounded-lg bg-[#0f1321] border border-[rgba(0,210,255,0.06)] px-4 py-3 text-xs text-[#5d6579] sm:w-48 flex-shrink-0">
-              <p className="font-semibold text-[#9aa3b8] mb-1">How it works</p>
+            <div className="rounded-lg bg-white border border-[rgba(0,210,255,0.06)] px-4 py-3 text-xs text-[#9aa0a6] sm:w-48 flex-shrink-0">
+              <p className="font-semibold text-[#5f6368] mb-1">How it works</p>
               <ul className="space-y-1 list-disc list-inside">
                 <li>Refreshed every 4 min</li>
                 <li>Expires after 5 min idle</li>
@@ -157,8 +157,8 @@ export default function PresenceSettingsPage() {
               onClick={() => setActiveSection(tab)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 activeSection === tab
-                  ? "bg-[rgba(0,210,255,0.1)] text-[#00d2ff] border border-[rgba(0,210,255,0.2)]"
-                  : "text-[#5d6579] hover:text-[#9aa3b8] hover:bg-[#1b1f2e]"
+                  ? "bg-[rgba(0,210,255,0.1)] text-[#1a56db] border border-[rgba(0,210,255,0.2)]"
+                  : "text-[#9aa0a6] hover:text-[#5f6368] hover:bg-white"
               }`}
             >
               {tab === "reference" ? "Status Guide" : "Recent History"}
@@ -168,9 +168,9 @@ export default function PresenceSettingsPage() {
 
         {/* ── Status Reference ── */}
         {activeSection === "reference" && (
-          <section className="rounded-xl border border-[rgba(0,210,255,0.1)] bg-[#1b1f2e] overflow-hidden">
+          <section className="rounded-xl border border-[rgba(0,210,255,0.1)] bg-white overflow-hidden">
             <div className="px-5 py-3 border-b border-[rgba(0,210,255,0.06)]">
-              <h2 className="text-sm font-semibold text-[#5d6579]">
+              <h2 className="text-sm font-semibold text-[#9aa0a6]">
                 Status Meanings
               </h2>
             </div>
@@ -182,10 +182,10 @@ export default function PresenceSettingsPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline gap-2 mb-0.5">
-                      <span className="text-sm font-semibold text-[#dfe1f6]">{s.label}</span>
-                      <span className="text-xs text-[#5d6579]">{s.description}</span>
+                      <span className="text-sm font-semibold text-[#202124]">{s.label}</span>
+                      <span className="text-xs text-[#9aa0a6]">{s.description}</span>
                     </div>
-                    <p className="text-xs text-[#9aa3b8] leading-relaxed">{s.detail}</p>
+                    <p className="text-xs text-[#5f6368] leading-relaxed">{s.detail}</p>
                   </div>
                 </li>
               ))}
@@ -195,29 +195,29 @@ export default function PresenceSettingsPage() {
 
         {/* ── History ── */}
         {activeSection === "history" && (
-          <section className="rounded-xl border border-[rgba(0,210,255,0.1)] bg-[#1b1f2e] overflow-hidden">
+          <section className="rounded-xl border border-[rgba(0,210,255,0.1)] bg-white overflow-hidden">
             <div className="px-5 py-3 border-b border-[rgba(0,210,255,0.06)] flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-[#5d6579]">
+              <h2 className="text-sm font-semibold text-[#9aa0a6]">
                 Recent Status Changes
               </h2>
-              <span className="text-xs text-[#5d6579] italic">Last 5 changes (demo)</span>
+              <span className="text-xs text-[#9aa0a6] italic">Last 5 changes (demo)</span>
             </div>
             <ul className="divide-y divide-[rgba(0,210,255,0.05)]">
               {MOCK_HISTORY.map((entry, i) => (
                 <li key={i} className="flex items-center gap-4 px-5 py-3.5">
                   <PresenceDot status={entry.status} size="md" />
                   <div className="flex-1 min-w-0">
-                    <span className="text-sm font-medium text-[#dfe1f6]">{entry.label}</span>
+                    <span className="text-sm font-medium text-[#202124]">{entry.label}</span>
                     {entry.message && (
-                      <span className="ml-2 text-xs text-[#5d6579]">— {entry.message}</span>
+                      <span className="ml-2 text-xs text-[#9aa0a6]">— {entry.message}</span>
                     )}
                   </div>
-                  <time className="text-xs text-[#5d6579] flex-shrink-0">{entry.timestamp}</time>
+                  <time className="text-xs text-[#9aa0a6] flex-shrink-0">{entry.timestamp}</time>
                 </li>
               ))}
             </ul>
             <div className="px-5 py-3 border-t border-[rgba(0,210,255,0.06)]">
-              <p className="text-xs text-[#5d6579]">
+              <p className="text-xs text-[#9aa0a6]">
                 Full history persistence requires a separate audit log implementation. This view
                 shows mocked data for UI reference.
               </p>

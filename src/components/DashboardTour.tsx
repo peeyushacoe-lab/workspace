@@ -64,12 +64,12 @@ export function DashboardTour() {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 "
       role="dialog"
       aria-modal="true"
       aria-label="Welcome tour"
     >
-      <div className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl shadow-2xl p-5 max-w-md w-full mx-4">
+      <div className="bg-white border border-[#e8eaed] rounded-xl shadow-2xl p-5 max-w-md w-full mx-4">
         {/* Progress dots */}
         <div className="flex items-center justify-between mb-7">
           <div className="flex gap-1.5">
@@ -77,14 +77,14 @@ export function DashboardTour() {
               <div
                 key={i}
                 className={`h-1.5 rounded-full transition-all duration-300 ${
-                  i === step ? "w-6 bg-[#00d2ff]" : i < step ? "w-1.5 bg-[#00d2ff]/40" : "w-1.5 bg-[#262b3a]"
+                  i === step ? "w-6 bg-[#1a56db]" : i < step ? "w-1.5 bg-[#1a56db]/40" : "w-1.5 bg-[#f1f3f4]"
                 }`}
               />
             ))}
           </div>
           <button
             onClick={dismiss}
-            className="text-[#9aa3b8] hover:text-[#dfe1f6] transition-colors p-1 -mr-1 rounded-lg hover:bg-[#262939]"
+            className="text-[#5f6368] hover:text-[#202124] transition-colors p-1 -mr-1 rounded-lg hover:bg-[#f1f3f4]"
             aria-label="Skip tour"
           >
             <X className="h-4 w-4" />
@@ -94,11 +94,11 @@ export function DashboardTour() {
         {/* Content */}
         <div className="flex items-start gap-4 mb-8">
           <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-[#eff6ff] flex items-center justify-center">
-            <Icon className="h-6 w-6 text-[#00d2ff]" />
+            <Icon className="h-6 w-6 text-[#1a56db]" />
           </div>
           <div>
-            <h2 className="font-semibold text-[#dfe1f6] text-lg leading-snug mb-2">{current.title}</h2>
-            <p className="text-sm text-[#9aa3b8] leading-relaxed">{current.body}</p>
+            <h2 className="font-semibold text-[#202124] text-lg leading-snug mb-2">{current.title}</h2>
+            <p className="text-sm text-[#5f6368] leading-relaxed">{current.body}</p>
           </div>
         </div>
 
@@ -106,13 +106,13 @@ export function DashboardTour() {
         <div className="flex gap-3">
           <button
             onClick={dismiss}
-            className="flex-1 py-2.5 text-sm text-[#9aa3b8] hover:text-[#dfe1f6] border border-[rgba(255,255,255,0.06)] rounded-lg transition-colors hover:bg-[#262939]"
+            className="flex-1 py-2.5 text-sm text-[#5f6368] hover:text-[#202124] border border-[#e8eaed] rounded-lg transition-colors hover:bg-[#f1f3f4]"
           >
             Skip
           </button>
           <button
             onClick={() => (isLast ? dismiss() : setStep(s => s + 1))}
-            className="flex-1 py-2.5 text-sm bg-[#00d2ff] text-[#003543] hover:bg-[#00b8d9] font-medium rounded-lg transition-colors flex items-center justify-center gap-1.5"
+            className="flex-1 py-2.5 text-sm bg-[#1a56db] text-white hover:bg-[#f8fafd] font-medium rounded-lg transition-colors flex items-center justify-center gap-1.5"
           >
             {isLast ? "Get started" : "Next"}
             {!isLast && <ChevronRight className="h-4 w-4" />}

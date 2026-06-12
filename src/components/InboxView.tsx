@@ -1584,9 +1584,9 @@ export function InboxView({ userRole, initialThreads }: {
                   <span className="text-[#9aa0a6] font-mono">{fromDomain}</span>
                   <div className="flex-1" />
                   <span className="flex items-center gap-1.5 text-[#bdc1c6]">
-                    <span className="flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full bg-[#06d6a0]" />SPF</span>
-                    <span className="flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full bg-[#06d6a0]" />DKIM</span>
-                    <span className="flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full bg-[#06d6a0]" />DMARC</span>
+                    <span className="flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full bg-[#f8fafd]" />SPF</span>
+                    <span className="flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full bg-[#f8fafd]" />DKIM</span>
+                    <span className="flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full bg-[#f8fafd]" />DMARC</span>
                   </span>
                 </div>
               );

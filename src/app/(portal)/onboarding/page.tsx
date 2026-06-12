@@ -49,7 +49,7 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0f1321] text-[#dfe1f6] flex items-center justify-center px-4">
+    <div className="min-h-screen bg-white text-[#202124] flex items-center justify-center px-4">
       <div className="w-full max-w-lg">
         {/* Header */}
         <div className="text-center mb-10">
@@ -59,13 +59,13 @@ export default function OnboardingPage() {
 
         {/* Progress bar */}
         <div className="mb-8">
-          <div className="flex justify-between text-xs text-[#5d6579] mb-1.5">
+          <div className="flex justify-between text-xs text-[#9aa0a6] mb-1.5">
             <span>Step {current + 1} of {STEPS.length}</span>
             <span>{progress}% complete</span>
           </div>
-          <div className="h-1.5 bg-[#262939] rounded-full overflow-hidden">
+          <div className="h-1.5 bg-[#f1f3f4] rounded-full overflow-hidden">
             <div
-              className="h-full bg-[#00d2ff] rounded-full transition-all duration-500"
+              className="h-full bg-[#1a56db] rounded-full transition-all duration-500"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -83,29 +83,29 @@ export default function OnboardingPage() {
                 key={s.id}
                 className={`flex items-start gap-4 p-4 rounded-xl border transition-all duration-300 ${
                   active
-                    ? "bg-[#1b1f2e] border-[#00d2ff]/30 shadow-lg shadow-[#00d2ff]/5"
+                    ? "bg-white border-[#1a56db]/30 shadow-lg shadow-[#00d2ff]/5"
                     : done
-                    ? "bg-[#141920] border-emerald-500/20"
-                    : "bg-[#141920] border-[rgba(255,255,255,0.05)] opacity-50"
+                    ? "bg-[#f8fafd] border-emerald-500/20"
+                    : "bg-[#f8fafd] border-[#e8eaed] opacity-50"
                 }`}
               >
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                  done ? "bg-emerald-500/20" : active ? "bg-[#00d2ff]/15" : "bg-[#262939]"
+                  done ? "bg-emerald-500/20" : active ? "bg-[#1a56db]/15" : "bg-[#f1f3f4]"
                 }`}>
                   {done ? (
                     <CheckCircle className="w-5 h-5 text-emerald-400" />
                   ) : (
-                    <Icon className={`w-5 h-5 ${active ? "text-[#00d2ff]" : "text-[#5d6579]"}`} />
+                    <Icon className={`w-5 h-5 ${active ? "text-[#1a56db]" : "text-[#9aa0a6]"}`} />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className={`font-semibold text-sm ${done ? "text-emerald-400" : active ? "text-white" : "text-[#5d6579]"}`}>
+                  <p className={`font-semibold text-sm ${done ? "text-emerald-400" : active ? "text-white" : "text-[#9aa0a6]"}`}>
                     {s.title}
                   </p>
                   {active && <p className="text-xs text-[#8899a6] mt-0.5 leading-relaxed">{s.description}</p>}
                 </div>
                 {!future && !done && !active && (
-                  <ChevronRight className="w-4 h-4 text-[#5d6579] flex-shrink-0 mt-1" />
+                  <ChevronRight className="w-4 h-4 text-[#9aa0a6] flex-shrink-0 mt-1" />
                 )}
               </div>
             );
@@ -117,7 +117,7 @@ export default function OnboardingPage() {
           <button
             onClick={markComplete}
             disabled={loading}
-            className="flex-1 flex items-center justify-center gap-2 py-3 bg-[#00d2ff] text-[#003543] font-semibold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-60"
+            className="flex-1 flex items-center justify-center gap-2 py-3 bg-[#1a56db] text-white font-semibold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-60"
           >
             {loading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -129,15 +129,15 @@ export default function OnboardingPage() {
           </button>
           <button
             onClick={skip}
-            className="px-5 py-3 text-sm text-[#5d6579] hover:text-[#9aa3b8] transition-colors rounded-xl border border-[rgba(255,255,255,0.06)] hover:bg-[#ffffff05]"
+            className="px-5 py-3 text-sm text-[#9aa0a6] hover:text-[#5f6368] transition-colors rounded-xl border border-[#e8eaed] hover:bg-[#ffffff05]"
           >
             {isLast ? "Go to inbox" : "Skip"}
           </button>
         </div>
 
-        <p className="text-center text-xs text-[#5d6579] mt-6">
+        <p className="text-center text-xs text-[#9aa0a6] mt-6">
           You can always update these later in{" "}
-          <a href="/settings" className="text-[#00d2ff] hover:underline">Settings</a>.
+          <a href="/settings" className="text-[#1a56db] hover:underline">Settings</a>.
         </p>
       </div>
     </div>

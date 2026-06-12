@@ -31,7 +31,7 @@ function CopyButton({ value }: { value: string }) {
     navigator.clipboard.writeText(value).then(() => toast.success("Copied")).catch(() => {});
   };
   return (
-    <button onClick={copy} className="p-1 text-[#5d6579] hover:text-[#00d2ff] transition-colors flex-shrink-0">
+    <button onClick={copy} className="p-1 text-[#9aa0a6] hover:text-[#1a56db] transition-colors flex-shrink-0">
       <Copy className="w-3.5 h-3.5" />
     </button>
   );
@@ -57,7 +57,7 @@ export default function DeliverabilityPage() {
   const totalCount = data?.records.length ?? 0;
 
   return (
-    <div className="min-h-screen bg-[#0f1321] text-[#dfe1f6]">
+    <div className="min-h-screen bg-white text-[#202124]">
       <PageHeader
         eyebrow="Admin · Email"
         title="Email Deliverability"
@@ -72,16 +72,16 @@ export default function DeliverabilityPage() {
             { label: "From Address", value: data?.fromEmail ?? "—", sub: "Outgoing sender" },
             { label: "DNS Records", value: loading ? "…" : `${okCount} / ${totalCount}`, sub: `${okCount === totalCount ? "All configured ✓" : "Action required"}` },
           ].map(({ label, value, sub }) => (
-            <div key={label} className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl p-4">
-              <p className="text-[10px] text-[#5d6579] mb-1">{label}</p>
-              <p className="font-mono text-sm text-[#00d2ff] truncate">{value}</p>
-              <p className="text-[11px] text-[#5d6579] mt-1">{sub}</p>
+            <div key={label} className="bg-white border border-[#e8eaed] rounded-xl p-4">
+              <p className="text-[10px] text-[#9aa0a6] mb-1">{label}</p>
+              <p className="font-mono text-sm text-[#1a56db] truncate">{value}</p>
+              <p className="text-[11px] text-[#9aa0a6] mt-1">{sub}</p>
             </div>
           ))}
         </div>
 
         {/* How to fix spam banner */}
-        <div className="bg-[#1a1200] border border-yellow-500/20 rounded-xl p-4 flex gap-3">
+        <div className="bg-amber-50 border border-yellow-500/20 rounded-xl p-4 flex gap-3">
           <AlertTriangle className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
           <div className="text-sm space-y-1">
             <p className="font-semibold text-yellow-300">Why emails go to spam</p>
@@ -95,26 +95,26 @@ export default function DeliverabilityPage() {
         </div>
 
         {/* DNS Records */}
-        <div className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl overflow-hidden">
-          <div className="flex items-center gap-3 px-4 py-3 border-b border-[rgba(255,255,255,0.06)]">
-            <Shield className="w-4 h-4 text-[#00d2ff]" />
+        <div className="bg-white border border-[#e8eaed] rounded-xl overflow-hidden">
+          <div className="flex items-center gap-3 px-4 py-3 border-b border-[#e8eaed]">
+            <Shield className="w-4 h-4 text-[#1a56db]" />
             <span className="text-sm font-medium">Required DNS Records</span>
             <div className="flex-1" />
-            <button onClick={load} className="p-1.5 text-[#5d6579] hover:text-[#9aa3b8]">
+            <button onClick={load} className="p-1.5 text-[#9aa0a6] hover:text-[#5f6368]">
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
             </button>
           </div>
 
-          <div className="divide-y divide-[rgba(255,255,255,0.04)]">
+          <div className="divide-y divide-[#f0f0f0]">
             {loading ? (
-              <div className="py-10 text-center text-[#5d6579] text-sm">Checking DNS…</div>
+              <div className="py-10 text-center text-[#9aa0a6] text-sm">Checking DNS…</div>
             ) : data?.records.map((record) => (
               <div key={record.host} className="px-4 py-4 flex items-start gap-3">
                 <StatusIcon status={record.status} />
                 <div className="flex-1 min-w-0 space-y-1.5">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs font-mono bg-[#262939] text-[#7dd8f5] px-2 py-0.5 rounded">{record.type}</span>
-                    <span className="text-sm font-medium text-[#dfe1f6] truncate">{record.host}</span>
+                    <span className="text-xs font-mono bg-[#f1f3f4] text-[#7dd8f5] px-2 py-0.5 rounded">{record.type}</span>
+                    <span className="text-sm font-medium text-[#202124] truncate">{record.host}</span>
                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
                       record.status === "ok" ? "bg-emerald-500/10 text-emerald-400" :
                       record.status === "missing" ? "bg-red-500/10 text-red-400" :
@@ -123,8 +123,8 @@ export default function DeliverabilityPage() {
                       {record.status === "ok" ? "Configured" : record.status === "missing" ? "Missing" : "Unverified"}
                     </span>
                   </div>
-                  <p className="text-xs text-[#5d6579]">{record.description}</p>
-                  <div className="flex items-center gap-2 bg-[#0c0e1a] rounded-lg px-3 py-2 mt-1">
+                  <p className="text-xs text-[#9aa0a6]">{record.description}</p>
+                  <div className="flex items-center gap-2 bg-[#f8fafd] rounded-lg px-3 py-2 mt-1">
                     <code className="text-xs text-[#7dd8f5] font-mono flex-1 truncate">{record.value}</code>
                     <CopyButton value={record.value} />
                   </div>
@@ -135,13 +135,13 @@ export default function DeliverabilityPage() {
         </div>
 
         {/* Avatar/Signature guide */}
-        <div className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl p-5 space-y-4">
+        <div className="bg-white border border-[#e8eaed] rounded-xl p-5 space-y-4">
           <h3 className="text-sm font-semibold flex items-center gap-2">
             <span className="text-base">👤</span> Sender Avatar in Gmail &amp; Outlook
           </h3>
-          <p className="text-xs text-[#9aa3b8] leading-relaxed">
-            The avatar shown next to your name in Gmail is pulled from the <strong className="text-[#dfe1f6]">sender&apos;s Google profile</strong> or
-            from a <strong className="text-[#dfe1f6]">BIMI record</strong> (Brand Indicators for Message Identification).
+          <p className="text-xs text-[#5f6368] leading-relaxed">
+            The avatar shown next to your name in Gmail is pulled from the <strong className="text-[#202124]">sender&apos;s Google profile</strong> or
+            from a <strong className="text-[#202124]">BIMI record</strong> (Brand Indicators for Message Identification).
             Your email signature image is separate and requires the recipient to <em>load remote images</em> (off by default in Gmail).
           </p>
           <div className="grid grid-cols-2 gap-4 text-xs">
@@ -149,9 +149,9 @@ export default function DeliverabilityPage() {
               { title: "For brand avatar in Gmail", steps: ["Set DMARC to p=quarantine or p=reject (required)", "Upload a square SVG logo to a public HTTPS URL", "Add TXT record: default._bimi.cybersage.uk → v=BIMI1; l=https://your-logo-url.svg"] },
               { title: "For signature photo", steps: ["Go to Settings → Signature tab", "Your avatar URL is already embedded in sent emails", "Recipients must enable 'Show images' in their client", "Use a publicly accessible HTTPS avatar URL (no auth)"] },
             ].map(({ title, steps }) => (
-              <div key={title} className="bg-[#0c0e1a] rounded-lg p-3 space-y-2">
-                <p className="font-semibold text-[#dfe1f6]">{title}</p>
-                <ol className="space-y-1 list-decimal list-inside text-[#9aa3b8]">
+              <div key={title} className="bg-[#f8fafd] rounded-lg p-3 space-y-2">
+                <p className="font-semibold text-[#202124]">{title}</p>
+                <ol className="space-y-1 list-decimal list-inside text-[#5f6368]">
                   {steps.map((s, i) => <li key={i}>{s}</li>)}
                 </ol>
               </div>
@@ -161,7 +161,7 @@ export default function DeliverabilityPage() {
             href="https://bimigroup.org/bimi-generator/"
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs text-[#00d2ff] hover:underline"
+            className="inline-flex items-center gap-1.5 text-xs text-[#1a56db] hover:underline"
           >
             <ExternalLink className="w-3.5 h-3.5" /> BIMI Generator tool
           </a>

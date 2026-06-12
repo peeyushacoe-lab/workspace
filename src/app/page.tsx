@@ -83,20 +83,20 @@ export default async function LandingPage() {
   if (user) redirect("/inbox");
 
   return (
-    <div className="min-h-screen bg-[#0a0d1a] text-[#dfe1f6] font-sans">
+    <div className="min-h-screen bg-[#f8fafd] text-[#202124] font-sans">
       {/* Nav */}
-      <nav className="sticky top-0 z-50 border-b border-[rgba(255,255,255,0.06)] bg-[#0c0f1b]">
+      <nav className="sticky top-0 z-50 border-b border-[#e8eaed] bg-[#f8fafd]">
         <div className="max-w-6xl mx-auto flex items-center justify-between px-6 py-4">
-          <span className="text-xl font-semibold tracking-tight text-[#00d2ff]">CyberSage</span>
-          <div className="flex items-center gap-6 text-sm text-[#9aa3b8]">
-            <Link href="#features" className="hover:text-[#00d2ff] transition-colors">Features</Link>
-            <Link href="#pricing" className="hover:text-[#00d2ff] transition-colors">Pricing</Link>
-            <Link href="/download" className="hover:text-[#00d2ff] transition-colors">Desktop app</Link>
-            <Link href="/status" className="hover:text-[#00d2ff] transition-colors">Status</Link>
-            <Link href="/login" className="hover:text-[#dfe1f6] transition-colors">Log in</Link>
+          <span className="text-xl font-semibold tracking-tight text-[#1a56db]">CyberSage</span>
+          <div className="flex items-center gap-6 text-sm text-[#5f6368]">
+            <Link href="#features" className="hover:text-[#1a56db] transition-colors">Features</Link>
+            <Link href="#pricing" className="hover:text-[#1a56db] transition-colors">Pricing</Link>
+            <Link href="/download" className="hover:text-[#1a56db] transition-colors">Desktop app</Link>
+            <Link href="/status" className="hover:text-[#1a56db] transition-colors">Status</Link>
+            <Link href="/login" className="hover:text-[#202124] transition-colors">Log in</Link>
             <Link
               href="/register"
-              className="px-4 py-1.5 bg-[#00d2ff] text-[#003543] font-semibold rounded-lg hover:opacity-90 transition-opacity"
+              className="px-4 py-1.5 bg-[#1a56db] text-white font-semibold rounded-lg hover:opacity-90 transition-opacity"
             >
               Get started
             </Link>
@@ -117,13 +117,13 @@ export default async function LandingPage() {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
             href="/register"
-            className="px-8 py-3 bg-[#00d2ff] text-[#003543] font-semibold text-base rounded-xl hover:opacity-90 transition-opacity"
+            className="px-8 py-3 bg-[#1a56db] text-white font-semibold text-base rounded-xl hover:opacity-90 transition-opacity"
           >
             Start for free
           </Link>
           <Link
             href="/login"
-            className="px-8 py-3 border border-[rgba(255,255,255,0.14)] text-[#dfe1f6] font-medium text-base rounded-xl hover:bg-[#ffffff08] transition-colors"
+            className="px-8 py-3 border border-[#d0d5dd] text-[#202124] font-medium text-base rounded-xl hover:bg-[#ffffff08] transition-colors"
           >
             Sign in
           </Link>
@@ -140,9 +140,9 @@ export default async function LandingPage() {
           {FEATURES.map((f) => (
             <div
               key={f.title}
-              className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl p-5 hover:border-[#00d2ff]/20 transition-colors"
+              className="bg-white border border-[#e8eaed] rounded-xl p-5 hover:border-[#1a56db]/20 transition-colors"
             >
-              <f.icon className="w-5 h-5 mb-3 text-[#8b93a7]" />
+              <f.icon className="w-5 h-5 mb-3 text-[#5f6368]" />
               <h3 className="font-semibold text-white mb-1">{f.title}</h3>
               <p className="text-sm text-[#8899a6] leading-relaxed">{f.desc}</p>
             </div>
@@ -152,9 +152,9 @@ export default async function LandingPage() {
 
       {/* Desktop app banner */}
       <section className="max-w-6xl mx-auto px-6 pb-4">
-        <div className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-2xl px-8 py-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+        <div className="bg-white border border-[#e8eaed] rounded-2xl px-8 py-8 flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-5">
-            <Monitor className="w-8 h-8 text-[#8b93a7] flex-shrink-0" />
+            <Monitor className="w-8 h-8 text-[#5f6368] flex-shrink-0" />
             <div>
               <p className="font-semibold text-white text-lg">Available as a desktop app</p>
               <p className="text-sm text-[#8899a6] mt-0.5">
@@ -164,7 +164,7 @@ export default async function LandingPage() {
           </div>
           <Link
             href="/download"
-            className="flex-shrink-0 px-6 py-2.5 bg-[#00d2ff] text-[#003543] font-semibold text-sm rounded-xl hover:opacity-90 transition-opacity whitespace-nowrap"
+            className="flex-shrink-0 px-6 py-2.5 bg-[#1a56db] text-white font-semibold text-sm rounded-xl hover:opacity-90 transition-opacity whitespace-nowrap"
           >
             Download
           </Link>
@@ -183,23 +183,23 @@ export default async function LandingPage() {
               key={plan.name}
               className={`rounded-xl p-6 border flex flex-col ${
                 plan.highlight
-                  ? "bg-[#1b1f2e] border-[#00d2ff]/40"
-                  : "bg-[#1b1f2e] border-[rgba(255,255,255,0.06)]"
+                  ? "bg-white border-[#1a56db]/40"
+                  : "bg-white border-[#e8eaed]"
               }`}
             >
               {plan.highlight && (
-                <span className="self-start mb-3 text-xs font-semibold text-[#00d2ff] bg-[#00d2ff]/10 px-2.5 py-0.5 rounded-full">
+                <span className="self-start mb-3 text-xs font-semibold text-[#1a56db] bg-[#1a56db]/10 px-2.5 py-0.5 rounded-full">
                   Most popular
                 </span>
               )}
               <h3 className="text-lg font-semibold text-white mb-0.5">{plan.name}</h3>
               <div className="mb-4">
                 <span className="text-3xl font-semibold text-white tracking-tight">{plan.price}</span>
-                <span className="text-sm text-[#5d6579] ml-1">{plan.period}</span>
+                <span className="text-sm text-[#9aa0a6] ml-1">{plan.period}</span>
               </div>
               <ul className="space-y-2 mb-6 flex-1">
                 {plan.features.map((f) => (
-                  <li key={f} className="flex items-center gap-2 text-sm text-[#9aa3b8]">
+                  <li key={f} className="flex items-center gap-2 text-sm text-[#5f6368]">
                     <Check className="w-3.5 h-3.5 text-[#06d6a0] flex-shrink-0" />
                     {f}
                   </li>
@@ -209,8 +209,8 @@ export default async function LandingPage() {
                 href={plan.href}
                 className={`block text-center py-2.5 rounded-lg font-semibold text-sm transition-opacity hover:opacity-90 ${
                   plan.highlight
-                    ? "bg-[#00d2ff] text-[#003543]"
-                    : "border border-[rgba(255,255,255,0.14)] text-[#dfe1f6] hover:bg-[#ffffff08]"
+                    ? "bg-[#1a56db] text-white"
+                    : "border border-[#d0d5dd] text-[#202124] hover:bg-[#ffffff08]"
                 }`}
               >
                 {plan.cta}
@@ -221,14 +221,14 @@ export default async function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-[rgba(255,255,255,0.06)] mt-8">
-        <div className="max-w-6xl mx-auto px-6 py-10 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-[#5d6579]">
-          <span className="font-semibold text-[#00d2ff]">CyberSage</span>
+      <footer className="border-t border-[#e8eaed] mt-8">
+        <div className="max-w-6xl mx-auto px-6 py-10 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-[#9aa0a6]">
+          <span className="font-semibold text-[#1a56db]">CyberSage</span>
           <div className="flex items-center gap-6">
-            <Link href="/download" className="hover:text-[#9aa3b8] transition-colors">Desktop app</Link>
-            <Link href="/status" className="hover:text-[#9aa3b8] transition-colors">Status</Link>
-            <Link href="/login" className="hover:text-[#9aa3b8] transition-colors">Log in</Link>
-            <a href="mailto:hello@cybersage.uk" className="hover:text-[#9aa3b8] transition-colors">Contact</a>
+            <Link href="/download" className="hover:text-[#5f6368] transition-colors">Desktop app</Link>
+            <Link href="/status" className="hover:text-[#5f6368] transition-colors">Status</Link>
+            <Link href="/login" className="hover:text-[#5f6368] transition-colors">Log in</Link>
+            <a href="mailto:hello@cybersage.uk" className="hover:text-[#5f6368] transition-colors">Contact</a>
           </div>
           <span>© {new Date().getFullYear()} CyberSage. All rights reserved.</span>
         </div>

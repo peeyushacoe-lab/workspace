@@ -44,12 +44,12 @@ export default function StatusPage() {
   const ok = allOperational();
 
   return (
-    <div className="min-h-screen bg-[#0a0d1a] text-[#dfe1f6]">
+    <div className="min-h-screen bg-[#f8fafd] text-[#202124]">
       {/* Nav */}
-      <nav className="border-b border-[rgba(255,255,255,0.06)]">
+      <nav className="border-b border-[#e8eaed]">
         <div className="max-w-3xl mx-auto flex items-center justify-between px-6 py-4">
-          <Link href="/" className="text-xl font-semibold text-[#00d2ff]">CyberSage</Link>
-          <Link href="/login" className="text-sm text-[#5d6579] hover:text-[#9aa3b8] transition-colors">Sign in</Link>
+          <Link href="/" className="text-xl font-semibold text-[#1a56db]">CyberSage</Link>
+          <Link href="/login" className="text-sm text-[#9aa0a6] hover:text-[#5f6368] transition-colors">Sign in</Link>
         </div>
       </nav>
 
@@ -67,26 +67,26 @@ export default function StatusPage() {
             <p className={`text-xl font-semibold ${ok ? "text-emerald-400" : "text-red-400"}`}>
               {ok ? "All systems operational" : "Some systems are experiencing issues"}
             </p>
-            <p className="text-sm text-[#5d6579] mt-0.5">
+            <p className="text-sm text-[#9aa0a6] mt-0.5">
               Last updated: {new Date().toUTCString()}
             </p>
           </div>
         </div>
 
         {/* Services */}
-        <h2 className="text-sm font-semibold text-[#5d6579] mb-4">Services</h2>
-        <div className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl overflow-hidden mb-10 divide-y divide-[rgba(255,255,255,0.04)]">
+        <h2 className="text-sm font-semibold text-[#9aa0a6] mb-4">Services</h2>
+        <div className="bg-white border border-[#e8eaed] rounded-xl overflow-hidden mb-10 divide-y divide-[#f0f0f0]">
           {SERVICES.map((svc) => {
             const cfg = STATUS_CONFIG[svc.status];
             return (
               <div key={svc.name} className="flex items-center justify-between px-5 py-3.5">
                 <div className="flex items-center gap-2.5">
                   <span className={`w-2 h-2 rounded-full flex-shrink-0 ${cfg.dot} ${svc.status === "operational" ? "animate-pulse" : ""}`} />
-                  <span className="text-sm text-[#dfe1f6]">{svc.name}</span>
+                  <span className="text-sm text-[#202124]">{svc.name}</span>
                 </div>
                 <div className="flex items-center gap-4 text-xs">
                   {svc.latency && (
-                    <span className="text-[#5d6579]">{svc.latency}</span>
+                    <span className="text-[#9aa0a6]">{svc.latency}</span>
                   )}
                   <span className={`font-medium ${cfg.color}`}>{cfg.label}</span>
                 </div>
@@ -96,15 +96,15 @@ export default function StatusPage() {
         </div>
 
         {/* Incidents */}
-        <h2 className="text-sm font-semibold text-[#5d6579] mb-4">Recent Incidents</h2>
+        <h2 className="text-sm font-semibold text-[#9aa0a6] mb-4">Recent Incidents</h2>
         {INCIDENTS.length === 0 ? (
-          <p className="text-sm text-[#5d6579] bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl px-5 py-4">
+          <p className="text-sm text-[#9aa0a6] bg-white border border-[#e8eaed] rounded-xl px-5 py-4">
             No incidents in the last 90 days.
           </p>
         ) : (
           <div className="space-y-3">
             {INCIDENTS.map((inc, i) => (
-              <div key={i} className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl px-5 py-4">
+              <div key={i} className="bg-white border border-[#e8eaed] rounded-xl px-5 py-4">
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-sm font-semibold text-white">{inc.title}</p>
                   <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
@@ -113,16 +113,16 @@ export default function StatusPage() {
                     {inc.resolved ? "Resolved" : "Ongoing"}
                   </span>
                 </div>
-                <p className="text-xs text-[#5d6579] mb-1">{inc.date}</p>
+                <p className="text-xs text-[#9aa0a6] mb-1">{inc.date}</p>
                 <p className="text-sm text-[#8899a6] leading-relaxed">{inc.detail}</p>
               </div>
             ))}
           </div>
         )}
 
-        <div className="mt-10 text-center text-sm text-[#5d6579]">
+        <div className="mt-10 text-center text-sm text-[#9aa0a6]">
           Questions? Email us at{" "}
-          <a href="mailto:support@cybersage.uk" className="text-[#00d2ff] hover:underline">
+          <a href="mailto:support@cybersage.uk" className="text-[#1a56db] hover:underline">
             support@cybersage.uk
           </a>
         </div>

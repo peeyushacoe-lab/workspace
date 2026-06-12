@@ -51,7 +51,7 @@ function AvatarStack({ members, color }: { members: { id: string; fullName: stri
       {rest > 0 && (
         <div
           style={{ marginLeft: -8, zIndex: 0, background: "rgba(255,255,255,0.06)", border: "2px solid #0f1321" }}
-          className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] text-[#5d6579] font-semibold"
+          className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] text-[#9aa0a6] font-semibold"
         >
           +{rest}
         </div>
@@ -85,29 +85,29 @@ function ExpandedPanel({ team }: { team: TeamWithMembers }) {
     >
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
         {/* Stats */}
-        <div className="bg-[#0f1321] rounded-lg p-3 flex flex-col gap-1">
-          <span className="text-[10px] text-[#5d6579]">Members</span>
+        <div className="bg-white rounded-lg p-3 flex flex-col gap-1">
+          <span className="text-[10px] text-[#9aa0a6]">Members</span>
           <span className="text-lg font-semibold" style={{ color: team.color }}>{team.memberCount}</span>
         </div>
-        <div className="bg-[#0f1321] rounded-lg p-3 flex flex-col gap-1">
-          <span className="text-[10px] text-[#5d6579]">Unread messages</span>
-          <span className="text-lg font-semibold text-[#dfe1f6]">0</span>
+        <div className="bg-white rounded-lg p-3 flex flex-col gap-1">
+          <span className="text-[10px] text-[#9aa0a6]">Unread messages</span>
+          <span className="text-lg font-semibold text-[#202124]">0</span>
         </div>
-        <div className="bg-[#0f1321] rounded-lg p-3 flex flex-col gap-1">
-          <span className="text-[10px] text-[#5d6579]">Activity</span>
-          <span className="text-xs text-[#5d6579]">Activity feed coming soon</span>
+        <div className="bg-white rounded-lg p-3 flex flex-col gap-1">
+          <span className="text-[10px] text-[#9aa0a6]">Activity</span>
+          <span className="text-xs text-[#9aa0a6]">Activity feed coming soon</span>
         </div>
       </div>
 
       {/* Members list */}
       {team.members.length > 0 ? (
         <div className="space-y-1">
-          <p className="text-[10px] text-[#5d6579] mb-2">Members</p>
+          <p className="text-[10px] text-[#9aa0a6] mb-2">Members</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
             {team.members.map((m) => (
               <div
                 key={m.id}
-                className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-[#0f1321]"
+                className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-white"
               >
                 {/* Avatar */}
                 <div
@@ -117,8 +117,8 @@ function ExpandedPanel({ team }: { team: TeamWithMembers }) {
                   {m.fullName.charAt(0)}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm text-[#dfe1f6] truncate leading-tight">{m.fullName}</p>
-                  <p className="text-[10px] text-[#5d6579] leading-tight truncate">
+                  <p className="text-sm text-[#202124] truncate leading-tight">{m.fullName}</p>
+                  <p className="text-[10px] text-[#9aa0a6] leading-tight truncate">
                     {m.role.replace(/_/g, " ")}
                   </p>
                 </div>
@@ -127,7 +127,7 @@ function ExpandedPanel({ team }: { team: TeamWithMembers }) {
           </div>
         </div>
       ) : (
-        <p className="text-sm text-[#5d6579] text-center py-4">No members yet</p>
+        <p className="text-sm text-[#9aa0a6] text-center py-4">No members yet</p>
       )}
     </div>
   );
@@ -145,7 +145,7 @@ function TeamCard({
 }) {
   return (
     <div
-      className="bg-[#1b1f2e] border rounded-xl overflow-hidden transition-all"
+      className="bg-white border rounded-xl overflow-hidden transition-all"
       style={{
         borderColor: isExpanded ? team.color + "44" : "rgba(255,255,255,0.06)",
         borderLeft: `4px solid ${team.color}`,
@@ -161,8 +161,8 @@ function TeamCard({
             <TeamIcon icon={team.icon} color={team.color} size={18} />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-semibold text-[#dfe1f6] leading-tight">{team.name}</h3>
-            <p className="text-xs text-[#5d6579] mt-0.5">
+            <h3 className="text-sm font-semibold text-[#202124] leading-tight">{team.name}</h3>
+            <p className="text-xs text-[#9aa0a6] mt-0.5">
               {team.memberCount} {team.memberCount === 1 ? "member" : "members"}
             </p>
           </div>
@@ -217,7 +217,7 @@ function TeamsGrid({
 }) {
   if (teams.length === 0) {
     return (
-      <p className="text-sm text-[#5d6579] text-center py-6">No teams available.</p>
+      <p className="text-sm text-[#9aa0a6] text-center py-6">No teams available.</p>
     );
   }
 
@@ -239,7 +239,7 @@ function TeamsGrid({
 function SectionLabel({ label }: { label: string }) {
   return (
     <div className="flex items-center gap-3 mb-3">
-      <span className="text-xs font-semibold text-[#5d6579]">{label}</span>
+      <span className="text-xs font-semibold text-[#9aa0a6]">{label}</span>
       <div className="flex-1 h-px bg-[rgba(255,255,255,0.05)]" />
     </div>
   );
@@ -277,7 +277,7 @@ export default function TeamsPage() {
   const otherTeams = data?.teams.filter((t) => !data.myTeamIds.includes(t.id)) ?? [];
 
   return (
-    <div className="min-h-screen bg-[#0f1321] text-[#dfe1f6]">
+    <div className="min-h-screen bg-white text-[#202124]">
       <PageHeader
         eyebrow="Workspace"
         title="Team Spaces"
@@ -286,7 +286,7 @@ export default function TeamsPage() {
 
       <div className="px-6 pb-10 max-w-5xl space-y-8">
         {loading ? (
-          <div className="flex items-center justify-center py-20 gap-2 text-[#5d6579]">
+          <div className="flex items-center justify-center py-20 gap-2 text-[#9aa0a6]">
             <Loader2 className="w-5 h-5 animate-spin" />
             <span className="text-sm">Loading team spaces…</span>
           </div>
@@ -311,8 +311,8 @@ export default function TeamsPage() {
             {/* No data at all */}
             {myTeams.length === 0 && otherTeams.length === 0 && (
               <div className="flex flex-col items-center justify-center py-20 gap-3">
-                <Users className="w-10 h-10 text-[#5d6579]" />
-                <p className="text-sm text-[#5d6579]">No team spaces found.</p>
+                <Users className="w-10 h-10 text-[#9aa0a6]" />
+                <p className="text-sm text-[#9aa0a6]">No team spaces found.</p>
               </div>
             )}
           </>

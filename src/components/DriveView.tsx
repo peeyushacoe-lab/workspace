@@ -142,16 +142,16 @@ function FolderTreeItem({
         }}
         className={`flex w-full items-center gap-1 rounded-lg px-2 py-1.5 text-sm transition-colors ${
           currentFolderId === folder.id
-            ? "bg-[#00d2ff]/10 text-[#7dd8f5] font-medium"
-            : "text-[#9aa3b8] hover:bg-[#1b1f2e] hover:text-[#dfe1f6]"
+            ? "bg-[#1a56db]/10 text-[#7dd8f5] font-medium"
+            : "text-[#5f6368] hover:bg-white hover:text-[#202124]"
         }`}
         style={{ paddingLeft: `${8 + depth * 16}px` }}
       >
         {hasChildren ? (
           expanded ? (
-            <ChevronDown className="h-3.5 w-3.5 shrink-0 text-[#9aa3b8]" />
+            <ChevronDown className="h-3.5 w-3.5 shrink-0 text-[#5f6368]" />
           ) : (
-            <ChevronRight className="h-3.5 w-3.5 shrink-0 text-[#9aa3b8]" />
+            <ChevronRight className="h-3.5 w-3.5 shrink-0 text-[#5f6368]" />
           )
         ) : (
           <span className="w-3.5 shrink-0" />
@@ -282,23 +282,23 @@ function ShareModalDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl bg-[#1b1f2e] p-6 shadow-2xl border border-[rgba(255,255,255,0.08)]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 ">
+      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-[#e8eaed]">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-base font-semibold text-[#dfe1f6]">Share &ldquo;{fileName}&rdquo;</h2>
-          <button onClick={onClose} className="rounded-lg p-1 hover:bg-[#262939] transition-colors">
-            <X className="h-4 w-4 text-[#9aa3b8]" />
+          <h2 className="text-base font-semibold text-[#202124]">Share &ldquo;{fileName}&rdquo;</h2>
+          <button onClick={onClose} className="rounded-lg p-1 hover:bg-[#f1f3f4] transition-colors">
+            <X className="h-4 w-4 text-[#5f6368]" />
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 rounded-xl bg-[#1b1f2e] p-1 mb-5 border border-[rgba(255,255,255,0.08)]">
+        <div className="flex gap-1 rounded-xl bg-white p-1 mb-5 border border-[#e8eaed]">
           {(["link", "email"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
               className={`flex-1 rounded-lg py-1.5 text-sm font-medium transition-colors ${
-                tab === t ? "bg-[#262939] text-[#dfe1f6] shadow-sm" : "text-[#9aa3b8] hover:text-[#dfe1f6]"
+                tab === t ? "bg-[#f1f3f4] text-[#202124] shadow-sm" : "text-[#5f6368] hover:text-[#202124]"
               }`}
             >
               {t === "link" ? "Create link" : "Share by email"}
@@ -308,7 +308,7 @@ function ShareModalDialog({
 
         {/* Role */}
         <div className="mb-4">
-          <p className="text-xs font-medium text-[#9aa3b8] mb-2">Permission</p>
+          <p className="text-xs font-medium text-[#5f6368] mb-2">Permission</p>
           <div className="flex gap-2">
             {(["VIEWER", "EDITOR"] as const).map((r) => (
               <button
@@ -316,8 +316,8 @@ function ShareModalDialog({
                 onClick={() => setRole(r)}
                 className={`flex-1 rounded-xl border py-2 text-sm font-medium transition-colors ${
                   role === r
-                    ? "border-[#00d2ff] bg-[#00d2ff]/10 text-[#7dd8f5]"
-                    : "border-[rgba(255,255,255,0.08)] text-[#9aa3b8] hover:border-[#707a90]"
+                    ? "border-[#1a56db] bg-[#1a56db]/10 text-[#7dd8f5]"
+                    : "border-[#e8eaed] text-[#5f6368] hover:border-[#707a90]"
                 }`}
               >
                 {r === "VIEWER" ? "View only" : "Can edit"}
@@ -328,7 +328,7 @@ function ShareModalDialog({
 
         {/* Expiry */}
         <div className="mb-5">
-          <p className="text-xs font-medium text-[#9aa3b8] mb-2">Expiry</p>
+          <p className="text-xs font-medium text-[#5f6368] mb-2">Expiry</p>
           <div className="flex gap-2 flex-wrap">
             {(["never", "7", "30", "custom"] as const).map((e) => (
               <button
@@ -336,8 +336,8 @@ function ShareModalDialog({
                 onClick={() => setExpiry(e)}
                 className={`rounded-xl border px-3 py-1.5 text-xs font-medium transition-colors ${
                   expiry === e
-                    ? "border-[#00d2ff] bg-[#00d2ff]/10 text-[#7dd8f5]"
-                    : "border-[rgba(255,255,255,0.08)] text-[#9aa3b8] hover:border-[#707a90]"
+                    ? "border-[#1a56db] bg-[#1a56db]/10 text-[#7dd8f5]"
+                    : "border-[#e8eaed] text-[#5f6368] hover:border-[#707a90]"
                 }`}
               >
                 {e === "never" ? "Never" : e === "7" ? "7 days" : e === "30" ? "30 days" : "Custom"}
@@ -350,7 +350,7 @@ function ShareModalDialog({
               value={customDate}
               onChange={(e) => setCustomDate(e.target.value)}
               min={new Date().toISOString().split("T")[0]}
-              className="mt-2 w-full rounded-xl border border-[rgba(255,255,255,0.08)] px-3 py-2 text-sm outline-none focus:border-[#00d2ff] focus:ring-2 focus:ring-[#00d2ff]/20 bg-[#0f1321] text-[#dfe1f6]"
+              className="mt-2 w-full rounded-xl border border-[#e8eaed] px-3 py-2 text-sm outline-none focus:border-[#1a56db] focus:ring-2 focus:ring-[#1a56db]/15 bg-white text-[#202124]"
             />
           )}
         </div>
@@ -360,33 +360,33 @@ function ShareModalDialog({
           <div>
             {linkUrl ? (
               <div className="space-y-3">
-                <div className="flex items-center gap-2 rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0f1321] p-3">
-                  <span className="flex-1 truncate text-sm text-[#dfe1f6]">{linkUrl}</span>
+                <div className="flex items-center gap-2 rounded-xl border border-[#e8eaed] bg-white p-3">
+                  <span className="flex-1 truncate text-sm text-[#202124]">{linkUrl}</span>
                   <button
                     onClick={handleCopy}
-                    className="shrink-0 rounded-lg p-1.5 hover:bg-[#262939] transition-colors"
+                    className="shrink-0 rounded-lg p-1.5 hover:bg-[#f1f3f4] transition-colors"
                   >
                     {copied ? (
                       <Check className="h-4 w-4 text-green-400" />
                     ) : (
-                      <Copy className="h-4 w-4 text-[#9aa3b8]" />
+                      <Copy className="h-4 w-4 text-[#5f6368]" />
                     )}
                   </button>
                 </div>
                 {linkExpiry && (
-                  <p className="text-xs text-[#9aa3b8]">
+                  <p className="text-xs text-[#5f6368]">
                     Expires {formatDistanceToNow(new Date(linkExpiry), { addSuffix: true })}
                   </p>
                 )}
                 {!linkExpiry && expiry === "never" && (
-                  <p className="text-xs text-[#9aa3b8]">This link never expires.</p>
+                  <p className="text-xs text-[#5f6368]">This link never expires.</p>
                 )}
               </div>
             ) : (
               <button
                 onClick={handleCreateLink}
                 disabled={loading}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#00d2ff] py-2.5 text-sm font-medium text-[#003543] hover:opacity-90 disabled:opacity-60 transition-colors"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1a56db] py-2.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-60 transition-colors"
               >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
                 Create link
@@ -401,12 +401,12 @@ function ShareModalDialog({
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Email address"
               onKeyDown={(e) => { if (e.key === "Enter") handleShareWithEmail(); }}
-              className="flex-1 rounded-xl border border-[rgba(255,255,255,0.08)] px-3 py-2 text-sm outline-none focus:border-[#00d2ff] focus:ring-2 focus:ring-[#00d2ff]/20 bg-[#0f1321] text-[#dfe1f6]"
+              className="flex-1 rounded-xl border border-[#e8eaed] px-3 py-2 text-sm outline-none focus:border-[#1a56db] focus:ring-2 focus:ring-[#1a56db]/15 bg-white text-[#202124]"
             />
             <button
               onClick={handleShareWithEmail}
               disabled={loading || !email.trim()}
-              className="flex items-center gap-1.5 rounded-xl bg-[#00d2ff] px-4 py-2 text-sm font-medium text-[#003543] hover:opacity-90 disabled:opacity-60 transition-colors"
+              className="flex items-center gap-1.5 rounded-xl bg-[#1a56db] px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-60 transition-colors"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send"}
             </button>
@@ -449,20 +449,20 @@ function FileDetailPanel({
   };
 
   return (
-    <div className="bg-[#1b1f2e] border-l border-[rgba(255,255,255,0.08)] w-80 flex flex-col shrink-0">
-      <div className="px-4 py-3 border-b border-[rgba(255,255,255,0.08)] flex items-center justify-between font-semibold text-[#dfe1f6] text-sm">
+    <div className="bg-white border-l border-[#e8eaed] w-80 flex flex-col shrink-0">
+      <div className="px-4 py-3 border-b border-[#e8eaed] flex items-center justify-between font-semibold text-[#202124] text-sm">
         <span className="truncate">{file.name}</span>
-        <button onClick={onClose} className="rounded-lg p-1 hover:bg-[#262939] transition-colors ml-2">
-          <X className="h-4 w-4 text-[#9aa3b8]" />
+        <button onClick={onClose} className="rounded-lg p-1 hover:bg-[#f1f3f4] transition-colors ml-2">
+          <X className="h-4 w-4 text-[#5f6368]" />
         </button>
       </div>
-      <div className="flex border-b border-[rgba(255,255,255,0.08)]">
+      <div className="flex border-b border-[#e8eaed]">
         <button
           onClick={() => setActiveTab("activity")}
           className={`flex flex-1 items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors ${
             activeTab === "activity"
-              ? "border-b-2 border-[#00d2ff] text-[#00d2ff]"
-              : "text-[#9aa3b8] hover:text-[#dfe1f6]"
+              ? "border-b-2 border-[#1a56db] text-[#1a56db]"
+              : "text-[#5f6368] hover:text-[#202124]"
           }`}
         >
           <Activity className="h-3.5 w-3.5" />
@@ -472,8 +472,8 @@ function FileDetailPanel({
           onClick={() => { setActiveTab("intelligence"); void loadIntelligence(); }}
           className={`flex flex-1 items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors ${
             activeTab === "intelligence"
-              ? "border-b-2 border-[#00d2ff] text-[#00d2ff]"
-              : "text-[#9aa3b8] hover:text-[#dfe1f6]"
+              ? "border-b-2 border-[#1a56db] text-[#1a56db]"
+              : "text-[#5f6368] hover:text-[#202124]"
           }`}
         >
           <Sparkles className="h-3.5 w-3.5" />
@@ -486,20 +486,20 @@ function FileDetailPanel({
           <div className="p-3 space-y-3">
             {loadingIntel ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-5 h-5 animate-spin text-[#00d2ff]" />
+                <Loader2 className="w-5 h-5 animate-spin text-[#1a56db]" />
               </div>
             ) : intelligence ? (
               <>
                 {intelligence.classification && (
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-[#7a8899]">Type</span>
-                    <span className="text-xs px-2 py-0.5 rounded bg-[#262939] text-[#9aa3b8]">{intelligence.classification}</span>
+                    <span className="text-xs px-2 py-0.5 rounded bg-[#f1f3f4] text-[#5f6368]">{intelligence.classification}</span>
                   </div>
                 )}
                 {intelligence.sensitivityLevel && (
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-[#7a8899]">Sensitivity</span>
-                    <span className={`text-xs px-2 py-0.5 rounded font-medium ${sensitivityColors[intelligence.sensitivityLevel] ?? "text-[#9aa3b8] bg-[#262939]"}`}>
+                    <span className={`text-xs px-2 py-0.5 rounded font-medium ${sensitivityColors[intelligence.sensitivityLevel] ?? "text-[#5f6368] bg-[#f1f3f4]"}`}>
                       {intelligence.sensitivityLevel}
                     </span>
                   </div>
@@ -507,7 +507,7 @@ function FileDetailPanel({
                 {intelligence.summary && (
                   <div>
                     <p className="text-xs text-[#7a8899] mb-1 font-medium">AI Summary</p>
-                    <p className="text-xs text-[#9aa3b8] leading-relaxed">{intelligence.summary}</p>
+                    <p className="text-xs text-[#5f6368] leading-relaxed">{intelligence.summary}</p>
                   </div>
                 )}
                 {intelligence.cached && (
@@ -899,15 +899,15 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
 
   return (
     <div
-      className="flex h-full bg-[#0f1321] relative"
+      className="flex h-full bg-white relative"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
       {/* Drag overlay */}
       {isDragOver && (
-        <div className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center rounded-2xl border-4 border-dashed border-[#00d2ff] bg-[#00d2ff]/10">
-          <div className="flex flex-col items-center gap-2 text-[#00d2ff]">
+        <div className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center rounded-2xl border-4 border-dashed border-[#1a56db] bg-[#1a56db]/10">
+          <div className="flex flex-col items-center gap-2 text-[#1a56db]">
             <Upload className="h-12 w-12" />
             <p className="text-lg font-semibold">Drop files to upload</p>
           </div>
@@ -915,14 +915,14 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
       )}
 
       {/* Left sidebar */}
-      <aside className="bg-[#1b1f2e] border-r border-[rgba(255,255,255,0.08)] w-56 flex-shrink-0 flex flex-col">
+      <aside className="bg-white border-r border-[#e8eaed] w-56 flex-shrink-0 flex flex-col">
         <div className="p-4 flex gap-2">
           <button
             onClick={() => {
               setCreatingFolder(true);
               setNewFolderName("");
             }}
-            className="bg-[#00d2ff] text-[#003543] hover:opacity-90 rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2 flex-1 justify-center"
+            className="bg-[#1a56db] text-white hover:opacity-90 rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2 flex-1 justify-center"
             style={{ transition: "background-color 150ms ease-out" }}
           >
             <Plus className="h-4 w-4" />
@@ -931,7 +931,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
           <button
             onClick={() => fileInputRef.current?.click()}
             title="Upload files"
-            className="bg-[#1b1f2e] text-[#9aa3b8] hover:bg-[#1b1f2e] border border-[rgba(255,255,255,0.08)] rounded-md px-3 py-2 text-sm font-medium flex items-center gap-2 transition-colors"
+            className="bg-white text-[#5f6368] hover:bg-white border border-[#e8eaed] rounded-md px-3 py-2 text-sm font-medium flex items-center gap-2 transition-colors"
           >
             <Upload className="h-4 w-4" />
           </button>
@@ -956,8 +956,8 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
               }}
               className={`flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-colors ${
                 section === key
-                  ? "bg-[#00d2ff]/10 text-[#7dd8f5] font-medium"
-                  : "text-[#9aa3b8] hover:bg-[#1b1f2e] hover:text-[#dfe1f6]"
+                  ? "bg-[#1a56db]/10 text-[#7dd8f5] font-medium"
+                  : "text-[#5f6368] hover:bg-white hover:text-[#202124]"
               }`}
             >
               <Icon className="h-4 w-4" />
@@ -968,7 +968,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
 
         {section === "my-drive" && sidebarFolders.length > 0 && (
           <div className="mt-4 px-3">
-            <p className="text-xs font-semibold text-[#9aa3b8] px-4 py-2">
+            <p className="text-xs font-semibold text-[#5f6368] px-4 py-2">
               Folders
             </p>
             <div className="space-y-0.5">
@@ -989,16 +989,16 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
           </div>
         )}
 
-        <div className="px-4 py-3 border-t border-[rgba(255,255,255,0.08)] mt-auto">
+        <div className="px-4 py-3 border-t border-[#e8eaed] mt-auto">
           {storage && (
             <div>
               <div className="flex justify-between mb-1">
-                <span className="text-xs text-[#9aa3b8]">{formatFileSize(storage.usedMB * 1024 * 1024)} used</span>
-                <span className="text-xs text-[#9aa3b8]">15 GB</span>
+                <span className="text-xs text-[#5f6368]">{formatFileSize(storage.usedMB * 1024 * 1024)} used</span>
+                <span className="text-xs text-[#5f6368]">15 GB</span>
               </div>
-              <div className="bg-[#262939] rounded-full h-1.5">
+              <div className="bg-[#f1f3f4] rounded-full h-1.5">
                 <div
-                  className="bg-[#00d2ff] text-[#003543] h-1.5 rounded-full transition-all"
+                  className="bg-[#1a56db] text-white h-1.5 rounded-full transition-all"
                   style={{ width: `${storagePercent}%` }}
                 />
               </div>
@@ -1008,7 +1008,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 flex flex-col bg-[#0f1321] min-w-0 overflow-hidden">
+      <main className="flex-1 flex flex-col bg-white min-w-0 overflow-hidden">
         {storage && !storage.configured && (
           <div className="flex items-center gap-2 bg-yellow-950/30 border-b border-yellow-700/30 px-6 py-2.5 text-sm text-yellow-400">
             <AlertTriangle className="h-4 w-4 text-yellow-500 shrink-0" />
@@ -1017,11 +1017,11 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
         )}
 
         {/* Toolbar */}
-        <div className="px-6 py-3 border-b border-[rgba(255,255,255,0.08)] bg-[#1b1f2e] flex items-center gap-3">
+        <div className="px-6 py-3 border-b border-[#e8eaed] bg-white flex items-center gap-3">
           <nav className="flex items-center gap-1 flex-1 min-w-0">
             <button
               onClick={() => navigateToBreadcrumb(-1)}
-              className="text-sm text-[#9aa3b8] hover:text-[#dfe1f6] transition-colors font-medium whitespace-nowrap"
+              className="text-sm text-[#5f6368] hover:text-[#202124] transition-colors font-medium whitespace-nowrap"
             >
               {section === "my-drive" ? "My Drive"
                 : section === "shared" ? "Shared with me"
@@ -1034,9 +1034,9 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                 <ChevronRight className="h-3.5 w-3.5 text-[#262b3a]" />
                 <button
                   onClick={() => navigateToBreadcrumb(idx)}
-                  className={`text-sm text-[#9aa3b8] hover:text-[#dfe1f6] transition-colors ${
+                  className={`text-sm text-[#5f6368] hover:text-[#202124] transition-colors ${
                     idx === breadcrumb.length - 1
-                      ? "font-medium text-[#dfe1f6]"
+                      ? "font-medium text-[#202124]"
                       : ""
                   }`}
                 >
@@ -1047,12 +1047,12 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
           </nav>
 
           <div className="relative w-56">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa3b8]" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#5f6368]" />
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search files..."
-              className="w-full bg-[#1b1f2e] border-transparent rounded-lg pl-9 py-2 text-sm focus:ring-2 focus:ring-[#00d2ff] focus:bg-[#262939] outline-none pr-3 text-[#dfe1f6]"
+              className="w-full bg-white border-transparent rounded-lg pl-9 py-2 text-sm focus:ring-2 focus:ring-[#1a56db] focus:bg-[#f1f3f4] outline-none pr-3 text-[#202124]"
             />
           </div>
 
@@ -1060,13 +1060,13 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
           <div className="relative" ref={sortMenuRef}>
             <button
               onClick={() => setShowSortMenu((v) => !v)}
-              className="bg-[#1b1f2e] text-[#9aa3b8] hover:bg-[#1b1f2e] border border-[rgba(255,255,255,0.08)] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2 transition-colors"
+              className="bg-white text-[#5f6368] hover:bg-white border border-[#e8eaed] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2 transition-colors"
             >
               <SortAsc className="h-4 w-4" />
               Sort
             </button>
             {showSortMenu && (
-              <div className="absolute right-0 top-full mt-1 z-30 bg-[#1b1f2e] border border-[rgba(255,255,255,0.08)] rounded-lg shadow-lg py-1 min-w-[160px]">
+              <div className="absolute right-0 top-full mt-1 z-30 bg-white border border-[#e8eaed] rounded-lg shadow-lg py-1 min-w-[160px]">
                 {(
                   [
                     { key: "name", label: "Name" },
@@ -1081,13 +1081,13 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                       else { setSortKey(key); setSortDir("asc"); }
                       setShowSortMenu(false);
                     }}
-                    className={`px-4 py-2 text-sm text-[#9aa3b8] hover:bg-[#262939] hover:text-[#dfe1f6] flex items-center gap-2 cursor-pointer w-full justify-between ${
-                      sortKey === key ? "text-[#00d2ff] font-medium" : ""
+                    className={`px-4 py-2 text-sm text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124] flex items-center gap-2 cursor-pointer w-full justify-between ${
+                      sortKey === key ? "text-[#1a56db] font-medium" : ""
                     }`}
                   >
                     {label}
                     {sortKey === key && (
-                      <span className="text-xs text-[#9aa3b8]">{sortDir === "asc" ? "↑" : "↓"}</span>
+                      <span className="text-xs text-[#5f6368]">{sortDir === "asc" ? "↑" : "↓"}</span>
                     )}
                   </button>
                 ))}
@@ -1096,11 +1096,11 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
           </div>
 
           {/* View toggle */}
-          <div className="flex items-center gap-1 rounded-xl border border-[rgba(255,255,255,0.08)] p-0.5">
+          <div className="flex items-center gap-1 rounded-xl border border-[#e8eaed] p-0.5">
             <button
               onClick={() => setView("grid")}
               className={`rounded-md p-1.5 transition-colors ${
-                view === "grid" ? "bg-[#00d2ff]/10 text-[#00d2ff]" : "text-[#9aa3b8] hover:bg-[#1b1f2e]"
+                view === "grid" ? "bg-[#1a56db]/10 text-[#1a56db]" : "text-[#5f6368] hover:bg-white"
               }`}
             >
               <Grid3x3 className="h-4 w-4" />
@@ -1108,7 +1108,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
             <button
               onClick={() => setView("list")}
               className={`rounded-md p-1.5 transition-colors ${
-                view === "list" ? "bg-[#00d2ff]/10 text-[#00d2ff]" : "text-[#9aa3b8] hover:bg-[#1b1f2e]"
+                view === "list" ? "bg-[#1a56db]/10 text-[#1a56db]" : "text-[#5f6368] hover:bg-white"
               }`}
             >
               <List className="h-4 w-4" />
@@ -1124,7 +1124,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
           />
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="bg-[#00d2ff] text-[#003543] hover:opacity-90 rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2 transition-colors"
+            className="bg-[#1a56db] text-white hover:opacity-90 rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2 transition-colors"
           >
             <Upload className="h-4 w-4" />
             Upload
@@ -1133,10 +1133,10 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
 
         {/* Upload progress bar area */}
         {uploadTasks.length > 0 && (
-          <div className="border-b border-[rgba(255,255,255,0.08)] bg-[#1b1f2e] px-6 py-2 space-y-1.5">
+          <div className="border-b border-[#e8eaed] bg-white px-6 py-2 space-y-1.5">
             {uploadTasks.map((task) => (
               <div key={task.id} className="flex items-center gap-3">
-                <span className="text-xs text-[#9aa3b8] truncate flex-1 max-w-xs">{task.name}</span>
+                <span className="text-xs text-[#5f6368] truncate flex-1 max-w-xs">{task.name}</span>
                 {task.error ? (
                   <span className="text-xs text-red-400">{task.error}</span>
                 ) : task.done ? (
@@ -1145,13 +1145,13 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                   </span>
                 ) : (
                   <div className="flex items-center gap-2 flex-1 max-w-xs">
-                    <div className="bg-[#262939] rounded-full h-1.5 flex-1">
+                    <div className="bg-[#f1f3f4] rounded-full h-1.5 flex-1">
                       <div
-                        className="bg-[#00d2ff] text-[#003543] h-1.5 rounded-full transition-all"
+                        className="bg-[#1a56db] text-white h-1.5 rounded-full transition-all"
                         style={{ width: `${task.progress}%` }}
                       />
                     </div>
-                    <span className="text-xs text-[#9aa3b8] w-8 text-right">{task.progress}%</span>
+                    <span className="text-xs text-[#5f6368] w-8 text-right">{task.progress}%</span>
                   </div>
                 )}
               </div>
@@ -1176,11 +1176,11 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                     }
                   }}
                   placeholder="Folder name"
-                  className="rounded-lg border border-[#00d2ff] px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#00d2ff]/20 w-48 bg-[#1b1f2e] text-[#dfe1f6]"
+                  className="rounded-lg border border-[#1a56db] px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#1a56db]/15 w-48 bg-white text-[#202124]"
                 />
                 <button
                   onClick={handleCreateFolder}
-                  className="bg-[#00d2ff] text-[#003543] hover:opacity-90 rounded-md px-3 py-2 text-sm font-medium flex items-center gap-2 transition-colors"
+                  className="bg-[#1a56db] text-white hover:opacity-90 rounded-md px-3 py-2 text-sm font-medium flex items-center gap-2 transition-colors"
                 >
                   Create
                 </button>
@@ -1189,7 +1189,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                     setCreatingFolder(false);
                     setNewFolderName("");
                   }}
-                  className="bg-[#1b1f2e] text-[#9aa3b8] hover:bg-[#1b1f2e] border border-[rgba(255,255,255,0.08)] rounded-md px-3 py-2 text-sm font-medium flex items-center gap-2 transition-colors"
+                  className="bg-white text-[#5f6368] hover:bg-white border border-[#e8eaed] rounded-md px-3 py-2 text-sm font-medium flex items-center gap-2 transition-colors"
                 >
                   Cancel
                 </button>
@@ -1198,10 +1198,10 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
 
             {loadingContent ? (
               <div className="flex h-48 items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-[#00d2ff]" />
+                <Loader2 className="h-8 w-8 animate-spin text-[#1a56db]" />
               </div>
             ) : filteredFolders.length === 0 && filteredFiles.length === 0 ? (
-              <div className="flex h-48 flex-col items-center justify-center gap-2 text-[#9aa3b8]">
+              <div className="flex h-48 flex-col items-center justify-center gap-2 text-[#5f6368]">
                 <HardDrive className="h-12 w-12 text-[#262b3a]" />
                 <p className="text-sm">
                   {searchQuery ? "No results found" : "This folder is empty"}
@@ -1262,12 +1262,12 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                 ))}
               </div>
             ) : (
-              <div className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#1b1f2e] overflow-hidden">
+              <div className="rounded-xl border border-[#e8eaed] bg-white overflow-hidden">
                 <table className="w-full">
                   <thead>
-                    <tr className="bg-[#0f1321] border-b border-[rgba(255,255,255,0.08)]">
+                    <tr className="bg-white border-b border-[#e8eaed]">
                       <th
-                        className="text-xs font-semibold text-[#9aa3b8] px-4 py-3 text-left cursor-pointer hover:text-[#dfe1f6] select-none"
+                        className="text-xs font-semibold text-[#5f6368] px-4 py-3 text-left cursor-pointer hover:text-[#202124] select-none"
                         onClick={() => {
                           if (sortKey === "name") setSortDir((d) => (d === "asc" ? "desc" : "asc"));
                           else { setSortKey("name"); setSortDir("asc"); }
@@ -1278,7 +1278,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                         </span>
                       </th>
                       <th
-                        className="text-xs font-semibold text-[#9aa3b8] px-4 py-3 text-left cursor-pointer hover:text-[#dfe1f6] select-none"
+                        className="text-xs font-semibold text-[#5f6368] px-4 py-3 text-left cursor-pointer hover:text-[#202124] select-none"
                         onClick={() => {
                           if (sortKey === "updatedAt") setSortDir((d) => (d === "asc" ? "desc" : "asc"));
                           else { setSortKey("updatedAt"); setSortDir("desc"); }
@@ -1289,7 +1289,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                         </span>
                       </th>
                       <th
-                        className="text-xs font-semibold text-[#9aa3b8] px-4 py-3 text-left cursor-pointer hover:text-[#dfe1f6] select-none"
+                        className="text-xs font-semibold text-[#5f6368] px-4 py-3 text-left cursor-pointer hover:text-[#202124] select-none"
                         onClick={() => {
                           if (sortKey === "size") setSortDir((d) => (d === "asc" ? "desc" : "asc"));
                           else { setSortKey("size"); setSortDir("asc"); }
@@ -1299,7 +1299,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                           Size {sortKey === "size" && <span className="text-xs">{sortDir === "asc" ? "↑" : "↓"}</span>}
                         </span>
                       </th>
-                      <th className="text-xs font-semibold text-[#9aa3b8] px-4 py-3 text-right">Actions</th>
+                      <th className="text-xs font-semibold text-[#5f6368] px-4 py-3 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1368,7 +1368,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
       {/* Right-click context menu */}
       {contextMenu && (
         <div
-          className="fixed z-50 bg-[#1b1f2e] border border-[rgba(255,255,255,0.08)] rounded-lg shadow-lg py-1 min-w-[160px] text-sm"
+          className="fixed z-50 bg-white border border-[#e8eaed] rounded-lg shadow-lg py-1 min-w-[160px] text-sm"
           style={{ top: contextMenu.y, left: contextMenu.x }}
         >
           {!contextMenu.isFolder && (() => {
@@ -1379,7 +1379,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                 <CtxItem icon={Eye} label="Preview" onClick={() => { handlePreview(file); setContextMenu(null); }} />
                 <CtxItem icon={Download} label="Download" onClick={() => { handleDownload(file); setContextMenu(null); }} />
                 <CtxItem icon={Share2} label="Share" onClick={() => { handleShare(file); setContextMenu(null); }} />
-                <div className="my-1 border-t border-[rgba(255,255,255,0.08)]" />
+                <div className="my-1 border-t border-[#e8eaed]" />
                 <CtxItem
                   icon={Star}
                   label={file.isStarred ? "Unstar" : "Star"}
@@ -1394,7 +1394,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                     setContextMenu(null);
                   }}
                 />
-                <div className="my-1 border-t border-[rgba(255,255,255,0.08)]" />
+                <div className="my-1 border-t border-[#e8eaed]" />
                 <CtxItem
                   icon={Trash2}
                   label="Move to Trash"
@@ -1419,7 +1419,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                     setContextMenu(null);
                   }}
                 />
-                <div className="my-1 border-t border-[rgba(255,255,255,0.08)]" />
+                <div className="my-1 border-t border-[#e8eaed]" />
                 <CtxItem
                   icon={Trash2}
                   label="Move to Trash"
@@ -1499,8 +1499,8 @@ function CtxItem({
   return (
     <button
       onClick={onClick}
-      className={`px-4 py-2 text-sm flex items-center gap-2 cursor-pointer w-full hover:bg-[#262939] hover:text-[#dfe1f6] transition-colors ${
-        danger ? "text-red-400" : "text-[#9aa3b8]"
+      className={`px-4 py-2 text-sm flex items-center gap-2 cursor-pointer w-full hover:bg-[#f1f3f4] hover:text-[#202124] transition-colors ${
+        danger ? "text-red-400" : "text-[#5f6368]"
       }`}
     >
       <Icon className="h-4 w-4 shrink-0" />
@@ -1542,15 +1542,15 @@ function GridFolderCard({
     <div
       className={`group relative cursor-pointer rounded-xl border p-4 transition-all ${
         selected
-          ? "border-[#00d2ff]/30 bg-[#00d2ff]/10"
-          : "bg-[#1b1f2e] border-[rgba(255,255,255,0.08)] hover:shadow-md hover:border-[#00d2ff]/30"
+          ? "border-[#1a56db]/30 bg-[#1a56db]/10"
+          : "bg-white border-[#e8eaed] hover:shadow-md hover:border-[#1a56db]/30"
       }`}
       onClick={onSelect}
       onDoubleClick={onOpen}
       onContextMenu={onContextMenu}
     >
       <div className="mb-3 flex justify-center">
-        <div className="w-12 h-12 rounded-lg bg-[#1b1f2e] flex items-center justify-center">
+        <div className="w-12 h-12 rounded-lg bg-white flex items-center justify-center">
           <Folder className="h-7 w-7 text-yellow-500" />
         </div>
       </div>
@@ -1564,10 +1564,10 @@ function GridFolderCard({
             if (e.key === "Escape") onRenameCancel();
           }}
           onClick={(e) => e.stopPropagation()}
-          className="w-full rounded-lg border border-[#00d2ff] px-2 py-1 text-xs outline-none bg-[#0f1321] text-[#dfe1f6]"
+          className="w-full rounded-lg border border-[#1a56db] px-2 py-1 text-xs outline-none bg-white text-[#202124]"
         />
       ) : (
-        <p className="font-medium text-sm text-[#dfe1f6] truncate text-center">{folder.name}</p>
+        <p className="font-medium text-sm text-[#202124] truncate text-center">{folder.name}</p>
       )}
       <div className="absolute right-2 top-2 hidden gap-1 group-hover:flex">
         <ActionBtn icon={Edit3} onClick={(e) => { e.stopPropagation(); onRenameStart(); }} title="Rename" />
@@ -1616,8 +1616,8 @@ function GridFileCard({
     <div
       className={`group relative cursor-pointer rounded-xl border p-4 transition-all ${
         selected
-          ? "border-[#00d2ff]/30 bg-[#00d2ff]/10"
-          : "bg-[#1b1f2e] border-[rgba(255,255,255,0.08)] hover:shadow-md hover:border-[#00d2ff]/30"
+          ? "border-[#1a56db]/30 bg-[#1a56db]/10"
+          : "bg-white border-[#e8eaed] hover:shadow-md hover:border-[#1a56db]/30"
       }`}
       onClick={onSelect}
       onDoubleClick={onPreview}
@@ -1634,8 +1634,8 @@ function GridFileCard({
             onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
           />
         ) : (
-          <div className="w-12 h-12 rounded-lg bg-[#1b1f2e] flex items-center justify-center">
-            <Icon className="h-7 w-7 text-[#00d2ff]" />
+          <div className="w-12 h-12 rounded-lg bg-white flex items-center justify-center">
+            <Icon className="h-7 w-7 text-[#1a56db]" />
           </div>
         )}
       </div>
@@ -1649,12 +1649,12 @@ function GridFileCard({
             if (e.key === "Escape") onRenameCancel();
           }}
           onClick={(e) => e.stopPropagation()}
-          className="w-full rounded-lg border border-[#00d2ff] px-2 py-1 text-xs outline-none bg-[#0f1321] text-[#dfe1f6]"
+          className="w-full rounded-lg border border-[#1a56db] px-2 py-1 text-xs outline-none bg-white text-[#202124]"
         />
       ) : (
-        <p className="font-medium text-sm text-[#dfe1f6] truncate text-center">{file.name}</p>
+        <p className="font-medium text-sm text-[#202124] truncate text-center">{file.name}</p>
       )}
-      <p className="mt-1 text-center text-xs text-[#9aa3b8]">{formatFileSize(file.size)}</p>
+      <p className="mt-1 text-center text-xs text-[#5f6368]">{formatFileSize(file.size)}</p>
       {file.isStarred && (
         <Star className="absolute left-2 top-2 h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
       )}
@@ -1706,10 +1706,10 @@ function ListFolderRow({
 }) {
   return (
     <tr
-      className="border-b border-[rgba(255,255,255,0.08)] hover:bg-[#0f1321] transition-colors group cursor-pointer"
+      className="border-b border-[#e8eaed] hover:bg-white transition-colors group cursor-pointer"
       onContextMenu={onContextMenu}
     >
-      <td className="px-4 py-3 text-sm text-[#dfe1f6]">
+      <td className="px-4 py-3 text-sm text-[#202124]">
         <div className="flex items-center gap-2.5 cursor-pointer" onDoubleClick={onOpen}>
           <Folder className="h-5 w-5 text-yellow-500 shrink-0" />
           {renamingId === folder.id ? (
@@ -1721,20 +1721,20 @@ function ListFolderRow({
                 if (e.key === "Enter") onRenameSubmit();
                 if (e.key === "Escape") onRenameCancel();
               }}
-              className="rounded border border-[#00d2ff] px-2 py-0.5 text-sm outline-none bg-[#0f1321] text-[#dfe1f6]"
+              className="rounded border border-[#1a56db] px-2 py-0.5 text-sm outline-none bg-white text-[#202124]"
             />
           ) : (
-            <span className="text-sm font-medium text-[#dfe1f6]">{folder.name}</span>
+            <span className="text-sm font-medium text-[#202124]">{folder.name}</span>
           )}
         </div>
       </td>
-      <td className="px-4 py-3 text-sm text-[#dfe1f6]">
-        <span className="flex items-center gap-1.5 text-[#9aa3b8]">
-          <Calendar className="h-3.5 w-3.5 text-[#9aa3b8]" />
+      <td className="px-4 py-3 text-sm text-[#202124]">
+        <span className="flex items-center gap-1.5 text-[#5f6368]">
+          <Calendar className="h-3.5 w-3.5 text-[#5f6368]" />
           {formatDistanceToNow(new Date(folder.createdAt), { addSuffix: true })}
         </span>
       </td>
-      <td className="px-4 py-3 text-sm text-[#9aa3b8]">—</td>
+      <td className="px-4 py-3 text-sm text-[#5f6368]">—</td>
       <td className="px-4 py-3 text-right">
         <div className="hidden gap-1 justify-end group-hover:flex">
           <ActionBtn icon={Edit3} onClick={onRenameStart} title="Rename" />
@@ -1779,13 +1779,13 @@ function ListFileRow({
   const Icon = getMimeIcon(file.mimeType);
   return (
     <tr
-      className="border-b border-[rgba(255,255,255,0.08)] hover:bg-[#0f1321] transition-colors group cursor-pointer"
+      className="border-b border-[#e8eaed] hover:bg-white transition-colors group cursor-pointer"
       onContextMenu={onContextMenu}
       onClick={onSelect}
     >
-      <td className="px-4 py-3 text-sm text-[#dfe1f6]">
+      <td className="px-4 py-3 text-sm text-[#202124]">
         <div className="flex items-center gap-2.5 cursor-pointer" onDoubleClick={onPreview}>
-          <Icon className="h-5 w-5 text-[#00d2ff] shrink-0" />
+          <Icon className="h-5 w-5 text-[#1a56db] shrink-0" />
           {renamingId === file.id ? (
             <input
               autoFocus
@@ -1795,21 +1795,21 @@ function ListFileRow({
                 if (e.key === "Enter") onRenameSubmit();
                 if (e.key === "Escape") onRenameCancel();
               }}
-              className="rounded border border-[#00d2ff] px-2 py-0.5 text-sm outline-none bg-[#0f1321] text-[#dfe1f6]"
+              className="rounded border border-[#1a56db] px-2 py-0.5 text-sm outline-none bg-white text-[#202124]"
             />
           ) : (
-            <span className="text-sm font-medium text-[#dfe1f6]">{file.name}</span>
+            <span className="text-sm font-medium text-[#202124]">{file.name}</span>
           )}
           {file.isStarred && <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400 shrink-0" />}
         </div>
       </td>
-      <td className="px-4 py-3 text-sm text-[#dfe1f6]">
-        <span className="flex items-center gap-1.5 text-[#9aa3b8]">
-          <Calendar className="h-3.5 w-3.5 text-[#9aa3b8]" />
+      <td className="px-4 py-3 text-sm text-[#202124]">
+        <span className="flex items-center gap-1.5 text-[#5f6368]">
+          <Calendar className="h-3.5 w-3.5 text-[#5f6368]" />
           {formatDistanceToNow(new Date(file.updatedAt), { addSuffix: true })}
         </span>
       </td>
-      <td className="px-4 py-3 text-sm text-[#9aa3b8]">{formatFileSize(file.size)}</td>
+      <td className="px-4 py-3 text-sm text-[#5f6368]">{formatFileSize(file.size)}</td>
       <td className="px-4 py-3 text-right">
         <div className="hidden gap-1 justify-end group-hover:flex">
           <ActionBtn icon={Eye} onClick={onPreview} title="Preview" />
@@ -1848,8 +1848,8 @@ function ActionBtn({
     <button
       onClick={onClick}
       title={title}
-      className={`p-1 hover:bg-[#1b1f2e] rounded-md opacity-0 group-hover:opacity-100 transition-opacity ${
-        active && activeClass ? activeClass : "text-[#9aa3b8]"
+      className={`p-1 hover:bg-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity ${
+        active && activeClass ? activeClass : "text-[#5f6368]"
       }`}
     >
       <Icon className="h-3.5 w-3.5" />

@@ -17,13 +17,13 @@ export default function GlobalError({
   return (
     <html>
       <body>
-        <div className="flex min-h-screen items-center justify-center bg-[#0f1321]">
+        <div className="flex min-h-screen items-center justify-center bg-white">
           <div className="text-center">
-            <h1 className="text-2xl font-semibold text-[#dfe1f6]">Something went wrong</h1>
-            <p className="mt-2 text-sm text-[#9aa3b8]">An unexpected error occurred.</p>
+            <h1 className="text-2xl font-semibold text-[#202124]">Something went wrong</h1>
+            <p className="mt-2 text-sm text-[#5f6368]">An unexpected error occurred.</p>
             <button
               onClick={reset}
-              className="mt-6 rounded-md bg-[#00d2ff] px-4 py-2 text-sm font-semibold text-[#003543] hover:bg-[#47d6ff]"
+              className="mt-6 rounded-md bg-[#1a56db] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1447c0]"
             >
               Try again
             </button>

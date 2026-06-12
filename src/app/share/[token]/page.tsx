@@ -19,11 +19,11 @@ export default async function SharePage({ params }: Props) {
   // Check expiry
   if (permission.expiresAt && permission.expiresAt < new Date()) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#0f1321]">
-        <div className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#1b1f2e] p-10 text-center max-w-md">
-          <LockIcon className="mx-auto mb-3 h-7 w-7 text-[#5d6579]" />
-          <h1 className="text-xl font-semibold text-[#dfe1f6] mb-2">Link expired</h1>
-          <p className="text-sm text-[#9aa3b8]">This share link has expired. Ask the owner for a new link.</p>
+      <div className="flex min-h-screen items-center justify-center bg-white">
+        <div className="rounded-xl border border-[#e8eaed] bg-white p-10 text-center max-w-md">
+          <LockIcon className="mx-auto mb-3 h-7 w-7 text-[#9aa0a6]" />
+          <h1 className="text-xl font-semibold text-[#202124] mb-2">Link expired</h1>
+          <p className="text-sm text-[#5f6368]">This share link has expired. Ask the owner for a new link.</p>
         </div>
       </div>
     );

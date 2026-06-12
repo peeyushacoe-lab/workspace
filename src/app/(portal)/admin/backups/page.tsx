@@ -71,7 +71,7 @@ function StatusBadge({ status }: { status: BackupStatus | VerificationStatus }) 
   }
   if (status === "not_tested") {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-full bg-[#5d6579]/15 text-[#5d6579] border border-[#5d6579]/25">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-full bg-[#5d6579]/15 text-[#9aa0a6] border border-[#5d6579]/25">
         <Clock className="w-3 h-3" /> Not tested
       </span>
     );
@@ -104,14 +104,14 @@ function SummaryCard({
   accent?: string;
 }) {
   return (
-    <div className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl p-4 flex items-start gap-3">
+    <div className="bg-white border border-[#e8eaed] rounded-xl p-4 flex items-start gap-3">
       <div className="p-2 rounded-lg bg-[rgba(0,210,255,0.08)] flex-shrink-0">
-        <Icon className="w-4 h-4 text-[#00d2ff]" />
+        <Icon className="w-4 h-4 text-[#1a56db]" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-[10px] text-[#5d6579] mb-1">{label}</p>
-        <p className={`font-semibold text-sm truncate ${accent ?? "text-[#dfe1f6]"}`}>{value}</p>
-        {sub && <p className="text-xs text-[#5d6579] mt-0.5">{sub}</p>}
+        <p className="text-[10px] text-[#9aa0a6] mb-1">{label}</p>
+        <p className={`font-semibold text-sm truncate ${accent ?? "text-[#202124]"}`}>{value}</p>
+        {sub && <p className="text-xs text-[#9aa0a6] mt-0.5">{sub}</p>}
       </div>
     </div>
   );
@@ -198,7 +198,7 @@ export default function BackupsPage() {
     : [];
 
   return (
-    <div className="min-h-screen bg-[#0f1321] text-[#dfe1f6]">
+    <div className="min-h-screen bg-white text-[#202124]">
       <PageHeader
         eyebrow="Admin"
         title="Backups"
@@ -211,7 +211,7 @@ export default function BackupsPage() {
           <button
             onClick={() => void runBackup()}
             disabled={runningBackup}
-            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-[#00d2ff]/10 text-[#00d2ff] border border-[#00d2ff]/20 hover:bg-[#00d2ff]/20 transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-[#1a56db]/10 text-[#1a56db] border border-[#1a56db]/20 hover:bg-[#1a56db]/20 transition-colors disabled:opacity-50"
           >
             {runningBackup ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -224,7 +224,7 @@ export default function BackupsPage() {
           <button
             onClick={() => void testRestore()}
             disabled={testingRestore}
-            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-[#262939] text-[#9aa3b8] border border-[rgba(255,255,255,0.06)] hover:bg-[#2e3347] transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-[#f1f3f4] text-[#5f6368] border border-[#e8eaed] hover:bg-[#2e3347] transition-colors disabled:opacity-50"
           >
             {testingRestore ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -238,7 +238,7 @@ export default function BackupsPage() {
 
           <button
             onClick={() => void load()}
-            className="p-2 text-[#5d6579] hover:text-[#9aa3b8] transition-colors"
+            className="p-2 text-[#9aa0a6] hover:text-[#5f6368] transition-colors"
             title="Refresh"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
@@ -279,7 +279,7 @@ export default function BackupsPage() {
                 ? "text-emerald-400"
                 : data?.verification.status === "failed"
                 ? "text-red-400"
-                : "text-[#5d6579]"
+                : "text-[#9aa0a6]"
             }
           />
           <SummaryCard
@@ -291,16 +291,16 @@ export default function BackupsPage() {
         </div>
 
         {/* ── Backup status table ── */}
-        <div className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl overflow-hidden">
-          <div className="flex items-center gap-3 px-4 py-3 border-b border-[rgba(255,255,255,0.06)]">
-            <Database className="w-4 h-4 text-[#00d2ff]" />
+        <div className="bg-white border border-[#e8eaed] rounded-xl overflow-hidden">
+          <div className="flex items-center gap-3 px-4 py-3 border-b border-[#e8eaed]">
+            <Database className="w-4 h-4 text-[#1a56db]" />
             <span className="text-sm font-medium">Backup Sources</span>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-[rgba(255,255,255,0.04)] text-[#5d6579] text-xs">
+                <tr className="border-b border-[#f0f0f0] text-[#9aa0a6] text-xs">
                   <th className="text-left px-4 py-2.5 font-medium">Source</th>
                   <th className="text-left px-4 py-2.5 font-medium">Type</th>
                   <th className="text-left px-4 py-2.5 font-medium">Status</th>
@@ -311,7 +311,7 @@ export default function BackupsPage() {
               <tbody>
                 {loading && rows.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="text-center text-[#5d6579] py-10">
+                    <td colSpan={5} className="text-center text-[#9aa0a6] py-10">
                       <Loader2 className="w-4 h-4 animate-spin inline mr-2" />
                       Loading backup data…
                     </td>
@@ -320,19 +320,19 @@ export default function BackupsPage() {
                   rows.map((row) => (
                     <tr
                       key={row.source}
-                      className="border-b border-[rgba(255,255,255,0.03)] hover:bg-[#262939]/30"
+                      className="border-b border-[#f0f0f0] hover:bg-[#f1f3f4]/30"
                     >
                       <td className="px-4 py-3">
-                        <span className="font-mono text-xs text-[#dfe1f6]">{row.source}</span>
+                        <span className="font-mono text-xs text-[#202124]">{row.source}</span>
                       </td>
-                      <td className="px-4 py-3 text-xs text-[#5d6579]">{row.type}</td>
+                      <td className="px-4 py-3 text-xs text-[#9aa0a6]">{row.type}</td>
                       <td className="px-4 py-3">
                         <StatusBadge status={row.status} />
                       </td>
-                      <td className="px-4 py-3 text-xs text-[#5d6579] hidden sm:table-cell">
+                      <td className="px-4 py-3 text-xs text-[#9aa0a6] hidden sm:table-cell">
                         {row.lastRun ? new Date(row.lastRun).toLocaleString() : "—"}
                       </td>
-                      <td className="px-4 py-3 text-right text-xs font-semibold text-[#dfe1f6]">
+                      <td className="px-4 py-3 text-right text-xs font-semibold text-[#202124]">
                         {row.size}
                       </td>
                     </tr>
@@ -344,9 +344,9 @@ export default function BackupsPage() {
         </div>
 
         {/* ── Retention policy card ── */}
-        <div className="bg-[#1b1f2e] border border-[rgba(255,255,255,0.06)] rounded-xl p-5">
+        <div className="bg-white border border-[#e8eaed] rounded-xl p-5">
           <div className="flex items-center gap-2 mb-4">
-            <CalendarDays className="w-4 h-4 text-[#00d2ff]" />
+            <CalendarDays className="w-4 h-4 text-[#1a56db]" />
             <span className="text-sm font-medium">Retention Policy</span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -357,16 +357,16 @@ export default function BackupsPage() {
                 ["Point-in-time recovery", "Enabled via platform"],
               ] as [string, string][]
             ).map(([label, value]) => (
-              <div key={label} className="bg-[#0f1321] rounded-lg p-3">
-                <p className="text-[10px] text-[#5d6579] mb-1">{label}</p>
-                <p className="text-sm font-semibold text-[#dfe1f6]">{value}</p>
+              <div key={label} className="bg-white rounded-lg p-3">
+                <p className="text-[10px] text-[#9aa0a6] mb-1">{label}</p>
+                <p className="text-sm font-semibold text-[#202124]">{value}</p>
               </div>
             ))}
           </div>
-          <p className="mt-4 text-xs text-[#5d6579] leading-relaxed">
+          <p className="mt-4 text-xs text-[#9aa0a6] leading-relaxed">
             Backups are managed by the Vercel/Postgres platform (Neon). Configure
             additional retention or cross-region replication in the platform dashboard.
-            Run <span className="text-[#00d2ff] font-mono">Test Restore</span> periodically
+            Run <span className="text-[#1a56db] font-mono">Test Restore</span> periodically
             to verify backup integrity.
           </p>
         </div>
