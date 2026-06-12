@@ -234,6 +234,24 @@ export default function UsersPage() {
     }
   };
 
+  const [resendingInvite, setResendingInvite] = useState<string | null>(null);
+  const handleResendInvite = async (userId: string, userName: string) => {
+    setResendingInvite(userId);
+    try {
+      const res = await fetch(`/api/users/${userId}/resend-invite`, { method: "POST" });
+      const data = await res.json() as { error?: string };
+      if (res.ok) {
+        toast.success(`Invite resent to ${userName}`);
+      } else {
+        toast.error(data.error ?? "Failed to resend invite");
+      }
+    } catch {
+      toast.error("An error occurred resending the invite");
+    } finally {
+      setResendingInvite(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -474,6 +492,20 @@ export default function UsersPage() {
                             <History className="w-3.5 h-3.5" />
                           </Button>
                         </Link>
+                        {/* Resend invite — shown only when user hasn't logged in yet */}
+                        {user.mustResetPassword && user.id !== currentUser?.id && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => void handleResendInvite(user.id, user.fullName)}
+                            disabled={resendingInvite === user.id}
+                            title="Resend invite email"
+                          >
+                            {resendingInvite === user.id
+                              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              : <Mail className="w-3.5 h-3.5" />}
+                          </Button>
+                        )}
                         {user.id !== currentUser?.id && user.role !== "ADMIN" && (
                           <Button
                             variant="outline"

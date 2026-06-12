@@ -23,12 +23,16 @@ const securityHeaders = [
       "default-src 'self'",
       // unsafe-eval removed in production; kept only for dev HMR
       `script-src 'self' ${isProd ? "" : "'unsafe-eval' "}'unsafe-inline' https://browser.sentry-cdn.com`,
-      "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob: https://lh3.googleusercontent.com",
-      "font-src 'self'",
-      "connect-src 'self' https://*.sentry.io wss: ws:",
+      // Google Fonts are loaded at runtime by some components and email templates
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "img-src 'self' data: blob: https://lh3.googleusercontent.com https://avatars.githubusercontent.com",
+      // fonts.gstatic.com serves the actual font files referenced by Google Fonts CSS
+      "font-src 'self' https://fonts.gstatic.com",
+      "connect-src 'self' https://*.sentry.io wss: ws: https://fonts.googleapis.com",
       "media-src 'self' blob:",
       "object-src 'none'",
+      // Allow Jitsi external API script to load from the configured domain (or public fallback)
+      `script-src-elem 'self' 'unsafe-inline' https://browser.sentry-cdn.com https://meet.jit.si ${process.env.JITSI_DOMAIN ? `https://${process.env.JITSI_DOMAIN}` : ""}`,
       `frame-src 'self' https://meet.jit.si ${process.env.JITSI_DOMAIN ? `https://${process.env.JITSI_DOMAIN}` : ""}`,
       "frame-ancestors 'none'",
       "base-uri 'self'",

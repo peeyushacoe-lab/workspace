@@ -8,12 +8,14 @@ export async function GET(request: Request) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(request.url);
-  const parentId = searchParams.get("parentId") ?? null;
+  const rawParent = searchParams.get("parentId");
+  // "root" is a sentinel value from the UI meaning the top-level (null parent)
+  const parentId = !rawParent || rawParent === "root" ? null : rawParent;
 
   const folders = await prisma.driveFolder.findMany({
     where: {
       ownerId: user.id,
-      parentId: parentId ?? null,
+      parentId,
     },
     include: {
       _count: { select: { children: true, files: true } },
@@ -37,8 +39,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Folder name is required" }, { status: 400 });
   }
 
+  const resolvedParent = !parentId || parentId === "root" ? null : parentId;
+
   const folder = await prisma.driveFolder.create({
-    data: { name: name.trim(), parentId: parentId ?? null, ownerId: user.id },
+    data: { name: name.trim(), parentId: resolvedParent, ownerId: user.id },
     include: { _count: { select: { children: true, files: true } } },
   });
 

@@ -34,6 +34,14 @@ export const metadata: Metadata = {
   creator: "CyberSage",
   publisher: "CyberSage",
   manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon.ico", type: "image/x-icon" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/favicon.ico",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",

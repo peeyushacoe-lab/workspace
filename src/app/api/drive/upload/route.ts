@@ -11,8 +11,11 @@ import { securitySyncQueue } from "@/lib/queues/security-sync.queue";
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
 
 const ALLOWED_MIME_TYPES = new Set([
-  // Images
-  "image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml", "image/bmp", "image/tiff",
+  // Images — include all common variants browsers/OSes may send
+  "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp",
+  "image/svg+xml", "image/bmp", "image/tiff", "image/avif",
+  "image/heic", "image/heif",   // iOS / macOS HEIC photos
+  "image/x-png", "image/pjpeg", // legacy browser MIME aliases
   // Documents
   "application/pdf",
   "application/msword",

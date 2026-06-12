@@ -243,8 +243,37 @@ function InMeetingRoom({
     });
   };
 
-  // Build Jitsi URL with pre-filled display name and sensible defaults
-  const jitsiSrc = `${joinInfo.jitsiUrl}#userInfo.displayName=${encodeURIComponent(joinInfo.userName)}&config.prejoinPageEnabled=false&config.startWithAudioMuted=false&config.startWithVideoMuted=false&interfaceConfig.SHOW_JITSI_WATERMARK=false&interfaceConfig.TOOLBAR_BUTTONS=["microphone","camera","closedcaptions","desktop","fullscreen","fodeviceselection","hangup","chat","recording","livestreaming","etherpad","sharedvideo","settings","raisehand","videoquality","filmstrip","invite","feedback","stats","shortcuts","tileview","videobackgroundblur","download","help","mute-everyone","security"]`;
+  // Build Jitsi embed URL. All branding/timer config is passed via hash params.
+  // For full white-label (no watermark, no timer), set NEXT_PUBLIC_JITSI_DOMAIN to
+  // your self-hosted Jitsi instance. The public meet.jit.si server overrides some
+  // interface configs server-side, so self-hosting is the only complete solution.
+  const jitsiSrc = [
+    joinInfo.jitsiUrl,
+    "#",
+    [
+      `userInfo.displayName=${encodeURIComponent(joinInfo.userName)}`,
+      "config.prejoinPageEnabled=false",
+      "config.startWithAudioMuted=false",
+      "config.startWithVideoMuted=false",
+      "config.hideConferenceTimer=true",
+      "config.disableDeepLinking=true",
+      "config.enableWelcomePage=false",
+      "config.disableThirdPartyRequests=true",
+      "config.defaultBackground=%230f1321",
+      "interfaceConfig.SHOW_JITSI_WATERMARK=false",
+      "interfaceConfig.SHOW_WATERMARK_FOR_GUESTS=false",
+      "interfaceConfig.SHOW_BRAND_WATERMARK=false",
+      "interfaceConfig.SHOW_POWERED_BY=false",
+      "interfaceConfig.DISPLAY_WELCOME_FOOTER=false",
+      `interfaceConfig.APP_NAME=${encodeURIComponent("CyberSage Meet")}`,
+      `interfaceConfig.PROVIDER_NAME=${encodeURIComponent("CyberSage")}`,
+      `interfaceConfig.TOOLBAR_BUTTONS=${encodeURIComponent(JSON.stringify([
+        "microphone","camera","closedcaptions","desktop","fullscreen",
+        "fodeviceselection","hangup","chat","settings","raisehand",
+        "videoquality","filmstrip","tileview","help","mute-everyone","security",
+      ]))}`,
+    ].join("&"),
+  ].join("");
 
   return (
     <div className="fixed inset-0 z-50 bg-[#060810] flex flex-col">
