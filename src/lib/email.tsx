@@ -159,7 +159,7 @@ export async function sendInviteEmail({
 }) {
   if (!resend) return { id: "dry-run", skipped: true };
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://nexus.cybersage.uk";
+  const appUrl = process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "https://nexus.cybersage.uk";
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /></head>
@@ -227,7 +227,7 @@ export async function sendEmail(
     ? renderEmailHtml(subject, body, contact, signature)
     : renderComposeHtml(body, contact, signature);
   const from = fromEmail || process.env.RESEND_FROM_EMAIL || "CyberSage <noreply@cybersage.uk>";
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://nexus.cybersage.uk";
+  const appUrl = process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "https://nexus.cybersage.uk";
 
   // Idempotency key: same subject + recipient + minute = same key within a 60s window,
   // preventing duplicate sends from double-clicks or retries.
@@ -469,7 +469,7 @@ export async function sendWelcomeInboxMessage(opts: {
   // Dynamic import to avoid circular deps with prisma at module level
   const { prisma } = await import("@/lib/prisma");
   const { workEmail, fullName, role, invitedByName, userId } = opts;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://nexus.cybersage.uk";
+  const appUrl = process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "https://nexus.cybersage.uk";
 
   const { subject, html } = buildWelcomeHtml({ fullName, workEmail, role, invitedByName, appUrl });
   const fromAddr = "noreply@cybersage.uk";

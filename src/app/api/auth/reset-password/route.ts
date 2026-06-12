@@ -7,7 +7,7 @@ import bcrypt from "bcrypt";
 import { z } from "zod";
 
 const schema = z.object({
-  currentPassword: z.string().min(1, "Current password is required"),
+  currentPassword: z.string().optional(),
   newPassword: z.string().min(8, "New password must be at least 8 characters"),
 });
 
@@ -24,11 +24,17 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { currentPassword, newPassword } = schema.parse(body);
 
-    // Verify the current password before allowing the change
-    const dbUser = await prisma.user.findUnique({ where: { id: user.id }, select: { passwordHash: true } });
-    const currentValid = dbUser?.passwordHash ? await bcrypt.compare(currentPassword, dbUser.passwordHash) : false;
-    if (!currentValid) {
-      return NextResponse.json({ error: "Current password is incorrect" }, { status: 400 });
+    // Forced reset (invited user setting password for first time) — skip current password check.
+    // For voluntary changes, verify the current password first.
+    if (!user.mustResetPassword) {
+      if (!currentPassword) {
+        return NextResponse.json({ error: "Current password is required" }, { status: 400 });
+      }
+      const dbUser = await prisma.user.findUnique({ where: { id: user.id }, select: { passwordHash: true } });
+      const currentValid = dbUser?.passwordHash ? await bcrypt.compare(currentPassword, dbUser.passwordHash) : false;
+      if (!currentValid) {
+        return NextResponse.json({ error: "Current password is incorrect" }, { status: 400 });
+      }
     }
 
     const hashed = await bcrypt.hash(newPassword, 12);

@@ -78,7 +78,7 @@ export async function POST(request: Request) {
       }).catch(() => null);
       // Use the public avatar endpoint so email clients (Gmail, Outlook) can load the image.
       // Raw avatarUrl may be a base64 data URL or signed S3 URL — neither works in emails.
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://nexus.cybersage.uk";
+      const appUrl = process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "https://nexus.cybersage.uk";
       const publicAvatarUrl = senderProfile?.avatarUrl
         ? `${appUrl}/api/workspace/avatar/${user.id}`
         : null;
