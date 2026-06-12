@@ -1,6 +1,12 @@
+node_modules/
 apps/
 packages/
 scripts/
 scratch/
 mcp-server/
+electron/
+dist/
 *.log
+.next/
+prisma/migrations/
+

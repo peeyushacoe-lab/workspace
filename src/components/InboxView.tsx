@@ -730,6 +730,11 @@ export function InboxView({ userRole, initialThreads }: {
   const [expandedMsgs, setExpandedMsgs]     = useState<Set<string>>(new Set());
   const rewriteMenuRef = useRef<HTMLDivElement>(null);
 
+  // Drag-and-drop folder state
+  const [draggedThread, setDraggedThread]   = useState<ThreadSummary | null>(null);
+  const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null);
+  const [rulePrompt, setRulePrompt]         = useState<{ thread: ThreadSummary; folder: CustomFolder } | null>(null);
+
   // Load custom folders once
   useEffect(() => {
     fetch("/api/inbox/folders")
@@ -903,6 +908,50 @@ export function InboxView({ userRole, initialThreads }: {
     toast.success("Restored to inbox");
   };
 
+  const handleFolderDrop = async (thread: ThreadSummary, folder: CustomFolder) => {
+    setDragOverFolderId(null);
+    setDraggedThread(null);
+    // Move the thread immediately
+    await patchThread(thread.id, { folderId: folder.id });
+    setThreads(prev => prev.map(t => t.id === thread.id ? { ...t, folderId: folder.id } : t));
+    toast.success(`Moved to "${folder.name}"`);
+    // Prompt to create a rule for the sender domain
+    const from = thread.lastMessage?.from ?? "";
+    const atIdx = from.lastIndexOf("@");
+    if (atIdx !== -1) {
+      setRulePrompt({ thread, folder });
+    }
+  };
+
+  const handleCreateDomainRule = async () => {
+    if (!rulePrompt) return;
+    const from = rulePrompt.thread.lastMessage?.from ?? "";
+    const atIdx = from.lastIndexOf("@");
+    if (atIdx === -1) { setRulePrompt(null); return; }
+    const domain = from.slice(atIdx); // e.g. "@acme.com"
+    const ruleName = `Auto: ${domain} → ${rulePrompt.folder.name}`;
+    try {
+      const res = await fetch("/api/inbox/rules", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: ruleName,
+          conditions: [{ field: "from", op: "endsWith", value: domain }],
+          action: "MOVE_FOLDER",
+          actionData: { folderId: rulePrompt.folder.id },
+        }),
+      });
+      if (res.ok) {
+        toast.success(`Rule created — all emails from ${domain} go to "${rulePrompt.folder.name}"`);
+      } else {
+        toast.error("Failed to create rule");
+      }
+    } catch {
+      toast.error("Failed to create rule");
+    }
+    setRulePrompt(null);
+  };
+
   const handleSnooze = async (id: string, until: Date) => {
     await patchThread(id, { isSnoozed: true, snoozedUntil: until.toISOString() });
     if (selectedThreadId === id) { setSelectedThreadId(null); setThreadDetail(null); }
@@ -1066,15 +1115,22 @@ export function InboxView({ userRole, initialThreads }: {
               <button
                 key={folder.id}
                 onClick={() => { setActiveCustomFolder(folder.id); setActiveFolder("inbox"); }}
+                onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; setDragOverFolderId(folder.id); }}
+                onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverFolderId(null); }}
+                onDrop={(e) => { e.preventDefault(); if (draggedThread) void handleFolderDrop(draggedThread, folder); }}
                 className={`flex w-full items-center gap-2.5 px-2.5 py-2 text-sm font-medium transition-colors rounded-md ${
-                  activeCustomFolder === folder.id
+                  dragOverFolderId === folder.id
+                    ? "bg-[#00d2ff]/10 text-[#00d2ff] border border-[#00d2ff]/30"
+                    : activeCustomFolder === folder.id
                     ? "bg-white/[0.07] text-[#eceef8]"
                     : "text-[#9aa3b8] hover:bg-white/[0.04] hover:text-[#dfe1f6]"
                 }`}
               >
-                <Folder className="h-3.5 w-3.5 flex-shrink-0" style={{ color: folder.color ?? "#9aa3b8" }} />
+                <Folder className="h-3.5 w-3.5 flex-shrink-0" style={{ color: dragOverFolderId === folder.id ? "#00d2ff" : (folder.color ?? "#9aa3b8") }} />
                 <span className="flex-1 text-left truncate">{folder.name}</span>
-                {(folder._count?.threads ?? 0) > 0 && (
+                {dragOverFolderId === folder.id ? (
+                  <span className="text-[10px] text-[#00d2ff] font-semibold">Drop here</span>
+                ) : (folder._count?.threads ?? 0) > 0 && (
                   <span className="text-[10px] text-[#9aa3b8]">{folder._count?.threads}</span>
                 )}
               </button>
@@ -1315,12 +1371,19 @@ export function InboxView({ userRole, initialThreads }: {
             visibleThreads.map(thread => (
               <div
                 key={thread.id}
+                draggable
+                onDragStart={(e) => {
+                  setDraggedThread(thread);
+                  e.dataTransfer.effectAllowed = "move";
+                  e.dataTransfer.setData("threadId", thread.id);
+                }}
+                onDragEnd={() => { setDraggedThread(null); setDragOverFolderId(null); }}
                 onClick={() => loadThreadDetail(thread.id)}
-                className={`group relative cursor-pointer transition-all duration-100 border-b border-[rgba(255,255,255,0.04)] ${
+                className={`group relative cursor-grab active:cursor-grabbing transition-all duration-100 border-b border-[rgba(255,255,255,0.04)] ${
                   selectedThreadId === thread.id
                     ? "bg-white/[0.06]"
                     : "hover:bg-white/[0.03]"
-                }`}
+                } ${draggedThread?.id === thread.id ? "opacity-50" : ""}`}
               >
                 {/* Hover action bar */}
                 <div className="absolute right-1 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-0.5 bg-[#1f2433] border border-[rgba(255,255,255,0.08)] shadow-lg rounded-lg px-1 py-1 z-10">
@@ -1844,6 +1907,34 @@ export function InboxView({ userRole, initialThreads }: {
           document.dispatchEvent(new CustomEvent("nexus:compose", { detail: { to: email } }));
         }}
       />
+
+      {/* ── Drag-drop Rule Prompt Snackbar ── */}
+      {rulePrompt && (() => {
+        const from = rulePrompt.thread.lastMessage?.from ?? "";
+        const atIdx = from.lastIndexOf("@");
+        const domain = atIdx !== -1 ? from.slice(atIdx) : from;
+        return (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-3 bg-[#1f2433] border border-[rgba(255,255,255,0.1)] rounded-xl shadow-2xl">
+            <Folder className="w-4 h-4 text-[#00d2ff] flex-shrink-0" />
+            <p className="text-sm text-[#dfe1f6]">
+              Also route all emails from <span className="font-semibold text-[#eceef8]">{domain}</span> to{" "}
+              <span className="font-semibold text-[#eceef8]">{rulePrompt.folder.name}</span>?
+            </p>
+            <button
+              onClick={() => void handleCreateDomainRule()}
+              className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#00d2ff] text-[#003543] hover:bg-[#33dbff] transition-colors flex-shrink-0"
+            >
+              Create Rule
+            </button>
+            <button
+              onClick={() => setRulePrompt(null)}
+              className="px-3 py-1.5 text-xs font-medium rounded-lg text-[#9aa3b8] hover:text-[#dfe1f6] hover:bg-white/[0.04] transition-colors flex-shrink-0"
+            >
+              Just this one
+            </button>
+          </div>
+        );
+      })()}
     </div>
   );
 }
