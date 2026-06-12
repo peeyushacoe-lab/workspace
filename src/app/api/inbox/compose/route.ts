@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/session";
 import { sendEmail, renderComposeHtml } from "@/lib/email";
 import { getTokensForUser, sendExpoPush } from "@/lib/expo-push";
 import { indexingQueue } from "@/lib/queues/indexing.queue";
+import { uploadToR2, isS3Configured } from "@/lib/s3";
 
 const composeSchema = z.object({
   to:        z.string().email(),
@@ -142,7 +143,7 @@ export async function POST(request: Request) {
       });
     }
 
-    await prisma.inboxMessage.create({
+    const recipientMsg = await prisma.inboxMessage.create({
       data: {
         threadId:  thread.id,
         from:      fromAddr,
@@ -153,6 +154,11 @@ export async function POST(request: Request) {
         isRead:    false,
       },
     });
+
+    // Persist attachments to R2 and create EmailAttachment records for the recipient message
+    if (attachmentFiles.length > 0) {
+      void saveAttachments(recipientMsg.id, attachmentFiles);
+    }
 
     // Also drop a copy in the sender's Sent mailbox (find or create)
     const senderMailbox = await prisma.mailbox.findUnique({ where: { email: fromAddr } });
@@ -172,7 +178,7 @@ export async function POST(request: Request) {
         data: { subject: cleanSubject, mailboxId: senderMailbox.id },
       });
 
-      await prisma.inboxMessage.create({
+      const sentMsg = await prisma.inboxMessage.create({
         data: {
           threadId:  sentThread.id,
           from:      fromAddr,
@@ -183,6 +189,11 @@ export async function POST(request: Request) {
           isRead:    true,
         },
       });
+
+      // Also save attachment copies for the sent version
+      if (attachmentFiles.length > 0) {
+        void saveAttachments(sentMsg.id, attachmentFiles);
+      }
     }
 
     // Queue email for full-text search indexing — fire-and-forget
@@ -257,7 +268,7 @@ export async function POST(request: Request) {
         data: { subject: cleanSubject, mailboxId: senderMailbox.id },
       });
 
-      await prisma.inboxMessage.create({
+      const externalSentMsg = await prisma.inboxMessage.create({
         data: {
           threadId: sentThread.id,
           from:     fromAddr,
@@ -268,6 +279,10 @@ export async function POST(request: Request) {
           isRead:   true,
         },
       });
+
+      if (attachmentFiles.length > 0) {
+        void saveAttachments(externalSentMsg.id, attachmentFiles);
+      }
     }
 
     // Also log it in EmailLog so it shows in campaign/analytics views
@@ -285,4 +300,66 @@ export async function POST(request: Request) {
     const msg = err instanceof Error ? err.message : "Send failed";
     return NextResponse.json({ error: msg }, { status: 500 });
   }
+}
+
+// ── Attachment helper ─────────────────────────────────────────────────────────
+// Uploads files to R2 (if configured) and creates EmailAttachment records so
+// the InboxView can render them. Runs fire-and-forget — never blocks the send.
+async function saveAttachments(
+  messageId: string,
+  files: Array<{ filename: string; content: Buffer }>,
+) {
+  for (const file of files) {
+    try {
+      const ext = file.filename.split(".").pop() ?? "bin";
+      const key = `attachments/${messageId}/${Date.now()}-${file.filename.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+      const mime = extToMime(ext);
+
+      let storageUrl: string | null = null;
+      let savedKey: string | null = null;
+
+      if (isS3Configured()) {
+        const result = await uploadToR2(file.content, key, mime);
+        storageUrl = result.url || null;
+        savedKey = result.key;
+      }
+
+      await prisma.emailAttachment.create({
+        data: {
+          messageId,
+          filename: file.filename,
+          mimeType: mime,
+          size: file.content.length,
+          storageUrl,
+          key: savedKey,
+        },
+      });
+    } catch (err) {
+      console.error("[compose] saveAttachments failed for", file.filename, err);
+    }
+  }
+}
+
+function extToMime(ext: string): string {
+  const map: Record<string, string> = {
+    pdf: "application/pdf",
+    doc: "application/msword",
+    docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    xls: "application/vnd.ms-excel",
+    xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ppt: "application/vnd.ms-powerpoint",
+    pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    png: "image/png",
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    gif: "image/gif",
+    webp: "image/webp",
+    svg: "image/svg+xml",
+    txt: "text/plain",
+    csv: "text/csv",
+    zip: "application/zip",
+    mp4: "video/mp4",
+    mp3: "audio/mpeg",
+  };
+  return map[ext.toLowerCase()] ?? "application/octet-stream";
 }

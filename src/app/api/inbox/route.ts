@@ -37,11 +37,16 @@ export async function GET(request: Request) {
         : folder === "archive"
         ? { ...userAccessFilter, isArchived: true, isTrashed: false }
         : {
-            // "inbox" (default) — exclude trash, archive, and pure sent-copy threads
+            // "inbox" (default) — exclude trash, archive, and pure sent-copy threads.
+            // Use `messages.some { from: { not: userEmail } }` rather than
+            // `NOT { messages.every { from: userEmail } }` — the latter has
+            // unreliable behaviour in Prisma when the relation set is empty (vacuous
+            // truth in SQL causes threads with zero messages to be excluded or
+            // included unexpectedly). The `some` form is explicit and predictable.
             ...userAccessFilter,
             isTrashed: false,
             isArchived: false,
-            NOT: { messages: { every: { from: userEmail } } },
+            messages: { some: { from: { not: userEmail } } },
           };
 
     const threads = await prisma.inboxThread.findMany({

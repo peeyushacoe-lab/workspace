@@ -299,7 +299,7 @@ function ProfileTab({ userId }: { userId: string }) {
       {/* Cover + Avatar */}
       <SectionCard title="Profile Photo & Cover">
         {/* Cover */}
-        <div className="relative rounded-xl overflow-hidden h-32 bg-gradient-to-r from-[#1a56db]/15 to-[#003543] mb-4 group">
+        <div className="relative rounded-xl overflow-hidden h-32 bg-gradient-to-r from-[#e8f0fe] to-[#dbeafe] mb-4 group">
           {profile.coverUrl && (
             <img src={profile.coverUrl} alt="Cover" className="w-full h-full object-cover" />
           )}
@@ -329,7 +329,7 @@ function ProfileTab({ userId }: { userId: string }) {
         {/* Avatar */}
         <div className="flex items-center gap-5">
           <div className="relative group">
-            <div className="h-20 w-20 rounded-full overflow-hidden border-2 border-[rgba(255,255,255,0.11)] bg-[#f1f3f4] flex items-center justify-center">
+            <div className="h-20 w-20 flex-shrink-0 rounded-full overflow-hidden border-2 border-[#e8eaed] bg-[#f1f3f4] flex items-center justify-center">
               {profile.avatarUrl ? (
                 <img src={profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
               ) : (
@@ -560,7 +560,7 @@ function SignatureTab({ userName }: { userName: string }) {
 
   const updateField = (k: keyof typeof form, v: string) => setForm((p) => ({ ...p, [k]: v }));
 
-  const generatedHtml = `<div style="font-family:Arial,sans-serif;font-size:13px;color:#333;border-top:2px solid #00d2ff;padding-top:10px;margin-top:10px"><strong style="font-size:14px;color:#003543">${form.fullName}</strong><br/><span style="color:#555">${form.title}</span>${form.phone ? `<br/>📞 ${form.phone}` : ""}${form.website ? `<br/><a href="${form.website}" style="color:#00d2ff">${form.website}</a>` : ""}${form.linkedinUrl ? `<br/><a href="${form.linkedinUrl}" style="color:#0077b5">LinkedIn</a>` : ""}<br/><span style="color:#888;font-size:11px">Powered by CyberSage</span></div>`;
+  const generatedHtml = `<div style="font-family:Arial,sans-serif;font-size:13px;color:#202124;border-top:2px solid #1a56db;padding-top:10px;margin-top:10px"><strong style="font-size:14px;color:#202124">${form.fullName}</strong><br/><span style="color:#5f6368">${form.title}</span>${form.phone ? `<br/><span style="color:#5f6368">📞 ${form.phone}</span>` : ""}${form.website ? `<br/><a href="${form.website}" style="color:#1a56db;text-decoration:none">${form.website}</a>` : ""}${form.linkedinUrl ? `<br/><a href="${form.linkedinUrl}" style="color:#1a56db;text-decoration:none">LinkedIn</a>` : ""}<br/><span style="color:#80868b;font-size:11px">Powered by CyberSage</span></div>`;
 
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-[#1a56db]" /></div>;
 

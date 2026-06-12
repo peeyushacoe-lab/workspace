@@ -1535,7 +1535,7 @@ export function InboxView({ userRole, initialThreads }: {
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <div className="flex-1 min-w-0">
-                <h3 className="text-base font-semibold text-[#e8eaf0] leading-tight truncate">{threadDetail.subject}</h3>
+                <h3 className="text-base font-semibold text-[#202124] leading-tight truncate">{threadDetail.subject}</h3>
                 <div className="flex items-center gap-2 mt-0.5">
                   <span className="text-[11px] text-[#4a5568] flex items-center gap-1">
                     <Inbox className="w-2.5 h-2.5" />
