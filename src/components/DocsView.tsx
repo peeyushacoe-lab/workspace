@@ -604,8 +604,8 @@ blockquote{border-left:4px solid #1a56db;margin:0;padding-left:1em;color:#5f6368
             <TB icon={<Quote className="h-3.5 w-3.5" />} title="Blockquote" active={editor?.isActive("blockquote")} onClick={() => editor?.chain().focus().toggleBlockquote().run()} />
             <TB icon={<Type className="h-3.5 w-3.5" />} title="Code block" active={editor?.isActive("codeBlock")} onClick={() => editor?.chain().focus().toggleCodeBlock().run()} />
             <TB icon={<Minus className="h-3.5 w-3.5" />} title="Horizontal rule" onClick={() => editor?.chain().focus().setHorizontalRule().run()} />
-            <TB icon={<Table className="h-3.5 w-3.5" />} title="Insert table (3×3)" onClick={() => { (editor?.chain().focus() as any)?.insertTable?.({ rows: 3, cols: 3, withHeaderRow: true })?.run?.(); }} />
-            <TB icon={<ImageIcon className="h-3.5 w-3.5" />} title="Insert image" onClick={() => { const u = prompt("Image URL:"); if (u) (editor?.chain().focus() as any)?.setImage?.({ src: u })?.run?.(); }} />
+            <TB icon={<Table className="h-3.5 w-3.5" />} title="Insert table (3×3)" onClick={() => { (editor?.chain().focus() as unknown as { insertTable?: (o: { rows: number; cols: number; withHeaderRow: boolean }) => { run: () => boolean } })?.insertTable?.({ rows: 3, cols: 3, withHeaderRow: true })?.run?.(); }} />
+            <TB icon={<ImageIcon className="h-3.5 w-3.5" />} title="Insert image" onClick={() => { const u = prompt("Image URL:"); if (u) (editor?.chain().focus() as unknown as { setImage?: (o: { src: string }) => { run: () => boolean } })?.setImage?.({ src: u })?.run?.(); }} />
             <TB icon={<Link2 className="h-3.5 w-3.5" />} title="Insert link" active={editor?.isActive("link")} onClick={() => { const u = prompt("URL:"); if (u) editor?.chain().focus().setLink?.({ href: u }).run(); else editor?.chain().focus().unsetLink?.().run(); }} />
             <TSep />
 
