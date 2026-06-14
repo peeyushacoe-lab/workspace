@@ -31,7 +31,7 @@ const APP_REGISTRY: Omit<AppEntry, "enabled">[] = [
   // ── Integrations ───────────────────────────────────────────────────────────
   { id: "github",      name: "GitHub",      description: "Link pull requests and issues to messages",      category: "Developer",            icon: "github",          status: "available"   },
   { id: "linear",      name: "Linear",      description: "Track issues and projects from your inbox",      category: "Project Management",   icon: "layers",          status: "available"   },
-  { id: "jira",        name: "Jira",        description: "Connect Jira tickets to email threads",          category: "Project Management",   icon: "trello",          status: "coming_soon" },
+  { id: "jira",        name: "Jira",        description: "Connect Jira tickets to email threads",          category: "Project Management",   icon: "trello",          status: "available"   },
   { id: "slack",       name: "Slack",       description: "Forward emails to Slack channels",               category: "Communication",        icon: "message-square",  status: "coming_soon" },
   { id: "salesforce",  name: "Salesforce",  description: "CRM contact enrichment for emails",             category: "CRM",                  icon: "briefcase",       status: "coming_soon" },
   { id: "zapier",      name: "Zapier",      description: "Connect Nexus to 5000+ apps",                   category: "Automation",           icon: "zap",             status: "available"   },

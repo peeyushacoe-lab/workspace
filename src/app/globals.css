@@ -285,3 +285,40 @@ textarea {
 .nav-active {
   box-shadow: none;
 }
+
+/* ── Docs editor content styles ─────────────────────────────────────────── */
+.docs-editor-content h1 { font-size: 2rem; font-weight: 700; margin: 1.2em 0 0.5em; color: #202124; }
+.docs-editor-content h2 { font-size: 1.5rem; font-weight: 600; margin: 1em 0 0.4em; color: #202124; }
+.docs-editor-content h3 { font-size: 1.2rem; font-weight: 600; margin: 0.9em 0 0.4em; color: #202124; }
+.docs-editor-content h4 { font-size: 1rem;  font-weight: 600; margin: 0.8em 0 0.3em; color: #202124; }
+.docs-editor-content h5, .docs-editor-content h6 { font-size: 0.9rem; font-weight: 600; margin: 0.7em 0 0.3em; color: #202124; }
+.docs-editor-content p { margin: 0 0 0.75em; line-height: 1.7; color: #202124; font-size: 0.9375rem; }
+.docs-editor-content ul, .docs-editor-content ol { padding-left: 1.5em; margin: 0.5em 0 0.75em; }
+.docs-editor-content li { margin: 0.25em 0; line-height: 1.6; color: #202124; }
+.docs-editor-content blockquote { border-left: 4px solid #1a56db; margin: 1em 0; padding: 0.5em 1em; color: #5f6368; background: #f8f9fa; border-radius: 0 6px 6px 0; }
+.docs-editor-content code { font-family: "Courier New", monospace; font-size: 0.875em; background: #f1f3f4; padding: 0.15em 0.4em; border-radius: 4px; color: #ea4335; }
+.docs-editor-content pre { background: #282c34; color: #abb2bf; padding: 1em 1.5em; border-radius: 8px; overflow-x: auto; margin: 1em 0; font-size: 0.85rem; }
+.docs-editor-content pre code { background: none; color: inherit; padding: 0; }
+.docs-editor-content hr { border: none; border-top: 2px solid #e8eaed; margin: 1.5em 0; }
+.docs-editor-content table { border-collapse: collapse; width: 100%; margin: 1em 0; }
+.docs-editor-content th { background: #f8f9fa; font-weight: 600; }
+.docs-editor-content td, .docs-editor-content th { border: 1px solid #e8eaed; padding: 8px 12px; text-align: left; }
+.docs-editor-content img { max-width: 100%; border-radius: 8px; margin: 1em 0; }
+.docs-editor-content a { color: #1a56db; text-decoration: underline; }
+.docs-editor-content strong { font-weight: 700; }
+.docs-editor-content em { font-style: italic; }
+.docs-editor-content s { text-decoration: line-through; }
+
+/* ── Notes editor ─────────────────────────────────────────────────────────── */
+.notes-editor:empty:before { content: attr(data-placeholder); color: #80868b; pointer-events: none; }
+.notes-editor h1, .notes-editor h2, .notes-editor h3 { font-weight: 600; margin: 0.8em 0 0.3em; color: #202124; }
+.notes-editor h1 { font-size: 1.4rem; }
+.notes-editor h2 { font-size: 1.15rem; }
+.notes-editor h3 { font-size: 1rem; }
+.notes-editor ul, .notes-editor ol { padding-left: 1.5em; }
+.notes-editor blockquote { border-left: 3px solid #1a56db; margin: 0.5em 0; padding-left: 0.75em; color: #5f6368; }
+.notes-editor pre { background: #282c34; color: #abb2bf; padding: 0.75em 1em; border-radius: 6px; font-size: 0.8rem; overflow-x: auto; }
+.notes-editor code { background: #f1f3f4; padding: 0.1em 0.3em; border-radius: 3px; font-family: monospace; font-size: 0.85em; color: #ea4335; }
+.notes-editor hr { border: none; border-top: 1px solid #e8eaed; margin: 1em 0; }
+.notes-editor a { color: #1a56db; text-decoration: underline; }
+.notes-editor img { max-width: 100%; border-radius: 6px; }

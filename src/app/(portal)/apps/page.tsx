@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   GitBranch, Layers, LayoutGrid, MessageSquare, Briefcase, Zap,
   Link, Code, CheckCircle2, Loader2, FileSpreadsheet, Presentation,
-  FileText, NotebookPen, ArrowRight,
+  FileText, NotebookPen, ArrowRight, ExternalLink,
 } from "lucide-react";
 import { PageHeader } from "@/components/Shell";
 import { toast } from "sonner";
@@ -108,6 +108,14 @@ function CategoryBadge({ category }: { category: string }) {
   );
 }
 
+// ─── Integration page routes for deep-link integrations ──────────────────────
+
+const INTEGRATION_ROUTES: Record<string, string> = {
+  github: "/apps/github",
+  jira: "/apps/jira",
+  linear: "/apps/linear",
+};
+
 // ─── Integration Card ─────────────────────────────────────────────────────────
 
 function IntegrationCard({
@@ -117,9 +125,11 @@ function IntegrationCard({
   isAdmin: boolean;
   onToggle: (id: string, next: boolean) => Promise<void>;
 }) {
+  const router = useRouter();
   const [busy, setBusy] = useState(false);
   const isComingSoon = app.status === "coming_soon";
   const isEnabled = app.enabled;
+  const detailRoute = INTEGRATION_ROUTES[app.id];
 
   const handleClick = async () => {
     if (isComingSoon || !isAdmin) return;
@@ -160,15 +170,28 @@ function IntegrationCard({
             Coming Soon
           </span>
         ) : isAdmin ? (
-          <button onClick={() => void handleClick()} disabled={busy}
-            className={[
-              "flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors disabled:opacity-50",
-              isEnabled
-                ? "bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100"
-                : "bg-[#e8f0fe] text-[#1a56db] border-[#1a56db]/20 hover:bg-[#dbeafe]",
-            ].join(" ")}>
-            {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : isEnabled ? <CheckCircle2 className="h-3 w-3" /> : null}
-            {busy ? "Saving…" : isEnabled ? "Disable" : "Enable"}
+          <>
+            <button onClick={() => void handleClick()} disabled={busy}
+              className={[
+                "flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors disabled:opacity-50",
+                isEnabled
+                  ? "bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100"
+                  : "bg-[#e8f0fe] text-[#1a56db] border-[#1a56db]/20 hover:bg-[#dbeafe]",
+              ].join(" ")}>
+              {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : isEnabled ? <CheckCircle2 className="h-3 w-3" /> : null}
+              {busy ? "Saving…" : isEnabled ? "Active" : "Enable"}
+            </button>
+            {detailRoute && (
+              <button onClick={() => router.push(detailRoute)}
+                className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg border border-[#e8eaed] text-[#5f6368] hover:bg-[#f1f3f4] transition-colors">
+                <ExternalLink className="h-3 w-3" /> Open
+              </button>
+            )}
+          </>
+        ) : detailRoute ? (
+          <button onClick={() => router.push(detailRoute)}
+            className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#e8f0fe] text-[#1a56db] border border-[#1a56db]/20 hover:bg-[#dbeafe] transition-colors">
+            <ExternalLink className="h-3 w-3" /> Connect
           </button>
         ) : (
           <button className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#f1f3f4] text-[#5f6368] border border-[#e8eaed] hover:bg-[#e8eaed] transition-colors">

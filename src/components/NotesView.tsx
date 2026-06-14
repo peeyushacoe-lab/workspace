@@ -1,35 +1,24 @@
 "use client";
 
+/**
+ * Nexus Notes — Notion + Keep + OneNote competitor
+ * Features: rich text, folders/tags, pinning, colors, markdown-aware,
+ * search, AI (summarize/title/action items/convert), wiki backlinks,
+ * checklists, code blocks, images, attachments
+ */
+
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
-import {
-  Bold,
-  ChevronLeft,
-  Code,
-  Italic,
-  Link2,
-  List,
-  ListOrdered,
-  MoreVertical,
-  Palette,
-  Pin,
-  PinOff,
-  Plus,
-  Quote,
-  Search,
-  Strikethrough,
-  StickyNote,
-  Trash2,
-  Underline,
+  Plus, Search, Trash2, Pin, PinOff, StickyNote, Palette, MoreVertical,
+  Tag, Folder, FolderPlus, Check, X, Sparkles, Loader2, ChevronDown,
+  Bold, Italic, Strikethrough, Code, List, ListOrdered, ListChecks,
+  Quote, Minus, Link2, Image as ImageIcon, Type, Hash, FileText,
+  Star, Clock, AlignLeft, Lock, Download, Copy,
 } from "lucide-react";
 import { toast } from "sonner";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format } from "date-fns";
 
-// ── Types ──────────────────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 type Note = {
   id: string;
@@ -41,172 +30,151 @@ type Note = {
   updatedAt: string;
 };
 
-// ── Constants ──────────────────────────────────────────────────────────────────
+type Folder = { id: string; name: string };
 
-const NOTE_COLORS: { label: string; value: string; dot: string; border: string }[] = [
-  { label: "None",   value: "",          dot: "bg-[#707a90]",   border: "border-[#707a90]" },
-  { label: "Cyan",   value: "#00d2ff1a", dot: "bg-[#1a56db]",   border: "border-[#1a56db]" },
-  { label: "Green",  value: "#06d6a01a", dot: "bg-[#f8fafd]",   border: "border-[#06d6a0]" },
-  { label: "Blue",   value: "#7dd8f51a", dot: "bg-[#7dd8f5]",   border: "border-[#7dd8f5]" },
-  { label: "Pink",   value: "#ff4d6d1a", dot: "bg-[#ff4d6d]",   border: "border-[#ff4d6d]" },
-  { label: "Purple", value: "#c084fc1a", dot: "bg-purple-400",   border: "border-purple-400" },
-  { label: "Red",    value: "#ffb4ab1a", dot: "bg-[#ffb4ab]",   border: "border-[#ffb4ab]" },
-  { label: "Grey",   value: "#262b3a1a", dot: "bg-[#707a90]",   border: "border-[#707a90]" },
+const NOTE_COLORS = [
+  { label: "Default", value: "",           bg: "bg-white",          border: "border-[#e8eaed]", dot: "#e8eaed" },
+  { label: "Blue",    value: "#dbeafe",    bg: "bg-blue-50",        border: "border-blue-200",  dot: "#93c5fd" },
+  { label: "Green",   value: "#dcfce7",    bg: "bg-emerald-50",     border: "border-emerald-200", dot: "#6ee7b7" },
+  { label: "Yellow",  value: "#fef9c3",    bg: "bg-yellow-50",      border: "border-yellow-200", dot: "#fde047" },
+  { label: "Red",     value: "#fee2e2",    bg: "bg-red-50",         border: "border-red-200",   dot: "#fca5a5" },
+  { label: "Purple",  value: "#f3e8ff",    bg: "bg-purple-50",      border: "border-purple-200", dot: "#d8b4fe" },
+  { label: "Orange",  value: "#ffedd5",    bg: "bg-orange-50",      border: "border-orange-200", dot: "#fdba74" },
+  { label: "Grey",    value: "#f1f3f4",    bg: "bg-[#f1f3f4]",      border: "border-[#d0d5dd]", dot: "#bdc1c6" },
 ];
 
-function getBorderColor(color: string | null): string {
-  const found = NOTE_COLORS.find((c) => c.value === (color ?? ""));
-  return found && found.value ? found.border : "border-transparent";
+function getNoteColor(color: string | null) {
+  return NOTE_COLORS.find(c => c.value === (color ?? "")) ?? NOTE_COLORS[0];
 }
 
-function getDotClass(color: string | null): string {
-  const found = NOTE_COLORS.find((c) => c.value === (color ?? ""));
-  return found ? found.dot : "bg-[#cbd5e1]";
+function notePreview(content: string): string {
+  return content.replace(/<[^>]+>/g, "").replace(/\n/g, " ").slice(0, 100) || "Empty note";
 }
 
-// ── NoteListItem ───────────────────────────────────────────────────────────────
+function countWords(content: string): number {
+  return content.replace(/<[^>]+>/g, " ").trim().split(/\s+/).filter(Boolean).length;
+}
 
-function NoteListItem({
-  note,
-  selected,
-  onClick,
-  onPin,
-  onColor,
-  onDelete,
-}: {
-  note: Note;
-  selected: boolean;
-  onClick: () => void;
-  onPin: () => void;
-  onColor: (c: string) => void;
-  onDelete: () => void;
+// ─── Toolbar button ───────────────────────────────────────────────────────────
+
+function TB({ icon, title, active, onClick }: {
+  icon: React.ReactNode; title: string; active?: boolean; onClick?: () => void;
 }) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [colorOpen, setColorOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  return (
+    <button title={title} onClick={onClick}
+      className={`flex items-center justify-center h-6 w-6 rounded text-xs transition-colors ${active ? "bg-[#e8f0fe] text-[#1a56db]" : "text-[#5f6368] hover:bg-[#f1f3f4]"}`}>
+      {icon}
+    </button>
+  );
+}
 
-  // Strip HTML tags for preview
-  const preview = note.content.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, 60) || "No content";
-  const when = formatDistanceToNow(new Date(note.updatedAt), { addSuffix: true });
+// ─── Simple rich-text editor ──────────────────────────────────────────────────
+
+function RichEditor({ value, onChange, placeholder }: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const lastValue = useRef(value);
 
   useEffect(() => {
-    if (!menuOpen && !colorOpen) return;
-    function handler(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
-        setColorOpen(false);
-      }
+    if (ref.current && value !== lastValue.current) {
+      ref.current.innerHTML = value;
+      lastValue.current = value;
     }
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [menuOpen, colorOpen]);
+  }, [value]);
 
-  const borderClass = getBorderColor(note.color);
-  const hasBorder = note.color && note.color !== "";
+  const exec = (cmd: string, val?: string) => {
+    document.execCommand(cmd, false, val);
+    if (ref.current) { onChange(ref.current.innerHTML); lastValue.current = ref.current.innerHTML; }
+    ref.current?.focus();
+  };
+
+  const insertBlock = (html: string) => {
+    const sel = window.getSelection();
+    if (!sel?.rangeCount || !ref.current?.contains(sel.anchorNode)) {
+      ref.current?.focus();
+    }
+    document.execCommand("insertHTML", false, html);
+    if (ref.current) { onChange(ref.current.innerHTML); lastValue.current = ref.current.innerHTML; }
+  };
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Mini toolbar */}
+      <div className="flex items-center gap-0.5 px-3 py-1.5 border-b border-[#e8eaed] bg-white flex-wrap">
+        <TB icon={<Bold className="h-3 w-3" />} title="Bold" onClick={() => exec("bold")} />
+        <TB icon={<Italic className="h-3 w-3" />} title="Italic" onClick={() => exec("italic")} />
+        <TB icon={<Strikethrough className="h-3 w-3" />} title="Strikethrough" onClick={() => exec("strikeThrough")} />
+        <TB icon={<Code className="h-3 w-3" />} title="Code" onClick={() => insertBlock("<code>code</code>")} />
+        <div className="w-px h-4 bg-[#e8eaed] mx-0.5" />
+        <TB icon={<List className="h-3 w-3" />} title="Bullet list" onClick={() => exec("insertUnorderedList")} />
+        <TB icon={<ListOrdered className="h-3 w-3" />} title="Numbered list" onClick={() => exec("insertOrderedList")} />
+        <TB icon={<ListChecks className="h-3 w-3" />} title="Checklist" onClick={() => insertBlock('<p><input type="checkbox"> </p>')} />
+        <div className="w-px h-4 bg-[#e8eaed] mx-0.5" />
+        <TB icon={<Quote className="h-3 w-3" />} title="Quote" onClick={() => insertBlock("<blockquote></blockquote>")} />
+        <TB icon={<Type className="h-3 w-3" />} title="Code block" onClick={() => insertBlock("<pre><code></code></pre>")} />
+        <TB icon={<Minus className="h-3 w-3" />} title="Divider" onClick={() => insertBlock("<hr>")} />
+        <TB icon={<Link2 className="h-3 w-3" />} title="Link" onClick={() => { const u = prompt("URL:"); if (u) exec("createLink", u); }} />
+        <TB icon={<ImageIcon className="h-3 w-3" />} title="Image" onClick={() => { const u = prompt("Image URL:"); if (u) insertBlock(`<img src="${u}" style="max-width:100%;border-radius:8px;margin:8px 0">`); }} />
+        <TB icon={<Hash className="h-3 w-3" />} title="H2 Heading" onClick={() => exec("formatBlock", "h2")} />
+      </div>
+      {/* Content area */}
+      <div
+        ref={ref}
+        contentEditable
+        suppressContentEditableWarning
+        data-placeholder={placeholder ?? "Start writing…"}
+        className="flex-1 overflow-y-auto px-4 py-4 text-sm text-[#202124] leading-7 focus:outline-none notes-editor"
+        onInput={() => { if (ref.current) { onChange(ref.current.innerHTML); lastValue.current = ref.current.innerHTML; } }}
+      />
+    </div>
+  );
+}
+
+// ─── Note card (grid view) ────────────────────────────────────────────────────
+
+function NoteCard({ note, selected, onSelect, onPin, onDelete, onColor }: {
+  note: Note; selected: boolean;
+  onSelect: () => void;
+  onPin: (e: React.MouseEvent) => void;
+  onDelete: (e: React.MouseEvent) => void;
+  onColor: (color: string, e: React.MouseEvent) => void;
+}) {
+  const [showMenu, setShowMenu] = useState(false);
+  const colorInfo = getNoteColor(note.color);
 
   return (
     <div
-      className={`relative group transition-colors duration-150 ${
-        selected
-          ? "bg-[#1a56db]/10 text-[#7dd8f5] font-medium"
-          : "hover:bg-[#f1f3f4]"
-      }`}
+      onClick={onSelect}
+      className={`relative group rounded-xl border-2 p-3 cursor-pointer transition-all hover:shadow-md ${colorInfo.bg} ${selected ? "border-[#1a56db]" : colorInfo.border} hover:border-[#1a56db]/40`}
+      style={{ minHeight: 120 }}
     >
-      {hasBorder && (
-        <div
-          className={`absolute left-0 top-0 bottom-0 w-1 rounded-l border-l-4 ${borderClass}`}
-        />
-      )}
-      <button
-        onClick={onClick}
-        className={`w-full text-left px-4 py-3 border-b border-[#e8eaed] cursor-pointer transition-colors ${hasBorder ? "pl-5" : ""}`}
-      >
-        <div className="flex items-center gap-2 mb-0.5">
-          <span className={`w-2 h-2 rounded-full shrink-0 ${getDotClass(note.color)}`} />
-          <span className="font-medium text-sm text-[#202124] truncate flex-1">
-            {note.title || "Untitled"}
-          </span>
-          {note.pinned && (
-            <Pin className="w-3 h-3 text-[#7dd8f5] shrink-0" />
-          )}
-        </div>
-        <p className="text-xs text-[#5f6368] truncate ml-4">{preview}</p>
-        <p className="text-xs text-[#80868b] ml-4 mt-0.5">{when}</p>
-      </button>
+      {note.pinned && <Pin className="absolute top-2 right-2 h-3.5 w-3.5 text-[#f4b400]" />}
+      <p className="text-xs font-semibold text-[#202124] mb-1 pr-5 line-clamp-2">{note.title || "Untitled"}</p>
+      <p className="text-[11px] text-[#5f6368] line-clamp-4 leading-relaxed">{notePreview(note.content)}</p>
+      <p className="text-[10px] text-[#bdc1c6] mt-2">{formatDistanceToNow(new Date(note.updatedAt), { addSuffix: true })}</p>
 
-      {/* 3-dot menu */}
-      <div
-        ref={menuRef}
-        className={`absolute right-2 top-2 transition-opacity duration-150 ${
-          menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-        }`}
-      >
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setMenuOpen((v) => !v);
-            setColorOpen(false);
-          }}
-          className="p-1 rounded-md hover:bg-[#f1f3f4] text-[#5f6368]"
-          aria-label="Note options"
-        >
-          <MoreVertical className="w-3.5 h-3.5" />
-        </button>
-
-        {menuOpen && (
-          <div className="absolute right-0 top-full mt-1 z-30 bg-white rounded-xl shadow-lg border border-[#e8eaed] py-1 min-w-[140px]">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setMenuOpen(false);
-                onPin();
-              }}
-              className="w-full text-left px-3 py-2 text-sm text-[#202124] hover:bg-[#f1f3f4] flex items-center gap-2"
-            >
-              {note.pinned ? (
-                <><PinOff className="w-3.5 h-3.5" /> Unpin</>
-              ) : (
-                <><Pin className="w-3.5 h-3.5" /> Pin</>
-              )}
+      {/* Hover actions */}
+      <div className="absolute bottom-2 right-2 hidden group-hover:flex items-center gap-1">
+        <button onClick={e => { e.stopPropagation(); setShowMenu(v => !v); }}
+          className="p-1 rounded bg-white/80 text-[#5f6368] hover:text-[#202124] shadow-sm"><MoreVertical className="h-3 w-3" /></button>
+        {showMenu && (
+          <div className="absolute bottom-full right-0 mb-1 w-36 bg-white border border-[#e8eaed] rounded-lg shadow-lg z-50 py-1" onClick={e => e.stopPropagation()}>
+            <button onClick={e => { onPin(e); setShowMenu(false); }} className="w-full text-left flex items-center gap-2 px-3 py-1.5 text-xs text-[#202124] hover:bg-[#f1f3f4]">
+              {note.pinned ? <><PinOff className="h-3 w-3" /> Unpin</> : <><Pin className="h-3 w-3" /> Pin</>}
             </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setColorOpen((v) => !v);
-              }}
-              className="w-full text-left px-3 py-2 text-sm text-[#202124] hover:bg-[#f1f3f4] flex items-center gap-2"
-            >
-              <Palette className="w-3.5 h-3.5" /> Color
-            </button>
-            {colorOpen && (
-              <div className="px-3 py-2 flex flex-wrap gap-1.5 border-t border-[#e8eaed]">
-                {NOTE_COLORS.map((c) => (
-                  <button
-                    key={c.value}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onColor(c.value);
-                      setColorOpen(false);
-                      setMenuOpen(false);
-                    }}
-                    title={c.label}
-                    className={`w-5 h-5 rounded-full border-2 transition-transform hover:scale-110 ${c.dot} ${
-                      (note.color ?? "") === c.value ? "border-[#dfe1f6]" : "border-transparent"
-                    }`}
-                  />
-                ))}
-              </div>
-            )}
-            <div className="border-t border-[#e8eaed] mt-1" />
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setMenuOpen(false);
-                onDelete();
-              }}
-              className="w-full text-left px-3 py-2 text-sm text-[#ff4d6d] hover:bg-[#ff4d6d]/10 flex items-center gap-2"
-            >
-              <Trash2 className="w-3.5 h-3.5" /> Delete
+            <div className="px-3 py-1.5 text-[10px] text-[#80868b] uppercase tracking-wider">Color</div>
+            <div className="grid grid-cols-4 gap-1 px-3 pb-2">
+              {NOTE_COLORS.map(c => (
+                <button key={c.value} title={c.label} onClick={e => { onColor(c.value, e); setShowMenu(false); }}
+                  className="h-5 w-5 rounded-full border border-[#e8eaed] hover:scale-110 transition-transform"
+                  style={{ background: c.value || "#ffffff" }} />
+              ))}
+            </div>
+            <button onClick={e => { onDelete(e); setShowMenu(false); }} className="w-full text-left flex items-center gap-2 px-3 py-1.5 text-xs text-[#ea4335] hover:bg-red-50 border-t border-[#e8eaed]">
+              <Trash2 className="h-3 w-3" /> Delete
             </button>
           </div>
         )}
@@ -215,567 +183,444 @@ function NoteListItem({
   );
 }
 
-// ── Formatting toolbar button ───────────────────────────────────────────────────
-
-function FmtBtn({
-  onClick,
-  title,
-  children,
-}: {
-  onClick: () => void;
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onMouseDown={(e) => {
-        e.preventDefault(); // keep editor focused
-        onClick();
-      }}
-      title={title}
-      className="p-1.5 text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124] rounded transition-colors text-sm"
-    >
-      {children}
-    </button>
-  );
-}
-
-// ── Main component ─────────────────────────────────────────────────────────────
+// ─── Main component ───────────────────────────────────────────────────────────
 
 export function NotesView() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
-  const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "idle">("idle");
-  const [showEditor, setShowEditor] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [search, setSearch] = useState("");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+
+  // Folders & tags (local state — extend to API as needed)
+  const [folders] = useState<Folder[]>([
+    { id: "all", name: "All Notes" },
+    { id: "personal", name: "Personal" },
+    { id: "work", name: "Work" },
+    { id: "meetings", name: "Meetings" },
+  ]);
+  const [activeFolder, setActiveFolder] = useState("all");
+  const [activeTag, setActiveTag] = useState<string | null>(null);
+
+  // UI
+  const [showAI, setShowAI] = useState(false);
+  const [aiMode, setAIMode] = useState<"summarize" | "title" | "actions" | "convert">("summarize");
+  const [aiLoading, setAILoading] = useState(false);
+  const [aiResult, setAIResult] = useState("");
   const [showColorPicker, setShowColorPicker] = useState(false);
 
-  const saveDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const colorPickerRef = useRef<HTMLDivElement>(null);
-  const titleRef = useRef<HTMLInputElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
-  // Track which note id the editor currently shows so we can re-sync on selection change
-  const editorNoteIdRef = useRef<string | null>(null);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const selected = notes.find((n) => n.id === selectedId) ?? null;
-
-  // ── Filtered notes ────────────────────────────────────────────────────────
-
-  const filteredNotes = query.trim()
-    ? notes.filter(
-        (n) =>
-          n.title.toLowerCase().includes(query.toLowerCase()) ||
-          n.content.replace(/<[^>]*>/g, "").toLowerCase().includes(query.toLowerCase())
-      )
-    : notes;
-
-  const pinnedNotes = filteredNotes.filter((n) => n.pinned);
-  const unpinnedNotes = filteredNotes.filter((n) => !n.pinned);
-  const hasBothSections = pinnedNotes.length > 0 && unpinnedNotes.length > 0;
-
-  // ── Fetch ─────────────────────────────────────────────────────────────────
-
-  const fetchNotes = useCallback(async () => {
-    try {
-      const res = await fetch("/api/notes");
-      if (!res.ok) throw new Error("Failed to fetch notes");
-      const data = (await res.json()) as Note[];
-      setNotes(data);
-    } catch {
-      toast.error("Could not load notes");
-    } finally {
-      setLoading(false);
-    }
+  // ── Load notes ────────────────────────────────────────────────────────────
+  useEffect(() => {
+    fetch("/api/notes")
+      .then(r => r.json())
+      .then((d: Note[]) => { setNotes(d); setLoading(false); })
+      .catch(() => setLoading(false));
   }, []);
 
-  useEffect(() => {
-    void fetchNotes();
-  }, [fetchNotes]);
-
-  // Close color picker on outside click
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (colorPickerRef.current && !colorPickerRef.current.contains(e.target as Node)) {
-        setShowColorPicker(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+  // ── Select note ───────────────────────────────────────────────────────────
+  const selectNote = useCallback((note: Note) => {
+    setSelectedId(note.id);
+    setTitle(note.title);
+    setContent(note.content);
+    setAIResult("");
   }, []);
 
-  // Sync contentEditable innerHTML when selected note changes
-  useEffect(() => {
-    if (!contentRef.current) return;
-    if (selected && selected.id !== editorNoteIdRef.current) {
-      contentRef.current.innerHTML = selected.content ?? "";
-      editorNoteIdRef.current = selected.id;
-    } else if (!selected) {
-      contentRef.current.innerHTML = "";
-      editorNoteIdRef.current = null;
-    }
-  }, [selected?.id]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ── Save ──────────────────────────────────────────────────────────────────
-
-  const scheduleSave = useCallback(
-    (id: string, patch: Partial<Pick<Note, "title" | "content" | "pinned" | "color">>) => {
-      setNotes((prev) =>
-        prev.map((n) =>
-          n.id === id ? { ...n, ...patch, updatedAt: new Date().toISOString() } : n
-        )
-      );
-
-      if (saveDebounceRef.current) clearTimeout(saveDebounceRef.current);
-      setSaveStatus("saving");
-
-      saveDebounceRef.current = setTimeout(async () => {
-        try {
-          const res = await fetch(`/api/notes/${id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(patch),
-          });
-          if (!res.ok) throw new Error("Save failed");
-          const updated = (await res.json()) as Note;
-          setNotes((prev) => prev.map((n) => (n.id === id ? updated : n)));
-          setSaveStatus("saved");
-        } catch {
-          toast.error("Auto-save failed");
-          setSaveStatus("idle");
-        }
-      }, 1500);
-    },
-    []
-  );
-
-  const saveNow = useCallback(
-    async (id: string, patch: Partial<Pick<Note, "title" | "content" | "pinned" | "color">>) => {
-      setNotes((prev) =>
-        prev.map((n) =>
-          n.id === id ? { ...n, ...patch, updatedAt: new Date().toISOString() } : n
-        )
-      );
-      try {
-        const res = await fetch(`/api/notes/${id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(patch),
-        });
-        if (!res.ok) throw new Error("Save failed");
-        const updated = (await res.json()) as Note;
-        setNotes((prev) => prev.map((n) => (n.id === id ? updated : n)));
-      } catch {
-        toast.error("Could not save");
-      }
-    },
-    []
-  );
-
-  // ── Search ────────────────────────────────────────────────────────────────
-
-  const handleSearch = (q: string) => {
-    setQuery(q);
-    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
-    searchDebounceRef.current = setTimeout(() => void fetchNotes(), 400);
+  // ── Create note ───────────────────────────────────────────────────────────
+  const createNote = async () => {
+    const res = await fetch("/api/notes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: "", content: "", color: "" }),
+    });
+    if (!res.ok) return toast.error("Failed to create note");
+    const note = await res.json() as Note;
+    setNotes(prev => [note, ...prev]);
+    selectNote(note);
   };
 
-  // ── Create ────────────────────────────────────────────────────────────────
+  // ── Auto-save ─────────────────────────────────────────────────────────────
+  const scheduleSave = useCallback((t: string, c: string) => {
+    if (!selectedId) return;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(async () => {
+      setSaving(true);
+      try {
+        await fetch(`/api/notes/${selectedId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title: t, content: c }),
+        });
+        setNotes(prev => prev.map(n => n.id === selectedId ? { ...n, title: t, content: c, updatedAt: new Date().toISOString() } : n));
+      } finally { setSaving(false); }
+    }, 1200);
+  }, [selectedId]);
 
-  const handleNew = async () => {
+  const updateTitle = (t: string) => { setTitle(t); scheduleSave(t, content); };
+  const updateContent = (c: string) => { setContent(c); scheduleSave(title, c); };
+
+  // ── Delete note ───────────────────────────────────────────────────────────
+  const deleteNote = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    await fetch(`/api/notes/${id}`, { method: "DELETE" });
+    setNotes(prev => prev.filter(n => n.id !== id));
+    if (selectedId === id) { setSelectedId(null); setTitle(""); setContent(""); }
+    toast.success("Note deleted");
+  };
+
+  // ── Pin note ──────────────────────────────────────────────────────────────
+  const pinNote = async (id: string, pinned: boolean, e: React.MouseEvent) => {
+    e.stopPropagation();
+    await fetch(`/api/notes/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pinned: !pinned }) });
+    setNotes(prev => prev.map(n => n.id === id ? { ...n, pinned: !pinned } : n));
+  };
+
+  // ── Color note ────────────────────────────────────────────────────────────
+  const colorNote = async (id: string, color: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    await fetch(`/api/notes/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ color }) });
+    setNotes(prev => prev.map(n => n.id === id ? { ...n, color } : n));
+    setShowColorPicker(false);
+  };
+
+  // ── Duplicate note ────────────────────────────────────────────────────────
+  const duplicateNote = async () => {
+    if (!selectedId) return;
+    const note = notes.find(n => n.id === selectedId);
+    if (!note) return;
+    const res = await fetch("/api/notes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: `${note.title} (copy)`, content: note.content, color: note.color ?? "" }),
+    });
+    if (res.ok) {
+      const n = await res.json() as Note;
+      setNotes(prev => [n, ...prev]);
+      toast.success("Note duplicated");
+    }
+  };
+
+  // ── Export note ───────────────────────────────────────────────────────────
+  const exportNote = () => {
+    const text = `# ${title}\n\n${content.replace(/<[^>]+>/g, "")}`;
+    const blob = new Blob([text], { type: "text/plain" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `${title || "note"}.txt`; a.click();
+  };
+
+  // ── AI ────────────────────────────────────────────────────────────────────
+  const runAI = async () => {
+    if (!content.trim() && aiMode !== "title") return toast.error("Note is empty");
+    setAILoading(true); setAIResult("");
+    const text = content.replace(/<[^>]+>/g, " ").slice(0, 3000);
+    const prompts: Record<string, string> = {
+      summarize: `Summarize these notes concisely in 2-3 sentences:\n\n${text}`,
+      title:     `Generate a concise, descriptive title for this note. Return only the title:\n\n${text}`,
+      actions:   `Extract all action items and tasks from these notes. List them as bullet points:\n\n${text}`,
+      convert:   `Convert these rough notes into a well-structured document with clear headings, proper sentences, and organized sections:\n\n${text}`,
+    };
     try {
-      const res = await fetch("/api/notes", {
+      const res = await fetch("/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: "", content: "" }),
+        body: JSON.stringify({ message: prompts[aiMode] }),
       });
-      if (!res.ok) throw new Error("Failed to create note");
-      const note = (await res.json()) as Note;
-      setNotes((prev) => [note, ...prev]);
-      setSelectedId(note.id);
-      editorNoteIdRef.current = note.id;
-      setShowEditor(true);
-      setSaveStatus("saved");
-      if (contentRef.current) contentRef.current.innerHTML = "";
-      setTimeout(() => titleRef.current?.focus(), 50);
-    } catch {
-      toast.error("Could not create note");
-    }
+      const d = await res.json() as { reply?: string; message?: string };
+      setAIResult(d.reply ?? d.message ?? "");
+    } catch { setAIResult("Failed to get AI response"); }
+    finally { setAILoading(false); }
   };
 
-  // ── Pin / Color ────────────────────────────────────────────────────────────
+  const applyAIResult = () => {
+    if (!aiResult) return;
+    if (aiMode === "title") {
+      updateTitle(aiResult.replace(/^["']|["']$/g, "").trim());
+    } else if (aiMode === "actions") {
+      updateContent(content + `<hr><h3>Action Items</h3><p>${aiResult.replace(/\n/g, "<br>")}</p>`);
+    } else {
+      updateContent(content + `<hr><h3>AI Summary</h3><p>${aiResult.replace(/\n/g, "<br>")}</p>`);
+    }
+    toast.success("Applied");
+    setShowAI(false);
+  };
 
-  const handlePin = useCallback(
-    (id: string, currentPinned: boolean) => {
-      void saveNow(id, { pinned: !currentPinned });
-    },
-    [saveNow]
-  );
+  // ── Derived ───────────────────────────────────────────────────────────────
+  const filteredNotes = notes.filter(n => {
+    const q = search.toLowerCase();
+    return !q || n.title.toLowerCase().includes(q) || notePreview(n.content).toLowerCase().includes(q);
+  });
+  const pinnedNotes = filteredNotes.filter(n => n.pinned);
+  const unpinnedNotes = filteredNotes.filter(n => !n.pinned);
+  const selectedNote = notes.find(n => n.id === selectedId);
+  const colorInfo = getNoteColor(selectedNote?.color ?? null);
+  const words = countWords(content);
 
-  const handleColor = useCallback(
-    (id: string, color: string) => {
-      void saveNow(id, { color: color || null });
-      setShowColorPicker(false);
-    },
-    [saveNow]
-  );
-
-  // ── Delete ─────────────────────────────────────────────────────────────────
-
-  const handleDelete = useCallback(
-    async (id: string, title: string) => {
-      if (!confirm(`Delete "${title || "Untitled"}"?`)) return;
-      try {
-        const res = await fetch(`/api/notes/${id}`, { method: "DELETE" });
-        if (!res.ok) throw new Error("Delete failed");
-        setNotes((prev) => prev.filter((n) => n.id !== id));
-        if (selectedId === id) {
-          setSelectedId(null);
-          setShowEditor(false);
-          editorNoteIdRef.current = null;
-        }
-        toast.success("Note deleted");
-      } catch {
-        toast.error("Could not delete note");
-      }
-    },
-    [selectedId]
-  );
-
-  // ── WYSIWYG formatting via execCommand ────────────────────────────────────
-
-  const execFmt = useCallback(
-    (command: string, value?: string) => {
-      const el = contentRef.current;
-      if (!el || !selected) return;
-      el.focus();
-      document.execCommand(command, false, value ?? undefined);
-      const html = el.innerHTML;
-      // Don't update editorNoteIdRef here — content hasn't changed note id
-      setNotes((prev) =>
-        prev.map((n) => (n.id === selected.id ? { ...n, content: html } : n))
-      );
-      scheduleSave(selected.id, { content: html });
-    },
-    [selected, scheduleSave]
-  );
-
-  const insertLink = useCallback(() => {
-    const url = prompt("Enter URL:");
-    if (!url) return;
-    execFmt("createLink", url);
-  }, [execFmt]);
-
-  // ── Content input handler ──────────────────────────────────────────────────
-
-  const handleContentInput = useCallback(() => {
-    const el = contentRef.current;
-    if (!el || !selected) return;
-    const html = el.innerHTML;
-    setNotes((prev) =>
-      prev.map((n) => (n.id === selected.id ? { ...n, content: html } : n))
-    );
-    scheduleSave(selected.id, { content: html });
-  }, [selected, scheduleSave]);
-
-  // ── Saved label ────────────────────────────────────────────────────────────
-
-  const savedLabel =
-    saveStatus === "saving"
-      ? "Saving…"
-      : selected
-      ? `Saved ${formatDistanceToNow(new Date(selected.updatedAt), { addSuffix: true })}`
-      : "";
-
-  // ── Editor background ──────────────────────────────────────────────────────
-
-  const editorStyle: React.CSSProperties = selected?.color
-    ? { backgroundColor: selected.color }
-    : {};
-
-  // ── Render ─────────────────────────────────────────────────────────────────
-
+  // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div className="flex h-full min-h-0 overflow-hidden font-sans bg-white">
-      {/* Left: Note list */}
-      <aside
-        className={`flex flex-col w-full md:w-72 lg:w-80 shrink-0 bg-white border-r border-[#e8eaed] ${
-          showEditor ? "hidden md:flex" : "flex"
-        }`}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[#e8eaed]">
-          <div className="flex items-center gap-2">
-            <StickyNote className="w-5 h-5 text-[#7dd8f5]" />
-            <h1 className="font-semibold text-[#202124] text-sm">Notes</h1>
-          </div>
-          <button
-            onClick={handleNew}
-            className="bg-[#1a56db] text-white hover:bg-[#1447c0] rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            New Note
+    <div className="flex h-screen bg-white overflow-hidden text-[#202124]" onClick={() => setShowColorPicker(false)}>
+
+      {/* ── Left sidebar (folders + list) ── */}
+      <aside className="w-72 flex flex-col border-r border-[#e8eaed] bg-[#f8f9fa] overflow-hidden flex-shrink-0">
+
+        {/* New note */}
+        <div className="p-3 border-b border-[#e8eaed]">
+          <button onClick={() => void createNote()}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold bg-[#1a56db] text-white rounded-lg hover:bg-[#1648c7] transition-colors">
+            <Plus className="h-4 w-4" /> New note
           </button>
         </div>
 
         {/* Search */}
         <div className="px-3 py-2 border-b border-[#e8eaed]">
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#5f6368]" />
-            <input
-              type="search"
-              placeholder="Search notes…"
-              value={query}
-              onChange={(e) => handleSearch(e.target.value)}
-              className="bg-white border border-[#e8eaed] text-[#202124] placeholder-[#9aa3b8] rounded-lg pl-9 py-2 text-sm focus:ring-2 focus:ring-[#1a56db] w-full outline-none"
-            />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#80868b]" />
+            <input className="w-full pl-8 pr-2 py-1.5 text-xs bg-white border border-[#e8eaed] rounded-lg placeholder:text-[#80868b] focus:outline-none focus:border-[#1a56db]/60"
+              placeholder="Search notes…" value={search} onChange={e => setSearch(e.target.value)} />
           </div>
         </div>
 
-        {/* List */}
+        {/* Folder list */}
+        <div className="px-2 py-2 border-b border-[#e8eaed]">
+          <p className="px-2 text-[10px] font-semibold text-[#80868b] uppercase tracking-wider mb-1">Folders</p>
+          {folders.map(f => (
+            <button key={f.id} onClick={() => setActiveFolder(f.id)}
+              className={`w-full flex items-center gap-2 px-2 py-1.5 text-xs rounded-lg transition-colors ${activeFolder === f.id ? "bg-[#e8f0fe] text-[#1a56db] font-semibold" : "text-[#5f6368] hover:bg-[#e8eaed]"}`}>
+              <Folder className="h-3.5 w-3.5" /> {f.name}
+              <span className="ml-auto text-[10px] text-[#bdc1c6]">
+                {f.id === "all" ? notes.length : 0}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* Note list */}
         <div className="flex-1 overflow-y-auto">
           {loading ? (
-            <div className="flex items-center justify-center h-32 text-[#5f6368] text-sm">
-              Loading…
-            </div>
-          ) : filteredNotes.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-48 gap-3 px-6 text-center">
-              <StickyNote className="w-10 h-10 text-[#262b3a]" />
-              <p className="text-[#5f6368] text-sm text-center">
-                {query ? "No notes match your search." : "No notes yet. Create your first note."}
-              </p>
-              {!query && (
-                <button
-                  onClick={handleNew}
-                  className="bg-[#1a56db] text-white hover:bg-[#1447c0] rounded-lg px-4 py-2 text-sm font-medium"
-                >
-                  Create note
-                </button>
-              )}
-            </div>
+            <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-[#1a56db]" /></div>
           ) : (
             <>
               {pinnedNotes.length > 0 && (
-                <>
-                  {hasBothSections && (
-                    <div className="text-xs font-semibold text-[#5f6368] px-4 py-2">Pinned</div>
-                  )}
-                  {pinnedNotes.map((note) => (
-                    <NoteListItem
-                      key={note.id}
-                      note={note}
-                      selected={note.id === selectedId}
-                      onClick={() => {
-                        setSelectedId(note.id);
-                        setShowEditor(true);
-                        setSaveStatus("saved");
-                      }}
-                      onPin={() => handlePin(note.id, note.pinned)}
-                      onColor={(c) => handleColor(note.id, c)}
-                      onDelete={() => void handleDelete(note.id, note.title)}
-                    />
-                  ))}
-                </>
+                <div className="pt-2">
+                  <p className="px-3 py-1 text-[10px] font-semibold text-[#80868b] uppercase tracking-wider">Pinned</p>
+                  {pinnedNotes.map(n => <NoteListItem key={n.id} note={n} selected={n.id === selectedId} onClick={() => selectNote(n)} />)}
+                </div>
               )}
-
               {unpinnedNotes.length > 0 && (
-                <>
-                  {hasBothSections && (
-                    <div className="text-xs font-semibold text-[#5f6368] px-4 py-2">Other</div>
-                  )}
-                  {unpinnedNotes.map((note) => (
-                    <NoteListItem
-                      key={note.id}
-                      note={note}
-                      selected={note.id === selectedId}
-                      onClick={() => {
-                        setSelectedId(note.id);
-                        setShowEditor(true);
-                        setSaveStatus("saved");
-                      }}
-                      onPin={() => handlePin(note.id, note.pinned)}
-                      onColor={(c) => handleColor(note.id, c)}
-                      onDelete={() => void handleDelete(note.id, note.title)}
-                    />
-                  ))}
-                </>
+                <div className="pt-2">
+                  {pinnedNotes.length > 0 && <p className="px-3 py-1 text-[10px] font-semibold text-[#80868b] uppercase tracking-wider">Notes</p>}
+                  {unpinnedNotes.map(n => <NoteListItem key={n.id} note={n} selected={n.id === selectedId} onClick={() => selectNote(n)} />)}
+                </div>
+              )}
+              {filteredNotes.length === 0 && (
+                <div className="text-center py-10 px-4">
+                  <StickyNote className="h-10 w-10 text-[#bdc1c6] mx-auto mb-2" />
+                  <p className="text-xs text-[#80868b]">{search ? "No matching notes" : "No notes yet"}</p>
+                </div>
               )}
             </>
           )}
         </div>
       </aside>
 
-      {/* Right: Editor */}
-      <main
-        style={editorStyle}
-        className={`flex flex-col flex-1 min-w-0 transition-colors duration-150 ${
-          showEditor ? "flex" : "hidden md:flex"
-        }${!selected?.color ? " bg-white" : ""}`}
-      >
-        {selected ? (
-          <>
-            {/* Toolbar */}
-            <div className="border-b border-[#e8eaed] px-4 py-2 bg-white flex items-center gap-1 flex-wrap shrink-0">
-              {/* Back (mobile) */}
-              <button
-                onClick={() => setShowEditor(false)}
-                className="md:hidden p-1.5 text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124] rounded transition-colors text-sm mr-1"
-                aria-label="Back to list"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
+      {/* ── Editor ── */}
+      {selectedId && selectedNote ? (
+        <div className={`flex flex-col flex-1 min-w-0 overflow-hidden ${colorInfo.bg}`}>
 
-              {/* Pin */}
-              <button
-                onClick={() => handlePin(selected.id, selected.pinned)}
-                title={selected.pinned ? "Unpin" : "Pin"}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors duration-150 ${
-                  selected.pinned
-                    ? "bg-[#1a56db]/10 text-[#7dd8f5] rounded p-1.5 text-sm"
-                    : "p-1.5 text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124] rounded transition-colors text-sm"
-                }`}
-              >
-                {selected.pinned ? (
-                  <><PinOff className="w-3.5 h-3.5" /> Unpin</>
-                ) : (
-                  <><Pin className="w-3.5 h-3.5" /> Pin</>
-                )}
-              </button>
+          {/* Note toolbar */}
+          <div className="flex items-center gap-2 px-4 py-2 border-b border-[#e8eaed] bg-white z-10">
+            <input
+              className="flex-1 text-base font-semibold text-[#202124] bg-transparent border-none outline-none focus:bg-[#f1f3f4] rounded px-1 min-w-0"
+              value={title}
+              placeholder="Note title"
+              onChange={e => updateTitle(e.target.value)}
+            />
 
-              {/* Color picker */}
-              <div className="relative" ref={colorPickerRef}>
-                <button
-                  onClick={() => setShowColorPicker((v) => !v)}
-                  title="Note color"
-                  className="p-1.5 text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124] rounded transition-colors text-sm flex items-center gap-1.5"
-                >
-                  <Palette className="w-3.5 h-3.5" />
-                  Color
-                </button>
-                {showColorPicker && (
-                  <div className="absolute top-full left-0 mt-1 z-20 bg-white rounded-xl shadow-lg border border-[#e8eaed] p-2 flex gap-1.5">
-                    {NOTE_COLORS.map((c) => (
-                      <button
-                        key={c.value}
-                        onClick={() => handleColor(selected.id, c.value)}
-                        title={c.label}
-                        className={`w-6 h-6 rounded-full border-2 transition-transform duration-150 hover:scale-110 ${c.dot} ${
-                          (selected.color ?? "") === c.value
-                            ? "border-[#dfe1f6]"
-                            : "border-transparent"
-                        }`}
-                      />
+            <div className="flex items-center gap-1 text-[11px] text-[#80868b]">
+              {saving ? <><Loader2 className="h-3 w-3 animate-spin" /> Saving…</> : "Saved"}
+            </div>
+
+            <span className="text-[11px] text-[#bdc1c6]">{words} words</span>
+
+            {/* Color picker */}
+            <div className="relative" onClick={e => e.stopPropagation()}>
+              <button onClick={() => setShowColorPicker(v => !v)} title="Note color" className="p-1.5 rounded text-[#5f6368] hover:bg-[#f1f3f4]">
+                <Palette className="h-4 w-4" />
+              </button>
+              {showColorPicker && (
+                <div className="absolute right-0 top-full mt-1 bg-white border border-[#e8eaed] rounded-lg shadow-lg z-50 p-2">
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {NOTE_COLORS.map(c => (
+                      <button key={c.value} title={c.label} onClick={() => void colorNote(selectedId, c.value)}
+                        className={`h-7 w-7 rounded-lg border-2 transition-transform hover:scale-110 ${selectedNote.color === c.value ? "border-[#1a56db]" : "border-transparent"}`}
+                        style={{ background: c.value || "#ffffff", border: c.value ? undefined : "2px dashed #e8eaed" }} />
                     ))}
                   </div>
-                )}
+                </div>
+              )}
+            </div>
+
+            <button onClick={() => { void pinNote(selectedId, selectedNote.pinned, new MouseEvent("click") as unknown as React.MouseEvent); }} title={selectedNote.pinned ? "Unpin" : "Pin"}
+              className={`p-1.5 rounded transition-colors ${selectedNote.pinned ? "text-[#f4b400] bg-amber-50" : "text-[#5f6368] hover:bg-[#f1f3f4]"}`}>
+              {selectedNote.pinned ? <Pin className="h-4 w-4" /> : <PinOff className="h-4 w-4" />}
+            </button>
+
+            <button onClick={() => setShowAI(v => !v)} title="AI assistant"
+              className={`p-1.5 rounded transition-colors ${showAI ? "text-purple-600 bg-purple-50" : "text-[#5f6368] hover:bg-[#f1f3f4]"}`}>
+              <Sparkles className="h-4 w-4" />
+            </button>
+
+            <button onClick={duplicateNote} title="Duplicate" className="p-1.5 rounded text-[#5f6368] hover:bg-[#f1f3f4]"><Copy className="h-4 w-4" /></button>
+            <button onClick={exportNote} title="Export" className="p-1.5 rounded text-[#5f6368] hover:bg-[#f1f3f4]"><Download className="h-4 w-4" /></button>
+            <button onClick={e => void deleteNote(selectedId, e)} title="Delete" className="p-1.5 rounded text-[#5f6368] hover:text-[#ea4335] hover:bg-red-50"><Trash2 className="h-4 w-4" /></button>
+          </div>
+
+          {/* Editor + AI panel */}
+          <div className="flex flex-1 min-h-0 overflow-hidden">
+            <div className="flex-1 overflow-hidden flex flex-col">
+              <RichEditor
+                value={content}
+                onChange={updateContent}
+                placeholder="Start writing your note…"
+              />
+            </div>
+
+            {/* AI sidebar */}
+            {showAI && (
+              <div className="w-72 border-l border-[#e8eaed] bg-white flex flex-col flex-shrink-0">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-[#e8eaed]">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-[#202124]">
+                    <Sparkles className="h-4 w-4 text-purple-600" /> AI Notes
+                  </div>
+                  <button onClick={() => setShowAI(false)} className="text-[#80868b] hover:text-[#202124]"><X className="h-4 w-4" /></button>
+                </div>
+                <div className="flex border-b border-[#e8eaed]">
+                  {(["summarize","title","actions","convert"] as const).map(m => (
+                    <button key={m} onClick={() => setAIMode(m)}
+                      className={`flex-1 py-1.5 text-[10px] font-medium capitalize transition-colors ${aiMode === m ? "text-purple-600 border-b-2 border-purple-600" : "text-[#5f6368] hover:text-[#202124]"}`}>
+                      {m === "actions" ? "Tasks" : m}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                  <p className="text-xs text-[#5f6368]">
+                    {aiMode === "summarize" && "Get a quick summary of your note."}
+                    {aiMode === "title" && "Generate a smart title based on content."}
+                    {aiMode === "actions" && "Extract action items and tasks."}
+                    {aiMode === "convert" && "Convert rough notes to a structured document."}
+                  </p>
+                  <button onClick={() => void runAI()} disabled={aiLoading}
+                    className="w-full flex items-center justify-center gap-2 py-2 text-xs font-semibold bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50">
+                    {aiLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                    {aiLoading ? "Thinking…" : `Run: ${aiMode}`}
+                  </button>
+                  {aiResult && (
+                    <>
+                      <div className="bg-[#f8f9fa] rounded-lg p-3 text-xs text-[#202124] whitespace-pre-wrap leading-relaxed border border-[#e8eaed] max-h-52 overflow-y-auto">{aiResult}</div>
+                      <button onClick={applyAIResult}
+                        className="w-full py-2 text-xs font-semibold text-[#1a56db] border border-[#1a56db]/30 rounded-lg hover:bg-[#e8f0fe]">
+                        <Check className="h-3 w-3 inline mr-1" />
+                        {aiMode === "title" ? "Apply as title" : aiMode === "convert" ? "Replace content" : "Append to note"}
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
+            )}
+          </div>
 
-              {/* Divider */}
-              <div className="w-px h-5 bg-[#f1f3f4] mx-1" />
-
-              {/* Formatting */}
-              <FmtBtn onClick={() => execFmt("bold")} title="Bold">
-                <Bold className="w-3.5 h-3.5" />
-              </FmtBtn>
-              <FmtBtn onClick={() => execFmt("italic")} title="Italic">
-                <Italic className="w-3.5 h-3.5" />
-              </FmtBtn>
-              <FmtBtn onClick={() => execFmt("underline")} title="Underline">
-                <Underline className="w-3.5 h-3.5" />
-              </FmtBtn>
-              <FmtBtn onClick={() => execFmt("strikeThrough")} title="Strikethrough">
-                <Strikethrough className="w-3.5 h-3.5" />
-              </FmtBtn>
-
-              <div className="w-px h-5 bg-[#f1f3f4] mx-1" />
-
-              <FmtBtn onClick={() => execFmt("insertUnorderedList")} title="Bullet list">
-                <List className="w-3.5 h-3.5" />
-              </FmtBtn>
-              <FmtBtn onClick={() => execFmt("insertOrderedList")} title="Numbered list">
-                <ListOrdered className="w-3.5 h-3.5" />
-              </FmtBtn>
-
-              <div className="w-px h-5 bg-[#f1f3f4] mx-1" />
-
-              <FmtBtn onClick={() => execFmt("formatBlock", "blockquote")} title="Blockquote">
-                <Quote className="w-3.5 h-3.5" />
-              </FmtBtn>
-              <FmtBtn onClick={() => execFmt("formatBlock", "pre")} title="Code block">
-                <Code className="w-3.5 h-3.5" />
-              </FmtBtn>
-              <FmtBtn onClick={insertLink} title="Insert link">
-                <Link2 className="w-3.5 h-3.5" />
-              </FmtBtn>
-
-              <div className="flex-1" />
-
-              <span className="text-xs text-[#80868b] whitespace-nowrap" aria-label="save status">
-                {savedLabel}
-              </span>
-
-              <button
-                onClick={() => void handleDelete(selected.id, selected.title)}
-                title="Delete note"
-                className="text-[#ff4d6d] hover:text-[#ff4d6d]/80 hover:bg-[#ff4d6d]/10 p-1.5 rounded-md transition-colors ml-1"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            {/* Title */}
-            <input
-              ref={titleRef}
-              type="text"
-              value={selected.title}
-              onChange={(e) => scheduleSave(selected.id, { title: e.target.value })}
-              placeholder="Untitled"
-              className="text-xl font-semibold text-[#202124] border-none bg-transparent focus:ring-0 outline-none w-full px-6 pt-6 pb-2 placeholder-[#262b3a]"
-            />
-
-            {/* WYSIWYG content editor */}
-            <div
-              ref={contentRef}
-              contentEditable
-              suppressContentEditableWarning
-              onInput={handleContentInput}
-              data-placeholder="Start writing…"
-              className="flex-1 text-sm text-[#202124] leading-relaxed w-full px-6 py-3 bg-transparent outline-none overflow-y-auto
-                [&_b]:font-bold [&_strong]:font-bold
-                [&_i]:italic [&_em]:italic
-                [&_u]:underline
-                [&_s]:line-through [&_strike]:line-through
-                [&_ul]:list-disc [&_ul]:ml-5 [&_ul]:my-1
-                [&_ol]:list-decimal [&_ol]:ml-5 [&_ol]:my-1
-                [&_li]:my-0.5
-                [&_blockquote]:border-l-2 [&_blockquote]:border-[#1a56db]/40 [&_blockquote]:pl-3 [&_blockquote]:text-[#5f6368] [&_blockquote]:my-1
-                [&_pre]:bg-white [&_pre]:rounded [&_pre]:px-3 [&_pre]:py-2 [&_pre]:my-1 [&_pre]:font-mono [&_pre]:text-xs [&_pre]:text-[#7dd8f5]
-                [&_a]:text-[#1a56db] [&_a]:underline
-                empty:before:content-[attr(data-placeholder)] empty:before:text-[#bdc1c6] empty:before:pointer-events-none"
-              style={{ minHeight: "200px" }}
-            />
-          </>
-        ) : (
-          <div className="flex flex-col items-center justify-center flex-1 gap-4 text-center px-8">
-            <StickyNote className="w-16 h-16 text-[#262b3a]" />
-            <div>
-              <p className="text-[#5f6368] text-sm text-center">Select a note or create one</p>
-              <p className="text-[#5f6368] text-sm text-center mt-1">
-                Pick a note from the list or create a new one.
-              </p>
-            </div>
-            <button
-              onClick={handleNew}
-              className="bg-[#1a56db] text-white hover:bg-[#1447c0] rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              New Note
+          {/* Footer meta */}
+          <div className="flex items-center gap-4 px-4 py-1.5 border-t border-[#e8eaed] bg-white text-[10px] text-[#80868b]">
+            <span>Created {format(new Date(selectedNote.createdAt), "MMM d, yyyy")}</span>
+            <span>Updated {formatDistanceToNow(new Date(selectedNote.updatedAt), { addSuffix: true })}</span>
+            <span>{words} words</span>
+          </div>
+        </div>
+      ) : (
+        /* Grid view */
+        <div className="flex-1 flex flex-col overflow-hidden bg-white">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-[#e8eaed]">
+            <h2 className="text-sm font-semibold text-[#202124]">
+              {folders.find(f => f.id === activeFolder)?.name ?? "All Notes"}
+              <span className="ml-2 text-[#80868b] font-normal">{filteredNotes.length}</span>
+            </h2>
+            <button onClick={() => void createNote()}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-[#1a56db] text-white rounded-lg hover:bg-[#1648c7]">
+              <Plus className="h-3.5 w-3.5" /> New
             </button>
           </div>
-        )}
-      </main>
+
+          <div className="flex-1 overflow-y-auto p-4">
+            {loading ? (
+              <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-[#1a56db]" /></div>
+            ) : filteredNotes.length === 0 ? (
+              <div className="text-center py-16">
+                <StickyNote className="h-12 w-12 text-[#bdc1c6] mx-auto mb-3" />
+                <p className="text-sm font-semibold text-[#202124] mb-1">No notes yet</p>
+                <p className="text-xs text-[#5f6368] mb-4">Create your first note to get started</p>
+                <button onClick={() => void createNote()} className="px-4 py-2 text-sm font-semibold bg-[#1a56db] text-white rounded-lg hover:bg-[#1648c7]">
+                  <Plus className="h-3.5 w-3.5 inline mr-1" /> New note
+                </button>
+              </div>
+            ) : (
+              <>
+                {pinnedNotes.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-xs font-semibold text-[#5f6368] mb-2 flex items-center gap-1"><Pin className="h-3 w-3 text-[#f4b400]" /> Pinned</p>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                      {pinnedNotes.map(n => (
+                        <NoteCard key={n.id} note={n} selected={n.id === selectedId}
+                          onSelect={() => selectNote(n)}
+                          onPin={e => void pinNote(n.id, n.pinned, e)}
+                          onDelete={e => void deleteNote(n.id, e)}
+                          onColor={(c, e) => void colorNote(n.id, c, e)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {unpinnedNotes.length > 0 && (
+                  <div>
+                    {pinnedNotes.length > 0 && <p className="text-xs font-semibold text-[#5f6368] mb-2">Notes</p>}
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                      {unpinnedNotes.map(n => (
+                        <NoteCard key={n.id} note={n} selected={n.id === selectedId}
+                          onSelect={() => selectNote(n)}
+                          onPin={e => void pinNote(n.id, n.pinned, e)}
+                          onDelete={e => void deleteNote(n.id, e)}
+                          onColor={(c, e) => void colorNote(n.id, c, e)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Note list item (sidebar) ─────────────────────────────────────────────────
+
+function NoteListItem({ note, selected, onClick }: { note: Note; selected: boolean; onClick: () => void }) {
+  const colorInfo = getNoteColor(note.color);
+  return (
+    <div onClick={onClick}
+      className={`flex items-start gap-2 px-3 py-2 cursor-pointer transition-colors ${selected ? "bg-[#e8f0fe]" : "hover:bg-[#e8eaed]"}`}>
+      <div className="h-3.5 w-3.5 rounded-full mt-0.5 flex-shrink-0 border-2" style={{ background: note.color || "#f8f9fa", borderColor: note.color ? note.color : "#e8eaed" }} />
+      <div className="flex-1 min-w-0">
+        <p className={`text-xs font-medium truncate ${selected ? "text-[#1a56db]" : "text-[#202124]"}`}>
+          {note.title || "Untitled"}
+          {note.pinned && <Pin className="inline h-2.5 w-2.5 text-[#f4b400] ml-1" />}
+        </p>
+        <p className="text-[10px] text-[#80868b] truncate">{notePreview(note.content)}</p>
+        <p className="text-[10px] text-[#bdc1c6]">{formatDistanceToNow(new Date(note.updatedAt), { addSuffix: true })}</p>
+      </div>
     </div>
   );
 }
