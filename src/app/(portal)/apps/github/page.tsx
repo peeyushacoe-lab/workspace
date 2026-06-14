@@ -1,10 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import {
   GitBranch, GitPullRequest, AlertCircle, Star, Lock, Globe,
-  ChevronLeft, Loader2, ExternalLink, RefreshCw, LogOut,
+  Loader2, ExternalLink, RefreshCw, LogOut,
   CheckCircle2, Clock, Circle, X, Key,
 } from "lucide-react";
 import { PageHeader } from "@/components/Shell";
@@ -214,7 +213,6 @@ function IssueRow({ item, isPR }: { item: GHIssue; isPR: boolean }) {
 type Tab = "overview" | "repos" | "prs" | "issues";
 
 export default function GitHubPage() {
-  const router = useRouter();
   const [data, setData] = useState<GHData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -252,11 +250,7 @@ export default function GitHubPage() {
   if (!data?.connected) {
     return (
       <div className="min-h-screen bg-white">
-        <PageHeader
-          eyebrow={<button onClick={() => router.push("/apps")} className="flex items-center gap-1 text-xs text-[#5f6368] hover:text-[#202124]"><ChevronLeft className="w-3.5 h-3.5" /> Apps</button>}
-          title="GitHub"
-          description="Connect GitHub to track repos, PRs, and issues"
-        />
+        <PageHeader eyebrow="Apps › GitHub" title="GitHub" description="Connect GitHub to track repos, PRs, and issues" />
         <div className="px-6 max-w-6xl">
           {data?.error && (
             <div className="mb-4 flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
@@ -280,7 +274,7 @@ export default function GitHubPage() {
   return (
     <div className="min-h-screen bg-white text-[#202124]">
       <PageHeader
-        eyebrow={<button onClick={() => router.push("/apps")} className="flex items-center gap-1 text-xs text-[#5f6368] hover:text-[#202124]"><ChevronLeft className="w-3.5 h-3.5" /> Apps</button>}
+        eyebrow="Apps › GitHub"
         title="GitHub"
         description="Your repos, pull requests, and issues"
         action={

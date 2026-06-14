@@ -5,7 +5,6 @@
  * DELETE — disconnect
  */
 import { NextResponse, type NextRequest } from "next/server";
-import { cookies } from "next/headers";
 import { getCurrentUser } from "@/lib/session";
 import { redis } from "@/lib/redis";
 
@@ -52,8 +51,7 @@ const ISSUES_QUERY = `
 `;
 
 export async function GET() {
-  const cookieStore = await cookies();
-  const user = await getCurrentUser(cookieStore);
+  const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const token = await redis.get(tokenKey(user.id));
@@ -104,8 +102,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const cookieStore = await cookies();
-  const user = await getCurrentUser(cookieStore);
+  const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json() as { apiKey?: string };
@@ -126,8 +123,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE() {
-  const cookieStore = await cookies();
-  const user = await getCurrentUser(cookieStore);
+  const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   await redis.del(tokenKey(user.id));

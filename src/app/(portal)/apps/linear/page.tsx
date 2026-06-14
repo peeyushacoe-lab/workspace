@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import {
-  Layers, ChevronLeft, Loader2, ExternalLink, RefreshCw,
+  Layers, Loader2, ExternalLink, RefreshCw,
   LogOut, CheckCircle2, X, Key, Circle,
 } from "lucide-react";
 import { PageHeader } from "@/components/Shell";
@@ -194,7 +193,6 @@ function TeamCard({ team }: { team: LinearTeam }) {
 type Tab = "overview" | "issues" | "teams";
 
 export default function LinearPage() {
-  const router = useRouter();
   const [data, setData] = useState<LinearData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -229,7 +227,7 @@ export default function LinearPage() {
     return (
       <div className="min-h-screen bg-white">
         <PageHeader
-          eyebrow={<button onClick={() => router.push("/apps")} className="flex items-center gap-1 text-xs text-[#5f6368] hover:text-[#202124]"><ChevronLeft className="w-3.5 h-3.5" /> Apps</button>}
+          eyebrow="Apps › Linear"
           title="Linear"
           description="Connect Linear to track issues and projects"
         />
@@ -264,7 +262,7 @@ export default function LinearPage() {
   return (
     <div className="min-h-screen bg-white text-[#202124]">
       <PageHeader
-        eyebrow={<button onClick={() => router.push("/apps")} className="flex items-center gap-1 text-xs text-[#5f6368] hover:text-[#202124]"><ChevronLeft className="w-3.5 h-3.5" /> Apps</button>}
+        eyebrow="Apps › Linear"
         title="Linear"
         description="Your issues and team workspaces"
         action={

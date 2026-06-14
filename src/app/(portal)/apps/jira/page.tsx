@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import {
-  LayoutGrid, ChevronLeft, Loader2, ExternalLink, RefreshCw,
+  LayoutGrid, Loader2, ExternalLink, RefreshCw,
   LogOut, CheckCircle2, X, Key, Globe, Folder, AlertCircle,
 } from "lucide-react";
 import { PageHeader } from "@/components/Shell";
@@ -241,7 +240,6 @@ function ProjectCard({ project, baseUrl }: { project: JiraProject; baseUrl: stri
 type Tab = "overview" | "issues" | "projects";
 
 export default function JiraPage() {
-  const router = useRouter();
   const [data, setData] = useState<JiraData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -276,7 +274,7 @@ export default function JiraPage() {
     return (
       <div className="min-h-screen bg-white">
         <PageHeader
-          eyebrow={<button onClick={() => router.push("/apps")} className="flex items-center gap-1 text-xs text-[#5f6368] hover:text-[#202124]"><ChevronLeft className="w-3.5 h-3.5" /> Apps</button>}
+          eyebrow="Apps › Jira"
           title="Jira"
           description="Connect Jira to manage issues and projects"
         />
@@ -304,7 +302,7 @@ export default function JiraPage() {
   return (
     <div className="min-h-screen bg-white text-[#202124]">
       <PageHeader
-        eyebrow={<button onClick={() => router.push("/apps")} className="flex items-center gap-1 text-xs text-[#5f6368] hover:text-[#202124]"><ChevronLeft className="w-3.5 h-3.5" /> Apps</button>}
+        eyebrow="Apps › Jira"
         title="Jira"
         description="Your issues and projects"
         action={
