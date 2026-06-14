@@ -264,7 +264,7 @@ export function DocsView() {
     setSelectedId(doc.id);
     setTitle(doc.title);
     setComments([]);
-    if (editor && doc.content) editor.commands.setContent(doc.content, false);
+    if (editor && doc.content) editor.commands.setContent(doc.content, { emitUpdate: false });
   }, [editor]);
 
   // ── Create doc ────────────────────────────────────────────────────────────
@@ -335,7 +335,7 @@ export function DocsView() {
   }, [editor, selectedId, title]);
 
   const restoreVersion = (v: VersionSnapshot) => {
-    editor?.commands.setContent(v.content, false);
+    editor?.commands.setContent(v.content, { emitUpdate: false });
     setTitle(v.title);
     toast.success("Version restored");
     setShowHistory(false);
