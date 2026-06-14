@@ -230,7 +230,6 @@ export function DocsView() {
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        history: false,
         heading: { levels: [1, 2, 3, 4, 5, 6] },
       }),
       Collaboration.configure({ document: ydoc }),
