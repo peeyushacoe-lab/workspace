@@ -7,13 +7,15 @@
  */
 
 import { useCallback, useEffect, useRef, useState, useId } from "react";
+import { useRouter } from "next/navigation";
 import {
   Bold, Italic, Underline, Strikethrough,
   AlignLeft, AlignCenter, AlignRight, AlignJustify,
+  ArrowLeft,
   Plus, Download, Upload, Share2, Loader2,
   BarChart3, SortAsc, SortDesc, Filter, Sparkles,
   ChevronDown, Paintbrush, Type, Merge, X, Check,
-  Undo2, Redo2, WrapText, EyeOff,
+  Undo2, Redo2, WrapText, EyeOff, Tag, ListChecks,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -22,7 +24,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
 import { DocShareModal } from "./DocShareModal";
-import { evaluateFormula, formatValue, indexToCol, parseRange, getRangeVals } from "@/lib/sheets/formula";
+import { evaluateFormula, formatValue, indexToCol, parseRange, parseRef, getRangeVals } from "@/lib/sheets/formula";
 import type { CellValue, NumberFormat } from "@/lib/sheets/formula";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -71,6 +73,14 @@ type ChartDef = {
 type SortRule = { col: number; dir: "asc" | "desc" };
 type FilterState = Record<number, string[]>; // col → allowed values
 
+type DataValidation = {
+  id: string;
+  range: { r1: number; c1: number; r2: number; c2: number };
+  type: "list";
+  values: string[];   // allowed dropdown values
+  strict: boolean;    // reject values not in the list
+};
+
 type SheetTab = {
   id: string;
   name: string;
@@ -86,6 +96,7 @@ type SheetTab = {
   sortRules: SortRule[];
   filters: FilterState;
   protectedRanges: string[];
+  dataValidations: DataValidation[];
 };
 
 // WorkbookDoc type removed (unused)
@@ -112,6 +123,7 @@ function blankSheet(id: string, name: string): SheetTab {
     conditionalRules: [], charts: [],
     sortRules: [], filters: {},
     protectedRanges: [],
+    dataValidations: [],
   };
 }
 
@@ -146,6 +158,7 @@ function deserializeSheet(raw: Record<string, unknown>): SheetTab {
 
 export default function SheetsEditor({ sheetId }: { sheetId: string }) {
   const _uid = useId();
+  const router = useRouter();
 
   // ── Document state ───────────────────────────────────────────────────────
   const [title, setTitle] = useState("Untitled Spreadsheet");
@@ -153,6 +166,11 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
   const [activeSheetId, setActiveSheetId] = useState("s1");
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
+
+  // ── Named ranges (workbook-level) ────────────────────────────────────────
+  const [namedRanges, setNamedRanges] = useState<Record<string, string>>({});
+  const namedRangesRef = useRef<Record<string, string>>({});
+  namedRangesRef.current = namedRanges;
 
   // ── Selection / editing ──────────────────────────────────────────────────
   const [sel, setSel] = useState<{ r: number; c: number }>({ r: 0, c: 0 });
@@ -171,6 +189,9 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
   const [showAI, setShowAI] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
   const [showCF, setShowCF] = useState(false);
+  const [showNames, setShowNames] = useState(false);
+  const [showValidation, setShowValidation] = useState(false);
+  const [dvDropdown, setDvDropdown] = useState<{ r: number; c: number; values: string[] } | null>(null);
   const [filterCol, setFilterCol] = useState<number | null>(null);
   const [editingSheetName, setEditingSheetName] = useState<string | null>(null);
   const [renameVal, setRenameVal] = useState("");
@@ -186,15 +207,16 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
   // ── Compute cell value ───────────────────────────────────────────────────
   const computeCell = useCallback((raw: string, sheet: SheetTab): CellValue => {
     if (!raw.startsWith("=")) return raw === "" ? null : isNaN(Number(raw)) ? raw : Number(raw);
+    const names = namedRangesRef.current;
     return evaluateFormula(raw, (r, c) => {
       const cell = sheet.cells[ck(r, c)];
       if (!cell?.v) return null;
       if (cell.v.startsWith("=")) return evaluateFormula(cell.v, (r2, c2) => {
         const c2ell = sheet.cells[ck(r2, c2)];
         return c2ell?.v ? (c2ell.v.startsWith("=") ? null : (isNaN(Number(c2ell.v)) ? c2ell.v : Number(c2ell.v))) : null;
-      });
+      }, names);
       return isNaN(Number(cell.v)) ? cell.v : Number(cell.v);
-    });
+    }, names);
   }, []);
 
   const getCellDisplayValue = useCallback((r: number, c: number, sheet: SheetTab): string => {
@@ -215,8 +237,9 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
         if (data.title) setTitle(data.title);
         if (data.content) {
           try {
-            const wb = JSON.parse(data.content) as { sheets?: unknown[] };
+            const wb = JSON.parse(data.content) as { sheets?: unknown[]; namedRanges?: Record<string, string> };
             if (wb.sheets?.length) setSheets((wb.sheets as Record<string, unknown>[]).map(deserializeSheet));
+            if (wb.namedRanges) setNamedRanges(wb.namedRanges);
           } catch { /* fresh sheet */ }
         }
         setLoaded(true);
@@ -235,7 +258,7 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             title: titleToSave,
-            content: JSON.stringify({ sheets: sheetsToSave.map(serializeSheet) }),
+            content: JSON.stringify({ sheets: sheetsToSave.map(serializeSheet), namedRanges: namedRangesRef.current }),
           }),
         });
       } finally {
@@ -353,11 +376,18 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
 
   // ── Commit edit ──────────────────────────────────────────────────────────
   const commitEdit = useCallback((moveDir: "down" | "right" | "none" = "down") => {
+    // Enforce strict list validation on the cell, if any.
+    const dv = (activeSheet.dataValidations ?? []).find(d =>
+      sel.r >= d.range.r1 && sel.r <= d.range.r2 && sel.c >= d.range.c1 && sel.c <= d.range.c2);
+    if (dv && dv.strict && editVal !== "" && !editVal.startsWith("=") && !dv.values.includes(editVal)) {
+      toast.error(`"${editVal}" is not an allowed value`);
+      return; // keep editing
+    }
     updateCell(sel.r, sel.c, editVal);
     setEditing(false);
     if (moveDir === "down") setSel(s => ({ r: Math.min(ROWS - 1, s.r + 1), c: s.c }));
     else if (moveDir === "right") setSel(s => ({ r: s.r, c: Math.min(COLS - 1, s.c + 1) }));
-  }, [sel, editVal, updateCell]);
+  }, [sel, editVal, updateCell, activeSheet]);
 
   // ── Add / remove sheet ────────────────────────────────────────────────────
   const addSheet = () => {
@@ -474,6 +504,41 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
     return {};
   }, [computeCell]);
 
+  // ── Data validation lookup ────────────────────────────────────────────────
+  const getCellValidation = useCallback((r: number, c: number): DataValidation | null => {
+    for (const dv of activeSheet.dataValidations ?? []) {
+      if (r >= dv.range.r1 && r <= dv.range.r2 && c >= dv.range.c1 && c <= dv.range.c2) return dv;
+    }
+    return null;
+  }, [activeSheet]);
+
+  const addValidation = (dv: Omit<DataValidation, "id">) => {
+    setSheets(prev => {
+      const next = prev.map(sh => sh.id === activeSheetId
+        ? { ...sh, dataValidations: [...(sh.dataValidations ?? []), { ...dv, id: `dv_${Date.now()}` }] }
+        : sh);
+      scheduleSave(next, title);
+      return next;
+    });
+  };
+
+  const removeValidation = (id: string) => {
+    setSheets(prev => {
+      const next = prev.map(sh => sh.id === activeSheetId
+        ? { ...sh, dataValidations: (sh.dataValidations ?? []).filter(d => d.id !== id) }
+        : sh);
+      scheduleSave(next, title);
+      return next;
+    });
+  };
+
+  // ── Named ranges apply ────────────────────────────────────────────────────
+  const applyNamedRanges = (nr: Record<string, string>) => {
+    setNamedRanges(nr);
+    namedRangesRef.current = nr;
+    scheduleSave(sheets, title);
+  };
+
   // ── XLSX export ───────────────────────────────────────────────────────────
   const exportXLSX = async () => {
     const XLSX = await import("xlsx");
@@ -565,10 +630,17 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
   );
 
   return (
-    <div className="flex flex-col h-screen bg-white overflow-hidden" onClick={() => { setColorPickerTarget(null); setSortMenuOpen(false); }}>
+    <div className="flex flex-col h-screen bg-white overflow-hidden" onClick={() => { setColorPickerTarget(null); setSortMenuOpen(false); setDvDropdown(null); }}>
 
       {/* ── Title bar ── */}
-      <div className="flex items-center gap-3 px-4 py-2 border-b border-[#e8eaed] bg-white z-20">
+      <div className="flex items-center gap-2 px-4 py-2 border-b border-[#e8eaed] bg-white z-20">
+        <button
+          onClick={() => router.push("/apps/sheets")}
+          title="Back to spreadsheets"
+          className="flex items-center justify-center h-8 w-8 rounded-lg text-[#5f6368] hover:bg-[#f1f3f4] transition-colors flex-shrink-0"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </button>
         <input
           className="text-sm font-semibold text-[#202124] bg-transparent border-none outline-none focus:bg-[#f1f3f4] rounded px-1 min-w-0 w-48"
           value={title}
@@ -694,6 +766,12 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
         {/* Conditional format */}
         <ToolBtn icon={<Paintbrush className="h-3.5 w-3.5" />} title="Conditional formatting" onClick={() => setShowCF(true)} />
 
+        {/* Data validation */}
+        <ToolBtn icon={<ListChecks className="h-3.5 w-3.5" />} title="Data validation (dropdowns)" active={(activeSheet.dataValidations?.length ?? 0) > 0} onClick={() => setShowValidation(true)} />
+
+        {/* Named ranges */}
+        <ToolBtn icon={<Tag className="h-3.5 w-3.5" />} title="Named ranges" active={Object.keys(namedRanges).length > 0} onClick={() => setShowNames(true)} />
+
         {/* Chart */}
         <ToolBtn icon={<BarChart3 className="h-3.5 w-3.5" />} title="Insert chart" onClick={() => setShowChart(true)} />
         <Sep />
@@ -777,6 +855,11 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
                   rowHeight={activeSheet.rowHeights[r] ?? DEFAULT_ROW_H}
                   getCellDisplayValue={getCellDisplayValue}
                   getCFStyle={getCFStyle}
+                  getCellValidation={getCellValidation}
+                  dvDropdown={dvDropdown}
+                  onOpenDropdown={(rr, cc, values) => setDvDropdown({ r: rr, c: cc, values })}
+                  onPickValidation={(rr, cc, val) => { updateCell(rr, cc, val); setDvDropdown(null); }}
+                  onCloseDropdown={() => setDvDropdown(null)}
                   onCellClick={(rr, cc, shiftKey) => {
                     if (shiftKey) {
                       setSelEnd({ r: rr, c: cc });
@@ -907,6 +990,23 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
           }}
         />
       )}
+      {showNames && (
+        <NamesDialog
+          names={namedRanges}
+          defaultRange={selEnd ? `${toA1(Math.min(sel.r, selEnd.r), Math.min(sel.c, selEnd.c))}:${toA1(Math.max(sel.r, selEnd.r), Math.max(sel.c, selEnd.c))}` : toA1(sel.r, sel.c)}
+          onClose={() => setShowNames(false)}
+          onSave={applyNamedRanges}
+        />
+      )}
+      {showValidation && (
+        <ValidationDialog
+          defaultRange={selEnd ? `${toA1(Math.min(sel.r, selEnd.r), Math.min(sel.c, selEnd.c))}:${toA1(Math.max(sel.r, selEnd.r), Math.max(sel.c, selEnd.c))}` : toA1(sel.r, sel.c)}
+          rules={activeSheet.dataValidations ?? []}
+          onClose={() => setShowValidation(false)}
+          onAdd={(rule) => { addValidation(rule); }}
+          onRemove={(id) => removeValidation(id)}
+        />
+      )}
     </div>
   );
 }
@@ -996,12 +1096,17 @@ function MenuItem({ children, onClick }: { children: React.ReactNode; onClick: (
 
 // ─── Row ─────────────────────────────────────────────────────────────────────
 
-function Row({ row, cols, sheet, sel, selEnd, editing, editVal, cellInputRef, colWidths, rowHeight, getCellDisplayValue, getCFStyle, onCellClick, onCellDoubleClick, onEditChange, onEditCommit, onEditCancel, onRowResize, onHideRow }: {
+function Row({ row, cols, sheet, sel, selEnd, editing, editVal, cellInputRef, colWidths, rowHeight, getCellDisplayValue, getCFStyle, getCellValidation, dvDropdown, onOpenDropdown, onPickValidation, onCloseDropdown, onCellClick, onCellDoubleClick, onEditChange, onEditCommit, onEditCancel, onRowResize, onHideRow }: {
   row: number; cols: number; sheet: SheetTab; sel: { r: number; c: number }; selEnd: { r: number; c: number } | null;
   editing: boolean; editVal: string; cellInputRef: React.RefObject<HTMLInputElement | null>;
   colWidths: Record<number, number>; rowHeight: number;
   getCellDisplayValue: (r: number, c: number, s: SheetTab) => string;
   getCFStyle: (r: number, c: number, s: SheetTab) => Partial<CellStyle>;
+  getCellValidation: (r: number, c: number) => DataValidation | null;
+  dvDropdown: { r: number; c: number; values: string[] } | null;
+  onOpenDropdown: (r: number, c: number, values: string[]) => void;
+  onPickValidation: (r: number, c: number, val: string) => void;
+  onCloseDropdown: () => void;
   onCellClick: (r: number, c: number, shift: boolean) => void;
   onCellDoubleClick: (r: number, c: number) => void;
   onEditChange: (v: string) => void;
@@ -1061,6 +1166,8 @@ function Row({ row, cols, sheet, sel, selEnd, editing, editVal, cellInputRef, co
         const cfStyle = getCFStyle(row, c, sheet);
         const w = colWidths[c] ?? DEFAULT_COL_W;
         const span = cell?.mergeSpan;
+        const validation = getCellValidation(row, c);
+        const dropdownOpen = dvDropdown?.r === row && dvDropdown?.c === c;
 
         const cellStyle: React.CSSProperties = {
           width: span ? undefined : w,
@@ -1107,6 +1214,34 @@ function Row({ row, cols, sheet, sel, selEnd, editing, editVal, cellInputRef, co
               <span className="text-xs leading-none flex items-center h-full" style={{ fontSize: style.fontSize ?? 12, paddingLeft: (style.indent ?? 0) * 12 }}>
                 {display}
               </span>
+            )}
+
+            {/* Data-validation dropdown caret */}
+            {validation && !isEditing && (
+              <button
+                title="Choose from list"
+                onClick={e => { e.stopPropagation(); onOpenDropdown(row, c, validation.values); }}
+                className="absolute right-0 top-1/2 -translate-y-1/2 h-full w-4 flex items-center justify-center text-[#5f6368] hover:text-[#1a56db] bg-[#f1f3f4]/80 z-[6]"
+              >
+                <ChevronDown className="h-3 w-3" />
+              </button>
+            )}
+
+            {/* Data-validation dropdown menu */}
+            {dropdownOpen && (
+              <div
+                className="absolute left-0 top-full mt-0.5 min-w-full max-h-48 overflow-y-auto bg-white border border-[#e8eaed] rounded-lg shadow-lg z-50 py-1"
+                onClick={e => e.stopPropagation()}
+              >
+                {validation?.values.length ? validation.values.map(v => (
+                  <button key={v} onClick={() => onPickValidation(row, c, v)}
+                    className="w-full text-left px-3 py-1.5 text-xs text-[#202124] hover:bg-[#e8f0fe] whitespace-nowrap flex items-center gap-2">
+                    {display === v && <Check className="h-3 w-3 text-[#1a56db]" />}
+                    <span className={display === v ? "" : "pl-5"}>{v}</span>
+                  </button>
+                )) : <div className="px-3 py-1.5 text-xs text-[#80868b]">No options</div>}
+                <button onClick={onCloseDropdown} className="w-full text-left px-3 py-1 text-[11px] text-[#80868b] hover:bg-[#f1f3f4] border-t border-[#e8eaed] mt-1">Close</button>
+              </div>
             )}
           </div>
         );
@@ -1378,6 +1513,145 @@ function FilterDialog({ col: _col, values, current, colLabel, onClose, onApply }
           <button onClick={() => onApply([])} className="px-3 py-1.5 text-xs border border-[#e8eaed] rounded-lg text-[#5f6368] hover:bg-[#f1f3f4]">Clear filter</button>
           <button onClick={onClose} className="px-3 py-1.5 text-xs border border-[#e8eaed] rounded-lg text-[#5f6368] hover:bg-[#f1f3f4]">Cancel</button>
           <button onClick={() => onApply([...selected])} className="flex-1 px-4 py-1.5 text-xs font-semibold bg-[#1a56db] text-white rounded-lg hover:bg-[#1648c7]">Apply</button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+// ─── Named Ranges Dialog ──────────────────────────────────────────────────────
+
+function NamesDialog({ names, defaultRange, onClose, onSave }: {
+  names: Record<string, string>;
+  defaultRange: string;
+  onClose: () => void;
+  onSave: (n: Record<string, string>) => void;
+}) {
+  const [local, setLocal] = useState<Record<string, string>>({ ...names });
+  const [newName, setNewName] = useState("");
+  const [newRange, setNewRange] = useState(defaultRange);
+
+  const validName = (n: string) => /^[A-Za-z_][A-Za-z0-9_]*$/.test(n);
+
+  const add = () => {
+    const n = newName.trim();
+    if (!validName(n)) return toast.error("Name must start with a letter and contain only letters, numbers, _");
+    if (!parseRange(newRange.toUpperCase()) && !parseRef(newRange.toUpperCase())) return toast.error("Invalid range (e.g. A1:B10)");
+    setLocal(prev => ({ ...prev, [n]: newRange.toUpperCase() }));
+    setNewName("");
+  };
+
+  const save = () => { onSave(local); onClose(); toast.success("Named ranges saved"); };
+
+  return (
+    <Modal title="Named ranges" onClose={onClose}>
+      <div className="space-y-3 p-4">
+        <p className="text-xs text-[#5f6368]">Give a range a name, then use it in formulas — e.g. <span className="font-mono text-[#202124]">=SUM(Revenue)</span>.</p>
+
+        {Object.keys(local).length > 0 && (
+          <div className="space-y-1.5 max-h-44 overflow-y-auto">
+            {Object.entries(local).map(([n, r]) => (
+              <div key={n} className="flex items-center gap-2 bg-[#f8f9fa] border border-[#e8eaed] rounded-lg px-3 py-1.5">
+                <Tag className="h-3.5 w-3.5 text-[#1a56db] flex-shrink-0" />
+                <span className="text-xs font-semibold text-[#202124] flex-shrink-0">{n}</span>
+                <span className="text-xs font-mono text-[#5f6368] ml-1 truncate flex-1">{r}</span>
+                <button onClick={() => setLocal(prev => { const cp = { ...prev }; delete cp[n]; return cp; })}
+                  className="p-1 rounded hover:bg-[#f1f3f4] text-[#80868b] hover:text-[#ea4335] flex-shrink-0"><X className="h-3.5 w-3.5" /></button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="flex gap-2 items-end">
+          <div className="flex-1">
+            <label className="text-[11px] font-medium text-[#5f6368] mb-1 block">Name</label>
+            <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Revenue"
+              onKeyDown={e => e.key === "Enter" && add()}
+              className="w-full px-2.5 py-1.5 bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg text-xs focus:outline-none focus:border-[#1a56db]/60" />
+          </div>
+          <div className="flex-1">
+            <label className="text-[11px] font-medium text-[#5f6368] mb-1 block">Range</label>
+            <input value={newRange} onChange={e => setNewRange(e.target.value)} placeholder="A1:A10"
+              onKeyDown={e => e.key === "Enter" && add()}
+              className="w-full px-2.5 py-1.5 bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg text-xs font-mono focus:outline-none focus:border-[#1a56db]/60" />
+          </div>
+          <button onClick={add} className="px-3 py-1.5 text-xs font-semibold bg-[#e8f0fe] text-[#1a56db] rounded-lg hover:bg-[#d2e3fc] h-[30px]">Add</button>
+        </div>
+
+        <div className="flex gap-2 pt-1">
+          <button onClick={onClose} className="flex-1 px-4 py-2 text-sm border border-[#e8eaed] rounded-lg text-[#5f6368] hover:bg-[#f1f3f4]">Cancel</button>
+          <button onClick={save} className="flex-1 px-4 py-2 text-sm font-semibold bg-[#1a56db] text-white rounded-lg hover:bg-[#1648c7]">Save</button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+// ─── Data Validation Dialog ───────────────────────────────────────────────────
+
+function ValidationDialog({ defaultRange, rules, onClose, onAdd, onRemove }: {
+  defaultRange: string;
+  rules: DataValidation[];
+  onClose: () => void;
+  onAdd: (r: Omit<DataValidation, "id">) => void;
+  onRemove: (id: string) => void;
+}) {
+  const [range, setRange] = useState(defaultRange);
+  const [values, setValues] = useState("");
+  const [strict, setStrict] = useState(true);
+
+  const add = () => {
+    const pr = parseRange(range.toUpperCase());
+    const single = parseRef(range.toUpperCase());
+    if (!pr && !single) return toast.error("Invalid range (e.g. A1:A10)");
+    const list = values.split(",").map(v => v.trim()).filter(Boolean);
+    if (!list.length) return toast.error("Enter at least one option (comma-separated)");
+    const r = pr ?? { startRow: single!.row, startCol: single!.col, endRow: single!.row, endCol: single!.col };
+    onAdd({ range: { r1: r.startRow, c1: r.startCol, r2: r.endRow, c2: r.endCol }, type: "list", values: list, strict });
+    setValues("");
+    toast.success("Dropdown added");
+  };
+
+  const rangeLabel = (r: DataValidation["range"]) => `${indexToCol(r.c1)}${r.r1 + 1}:${indexToCol(r.c2)}${r.r2 + 1}`;
+
+  return (
+    <Modal title="Data validation" onClose={onClose}>
+      <div className="space-y-3 p-4">
+        <p className="text-xs text-[#5f6368]">Turn a range into dropdowns. Cells show a ▾ caret to pick from your list.</p>
+
+        {rules.length > 0 && (
+          <div className="space-y-1.5 max-h-36 overflow-y-auto">
+            {rules.map(rule => (
+              <div key={rule.id} className="flex items-center gap-2 bg-[#f8f9fa] border border-[#e8eaed] rounded-lg px-3 py-1.5">
+                <ListChecks className="h-3.5 w-3.5 text-[#1a56db] flex-shrink-0" />
+                <span className="text-xs font-mono font-semibold text-[#202124] flex-shrink-0">{rangeLabel(rule.range)}</span>
+                <span className="text-xs text-[#5f6368] ml-1 truncate flex-1">{rule.values.join(", ")}</span>
+                <button onClick={() => onRemove(rule.id)}
+                  className="p-1 rounded hover:bg-[#f1f3f4] text-[#80868b] hover:text-[#ea4335] flex-shrink-0"><X className="h-3.5 w-3.5" /></button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div>
+          <label className="text-[11px] font-medium text-[#5f6368] mb-1 block">Apply to range</label>
+          <input value={range} onChange={e => setRange(e.target.value)} placeholder="A1:A10"
+            className="w-full px-2.5 py-1.5 bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg text-xs font-mono focus:outline-none focus:border-[#1a56db]/60" />
+        </div>
+        <div>
+          <label className="text-[11px] font-medium text-[#5f6368] mb-1 block">Options (comma-separated)</label>
+          <input value={values} onChange={e => setValues(e.target.value)} placeholder="Low, Medium, High, Critical"
+            onKeyDown={e => e.key === "Enter" && add()}
+            className="w-full px-2.5 py-1.5 bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg text-xs focus:outline-none focus:border-[#1a56db]/60" />
+        </div>
+        <label className="flex items-center gap-2 text-xs text-[#5f6368] cursor-pointer">
+          <input type="checkbox" checked={strict} onChange={e => setStrict(e.target.checked)} />
+          Reject input outside the list
+        </label>
+
+        <div className="flex gap-2 pt-1">
+          <button onClick={onClose} className="flex-1 px-4 py-2 text-sm border border-[#e8eaed] rounded-lg text-[#5f6368] hover:bg-[#f1f3f4]">Done</button>
+          <button onClick={add} className="flex-1 px-4 py-2 text-sm font-semibold bg-[#1a56db] text-white rounded-lg hover:bg-[#1648c7]">Add dropdown</button>
         </div>
       </div>
     </Modal>

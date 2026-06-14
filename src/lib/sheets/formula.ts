@@ -614,10 +614,33 @@ export function evalE(expr: string, g: CellGetter): CellValue {
 
 // ─── Public entry point ────────────────────────────────────────────────────
 
-export function evaluateFormula(formula: string, getter: CellGetter): CellValue {
+// ─── Named ranges ──────────────────────────────────────────────────────────
+// Substitute defined names (e.g. "Revenue") with their A1 range/ref text before
+// evaluation. Word-boundary, case-insensitive, skips text inside quotes and
+// names immediately followed by "(" (so they can't shadow function calls).
+export function substituteNames(expr: string, names: Record<string, string>): string {
+  const entries = Object.entries(names);
+  if (!entries.length) return expr;
+  // Longest names first to avoid partial-overlap replacement.
+  entries.sort((a, b) => b[0].length - a[0].length);
+  // Split on quoted segments so we never touch string literals.
+  const parts = expr.split(/("(?:[^"\\]|\\.)*")/);
+  for (let i = 0; i < parts.length; i++) {
+    if (i % 2 === 1) continue; // odd indices are quoted strings
+    for (const [name, range] of entries) {
+      if (!range) continue;
+      const re = new RegExp(`\\b${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b(?!\\s*\\()`, "gi");
+      parts[i] = parts[i].replace(re, range);
+    }
+  }
+  return parts.join("");
+}
+
+export function evaluateFormula(formula: string, getter: CellGetter, names?: Record<string, string>): CellValue {
   if (!formula.startsWith("=")) return formula;
   try {
-    return evalE(formula.slice(1), getter);
+    const body = names ? substituteNames(formula.slice(1), names) : formula.slice(1);
+    return evalE(body, getter);
   } catch {
     return "#ERROR!";
   }

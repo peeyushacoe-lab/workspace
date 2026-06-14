@@ -21,6 +21,10 @@ import { toast } from "sonner";
 import { formatDistanceToNow, format } from "date-fns";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import TextAlign from "@tiptap/extension-text-align";
+import Image from "@tiptap/extension-image";
+import { TableKit } from "@tiptap/extension-table";
+import { TaskList, TaskItem } from "@tiptap/extension-list";
 import * as Y from "yjs";
 import Collaboration from "@tiptap/extension-collaboration";
 import { DocShareModal } from "./DocShareModal";
@@ -232,6 +236,11 @@ export function DocsView() {
       StarterKit.configure({
         heading: { levels: [1, 2, 3, 4, 5, 6] },
       }),
+      TextAlign.configure({ types: ["heading", "paragraph"] }),
+      Image.configure({ inline: false, allowBase64: true }),
+      TableKit.configure({ table: { resizable: true } }),
+      TaskList,
+      TaskItem.configure({ nested: true }),
       Collaboration.configure({ document: ydoc }),
     ],
     content: "",
@@ -588,15 +597,15 @@ blockquote{border-left:4px solid #1a56db;margin:0;padding-left:1em;color:#5f6368
             <TB icon={<Code className="h-3.5 w-3.5" />} title="Code" active={editor?.isActive("code")} onClick={() => editor?.chain().focus().toggleCode().run()} />
             <TSep />
 
-            <TB icon={<AlignLeft className="h-3.5 w-3.5" />} title="Align left" onClick={() => (editor?.chain().focus() as ReturnType<typeof editor.chain> & { setTextAlign?: (v: string) => { run: () => void } })?.setTextAlign?.("left").run()} />
-            <TB icon={<AlignCenter className="h-3.5 w-3.5" />} title="Align center" onClick={() => (editor?.chain().focus() as ReturnType<typeof editor.chain> & { setTextAlign?: (v: string) => { run: () => void } })?.setTextAlign?.("center").run()} />
-            <TB icon={<AlignRight className="h-3.5 w-3.5" />} title="Align right" onClick={() => (editor?.chain().focus() as ReturnType<typeof editor.chain> & { setTextAlign?: (v: string) => { run: () => void } })?.setTextAlign?.("right").run()} />
-            <TB icon={<AlignJustify className="h-3.5 w-3.5" />} title="Justify" onClick={() => (editor?.chain().focus() as ReturnType<typeof editor.chain> & { setTextAlign?: (v: string) => { run: () => void } })?.setTextAlign?.("justify").run()} />
+            <TB icon={<AlignLeft className="h-3.5 w-3.5" />} title="Align left" active={editor?.isActive({ textAlign: "left" })} onClick={() => (editor?.chain().focus() as ReturnType<typeof editor.chain> & { setTextAlign?: (v: string) => { run: () => void } })?.setTextAlign?.("left").run()} />
+            <TB icon={<AlignCenter className="h-3.5 w-3.5" />} title="Align center" active={editor?.isActive({ textAlign: "center" })} onClick={() => (editor?.chain().focus() as ReturnType<typeof editor.chain> & { setTextAlign?: (v: string) => { run: () => void } })?.setTextAlign?.("center").run()} />
+            <TB icon={<AlignRight className="h-3.5 w-3.5" />} title="Align right" active={editor?.isActive({ textAlign: "right" })} onClick={() => (editor?.chain().focus() as ReturnType<typeof editor.chain> & { setTextAlign?: (v: string) => { run: () => void } })?.setTextAlign?.("right").run()} />
+            <TB icon={<AlignJustify className="h-3.5 w-3.5" />} title="Justify" active={editor?.isActive({ textAlign: "justify" })} onClick={() => (editor?.chain().focus() as ReturnType<typeof editor.chain> & { setTextAlign?: (v: string) => { run: () => void } })?.setTextAlign?.("justify").run()} />
             <TSep />
 
             <TB icon={<List className="h-3.5 w-3.5" />} title="Bullet list" active={editor?.isActive("bulletList")} onClick={() => editor?.chain().focus().toggleBulletList().run()} />
             <TB icon={<ListOrdered className="h-3.5 w-3.5" />} title="Numbered list" active={editor?.isActive("orderedList")} onClick={() => editor?.chain().focus().toggleOrderedList().run()} />
-            <TB icon={<ListChecks className="h-3.5 w-3.5" />} title="Checklist" onClick={() => editor?.chain().focus().toggleBulletList().run()} />
+            <TB icon={<ListChecks className="h-3.5 w-3.5" />} title="Checklist" active={editor?.isActive("taskList")} onClick={() => (editor?.chain().focus() as unknown as { toggleTaskList?: () => { run: () => boolean } })?.toggleTaskList?.()?.run?.()} />
             <TB icon={<IndentDecrease className="h-3.5 w-3.5" />} title="Decrease indent" onClick={() => editor?.chain().focus().liftListItem("listItem").run()} />
             <TB icon={<IndentIncrease className="h-3.5 w-3.5" />} title="Increase indent" onClick={() => editor?.chain().focus().sinkListItem("listItem").run()} />
             <TSep />

@@ -8,7 +8,9 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
+  ArrowLeft,
   Plus, Trash2, Download, Upload, X, Loader2, Share2, Copy,
   Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight,
   ChevronUp, ChevronDown, Type, Square, Circle,   BarChart3, Table, Code2, Image as ImageIcon,   Play, ChevronLeft, ChevronRight, FileText,
@@ -261,6 +263,7 @@ function SlideElementView({ el, zoom, theme }: { el: SlideElement; zoom: number;
 // ─── Main editor ──────────────────────────────────────────────────────────────
 
 export default function SlidesEditor({ presId }: { presId: string }) {
+  const router = useRouter();
   const [title, setTitle] = useState("Untitled Presentation");
   const [slides, setSlides] = useState<Slide[]>([{
     id: "s1", background: "#ffffff", elements: [], notes: "", transition: "fade"
@@ -594,7 +597,14 @@ export default function SlidesEditor({ presId }: { presId: string }) {
     <div className="flex flex-col h-screen bg-white overflow-hidden text-[#202124]">
 
       {/* ── Title bar ── */}
-      <div className="flex items-center gap-3 px-4 py-2 border-b border-[#e8eaed] bg-white z-20">
+      <div className="flex items-center gap-2 px-4 py-2 border-b border-[#e8eaed] bg-white z-20">
+        <button
+          onClick={() => router.push("/apps/slides")}
+          title="Back to presentations"
+          className="flex items-center justify-center h-8 w-8 rounded-lg text-[#5f6368] hover:bg-[#f1f3f4] transition-colors flex-shrink-0"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </button>
         <input
           className="text-sm font-semibold text-[#202124] bg-transparent border-none outline-none focus:bg-[#f1f3f4] rounded px-1 min-w-0 w-52"
           value={title}

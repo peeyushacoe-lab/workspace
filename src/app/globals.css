@@ -308,6 +308,19 @@ textarea {
 .docs-editor-content strong { font-weight: 700; }
 .docs-editor-content em { font-style: italic; }
 .docs-editor-content s { text-decoration: line-through; }
+/* Task list (checklist) */
+.docs-editor-content ul[data-type="taskList"] { list-style: none; padding-left: 0.25em; margin: 0.5em 0 0.75em; }
+.docs-editor-content ul[data-type="taskList"] li { display: flex; align-items: flex-start; gap: 0.5em; margin: 0.2em 0; }
+.docs-editor-content ul[data-type="taskList"] li > label { margin-top: 0.25em; user-select: none; }
+.docs-editor-content ul[data-type="taskList"] li > div { flex: 1; min-width: 0; }
+.docs-editor-content ul[data-type="taskList"] li > div > p { margin: 0; }
+.docs-editor-content ul[data-type="taskList"] input[type="checkbox"] { accent-color: #1a56db; width: 15px; height: 15px; cursor: pointer; }
+.docs-editor-content ul[data-type="taskList"] li[data-checked="true"] > div { color: #80868b; text-decoration: line-through; }
+/* Table selection + resize */
+.docs-editor-content table { table-layout: fixed; }
+.docs-editor-content td, .docs-editor-content th { position: relative; }
+.docs-editor-content .selectedCell:after { content: ""; position: absolute; inset: 0; background: rgba(26,86,219,0.12); pointer-events: none; }
+.docs-editor-content .column-resize-handle { position: absolute; right: -2px; top: 0; bottom: 0; width: 4px; background: #1a56db; cursor: col-resize; }
 
 /* ── Notes editor ─────────────────────────────────────────────────────────── */
 .notes-editor:empty:before { content: attr(data-placeholder); color: #80868b; pointer-events: none; }
