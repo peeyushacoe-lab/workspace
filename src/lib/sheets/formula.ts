@@ -130,7 +130,7 @@ function evalFn(name: string, rawArgs: string[], g: CellGetter): CellValue {
     case "AVERAGE": {
       // include zeros (no filter needed)
       const numeric = rawArgs.flatMap(a => getVals(a)).filter(v => typeof v === "number" || (typeof v === "string" && !isNaN(Number(v)) && toStr(v) !== ""));
-      return numeric.length ? numeric.reduce((s, v) => s + toN(v), 0) / numeric.length : 0;
+      return numeric.length ? numeric.reduce<number>((s, v) => s + toN(v), 0) / numeric.length : 0;
     }
     case "COUNT": return rawArgs.flatMap(a => getVals(a)).filter(v => typeof v === "number" || (typeof v === "string" && !isNaN(Number(v)) && toStr(v) !== "")).length;
     case "COUNTA": return rawArgs.flatMap(a => getVals(a)).filter(v => v !== null && v !== "").length;
@@ -155,12 +155,12 @@ function evalFn(name: string, rawArgs: string[], g: CellGetter): CellValue {
       const r = getRangeVals(rawArgs[0], g);
       const crit = e(rawArgs[1]);
       const sumR = rawArgs[2] ? getRangeVals(rawArgs[2], g) : r;
-      return r.reduce((t, v, i) => t + (matchCrit(v, crit) ? toN(sumR[i] ?? 0) : 0), 0);
+      return r.reduce<number>((t, v, i) => t + (matchCrit(v, crit) ? toN(sumR[i] ?? 0) : 0), 0);
     }
     case "SUMIFS": {
       if (rawArgs.length < 3) return "#VALUE!";
       const sumR = getRangeVals(rawArgs[0], g);
-      return sumR.reduce((t, v, i) => {
+      return sumR.reduce<number>((t, v, i) => {
         for (let p = 1; p < rawArgs.length; p += 2) {
           const cr = getRangeVals(rawArgs[p], g);
           if (!matchCrit(cr[i] ?? null, e(rawArgs[p + 1]))) return t;

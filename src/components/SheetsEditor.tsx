@@ -297,7 +297,7 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
         for (let r = r1; r <= r2; r++) {
           for (let c = c1; c <= c2; c++) {
             const k = ck(r, c);
-            newCells[k] = { v: "", ...newCells[k], s: { ...newCells[k]?.s, ...stylePatch } };
+            newCells[k] = { ...newCells[k], s: { ...newCells[k]?.s, ...stylePatch } };
           }
         }
         return { ...sh, cells: newCells };
@@ -945,7 +945,7 @@ function ColorPicker({ onSelect }: { onSelect: (c: string) => void }) {
 
 // ─── Column header ──────────────────────────────────────────────────────────
 
-function ColHeader({ _col, label, width, hidden, selected, onResize, onHide, onSort, onFilter, filterActive }: {
+function ColHeader({ col: _col, label, width, hidden, selected, onResize, onHide, onSort, onFilter, filterActive }: {
   col: number; label: string; width: number; hidden: boolean; selected: boolean;
   onResize: (w: number) => void; onHide: () => void; onSort: (d: "asc" | "desc") => void;
   onFilter: () => void; filterActive: boolean;
@@ -1343,7 +1343,7 @@ function CFDialog({ defaultRange, onClose, onAdd }: {
 
 // ─── Filter Dialog ────────────────────────────────────────────────────────────
 
-function FilterDialog({ _col, values, current, colLabel, onClose, onApply }: {
+function FilterDialog({ col: _col, values, current, colLabel, onClose, onApply }: {
   col: number; values: string[]; current: string[]; colLabel: string;
   onClose: () => void; onApply: (allowed: string[]) => void;
 }) {

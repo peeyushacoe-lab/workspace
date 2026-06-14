@@ -146,7 +146,7 @@ function NoteCard({ note, selected, onSelect, onPin, onDelete, onColor }: {
   return (
     <div
       onClick={onSelect}
-      className={`relative group rounded-xl border-2 p-3 cursor-pointer transition-all hover:shadow-md ${colorInfo.bg} ${selected ? "border-[#1a56db]" : colorInfo.border} hover:border-[#1a56db]/40`}
+      className={`relative group rounded-xl border-2 p-3 cursor-pointer transition-all hover:shadow-md ${_colorInfo.bg} ${selected ? "border-[#1a56db]" : _colorInfo.border} hover:border-[#1a56db]/40`}
       style={{ minHeight: 120 }}
     >
       {note.pinned && <Pin className="absolute top-2 right-2 h-3.5 w-3.5 text-[#f4b400]" />}
@@ -425,7 +425,7 @@ export function NotesView() {
 
       {/* ── Editor ── */}
       {selectedId && selectedNote ? (
-        <div className={`flex flex-col flex-1 min-w-0 overflow-hidden ${colorInfo.bg}`}>
+        <div className={`flex flex-col flex-1 min-w-0 overflow-hidden ${_colorInfo.bg}`}>
 
           {/* Note toolbar */}
           <div className="flex items-center gap-2 px-4 py-2 border-b border-[#e8eaed] bg-white z-10">
