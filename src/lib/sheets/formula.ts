@@ -128,7 +128,7 @@ function evalFn(name: string, rawArgs: string[], g: CellGetter): CellValue {
       return sum;
     }
     case "AVERAGE": {
-      const ns = allNums(rawArgs).filter((_, i, a) => a[i] !== 0 || true); // include zeros
+      // include zeros (no filter needed)
       const numeric = rawArgs.flatMap(a => getVals(a)).filter(v => typeof v === "number" || (typeof v === "string" && !isNaN(Number(v)) && toStr(v) !== ""));
       return numeric.length ? numeric.reduce((s, v) => s + toN(v), 0) / numeric.length : 0;
     }
@@ -379,7 +379,7 @@ function evalFn(name: string, rawArgs: string[], g: CellGetter): CellValue {
     }
     case "NETWORKDAYS": {
       const start = new Date(toStr(e(rawArgs[0]))); const end = new Date(toStr(e(rawArgs[1])));
-      let count = 0, cur = new Date(start);
+      let count = 0; const cur = new Date(start);
       while (cur <= end) { if (cur.getDay() !== 0 && cur.getDay() !== 6) count++; cur.setDate(cur.getDate() + 1); }
       return count;
     }

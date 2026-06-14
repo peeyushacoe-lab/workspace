@@ -17,7 +17,6 @@ import {
   RefreshCw,
   Globe,
   Eye,
-  Sparkles,
   CalendarSearch,
   Link2,
   Video,
@@ -103,7 +102,7 @@ type AvailabilityResult = {
 
 // Sentinel stored in description to mark OOO events
 const OOO_MARKER = "[OUT_OF_OFFICE]";
-const OOO_COLOR = "#F97316"; // orange-500
+const _OOO_COLOR = "#F97316"; // orange-500
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 

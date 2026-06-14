@@ -1,4 +1,4 @@
-import { SlidesEditor } from "@/components/SlidesEditor";
+import SlidesEditor from "@/components/SlidesEditor";
 
 export default async function SlideEditorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

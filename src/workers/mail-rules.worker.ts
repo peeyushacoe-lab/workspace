@@ -90,7 +90,7 @@ export function createMailRulesWorker() {
   return new Worker<MailRulesJobData>(
     MAIL_RULES_QUEUE_NAME,
     async (job: Job<MailRulesJobData>) => {
-      const { messageId, mailboxId, userId } = job.data;
+      const { messageId, mailboxId: _mailboxId, userId } = job.data;
 
       const message = await prisma.inboxMessage.findUnique({
         where: { id: messageId },

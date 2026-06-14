@@ -39,7 +39,7 @@ export async function POST(request: Request, { params }: Params) {
     include: { options: { orderBy: { order: "asc" } } },
   });
 
-  const profile = await prisma.user.findUnique({
+  const _profile = await prisma.user.findUnique({
     where: { id: user.userId },
     select: { fullName: true, displayName: true, avatarUrl: true },
   });

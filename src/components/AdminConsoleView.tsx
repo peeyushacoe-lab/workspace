@@ -19,7 +19,6 @@ import {
   CheckCircle,
   Search,
   AlertCircle,
-  ExternalLink,
   Download,
   Ban,
   Lock,
@@ -1580,7 +1579,7 @@ function LegalHoldTab() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { load(); }, []);
 
   const placeHold = async () => {
     if (!selectedUserId) { toast.error("Select a user"); return; }
@@ -2598,7 +2597,8 @@ function SentinelTab() {
     }
   };
 
-  useEffect(() => { void load(); }, [filter]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { void load(); // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter]);
 
   const ack = async (id: string) => {
     await fetch(`/api/sentinel/alerts/${id}`, {

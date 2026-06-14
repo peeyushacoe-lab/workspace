@@ -316,14 +316,14 @@ function NewResourceForm({ onCreated }: { onCreated: () => void }) {
 
 function BookingTimeline({
   bookings,
-  selectedDate,
+  selectedDate: _selectedDate,
   onSlotClick,
   onCancelBooking,
   currentUserId,
   isAdmin,
 }: {
   bookings: Booking[];
-  selectedDate: string;
+  selectedDate?: string;
   onSlotClick: (hour: number) => void;
   onCancelBooking: (booking: Booking) => void;
   currentUserId: string;

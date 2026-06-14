@@ -1,4 +1,4 @@
-import { SheetsEditor } from "@/components/SheetsEditor";
+import SheetsEditor from "@/components/SheetsEditor";
 
 export default async function SheetEditorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

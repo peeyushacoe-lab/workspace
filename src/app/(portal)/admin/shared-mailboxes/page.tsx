@@ -151,7 +151,7 @@ function MemberPanel({
   };
 
   const currentMembers = allMembers.filter((m) => currentIds.has(m.id));
-  const nonMembers = allMembers.filter((m) => !currentIds.has(m.id));
+  const _nonMembers = allMembers.filter((m) => !currentIds.has(m.id));
 
   return (
     <div className="border-t border-[#e8eaed] bg-white px-5 py-4">

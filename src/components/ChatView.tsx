@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 ﻿"use client";
 
 import { useCallback, useEffect, useRef, useState, memo } from "react";
@@ -26,9 +27,7 @@ import {
   Pin,
   PinOff,
   Mic,
-  MicOff,
   Square,
-  Phone,
   Video,
   Megaphone,
   Paperclip,
@@ -1282,7 +1281,7 @@ function ChannelSection({
         <div className="space-y-0.5 mt-0.5">
           {channels.map((ch) => {
             const isSelected = selectedChannelId === ch.id;
-            const memberCount = ch.members?.length ?? 0;
+            const _memberCount = ch.members?.length ?? 0;
             return (
               <button
                 key={ch.id}
@@ -2132,8 +2131,10 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
       socket.off("chat:reactions_updated", onReactionsUpdated);
       socket.off("chat:presence", onPresence);
       socket.off("chat:typing", onTyping);
-      typingTimers.current.forEach((t) => clearTimeout(t));
-      typingTimers.current.clear();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      const timers = typingTimers.current;
+      timers.forEach((t) => clearTimeout(t));
+      timers.clear();
       setTypingNames(new Map());
     };
   }, [selectedChannelId, currentUserId]);

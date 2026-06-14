@@ -16,10 +16,7 @@ import {
   ZoomIn,
   ZoomOut,
   RotateCcw,
-  Sparkles,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+    } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 type DriveFile = {
@@ -115,10 +112,10 @@ export function FilePreviewModal({
   const imgContainerRef = useRef<HTMLDivElement>(null);
 
   // AI summary state
-  const [aiSummary, setAiSummary] = useState<string | null>(null);
-  const [aiSummaryLoading, setAiSummaryLoading] = useState(false);
-  const [aiSummaryError, setAiSummaryError] = useState<string | null>(null);
-  const [showSummaryPanel, setShowSummaryPanel] = useState(false);
+  const [_aiSummary, setAiSummary] = useState<string | null>(null);
+  const [_aiSummaryLoading, setAiSummaryLoading] = useState(false);
+  const [_aiSummaryError, setAiSummaryError] = useState<string | null>(null);
+  const [_showSummaryPanel, setShowSummaryPanel] = useState(false);
 
   const previewType = getPreviewType(file.mimeType, file.name);
 
@@ -143,7 +140,7 @@ export function FilePreviewModal({
     setShowSummaryPanel(false);
   }, [file.id]);
 
-  const handleSummarize = async () => {
+  const _handleSummarize = async () => {
     if (!textContent) return;
     setAiSummaryLoading(true);
     setAiSummaryError(null);

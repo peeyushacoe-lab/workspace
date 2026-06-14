@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Key, Webhook, Plus, Trash2, Copy, Check, Eye, EyeOff, Loader2, Globe, Zap } from "lucide-react";
+import { Key, Webhook, Plus, Trash2, Copy, Check,  Loader2, Globe, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/Shell";
 

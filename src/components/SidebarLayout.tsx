@@ -1,7 +1,8 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { LogOut, ChevronLeft, ChevronRight, Menu, X, Settings, Bell } from "lucide-react";
+import { LogOut, ChevronLeft, ChevronRight, Menu, X, Settings } from "lucide-react";
 import { SidebarNav } from "./SidebarNav";
 import { SearchTrigger } from "./GlobalSearch";
 import { NotificationCenter } from "./NotificationCenter";

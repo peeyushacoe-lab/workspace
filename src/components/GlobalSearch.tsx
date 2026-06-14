@@ -212,7 +212,7 @@ const TYPE_META: Record<
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function TypeBadge({ type }: { type: SearchResultType }) {
+function _TypeBadge({ type }: { type: SearchResultType }) {
   const { label, color, bg, Icon } = TYPE_META[type];
   return (
     <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${bg} ${color}`}>

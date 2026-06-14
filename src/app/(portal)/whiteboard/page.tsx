@@ -5,7 +5,7 @@ import { Pencil, Eraser, Square, Circle, Minus, Trash2, Download, Users } from "
 import { PageHeader } from "@/components/Shell";
 
 type Tool = "pen" | "eraser" | "line" | "rect" | "ellipse";
-type DrawEvent = { type: "draw" | "clear"; tool: Tool; color: string; size: number; points?: [number, number][]; from?: [number, number]; to?: [number, number] };
+type _DrawEvent = { type: "draw" | "clear"; tool: Tool; color: string; size: number; points?: [number, number][]; from?: [number, number]; to?: [number, number] };
 
 const COLORS = ["#00d2ff", "#7dd8f5", "#dfe1f6", "#ff4d6d", "#ffd166", "#06d6a0", "#ffffff", "#000000"];
 

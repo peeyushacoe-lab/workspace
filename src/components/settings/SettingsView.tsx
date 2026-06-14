@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -7,7 +8,7 @@ import {
   Sun, Moon, Monitor, ChevronRight, Check, ToggleRight,
   Download, AlertTriangle, Camera, Key, Cpu,
   Copy, Eye, EyeOff, Building2, Phone, MapPin,
-  Link2, Languages, Tag, Briefcase, Users,
+  Link2, Tag, Briefcase, Users,
 } from "lucide-react";
 import { MFASetup } from "@/components/MFASetup";
 import { SessionManager } from "@/components/SessionManager";

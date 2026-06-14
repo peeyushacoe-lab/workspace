@@ -127,7 +127,7 @@ export function CommandPalette({
             <p className="px-4 py-8 text-center text-sm text-[#5f6368]">No results found</p>
           ) : (
             Object.entries(grouped).map(([group, groupItems]) => {
-              const groupStart = flat.indexOf(groupItems[0]!);
+              const _groupStart = flat.indexOf(groupItems[0]!);
               return (
                 <div key={group}>
                   <p className="px-4 py-1.5 text-[10px] font-semibold text-[#5f6368]/50">

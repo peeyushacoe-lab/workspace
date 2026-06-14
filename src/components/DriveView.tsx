@@ -1232,7 +1232,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                     onSetRenameValue={setRenameValue}
                     onSelect={() => setSelectedItem(folder.id)}
                     onOpen={() => navigateToFolder(folder)}
-                    onRenameStart={() => {
+                    _onRenameStart={() => {
                       setRenamingId(folder.id);
                       setRenameValue(folder.name);
                     }}
@@ -1255,7 +1255,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                       setDetailFile(file);
                     }}
                     onPreview={() => handlePreview(file)}
-                    onRenameStart={() => {
+                    _onRenameStart={() => {
                       setRenamingId(file.id);
                       setRenameValue(file.name);
                     }}
@@ -1319,7 +1319,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                         renameValue={renameValue}
                         onSetRenameValue={setRenameValue}
                         onOpen={() => navigateToFolder(folder)}
-                        onRenameStart={() => {
+                        _onRenameStart={() => {
                           setRenamingId(folder.id);
                           setRenameValue(folder.name);
                         }}
@@ -1341,7 +1341,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                           setDetailFile(file);
                         }}
                         onPreview={() => handlePreview(file)}
-                        onRenameStart={() => {
+                        _onRenameStart={() => {
                           setRenamingId(file.id);
                           setRenameValue(file.name);
                         }}
@@ -1527,7 +1527,7 @@ function GridFolderCard({
   onSetRenameValue,
   onSelect,
   onOpen,
-  onRenameStart,
+  _onRenameStart,
   onRenameSubmit,
   onRenameCancel,
   onTrash,
@@ -1540,7 +1540,7 @@ function GridFolderCard({
   onSetRenameValue: (v: string) => void;
   onSelect: () => void;
   onOpen: () => void;
-  onRenameStart: () => void;
+  _onRenameStart: () => void;
   onRenameSubmit: () => void;
   onRenameCancel: () => void;
   onTrash: () => void;
@@ -1578,7 +1578,7 @@ function GridFolderCard({
         <p className="font-medium text-sm text-[#202124] truncate text-center">{folder.name}</p>
       )}
       <div className="absolute right-2 top-2 hidden gap-1 group-hover:flex">
-        <ActionBtn icon={Edit3} onClick={(e) => { e.stopPropagation(); onRenameStart(); }} title="Rename" />
+        <ActionBtn icon={Edit3} onClick={(e) => { e.stopPropagation(); _onRenameStart(); }} title="Rename" />
         <ActionBtn icon={Trash2} onClick={(e) => { e.stopPropagation(); onTrash(); }} title="Trash" />
         <ActionBtn icon={MoreVertical} onClick={(e) => { e.stopPropagation(); onContextMenu(e); }} title="More" />
       </div>
@@ -1594,7 +1594,7 @@ function GridFileCard({
   onSetRenameValue,
   onSelect,
   onPreview,
-  onRenameStart,
+  _onRenameStart,
   onRenameSubmit,
   onRenameCancel,
   onTrash,
@@ -1610,7 +1610,7 @@ function GridFileCard({
   onSetRenameValue: (v: string) => void;
   onSelect: () => void;
   onPreview: () => void;
-  onRenameStart: () => void;
+  _onRenameStart: () => void;
   onRenameSubmit: () => void;
   onRenameCancel: () => void;
   onTrash: () => void;
@@ -1695,7 +1695,7 @@ function ListFolderRow({
   renameValue,
   onSetRenameValue,
   onOpen,
-  onRenameStart,
+  _onRenameStart,
   onRenameSubmit,
   onRenameCancel,
   onTrash,
@@ -1706,7 +1706,7 @@ function ListFolderRow({
   renameValue: string;
   onSetRenameValue: (v: string) => void;
   onOpen: () => void;
-  onRenameStart: () => void;
+  _onRenameStart: () => void;
   onRenameSubmit: () => void;
   onRenameCancel: () => void;
   onTrash: () => void;
@@ -1745,7 +1745,7 @@ function ListFolderRow({
       <td className="px-4 py-3 text-sm text-[#5f6368]">—</td>
       <td className="px-4 py-3 text-right">
         <div className="hidden gap-1 justify-end group-hover:flex">
-          <ActionBtn icon={Edit3} onClick={onRenameStart} title="Rename" />
+          <ActionBtn icon={Edit3} onClick={_onRenameStart} title="Rename" />
           <ActionBtn icon={Trash2} onClick={onTrash} title="Trash" />
         </div>
       </td>
@@ -1760,7 +1760,7 @@ function ListFileRow({
   onSetRenameValue,
   onSelect,
   onPreview,
-  onRenameStart,
+  _onRenameStart,
   onRenameSubmit,
   onRenameCancel,
   onTrash,
@@ -1775,7 +1775,7 @@ function ListFileRow({
   onSetRenameValue: (v: string) => void;
   onSelect: () => void;
   onPreview: () => void;
-  onRenameStart: () => void;
+  _onRenameStart: () => void;
   onRenameSubmit: () => void;
   onRenameCancel: () => void;
   onTrash: () => void;

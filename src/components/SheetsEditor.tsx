@@ -6,14 +6,14 @@
  * number formats, column/row resize, freeze panes, merge cells, AI assistant
  */
 
-import { useCallback, useEffect, useRef, useState, useMemo, useId } from "react";
+import { useCallback, useEffect, useRef, useState, useId } from "react";
 import {
   Bold, Italic, Underline, Strikethrough,
   AlignLeft, AlignCenter, AlignRight, AlignJustify,
-  Plus, Trash2, Download, Upload, Share2, Loader2,
+  Plus, Download, Upload, Share2, Loader2,
   BarChart3, SortAsc, SortDesc, Filter, Sparkles,
   ChevronDown, Paintbrush, Type, Merge, X, Check,
-  Undo2, Redo2, Search, WrapText, Lock, EyeOff,
+  Undo2, Redo2, WrapText, EyeOff,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -22,7 +22,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
 import { DocShareModal } from "./DocShareModal";
-import { evaluateFormula, formatValue, indexToCol, parseRef, parseRange, getRangeVals } from "@/lib/sheets/formula";
+import { evaluateFormula, formatValue, indexToCol, parseRange, getRangeVals } from "@/lib/sheets/formula";
 import type { CellValue, NumberFormat } from "@/lib/sheets/formula";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -88,10 +88,7 @@ type SheetTab = {
   protectedRanges: string[];
 };
 
-type WorkbookDoc = {
-  sheets: SheetTab[];
-  version: number;
-};
+// WorkbookDoc type removed (unused)
 
 const ROWS = 200;
 const COLS = 26;
@@ -148,7 +145,7 @@ function deserializeSheet(raw: Record<string, unknown>): SheetTab {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function SheetsEditor({ sheetId }: { sheetId: string }) {
-  const uid = useId();
+  const _uid = useId();
 
   // ── Document state ───────────────────────────────────────────────────────
   const [title, setTitle] = useState("Untitled Spreadsheet");
@@ -400,7 +397,7 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
         const vb = computeCell(b[col]?.v ?? "", sh);
         const sa = String(va ?? ""), sb = String(vb ?? "");
         const na = Number(va), nb = Number(vb);
-        let cmp = (!isNaN(na) && !isNaN(nb)) ? na - nb : sa.localeCompare(sb);
+        const cmp = (!isNaN(na) && !isNaN(nb)) ? na - nb : sa.localeCompare(sb);
         return dir === "desc" ? -cmp : cmp;
       });
       const newCells = { ...sh.cells };
@@ -752,7 +749,7 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
                 onHide={() => setSheets(prev => prev.map(sh => {
                   if (sh.id !== activeSheetId) return sh;
                   const hs = new Set(sh.hiddenCols);
-                  hs.has(c) ? hs.delete(c) : hs.add(c);
+                  if (hs.has(c)) { hs.delete(c); } else { hs.add(c); };
                   return { ...sh, hiddenCols: hs };
                 }))}
                 onSort={(dir) => sortByCol(c, dir)}
@@ -803,7 +800,7 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
                   onHideRow={() => setSheets(prev => prev.map(sh => {
                     if (sh.id !== activeSheetId) return sh;
                     const hs = new Set(sh.hiddenRows);
-                    hs.has(r) ? hs.delete(r) : hs.add(r);
+                    if (hs.has(r)) { hs.delete(r); } else { hs.add(r); };
                     return { ...sh, hiddenRows: hs };
                   }))}
                 />
@@ -948,7 +945,7 @@ function ColorPicker({ onSelect }: { onSelect: (c: string) => void }) {
 
 // ─── Column header ──────────────────────────────────────────────────────────
 
-function ColHeader({ col, label, width, hidden, selected, onResize, onHide, onSort, onFilter, filterActive }: {
+function ColHeader({ _col, label, width, hidden, selected, onResize, onHide, onSort, onFilter, filterActive }: {
   col: number; label: string; width: number; hidden: boolean; selected: boolean;
   onResize: (w: number) => void; onHide: () => void; onSort: (d: "asc" | "desc") => void;
   onFilter: () => void; filterActive: boolean;
@@ -1346,7 +1343,7 @@ function CFDialog({ defaultRange, onClose, onAdd }: {
 
 // ─── Filter Dialog ────────────────────────────────────────────────────────────
 
-function FilterDialog({ col, values, current, colLabel, onClose, onApply }: {
+function FilterDialog({ _col, values, current, colLabel, onClose, onApply }: {
   col: number; values: string[]; current: string[]; colLabel: string;
   onClose: () => void; onApply: (allowed: string[]) => void;
 }) {
@@ -1370,7 +1367,7 @@ function FilterDialog({ col, values, current, colLabel, onClose, onApply }: {
             <label key={v} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-[#f1f3f4] px-1 rounded">
               <input type="checkbox" checked={selected.has(v)} onChange={e => {
                 const s = new Set(selected);
-                e.target.checked ? s.add(v) : s.delete(v);
+                if (e.target.checked) { s.add(v); } else { s.delete(v); }
                 setSelected(s);
               }} />
               {v}

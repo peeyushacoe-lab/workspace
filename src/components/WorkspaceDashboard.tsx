@@ -1,7 +1,8 @@
+/* eslint-disable @next/next/no-img-element */
 ﻿"use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Send, User, Loader2, CheckCircle2, AlertCircle, Sparkles, X, ChevronDown, Paperclip } from "lucide-react";
+import { Send, User, Loader2, CheckCircle2, AlertCircle, Sparkles, X, Paperclip } from "lucide-react";
 import { toast } from "sonner";
 import { getAllowedSendersForRole, type EmailAddressConfig } from "@/lib/email-config";
 import type { UserRole } from "@/generated/prisma/enums";

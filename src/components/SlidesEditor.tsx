@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 /**
@@ -10,12 +11,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Plus, Trash2, Download, Upload, X, Loader2, Share2, Copy,
   Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight,
-  ChevronUp, ChevronDown, Type, Square, Circle, Triangle,
-  BarChart3, Table, Code2, Image as ImageIcon, Link2,
-  Play, Pause, ChevronLeft, ChevronRight, Monitor, FileText,
-  Sparkles, Layers, Grid3x3, AlignHorizontalDistributeCenter,
-  AlignVerticalDistributeCenter, Undo2, Redo2, ZoomIn, ZoomOut,
-  PanelLeft, SlidersHorizontal, Maximize2, Minimize2,
+  ChevronUp, ChevronDown, Type, Square, Circle,   BarChart3, Table, Code2, Image as ImageIcon,   Play, ChevronLeft, ChevronRight, FileText,
+  Sparkles, Layers, Grid3x3,   Undo2, Redo2, ZoomIn, ZoomOut,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -172,7 +169,7 @@ async function exportPPTX(slides: Slide[], title: string) {
 
 // ─── Slide canvas element ─────────────────────────────────────────────────────
 
-function SlideCanvas({ slide, selected, onSelect, theme, zoom = 1 }: {
+function _SlideCanvas({ slide, selected, onSelect, theme, zoom = 1 }: {
   slide: Slide; selected: boolean; onSelect: () => void; theme: Theme; zoom?: number;
 }) {
   const isGradient = slide.background.includes("gradient");

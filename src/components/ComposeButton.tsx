@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { SquarePen, X, Maximize2, Minimize2, ChevronDown } from "lucide-react";
+import { SquarePen, X, Maximize2, ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { SimpleComposer } from "./WorkspaceDashboard";
 import type { UserRole } from "@/generated/prisma/enums";

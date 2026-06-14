@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
-  Bell, BellOff, Check, CheckCheck, Trash2, X,
+  Bell, BellOff, Check, CheckCheck, Trash2,
   AtSign, Calendar, Shield, AlertTriangle, Mail,
   FileText, Settings, Loader2, RefreshCw, Filter,
 } from "lucide-react";
@@ -51,7 +51,7 @@ const TYPE_CONFIG: Record<NotificationType, {
   SYSTEM:            { label: "System",           Icon: Settings,     color: "text-[#9aa0a6]",   bg: "bg-[#5d6579]/10",  border: "border-[#5d6579]/20" },
 };
 
-const ALL_TYPES = Object.keys(TYPE_CONFIG) as NotificationType[];
+const _ALL_TYPES = Object.keys(TYPE_CONFIG) as NotificationType[];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 

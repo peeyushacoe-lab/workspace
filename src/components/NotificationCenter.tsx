@@ -80,7 +80,7 @@ function groupByDay(notifications: Notification[]): Record<string, Notification[
   return groups;
 }
 
-export function NotificationCenter({ userId, dark = false }: { userId: string; dark?: boolean }) {
+export function NotificationCenter({ userId, dark: _dark = false }: { userId: string; dark?: boolean }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<"all" | "unread">("all");

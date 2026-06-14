@@ -1,15 +1,15 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Inbox, Search, RefreshCw, Clock, ChevronLeft, ChevronRight,
-  Mail, Reply, Forward, Trash2, Star, Archive, X, Send, Tag,
+Reply, Forward, Trash2, Star, Archive, X, Send, Tag,
   AlertCircle, AlertTriangle, Info, ShieldAlert, FileText,
   Sparkles, Loader2, ChevronDown, CalendarClock, FolderPlus,
-  Folder, BellOff, Zap, Users, MoreHorizontal, Plus, Edit2, Trash,
-  Shield, ShieldCheck, ShieldX, Globe, Lock, Eye, Activity,
-} from "lucide-react";
-import { formatDistanceToNow, isPast, isBefore, addHours, addDays, nextMonday, format, isToday, isThisYear } from "date-fns";
+  Folder, BellOff, Zap, Plus,
+  Shield, ShieldCheck, ShieldX, Globe, Lock, } from "lucide-react";
+import { formatDistanceToNow, isPast, addHours, addDays, nextMonday, format, isToday, isThisYear } from "date-fns";
 import { toast } from "sonner";
 import { SimpleComposer } from "./WorkspaceDashboard";
 import { UserProfileModal } from "./UserProfileModal";
@@ -1047,7 +1047,7 @@ export function InboxView({ userRole, initialThreads }: {
   const snoozedCount = threads.filter(t => t.isSnoozed && !t.isTrashed).length;
 
   const isSpecialFolder = activeFolder === "sent" || activeFolder === "drafts" || activeFolder === "scheduled";
-  const isArchiveFolder = activeFolder === "archive";
+  const _isArchiveFolder = activeFolder === "archive";
 
   const setSystemFolder = (key: SystemFolder) => {
     setActiveFolder(key);

@@ -10,10 +10,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Plus, Search, Trash2, Pin, PinOff, StickyNote, Palette, MoreVertical,
-  Tag, Folder, FolderPlus, Check, X, Sparkles, Loader2, ChevronDown,
-  Bold, Italic, Strikethrough, Code, List, ListOrdered, ListChecks,
-  Quote, Minus, Link2, Image as ImageIcon, Type, Hash, FileText,
-  Star, Clock, AlignLeft, Lock, Download, Copy,
+Folder, Check, X, Sparkles, Loader2,   Bold, Italic, Strikethrough, Code, List, ListOrdered, ListChecks,
+  Quote, Minus, Link2, Image as ImageIcon, Type, Hash,   Download, Copy,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow, format } from "date-fns";
@@ -143,7 +141,7 @@ function NoteCard({ note, selected, onSelect, onPin, onDelete, onColor }: {
   onColor: (color: string, e: React.MouseEvent) => void;
 }) {
   const [showMenu, setShowMenu] = useState(false);
-  const colorInfo = getNoteColor(note.color);
+  const _colorInfo = getNoteColor(note.color);
 
   return (
     <div
@@ -193,7 +191,7 @@ export function NotesView() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [search, setSearch] = useState("");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [_viewMode, _setViewMode] = useState<"grid" | "list">("grid");
 
   // Folders & tags (local state — extend to API as needed)
   const [folders] = useState<Folder[]>([
@@ -203,7 +201,7 @@ export function NotesView() {
     { id: "meetings", name: "Meetings" },
   ]);
   const [activeFolder, setActiveFolder] = useState("all");
-  const [activeTag, setActiveTag] = useState<string | null>(null);
+  const [_activeTag, _setActiveTag] = useState<string | null>(null);
 
   // UI
   const [showAI, setShowAI] = useState(false);
@@ -355,7 +353,7 @@ export function NotesView() {
   const pinnedNotes = filteredNotes.filter(n => n.pinned);
   const unpinnedNotes = filteredNotes.filter(n => !n.pinned);
   const selectedNote = notes.find(n => n.id === selectedId);
-  const colorInfo = getNoteColor(selectedNote?.color ?? null);
+  const _colorInfo = getNoteColor(selectedNote?.color ?? null);
   const words = countWords(content);
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -608,7 +606,7 @@ export function NotesView() {
 // ─── Note list item (sidebar) ─────────────────────────────────────────────────
 
 function NoteListItem({ note, selected, onClick }: { note: Note; selected: boolean; onClick: () => void }) {
-  const colorInfo = getNoteColor(note.color);
+  const _colorInfo = getNoteColor(note.color);
   return (
     <div onClick={onClick}
       className={`flex items-start gap-2 px-3 py-2 cursor-pointer transition-colors ${selected ? "bg-[#e8f0fe]" : "hover:bg-[#e8eaed]"}`}>
