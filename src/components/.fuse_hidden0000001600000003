@@ -35,13 +35,6 @@ import {
   SortAsc,
   MoreVertical,
   Sparkles,
-  FileSpreadsheet,
-  Presentation,
-  FolderPlus,
-  Info,
-  ChevronUp,
-  Move,
-  History,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
@@ -123,36 +116,7 @@ function getMimeIcon(mimeType: string) {
   if (mimeType === "application/pdf") return FileText;
   if (mimeType.startsWith("video/")) return Video;
   if (mimeType.startsWith("audio/")) return Music;
-  if (
-    mimeType.includes("word") ||
-    mimeType.includes("document") ||
-    mimeType === "text/plain"
-  )
-    return FileText;
-  if (mimeType.includes("sheet") || mimeType.includes("excel") || mimeType === "text/csv")
-    return FileSpreadsheet;
-  if (mimeType.includes("presentation") || mimeType.includes("powerpoint"))
-    return Presentation;
   return File;
-}
-
-// Google-style type-coloured icon tint
-function getMimeColor(mimeType: string): string {
-  if (mimeType === "application/pdf") return "#ea4335"; // red
-  if (mimeType.includes("sheet") || mimeType.includes("excel") || mimeType === "text/csv")
-    return "#0f9d58"; // green
-  if (mimeType.includes("presentation") || mimeType.includes("powerpoint"))
-    return "#f4b400"; // amber
-  if (mimeType.startsWith("image/")) return "#a142f4"; // purple
-  if (mimeType.startsWith("video/")) return "#ff6d00"; // orange
-  if (mimeType.startsWith("audio/")) return "#1a73e8"; // blue
-  if (
-    mimeType.includes("word") ||
-    mimeType.includes("document") ||
-    mimeType === "text/plain"
-  )
-    return "#1a56db"; // blue
-  return "#5f6368"; // grey
 }
 
 function FolderTreeItem({
@@ -176,10 +140,10 @@ function FolderTreeItem({
           onSelect(folder.id);
           if (hasChildren) setExpanded((e) => !e);
         }}
-        className={`flex w-full items-center gap-1 rounded-r-full px-2 py-1.5 text-sm transition-colors ${
+        className={`flex w-full items-center gap-1 rounded-lg px-2 py-1.5 text-sm transition-colors ${
           currentFolderId === folder.id
-            ? "bg-[#e8f0fe] text-[#1a56db] font-medium"
-            : "text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124]"
+            ? "bg-[#1a56db]/10 text-[#7dd8f5] font-medium"
+            : "text-[#5f6368] hover:bg-white hover:text-[#202124]"
         }`}
         style={{ paddingLeft: `${8 + depth * 16}px` }}
       >
@@ -352,8 +316,8 @@ function ShareModalDialog({
                 onClick={() => setRole(r)}
                 className={`flex-1 rounded-xl border py-2 text-sm font-medium transition-colors ${
                   role === r
-                    ? "border-[#1a56db] bg-[#e8f0fe] text-[#1a56db]"
-                    : "border-[#e8eaed] text-[#5f6368] hover:border-[#1a56db]/40"
+                    ? "border-[#1a56db] bg-[#1a56db]/10 text-[#7dd8f5]"
+                    : "border-[#e8eaed] text-[#5f6368] hover:border-[#707a90]"
                 }`}
               >
                 {r === "VIEWER" ? "View only" : "Can edit"}
@@ -372,8 +336,8 @@ function ShareModalDialog({
                 onClick={() => setExpiry(e)}
                 className={`rounded-xl border px-3 py-1.5 text-xs font-medium transition-colors ${
                   expiry === e
-                    ? "border-[#1a56db] bg-[#e8f0fe] text-[#1a56db]"
-                    : "border-[#e8eaed] text-[#5f6368] hover:border-[#1a56db]/40"
+                    ? "border-[#1a56db] bg-[#1a56db]/10 text-[#7dd8f5]"
+                    : "border-[#e8eaed] text-[#5f6368] hover:border-[#707a90]"
                 }`}
               >
                 {e === "never" ? "Never" : e === "7" ? "7 days" : e === "30" ? "30 days" : "Custom"}
@@ -591,12 +555,8 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
   const [sortKey, setSortKey] = useState<SortKey>("updatedAt");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [showSortMenu, setShowSortMenu] = useState(false);
-  const [showNewMenu, setShowNewMenu] = useState(false);
-  const [moveModal, setMoveModal] = useState<{ id: string; name: string; isFolder: boolean } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const folderInputRef = useRef<HTMLInputElement>(null);
   const sortMenuRef = useRef<HTMLDivElement>(null);
-  const newMenuRef = useRef<HTMLDivElement>(null);
 
   const fetchStorage = useCallback(async () => {
     try {
@@ -705,9 +665,6 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
     const handler = (e: MouseEvent) => {
       if (sortMenuRef.current && !sortMenuRef.current.contains(e.target as Node)) {
         setShowSortMenu(false);
-      }
-      if (newMenuRef.current && !newMenuRef.current.contains(e.target as Node)) {
-        setShowNewMenu(false);
       }
       setContextMenu(null);
     };
@@ -910,32 +867,6 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
     setPreviewFile(file);
   };
 
-  const handleMove = async (id: string, isFolder: boolean, targetFolderId: string | null) => {
-    try {
-      const endpoint = isFolder ? "/api/drive/folders/" + id : "/api/drive/files/" + id;
-      const res = await fetch(endpoint, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(isFolder ? { parentId: targetFolderId } : { folderId: targetFolderId }),
-      });
-      if (!res.ok) throw new Error("Failed");
-      toast.success("Moved");
-      setMoveModal(null);
-      fetchContent();
-      fetchSidebarFolders();
-    } catch {
-      toast.error("Could not move item");
-    }
-  };
-
-  const handleFolderInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const fileList = Array.from(e.target.files ?? []);
-    for (const f of fileList) {
-      handleUploadSingle(f);
-    }
-    if (folderInputRef.current) folderInputRef.current.value = "";
-  };
-
   // Right-click context menu
   const handleContextMenu = (
     e: React.MouseEvent,
@@ -983,69 +914,38 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
     >
       {/* Drag overlay */}
       {isDragOver && (
-        <div className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center bg-[#1a56db]/5 backdrop-blur-[1px]">
-          <div className="flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-[#1a56db] bg-white px-12 py-10 shadow-sm">
-            <Upload className="h-10 w-10 text-[#1a56db]" />
-            <p className="text-base font-semibold text-[#202124]">Drop files here to upload</p>
-            <p className="text-xs text-[#80868b]">to {section === "my-drive" && breadcrumb.length > 0 ? breadcrumb[breadcrumb.length - 1].name : "My Drive"}</p>
+        <div className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center rounded-2xl border-4 border-dashed border-[#1a56db] bg-[#1a56db]/10">
+          <div className="flex flex-col items-center gap-2 text-[#1a56db]">
+            <Upload className="h-12 w-12" />
+            <p className="text-lg font-semibold">Drop files to upload</p>
           </div>
         </div>
       )}
 
-      {/* Hidden upload inputs */}
-      <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileInputChange} />
-      <input
-        ref={folderInputRef}
-        type="file"
-        multiple
-        className="hidden"
-        onChange={handleFolderInputChange}
-        {...({ webkitdirectory: "", directory: "" } as Record<string, string>)}
-      />
-
       {/* Left sidebar */}
-      <aside className="bg-white border-r border-[#e8eaed] w-60 flex-shrink-0 flex flex-col py-3">
-        <div className="px-3 pb-2 relative" ref={newMenuRef}>
+      <aside className="bg-white border-r border-[#e8eaed] w-56 flex-shrink-0 flex flex-col">
+        <div className="p-4 flex gap-2">
           <button
-            onClick={() => setShowNewMenu((v) => !v)}
-            className="flex items-center gap-3 rounded-2xl bg-white border border-[#e8eaed] pl-4 pr-6 py-3 text-sm font-medium text-[#202124] shadow-sm hover:shadow transition-shadow"
+            onClick={() => {
+              setCreatingFolder(true);
+              setNewFolderName("");
+            }}
+            className="bg-[#1a56db] text-white hover:opacity-90 rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2 flex-1 justify-center"
+            style={{ transition: "background-color 150ms ease-out" }}
           >
-            <Plus className="h-5 w-5 text-[#1a56db]" />
+            <Plus className="h-4 w-4" />
             New
           </button>
-          {showNewMenu && (
-            <div className="absolute left-3 top-full z-30 mt-1 w-56 rounded-lg border border-[#e8eaed] bg-white py-1.5 shadow-lg">
-              <NewMenuItem
-                icon={FolderPlus}
-                label="New folder"
-                onClick={() => {
-                  setCreatingFolder(true);
-                  setNewFolderName("");
-                  setShowNewMenu(false);
-                }}
-              />
-              <div className="my-1 border-t border-[#e8eaed]" />
-              <NewMenuItem
-                icon={Upload}
-                label="File upload"
-                onClick={() => {
-                  fileInputRef.current?.click();
-                  setShowNewMenu(false);
-                }}
-              />
-              <NewMenuItem
-                icon={Folder}
-                label="Folder upload"
-                onClick={() => {
-                  folderInputRef.current?.click();
-                  setShowNewMenu(false);
-                }}
-              />
-            </div>
-          )}
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            title="Upload files"
+            className="bg-white text-[#5f6368] hover:bg-white border border-[#e8eaed] rounded-md px-3 py-2 text-sm font-medium flex items-center gap-2 transition-colors"
+          >
+            <Upload className="h-4 w-4" />
+          </button>
         </div>
 
-        <nav className="mt-2 pr-3 space-y-0.5">
+        <nav className="px-3 space-y-0.5">
           {(
             [
               { key: "my-drive", label: "My Drive", icon: HardDrive },
@@ -1061,24 +961,22 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                 setSection(key);
                 setCurrentFolderId(null);
                 setBreadcrumb([]);
-                setSelectedItem(null);
-                setDetailFile(null);
               }}
-              className={`flex w-full items-center gap-3 rounded-r-full pl-6 pr-3 py-2 text-sm transition-colors ${
+              className={`flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-colors ${
                 section === key
-                  ? "bg-[#e8f0fe] text-[#1a56db] font-medium"
-                  : "text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124]"
+                  ? "bg-[#1a56db]/10 text-[#7dd8f5] font-medium"
+                  : "text-[#5f6368] hover:bg-white hover:text-[#202124]"
               }`}
             >
-              <Icon className="h-[18px] w-[18px]" />
+              <Icon className="h-4 w-4" />
               {label}
             </button>
           ))}
         </nav>
 
         {section === "my-drive" && sidebarFolders.length > 0 && (
-          <div className="mt-4 pr-2">
-            <p className="text-xs font-medium text-[#80868b] px-6 py-1.5">
+          <div className="mt-4 px-3">
+            <p className="text-xs font-semibold text-[#5f6368] px-4 py-2">
               Folders
             </p>
             <div className="space-y-0.5">
@@ -1099,22 +997,19 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
           </div>
         )}
 
-        <div className="px-5 py-3 border-t border-[#e8eaed] mt-auto">
+        <div className="px-4 py-3 border-t border-[#e8eaed] mt-auto">
           {storage && (
             <div>
-              <div className="flex items-center gap-2 mb-2 text-[#5f6368]">
-                <HardDrive className="h-4 w-4" />
-                <span className="text-xs font-medium">Storage</span>
+              <div className="flex justify-between mb-1">
+                <span className="text-xs text-[#5f6368]">{formatFileSize(storage.usedMB * 1024 * 1024)} used</span>
+                <span className="text-xs text-[#5f6368]">15 GB</span>
               </div>
-              <div className="bg-[#e8eaed] rounded-full h-1.5">
+              <div className="bg-[#f1f3f4] rounded-full h-1.5">
                 <div
-                  className="bg-[#1a56db] h-1.5 rounded-full transition-all"
-                  style={{ width: storagePercent + "%" }}
+                  className="bg-[#1a56db] text-white h-1.5 rounded-full transition-all"
+                  style={{ width: `${storagePercent}%` }}
                 />
               </div>
-              <p className="mt-2 text-xs text-[#80868b]">
-                {formatFileSize(storage.usedMB * 1024 * 1024)} of {(storage.totalMB / 1024).toFixed(0)} GB used
-              </p>
             </div>
           )}
         </div>
@@ -1129,27 +1024,12 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
           </div>
         )}
 
-        {/* Top search bar */}
-        <div className="px-6 pt-4 pb-2 bg-white">
-          <div className="relative max-w-2xl">
-            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#5f6368]" />
-            <input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search in Drive"
-              className="w-full bg-[#f1f3f4] rounded-full pl-11 py-2.5 text-sm focus:bg-white focus:ring-1 focus:ring-[#1a56db]/40 focus:shadow-sm outline-none pr-4 text-[#202124] placeholder:text-[#5f6368] transition-colors"
-            />
-          </div>
-        </div>
-
-        {/* Toolbar: breadcrumb + controls */}
-        <div className="px-6 py-2 bg-white flex items-center gap-3">
-          <nav className="flex items-center gap-1 flex-1 min-w-0 overflow-hidden">
+        {/* Toolbar */}
+        <div className="px-6 py-3 border-b border-[#e8eaed] bg-white flex items-center gap-3">
+          <nav className="flex items-center gap-1 flex-1 min-w-0">
             <button
               onClick={() => navigateToBreadcrumb(-1)}
-              className={`rounded-lg px-2 py-1 text-lg text-[#202124] hover:bg-[#f1f3f4] transition-colors font-normal whitespace-nowrap ${
-                breadcrumb.length === 0 ? "font-medium" : ""
-              }`}
+              className="text-sm text-[#5f6368] hover:text-[#202124] transition-colors font-medium whitespace-nowrap"
             >
               {section === "my-drive" ? "My Drive"
                 : section === "shared" ? "Shared with me"
@@ -1158,12 +1038,14 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                 : "Trash"}
             </button>
             {breadcrumb.map((crumb, idx) => (
-              <span key={crumb.id} className="flex items-center gap-1 min-w-0">
-                <ChevronRight className="h-4 w-4 text-[#80868b] shrink-0" />
+              <span key={crumb.id} className="flex items-center gap-1">
+                <ChevronRight className="h-3.5 w-3.5 text-[#262b3a]" />
                 <button
                   onClick={() => navigateToBreadcrumb(idx)}
-                  className={`rounded-lg px-2 py-1 text-lg text-[#202124] hover:bg-[#f1f3f4] transition-colors truncate ${
-                    idx === breadcrumb.length - 1 ? "font-medium" : "font-normal"
+                  className={`text-sm text-[#5f6368] hover:text-[#202124] transition-colors ${
+                    idx === breadcrumb.length - 1
+                      ? "font-medium text-[#202124]"
+                      : ""
                   }`}
                 >
                   {crumb.name}
@@ -1172,22 +1054,32 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
             ))}
           </nav>
 
+          <div className="relative w-56">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#5f6368]" />
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search files..."
+              className="w-full bg-white border-transparent rounded-lg pl-9 py-2 text-sm focus:ring-2 focus:ring-[#1a56db] focus:bg-[#f1f3f4] outline-none pr-3 text-[#202124]"
+            />
+          </div>
+
           {/* Sort */}
           <div className="relative" ref={sortMenuRef}>
             <button
               onClick={() => setShowSortMenu((v) => !v)}
-              title="Sort"
-              className="text-[#5f6368] hover:bg-[#f1f3f4] rounded-full p-2 flex items-center gap-2 transition-colors"
+              className="bg-white text-[#5f6368] hover:bg-white border border-[#e8eaed] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2 transition-colors"
             >
-              <SortAsc className="h-[18px] w-[18px]" />
+              <SortAsc className="h-4 w-4" />
+              Sort
             </button>
             {showSortMenu && (
-              <div className="absolute right-0 top-full mt-1 z-30 bg-white border border-[#e8eaed] rounded-lg shadow-lg py-1 min-w-[180px]">
+              <div className="absolute right-0 top-full mt-1 z-30 bg-white border border-[#e8eaed] rounded-lg shadow-lg py-1 min-w-[160px]">
                 {(
                   [
                     { key: "name", label: "Name" },
                     { key: "size", label: "Size" },
-                    { key: "updatedAt", label: "Last modified" },
+                    { key: "updatedAt", label: "Date modified" },
                   ] as const
                 ).map(({ key, label }) => (
                   <button
@@ -1203,9 +1095,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                   >
                     {label}
                     {sortKey === key && (
-                      sortDir === "asc"
-                        ? <ChevronUp className="h-4 w-4 text-[#1a56db]" />
-                        : <ChevronDown className="h-4 w-4 text-[#1a56db]" />
+                      <span className="text-xs text-[#5f6368]">{sortDir === "asc" ? "↑" : "↓"}</span>
                     )}
                   </button>
                 ))}
@@ -1214,39 +1104,38 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
           </div>
 
           {/* View toggle */}
-          <div className="flex items-center rounded-full border border-[#e8eaed] p-0.5">
-            <button
-              onClick={() => setView("list")}
-              title="List view"
-              className={`rounded-full p-1.5 transition-colors ${
-                view === "list" ? "bg-[#e8f0fe] text-[#1a56db]" : "text-[#5f6368] hover:bg-[#f1f3f4]"
-              }`}
-            >
-              <List className="h-[18px] w-[18px]" />
-            </button>
+          <div className="flex items-center gap-1 rounded-xl border border-[#e8eaed] p-0.5">
             <button
               onClick={() => setView("grid")}
-              title="Grid view"
-              className={`rounded-full p-1.5 transition-colors ${
-                view === "grid" ? "bg-[#e8f0fe] text-[#1a56db]" : "text-[#5f6368] hover:bg-[#f1f3f4]"
+              className={`rounded-md p-1.5 transition-colors ${
+                view === "grid" ? "bg-[#1a56db]/10 text-[#1a56db]" : "text-[#5f6368] hover:bg-white"
               }`}
             >
-              <Grid3x3 className="h-[18px] w-[18px]" />
+              <Grid3x3 className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setView("list")}
+              className={`rounded-md p-1.5 transition-colors ${
+                view === "list" ? "bg-[#1a56db]/10 text-[#1a56db]" : "text-[#5f6368] hover:bg-white"
+              }`}
+            >
+              <List className="h-4 w-4" />
             </button>
           </div>
 
-          {/* Details toggle */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            className="hidden"
+            onChange={handleFileInputChange}
+          />
           <button
-            onClick={() => {
-              if (detailFile) { setDetailFile(null); setSelectedItem(null); }
-              else if (activeFileForDetail) setDetailFile(activeFileForDetail);
-            }}
-            title="View details"
-            className={`rounded-full p-2 transition-colors ${
-              detailFile ? "bg-[#e8f0fe] text-[#1a56db]" : "text-[#5f6368] hover:bg-[#f1f3f4]"
-            }`}
+            onClick={() => fileInputRef.current?.click()}
+            className="bg-[#1a56db] text-white hover:opacity-90 rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2 transition-colors"
           >
-            <Info className="h-[18px] w-[18px]" />
+            <Upload className="h-4 w-4" />
+            Upload
           </button>
         </div>
 
@@ -1343,7 +1232,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                     onSetRenameValue={setRenameValue}
                     onSelect={() => setSelectedItem(folder.id)}
                     onOpen={() => navigateToFolder(folder)}
-                    _onRenameStart={() => {
+                    onRenameStart={() => {
                       setRenamingId(folder.id);
                       setRenameValue(folder.name);
                     }}
@@ -1366,7 +1255,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                       setDetailFile(file);
                     }}
                     onPreview={() => handlePreview(file)}
-                    _onRenameStart={() => {
+                    onRenameStart={() => {
                       setRenamingId(file.id);
                       setRenameValue(file.name);
                     }}
@@ -1430,7 +1319,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                         renameValue={renameValue}
                         onSetRenameValue={setRenameValue}
                         onOpen={() => navigateToFolder(folder)}
-                        _onRenameStart={() => {
+                        onRenameStart={() => {
                           setRenamingId(folder.id);
                           setRenameValue(folder.name);
                         }}
@@ -1452,7 +1341,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                           setDetailFile(file);
                         }}
                         onPreview={() => handlePreview(file)}
-                        _onRenameStart={() => {
+                        onRenameStart={() => {
                           setRenamingId(file.id);
                           setRenameValue(file.name);
                         }}
@@ -1638,7 +1527,7 @@ function GridFolderCard({
   onSetRenameValue,
   onSelect,
   onOpen,
-  _onRenameStart,
+  onRenameStart,
   onRenameSubmit,
   onRenameCancel,
   onTrash,
@@ -1651,7 +1540,7 @@ function GridFolderCard({
   onSetRenameValue: (v: string) => void;
   onSelect: () => void;
   onOpen: () => void;
-  _onRenameStart: () => void;
+  onRenameStart: () => void;
   onRenameSubmit: () => void;
   onRenameCancel: () => void;
   onTrash: () => void;
@@ -1689,7 +1578,7 @@ function GridFolderCard({
         <p className="font-medium text-sm text-[#202124] truncate text-center">{folder.name}</p>
       )}
       <div className="absolute right-2 top-2 hidden gap-1 group-hover:flex">
-        <ActionBtn icon={Edit3} onClick={(e) => { e.stopPropagation(); _onRenameStart(); }} title="Rename" />
+        <ActionBtn icon={Edit3} onClick={(e) => { e.stopPropagation(); onRenameStart(); }} title="Rename" />
         <ActionBtn icon={Trash2} onClick={(e) => { e.stopPropagation(); onTrash(); }} title="Trash" />
         <ActionBtn icon={MoreVertical} onClick={(e) => { e.stopPropagation(); onContextMenu(e); }} title="More" />
       </div>
@@ -1705,7 +1594,7 @@ function GridFileCard({
   onSetRenameValue,
   onSelect,
   onPreview,
-  _onRenameStart,
+  onRenameStart,
   onRenameSubmit,
   onRenameCancel,
   onTrash,
@@ -1721,7 +1610,7 @@ function GridFileCard({
   onSetRenameValue: (v: string) => void;
   onSelect: () => void;
   onPreview: () => void;
-  _onRenameStart: () => void;
+  onRenameStart: () => void;
   onRenameSubmit: () => void;
   onRenameCancel: () => void;
   onTrash: () => void;
@@ -1806,7 +1695,7 @@ function ListFolderRow({
   renameValue,
   onSetRenameValue,
   onOpen,
-  _onRenameStart,
+  onRenameStart,
   onRenameSubmit,
   onRenameCancel,
   onTrash,
@@ -1817,7 +1706,7 @@ function ListFolderRow({
   renameValue: string;
   onSetRenameValue: (v: string) => void;
   onOpen: () => void;
-  _onRenameStart: () => void;
+  onRenameStart: () => void;
   onRenameSubmit: () => void;
   onRenameCancel: () => void;
   onTrash: () => void;
@@ -1856,7 +1745,7 @@ function ListFolderRow({
       <td className="px-4 py-3 text-sm text-[#5f6368]">—</td>
       <td className="px-4 py-3 text-right">
         <div className="hidden gap-1 justify-end group-hover:flex">
-          <ActionBtn icon={Edit3} onClick={_onRenameStart} title="Rename" />
+          <ActionBtn icon={Edit3} onClick={onRenameStart} title="Rename" />
           <ActionBtn icon={Trash2} onClick={onTrash} title="Trash" />
         </div>
       </td>
@@ -1871,7 +1760,7 @@ function ListFileRow({
   onSetRenameValue,
   onSelect,
   onPreview,
-  _onRenameStart,
+  onRenameStart,
   onRenameSubmit,
   onRenameCancel,
   onTrash,
@@ -1886,7 +1775,7 @@ function ListFileRow({
   onSetRenameValue: (v: string) => void;
   onSelect: () => void;
   onPreview: () => void;
-  _onRenameStart: () => void;
+  onRenameStart: () => void;
   onRenameSubmit: () => void;
   onRenameCancel: () => void;
   onTrash: () => void;

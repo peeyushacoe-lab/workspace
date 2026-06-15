@@ -1285,17 +1285,82 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
         {/* Number format */}
         <select
           className="text-xs border border-[#e8eaed] rounded px-1.5 py-1 bg-white text-[#202124] h-7 cursor-pointer"
-          value={cellStyle.format ?? "general"}
-          onChange={e => applyStyle({ format: e.target.value as NumberFormat })}
+          value={cellStyle.accounting ? "accounting" : (cellStyle.format ?? "general")}
+          onChange={e => {
+            const v = e.target.value;
+            if (v === "accounting") applyStyle({ format: "currency", accounting: true, align: "right" });
+            else applyStyle({ format: v as NumberFormat, accounting: false });
+          }}
         >
           <option value="general">General</option>
           <option value="number">Number</option>
           <option value="currency">Currency</option>
+          <option value="accounting">Accounting</option>
           <option value="percent">Percent</option>
           <option value="date">Date</option>
           <option value="scientific">Scientific</option>
           <option value="text">Text</option>
         </select>
+
+        {/* Quick number-format buttons */}
+        <ToolBtn
+          icon={<span className="text-[13px] font-semibold leading-none">$</span>}
+          title="Currency"
+          active={cellStyle.format === "currency" && !cellStyle.accounting}
+          onClick={() => applyStyle({ format: "currency", accounting: false })}
+        />
+        <ToolBtn
+          icon={<span className="text-[13px] font-semibold leading-none">%</span>}
+          title="Percent"
+          active={cellStyle.format === "percent"}
+          onClick={() => applyStyle({ format: "percent", accounting: false })}
+        />
+        <ToolBtn
+          icon={<span className="text-[11px] font-semibold leading-none">1,000</span>}
+          title="Number (thousands separator)"
+          active={cellStyle.format === "number"}
+          onClick={() => applyStyle({ format: "number", accounting: false })}
+        />
+
+        {/* Currency picker */}
+        <div className="relative">
+          <ToolBtn
+            icon={
+              <span className="flex items-center leading-none text-[12px] font-semibold">
+                {(CURRENCIES.find(x => x.code === (cellStyle.currency ?? "USD"))?.symbol ?? "$") + ""}
+                <ChevronDown className="h-3 w-3 ml-0.5" />
+              </span>
+            }
+            title="Currency symbol"
+            onClick={e => { e.stopPropagation(); setCurrencyMenuOpen(v => !v); }}
+          />
+          {currencyMenuOpen && (
+            <div className="absolute top-full left-0 mt-1 w-28 bg-white border border-[#e8eaed] rounded-lg shadow-lg z-50 py-1" onClick={e => e.stopPropagation()}>
+              {CURRENCIES.map(cur => (
+                <button
+                  key={cur.code}
+                  onClick={() => { applyStyle({ format: "currency", currency: cur.code }); setCurrencyMenuOpen(false); }}
+                  className={`flex items-center gap-2 w-full px-2.5 py-1.5 text-[13px] text-left transition-colors ${(cellStyle.currency ?? "USD") === cur.code ? "bg-[#e8f0fe] text-[#1a56db]" : "text-[#5f6368] hover:bg-[#f1f3f4]"}`}
+                >
+                  <span className="w-4 text-center font-semibold">{cur.symbol}</span>
+                  {cur.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Decimal places */}
+        <ToolBtn
+          icon={<span className="text-[10px] font-semibold leading-none whitespace-nowrap">.0{"+"}</span>}
+          title="Increase decimal places"
+          onClick={() => { const cur = cellStyle.decimals ?? 2; applyStyle({ decimals: Math.min(10, cur + 1) }); }}
+        />
+        <ToolBtn
+          icon={<span className="text-[10px] font-semibold leading-none whitespace-nowrap">.0{"−"}</span>}
+          title="Decrease decimal places"
+          onClick={() => { const cur = cellStyle.decimals ?? 2; applyStyle({ decimals: Math.max(0, cur - 1) }); }}
+        />
         <Sep />
 
         {/* Merge */}

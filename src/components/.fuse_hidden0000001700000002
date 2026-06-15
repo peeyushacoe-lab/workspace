@@ -1,0 +1,2781 @@
+﻿"use client";
+
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import {
+  Users,
+  Mail,
+  ShieldAlert,
+  BarChart3,
+  BookOpen,
+  Database,
+  MessageSquare,
+  HardDrive,
+  TrendingUp,
+  X,
+  Plus,
+  Trash2,
+  Loader2,
+  AlertTriangle,
+  CheckCircle,
+  Search,
+  AlertCircle,
+  Download,
+  Ban,
+  Lock,
+  FileDown,
+  Activity,
+  Timer,
+  Archive,
+  ToggleLeft,
+  ToggleRight,
+  Upload,
+  FileText,
+  Check,
+} from "lucide-react";
+import { format, parseISO } from "date-fns";
+import { toast } from "sonner";
+
+type AdminSidebarTab = "overview" | "users" | "mailboxes" | "audit" | "security" | "suppression" | "legal-hold" | "gdpr" | "security-stats" | "retention" | "sso" | "sentinel";
+
+type AdminUser = {
+  id: string;
+  fullName: string;
+  email: string;
+  role: string;
+  isActive: boolean;
+  createdAt: string;
+  lastLogin: string | null;
+};
+
+type AdminStats = {
+  users: { total: number; active: number };
+  mailboxes: number;
+  emails: { total: number; today: number };
+  contacts: number;
+  security: { openIncidents: number; dlpViolations: number };
+  chat: { messages: number };
+  drive: { files: number };
+  emailStats30d?: {
+    sent: number;
+    delivered: number;
+    bounced: number;
+    opened: number;
+    deliveryRate: number;
+    bounceRate: number;
+    openRate: number;
+  };
+};
+
+type AdminMailbox = {
+  id: string;
+  email: string;
+  displayName: string;
+  isShared: boolean;
+  isNoReply: boolean;
+  _count: { threads: number };
+  accessLogs: { user: { id: string; fullName: string; email: string; role: string } }[];
+};
+
+type AuditLog = {
+  id: string;
+  actorId: string | null;
+  action: string;
+  targetType?: string | null;
+  targetId?: string | null;
+  ipAddress?: string | null;
+  createdAt: string;
+};
+
+type SecurityEvent = {
+  id: string;
+  type: string;
+  severity: string;
+  createdAt: string;
+  metadata?: Record<string, unknown>;
+};
+
+type SocStats = {
+  incidents: {
+    byStatus: { status: string; _count: number }[];
+    bySeverity: { severity: string; _count: number }[];
+  };
+  recentSecurityEvents: SecurityEvent[];
+  dlpViolations: number;
+  highRiskThreats: number;
+};
+
+type SuppressionEntry = {
+  id: string;
+  email: string;
+  reason: string;
+  createdAt: string;
+};
+
+const ROLE_COLORS: Record<string, string> = {
+  ADMIN: "bg-[#1a56db]/10 text-[#7dd8f5] border-[#1a56db]/20",
+  CEO: "bg-purple-500/10 text-purple-300 border-purple-500/20",
+  CISO: "bg-orange-500/10 text-orange-300 border-orange-500/20",
+  MARKETING: "bg-[#f1f3f4] text-[#5f6368] border-[#e8eaed]",
+  INTERNSHIP: "bg-[#f1f3f4] text-[#5f6368] border-[#e8eaed]",
+  R_AND_D: "bg-[#f1f3f4] text-[#5f6368] border-[#e8eaed]",
+};
+
+const REASON_COLORS: Record<string, string> = {
+  BOUNCE: "bg-orange-500/10 text-orange-300 border-orange-500/20",
+  SPAM: "bg-[#ff4d6d]/10 text-[#ff4d6d] border-[#ff4d6d]/20",
+  MANUAL: "bg-[#f1f3f4] text-[#5f6368] border-[#e8eaed]",
+};
+
+const ACTION_COLORS: Record<string, string> = {
+  LOGIN: "bg-[#f8fafd]/10 text-[#06d6a0] border-[#06d6a0]/20",
+  LOGOUT: "bg-[#f1f3f4] text-[#5f6368] border-[#e8eaed]",
+  EMAIL_QUEUED: "bg-[#1a56db]/10 text-[#1a56db] border-[#1a56db]/20",
+};
+
+const SEVERITY_COLORS: Record<string, string> = {
+  CRITICAL: "text-[#ff4d6d] bg-[#ff4d6d]/10",
+  HIGH: "text-orange-300 bg-orange-500/10",
+  MEDIUM: "text-yellow-300 bg-yellow-500/10",
+  LOW: "text-[#06d6a0] bg-[#f8fafd]/10",
+};
+
+function SkeletonRow({ cols }: { cols: number }) {
+  return (
+    <tr>
+      {Array.from({ length: cols }).map((_, i) => (
+        <td key={i} className="px-4 py-3">
+          <div className="h-4 bg-[#f1f3f4] rounded animate-pulse" style={{ width: `${60 + (i * 7) % 30}%` }} />
+        </td>
+      ))}
+    </tr>
+  );
+}
+
+function EmptyState({ icon: Icon, message }: { icon: React.ElementType; message: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 text-[#5f6368]">
+      <Icon className="w-12 h-12 mb-3 opacity-20" />
+      <p className="text-sm">{message}</p>
+    </div>
+  );
+}
+
+function ErrorState({ message }: { message: string }) {
+  return (
+    <div className="flex items-center gap-3 p-4 bg-[#ff4d6d]/10 border border-[#ff4d6d]/30 rounded-xl text-sm text-[#ff4d6d] m-4">
+      <AlertCircle className="w-4 h-4 flex-shrink-0" />
+      {message}
+    </div>
+  );
+}
+
+function StatCard({
+  label,
+  value,
+  icon: Icon,
+  iconColor,
+  sub,
+}: {
+  label: string;
+  value: number | string;
+  icon: React.ElementType;
+  iconColor: string;
+  sub?: string;
+}) {
+  return (
+    <div className="bg-white border border-[#e8eaed] rounded-xl p-5">
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-sm font-medium text-[#5f6368]">{label}</p>
+          <p className="text-2xl font-semibold text-[#202124] mt-1">{typeof value === "number" ? value.toLocaleString() : value}</p>
+          {sub && <p className="text-xs text-[#5f6368] mt-1">{sub}</p>}
+        </div>
+        <div className={`p-3 rounded-xl ${iconColor}`}>
+          <Icon className="w-5 h-5" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RateBar({ label, rate, color }: { label: string; rate: number; color: string }) {
+  return (
+    <div className="flex-1 bg-white border border-[#e8eaed] rounded-xl p-5">
+      <p className="text-sm font-medium text-[#5f6368] mb-1">{label}</p>
+      <p className={`text-2xl font-semibold text-[#202124] mt-1 ${color}`}>{rate}%</p>
+      <div className="mt-3 bg-[#f1f3f4] rounded-full h-2 flex-1 overflow-hidden">
+        <div
+          className={`bg-[#1a56db] h-2 rounded-full transition-all`}
+          style={{ width: `${Math.min(rate, 100)}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function OverviewTab() {
+  const [stats, setStats] = useState<AdminStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/admin/stats")
+      .then((r) => {
+        if (!r.ok) throw new Error("Failed to load stats");
+        return r.json() as Promise<AdminStats>;
+      })
+      .then(setStats)
+      .catch((e: Error) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-3 gap-4">
+          {Array.from({ length: 9 }).map((_, i) => (
+            <div key={i} className="h-32 bg-white rounded-xl animate-pulse" />
+          ))}
+        </div>
+        <div className="h-32 bg-white rounded-xl animate-pulse" />
+      </div>
+    );
+  }
+  if (error) return <ErrorState message={error} />;
+  if (!stats) return null;
+
+  const es = stats.emailStats30d;
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-3 gap-4">
+        <StatCard
+          label="Total Users"
+          value={stats.users.total}
+          icon={Users}
+          iconColor="bg-[#1a56db]/10 text-[#1a56db]"
+          sub={`${stats.users.active} active`}
+        />
+        <StatCard
+          label="Active Users"
+          value={stats.users.active}
+          icon={TrendingUp}
+          iconColor="bg-[#f8fafd]/10 text-[#06d6a0]"
+        />
+        <StatCard
+          label="Total Mailboxes"
+          value={stats.mailboxes}
+          icon={Mail}
+          iconColor="bg-purple-500/10 text-purple-300"
+        />
+        <StatCard
+          label="Emails Today"
+          value={stats.emails.today}
+          icon={BarChart3}
+          iconColor="bg-[#1a56db]/10 text-[#7dd8f5]"
+          sub={`${stats.emails.total} total`}
+        />
+        <StatCard
+          label="Contacts"
+          value={stats.contacts}
+          icon={BookOpen}
+          iconColor="bg-teal-500/10 text-teal-300"
+        />
+        <StatCard
+          label="Open Incidents"
+          value={stats.security.openIncidents}
+          icon={ShieldAlert}
+          iconColor="bg-[#ff4d6d]/10 text-[#ff4d6d]"
+        />
+        <StatCard
+          label="DLP Violations"
+          value={stats.security.dlpViolations}
+          icon={AlertTriangle}
+          iconColor="bg-orange-500/10 text-orange-300"
+        />
+        <StatCard
+          label="Chat Messages"
+          value={stats.chat.messages}
+          icon={MessageSquare}
+          iconColor="bg-violet-500/10 text-violet-300"
+        />
+        <StatCard
+          label="Drive Files"
+          value={stats.drive.files}
+          icon={HardDrive}
+          iconColor="bg-[#f8fafd]/10 text-[#06d6a0]"
+        />
+      </div>
+
+      {/* Email stats last 30 days */}
+      {es && (
+        <div className="bg-white border border-[#e8eaed] rounded-xl overflow-hidden">
+          <div className="px-5 py-4 border-b border-[#e8eaed]">
+            <h3 className="font-semibold text-[#202124] text-sm">Email Performance — Last 30 Days</h3>
+            <p className="text-xs text-[#5f6368] mt-0.5">{es.sent.toLocaleString()} emails sent</p>
+          </div>
+          <div className="p-5">
+            <div className="grid grid-cols-4 gap-4 mb-4">
+              <div className="text-center">
+                <p className="text-2xl font-semibold text-[#202124]">{es.sent.toLocaleString()}</p>
+                <p className="text-xs font-medium text-[#5f6368] mt-1">Sent</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-semibold text-[#06d6a0]">{es.delivered.toLocaleString()}</p>
+                <p className="text-xs font-medium text-[#5f6368] mt-1">Delivered</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-semibold text-[#ff4d6d]">{es.bounced.toLocaleString()}</p>
+                <p className="text-xs font-medium text-[#5f6368] mt-1">Bounced</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-semibold text-[#1a56db]">{es.opened.toLocaleString()}</p>
+                <p className="text-xs font-medium text-[#5f6368] mt-1">Opened</p>
+              </div>
+            </div>
+            <div className="flex gap-4">
+              <RateBar label="Delivery Rate" rate={es.deliveryRate} color="text-[#06d6a0]" />
+              <RateBar label="Bounce Rate" rate={es.bounceRate} color="text-[#ff4d6d]" />
+              <RateBar label="Open Rate" rate={es.openRate} color="text-[#1a56db]" />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── CSV Import Modal ─────────────────────────────────────────────────────────
+
+type ImportRowResult = { email: string; status: "created" | "skipped" | "error"; reason?: string; tempPassword?: string };
+
+function CsvImportModal({ onClose, onImported }: { onClose: () => void; onImported: () => void }) {
+  const [csvText, setCsvText] = useState("");
+  const [parsed, setParsed] = useState<{ email: string; fullName: string; role: string }[]>([]);
+  const [parseError, setParseError] = useState<string | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [results, setResults] = useState<ImportRowResult[] | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const parseCsv = (text: string) => {
+    setParseError(null);
+    const lines = text.trim().split(/\r?\n/).filter(l => l.trim());
+    if (lines.length < 2) { setParseError("CSV needs a header row and at least one data row"); setParsed([]); return; }
+
+    const header = lines[0]!.split(",").map(h => h.replace(/^["']|["']$/g, "").trim().toLowerCase());
+    const emailIdx = header.indexOf("email");
+    const nameIdx = header.findIndex(h => h === "fullname" || h === "full name" || h === "name");
+    const roleIdx = header.indexOf("role");
+
+    if (emailIdx === -1 || nameIdx === -1 || roleIdx === -1) {
+      setParseError("Header must contain: email, fullName (or name), role");
+      setParsed([]);
+      return;
+    }
+
+    const rows = lines.slice(1).map(line => {
+      const cols = line.split(",").map(c => c.replace(/^["']|["']$/g, "").trim());
+      return { email: cols[emailIdx] ?? "", fullName: cols[nameIdx] ?? "", role: cols[roleIdx] ?? "" };
+    }).filter(r => r.email);
+
+    setParsed(rows);
+  };
+
+  const handleTextChange = (v: string) => { setCsvText(v); parseCsv(v); };
+
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => { const text = ev.target?.result as string; setCsvText(text); parseCsv(text); };
+    reader.readAsText(file);
+  };
+
+  const handleImport = async () => {
+    if (!parsed.length) return;
+    setImporting(true);
+    try {
+      const res = await fetch("/api/admin/users/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ users: parsed }),
+      });
+      const data = await res.json() as { results: ImportRowResult[]; summary: { created: number; skipped: number; errors: number } };
+      setResults(data.results);
+      toast.success(`Imported: ${data.summary.created} created, ${data.summary.skipped} skipped, ${data.summary.errors} errors`);
+    } catch {
+      toast.error("Import failed");
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/60" />
+      <div className="relative z-10 bg-white rounded-xl shadow-2xl w-full max-w-xl border border-[#e8eaed] max-h-[85vh] overflow-hidden flex flex-col">
+        <div className="px-6 py-4 border-b border-[#e8eaed] flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Upload className="h-5 w-5 text-[#1a56db]" />
+            <h2 className="font-semibold text-[#202124]">Import Users from CSV</h2>
+          </div>
+          <button onClick={onClose} className="p-1.5 text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124] rounded-md transition-colors">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          {!results ? (
+            <>
+              <p className="text-sm text-[#5f6368]">
+                Upload or paste a CSV with columns: <code className="bg-[#f1f3f4] px-1 rounded text-xs font-mono text-[#1a56db]">email, fullName, role</code>
+              </p>
+              <p className="text-xs text-[#5f6368]">
+                Valid roles: ADMIN, CEO, CISO, DEVELOPER, MARKETING, FINANCE, SUPPORT, OPERATIONS, QA, RESEARCH, CYBER_SECURITY, R_AND_D, COO, OPS_MANAGER, INTERNSHIP
+              </p>
+
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => fileRef.current?.click()}
+                  className="bg-[#f1f3f4] text-[#5f6368] hover:bg-[#303444] border border-[#e8eaed] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2"
+                >
+                  <FileText className="w-4 h-4" />
+                  Choose CSV file
+                </button>
+                <input ref={fileRef} type="file" accept=".csv,text/csv" onChange={handleFile} className="hidden" />
+                <span className="text-xs text-[#5f6368]">or paste below</span>
+              </div>
+
+              <textarea
+                value={csvText}
+                onChange={(e) => handleTextChange(e.target.value)}
+                placeholder={"email,fullName,role\nalice@company.com,Alice Smith,DEVELOPER\nbob@company.com,Bob Jones,MARKETING"}
+                rows={6}
+                className="w-full text-xs font-mono border border-[#e8eaed] bg-white text-[#202124] rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-[#1a56db] outline-none resize-none placeholder:text-[#80868b]"
+              />
+
+              {parseError && <p className="text-sm text-[#ff4d6d]">{parseError}</p>}
+
+              {parsed.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-[#5f6368] mb-2">{parsed.length} users ready to import</p>
+                  <div className="bg-white border border-[#e8eaed] rounded-xl overflow-hidden max-h-48 overflow-y-auto">
+                    <table className="w-full text-xs">
+                      <thead className="bg-[#f1f3f4] border-b border-[#e8eaed] sticky top-0">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Email</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Name</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Role</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {parsed.slice(0, 20).map((row, i) => (
+                          <tr key={i} className="border-b border-[#e8eaed] hover:bg-white transition-colors">
+                            <td className="px-4 py-3 text-sm text-[#202124]">{row.email}</td>
+                            <td className="px-4 py-3 text-sm text-[#202124]">{row.fullName}</td>
+                            <td className="px-4 py-3 text-sm text-[#5f6368]">{row.role}</td>
+                          </tr>
+                        ))}
+                        {parsed.length > 20 && (
+                          <tr><td colSpan={3} className="px-4 py-3 text-[#5f6368] text-center text-xs">…and {parsed.length - 20} more</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <div>
+              <p className="text-sm font-semibold text-[#202124] mb-3">Import Results</p>
+              <div className="bg-white border border-[#e8eaed] rounded-xl overflow-hidden max-h-80 overflow-y-auto">
+                <table className="w-full text-xs">
+                  <thead className="bg-[#f1f3f4] border-b border-[#e8eaed] sticky top-0">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Email</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Status</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Temp Password / Note</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {results.map((r, i) => (
+                      <tr key={i} className={r.status === "error" ? "bg-[#ff4d6d]/10 text-[#ff4d6d]" : r.status === "skipped" ? "bg-amber-500/10 text-amber-300" : "bg-[#f8fafd]/10 text-[#06d6a0]"}>
+                        <td className="px-3 py-1.5 font-mono">{r.email}</td>
+                        <td className="px-3 py-1.5">
+                          <span className={`inline-flex items-center gap-1 font-semibold`}>
+                            {r.status === "created" && <Check className="w-3 h-3" />}
+                            {r.status}
+                          </span>
+                        </td>
+                        <td className="px-3 py-1.5 font-mono">{r.tempPassword ?? r.reason ?? "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="text-xs text-[#5f6368] mt-2">Share temp passwords with users — they must reset on first login.</p>
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#e8eaed]">
+          {results ? (
+            <button onClick={onImported} className="bg-[#1a56db] text-white hover:bg-[#1447c0] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2">
+              Done
+            </button>
+          ) : (
+            <>
+              <button onClick={onClose} className="bg-[#f1f3f4] text-[#5f6368] hover:bg-[#303444] border border-[#e8eaed] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2">
+                Cancel
+              </button>
+              <button
+                onClick={handleImport}
+                disabled={!parsed.length || importing}
+                className="bg-[#1a56db] text-white hover:bg-[#1447c0] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2 disabled:opacity-40"
+              >
+                {importing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                {importing ? "Importing…" : `Import ${parsed.length} users`}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function UsersTab() {
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [savingId, setSavingId] = useState<string | null>(null);
+  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
+  const [pendingRole, setPendingRole] = useState<Record<string, string>>({});
+  const [showCsvImport, setShowCsvImport] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/admin/users")
+      .then((r) => {
+        if (!r.ok) throw new Error("Failed to load users");
+        return r.json() as Promise<AdminUser[] | { users: AdminUser[] }>;
+      })
+      .then((data) => {
+        const list: AdminUser[] = Array.isArray(data) ? data : (data as { users: AdminUser[] }).users ?? [];
+        setUsers(list);
+        const roles: Record<string, string> = {};
+        list.forEach((u) => { roles[u.id] = u.role; });
+        setPendingRole(roles);
+      })
+      .catch((e: Error) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const patchUser = async (id: string, patch: { role?: string; isActive?: boolean }) => {
+    setSavingId(id);
+    try {
+      const res = await fetch(`/api/admin/users/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch),
+      });
+      if (!res.ok) {
+        const d = await res.json() as { error?: string };
+        throw new Error(d.error ?? "Update failed");
+      }
+      const updated = (await res.json()) as AdminUser;
+      setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, ...updated } : u)));
+      if (selectedUser?.id === id) setSelectedUser((prev) => prev ? { ...prev, ...updated } : null);
+      toast.success("User updated");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to update user");
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const handleRoleChange = (userId: string, newRole: string) => {
+    setPendingRole((prev) => ({ ...prev, [userId]: newRole }));
+  };
+
+  const applyRoleChange = (user: AdminUser) => {
+    const newRole = pendingRole[user.id];
+    if (newRole && newRole !== user.role) {
+      void patchUser(user.id, { role: newRole });
+    }
+  };
+
+  const toggleSuspend = (user: AdminUser) => {
+    void patchUser(user.id, { isActive: !user.isActive });
+  };
+
+  const filtered = users.filter(
+    (u) =>
+      u.fullName?.toLowerCase().includes(search.toLowerCase()) ||
+      u.email?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const avatarColors = ["bg-[#1a56db]/20", "bg-purple-500/20", "bg-[#f8fafd]/20", "bg-[#ff4d6d]/20"];
+
+  return (
+    <div className="flex h-full">
+      <div className="flex-1 overflow-auto">
+        <div className="flex items-center gap-3 mb-4 p-4 border-b border-[#e8eaed] bg-white sticky top-0 z-10">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5f6368]" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name or email..."
+              className="w-full bg-white border border-[#e8eaed] text-[#202124] rounded-lg pl-9 py-2 text-sm focus:ring-2 focus:ring-[#1a56db] outline-none placeholder:text-[#80868b]"
+            />
+          </div>
+          <button
+            onClick={() => setShowCsvImport(true)}
+            className="bg-[#1a56db] text-white hover:bg-[#1447c0] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2"
+          >
+            <Upload className="w-4 h-4" />
+            Import CSV
+          </button>
+        </div>
+        {showCsvImport && (
+          <CsvImportModal
+            onClose={() => setShowCsvImport(false)}
+            onImported={() => {
+              setShowCsvImport(false);
+              // Reload users
+              setLoading(true);
+              fetch("/api/admin/users")
+                .then(r => r.json() as Promise<AdminUser[] | { users: AdminUser[] }>)
+                .then(data => { const list: AdminUser[] = Array.isArray(data) ? data : (data as { users: AdminUser[] }).users ?? []; setUsers(list); const roles: Record<string, string> = {}; list.forEach(u => { roles[u.id] = u.role; }); setPendingRole(roles); })
+                .catch(() => {})
+                .finally(() => setLoading(false));
+            }}
+          />
+        )}
+
+        {error ? (
+          <ErrorState message={error} />
+        ) : (
+          <div className="overflow-x-auto bg-white border border-[#e8eaed] rounded-xl overflow-hidden">
+          <table className="w-full text-sm min-w-[640px]">
+            <thead className="bg-[#f1f3f4] border-b border-[#e8eaed]">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Name</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Email</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Role</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Joined</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Last Login</th>
+                <th className="px-4 py-3" />
+              </tr>
+            </thead>
+            <tbody>
+              {loading
+                ? Array.from({ length: 6 }).map((_, i) => <SkeletonRow key={i} cols={7} />)
+                : filtered.length === 0
+                ? (
+                  <tr>
+                    <td colSpan={7}>
+                      <EmptyState icon={Users} message="No users found." />
+                    </td>
+                  </tr>
+                )
+                : filtered.map((u) => {
+                  const avatarColor = avatarColors[(u.fullName?.charCodeAt(0) ?? 0) % avatarColors.length];
+                  const currentPendingRole = pendingRole[u.id] ?? u.role;
+                  const roleChanged = currentPendingRole !== u.role;
+                  const isSaving = savingId === u.id;
+
+                  return (
+                    <tr
+                      key={u.id}
+                      onClick={() => setSelectedUser(u.id === selectedUser?.id ? null : u)}
+                      className={`border-b border-[#e8eaed] hover:bg-[#f1f3f4] transition-colors cursor-pointer ${selectedUser?.id === u.id ? "bg-[#1a56db]/5" : ""}`}
+                    >
+                      <td className="px-4 py-3 text-sm text-[#202124]">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-8 h-8 rounded-full ${avatarColor} flex items-center justify-center text-[#202124] text-xs font-semibold flex-shrink-0`}
+                          >
+                            {(u.fullName ?? u.email ?? "?").charAt(0).toUpperCase()}
+                          </div>
+                          <span className="font-semibold text-[#202124]">{u.fullName ?? "—"}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-[#5f6368]">{u.email}</td>
+                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={currentPendingRole}
+                            onChange={(e) => handleRoleChange(u.id, e.target.value)}
+                            className="bg-white border border-[#e8eaed] rounded-md px-3 py-2 text-sm text-[#202124] focus:ring-2 focus:ring-[#1a56db] outline-none"
+                            disabled={isSaving}
+                          >
+                            {["ADMIN", "CEO", "CISO", "MARKETING", "INTERNSHIP", "R_AND_D"].map((r) => (
+                              <option key={r} value={r}>{r}</option>
+                            ))}
+                          </select>
+                          {roleChanged && (
+                            <button
+                              onClick={() => applyRoleChange(u)}
+                              disabled={isSaving}
+                              className="px-2 py-1 bg-[#1a56db] text-white rounded-md text-xs font-semibold hover:bg-[#1447c0] disabled:opacity-50"
+                            >
+                              {isSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : "Save"}
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        {u.isActive ? (
+                          <span className="flex items-center gap-1.5 text-[#06d6a0] text-xs font-medium">
+                            <span className="w-2 h-2 rounded-full bg-[#f8fafd]" />
+                            Active
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-1.5 text-[#ff4d6d] text-xs font-medium">
+                            <span className="w-2 h-2 rounded-full bg-[#ff4d6d]" />
+                            Suspended
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-[#5f6368]">
+                        {u.createdAt ? format(parseISO(u.createdAt), "MMM d, yyyy") : "—"}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-[#5f6368]">
+                        {u.lastLogin ? format(parseISO(u.lastLogin), "MMM d, yyyy HH:mm") : "Never"}
+                      </td>
+                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          onClick={() => toggleSuspend(u)}
+                          disabled={isSaving}
+                          title={u.isActive ? "Suspend user" : "Unsuspend user"}
+                          className={`p-1.5 text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124] rounded-md transition-colors disabled:opacity-50`}
+                        >
+                          {isSaving
+                            ? <Loader2 className="w-4 h-4 animate-spin" />
+                            : u.isActive
+                            ? <Ban className="w-4 h-4" />
+                            : <CheckCircle className="w-4 h-4" />}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+            </tbody>
+          </table>
+          </div>
+        )}
+      </div>
+
+      {selectedUser && (
+        <div className="w-72 border-l border-[#e8eaed] flex flex-col flex-shrink-0 bg-white">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-[#e8eaed] bg-white">
+            <span className="text-sm font-semibold text-[#202124]">User Details</span>
+            <button onClick={() => setSelectedUser(null)} className="p-1.5 text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124] rounded-md transition-colors">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="p-5 space-y-4 flex-1 overflow-y-auto text-sm">
+            <div className="flex flex-col items-center gap-3 pt-2">
+              <div
+                className={`w-14 h-14 rounded-full ${avatarColors[(selectedUser.fullName?.charCodeAt(0) ?? 0) % avatarColors.length]} flex items-center justify-center text-[#202124] text-xl font-semibold`}
+              >
+                {selectedUser.fullName.charAt(0).toUpperCase()}
+              </div>
+              <div className="text-center">
+                <p className="font-semibold text-[#202124]">{selectedUser.fullName}</p>
+                <p className="text-xs text-[#5f6368]">{selectedUser.email}</p>
+              </div>
+            </div>
+            <div className="space-y-1">
+              {([
+                ["Role", <span key="role" className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border ${ROLE_COLORS[selectedUser.role] ?? "bg-[#f1f3f4] text-[#5f6368] border-[#e8eaed]"}`}>{selectedUser.role}</span>],
+                ["Status", <span key="status" className={selectedUser.isActive ? "text-[#06d6a0] font-semibold" : "text-[#ff4d6d] font-semibold"}>{selectedUser.isActive ? "Active" : "Suspended"}</span>],
+                ["Joined", format(parseISO(selectedUser.createdAt), "MMM d, yyyy")],
+                ["Last Login", selectedUser.lastLogin ? format(parseISO(selectedUser.lastLogin), "MMM d, yyyy HH:mm") : "Never"],
+              ] as [string, React.ReactNode][]).map(([label, val]) => (
+                <div key={label} className="flex justify-between py-2 border-b border-[#e8eaed]">
+                  <span className="text-[#5f6368]">{label}</span>
+                  <span className="text-[#202124]">{val}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function NewMailboxModal({
+  onClose,
+  onCreate,
+}: {
+  onClose: () => void;
+  onCreate: (m: AdminMailbox) => void;
+}) {
+  const [email, setEmail] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [isShared, setIsShared] = useState(false);
+  const [isNoReply, setIsNoReply] = useState(false);
+  const [creating, setCreating] = useState(false);
+
+  const submit = async () => {
+    if (!email.trim() || !displayName.trim()) {
+      toast.error("Email and display name are required");
+      return;
+    }
+    setCreating(true);
+    try {
+      const res = await fetch("/api/admin/mailboxes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, displayName, isShared, isNoReply }),
+      });
+      if (!res.ok) {
+        const d = await res.json() as { error?: string };
+        throw new Error(d.error ?? "Failed to create mailbox");
+      }
+      const mailbox = (await res.json()) as AdminMailbox;
+      onCreate(mailbox);
+      toast.success("Mailbox created");
+      onClose();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to create mailbox");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/40" />
+      <div className="relative z-10 bg-white rounded-xl shadow-2xl border border-[#e8eaed] p-6 w-full max-w-md mx-4">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="font-semibold text-[#202124]">New Mailbox</h2>
+          <button onClick={onClose} className="p-1.5 text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124] rounded-md transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-[#5f6368] mb-1.5">Email Address</label>
+            <input
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="e.g. support@cybersage.io"
+              type="email"
+              className="w-full px-3 py-2.5 border border-[#e8eaed] rounded-lg text-sm text-[#202124] bg-white focus:ring-2 focus:ring-[#1a56db] outline-none"
+              autoFocus
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-[#5f6368] mb-1.5">Display Name</label>
+            <input
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="e.g. Support Team"
+              className="w-full px-3 py-2.5 border border-[#e8eaed] rounded-lg text-sm text-[#202124] bg-white focus:ring-2 focus:ring-[#1a56db] outline-none"
+            />
+          </div>
+          <div className="space-y-3 pt-1">
+            {[
+              { label: "Shared mailbox", val: isShared, set: setIsShared },
+              { label: "No-reply mailbox", val: isNoReply, set: setIsNoReply },
+            ].map(({ label, val, set }) => (
+              <label key={label} className="flex items-center gap-3 cursor-pointer">
+                <div
+                  onClick={() => set((v) => !v)}
+                  className={`w-10 h-6 rounded-full transition-colors relative ${val ? "bg-[#1a56db]" : "bg-[#f1f3f4]"}`}
+                >
+                  <span className={`absolute top-1 w-4 h-4 bg-[#dfe1f6] rounded-full shadow transition-transform ${val ? "translate-x-5" : "translate-x-1"}`} />
+                </div>
+                <span className="text-sm text-[#202124]">{label}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+        <div className="flex gap-3 mt-6">
+          <button onClick={onClose} className="flex-1 bg-white text-[#5f6368] hover:bg-[#f1f3f4] border border-[#e8eaed] rounded-md px-4 py-2 text-sm font-medium">
+            Cancel
+          </button>
+          <button
+            onClick={() => void submit()}
+            disabled={creating}
+            className="flex-1 flex items-center justify-center gap-2 bg-[#1a56db] text-white hover:bg-[#1447c0] rounded-md px-4 py-2 text-sm font-medium disabled:opacity-50"
+          >
+            {creating && <Loader2 className="w-4 h-4 animate-spin" />}
+            Create Mailbox
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MailboxesTab() {
+  const [mailboxes, setMailboxes] = useState<AdminMailbox[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/admin/mailboxes")
+      .then((r) => {
+        if (!r.ok) throw new Error("Failed to load mailboxes");
+        return r.json() as Promise<AdminMailbox[] | { mailboxes: AdminMailbox[] }>;
+      })
+      .then((data) => setMailboxes(Array.isArray(data) ? data : (data as { mailboxes: AdminMailbox[] }).mailboxes ?? []))
+      .catch((e: Error) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleDelete = async (id: string) => {
+    setDeletingId(id);
+    try {
+      const res = await fetch(`/api/admin/mailboxes/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Delete failed");
+      setMailboxes((prev) => prev.filter((m) => m.id !== id));
+      toast.success("Mailbox deleted");
+    } catch {
+      toast.error("Failed to delete mailbox");
+    } finally {
+      setDeletingId(null);
+      setConfirmDeleteId(null);
+    }
+  };
+
+  const mailboxType = (m: AdminMailbox) => {
+    if (m.isNoReply) return "No-Reply";
+    if (m.isShared) return "Shared";
+    return "Personal";
+  };
+
+  const typeColor = (type: string) => {
+    if (type === "No-Reply") return "bg-[#f1f3f4] text-[#5f6368] border-[#e8eaed]";
+    if (type === "Shared") return "bg-[#1a56db]/10 text-[#7dd8f5] border-[#1a56db]/20";
+    return "bg-[#f8fafd]/10 text-[#06d6a0] border-[#06d6a0]/20";
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between p-4 border-b border-[#e8eaed] bg-white sticky top-0 z-10">
+        <span className="text-sm text-[#5f6368]">{mailboxes.length} mailbox{mailboxes.length !== 1 ? "es" : ""}</span>
+        <button
+          onClick={() => setShowModal(true)}
+          className="bg-[#1a56db] text-white hover:bg-[#1447c0] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          New Mailbox
+        </button>
+      </div>
+
+      {error ? (
+        <ErrorState message={error} />
+      ) : (
+        <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[640px]">
+          <thead className="bg-white border-b border-[#e8eaed]">
+            <tr>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Email</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Display Name</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Type</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Threads</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Members</th>
+              <th className="px-4 py-3" />
+            </tr>
+          </thead>
+          <tbody>
+            {loading
+              ? Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} cols={6} />)
+              : mailboxes.length === 0
+              ? (
+                <tr>
+                  <td colSpan={6}>
+                    <EmptyState icon={Database} message="No mailboxes configured." />
+                  </td>
+                </tr>
+              )
+              : mailboxes.map((m) => {
+                const type = mailboxType(m);
+                return (
+                  <tr key={m.id} className="border-b border-[#e8eaed] hover:bg-[#f1f3f4] transition-colors">
+                    <td className="px-4 py-3 text-sm text-[#202124] font-mono">{m.email}</td>
+                    <td className="px-4 py-3 text-sm font-semibold text-[#202124]">{m.displayName}</td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium border ${typeColor(type)}`}>
+                        {type}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-[#5f6368]">{m._count?.threads ?? 0}</td>
+                    <td className="px-4 py-3 text-sm text-[#5f6368]">{m.accessLogs?.length ?? 0}</td>
+                    <td className="px-4 py-3 text-right">
+                      {confirmDeleteId === m.id ? (
+                        <div className="flex items-center gap-2 justify-end">
+                          <span className="text-xs text-[#5f6368]">Delete?</span>
+                          <button
+                            onClick={() => void handleDelete(m.id)}
+                            disabled={deletingId === m.id}
+                            className="px-2.5 py-1 bg-[#ff4d6d] text-white rounded-md text-xs font-semibold hover:bg-[#ff6b84] disabled:opacity-50"
+                          >
+                            {deletingId === m.id ? <Loader2 className="w-3 h-3 animate-spin" /> : "Yes"}
+                          </button>
+                          <button
+                            onClick={() => setConfirmDeleteId(null)}
+                            className="px-2.5 py-1 bg-white text-[#5f6368] hover:bg-[#f1f3f4] border border-[#e8eaed] rounded-md text-xs font-semibold"
+                          >
+                            No
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setConfirmDeleteId(m.id)}
+                          className="p-1.5 text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124] rounded-md transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+          </tbody>
+        </table>
+        </div>
+      )}
+
+      {showModal && (
+        <NewMailboxModal
+          onClose={() => setShowModal(false)}
+          onCreate={(m) => {
+            setMailboxes((prev) => [{ ...m, _count: { threads: 0 }, accessLogs: [] }, ...prev]);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function exportAuditCsv(logs: AuditLog[]) {
+  const header = ["Timestamp", "Actor ID", "Action", "Target Type", "Target ID", "IP Address"];
+  const rows = logs.map((log) => [
+    format(parseISO(log.createdAt), "yyyy-MM-dd HH:mm:ss"),
+    log.actorId ?? "",
+    log.action,
+    log.targetType ?? "",
+    log.targetId ?? "",
+    log.ipAddress ?? "",
+  ]);
+  const csv = [header, ...rows].map((r) => r.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `audit-logs-${format(new Date(), "yyyy-MM-dd")}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function AuditLogsTab() {
+  const [logs, setLogs] = useState<AuditLog[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [actionFilter, setActionFilter] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 50;
+
+  const buildUrl = useCallback(
+    (p: number) => {
+      const params = new URLSearchParams();
+      if (actionFilter) params.set("action", actionFilter);
+      if (fromDate) params.set("from", fromDate);
+      if (toDate) params.set("to", toDate);
+      params.set("limit", String(PAGE_SIZE));
+      params.set("offset", String((p - 1) * PAGE_SIZE));
+      return `/api/admin/audit-logs?${params.toString()}`;
+    },
+    [actionFilter, fromDate, toDate]
+  );
+
+  useEffect(() => {
+    setLoading(true);
+    setPage(1);
+    fetch(buildUrl(1))
+      .then((r) => {
+        if (!r.ok) throw new Error("Failed to load audit logs");
+        return r.json() as Promise<{ logs: AuditLog[]; total: number }>;
+      })
+      .then((d) => {
+        setLogs(Array.isArray(d) ? d : (d.logs ?? []));
+        setTotal(Array.isArray(d) ? d.length : (d.total ?? 0));
+      })
+      .catch((e: Error) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, [buildUrl]);
+
+  const goToPage = async (p: number) => {
+    setLoading(true);
+    try {
+      const res = await fetch(buildUrl(p));
+      const d = (await res.json()) as { logs?: AuditLog[]; total?: number } | AuditLog[];
+      setLogs(Array.isArray(d) ? d : (d.logs ?? []));
+      setTotal(Array.isArray(d) ? d.length : (d.total ?? 0));
+      setPage(p);
+    } catch {
+      toast.error("Failed to load page");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  const actionBadge = (action: string) => {
+    const color = ACTION_COLORS[action] ?? "bg-[#f1f3f4] text-[#5f6368] border-[#e8eaed]";
+    return (
+      <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold border ${color}`}>
+        {action}
+      </span>
+    );
+  };
+
+  return (
+    <div>
+      <div className="p-4 border-b border-[#e8eaed] bg-white sticky top-0 z-10">
+        <div className="flex items-center gap-3 mb-4 flex-wrap">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#80868b]" />
+            <input
+              value={actionFilter}
+              onChange={(e) => setActionFilter(e.target.value)}
+              placeholder="Filter by action..."
+              className="bg-white border border-[#e8eaed] rounded-lg pl-9 py-2 text-sm text-[#202124] focus:ring-2 focus:ring-[#1a56db] outline-none w-44"
+            />
+          </div>
+          <input
+            type="date"
+            value={fromDate}
+            onChange={(e) => setFromDate(e.target.value)}
+            className="bg-white border border-[#e8eaed] rounded-md px-3 py-2 text-sm text-[#202124] focus:ring-2 focus:ring-[#1a56db] outline-none"
+          />
+          <span className="text-[#5f6368] text-sm">to</span>
+          <input
+            type="date"
+            value={toDate}
+            onChange={(e) => setToDate(e.target.value)}
+            className="bg-white border border-[#e8eaed] rounded-md px-3 py-2 text-sm text-[#202124] focus:ring-2 focus:ring-[#1a56db] outline-none"
+          />
+          <span className="text-xs text-[#5f6368] ml-auto">{total} total logs</span>
+          <button
+            onClick={() => exportAuditCsv(logs)}
+            disabled={logs.length === 0}
+            className="bg-white text-[#5f6368] hover:bg-[#f1f3f4] border border-[#e8eaed] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2 disabled:opacity-40"
+          >
+            <Download className="w-4 h-4" />
+            Export CSV
+          </button>
+        </div>
+      </div>
+
+      {error ? (
+        <ErrorState message={error} />
+      ) : (
+        <>
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[640px]">
+            <thead className="bg-white border-b border-[#e8eaed]">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Timestamp</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Actor</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Action</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Target Type</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Target ID</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">IP Address</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading
+                ? Array.from({ length: 8 }).map((_, i) => <SkeletonRow key={i} cols={6} />)
+                : logs.length === 0
+                ? (
+                  <tr>
+                    <td colSpan={6}>
+                      <EmptyState icon={BookOpen} message="No audit logs found." />
+                    </td>
+                  </tr>
+                )
+                : logs.map((log) => (
+                  <tr key={log.id} className="border-b border-[#e8eaed] hover:bg-[#f1f3f4] transition-colors">
+                    <td className="px-4 py-3 text-sm text-[#5f6368] whitespace-nowrap">
+                      {format(parseISO(log.createdAt), "MMM d, yyyy HH:mm:ss")}
+                    </td>
+                    <td className="px-4 py-3 font-mono text-sm text-[#202124]">{log.actorId ?? "—"}</td>
+                    <td className="px-4 py-3">{actionBadge(log.action)}</td>
+                    <td className="px-4 py-3 text-sm text-[#202124]">{log.targetType ?? "—"}</td>
+                    <td className="px-4 py-3 font-mono text-sm text-[#5f6368]">{log.targetId ?? "—"}</td>
+                    <td className="px-4 py-3 font-mono text-sm text-[#5f6368]">{log.ipAddress ?? "—"}</td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+          </div>
+
+          {!loading && totalPages > 1 && (
+            <div className="flex items-center gap-2 mt-4 text-sm text-[#5f6368] justify-center py-3">
+              <button
+                onClick={() => void goToPage(page - 1)}
+                disabled={page <= 1}
+                className="px-3 py-1.5 bg-white border border-[#e8eaed] rounded-md text-sm text-[#5f6368] hover:bg-[#f1f3f4] disabled:opacity-40"
+              >
+                Previous
+              </button>
+              <span className="text-sm text-[#5f6368]">
+                Page {page} of {totalPages}
+              </span>
+              <button
+                onClick={() => void goToPage(page + 1)}
+                disabled={page >= totalPages}
+                className="px-3 py-1.5 bg-white border border-[#e8eaed] rounded-md text-sm text-[#5f6368] hover:bg-[#f1f3f4] disabled:opacity-40"
+              >
+                Next
+              </button>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+function SuppressionTab() {
+  const [entries, setEntries] = useState<SuppressionEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [showAdd, setShowAdd] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [adding, setAdding] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/admin/suppression")
+      .then((r) => {
+        if (!r.ok) throw new Error("Failed to load suppression list");
+        return r.json() as Promise<SuppressionEntry[] | { entries: SuppressionEntry[] }>;
+      })
+      .then((data) => setEntries(Array.isArray(data) ? data : (data as { entries: SuppressionEntry[] }).entries ?? []))
+      .catch((e: Error) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleRemove = async (id: string) => {
+    setDeletingId(id);
+    try {
+      const res = await fetch(`/api/admin/suppression/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Delete failed");
+      setEntries((prev) => prev.filter((e) => e.id !== id));
+      toast.success("Entry removed");
+    } catch {
+      toast.error("Failed to remove entry");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleAdd = async () => {
+    if (!newEmail.trim()) {
+      toast.error("Email is required");
+      return;
+    }
+    setAdding(true);
+    try {
+      const res = await fetch("/api/admin/suppression", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: newEmail.trim(), reason: "MANUAL" }),
+      });
+      if (!res.ok) {
+        const d = await res.json() as { error?: string };
+        throw new Error(d.error ?? "Failed to add");
+      }
+      const entry = (await res.json()) as SuppressionEntry;
+      setEntries((prev) => [entry, ...prev]);
+      setNewEmail("");
+      setShowAdd(false);
+      toast.success("Email suppressed");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to add entry");
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between p-4 border-b border-[#e8eaed] bg-white sticky top-0 z-10">
+        <span className="text-sm text-[#5f6368]">{entries.length} suppressed address{entries.length !== 1 ? "es" : ""}</span>
+        <button
+          onClick={() => setShowAdd((v) => !v)}
+          className="bg-[#1a56db] text-white hover:bg-[#1447c0] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          Add Manually
+        </button>
+      </div>
+
+      {showAdd && (
+        <div className="p-4 border-b border-[#e8eaed] bg-[#1a56db]/5">
+          <div className="flex items-center gap-3 max-w-lg">
+            <input
+              value={newEmail}
+              onChange={(e) => setNewEmail(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") void handleAdd(); }}
+              placeholder="Enter email to suppress..."
+              type="email"
+              autoFocus
+              className="flex-1 bg-white border border-[#e8eaed] rounded-lg px-3 py-2 text-sm text-[#202124] focus:ring-2 focus:ring-[#1a56db] outline-none"
+            />
+            <button
+              onClick={() => void handleAdd()}
+              disabled={adding}
+              className="bg-[#1a56db] text-white hover:bg-[#1447c0] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2 disabled:opacity-50"
+            >
+              {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+              Add
+            </button>
+            <button
+              onClick={() => { setShowAdd(false); setNewEmail(""); }}
+              className="p-1.5 text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124] rounded-md transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {error ? (
+        <ErrorState message={error} />
+      ) : (
+        <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[640px]">
+          <thead className="bg-white border-b border-[#e8eaed]">
+            <tr>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Email</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Reason</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Added</th>
+              <th className="px-4 py-3" />
+            </tr>
+          </thead>
+          <tbody>
+            {loading
+              ? Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} cols={4} />)
+              : entries.length === 0
+              ? (
+                <tr>
+                  <td colSpan={4}>
+                    <EmptyState icon={Ban} message="No suppressed addresses." />
+                  </td>
+                </tr>
+              )
+              : entries.map((entry) => (
+                <tr key={entry.id} className="border-b border-[#e8eaed] hover:bg-[#f1f3f4] transition-colors">
+                  <td className="px-4 py-3 text-sm text-[#202124] font-mono">{entry.email}</td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border ${REASON_COLORS[entry.reason] ?? "bg-[#f1f3f4] text-[#5f6368] border-[#e8eaed]"}`}>
+                      {entry.reason}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-[#5f6368]">
+                    {format(parseISO(entry.createdAt), "MMM d, yyyy HH:mm")}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <button
+                      onClick={() => void handleRemove(entry.id)}
+                      disabled={deletingId === entry.id}
+                      className="flex items-center gap-1.5 px-2.5 py-1 text-[#ff4d6d] hover:bg-[#ff4d6d]/10 rounded-md text-xs font-semibold transition-colors disabled:opacity-50 ml-auto"
+                    >
+                      {deletingId === entry.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+                      Remove
+                    </button>
+                  </td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SecurityTab() {
+  const [stats, setStats] = useState<SocStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/soc/stats")
+      .then((r) => {
+        if (!r.ok) throw new Error("Failed to load security stats");
+        return r.json() as Promise<SocStats>;
+      })
+      .then(setStats)
+      .catch((e: Error) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const openIncidents =
+    stats?.incidents.byStatus
+      .filter((s) => ["OPEN", "INVESTIGATING"].includes(s.status))
+      .reduce((acc, s) => acc + s._count, 0) ?? 0;
+
+  if (loading) {
+    return (
+      <div className="p-6 space-y-4">
+        <div className="grid grid-cols-3 gap-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="h-28 bg-[#f1f3f4] rounded-xl animate-pulse" />
+          ))}
+        </div>
+        <div className="h-64 bg-[#f1f3f4] rounded-xl animate-pulse" />
+      </div>
+    );
+  }
+
+  if (error) return <ErrorState message={error} />;
+  if (!stats) return null;
+
+  return (
+    <div className="p-6 space-y-6">
+      <div className="grid grid-cols-3 gap-4">
+        <div className="bg-[#ff4d6d]/10 border border-[#ff4d6d]/20 rounded-xl p-4">
+          <p className="text-sm font-medium text-[#5f6368]">Open Incidents</p>
+          <p className="text-2xl font-semibold text-[#202124] mt-1">{openIncidents}</p>
+          <p className="text-xs text-[#5f6368] mt-1">Needs attention</p>
+        </div>
+        <div className="bg-[#ff4d6d]/5 border border-[#ff4d6d]/10 rounded-xl p-4">
+          <p className="text-sm font-medium text-[#5f6368]">DLP Violations</p>
+          <p className="text-2xl font-semibold text-[#202124] mt-1">{stats.dlpViolations}</p>
+          <p className="text-xs text-[#5f6368] mt-1">Policy breaches</p>
+        </div>
+        <div className="bg-[#ff4d6d]/5 border border-[#ff4d6d]/10 rounded-xl p-4">
+          <p className="text-sm font-medium text-[#5f6368]">High-Risk Threats</p>
+          <p className="text-2xl font-semibold text-[#202124] mt-1">{stats.highRiskThreats}</p>
+          <p className="text-xs text-[#5f6368] mt-1">Score &ge; 50</p>
+        </div>
+      </div>
+
+      {/* DLP incidents by severity — horizontal bar chart */}
+      {stats.incidents.bySeverity.length > 0 && (
+        <div className="bg-white border border-[#e8eaed] rounded-xl overflow-hidden">
+          <div className="px-5 py-4 border-b border-[#e8eaed]">
+            <h3 className="font-semibold text-[#202124] text-sm">Incidents by Severity</h3>
+            <p className="text-xs text-[#5f6368] mt-0.5">DLP & threat incident distribution</p>
+          </div>
+          <div className="p-5 space-y-3">
+            {(() => {
+              const maxVal = Math.max(...stats.incidents.bySeverity.map((s) => s._count), 1);
+              const colors: Record<string, string> = {
+                CRITICAL: "bg-[#ff4d6d]", HIGH: "bg-orange-500",
+                MEDIUM: "bg-yellow-500", LOW: "bg-[#1a56db]",
+              };
+              return stats.incidents.bySeverity.map((s) => (
+                <div key={s.severity} className="flex items-center gap-3">
+                  <span className="text-xs font-semibold text-[#5f6368] w-16 flex-shrink-0">{s.severity}</span>
+                  <div className="bg-[#f1f3f4] rounded-full h-2 flex-1">
+                    <div
+                      className={`h-2 rounded-full transition-all ${colors[s.severity] ?? "bg-[#9aa3b8]"}`}
+                      style={{ width: `${Math.round((s._count / maxVal) * 100)}%` }}
+                    />
+                  </div>
+                  <span className="text-xs font-semibold text-[#202124] w-8 text-right flex-shrink-0">{s._count}</span>
+                </div>
+              ));
+            })()}
+          </div>
+        </div>
+      )}
+
+      <div className="bg-white border border-[#e8eaed] rounded-xl overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[#e8eaed]">
+          <h3 className="font-semibold text-[#202124] text-sm">Recent Security Events</h3>
+          <span className="text-[10px] text-[#80868b] italic">Managed by CyberSage Sentinel</span>
+        </div>
+        {stats.recentSecurityEvents.length === 0 ? (
+          <EmptyState icon={ShieldAlert} message="No recent security events." />
+        ) : (
+          <div className="divide-y divide-[#262b3a]">
+            {stats.recentSecurityEvents.map((evt) => {
+              const sc = SEVERITY_COLORS[evt.severity] ?? "text-[#5f6368] bg-[#f1f3f4]";
+              return (
+                <div key={evt.id} className="flex items-center gap-4 px-5 py-3 hover:bg-[#f1f3f4] transition-colors">
+                  <div className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${sc}`}>
+                    {evt.severity}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-[#202124] text-sm">{evt.type}</p>
+                    {evt.metadata && (
+                      <p className="text-xs text-[#5f6368] truncate">
+                        {JSON.stringify(evt.metadata).slice(0, 80)}
+                      </p>
+                    )}
+                  </div>
+                  <span className="text-xs text-[#5f6368] whitespace-nowrap">
+                    {format(parseISO(evt.createdAt), "MMM d, HH:mm")}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Legal Hold Tab
+// ─────────────────────────────────────────────────────────────
+
+type LegalHoldEntry = {
+  id: string;
+  targetUserId: string;
+  userName: string;
+  userEmail: string;
+  placedAt: string;
+  placedBy: string;
+  reason: string;
+  status: "Active" | "Released";
+};
+
+function LegalHoldTab() {
+  const [holds, setHolds] = useState<LegalHoldEntry[]>([]);
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState("");
+  const [reason, setReason] = useState("");
+  const [placing, setPlacing] = useState(false);
+  const [releasingId, setReleasingId] = useState<string | null>(null);
+
+  const load = () => {
+    setLoading(true);
+    Promise.all([
+      fetch("/api/admin/legal-hold").then(r => r.json() as Promise<LegalHoldEntry[] | { holds: LegalHoldEntry[] }>),
+      fetch("/api/admin/users").then(r => r.json() as Promise<AdminUser[] | { users: AdminUser[] }>),
+    ])
+      .then(([h, u]) => {
+        setHolds(Array.isArray(h) ? h : (h as { holds: LegalHoldEntry[] }).holds ?? []);
+        setUsers(Array.isArray(u) ? u : (u as { users: AdminUser[] }).users ?? []);
+      })
+      .catch((e: Error) => setError(e.message))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const placeHold = async () => {
+    if (!selectedUserId) { toast.error("Select a user"); return; }
+    if (!reason.trim()) { toast.error("Reason is required"); return; }
+    setPlacing(true);
+    try {
+      const res = await fetch("/api/admin/legal-hold", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: selectedUserId, reason: reason.trim() }),
+      });
+      if (!res.ok) {
+        const d = await res.json() as { error?: string };
+        throw new Error(d.error ?? "Failed to place hold");
+      }
+      toast.success("Legal hold placed");
+      setShowModal(false);
+      setSelectedUserId("");
+      setReason("");
+      load();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed");
+    } finally {
+      setPlacing(false);
+    }
+  };
+
+  const releaseHold = async (userId: string) => {
+    setReleasingId(userId);
+    try {
+      const res = await fetch(`/api/admin/legal-hold/${userId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Release failed");
+      toast.success("Legal hold released");
+      load();
+    } catch {
+      toast.error("Failed to release hold");
+    } finally {
+      setReleasingId(null);
+    }
+  };
+
+  const activeHolds = holds.filter(h => h.status === "Active");
+
+  return (
+    <div>
+      <div className="flex items-center justify-between p-4 border-b border-[#e8eaed] bg-white sticky top-0 z-10">
+        <span className="text-sm text-[#5f6368]">
+          {activeHolds.length} active hold{activeHolds.length !== 1 ? "s" : ""}
+        </span>
+        <button
+          onClick={() => setShowModal(true)}
+          className="bg-[#1a56db] text-white hover:bg-[#1447c0] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          Place Hold
+        </button>
+      </div>
+
+      {error ? <ErrorState message={error} /> : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[640px]">
+            <thead className="bg-white border-b border-[#e8eaed]">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">User</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Email</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Hold Placed</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Placed By</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Reason</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Status</th>
+                <th className="px-4 py-3" />
+              </tr>
+            </thead>
+            <tbody>
+              {loading
+                ? Array.from({ length: 4 }).map((_, i) => <SkeletonRow key={i} cols={7} />)
+                : holds.length === 0
+                ? (
+                  <tr>
+                    <td colSpan={7}>
+                      <EmptyState icon={Lock} message="No legal holds placed." />
+                    </td>
+                  </tr>
+                )
+                : holds.map((h) => (
+                  <tr key={h.id} className="border-b border-[#e8eaed] hover:bg-[#f1f3f4] transition-colors">
+                    <td className="px-4 py-3 text-sm font-semibold text-[#202124]">{h.userName}</td>
+                    <td className="px-4 py-3 font-mono text-sm text-[#5f6368]">{h.userEmail}</td>
+                    <td className="px-4 py-3 text-sm text-[#5f6368] whitespace-nowrap">
+                      {format(parseISO(h.placedAt), "MMM d, yyyy HH:mm")}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-[#5f6368]">{h.placedBy}</td>
+                    <td className="px-4 py-3 text-sm text-[#5f6368] max-w-[200px] truncate">{h.reason}</td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border ${
+                        h.status === "Active"
+                          ? "bg-[#ff4d6d]/10 text-[#ff4d6d] border-[#ff4d6d]/20"
+                          : "bg-[#f1f3f4] text-[#5f6368] border-[#e8eaed]"
+                      }`}>
+                        {h.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {h.status === "Active" && (
+                        <button
+                          onClick={() => void releaseHold(h.targetUserId)}
+                          disabled={releasingId === h.targetUserId}
+                          className="flex items-center gap-1.5 px-2.5 py-1 text-[#1a56db] hover:bg-[#1a56db]/10 rounded-md text-xs font-semibold transition-colors disabled:opacity-50 ml-auto"
+                        >
+                          {releasingId === h.targetUserId
+                            ? <Loader2 className="w-3 h-3 animate-spin" />
+                            : <CheckCircle className="w-3 h-3" />}
+                          Release
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Place Hold Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/60" />
+          <div className="relative z-10 bg-white rounded-xl shadow-2xl border border-[#e8eaed] p-6 w-full max-w-md mx-4">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="font-semibold text-[#202124]">Place Legal Hold</h2>
+              <button onClick={() => setShowModal(false)} className="p-1.5 text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124] rounded-md transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-[#5f6368] mb-1.5">User</label>
+                <select
+                  value={selectedUserId}
+                  onChange={(e) => setSelectedUserId(e.target.value)}
+                  className="w-full bg-white border border-[#e8eaed] rounded-md px-3 py-2.5 text-sm text-[#202124] focus:ring-2 focus:ring-[#1a56db] outline-none"
+                >
+                  <option value="">Select a user…</option>
+                  {users.map(u => (
+                    <option key={u.id} value={u.id}>{u.fullName} ({u.email})</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#5f6368] mb-1.5">
+                  Reason <span className="text-[#ff4d6d]">*</span>
+                </label>
+                <textarea
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  placeholder="Legal basis or investigation reason…"
+                  rows={3}
+                  className="w-full px-3 py-2.5 border border-[#e8eaed] bg-white text-[#202124] rounded-lg text-sm focus:ring-2 focus:ring-[#1a56db] outline-none resize-none"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowModal(false)}
+                className="flex-1 bg-white text-[#5f6368] hover:bg-[#f1f3f4] border border-[#e8eaed] rounded-md px-4 py-2 text-sm font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => void placeHold()}
+                disabled={placing}
+                className="flex-1 flex items-center justify-center gap-2 bg-[#ff4d6d] text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-[#ff6b84] disabled:opacity-50"
+              >
+                {placing && <Loader2 className="w-4 h-4 animate-spin" />}
+                Place Hold
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// GDPR Export Tab
+// ─────────────────────────────────────────────────────────────
+
+function GdprExportTab() {
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState("");
+  const [exporting, setExporting] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/admin/users")
+      .then(r => {
+        if (!r.ok) throw new Error("Failed to load users");
+        return r.json() as Promise<AdminUser[] | { users: AdminUser[] }>;
+      })
+      .then((data) => setUsers(Array.isArray(data) ? data : (data as { users: AdminUser[] }).users ?? []))
+      .catch((e: Error) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleExport = async () => {
+    if (!selectedUserId) { toast.error("Select a user first"); return; }
+    setExporting(true);
+    try {
+      const res = await fetch(`/api/admin/export/${selectedUserId}`, { method: "POST" });
+      if (!res.ok) {
+        const d = await res.json() as { error?: string };
+        throw new Error(d.error ?? "Export failed");
+      }
+      const data = await res.json() as unknown;
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `cybersage-export-${selectedUserId}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Export downloaded");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Export failed");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  return (
+    <div className="p-6 max-w-lg">
+      <div className="bg-[#ff4d6d]/5 border border-[#ff4d6d]/20 rounded-xl p-4 mb-6 flex items-start gap-3">
+        <AlertTriangle className="w-4 h-4 text-[#ff4d6d] flex-shrink-0 mt-0.5" />
+        <p className="text-sm text-[#5f6368]">
+          GDPR data exports contain sensitive personal data. Only perform exports for legitimate legal requests and log all access appropriately.
+        </p>
+      </div>
+
+      {error ? <ErrorState message={error} /> : (
+        <div className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-[#5f6368] mb-1.5">Select User</label>
+            {loading ? (
+              <div className="h-10 bg-[#f1f3f4] rounded-lg animate-pulse" />
+            ) : (
+              <select
+                value={selectedUserId}
+                onChange={(e) => setSelectedUserId(e.target.value)}
+                className="w-full bg-white border border-[#e8eaed] rounded-md px-3 py-2.5 text-sm text-[#202124] focus:ring-2 focus:ring-[#1a56db] outline-none"
+              >
+                <option value="">Choose a user…</option>
+                {users.map(u => (
+                  <option key={u.id} value={u.id}>{u.fullName} — {u.email}</option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          <div className="pt-2">
+            <button
+              onClick={() => void handleExport()}
+              disabled={exporting || !selectedUserId || loading}
+              className="bg-[#1a56db] text-white hover:bg-[#1447c0] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2 disabled:opacity-50"
+            >
+              {exporting
+                ? <Loader2 className="w-4 h-4 animate-spin" />
+                : <FileDown className="w-4 h-4" />}
+              Export User Data
+            </button>
+          </div>
+
+          <div className="mt-6 bg-white border border-[#e8eaed] rounded-xl p-4">
+            <p className="text-xs font-semibold text-[#5f6368] mb-3">Export includes</p>
+            <ul className="space-y-1.5 text-sm text-[#5f6368]">
+              {[
+                "User profile and account details",
+                "Inbox messages (up to 1,000)",
+                "Chat messages (up to 1,000)",
+                "Drive file metadata (up to 500)",
+                "Calendar events organized by user",
+                "Audit log entries (up to 1,000)",
+              ].map((item) => (
+                <li key={item} className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-[#1a56db] flex-shrink-0" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Security Stats Tab (login analytics / compliance)
+// ─────────────────────────────────────────────────────────────
+
+type LoginAnomaly = {
+  email: string;
+  count: number;
+  firstAttempt: string;
+  lastAttempt: string;
+  userId: string | null;
+};
+
+type DlpTrend = { date: string; count: number };
+
+type SecurityStats = {
+  failedLogins24h: number;
+  failedLogins7d: number;
+  activeSessions: number;
+  usersOnHold: number;
+  topFailedLogins: { email: string; count: number }[];
+  loginAnomalies: LoginAnomaly[];
+  noSuccessUsers: { email: string; count: number }[];
+  dlpTrends: DlpTrend[];
+};
+
+function SecurityStatsTab() {
+  const [stats, setStats] = useState<SecurityStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/admin/security-stats")
+      .then(r => {
+        if (!r.ok) throw new Error("Failed to load security stats");
+        return r.json() as Promise<SecurityStats>;
+      })
+      .then(setStats)
+      .catch((e: Error) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="p-6 space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-28 bg-[#f1f3f4] rounded-xl animate-pulse" />
+          ))}
+        </div>
+        <div className="h-48 bg-[#f1f3f4] rounded-xl animate-pulse" />
+      </div>
+    );
+  }
+
+  if (error) return <ErrorState message={error} />;
+  if (!stats) return null;
+
+  const maxCount = Math.max(...stats.topFailedLogins.map(r => r.count), 1);
+
+  return (
+    <div className="p-6 space-y-6">
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="bg-[#ff4d6d]/10 border border-[#ff4d6d]/30 rounded-xl p-4">
+          <p className="text-sm font-medium text-[#5f6368]">Failed Logins (24h)</p>
+          <p className="text-2xl font-semibold text-[#ff4d6d] mt-1">{stats.failedLogins24h.toLocaleString()}</p>
+          <p className="text-xs text-[#5f6368] mt-1">Unsuccessful attempts</p>
+        </div>
+        <div className="bg-amber-400/10 border border-amber-400/30 rounded-xl p-4">
+          <p className="text-sm font-medium text-[#5f6368]">Failed Logins (7d)</p>
+          <p className="text-2xl font-semibold text-amber-400 mt-1">{stats.failedLogins7d.toLocaleString()}</p>
+          <p className="text-xs text-[#5f6368] mt-1">Last 7 days total</p>
+        </div>
+        <div className="bg-white border border-[#e8eaed] rounded-xl p-4">
+          <p className="text-sm font-medium text-[#5f6368]">Active Sessions</p>
+          <p className="text-2xl font-semibold text-[#202124] mt-1">{stats.activeSessions.toLocaleString()}</p>
+          <p className="text-xs text-[#5f6368] mt-1">Currently valid</p>
+        </div>
+        <div className="bg-white border border-[#e8eaed] rounded-xl p-4">
+          <p className="text-sm font-medium text-[#5f6368]">Users on Legal Hold</p>
+          <p className="text-2xl font-semibold text-[#202124] mt-1">{stats.usersOnHold.toLocaleString()}</p>
+          <p className="text-xs text-[#5f6368] mt-1">Active holds only</p>
+        </div>
+      </div>
+
+      {/* Top 5 failed logins table with inline bar chart */}
+      <div className="bg-white border border-[#e8eaed] rounded-xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-[#e8eaed]">
+          <h3 className="font-semibold text-[#202124] text-sm">Top 5 Users — Failed Logins (Last 7 Days)</h3>
+          <p className="text-xs text-[#5f6368] mt-0.5">Accounts with most authentication failures</p>
+        </div>
+        {stats.topFailedLogins.length === 0 ? (
+          <EmptyState icon={Activity} message="No failed login events in last 7 days." />
+        ) : (
+          <div className="divide-y divide-[#262b3a]/40">
+            {stats.topFailedLogins.map((row, i) => (
+              <div key={row.email} className="flex items-center gap-4 px-5 py-3">
+                <span className="text-xs font-semibold text-[#5f6368] w-5 flex-shrink-0">{i + 1}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-[#202124] truncate">{row.email}</p>
+                  <div className="mt-1.5 bg-[#e2e8f0] rounded-full h-2 flex-1 overflow-hidden">
+                    <div
+                      className="bg-[#1a56db] h-2 rounded-full transition-all"
+                      style={{ width: `${Math.round((row.count / maxCount) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+                <span className="text-sm font-semibold text-red-600 flex-shrink-0">{row.count}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Login Anomalies — brute force candidates */}
+      <div className="bg-[#ff4d6d]/10 border border-[#ff4d6d]/30 rounded-xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-[#ff4d6d]/20 flex items-center gap-2">
+          <ShieldAlert className="h-4 w-4 text-[#ff4d6d] flex-shrink-0" />
+          <div>
+            <h3 className="font-semibold text-[#202124] text-sm">Login Anomalies — Brute Force Candidates</h3>
+            <p className="text-xs text-[#5f6368] mt-0.5">Accounts with 5+ failed attempts in the last 24 hours and no successful login</p>
+          </div>
+          {stats.loginAnomalies.length > 0 && (
+            <span className="ml-auto bg-[#ff4d6d]/20 text-[#ff4d6d] text-xs font-semibold px-2 py-0.5 rounded-full">
+              {stats.loginAnomalies.length} flagged
+            </span>
+          )}
+        </div>
+        {stats.loginAnomalies.length === 0 ? (
+          <EmptyState icon={ShieldAlert} message="No brute-force patterns detected in last 24h." />
+        ) : (
+          <div className="divide-y divide-[#ff4d6d]/10">
+            {stats.loginAnomalies.map((row) => {
+              const first = parseISO(row.firstAttempt);
+              const last = parseISO(row.lastAttempt);
+              const windowMins = Math.max(1, Math.round((last.getTime() - first.getTime()) / 60000));
+              const rate = (row.count / windowMins).toFixed(1);
+              return (
+                <div key={row.email} className="flex items-start gap-4 px-5 py-3">
+                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#ff4d6d]/15 text-[#ff4d6d]">
+                    <AlertTriangle className="h-4 w-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-[#202124] text-sm truncate">{row.email}</p>
+                    <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5">
+                      <span className="text-xs text-red-600 font-medium">{row.count} attempts</span>
+                      <span className="text-xs text-[#5f6368]">{rate}/min avg rate</span>
+                      <span className="text-xs text-[#5f6368]">
+                        First: {format(first, "HH:mm")} · Last: {format(last, "HH:mm")}
+                      </span>
+                    </div>
+                  </div>
+                  <span className="flex-shrink-0 mt-1 inline-block bg-[#ff4d6d] text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">
+                    Alert
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Failed-only users — no successful login today */}
+      <div className="bg-amber-50 border border-amber-200 rounded-xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-amber-200 flex items-center gap-2">
+          <AlertTriangle className="h-4 w-4 text-amber-500 flex-shrink-0" />
+          <div>
+            <h3 className="font-semibold text-[#202124] text-sm">Locked-Out Accounts (Last 24h)</h3>
+            <p className="text-xs text-[#5f6368] mt-0.5">Failed logins with zero successful logins — may be locked out or compromised</p>
+          </div>
+          {stats.noSuccessUsers.length > 0 && (
+            <span className="ml-auto bg-amber-100 text-amber-700 text-xs font-semibold px-2 py-0.5 rounded-full">
+              {stats.noSuccessUsers.length} accounts
+            </span>
+          )}
+        </div>
+        {stats.noSuccessUsers.length === 0 ? (
+          <EmptyState icon={AlertTriangle} message="No locked-out accounts detected." />
+        ) : (
+          <div className="divide-y divide-amber-100">
+            {stats.noSuccessUsers.map((row) => (
+              <div key={row.email} className="flex items-center gap-4 px-5 py-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-[#202124] truncate">{row.email}</p>
+                  <div className="mt-1.5 bg-[#e2e8f0] rounded-full h-2 flex-1 overflow-hidden">
+                    <div
+                      className="bg-[#2563eb] h-2 rounded-full"
+                      style={{ width: `${Math.min(100, Math.round((row.count / 20) * 100))}%` }}
+                    />
+                  </div>
+                </div>
+                <span className="text-sm font-semibold text-amber-600 flex-shrink-0">{row.count}×</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* DLP Trend Sparkline (last 30 days) */}
+      {stats.dlpTrends.length > 0 && (
+        <div className="bg-white border border-[#e8eaed] rounded-xl overflow-hidden">
+          <div className="px-5 py-4 border-b border-[#e8eaed] flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-[#1a56db] flex-shrink-0" />
+            <div>
+              <h3 className="font-semibold text-[#202124] text-sm">DLP Violation Trend (Last 30 Days)</h3>
+              <p className="text-xs text-[#5f6368] mt-0.5">Daily count of DLP policy violations</p>
+            </div>
+          </div>
+          <div className="px-5 py-4">
+            {(() => {
+              const maxVal = Math.max(...stats.dlpTrends.map(d => d.count), 1);
+              return (
+                <div className="space-y-1.5">
+                  {stats.dlpTrends.slice(-14).map((d) => (
+                    <div key={d.date} className="flex items-center gap-3">
+                      <span className="text-[11px] text-[#5f6368] w-20 flex-shrink-0">
+                        {format(parseISO(d.date), "MMM d")}
+                      </span>
+                      <div className="bg-[#f1f3f4] rounded-full h-2 flex-1 overflow-hidden">
+                        <div
+                          className="bg-[#1a56db] h-2 rounded-full transition-all"
+                          style={{ width: `${Math.round((d.count / maxVal) * 100)}%` }}
+                        />
+                      </div>
+                      <span className="text-[11px] font-semibold text-[#202124] w-6 text-right flex-shrink-0">
+                        {d.count}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Retention Policy Tab ─────────────────────────────────────────────────────
+
+type RetentionPolicy = {
+  id: string;
+  module: "Mail" | "Chat" | "Drive" | "Calendar";
+  days: number;
+  action: "Delete" | "Archive";
+  active: boolean;
+  updatedAt: string;
+};
+
+const MODULES = ["Mail", "Chat", "Drive", "Calendar"] as const;
+const MODULE_COLORS: Record<string, string> = {
+  Mail: "bg-[#1a56db]/15 text-[#1a56db]",
+  Chat: "bg-[#f8fafd]/15 text-[#06d6a0]",
+  Drive: "bg-amber-400/15 text-amber-400",
+  Calendar: "bg-violet-400/15 text-violet-400",
+};
+
+function RetentionTab() {
+  const [policies, setPolicies] = useState<RetentionPolicy[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ module: "Mail" as RetentionPolicy["module"], days: 90, action: "Archive" as RetentionPolicy["action"], active: true });
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const r = await fetch("/api/admin/retention");
+      if (r.ok) { const d = await r.json() as RetentionPolicy[] | { policies: RetentionPolicy[] }; setPolicies(Array.isArray(d) ? d : (d as { policies: RetentionPolicy[] }).policies ?? []); };
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { void load(); }, [load]);
+
+  const handleCreate = async () => {
+    setSaving(true);
+    try {
+      const r = await fetch("/api/admin/retention", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (!r.ok) throw new Error("Failed");
+      toast.success("Retention policy saved");
+      setShowForm(false);
+      await load();
+    } catch {
+      toast.error("Could not save policy");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleToggle = async (p: RetentionPolicy) => {
+    try {
+      const r = await fetch("/api/admin/retention", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...p, active: !p.active }),
+      });
+      if (!r.ok) throw new Error();
+      await load();
+    } catch {
+      toast.error("Could not update policy");
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      const r = await fetch(`/api/admin/retention?id=${id}`, { method: "DELETE" });
+      if (!r.ok) throw new Error();
+      toast.success("Policy deleted");
+      await load();
+    } catch {
+      toast.error("Could not delete policy");
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6 space-y-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="h-16 bg-[#f1f3f4] rounded-xl animate-pulse" />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 space-y-5">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="font-semibold text-[#202124] text-sm">Retention Policies</h3>
+          <p className="text-xs text-[#5f6368] mt-0.5">Automatically delete or archive data after a set period.</p>
+        </div>
+        <button
+          onClick={() => setShowForm((v) => !v)}
+          className="bg-[#1a56db] text-white hover:bg-[#f8fafd] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          New Policy
+        </button>
+      </div>
+
+      {/* Create form */}
+      {showForm && (
+        <div className="bg-[#f1f3f4] border border-[#e8eaed] rounded-xl p-4 space-y-3">
+          <p className="text-xs font-semibold text-[#5f6368]">New Retention Policy</p>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-[#5f6368] mb-1">Module</label>
+              <select
+                value={form.module}
+                onChange={(e) => setForm((f) => ({ ...f, module: e.target.value as RetentionPolicy["module"] }))}
+                className="w-full bg-[#f1f3f4] border border-[#e8eaed] rounded-md px-3 py-2 text-sm text-[#202124] outline-none focus:ring-2 focus:ring-[#1a56db]/20"
+              >
+                {MODULES.map((m) => <option key={m} value={m}>{m}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[#5f6368] mb-1">Retain for (days)</label>
+              <input
+                type="number"
+                min={1}
+                max={36500}
+                value={form.days}
+                onChange={(e) => setForm((f) => ({ ...f, days: Number(e.target.value) }))}
+                className="w-full bg-[#f1f3f4] border border-[#e8eaed] rounded-md px-3 py-2 text-sm text-[#202124] outline-none focus:ring-2 focus:ring-[#1a56db]/20"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[#5f6368] mb-1">Action after period</label>
+              <select
+                value={form.action}
+                onChange={(e) => setForm((f) => ({ ...f, action: e.target.value as RetentionPolicy["action"] }))}
+                className="w-full bg-[#f1f3f4] border border-[#e8eaed] rounded-md px-3 py-2 text-sm text-[#202124] outline-none focus:ring-2 focus:ring-[#1a56db]/20"
+              >
+                <option value="Archive">Archive</option>
+                <option value="Delete">Delete</option>
+              </select>
+            </div>
+            <div className="flex items-end">
+              <label className="flex items-center gap-2 text-sm text-[#202124] cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.active}
+                  onChange={(e) => setForm((f) => ({ ...f, active: e.target.checked }))}
+                  className="rounded"
+                />
+                Active immediately
+              </label>
+            </div>
+          </div>
+          <div className="flex gap-2 pt-1">
+            <button
+              onClick={handleCreate}
+              disabled={saving}
+              className="bg-[#1a56db] text-white hover:bg-[#f8fafd] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2 disabled:opacity-60"
+            >
+              {saving && <Loader2 className="w-3 h-3 animate-spin" />}
+              Save Policy
+            </button>
+            <button
+              onClick={() => setShowForm(false)}
+              className="bg-[#f1f3f4] text-[#5f6368] hover:bg-[#303444] border border-[#e8eaed] rounded-md px-4 py-2 text-sm font-medium"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Policy list */}
+      {policies.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-12 text-[#5f6368]">
+          <Timer className="w-10 h-10 mb-3 opacity-30" />
+          <p className="text-sm">No retention policies configured</p>
+          <p className="text-xs mt-1">Add a policy to automatically manage old data</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {policies.map((p) => (
+            <div key={p.id} className="flex items-center gap-4 bg-white border border-[#e8eaed] rounded-xl px-5 py-4">
+              <span className={`px-2.5 py-1 rounded-lg text-xs font-medium flex-shrink-0 ${MODULE_COLORS[p.module] ?? "bg-[#f1f3f4] text-[#5f6368]"}`}>
+                {p.module}
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-[#202124]">
+                  Retain {p.days} days, then {p.action === "Delete" ? "delete" : "archive"}
+                </p>
+                <p className="text-xs text-[#5f6368]">Updated {new Date(p.updatedAt).toLocaleDateString()}</p>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <button
+                  onClick={() => handleToggle(p)}
+                  className={`flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${p.active ? "border-[#06d6a0]/40 text-[#06d6a0] bg-[#f8fafd]/10" : "border-[#e8eaed] text-[#5f6368] bg-[#f1f3f4]"}`}
+                  title={p.active ? "Disable" : "Enable"}
+                >
+                  {p.active ? <ToggleRight className="w-3.5 h-3.5" /> : <ToggleLeft className="w-3.5 h-3.5" />}
+                  {p.active ? "Active" : "Inactive"}
+                </button>
+                {p.action === "Archive" ? (
+                  <Archive className="w-4 h-4 text-[#5f6368] flex-shrink-0" />
+                ) : (
+                  <Trash2 className="w-4 h-4 text-[#5f6368] flex-shrink-0" />
+                )}
+                <button
+                  onClick={() => handleDelete(p.id)}
+                  className="p-1.5 text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124] rounded-md transition-colors"
+                  title="Delete policy"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── SSO Tab ─────────────────────────────────────────────────────────────────
+
+type SSOConfig = {
+  id: string;
+  provider: "SAML" | "OIDC" | "GOOGLE" | "MICROSOFT";
+  entityId: string | null;
+  metadataUrl: string | null;
+  clientId: string | null;
+  clientSecret: string | null;
+  callbackUrl: string | null;
+  isActive: boolean;
+  autoProvision: boolean;
+  defaultRole: string;
+  createdAt: string;
+};
+
+function SSOTab() {
+  const [configs, setConfigs] = useState<SSOConfig[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    provider: "SAML" as SSOConfig["provider"],
+    entityId: "",
+    metadataUrl: "",
+    metadataXml: "",
+    clientId: "",
+    clientSecret: "",
+    callbackUrl: "",
+    isActive: false,
+    autoProvision: true,
+    defaultRole: "DEVELOPER",
+  });
+
+  useEffect(() => {
+    fetch("/api/admin/sso")
+      .then((r) => r.ok ? r.json() as Promise<SSOConfig[]> : [])
+      .then(setConfigs)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/admin/sso", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const c = await res.json() as SSOConfig;
+      setConfigs((prev) => [c, ...prev.filter((x) => x.provider !== c.provider || x.id !== c.id)]);
+      setShowForm(false);
+      toast.success("SSO configuration saved");
+    } catch {
+      toast.error("Failed to save SSO config");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Delete this SSO config?")) return;
+    await fetch(`/api/admin/sso?id=${id}`, { method: "DELETE" });
+    setConfigs((prev) => prev.filter((c) => c.id !== id));
+    toast.success("Deleted");
+  };
+
+  const PROVIDERS = ["SAML", "OIDC", "GOOGLE", "MICROSOFT"] as const;
+  const isSAMLOrOIDC = form.provider === "SAML" || form.provider === "OIDC";
+
+  return (
+    <div className="p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-base font-semibold text-[#202124]">SSO Configurations</h3>
+          <p className="text-xs text-[#7a8899] mt-0.5">Configure SAML 2.0, OIDC, or OAuth providers for Single Sign-On.</p>
+        </div>
+        <button
+          onClick={() => setShowForm(!showForm)}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1a56db] text-white text-xs font-semibold rounded-lg hover:bg-[#1447c0] transition-colors"
+        >
+          <Plus className="w-3.5 h-3.5" /> Add Provider
+        </button>
+      </div>
+
+      {showForm && (
+        <div className="bg-white border border-[#e8eaed] rounded-xl p-5 space-y-4">
+          <h4 className="text-sm font-semibold text-[#202124]">New SSO Provider</h4>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs text-[#7a8899] mb-1">Provider</label>
+              <select
+                value={form.provider}
+                onChange={(e) => setForm({ ...form, provider: e.target.value as SSOConfig["provider"] })}
+                className="w-full bg-[#f1f3f4] border border-[#e8eaed] rounded-lg px-3 py-2 text-sm text-[#202124] outline-none"
+              >
+                {PROVIDERS.map((p) => <option key={p}>{p}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-[#7a8899] mb-1">Default Role</label>
+              <input
+                value={form.defaultRole}
+                onChange={(e) => setForm({ ...form, defaultRole: e.target.value })}
+                className="w-full bg-[#f1f3f4] border border-[#e8eaed] rounded-lg px-3 py-2 text-sm text-[#202124] outline-none"
+              />
+            </div>
+          </div>
+          {isSAMLOrOIDC ? (
+            <>
+              <div>
+                <label className="block text-xs text-[#7a8899] mb-1">Metadata URL</label>
+                <input
+                  value={form.metadataUrl}
+                  onChange={(e) => setForm({ ...form, metadataUrl: e.target.value })}
+                  placeholder="https://idp.example.com/metadata.xml"
+                  className="w-full bg-[#f1f3f4] border border-[#e8eaed] rounded-lg px-3 py-2 text-sm text-[#202124] placeholder:text-[#4a5568] outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-[#7a8899] mb-1">Entity ID (SP)</label>
+                <input
+                  value={form.entityId}
+                  onChange={(e) => setForm({ ...form, entityId: e.target.value })}
+                  placeholder="https://app.cybersage.io/sso/saml"
+                  className="w-full bg-[#f1f3f4] border border-[#e8eaed] rounded-lg px-3 py-2 text-sm text-[#202124] placeholder:text-[#4a5568] outline-none"
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <div>
+                <label className="block text-xs text-[#7a8899] mb-1">Client ID</label>
+                <input
+                  value={form.clientId}
+                  onChange={(e) => setForm({ ...form, clientId: e.target.value })}
+                  className="w-full bg-[#f1f3f4] border border-[#e8eaed] rounded-lg px-3 py-2 text-sm text-[#202124] outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-[#7a8899] mb-1">Client Secret</label>
+                <input
+                  type="password"
+                  value={form.clientSecret}
+                  onChange={(e) => setForm({ ...form, clientSecret: e.target.value })}
+                  className="w-full bg-[#f1f3f4] border border-[#e8eaed] rounded-lg px-3 py-2 text-sm text-[#202124] outline-none"
+                />
+              </div>
+            </>
+          )}
+          <div>
+            <label className="block text-xs text-[#7a8899] mb-1">Callback URL</label>
+            <input
+              value={form.callbackUrl}
+              onChange={(e) => setForm({ ...form, callbackUrl: e.target.value })}
+              placeholder="https://app.cybersage.io/api/auth/sso/callback"
+              className="w-full bg-[#f1f3f4] border border-[#e8eaed] rounded-lg px-3 py-2 text-sm text-[#202124] placeholder:text-[#4a5568] outline-none"
+            />
+          </div>
+          <div className="flex items-center gap-6">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.isActive}
+                onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+                className="rounded"
+              />
+              <span className="text-sm text-[#5f6368]">Active</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.autoProvision}
+                onChange={(e) => setForm({ ...form, autoProvision: e.target.checked })}
+                className="rounded"
+              />
+              <span className="text-sm text-[#5f6368]">Auto-provision new users</span>
+            </label>
+          </div>
+          <div className="flex gap-3">
+            <button onClick={() => setShowForm(false)} className="px-4 py-2 rounded-lg bg-[#f1f3f4] text-[#5f6368] text-sm hover:bg-[#2e3347]">Cancel</button>
+            <button onClick={handleSave} disabled={saving} className="px-4 py-2 rounded-lg bg-[#1a56db] text-white text-sm font-semibold hover:bg-[#1447c0] disabled:opacity-50 flex items-center gap-2">
+              {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />} Save
+            </button>
+          </div>
+        </div>
+      )}
+
+      {loading ? (
+        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-[#1a56db]" /></div>
+      ) : configs.length === 0 ? (
+        <div className="text-center py-12 text-[#7a8899]">No SSO providers configured.</div>
+      ) : (
+        <div className="space-y-3">
+          {configs.map((c) => (
+            <div key={c.id} className="flex items-center gap-4 p-4 bg-white border border-[#e8eaed] rounded-xl">
+              <div className="w-10 h-10 rounded-xl bg-[#f1f3f4] flex items-center justify-center flex-shrink-0">
+                <ShieldAlert className="w-5 h-5 text-[#1a56db]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-[#202124] text-sm">{c.provider}</span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${c.isActive ? "bg-green-500/15 text-green-400 border border-green-500/30" : "bg-[#f1f3f4] text-[#7a8899]"}`}>
+                    {c.isActive ? "Active" : "Inactive"}
+                  </span>
+                </div>
+                <p className="text-xs text-[#7a8899] mt-0.5">
+                  Default role: {c.defaultRole} · Auto-provision: {c.autoProvision ? "yes" : "no"}
+                </p>
+              </div>
+              <button onClick={() => handleDelete(c.id)} className="p-2 text-[#7a8899] hover:text-rose-400 rounded-lg hover:bg-rose-400/10 transition-colors">
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Sentinel Alerts Tab ──────────────────────────────────────────────────────
+
+type SentinelAlert = {
+  id: string;
+  alertType: string;
+  severity: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+  targetType: string;
+  targetId: string;
+  userId: string | null;
+  description: string;
+  acknowledged: boolean;
+  resolvedAt: string | null;
+  createdAt: string;
+};
+
+function SentinelTab() {
+  const [alerts, setAlerts] = useState<SentinelAlert[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<"all" | "open" | "critical">("open");
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const params = filter === "open" ? "?acknowledged=false" : filter === "critical" ? "?severity=CRITICAL" : "";
+      const res = await fetch(`/api/sentinel/alerts${params}`);
+      if (res.ok) {
+        const data = await res.json() as { alerts: SentinelAlert[] };
+        setAlerts(data.alerts ?? []);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { void load(); }, [filter]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const ack = async (id: string) => {
+    await fetch(`/api/sentinel/alerts/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ acknowledged: true }),
+    });
+    setAlerts((prev) => prev.map((a) => a.id === id ? { ...a, acknowledged: true } : a));
+    toast.success("Alert acknowledged");
+  };
+
+  const resolve = async (id: string) => {
+    await fetch(`/api/sentinel/alerts/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ acknowledged: true, resolvedAt: new Date().toISOString() }),
+    });
+    setAlerts((prev) => prev.filter((a) => a.id !== id));
+    toast.success("Alert resolved");
+  };
+
+  const severityConfig = {
+    CRITICAL: "bg-rose-500/15 text-rose-400 border border-rose-500/30",
+    HIGH:     "bg-orange-500/15 text-orange-400 border border-orange-500/30",
+    MEDIUM:   "bg-amber-500/15 text-amber-400 border border-amber-500/30",
+    LOW:      "bg-[#f1f3f4] text-[#7a8899] border border-[#e8eaed]",
+  };
+
+  return (
+    <div className="p-6 space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-base font-semibold text-[#202124]">Sentinel Alerts</h3>
+          <p className="text-xs text-[#7a8899] mt-0.5">Security alerts from CyberSage Sentinel. Acknowledge or resolve incidents.</p>
+        </div>
+        <div className="flex gap-1">
+          {(["open", "critical", "all"] as const).map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-colors capitalize ${
+                filter === f ? "bg-[#1a56db]/15 text-[#1a56db]" : "text-[#7a8899] hover:bg-[#f1f3f4]"
+              }`}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-[#1a56db]" /></div>
+      ) : alerts.length === 0 ? (
+        <div className="text-center py-12">
+          <CheckCircle className="w-8 h-8 text-green-400 mx-auto mb-2" />
+          <p className="text-sm text-[#7a8899]">No alerts{filter === "open" ? " — all clear" : ""}</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {alerts.map((a) => (
+            <div key={a.id} className={`p-4 rounded-xl border ${a.acknowledged ? "bg-white border-[#f0f0f0]" : "bg-white border-[#e8eaed]"}`}>
+              <div className="flex items-start gap-3">
+                <AlertTriangle className={`w-4 h-4 mt-0.5 flex-shrink-0 ${a.severity === "CRITICAL" ? "text-rose-400" : a.severity === "HIGH" ? "text-orange-400" : "text-amber-400"}`} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-sm font-medium text-[#202124]">{a.alertType}</span>
+                    <span className={`text-xs px-1.5 py-0.5 rounded-full ${severityConfig[a.severity]}`}>{a.severity}</span>
+                    {a.acknowledged && <span className="text-xs text-[#7a8899]">Acknowledged</span>}
+                  </div>
+                  <p className="text-xs text-[#5f6368] leading-relaxed mb-1.5">{a.description}</p>
+                  <p className="text-xs text-[#7a8899]">
+                    {a.targetType}/{a.targetId} · {format(parseISO(a.createdAt), "MMM d, h:mm a")}
+                  </p>
+                </div>
+                {!a.acknowledged && (
+                  <div className="flex gap-1.5 flex-shrink-0">
+                    <button
+                      onClick={() => ack(a.id)}
+                      className="text-xs px-2.5 py-1 rounded-lg bg-[#f1f3f4] text-[#5f6368] hover:bg-[#2e3347] transition-colors"
+                    >
+                      Ack
+                    </button>
+                    <button
+                      onClick={() => resolve(a.id)}
+                      className="text-xs px-2.5 py-1 rounded-lg bg-green-500/15 text-green-400 border border-green-500/30 hover:bg-green-500/25 transition-colors"
+                    >
+                      Resolve
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const SIDEBAR_TABS: { id: AdminSidebarTab; label: string; icon: React.ElementType; description: string }[] = [
+  { id: "overview",        label: "Overview",        icon: BarChart3,   description: "System-wide statistics at a glance." },
+  { id: "users",           label: "Users",           icon: Users,       description: "Manage workspace users, roles, and access." },
+  { id: "mailboxes",       label: "Mailboxes",       icon: Mail,        description: "Configure and manage email mailboxes." },
+  { id: "audit",           label: "Audit Logs",      icon: BookOpen,    description: "Track all system actions and user events." },
+  { id: "suppression",     label: "Suppression",     icon: Ban,         description: "Manage suppressed email addresses." },
+  { id: "security",        label: "Security",        icon: ShieldAlert, description: "Monitor threats, incidents, and policy violations." },
+  { id: "legal-hold",      label: "Legal Hold",      icon: Lock,        description: "Place and manage legal holds on user accounts." },
+  { id: "gdpr",            label: "GDPR Export",     icon: FileDown,    description: "Export user data for GDPR compliance requests." },
+  { id: "security-stats",  label: "Login Analytics", icon: Activity,    description: "Failed login counts, active sessions, and hold stats." },
+  { id: "retention",       label: "Retention",       icon: Timer,       description: "Configure automatic data retention and deletion policies." },
+  { id: "sso",             label: "SSO / SAML",      icon: ShieldAlert, description: "Configure Single Sign-On providers (SAML, OIDC, Google, Microsoft)." },
+  { id: "sentinel",        label: "Sentinel Alerts", icon: AlertTriangle, description: "View and acknowledge security alerts from CyberSage Sentinel." },
+];
+
+export function AdminConsoleView(_props: { currentUserId: string }) {
+  const [activeTab, setActiveTab] = useState<AdminSidebarTab>("overview");
+
+  const activeTabMeta = SIDEBAR_TABS.find((t) => t.id === activeTab);
+
+  return (
+    <div className="bg-white min-h-screen">
+      <div className="flex h-[calc(100vh-160px)] min-h-[400px] bg-white border border-[#e8eaed] rounded-xl overflow-hidden">
+        <div className="w-52 bg-[#f8fafd] flex flex-col flex-shrink-0">
+          <div className="px-6 py-4 border-b border-[#e8eaed]/10">
+            <div className="flex items-center gap-2">
+              <ShieldAlert className="w-5 h-5 text-[#1a56db]" />
+              <span className="text-white font-semibold text-sm">Admin Console</span>
+            </div>
+          </div>
+          <nav className="flex-1 p-3 space-y-1">
+            {SIDEBAR_TABS.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-left transition-colors ${
+                    activeTab === tab.id
+                      ? "bg-[#e8f0fe] text-[#202124]"
+                      : "text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124]"
+                  }`}
+                >
+                  <Icon className="w-4 h-4 flex-shrink-0" />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="px-6 py-4 border-b border-[#e8eaed] bg-white flex items-center justify-between flex-shrink-0">
+            <div>
+              <h1 className="text-xl font-semibold text-[#202124]">{activeTabMeta?.label}</h1>
+              <p className="text-xs text-[#5f6368] mt-0.5">{activeTabMeta?.description}</p>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-auto bg-white">
+            {activeTab === "overview" && (
+              <div className="p-6">
+                <OverviewTab />
+              </div>
+            )}
+            {activeTab === "users" && <UsersTab />}
+            {activeTab === "mailboxes" && <MailboxesTab />}
+            {activeTab === "audit" && <AuditLogsTab />}
+            {activeTab === "suppression" && <SuppressionTab />}
+            {activeTab === "security" && <SecurityTab />}
+            {activeTab === "legal-hold" && <LegalHoldTab />}
+            {activeTab === "gdpr" && <GdprExportTab />}
+            {activeTab === "security-stats" && <SecurityStatsTab />}
+            {activeTab === "retention" && <RetentionTab />}
+            {activeTab === "sso" && <SSOTab />}
+            {activeTab === "sentinel" && <SentinelTab />}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
