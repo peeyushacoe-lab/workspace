@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, FileSpreadsheet, Users, Trash2, ExternalLink, Loader2, Clock } from "lucide-react";
+import { Plus, FileSpreadsheet, Users, Trash2, ExternalLink, Loader2, Clock, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 
@@ -48,9 +48,15 @@ export default function SheetsPage() {
   return (
     <div className="p-6 max-w-5xl mx-auto">
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-xl font-semibold text-[#202124]">Spreadsheets</h1>
-          <p className="text-sm text-[#5f6368] mt-0.5">Create and collaborate on spreadsheets</p>
+        <div className="flex items-center gap-3">
+          <button onClick={() => router.push("/apps")} title="Back to Apps"
+            className="flex items-center justify-center h-9 w-9 rounded-lg text-[#5f6368] hover:bg-[#f1f3f4] transition-colors flex-shrink-0">
+            <ArrowLeft className="h-4 w-4" />
+          </button>
+          <div>
+            <h1 className="text-xl font-semibold text-[#202124]">Spreadsheets</h1>
+            <p className="text-sm text-[#5f6368] mt-0.5">Create and collaborate on spreadsheets</p>
+          </div>
         </div>
         <button onClick={createNew} disabled={creating}
           className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-[#1a56db] text-white hover:bg-[#1648c7] disabled:opacity-50 transition-colors">

@@ -491,6 +491,14 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
           for (let c = src.c1; c <= src.c2; c++) {
             const source: string[] = [];
             for (let r = src.r1; r <= src.r2; r++) source.push(raw(r, c));
+            // Single-cell source: extend upward over the contiguous filled run so a
+            // series like 1,2,3 is detected (Google-Sheets-style autofill).
+            if (src.r1 === src.r2) {
+              const run: string[] = [];
+              let rr = src.r1 - 1;
+              while (rr >= 0 && raw(rr, c) !== "" && run.length < 200) { run.unshift(raw(rr, c)); rr--; }
+              for (let i = run.length - 1; i >= 0; i--) source.unshift(run[i]);
+            }
             const filled = fillSeries(source, downExtent);
             const baseStyle = srcStyle(src.r2, c);
             filled.forEach((v, i) => {
@@ -503,6 +511,12 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
           for (let r = src.r1; r <= src.r2; r++) {
             const source: string[] = [];
             for (let c = src.c1; c <= src.c2; c++) source.push(raw(r, c));
+            if (src.c1 === src.c2) {
+              const run: string[] = [];
+              let cc = src.c1 - 1;
+              while (cc >= 0 && raw(r, cc) !== "" && run.length < 200) { run.unshift(raw(r, cc)); cc--; }
+              for (let i = run.length - 1; i >= 0; i--) source.unshift(run[i]);
+            }
             const filled = fillSeries(source, rightExtent);
             const baseStyle = srcStyle(r, src.c2);
             filled.forEach((v, i) => {
@@ -668,44 +682,42 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
     });
   }, [activeSheetId, pushHistory, scheduleSave, title]);
 
-  // ── Keyboard navigation ───────────────────────────────────────────────────
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if ((e.key === "h" || e.key === "H") && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault(); setShowFindReplace(true); return;
-      }
-      if (editing) return;
-      const move = (dr: number, dc: number) => {
-        e.preventDefault();
-        setSel(s => ({ r: Math.max(0, Math.min(ROWS - 1, s.r + dr)), c: Math.max(0, Math.min(COLS - 1, s.c + dc)) }));
-        setSelEnd(null);
-      };
-      if (e.key === "ArrowUp") move(-1, 0);
-      else if (e.key === "ArrowDown") move(1, 0);
-      else if (e.key === "ArrowLeft") move(0, -1);
-      else if (e.key === "ArrowRight") move(0, 1);
-      else if (e.key === "Tab") { e.preventDefault(); move(0, 1); }
-      else if (e.key === "Enter") move(1, 0);
-      else if (e.key === "Delete" || e.key === "Backspace") {
-        updateCell(sel.r, sel.c, "");
-      } else if (e.key === "z" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault(); if (e.shiftKey) redo(); else undo();
-      } else if (e.key === "c" && (e.metaKey || e.ctrlKey)) {
-        const val = getCellDisplayValue(sel.r, sel.c, activeSheet);
-        void navigator.clipboard.writeText(val);
-      } else if (e.key === "F2") {
-        const cell = activeSheet.cells[ck(sel.r, sel.c)];
-        setEditVal(cell?.v ?? "");
-        setEditing(true);
-        setTimeout(() => cellInputRef.current?.focus(), 0);
-      } else if (!e.metaKey && !e.ctrlKey && e.key.length === 1) {
-        setEditVal(e.key);
-        setEditing(true);
-        setTimeout(() => cellInputRef.current?.focus(), 0);
-      }
+  // ── Keyboard navigation (on the focused grid container) ────────────────────
+  const focusGrid = useCallback(() => { setTimeout(() => gridRef.current?.focus(), 0); }, []);
+
+  const handleGridKey = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if ((e.key === "h" || e.key === "H") && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault(); setShowFindReplace(true); return;
     }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    if (editing) return; // the cell input handles its own keys (and stops propagation)
+    const move = (dr: number, dc: number) => {
+      e.preventDefault();
+      setSel(s => ({ r: Math.max(0, Math.min(ROWS - 1, s.r + dr)), c: Math.max(0, Math.min(COLS - 1, s.c + dc)) }));
+      setSelEnd(null);
+    };
+    if (e.key === "ArrowUp") move(-1, 0);
+    else if (e.key === "ArrowDown") move(1, 0);
+    else if (e.key === "ArrowLeft") move(0, -1);
+    else if (e.key === "ArrowRight") move(0, 1);
+    else if (e.key === "Tab") { e.preventDefault(); move(0, e.shiftKey ? -1 : 1); }
+    else if (e.key === "Enter") move(1, 0);
+    else if (e.key === "Delete" || e.key === "Backspace") {
+      e.preventDefault(); updateCell(sel.r, sel.c, "");
+    } else if (e.key === "z" && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault(); if (e.shiftKey) redo(); else undo();
+    } else if (e.key === "c" && (e.metaKey || e.ctrlKey)) {
+      const val = getCellDisplayValue(sel.r, sel.c, activeSheet);
+      void navigator.clipboard.writeText(val);
+    } else if (e.key === "F2") {
+      const cell = activeSheet.cells[ck(sel.r, sel.c)];
+      setEditVal(cell?.v ?? "");
+      setEditing(true);
+      setTimeout(() => cellInputRef.current?.focus(), 0);
+    } else if (!e.metaKey && !e.ctrlKey && e.key.length === 1) {
+      setEditVal(e.key);
+      setEditing(true);
+      setTimeout(() => cellInputRef.current?.focus(), 0);
+    }
   }, [editing, sel, activeSheet, updateCell, undo, redo, getCellDisplayValue]);
 
   // Update formula bar on selection change
@@ -727,7 +739,8 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
     setEditing(false);
     if (moveDir === "down") setSel(s => ({ r: Math.min(ROWS - 1, s.r + 1), c: s.c }));
     else if (moveDir === "right") setSel(s => ({ r: s.r, c: Math.min(COLS - 1, s.c + 1) }));
-  }, [sel, editVal, updateCell, activeSheet]);
+    focusGrid();
+  }, [sel, editVal, updateCell, activeSheet, focusGrid]);
 
   // ── Add / remove sheet ────────────────────────────────────────────────────
   const addSheet = () => {
@@ -1490,7 +1503,7 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
       {/* ── Main area ── */}
       <div className="flex flex-1 min-h-0">
         {/* Grid */}
-        <div className="flex-1 overflow-auto" ref={gridRef}>
+        <div className="flex-1 overflow-auto outline-none" ref={gridRef} tabIndex={0} onKeyDown={handleGridKey}>
           <div style={{ display: "grid", gridTemplateColumns: `${ROW_HEADER_W}px ${Array.from({ length: COLS }, (_, c) => `${activeSheet.colWidths[c] ?? DEFAULT_COL_W}px`).join(" ")}` }}>
             {/* Column headers */}
             <div className="sticky top-0 left-0 z-20 bg-[#f8f9fa] border-r border-b border-[#e8eaed]" style={{ height: COL_HEADER_H }} />
@@ -1566,6 +1579,7 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
                       setSelEnd(null);
                       setEditing(false);
                     }
+                    focusGrid();
                   }}
                   onCellDoubleClick={(rr, cc) => {
                     setSel({ r: rr, c: cc });
@@ -2162,6 +2176,7 @@ function Row({ row, cols, sheet, sel, selEnd, editing, editVal, cellInputRef, co
                 value={editVal}
                 onChange={e => onEditChange(e.target.value)}
                 onKeyDown={e => {
+                  e.stopPropagation();
                   if (e.key === "Enter") { e.preventDefault(); onEditCommit("down"); }
                   else if (e.key === "Tab") { e.preventDefault(); onEditCommit("right"); }
                   else if (e.key === "Escape") { onEditCancel(); }

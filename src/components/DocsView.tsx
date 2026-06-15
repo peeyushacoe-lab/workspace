@@ -742,6 +742,12 @@ blockquote{border-left:4px solid #1a56db;margin:0;padding-left:1em;color:#5f6368
 
       {/* ── Doc list sidebar ── */}
       <aside className="w-64 flex flex-col border-r border-[#e8eaed] bg-[#f8f9fa] overflow-hidden flex-shrink-0">
+        <div className="px-3 pt-3">
+          <a href="/apps" title="Back to Apps"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-[#5f6368] hover:text-[#202124] hover:bg-[#f1f3f4] rounded-md px-2 py-1 -ml-1 transition-colors">
+            <ChevronDown className="h-3.5 w-3.5 rotate-90" /> Apps
+          </a>
+        </div>
         <div className="p-3 border-b border-[#e8eaed]">
           <button onClick={() => void createDoc()}
             className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold bg-[#1a56db] text-white rounded-lg hover:bg-[#1648c7] transition-colors">
@@ -1047,7 +1053,18 @@ blockquote{border-left:4px solid #1a56db;margin:0;padding-left:1em;color:#5f6368
             <TB icon={<Type className="h-3.5 w-3.5" />} title="Code block" active={editor?.isActive("codeBlock")} onClick={() => editor?.chain().focus().toggleCodeBlock().run()} />
             <TB icon={<Minus className="h-3.5 w-3.5" />} title="Horizontal rule" onClick={() => editor?.chain().focus().setHorizontalRule().run()} />
             <TB icon={<Table className="h-3.5 w-3.5" />} title="Insert table (3×3)" onClick={() => { (editor?.chain().focus() as unknown as { insertTable?: (o: { rows: number; cols: number; withHeaderRow: boolean }) => { run: () => boolean } })?.insertTable?.({ rows: 3, cols: 3, withHeaderRow: true })?.run?.(); }} />
-            <TB icon={<ImageIcon className="h-3.5 w-3.5" />} title="Insert image" onClick={() => { const u = prompt("Image URL:"); if (u) (editor?.chain().focus() as unknown as { setImage?: (o: { src: string }) => { run: () => boolean } })?.setImage?.({ src: u })?.run?.(); }} />
+            <label title="Insert image (upload)" className="flex items-center justify-center h-7 w-7 rounded text-sm text-[#5f6368] hover:bg-[#f1f3f4] cursor-pointer transition-colors">
+              <ImageIcon className="h-3.5 w-3.5" />
+              <input type="file" accept="image/*" className="hidden" onChange={e => {
+                const f = e.target.files?.[0];
+                if (!f) return;
+                if (f.size > 5 * 1024 * 1024) { toast.error("Image too large (max 5MB)"); return; }
+                const reader = new FileReader();
+                reader.onload = () => (editor?.chain().focus() as unknown as { setImage?: (o: { src: string }) => { run: () => boolean } })?.setImage?.({ src: String(reader.result) })?.run?.();
+                reader.readAsDataURL(f);
+                e.currentTarget.value = "";
+              }} />
+            </label>
             <TB icon={<Link2 className="h-3.5 w-3.5" />} title="Insert link" active={editor?.isActive("link")} onClick={() => { const u = prompt("URL:"); if (u) editor?.chain().focus().setLink?.({ href: u }).run(); else editor?.chain().focus().unsetLink?.().run(); }} />
             <TSep />
 

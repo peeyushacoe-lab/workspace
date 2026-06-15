@@ -2,6 +2,7 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { LogOut, ChevronLeft, ChevronRight, Menu, X, Settings } from "lucide-react";
 import { SidebarNav } from "./SidebarNav";
 import { SearchTrigger } from "./GlobalSearch";
@@ -37,6 +38,12 @@ export function SidebarLayout({
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const pathname = usePathname();
+
+  // Editor routes open full-screen (no portal chrome), like opening a doc in Google.
+  const fullScreen =
+    /^\/apps\/(sheets|slides)\/[^/]+$/.test(pathname || "") ||
+    pathname === "/docs" || (pathname?.startsWith("/docs/") ?? false);
 
   useEffect(() => {
     setMounted(true);
@@ -140,6 +147,10 @@ export function SidebarLayout({
 
   const desktopWidth = mounted && collapsed ? "lg:w-[56px]" : "lg:w-[228px]";
   const contentPad   = mounted && collapsed ? "lg:pl-[56px]" : "lg:pl-[228px]";
+
+  if (fullScreen) {
+    return <div className="h-screen w-screen overflow-hidden bg-white">{children}</div>;
+  }
 
   return (
     <div className="min-h-screen bg-[#f8fafd]">

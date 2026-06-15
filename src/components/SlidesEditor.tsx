@@ -1139,7 +1139,18 @@ export default function SlidesEditor({ presId }: { presId: string }) {
         <ToolBtn icon={<MoveRight className="h-3.5 w-3.5" />} title="Arrow" onClick={() => addElement({ type: "shape", x: 100, y: 120, w: 200, h: 100, shapeType: "arrow", style: { bg: theme.accent + "40" } })} />
         <ToolBtn icon={<Minus className="h-3.5 w-3.5" />} title="Line" onClick={() => addElement({ type: "shape", x: 100, y: 160, w: 240, h: 12, shapeType: "line", style: { borderColor: theme.accent, borderWidth: 3 } })} />
         <ToolBtn icon={<Star className="h-3.5 w-3.5" />} title="Star" onClick={() => addElement({ type: "shape", x: 100, y: 100, w: 140, h: 140, shapeType: "star", style: { bg: theme.accent + "40" } })} />
-        <ToolBtn icon={<ImageIcon className="h-3.5 w-3.5" />} title="Image" onClick={() => { const u = prompt("Image URL:"); if (u) addElement({ type: "image", x: 100, y: 100, w: 300, h: 200, src: u }); }} />
+        <label title="Insert image (upload)" className="flex items-center justify-center h-7 w-7 rounded text-sm text-[#5f6368] hover:bg-[#f1f3f4] cursor-pointer transition-colors">
+          <ImageIcon className="h-3.5 w-3.5" />
+          <input type="file" accept="image/*" className="hidden" onChange={e => {
+            const f = e.target.files?.[0];
+            if (!f) return;
+            if (f.size > 5 * 1024 * 1024) { toast.error("Image too large (max 5MB)"); return; }
+            const reader = new FileReader();
+            reader.onload = () => addElement({ type: "image", x: 100, y: 100, w: 320, h: 220, src: String(reader.result) });
+            reader.readAsDataURL(f);
+            e.currentTarget.value = "";
+          }} />
+        </label>
         <ToolBtn icon={<BarChart3 className="h-3.5 w-3.5" />} title="Bar chart" onClick={() => addElement({ type: "chart", x: 200, y: 120, w: 400, h: 300, chartType: "bar", chartData: [{ name: "Q1", value: 40 }, { name: "Q2", value: 65 }, { name: "Q3", value: 50 }, { name: "Q4", value: 80 }] })} />
         <ToolBtn icon={<Table className="h-3.5 w-3.5" />} title="Table" onClick={() => addElement({ type: "table", x: 100, y: 120, w: 500, h: 200, tableRows: [["Header 1", "Header 2", "Header 3"], ["Row 1 A", "Row 1 B", "Row 1 C"], ["Row 2 A", "Row 2 B", "Row 2 C"]] })} />
         <ToolBtn icon={<Code2 className="h-3.5 w-3.5" />} title="Code block" onClick={() => addElement({ type: "code", x: 100, y: 120, w: 600, h: 200, content: "// Your code here\nconst hello = 'world';\nconsole.log(hello);" })} />
