@@ -1046,12 +1046,28 @@ export default function SlidesEditor({ presId }: { presId: string }) {
             </button>
           </div>
         </div>
-        {ps.notes && (
-          <div className="w-72 border-l border-white/10 p-6">
-            <p className="text-white/50 text-xs font-semibold uppercase mb-3">Speaker Notes</p>
-            <p className="text-white/80 text-sm leading-relaxed">{ps.notes}</p>
+        <div className="w-72 border-l border-white/10 p-6 flex flex-col gap-5 overflow-y-auto">
+          <div>
+            <p className="text-white/50 text-xs font-semibold uppercase mb-2">Next slide</p>
+            {(() => {
+              const ni = nextVisibleIndex(presenterSlide);
+              if (ni === presenterSlide) return <p className="text-white/40 text-sm">End of presentation</p>;
+              const nx = slides[ni];
+              const z = 240 / CANVAS_W;
+              return (
+                <div className="rounded overflow-hidden border border-white/15" style={{ width: 240, aspectRatio: "16/9", position: "relative", background: nx.background }}>
+                  {nx.elements.slice().sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0)).map(el => (
+                    <SlideElementView key={el.id} el={el} zoom={z} theme={theme} editMode />
+                  ))}
+                </div>
+              );
+            })()}
           </div>
-        )}
+          <div className="flex-1 min-h-0">
+            <p className="text-white/50 text-xs font-semibold uppercase mb-2">Speaker notes</p>
+            <p className="text-white/80 text-sm leading-relaxed whitespace-pre-wrap">{ps.notes || "No notes for this slide."}</p>
+          </div>
+        </div>
       </div>
     );
   }

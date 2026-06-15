@@ -312,6 +312,7 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
   const [selEnd, setSelEnd] = useState<{ r: number; c: number } | null>(null);
   const [fillDrag, setFillDrag] = useState<{ r1: number; c1: number; r2: number; c2: number } | null>(null);
   const [fillTo, setFillTo] = useState<{ r: number; c: number } | null>(null);
+  const selecting = useRef(false);
   const [editing, setEditing] = useState(false);
   const [editVal, setEditVal] = useState("");
   const [formulaBarVal, setFormulaBarVal] = useState("");
@@ -548,6 +549,13 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
     window.addEventListener("mouseup", onUp);
     return () => window.removeEventListener("mouseup", onUp);
   }, [fillDrag, fillTo, applyFill]);
+
+  // End a drag-selection on mouseup anywhere.
+  useEffect(() => {
+    const onUp = () => { selecting.current = false; };
+    window.addEventListener("mouseup", onUp);
+    return () => window.removeEventListener("mouseup", onUp);
+  }, []);
 
   // ── Apply style to selection ──────────────────────────────────────────────
   const applyStyle = useCallback((stylePatch: Partial<CellStyle>) => {
@@ -1559,7 +1567,13 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
                   fillDrag={fillDrag}
                   fillTo={fillTo}
                   onStartFill={startFill}
-                  onCellEnter={(rr, cc) => { if (fillDrag) setFillTo({ r: rr, c: cc }); }}
+                  onCellEnter={(rr, cc) => { if (fillDrag) setFillTo({ r: rr, c: cc }); else if (selecting.current) setSelEnd({ r: rr, c: cc }); }}
+                  onCellMouseDown={(rr, cc, shiftKey) => {
+                    if (painterStyle) return; // let click handle the painter
+                    if (shiftKey) { setSelEnd({ r: rr, c: cc }); }
+                    else { setSel({ r: rr, c: cc }); setSelEnd(null); setEditing(false); selecting.current = true; }
+                    focusGrid();
+                  }}
                   onCellClick={(rr, cc, shiftKey) => {
                     if (painterStyle) {
                       // Format painter armed: apply copied style to the clicked cell
@@ -2015,7 +2029,7 @@ function TemplatesDialog({ hasData, onClose, onApply }: {
 
 // ─── Row ─────────────────────────────────────────────────────────────────────
 
-function Row({ row, cols, sheet, sel, selEnd, editing, editVal, cellInputRef, colWidths, rowHeight, frozenRows, frozenCols, frozenColLefts, frozenRowTops, getCellDisplayValue, getCFStyle, getCellValidation, dvDropdown, onOpenDropdown, onPickValidation, onCloseDropdown, fillDrag, fillTo, onStartFill, onCellEnter, onCellClick, onCellDoubleClick, onEditChange, onEditCommit, onEditCancel, onRowResize, onHideRow }: {
+function Row({ row, cols, sheet, sel, selEnd, editing, editVal, cellInputRef, colWidths, rowHeight, frozenRows, frozenCols, frozenColLefts, frozenRowTops, getCellDisplayValue, getCFStyle, getCellValidation, dvDropdown, onOpenDropdown, onPickValidation, onCloseDropdown, fillDrag, fillTo, onStartFill, onCellEnter, onCellMouseDown, onCellClick, onCellDoubleClick, onEditChange, onEditCommit, onEditCancel, onRowResize, onHideRow }: {
   row: number; cols: number; sheet: SheetTab; sel: { r: number; c: number }; selEnd: { r: number; c: number } | null;
   editing: boolean; editVal: string; cellInputRef: React.RefObject<HTMLInputElement | null>;
   colWidths: Record<number, number>; rowHeight: number;
@@ -2032,6 +2046,7 @@ function Row({ row, cols, sheet, sel, selEnd, editing, editVal, cellInputRef, co
   fillTo: { r: number; c: number } | null;
   onStartFill: () => void;
   onCellEnter: (r: number, c: number) => void;
+  onCellMouseDown: (r: number, c: number, shift: boolean) => void;
   onCellClick: (r: number, c: number, shift: boolean) => void;
   onCellDoubleClick: (r: number, c: number) => void;
   onEditChange: (v: string) => void;
@@ -2164,6 +2179,7 @@ function Row({ row, cols, sheet, sel, selEnd, editing, editVal, cellInputRef, co
               ${isSelected ? "outline outline-2 outline-[#1a56db] z-[5]" : isInRange ? "bg-[#e8f0fe]/60" : ""}
               ${isFillPreview ? "outline-dashed outline-1 outline-[#1a56db]/60 bg-[#e8f0fe]/40" : ""}`}
             style={cellStyle}
+            onMouseDown={e => { if (e.button === 0) onCellMouseDown(row, c, e.shiftKey); }}
             onClick={e => onCellClick(row, c, e.shiftKey)}
             onDoubleClick={() => onCellDoubleClick(row, c)}
             onMouseEnter={() => onCellEnter(row, c)}
