@@ -86,6 +86,8 @@ export const portalNavItems: PortalNavItem[] = [
   { href: "/org",       label: "Org",        hint: "Organization settings",  roles: ["ADMIN"] },
   { href: "/admin",     label: "Admin",      hint: "System administration", roles: ["ADMIN"] },
   { href: "/compliance",  label: "Compliance",  hint: "Audit logs & GDPR",         roles: ["ADMIN", "CISO"] },
+  { href: "/soc",         label: "SOC",         hint: "Security operations centre", roles: ALL_ROLES },
+  { href: "/developer",   label: "Developer",   hint: "API keys & webhooks",        roles: MGMT_ROLES },
   { href: "/settings",    label: "Settings",    hint: "Signature & security",       roles: ALL_ROLES },
   { href: "/download",    label: "Desktop App", hint: "Download for Windows/Mac/Linux", roles: ALL_ROLES },
 ];
@@ -124,6 +126,10 @@ const pathAccess: Array<{ prefix: string; roles: UserRole[] }> = [
   { prefix: "/onboarding",     roles: ALL_ROLES },
   { prefix: "/status",         roles: ALL_ROLES },
   { prefix: "/download",       roles: ALL_ROLES },
+  { prefix: "/soc",            roles: ALL_ROLES },
+  { prefix: "/developer",      roles: MGMT_ROLES },
+  { prefix: "/access",         roles: ["ADMIN", "CISO"] },
+  { prefix: "/brain",          roles: ALL_ROLES },
 ];
 
 const validRoles = new Set<UserRole>(ALL_ROLES);

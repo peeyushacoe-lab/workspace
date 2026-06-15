@@ -1975,3 +1975,15 @@ function ActionBtn({
     </button>
   );
 }
+
+function NewMenuItem({ icon: Icon, label, onClick }: { icon: React.ElementType; label: string; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex w-full items-center gap-3 px-4 py-2 text-sm text-[#202124] hover:bg-[#f1f3f4] transition-colors"
+    >
+      <Icon className="h-4 w-4 text-[#5f6368]" />
+      {label}
+    </button>
+  );
+}
