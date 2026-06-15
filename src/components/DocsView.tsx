@@ -15,7 +15,9 @@ import {
   Undo2, Redo2, ChevronDown, Sparkles, MessageSquare, History,
   Download, Shield, X, Check,
   IndentDecrease, IndentIncrease, Type,
-  BookOpen, Clock,
+  BookOpen, Clock, LayoutTemplate, WifiOff,
+  Superscript as SuperscriptIcon, Subscript as SubscriptIcon, RemoveFormatting, Highlighter,
+  FileCog, PanelTop, BarChart3,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow, format } from "date-fns";
@@ -25,6 +27,10 @@ import TextAlign from "@tiptap/extension-text-align";
 import Image from "@tiptap/extension-image";
 import { TableKit } from "@tiptap/extension-table";
 import { TaskList, TaskItem } from "@tiptap/extension-list";
+import { TextStyle, FontFamily, FontSize, Color } from "@tiptap/extension-text-style";
+import Highlight from "@tiptap/extension-highlight";
+import Subscript from "@tiptap/extension-subscript";
+import Superscript from "@tiptap/extension-superscript";
 import * as Y from "yjs";
 import Collaboration from "@tiptap/extension-collaboration";
 import { DocShareModal } from "./DocShareModal";
@@ -66,6 +72,180 @@ const SECURITY_LABELS: { value: SecurityLabel; label: string; color: string; bg:
 ];
 
 const REMOTE_ORIGIN = "sse-relay";
+
+// ─── Document templates ─────────────────────────────────────────────────────────
+
+const DOC_TEMPLATES: { id: string; label: string; html: string }[] = [
+  {
+    id: "resume",
+    label: "Resume",
+    html: [
+      "<h1>Your Name</h1>",
+      "<p>City, Country &middot; email@example.com &middot; +1 555 000 0000 &middot; linkedin.com/in/you</p>",
+      "<h2>Summary</h2>",
+      "<p>Concise professional summary highlighting your experience, strengths, and goals.</p>",
+      "<h2>Experience</h2>",
+      "<h3>Job Title — Company</h3>",
+      "<p><em>Month Year – Present</em></p>",
+      "<ul><li>Key achievement or responsibility with measurable impact.</li><li>Another accomplishment.</li><li>Another accomplishment.</li></ul>",
+      "<h3>Job Title — Company</h3>",
+      "<p><em>Month Year – Month Year</em></p>",
+      "<ul><li>Key achievement or responsibility.</li><li>Another accomplishment.</li></ul>",
+      "<h2>Education</h2>",
+      "<p><strong>Degree</strong>, University — Year</p>",
+      "<h2>Skills</h2>",
+      "<ul><li>Skill one</li><li>Skill two</li><li>Skill three</li></ul>",
+    ].join(""),
+  },
+  {
+    id: "cover-letter",
+    label: "Cover Letter",
+    html: [
+      "<h1>Cover Letter</h1>",
+      "<p>Your Name<br>City, Country<br>email@example.com</p>",
+      "<p>Date</p>",
+      "<p>Hiring Manager<br>Company Name<br>Company Address</p>",
+      "<p>Dear Hiring Manager,</p>",
+      "<p>Opening paragraph: state the role you are applying for and a compelling hook about why you are a strong fit.</p>",
+      "<p>Body paragraph: describe your relevant experience and accomplishments, tying them to the role&rsquo;s requirements.</p>",
+      "<p>Closing paragraph: reiterate your enthusiasm, thank the reader, and invite next steps.</p>",
+      "<p>Sincerely,<br>Your Name</p>",
+    ].join(""),
+  },
+  {
+    id: "meeting-notes",
+    label: "Meeting Notes",
+    html: [
+      "<h1>Meeting Notes</h1>",
+      "<p><strong>Date:</strong> &nbsp; &nbsp; <strong>Time:</strong> &nbsp; &nbsp; <strong>Location:</strong></p>",
+      "<h2>Attendees</h2>",
+      "<ul><li>Name</li><li>Name</li></ul>",
+      "<h2>Agenda</h2>",
+      "<ol><li>Topic one</li><li>Topic two</li><li>Topic three</li></ol>",
+      "<h2>Discussion</h2>",
+      "<p>Notes from the discussion go here.</p>",
+      "<h2>Action Items</h2>",
+      "<table><tbody><tr><th>Owner</th><th>Action</th><th>Due</th></tr><tr><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td></tr></tbody></table>",
+      "<h2>Decisions</h2>",
+      "<ul><li>Decision recorded here.</li></ul>",
+    ].join(""),
+  },
+  {
+    id: "report",
+    label: "Report",
+    html: [
+      "<h1>Report Title</h1>",
+      "<p><em>Prepared by Your Name &middot; Date</em></p>",
+      "<h2>Executive Summary</h2>",
+      "<p>High-level overview of the report&rsquo;s purpose, findings, and recommendations.</p>",
+      "<h2>Introduction</h2>",
+      "<p>Background and context for this report.</p>",
+      "<h2>Findings</h2>",
+      "<p>Detailed findings and analysis.</p>",
+      "<table><tbody><tr><th>Metric</th><th>Value</th><th>Notes</th></tr><tr><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td></tr></tbody></table>",
+      "<h2>Recommendations</h2>",
+      "<ol><li>Recommendation one</li><li>Recommendation two</li></ol>",
+      "<h2>Conclusion</h2>",
+      "<p>Summary of the report and next steps.</p>",
+    ].join(""),
+  },
+];
+
+function docsDraftKey(id: string): string {
+  return "nexus_docs_draft_" + id;
+}
+
+// ─── Page setup ─────────────────────────────────────────────────────────────────
+
+type PageSize = "Letter" | "A4" | "Legal";
+type Orientation = "Portrait" | "Landscape";
+type MarginPreset = "Normal" | "Narrow" | "Wide";
+
+type PageSetup = {
+  size: PageSize;
+  orientation: Orientation;
+  margins: MarginPreset;
+};
+
+const DEFAULT_PAGE_SETUP: PageSetup = { size: "Letter", orientation: "Portrait", margins: "Normal" };
+
+// Dimensions in px at ~96 dpi (portrait — width x height).
+const PAGE_SIZES: Record<PageSize, { w: number; h: number }> = {
+  Letter: { w: 816, h: 1056 },
+  A4:     { w: 794, h: 1123 },
+  Legal:  { w: 816, h: 1344 },
+};
+
+// Inner padding presets (vertical / horizontal) in px.
+const MARGIN_PRESETS: Record<MarginPreset, { v: number; h: number }> = {
+  Normal: { v: 96, h: 96 },
+  Narrow: { v: 48, h: 48 },
+  Wide:   { v: 144, h: 144 },
+};
+
+function pageSetupKey(id: string): string {
+  return "nexus_docs_pagesetup_" + id;
+}
+
+function headerFooterKey(id: string): string {
+  return "nexus_docs_headerfooter_" + id;
+}
+
+function loadPageSetup(id: string): PageSetup {
+  try {
+    const raw = localStorage.getItem(pageSetupKey(id));
+    if (raw) {
+      const p = JSON.parse(raw) as Partial<PageSetup>;
+      return {
+        size: p.size && PAGE_SIZES[p.size] ? p.size : DEFAULT_PAGE_SETUP.size,
+        orientation: p.orientation === "Landscape" ? "Landscape" : "Portrait",
+        margins: p.margins && MARGIN_PRESETS[p.margins] ? p.margins : DEFAULT_PAGE_SETUP.margins,
+      };
+    }
+  } catch { /* ignore */ }
+  return { ...DEFAULT_PAGE_SETUP };
+}
+
+type HeaderFooter = { enabled: boolean; header: string; footer: string };
+
+const DEFAULT_HEADER_FOOTER: HeaderFooter = { enabled: false, header: "", footer: "" };
+
+function loadHeaderFooter(id: string): HeaderFooter {
+  try {
+    const raw = localStorage.getItem(headerFooterKey(id));
+    if (raw) {
+      const h = JSON.parse(raw) as Partial<HeaderFooter>;
+      return {
+        enabled: h.enabled === true,
+        header: typeof h.header === "string" ? h.header : "",
+        footer: typeof h.footer === "string" ? h.footer : "",
+      };
+    }
+  } catch { /* ignore */ }
+  return { ...DEFAULT_HEADER_FOOTER };
+}
+
+// ─── Document stats ─────────────────────────────────────────────────────────────
+
+type DocStats = {
+  words: number;
+  charsWithSpaces: number;
+  charsNoSpaces: number;
+  sentences: number;
+  paragraphs: number;
+  readingMinutes: number;
+};
+
+function computeStats(text: string): DocStats {
+  const trimmed = text.trim();
+  const words = trimmed ? trimmed.split(/\s+/).filter(Boolean).length : 0;
+  const charsWithSpaces = text.length;
+  const charsNoSpaces = text.replace(/\s/g, "").length;
+  const sentences = trimmed ? (trimmed.match(/[^.!?]+[.!?]+(\s|$)|[^.!?]+$/g) ?? []).filter(s => s.trim().length > 0).length : 0;
+  const paragraphs = trimmed ? trimmed.split(/\n+/).filter(p => p.trim().length > 0).length : 0;
+  const readingMinutes = Math.max(words > 0 ? 1 : 0, Math.ceil(words / 200));
+  return { words, charsWithSpaces, charsNoSpaces, sentences, paragraphs, readingMinutes };
+}
 
 // ─── Collab hook ──────────────────────────────────────────────────────────────
 
@@ -212,7 +392,16 @@ export function DocsView() {
   const [showOutline, setShowOutline] = useState(true);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showSecurityMenu, setShowSecurityMenu] = useState(false);
+  const [showTemplateMenu, setShowTemplateMenu] = useState(false);
   const [headingMenu, setHeadingMenu] = useState(false);
+  const [isOffline, setIsOffline] = useState(false);
+  const [showPageSetupMenu, setShowPageSetupMenu] = useState(false);
+  const [showStats, setShowStats] = useState(false);
+
+  // Page setup, header/footer (per-doc, persisted)
+  const [pageSetup, setPageSetup] = useState<PageSetup>(DEFAULT_PAGE_SETUP);
+  const [headerFooter, setHeaderFooter] = useState<HeaderFooter>(DEFAULT_HEADER_FOOTER);
+  const [stats, setStats] = useState<DocStats>(() => computeStats(""));
 
   // Features
   const [comments, setComments] = useState<Comment[]>([]);
@@ -241,6 +430,13 @@ export function DocsView() {
       TableKit.configure({ table: { resizable: true } }),
       TaskList,
       TaskItem.configure({ nested: true }),
+      TextStyle,
+      FontFamily,
+      FontSize,
+      Color,
+      Highlight.configure({ multicolor: true }),
+      Subscript,
+      Superscript,
       Collaboration.configure({ document: ydoc }),
     ],
     content: "",
@@ -255,6 +451,7 @@ export function DocsView() {
         }
       });
       setOutline(heads);
+      setStats(computeStats(ed.getText()));
       if (saveTimer.current) clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(() => { void autoSave(ed.getHTML()); }, 2000);
     },
@@ -268,12 +465,72 @@ export function DocsView() {
       .catch(() => setLoading(false));
   }, []);
 
+  // ── Offline indicator ─────────────────────────────────────────────────────
+  useEffect(() => {
+    if (typeof navigator !== "undefined") setIsOffline(!navigator.onLine);
+    const goOnline = () => setIsOffline(false);
+    const goOffline = () => setIsOffline(true);
+    window.addEventListener("online", goOnline);
+    window.addEventListener("offline", goOffline);
+    return () => {
+      window.removeEventListener("online", goOnline);
+      window.removeEventListener("offline", goOffline);
+    };
+  }, []);
+
+  // ── Page setup persistence ────────────────────────────────────────────────
+  const updatePageSetup = useCallback((patch: Partial<PageSetup>) => {
+    setPageSetup(prev => {
+      const next = { ...prev, ...patch };
+      if (selectedId) {
+        try { localStorage.setItem(pageSetupKey(selectedId), JSON.stringify(next)); } catch { /* ignore */ }
+      }
+      return next;
+    });
+  }, [selectedId]);
+
+  // ── Header / footer persistence ───────────────────────────────────────────
+  const updateHeaderFooter = useCallback((patch: Partial<HeaderFooter>) => {
+    setHeaderFooter(prev => {
+      const next = { ...prev, ...patch };
+      if (selectedId) {
+        try { localStorage.setItem(headerFooterKey(selectedId), JSON.stringify(next)); } catch { /* ignore */ }
+      }
+      return next;
+    });
+  }, [selectedId]);
+
+  // ── Live document stats ───────────────────────────────────────────────────
+  const refreshStats = useCallback(() => {
+    if (editor) setStats(computeStats(editor.getText()));
+  }, [editor]);
+
   // ── Select doc ────────────────────────────────────────────────────────────
   const selectDoc = useCallback((doc: Doc) => {
     setSelectedId(doc.id);
-    setTitle(doc.title);
     setComments([]);
-    if (editor && doc.content) editor.commands.setContent(doc.content, { emitUpdate: false });
+    setPageSetup(loadPageSetup(doc.id));
+    setHeaderFooter(loadHeaderFooter(doc.id));
+
+    // Restore from offline draft if we have no network / fetch unavailable
+    let nextTitle = doc.title;
+    let nextContent = doc.content;
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      try {
+        const raw = localStorage.getItem(docsDraftKey(doc.id));
+        if (raw) {
+          const draft = JSON.parse(raw) as { title?: string; content?: string };
+          if (typeof draft.title === "string") nextTitle = draft.title;
+          if (typeof draft.content === "string") nextContent = draft.content;
+        }
+      } catch { /* ignore corrupt draft */ }
+    }
+
+    setTitle(nextTitle);
+    if (editor) {
+      if (nextContent) editor.commands.setContent(nextContent, { emitUpdate: false });
+      else editor.commands.clearContent();
+    }
   }, [editor]);
 
   // ── Create doc ────────────────────────────────────────────────────────────
@@ -294,6 +551,12 @@ export function DocsView() {
   // ── Auto-save ─────────────────────────────────────────────────────────────
   const autoSave = useCallback(async (content: string) => {
     if (!selectedId) return;
+
+    // Always cache the latest draft locally for offline recovery.
+    try {
+      localStorage.setItem(docsDraftKey(selectedId), JSON.stringify({ title, content }));
+    } catch { /* storage may be full / unavailable */ }
+
     setSaving(true);
     try {
       await fetch(`/api/docs/${selectedId}`, {
@@ -302,8 +565,12 @@ export function DocsView() {
         body: JSON.stringify({ content }),
       });
       setDocs(prev => prev.map(d => d.id === selectedId ? { ...d, content, updatedAt: new Date().toISOString() } : d));
+      // Real save succeeded — refresh the cached draft to mirror server state.
+      try {
+        localStorage.setItem(docsDraftKey(selectedId), JSON.stringify({ title, content }));
+      } catch { /* ignore */ }
     } finally { setSaving(false); }
-  }, [selectedId]);
+  }, [selectedId, title]);
 
   const saveTitle = async (t: string) => {
     if (!selectedId) return;
@@ -313,6 +580,17 @@ export function DocsView() {
       body: JSON.stringify({ title: t }),
     });
     setDocs(prev => prev.map(d => d.id === selectedId ? { ...d, title: t } : d));
+  };
+
+  // ── Templates ─────────────────────────────────────────────────────────────
+  const applyTemplate = (tpl: { id: string; label: string; html: string }) => {
+    if (!editor || !selectedId) return;
+    editor.commands.setContent(tpl.html, { emitUpdate: false });
+    editor.commands.focus();
+    setShowTemplateMenu(false);
+    // Persist through the existing save path.
+    void autoSave(tpl.html);
+    toast.success(tpl.label + " template applied");
   };
 
   const deleteDoc = async (id: string, e: React.MouseEvent) => {
@@ -445,10 +723,18 @@ blockquote{border-left:4px solid #1a56db;margin:0;padding-left:1em;color:#5f6368
   const wordCount = editor ? countWords(editor.getHTML()) : 0;
   const secInfo = SECURITY_LABELS.find(s => s.value === securityLabel)!;
 
+  // Page setup → paper dimensions / padding
+  const baseSize = PAGE_SIZES[pageSetup.size];
+  const paperW = pageSetup.orientation === "Landscape" ? baseSize.h : baseSize.w;
+  const paperH = pageSetup.orientation === "Landscape" ? baseSize.w : baseSize.h;
+  const marginPx = MARGIN_PRESETS[pageSetup.margins];
+  // Estimated page count from content height vs page height (best-effort).
+  const estimatedPages = Math.max(1, Math.ceil((wordCount * 6.2) / Math.max(1, (paperH - marginPx.v * 2))) || 1);
+
   const rightPanelOpen = showAI || showComments || showHistory;
 
   // Close menus on outside click
-  const closeMenus = () => { setHeadingMenu(false); setShowExportMenu(false); setShowSecurityMenu(false); };
+  const closeMenus = () => { setHeadingMenu(false); setShowExportMenu(false); setShowSecurityMenu(false); setShowTemplateMenu(false); setShowPageSetupMenu(false); setShowStats(false); };
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
@@ -534,11 +820,105 @@ blockquote{border-left:4px solid #1a56db;margin:0;padding-left:1em;color:#5f6368
               </div>
             ))}
 
+            {isOffline && (
+              <span className="flex items-center gap-1 text-[11px] font-medium text-[#f4b400]">
+                <WifiOff className="h-3.5 w-3.5" /> Offline — editing locally
+              </span>
+            )}
+
             <span className="text-[11px] text-[#80868b]">
               {saving ? <span className="flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" />Saving…</span> : <span className="text-[#0f9d58]">Saved</span>}
             </span>
 
             <div className="flex items-center gap-0.5">
+              {/* Page setup */}
+              <div className="relative" onClick={e => e.stopPropagation()}>
+                <IconBtn icon={<FileCog className="h-4 w-4" />} title="Page setup" active={showPageSetupMenu} onClick={() => { setShowPageSetupMenu(v => !v); setShowStats(false); }} />
+                {showPageSetupMenu && (
+                  <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-[#e8eaed] rounded-lg shadow-lg z-50 p-3 space-y-3">
+                    <p className="text-xs font-semibold text-[#202124]">Page setup</p>
+                    <div className="space-y-1">
+                      <p className="text-[11px] font-medium text-[#5f6368]">Page size</p>
+                      <div className="grid grid-cols-3 gap-1">
+                        {(["Letter", "A4", "Legal"] as const).map(s => (
+                          <button key={s} onClick={() => updatePageSetup({ size: s })}
+                            className={`px-2 py-1 text-[11px] font-medium rounded border transition-colors ${pageSetup.size === s ? "bg-[#e8f0fe] text-[#1a56db] border-[#1a56db]/40" : "border-[#e8eaed] text-[#5f6368] hover:bg-[#f1f3f4]"}`}>
+                            {s}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[11px] font-medium text-[#5f6368]">Orientation</p>
+                      <div className="grid grid-cols-2 gap-1">
+                        {(["Portrait", "Landscape"] as const).map(o => (
+                          <button key={o} onClick={() => updatePageSetup({ orientation: o })}
+                            className={`px-2 py-1 text-[11px] font-medium rounded border transition-colors ${pageSetup.orientation === o ? "bg-[#e8f0fe] text-[#1a56db] border-[#1a56db]/40" : "border-[#e8eaed] text-[#5f6368] hover:bg-[#f1f3f4]"}`}>
+                            {o}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[11px] font-medium text-[#5f6368]">Margins</p>
+                      <div className="grid grid-cols-3 gap-1">
+                        {(["Normal", "Narrow", "Wide"] as const).map(m => (
+                          <button key={m} onClick={() => updatePageSetup({ margins: m })}
+                            className={`px-2 py-1 text-[11px] font-medium rounded border transition-colors ${pageSetup.margins === m ? "bg-[#e8f0fe] text-[#1a56db] border-[#1a56db]/40" : "border-[#e8eaed] text-[#5f6368] hover:bg-[#f1f3f4]"}`}>
+                            {m}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Header / footer toggle */}
+              <IconBtn icon={<PanelTop className="h-4 w-4" />} title="Header & footer" active={headerFooter.enabled} onClick={() => updateHeaderFooter({ enabled: !headerFooter.enabled })} />
+
+              {/* Document stats */}
+              <div className="relative" onClick={e => e.stopPropagation()}>
+                <IconBtn icon={<BarChart3 className="h-4 w-4" />} title="Word count & stats" active={showStats} onClick={() => { const open = !showStats; setShowStats(open); setShowPageSetupMenu(false); if (open) refreshStats(); }} />
+                {showStats && (
+                  <div className="absolute right-0 top-full mt-1 w-60 bg-white border border-[#e8eaed] rounded-lg shadow-lg z-50 p-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <BarChart3 className="h-4 w-4 text-[#1a56db]" />
+                      <p className="text-xs font-semibold text-[#202124]">Document stats</p>
+                    </div>
+                    <div className="space-y-1.5">
+                      {([
+                        ["Words", stats.words.toLocaleString()],
+                        ["Characters", stats.charsWithSpaces.toLocaleString()],
+                        ["Characters (no spaces)", stats.charsNoSpaces.toLocaleString()],
+                        ["Sentences", stats.sentences.toLocaleString()],
+                        ["Paragraphs", stats.paragraphs.toLocaleString()],
+                        ["Reading time", stats.readingMinutes + " min"],
+                      ] as const).map(([label, value]) => (
+                        <div key={label} className="flex items-center justify-between text-xs">
+                          <span className="text-[#5f6368]">{label}</span>
+                          <span className="font-semibold text-[#202124]">{value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Templates */}
+              <div className="relative" onClick={e => e.stopPropagation()}>
+                <IconBtn icon={<LayoutTemplate className="h-4 w-4" />} title="Templates" active={showTemplateMenu} onClick={() => setShowTemplateMenu(v => !v)} />
+                {showTemplateMenu && (
+                  <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-[#e8eaed] rounded-lg shadow-lg z-50 py-1">
+                    <p className="px-3 py-1 text-[10px] font-medium text-[#80868b]">Start from template</p>
+                    {DOC_TEMPLATES.map(tpl => (
+                      <MenuItm key={tpl.id} onClick={() => applyTemplate(tpl)}>
+                        <FileText className="h-3.5 w-3.5 text-[#5f6368]" /> {tpl.label}
+                      </MenuItm>
+                    ))}
+                  </div>
+                )}
+              </div>
               <IconBtn icon={<BookOpen className="h-4 w-4" />} title="Document outline" active={showOutline} onClick={() => setShowOutline(v => !v)} />
               <IconBtn icon={<MessageSquare className="h-4 w-4" />} title="Comments" active={showComments} onClick={() => { setShowComments(v => !v); setShowAI(false); setShowHistory(false); }} />
               <IconBtn icon={<History className="h-4 w-4" />} title="Version history" active={showHistory} onClick={() => { setShowHistory(v => !v); setShowAI(false); setShowComments(false); }} />
@@ -590,6 +970,59 @@ blockquote{border-left:4px solid #1a56db;margin:0;padding-left:1em;color:#5f6368
             </div>
             <TSep />
 
+            {/* Font family */}
+            <select
+              title="Font"
+              className="h-7 px-1.5 text-xs border border-[#e8eaed] rounded text-[#5f6368] bg-white hover:bg-[#f1f3f4] focus:outline-none focus:border-[#1a56db]/60 cursor-pointer"
+              value={(editor?.getAttributes("textStyle").fontFamily as string) ?? ""}
+              onChange={e => {
+                const v = e.target.value;
+                const c = editor?.chain().focus() as unknown as { setFontFamily: (v: string) => { run: () => void }; unsetFontFamily: () => { run: () => void } } | undefined;
+                if (v) c?.setFontFamily(v).run();
+                else c?.unsetFontFamily().run();
+              }}>
+              <option value="">Font</option>
+              {["Arial", "Georgia", "Times New Roman", "Courier New", "Verdana", "Roboto"].map(f => (
+                <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>
+              ))}
+            </select>
+
+            {/* Font size */}
+            <select
+              title="Font size"
+              className="h-7 px-1.5 text-xs border border-[#e8eaed] rounded text-[#5f6368] bg-white hover:bg-[#f1f3f4] focus:outline-none focus:border-[#1a56db]/60 cursor-pointer"
+              value={((editor?.getAttributes("textStyle").fontSize as string) ?? "").replace("px", "")}
+              onChange={e => {
+                const v = e.target.value;
+                const c = editor?.chain().focus() as unknown as { setFontSize: (v: string) => { run: () => void }; unsetFontSize: () => { run: () => void } } | undefined;
+                if (v) c?.setFontSize(v + "px").run();
+                else c?.unsetFontSize().run();
+              }}>
+              <option value="">Size</option>
+              {[10, 12, 14, 16, 18, 24, 30, 36].map(s => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+
+            {/* Text color */}
+            <label title="Text color" className="flex items-center justify-center h-7 w-7 rounded text-[#5f6368] hover:bg-[#f1f3f4] cursor-pointer relative">
+              <Type className="h-3.5 w-3.5" />
+              <input type="color" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                value={(editor?.getAttributes("textStyle").color as string) ?? "#202124"}
+                onChange={e => (editor?.chain().focus() as unknown as { setColor: (v: string) => { run: () => void } } | undefined)?.setColor(e.target.value).run()} />
+            </label>
+
+            {/* Highlight color */}
+            <label title="Highlight color"
+              className={`flex items-center justify-center h-7 w-7 rounded cursor-pointer relative ${editor?.isActive("highlight") ? "bg-[#e8f0fe] text-[#1a56db]" : "text-[#5f6368] hover:bg-[#f1f3f4]"}`}>
+              <Highlighter className="h-3.5 w-3.5" />
+              <input type="color" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                value={(editor?.getAttributes("highlight").color as string) ?? "#fff176"}
+                onChange={e => (editor?.chain().focus() as unknown as { toggleHighlight: (o: { color: string }) => { run: () => void } } | undefined)?.toggleHighlight({ color: e.target.value }).run()} />
+            </label>
+            <TB icon={<X className="h-3.5 w-3.5" />} title="Clear highlight" active={false} onClick={() => (editor?.chain().focus() as unknown as { unsetHighlight: () => { run: () => void } } | undefined)?.unsetHighlight().run()} />
+            <TSep />
+
             <TB icon={<Bold className="h-3.5 w-3.5" />} title="Bold (⌘B)" active={editor?.isActive("bold")} onClick={() => editor?.chain().focus().toggleBold().run()} />
             <TB icon={<Italic className="h-3.5 w-3.5" />} title="Italic (⌘I)" active={editor?.isActive("italic")} onClick={() => editor?.chain().focus().toggleItalic().run()} />
             <TB icon={<Underline className="h-3.5 w-3.5" />} title="Underline" onClick={() => editor?.chain().focus().toggleMark?.("underline").run()} />
@@ -618,6 +1051,11 @@ blockquote{border-left:4px solid #1a56db;margin:0;padding-left:1em;color:#5f6368
             <TB icon={<Link2 className="h-3.5 w-3.5" />} title="Insert link" active={editor?.isActive("link")} onClick={() => { const u = prompt("URL:"); if (u) editor?.chain().focus().setLink?.({ href: u }).run(); else editor?.chain().focus().unsetLink?.().run(); }} />
             <TSep />
 
+            <TB icon={<SuperscriptIcon className="h-3.5 w-3.5" />} title="Superscript" active={editor?.isActive("superscript")} onClick={() => (editor?.chain().focus() as unknown as { toggleSuperscript: () => { run: () => void } } | undefined)?.toggleSuperscript().run()} />
+            <TB icon={<SubscriptIcon className="h-3.5 w-3.5" />} title="Subscript" active={editor?.isActive("subscript")} onClick={() => (editor?.chain().focus() as unknown as { toggleSubscript: () => { run: () => void } } | undefined)?.toggleSubscript().run()} />
+            <TB icon={<RemoveFormatting className="h-3.5 w-3.5" />} title="Clear formatting" onClick={() => editor?.chain().focus().unsetAllMarks().clearNodes().run()} />
+            <TSep />
+
             <span className="text-[11px] text-[#80868b] px-1 whitespace-nowrap">{wordCount} words</span>
           </div>
 
@@ -641,10 +1079,42 @@ blockquote{border-left:4px solid #1a56db;margin:0;padding-left:1em;color:#5f6368
 
             {/* Paper editor */}
             <div className="flex-1 overflow-y-auto bg-[#f4f6f8]">
-              <div className="max-w-4xl mx-auto my-8 bg-white shadow border border-[#e8eaed] rounded-lg">
-                <div className="px-16 py-12">
+              <div
+                className="mx-auto my-8 bg-white shadow border border-[#e8eaed] rounded-lg flex flex-col"
+                style={{ width: paperW, maxWidth: "100%", minHeight: paperH }}
+              >
+                {headerFooter.enabled && (
+                  <div
+                    className="border-b border-dashed border-[#e8eaed]"
+                    style={{ paddingLeft: marginPx.h, paddingRight: marginPx.h, paddingTop: Math.min(marginPx.v, 40), paddingBottom: 12 }}
+                  >
+                    <input
+                      className="w-full bg-transparent text-xs text-[#5f6368] placeholder:text-[#80868b] outline-none focus:bg-[#f8f9fa] rounded px-1 py-0.5"
+                      placeholder="Header (e.g. document title, author)…"
+                      value={headerFooter.header}
+                      onChange={e => updateHeaderFooter({ header: e.target.value })}
+                    />
+                  </div>
+                )}
+                <div className="flex-1" style={{ paddingLeft: marginPx.h, paddingRight: marginPx.h, paddingTop: marginPx.v, paddingBottom: marginPx.v }}>
                   <EditorContent editor={editor} />
                 </div>
+                {headerFooter.enabled && (
+                  <div
+                    className="border-t border-dashed border-[#e8eaed] flex items-center gap-2"
+                    style={{ paddingLeft: marginPx.h, paddingRight: marginPx.h, paddingTop: 12, paddingBottom: Math.min(marginPx.v, 40) }}
+                  >
+                    <input
+                      className="flex-1 bg-transparent text-xs text-[#5f6368] placeholder:text-[#80868b] outline-none focus:bg-[#f8f9fa] rounded px-1 py-0.5"
+                      placeholder="Footer…"
+                      value={headerFooter.footer}
+                      onChange={e => updateHeaderFooter({ footer: e.target.value })}
+                    />
+                    <span className="text-[11px] text-[#80868b] whitespace-nowrap flex-shrink-0">
+                      {"Page 1 of " + estimatedPages}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 

@@ -35,6 +35,13 @@ import {
   SortAsc,
   MoreVertical,
   Sparkles,
+  FileSpreadsheet,
+  Presentation,
+  FolderPlus,
+  Info,
+  ChevronUp,
+  Move,
+  History,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
@@ -116,7 +123,36 @@ function getMimeIcon(mimeType: string) {
   if (mimeType === "application/pdf") return FileText;
   if (mimeType.startsWith("video/")) return Video;
   if (mimeType.startsWith("audio/")) return Music;
+  if (
+    mimeType.includes("word") ||
+    mimeType.includes("document") ||
+    mimeType === "text/plain"
+  )
+    return FileText;
+  if (mimeType.includes("sheet") || mimeType.includes("excel") || mimeType === "text/csv")
+    return FileSpreadsheet;
+  if (mimeType.includes("presentation") || mimeType.includes("powerpoint"))
+    return Presentation;
   return File;
+}
+
+// Google-style type-coloured icon tint
+function getMimeColor(mimeType: string): string {
+  if (mimeType === "application/pdf") return "#ea4335"; // red
+  if (mimeType.includes("sheet") || mimeType.includes("excel") || mimeType === "text/csv")
+    return "#0f9d58"; // green
+  if (mimeType.includes("presentation") || mimeType.includes("powerpoint"))
+    return "#f4b400"; // amber
+  if (mimeType.startsWith("image/")) return "#a142f4"; // purple
+  if (mimeType.startsWith("video/")) return "#ff6d00"; // orange
+  if (mimeType.startsWith("audio/")) return "#1a73e8"; // blue
+  if (
+    mimeType.includes("word") ||
+    mimeType.includes("document") ||
+    mimeType === "text/plain"
+  )
+    return "#1a56db"; // blue
+  return "#5f6368"; // grey
 }
 
 function FolderTreeItem({
@@ -140,10 +176,10 @@ function FolderTreeItem({
           onSelect(folder.id);
           if (hasChildren) setExpanded((e) => !e);
         }}
-        className={`flex w-full items-center gap-1 rounded-lg px-2 py-1.5 text-sm transition-colors ${
+        className={`flex w-full items-center gap-1 rounded-r-full px-2 py-1.5 text-sm transition-colors ${
           currentFolderId === folder.id
-            ? "bg-[#1a56db]/10 text-[#7dd8f5] font-medium"
-            : "text-[#5f6368] hover:bg-white hover:text-[#202124]"
+            ? "bg-[#e8f0fe] text-[#1a56db] font-medium"
+            : "text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124]"
         }`}
         style={{ paddingLeft: `${8 + depth * 16}px` }}
       >
@@ -316,8 +352,8 @@ function ShareModalDialog({
                 onClick={() => setRole(r)}
                 className={`flex-1 rounded-xl border py-2 text-sm font-medium transition-colors ${
                   role === r
-                    ? "border-[#1a56db] bg-[#1a56db]/10 text-[#7dd8f5]"
-                    : "border-[#e8eaed] text-[#5f6368] hover:border-[#707a90]"
+                    ? "border-[#1a56db] bg-[#e8f0fe] text-[#1a56db]"
+                    : "border-[#e8eaed] text-[#5f6368] hover:border-[#1a56db]/40"
                 }`}
               >
                 {r === "VIEWER" ? "View only" : "Can edit"}
@@ -336,8 +372,8 @@ function ShareModalDialog({
                 onClick={() => setExpiry(e)}
                 className={`rounded-xl border px-3 py-1.5 text-xs font-medium transition-colors ${
                   expiry === e
-                    ? "border-[#1a56db] bg-[#1a56db]/10 text-[#7dd8f5]"
-                    : "border-[#e8eaed] text-[#5f6368] hover:border-[#707a90]"
+                    ? "border-[#1a56db] bg-[#e8f0fe] text-[#1a56db]"
+                    : "border-[#e8eaed] text-[#5f6368] hover:border-[#1a56db]/40"
                 }`}
               >
                 {e === "never" ? "Never" : e === "7" ? "7 days" : e === "30" ? "30 days" : "Custom"}
@@ -555,8 +591,12 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
   const [sortKey, setSortKey] = useState<SortKey>("updatedAt");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [showSortMenu, setShowSortMenu] = useState(false);
+  const [showNewMenu, setShowNewMenu] = useState(false);
+  const [moveModal, setMoveModal] = useState<{ id: string; name: string; isFolder: boolean } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const folderInputRef = useRef<HTMLInputElement>(null);
   const sortMenuRef = useRef<HTMLDivElement>(null);
+  const newMenuRef = useRef<HTMLDivElement>(null);
 
   const fetchStorage = useCallback(async () => {
     try {
@@ -665,6 +705,9 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
     const handler = (e: MouseEvent) => {
       if (sortMenuRef.current && !sortMenuRef.current.contains(e.target as Node)) {
         setShowSortMenu(false);
+      }
+      if (newMenuRef.current && !newMenuRef.current.contains(e.target as Node)) {
+        setShowNewMenu(false);
       }
       setContextMenu(null);
     };
@@ -865,6 +908,32 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
 
   const handlePreview = (file: DriveFile) => {
     setPreviewFile(file);
+  };
+
+  const handleMove = async (id: string, isFolder: boolean, targetFolderId: string | null) => {
+    try {
+      const endpoint = isFolder ? "/api/drive/folders/" + id : "/api/drive/files/" + id;
+      const res = await fetch(endpoint, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(isFolder ? { parentId: targetFolderId } : { folderId: targetFolderId }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      toast.success("Moved");
+      setMoveModal(null);
+      fetchContent();
+      fetchSidebarFolders();
+    } catch {
+      toast.error("Could not move item");
+    }
+  };
+
+  const handleFolderInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fileList = Array.from(e.target.files ?? []);
+    for (const f of fileList) {
+      handleUploadSingle(f);
+    }
+    if (folderInputRef.current) folderInputRef.current.value = "";
   };
 
   // Right-click context menu

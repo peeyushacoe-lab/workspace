@@ -322,6 +322,26 @@ textarea {
 .docs-editor-content .selectedCell:after { content: ""; position: absolute; inset: 0; background: rgba(26,86,219,0.12); pointer-events: none; }
 .docs-editor-content .column-resize-handle { position: absolute; right: -2px; top: 0; bottom: 0; width: 4px; background: #1a56db; cursor: col-resize; }
 
+/* ── Slides: element entrance animations ──────────────────────────────────── */
+@keyframes nx-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes nx-fly-left { from { opacity: 0; transform: translateX(-60px); } to { opacity: 1; transform: none; } }
+@keyframes nx-fly-right { from { opacity: 0; transform: translateX(60px); } to { opacity: 1; transform: none; } }
+@keyframes nx-fly-up { from { opacity: 0; transform: translateY(60px); } to { opacity: 1; transform: none; } }
+@keyframes nx-zoom { from { opacity: 0; transform: scale(0.6); } to { opacity: 1; transform: none; } }
+@keyframes nx-wipe { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes nx-bounce {
+  0% { opacity: 0; transform: translateY(-40px); }
+  60% { opacity: 1; transform: translateY(12px); }
+  80% { transform: translateY(-6px); }
+  100% { transform: translateY(0); }
+}
+/* ── Slides: slide transitions ────────────────────────────────────────────── */
+@keyframes nx-slide-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes nx-slide-push { from { opacity: 0; transform: translateX(8%); } to { opacity: 1; transform: none; } }
+@keyframes nx-slide-zoom { from { opacity: 0; transform: scale(1.08); } to { opacity: 1; transform: none; } }
+@keyframes nx-slide-cover { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes nx-slide-morph { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: none; } }
+
 /* ── Notes editor ─────────────────────────────────────────────────────────── */
 .notes-editor:empty:before { content: attr(data-placeholder); color: #80868b; pointer-events: none; }
 .notes-editor h1, .notes-editor h2, .notes-editor h3 { font-weight: 600; margin: 0.8em 0 0.3em; color: #202124; }

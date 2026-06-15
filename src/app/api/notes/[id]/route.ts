@@ -35,6 +35,7 @@ export async function PUT(request: Request, { params }: Params) {
     content?: string;
     pinned?: boolean;
     color?: string | null;
+    folder?: string | null;
   };
 
   const updated = await prisma.note.update({
@@ -44,6 +45,7 @@ export async function PUT(request: Request, { params }: Params) {
       ...(body.content !== undefined ? { content: body.content } : {}),
       ...(body.pinned !== undefined ? { pinned: body.pinned } : {}),
       ...(body.color !== undefined ? { color: body.color } : {}),
+      ...(body.folder !== undefined ? { folder: body.folder } : {}),
     },
   });
 

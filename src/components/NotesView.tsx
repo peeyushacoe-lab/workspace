@@ -12,6 +12,7 @@ import {
   Plus, Search, Trash2, Pin, PinOff, StickyNote, Palette, MoreVertical,
 Folder, Check, X, Sparkles, Loader2,   Bold, Italic, Strikethrough, Code, List, ListOrdered, ListChecks,
   Quote, Minus, Link2, Image as ImageIcon, Type, Hash,   Download, Copy,
+  LayoutTemplate, WifiOff, Mic, Paperclip,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow, format } from "date-fns";
@@ -24,6 +25,7 @@ type Note = {
   content: string;
   pinned: boolean;
   color: string | null;
+  folder: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -53,6 +55,55 @@ function countWords(content: string): number {
   return content.replace(/<[^>]+>/g, " ").trim().split(/\s+/).filter(Boolean).length;
 }
 
+// ─── Note templates ─────────────────────────────────────────────────────────────
+
+const NOTE_TEMPLATES: { id: string; label: string; html: string }[] = [
+  {
+    id: "meeting",
+    label: "Meeting notes",
+    html: [
+      "<h2>Meeting notes</h2>",
+      "<p><strong>Date:</strong> &nbsp; &nbsp; <strong>Attendees:</strong></p>",
+      "<p><strong>Agenda</strong></p>",
+      "<ul><li>Topic one</li><li>Topic two</li></ul>",
+      "<p><strong>Notes</strong></p>",
+      "<p>Discussion notes…</p>",
+      "<p><strong>Action items</strong></p>",
+      '<p><input type="checkbox"> Owner — task</p>',
+      '<p><input type="checkbox"> Owner — task</p>',
+    ].join(""),
+  },
+  {
+    id: "todo",
+    label: "To-do list",
+    html: [
+      "<h2>To-do list</h2>",
+      '<p><input type="checkbox"> First task</p>',
+      '<p><input type="checkbox"> Second task</p>',
+      '<p><input type="checkbox"> Third task</p>',
+      '<p><input type="checkbox"> Fourth task</p>',
+    ].join(""),
+  },
+  {
+    id: "journal",
+    label: "Daily journal",
+    html: [
+      "<h2>Daily journal</h2>",
+      "<p><strong>Today I&rsquo;m grateful for</strong></p>",
+      "<ul><li></li></ul>",
+      "<p><strong>What happened today</strong></p>",
+      "<p>Write about your day…</p>",
+      "<p><strong>Top priorities for tomorrow</strong></p>",
+      '<p><input type="checkbox"> Priority one</p>',
+      '<p><input type="checkbox"> Priority two</p>',
+    ].join(""),
+  },
+];
+
+function notesDraftKey(id: string): string {
+  return "nexus_notes_draft_" + id;
+}
+
 // ─── Toolbar button ───────────────────────────────────────────────────────────
 
 function TB({ icon, title, active, onClick }: {
@@ -76,6 +127,19 @@ function RichEditor({ value, onChange, placeholder }: {
   const ref = useRef<HTMLDivElement>(null);
   const lastValue = useRef(value);
 
+  // ── Voice recording state ──
+  const [recording, setRecording] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Size / duration caps
+  const MAX_AUDIO_SECONDS = 5 * 60; // ~5 minutes
+  const MAX_FILE_BYTES = 3 * 1024 * 1024; // ~3 MB
+
   useEffect(() => {
     if (ref.current && value !== lastValue.current) {
       ref.current.innerHTML = value;
@@ -98,6 +162,134 @@ function RichEditor({ value, onChange, placeholder }: {
     if (ref.current) { onChange(ref.current.innerHTML); lastValue.current = ref.current.innerHTML; }
   };
 
+  // ── Clean up recording resources ──
+  const stopMediaStream = useCallback(() => {
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach(t => t.stop());
+      mediaStreamRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      try {
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+          mediaRecorderRef.current.stop();
+        }
+      } catch { /* ignore */ }
+      stopMediaStream();
+    };
+  }, [stopMediaStream]);
+
+  const stopRecording = useCallback(() => {
+    const mr = mediaRecorderRef.current;
+    if (mr && mr.state !== "inactive") {
+      try { mr.stop(); } catch { /* ignore */ }
+    }
+  }, []);
+
+  const startRecording = useCallback(async () => {
+    if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+      toast.error("Audio recording is not supported in this browser");
+      return;
+    }
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch {
+      toast.error("Microphone access denied");
+      return;
+    }
+    mediaStreamRef.current = stream;
+    chunksRef.current = [];
+    let mr: MediaRecorder;
+    try {
+      mr = new MediaRecorder(stream);
+    } catch {
+      toast.error("Recording is not supported in this browser");
+      stopMediaStream();
+      return;
+    }
+    mediaRecorderRef.current = mr;
+
+    mr.ondataavailable = (e: BlobEvent) => {
+      if (e.data && e.data.size > 0) chunksRef.current.push(e.data);
+    };
+    mr.onstop = () => {
+      const type = mr.mimeType || "audio/webm";
+      const blob = new Blob(chunksRef.current, { type });
+      chunksRef.current = [];
+      stopMediaStream();
+      setRecording(false);
+      setElapsed(0);
+      if (blob.size === 0) { toast.error("No audio captured"); return; }
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = typeof reader.result === "string" ? reader.result : "";
+        if (!dataUrl) { toast.error("Failed to process recording"); return; }
+        insertBlock('<audio controls src="' + dataUrl + '" style="display:block;margin:8px 0;max-width:100%"></audio><p><br></p>');
+        toast.success("Voice note added");
+      };
+      reader.onerror = () => toast.error("Failed to process recording");
+      reader.readAsDataURL(blob);
+    };
+
+    mr.start();
+    setRecording(true);
+    setElapsed(0);
+    timerRef.current = setInterval(() => {
+      setElapsed(prev => {
+        const next = prev + 1;
+        if (next >= MAX_AUDIO_SECONDS) {
+          toast.message("Recording limit reached (5 min)");
+          stopRecording();
+        }
+        return next;
+      });
+    }, 1000);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stopMediaStream, stopRecording]);
+
+  const toggleRecording = useCallback(() => {
+    if (recording) stopRecording();
+    else void startRecording();
+  }, [recording, startRecording, stopRecording]);
+
+  // ── File attachment ──
+  const handleAttachFile = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target;
+    const file = input.files?.[0];
+    input.value = ""; // allow re-selecting the same file
+    if (!file) return;
+    if (file.size > MAX_FILE_BYTES) {
+      toast.error("File too large (max 3 MB)");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = typeof reader.result === "string" ? reader.result : "";
+      if (!dataUrl) { toast.error("Failed to read file"); return; }
+      const safeName = (file.name || "attachment").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      if (file.type.startsWith("image/")) {
+        insertBlock('<img src="' + dataUrl + '" alt="' + safeName + '" style="max-width:100%;border-radius:8px;margin:8px 0"><p><br></p>');
+      } else {
+        const chip = '<a href="' + dataUrl + '" download="' + safeName + '" style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;margin:2px 0;background:#f1f3f4;border:1px solid #e8eaed;border-radius:8px;color:#1a56db;text-decoration:none;font-size:13px">📎 ' + safeName + '</a>';
+        insertBlock(chip + '<p><br></p>');
+      }
+      toast.success("Attachment added");
+    };
+    reader.onerror = () => toast.error("Failed to read file");
+    reader.readAsDataURL(file);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const formatElapsed = (s: number): string => {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return m + ":" + (sec < 10 ? "0" + sec : String(sec));
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* Mini toolbar */}
@@ -117,6 +309,21 @@ function RichEditor({ value, onChange, placeholder }: {
         <TB icon={<Link2 className="h-3 w-3" />} title="Link" onClick={() => { const u = prompt("URL:"); if (u) exec("createLink", u); }} />
         <TB icon={<ImageIcon className="h-3 w-3" />} title="Image" onClick={() => { const u = prompt("Image URL:"); if (u) insertBlock(`<img src="${u}" style="max-width:100%;border-radius:8px;margin:8px 0">`); }} />
         <TB icon={<Hash className="h-3 w-3" />} title="H2 Heading" onClick={() => exec("formatBlock", "h2")} />
+        <div className="w-px h-4 bg-[#e8eaed] mx-0.5" />
+        <TB icon={<Paperclip className="h-3 w-3" />} title="Attach file" onClick={() => fileInputRef.current?.click()} />
+        <button
+          title={recording ? "Stop recording" : "Record voice note"}
+          onClick={toggleRecording}
+          className={`flex items-center justify-center h-6 rounded text-xs transition-colors ${recording ? "px-1.5 gap-1 bg-red-50 text-[#ea4335]" : "w-6 text-[#5f6368] hover:bg-[#f1f3f4]"}`}>
+          {recording ? <span className="h-2 w-2 rounded-full bg-[#ea4335] animate-pulse" /> : <Mic className="h-3 w-3" />}
+          {recording && <span className="text-[11px] font-medium tabular-nums">{formatElapsed(elapsed)}</span>}
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          className="hidden"
+          onChange={handleAttachFile}
+        />
       </div>
       {/* Content area */}
       <div
@@ -209,6 +416,8 @@ export function NotesView() {
   const [aiLoading, setAILoading] = useState(false);
   const [aiResult, setAIResult] = useState("");
   const [showColorPicker, setShowColorPicker] = useState(false);
+  const [showTemplateMenu, setShowTemplateMenu] = useState(false);
+  const [isOffline, setIsOffline] = useState(false);
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -220,11 +429,39 @@ export function NotesView() {
       .catch(() => setLoading(false));
   }, []);
 
+  // ── Offline indicator ─────────────────────────────────────────────────────
+  useEffect(() => {
+    if (typeof navigator !== "undefined") setIsOffline(!navigator.onLine);
+    const goOnline = () => setIsOffline(false);
+    const goOffline = () => setIsOffline(true);
+    window.addEventListener("online", goOnline);
+    window.addEventListener("offline", goOffline);
+    return () => {
+      window.removeEventListener("online", goOnline);
+      window.removeEventListener("offline", goOffline);
+    };
+  }, []);
+
   // ── Select note ───────────────────────────────────────────────────────────
   const selectNote = useCallback((note: Note) => {
     setSelectedId(note.id);
-    setTitle(note.title);
-    setContent(note.content);
+
+    let nextTitle = note.title;
+    let nextContent = note.content;
+    // Restore from offline draft if we have no network.
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      try {
+        const raw = localStorage.getItem(notesDraftKey(note.id));
+        if (raw) {
+          const draft = JSON.parse(raw) as { title?: string; content?: string };
+          if (typeof draft.title === "string") nextTitle = draft.title;
+          if (typeof draft.content === "string") nextContent = draft.content;
+        }
+      } catch { /* ignore corrupt draft */ }
+    }
+
+    setTitle(nextTitle);
+    setContent(nextContent);
     setAIResult("");
   }, []);
 
@@ -233,7 +470,7 @@ export function NotesView() {
     const res = await fetch("/api/notes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: "", content: "", color: "" }),
+      body: JSON.stringify({ title: "", content: "", color: "", folder: activeFolder !== "all" ? activeFolder : null }),
     });
     if (!res.ok) return toast.error("Failed to create note");
     const note = await res.json() as Note;
@@ -244,6 +481,12 @@ export function NotesView() {
   // ── Auto-save ─────────────────────────────────────────────────────────────
   const scheduleSave = useCallback((t: string, c: string) => {
     if (!selectedId) return;
+
+    // Cache the latest draft locally right away for offline recovery.
+    try {
+      localStorage.setItem(notesDraftKey(selectedId), JSON.stringify({ title: t, content: c }));
+    } catch { /* storage may be full / unavailable */ }
+
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
       setSaving(true);
@@ -283,6 +526,25 @@ export function NotesView() {
     await fetch(`/api/notes/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ color }) });
     setNotes(prev => prev.map(n => n.id === id ? { ...n, color } : n));
     setShowColorPicker(false);
+  };
+
+  // ── Move note to folder ───────────────────────────────────────────────────
+  const moveToFolder = async (id: string, folder: string) => {
+    const value = folder || null;
+    await fetch(`/api/notes/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ folder: value }) });
+    setNotes(prev => prev.map(n => n.id === id ? { ...n, folder: value } : n));
+  };
+
+  // ── Templates ─────────────────────────────────────────────────────────────
+  const applyTemplate = (tpl: { id: string; label: string; html: string }) => {
+    if (!selectedId) return;
+    const nextTitle = title && title.trim() ? title : tpl.label;
+    setTitle(nextTitle);
+    // Reuse the editor's content-setting + save path.
+    updateContent(tpl.html);
+    if (nextTitle !== title) scheduleSave(nextTitle, tpl.html);
+    setShowTemplateMenu(false);
+    toast.success(tpl.label + " template applied");
   };
 
   // ── Duplicate note ────────────────────────────────────────────────────────
@@ -348,7 +610,9 @@ export function NotesView() {
   // ── Derived ───────────────────────────────────────────────────────────────
   const filteredNotes = notes.filter(n => {
     const q = search.toLowerCase();
-    return !q || n.title.toLowerCase().includes(q) || notePreview(n.content).toLowerCase().includes(q);
+    const matchesSearch = !q || n.title.toLowerCase().includes(q) || notePreview(n.content).toLowerCase().includes(q);
+    const matchesFolder = activeFolder === "all" || n.folder === activeFolder;
+    return matchesSearch && matchesFolder;
   });
   const pinnedNotes = filteredNotes.filter(n => n.pinned);
   const unpinnedNotes = filteredNotes.filter(n => !n.pinned);
@@ -358,7 +622,7 @@ export function NotesView() {
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div className="flex h-screen bg-white overflow-hidden text-[#202124]" onClick={() => setShowColorPicker(false)}>
+    <div className="flex h-screen bg-white overflow-hidden text-[#202124]" onClick={() => { setShowColorPicker(false); setShowTemplateMenu(false); }}>
 
       {/* ── Left sidebar (folders + list) ── */}
       <aside className="w-72 flex flex-col border-r border-[#e8eaed] bg-[#f8f9fa] overflow-hidden flex-shrink-0">
@@ -436,11 +700,49 @@ export function NotesView() {
               onChange={e => updateTitle(e.target.value)}
             />
 
+            {isOffline && (
+              <span className="flex items-center gap-1 text-[11px] font-medium text-[#f4b400]">
+                <WifiOff className="h-3.5 w-3.5" /> Offline — editing locally
+              </span>
+            )}
+
             <div className="flex items-center gap-1 text-[11px] text-[#80868b]">
               {saving ? <><Loader2 className="h-3 w-3 animate-spin" /> Saving…</> : "Saved"}
             </div>
 
             <span className="text-[11px] text-[#bdc1c6]">{words} words</span>
+
+            {/* Templates */}
+            <div className="relative" onClick={e => e.stopPropagation()}>
+              <button onClick={() => setShowTemplateMenu(v => !v)} title="Templates"
+                className={`p-1.5 rounded transition-colors ${showTemplateMenu ? "bg-[#e8f0fe] text-[#1a56db]" : "text-[#5f6368] hover:bg-[#f1f3f4]"}`}>
+                <LayoutTemplate className="h-4 w-4" />
+              </button>
+              {showTemplateMenu && (
+                <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-[#e8eaed] rounded-lg shadow-lg z-50 py-1">
+                  <p className="px-3 py-1 text-[10px] font-medium text-[#80868b]">Quick templates</p>
+                  {NOTE_TEMPLATES.map(tpl => (
+                    <button key={tpl.id} onClick={() => applyTemplate(tpl)}
+                      className="w-full text-left flex items-center gap-2 px-3 py-1.5 text-xs text-[#202124] hover:bg-[#f1f3f4]">
+                      <StickyNote className="h-3.5 w-3.5 text-[#5f6368]" /> {tpl.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Folder selector */}
+            <select
+              title="Move to folder"
+              value={selectedNote.folder ?? ""}
+              onChange={e => void moveToFolder(selectedId, e.target.value)}
+              className="text-xs border border-[#e8eaed] rounded-lg px-2 py-1 bg-white text-[#5f6368] focus:outline-none focus:border-[#1a56db]/60 cursor-pointer"
+            >
+              <option value="">No folder</option>
+              {folders.filter(f => f.id !== "all").map(f => (
+                <option key={f.id} value={f.id}>{f.name}</option>
+              ))}
+            </select>
 
             {/* Color picker */}
             <div className="relative" onClick={e => e.stopPropagation()}>

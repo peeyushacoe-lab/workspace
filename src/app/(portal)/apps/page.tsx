@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   GitBranch, Layers, LayoutGrid, MessageSquare, Briefcase, Zap,
   Link, Code, CheckCircle2, Loader2, FileSpreadsheet, Presentation,
-  FileText, NotebookPen, ArrowRight, ExternalLink,
+  FileText, NotebookPen, ArrowRight, ExternalLink, HardDrive,
 } from "lucide-react";
 import { PageHeader } from "@/components/Shell";
 import { toast } from "sonner";
@@ -61,6 +61,15 @@ const BUILTIN_APPS = [
     href: "/notes",
     icon: NotebookPen,
     color: "bg-purple-50 text-purple-600",
+    badge: null,
+  },
+  {
+    id: "drive",
+    name: "Drive",
+    description: "Store, organize, and share files and folders with previews and version history",
+    href: "/drive",
+    icon: HardDrive,
+    color: "bg-cyan-50 text-cyan-600",
     badge: null,
   },
 ];

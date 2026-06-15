@@ -982,6 +982,7 @@ model Note {
   userId         String
   pinned         Boolean  @default(false)
   color          String?
+  folder         String?
   isDoc          Boolean  @default(false)
   organizationId String?
   createdAt      DateTime @default(now())

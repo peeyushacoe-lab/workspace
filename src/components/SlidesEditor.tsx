@@ -14,7 +14,10 @@ import {
   Plus, Trash2, Download, Upload, X, Loader2, Share2, Copy,
   Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight,
   ChevronUp, ChevronDown, Type, Square, Circle,   BarChart3, Table, Code2, Image as ImageIcon,   Play, ChevronLeft, ChevronRight, FileText,
-  Sparkles, Layers, Grid3x3,   Undo2, Redo2, ZoomIn, ZoomOut,
+  Sparkles, Layers, Grid3x3, LayoutGrid,   Undo2, Redo2, ZoomIn, ZoomOut,
+  LayoutTemplate, Eye, EyeOff, FolderPlus, ChevronRight as ChevronRightIcon, Images,
+  Triangle, Star, MoveRight, Minus, Grid, Timer, RotateCcw,
+  Search, Replace, Video, Hash,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -43,18 +46,18 @@ type ElementStyle = {
 
 type SlideElement = {
   id: string;
-  type: "text" | "shape" | "image" | "chart" | "table" | "code";
+  type: "text" | "shape" | "image" | "chart" | "table" | "code" | "video";
   x: number; y: number; w: number; h: number;
   content?: string;
   src?: string;
-  shapeType?: "rect" | "circle" | "triangle" | "arrow" | "star";
+  shapeType?: "rect" | "circle" | "triangle" | "arrow" | "star" | "line";
   chartType?: "bar" | "line" | "pie";
   chartData?: { name: string; value: number }[];
   tableRows?: string[][];
   style?: ElementStyle;
   locked?: boolean;
   zIndex?: number;
-  animIn?: "none" | "fade" | "slide-left" | "slide-right" | "slide-up" | "zoom";
+  animIn?: "none" | "fade" | "slide-left" | "slide-right" | "slide-up" | "zoom" | "wipe" | "bounce";
 };
 
 type Slide = {
@@ -63,7 +66,64 @@ type Slide = {
   backgroundImage?: string;
   elements: SlideElement[];
   notes: string;
-  transition?: "none" | "fade" | "slide" | "zoom";
+  transition?: "none" | "fade" | "slide" | "zoom" | "cover" | "morph";
+  section?: string;
+  hidden?: boolean;
+};
+
+// ─── Layout presets (Feature 1) ─────────────────────────────────────────────
+// Each returns a fresh set of elements (without ids) arranged in CANVAS coords.
+const LAYOUT_PRESETS: { name: string; build: () => Omit<SlideElement, "id">[] }[] = [
+  {
+    name: "Title",
+    build: () => [
+      { type: "text", x: 80, y: 200, w: 800, h: 80, content: "Presentation Title", style: { fontSize: 48, bold: true, align: "center", color: "#202124" } },
+      { type: "text", x: 200, y: 300, w: 560, h: 40, content: "Subtitle or presenter name", style: { fontSize: 22, align: "center", color: "#5f6368" } },
+    ],
+  },
+  {
+    name: "Title + Content",
+    build: () => [
+      { type: "text", x: 48, y: 40, w: 864, h: 60, content: "Slide Title", style: { fontSize: 34, bold: true, color: "#202124" } },
+      { type: "text", x: 48, y: 120, w: 864, h: 360, content: "• Add your first bullet point\n• Second key idea\n• Supporting detail", style: { fontSize: 20, color: "#5f6368" } },
+    ],
+  },
+  {
+    name: "Two Content",
+    build: () => [
+      { type: "text", x: 48, y: 40, w: 864, h: 60, content: "Slide Title", style: { fontSize: 34, bold: true, color: "#202124" } },
+      { type: "text", x: 48, y: 120, w: 420, h: 360, content: "• Left column point\n• Another idea\n• Detail", style: { fontSize: 20, color: "#5f6368" } },
+      { type: "text", x: 492, y: 120, w: 420, h: 360, content: "• Right column point\n• Another idea\n• Detail", style: { fontSize: 20, color: "#5f6368" } },
+    ],
+  },
+  {
+    name: "Section Header",
+    build: () => [
+      { type: "text", x: 64, y: 220, w: 832, h: 80, content: "Section Title", style: { fontSize: 44, bold: true, align: "left", color: "#202124" } },
+      { type: "text", x: 64, y: 312, w: 832, h: 40, content: "Brief description of this section", style: { fontSize: 22, align: "left", color: "#5f6368" } },
+    ],
+  },
+  {
+    name: "Blank",
+    build: () => [],
+  },
+];
+
+// animIn value → CSS keyframe name (see globals.css)
+const ANIM_KEYFRAME: Record<string, string> = {
+  fade: "nx-fade", "slide-left": "nx-fly-left", "slide-right": "nx-fly-right",
+  "slide-up": "nx-fly-up", zoom: "nx-zoom", wipe: "nx-wipe", bounce: "nx-bounce",
+};
+const ANIM_LABELS: { value: NonNullable<SlideElement["animIn"]>; label: string }[] = [
+  { value: "none", label: "None" }, { value: "fade", label: "Fade in" },
+  { value: "slide-left", label: "Fly in ←" }, { value: "slide-right", label: "Fly in →" },
+  { value: "slide-up", label: "Fly in ↑" }, { value: "zoom", label: "Zoom in" },
+  { value: "wipe", label: "Wipe" }, { value: "bounce", label: "Bounce" },
+];
+// slide transition → CSS keyframe name
+const TRANSITION_KEYFRAME: Record<string, string> = {
+  fade: "nx-slide-fade", slide: "nx-slide-push", zoom: "nx-slide-zoom",
+  cover: "nx-slide-cover", morph: "nx-slide-morph",
 };
 
 type Theme = {
@@ -188,14 +248,34 @@ function _SlideCanvas({ slide, selected, onSelect, theme, zoom = 1 }: {
   );
 }
 
-function SlideElementView({ el, zoom, theme }: { el: SlideElement; zoom: number; theme: Theme }) {
+// Convert a YouTube / Vimeo watch URL into an embeddable iframe URL.
+// Returns null if the URL isn't a recognised embeddable provider.
+function videoEmbedUrl(raw: string): string | null {
+  if (!raw) return null;
+  const url = raw.trim();
+  // YouTube — youtu.be/ID, youtube.com/watch?v=ID, youtube.com/embed/ID
+  const ytShort = url.match(/youtu\.be\/([A-Za-z0-9_-]{6,})/);
+  if (ytShort) return "https://www.youtube.com/embed/" + ytShort[1];
+  const ytWatch = url.match(/[?&]v=([A-Za-z0-9_-]{6,})/);
+  if (ytWatch && /youtube\.com/.test(url)) return "https://www.youtube.com/embed/" + ytWatch[1];
+  const ytEmbed = url.match(/youtube\.com\/embed\/([A-Za-z0-9_-]{6,})/);
+  if (ytEmbed) return "https://www.youtube.com/embed/" + ytEmbed[1];
+  // Vimeo — vimeo.com/ID
+  const vimeo = url.match(/vimeo\.com\/(?:video\/)?(\d{4,})/);
+  if (vimeo) return "https://player.vimeo.com/video/" + vimeo[1];
+  return null;
+}
+
+function SlideElementView({ el, zoom, theme, anim, animDelay = 0, editMode = false }: { el: SlideElement; zoom: number; theme: Theme; anim?: boolean; animDelay?: number; editMode?: boolean }) {
   const s = el.style ?? {};
+  const kf = anim && el.animIn && el.animIn !== "none" ? ANIM_KEYFRAME[el.animIn] : null;
   const base: React.CSSProperties = {
     position: "absolute",
     left: el.x * zoom, top: el.y * zoom,
     width: el.w * zoom, height: el.h * zoom,
     opacity: s.opacity ?? 1,
     zIndex: el.zIndex ?? 1,
+    ...(kf ? { animation: `${kf} 0.6s ease both`, animationDelay: `${animDelay}ms` } : {}),
   };
 
   if (el.type === "text") {
@@ -206,7 +286,31 @@ function SlideElementView({ el, zoom, theme }: { el: SlideElement; zoom: number;
     );
   }
   if (el.type === "shape") {
-    const shapeStyle: React.CSSProperties = { ...base, background: s.bg ?? theme.secondary + "40", border: `${s.borderWidth ?? 0}px solid ${s.borderColor ?? "transparent"}`, borderRadius: el.shapeType === "circle" ? "50%" : s.borderRadius ?? 0 };
+    const fill = s.bg ?? theme.secondary + "40";
+    const stroke = s.borderColor ?? "transparent";
+    const strokeW = s.borderWidth ?? 0;
+    const st = el.shapeType ?? "rect";
+    // Line: a thin coloured bar spanning the element's width, vertically centred.
+    if (st === "line") {
+      const lineColor = s.borderColor ?? s.bg ?? theme.secondary;
+      const thickness = Math.max(2, strokeW || 3) * zoom;
+      return (
+        <div style={{ ...base, display: "flex", alignItems: "center" }}>
+          <div style={{ width: "100%", height: thickness, background: lineColor, borderRadius: thickness }} />
+        </div>
+      );
+    }
+    // Triangle / arrow / star via CSS clip-path polygons.
+    const clip =
+      st === "triangle" ? "polygon(50% 0%, 0% 100%, 100% 100%)"
+      : st === "arrow" ? "polygon(0% 30%, 60% 30%, 60% 10%, 100% 50%, 60% 90%, 60% 70%, 0% 70%)"
+      : st === "star" ? "polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)"
+      : null;
+    if (clip) {
+      return <div style={{ ...base, background: fill, clipPath: clip, WebkitClipPath: clip }} />;
+    }
+    // rect / circle
+    const shapeStyle: React.CSSProperties = { ...base, background: fill, border: strokeW + "px solid " + stroke, borderRadius: st === "circle" ? "50%" : s.borderRadius ?? 0 };
     return <div style={shapeStyle} />;
   }
   if (el.type === "image" && el.src) {
@@ -257,6 +361,45 @@ function SlideElementView({ el, zoom, theme }: { el: SlideElement; zoom: number;
       </div>
     );
   }
+  if (el.type === "video") {
+    const embed = videoEmbedUrl(el.src ?? "");
+    // In edit mode, render a non-interactive poster so the element can be selected / dragged.
+    if (editMode) {
+      return (
+        <div style={{ ...base, background: "#0f1115", borderRadius: 6 * zoom, overflow: "hidden", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#cdd6f4", pointerEvents: "none" }}>
+          <Play style={{ width: 28 * zoom, height: 28 * zoom }} fill="currentColor" />
+          <span style={{ fontSize: 11 * zoom, marginTop: 6 * zoom, opacity: 0.7, maxWidth: "90%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {embed ? "Embedded video" : (el.src ? "Video file" : "No video URL")}
+          </span>
+        </div>
+      );
+    }
+    // Presenter / playable mode.
+    if (embed) {
+      return (
+        <iframe
+          src={embed}
+          style={{ ...base, border: "none", borderRadius: 6 * zoom }}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+      );
+    }
+    if (el.src) {
+      return (
+        <video
+          src={el.src}
+          controls
+          style={{ ...base, background: "#000", borderRadius: 6 * zoom, objectFit: "contain" }}
+        />
+      );
+    }
+    return (
+      <div style={{ ...base, background: "#0f1115", borderRadius: 6 * zoom, display: "flex", alignItems: "center", justifyContent: "center", color: "#80868b", fontSize: 12 * zoom }}>
+        No video URL
+      </div>
+    );
+  }
   return null;
 }
 
@@ -274,6 +417,8 @@ export default function SlidesEditor({ presId }: { presId: string }) {
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [zoom, setZoom] = useState(0.6);
+  const [snapToGrid, setSnapToGrid] = useState(false);
+  const GRID = 10; // grid size in canvas units
 
   // Panels
   const [showNotes, setShowNotes] = useState(false);
@@ -282,7 +427,28 @@ export default function SlidesEditor({ presId }: { presId: string }) {
   const [showShare, setShowShare] = useState(false);
   const [presenterMode, setPresenterMode] = useState(false);
   const [presenterSlide, setPresenterSlide] = useState(0);
+  const [elapsed, setElapsed] = useState(0); // presenter elapsed seconds
   const [showAI, setShowAI] = useState(false);
+  const [showLayout, setShowLayout] = useState(false);
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+
+  // Slide sorter / grid overview
+  const [sorterView, setSorterView] = useState(false);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [dropIdx, setDropIdx] = useState<number | null>(null);
+
+  // Deck-level footer / slide-number settings (Feature 2)
+  const [showNumbers, setShowNumbers] = useState(false);
+  const [showFooter, setShowFooter] = useState(false);
+  const [footerText, setFooterText] = useState("");
+  const [showDeckSettings, setShowDeckSettings] = useState(false);
+
+  // Find & Replace (Feature 1)
+  const [showFindReplace, setShowFindReplace] = useState(false);
+  const [findText, setFindText] = useState("");
+  const [replaceText, setReplaceText] = useState("");
+  const [matchCase, setMatchCase] = useState(false);
+  const findCursor = useRef<{ slide: number; el: number; occ: number }>({ slide: 0, el: -1, occ: -1 });
 
   // AI
   const [aiPrompt, setAIPrompt] = useState("");
@@ -308,9 +474,14 @@ export default function SlidesEditor({ presId }: { presId: string }) {
         if (d.title) setTitle(d.title);
         if (d.content) {
           try {
-            const parsed = JSON.parse(d.content) as { slides?: Slide[]; themeId?: string };
+            const parsed = JSON.parse(d.content) as { slides?: Slide[]; themeId?: string; deck?: { showNumbers?: boolean; showFooter?: boolean; footerText?: string } };
             if (parsed.slides?.length) setSlides(parsed.slides);
             if (parsed.themeId) setTheme(THEMES.find(t => t.id === parsed.themeId) ?? THEMES[0]);
+            if (parsed.deck) {
+              if (typeof parsed.deck.showNumbers === "boolean") setShowNumbers(parsed.deck.showNumbers);
+              if (typeof parsed.deck.showFooter === "boolean") setShowFooter(parsed.deck.showFooter);
+              if (typeof parsed.deck.footerText === "string") setFooterText(parsed.deck.footerText);
+            }
           } catch { /* fresh */ }
         }
         setLoaded(true);
@@ -327,11 +498,11 @@ export default function SlidesEditor({ presId }: { presId: string }) {
         await fetch(`/api/slides/${presId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title: t, content: JSON.stringify({ slides: s, themeId: theme.id }) }),
+          body: JSON.stringify({ title: t, content: JSON.stringify({ slides: s, themeId: theme.id, deck: { showNumbers, showFooter, footerText } }) }),
         });
       } finally { setSaving(false); }
     }, 1500);
-  }, [presId, theme.id]);
+  }, [presId, theme.id, showNumbers, showFooter, footerText]);
 
   // ── History ───────────────────────────────────────────────────────────────
   const pushHistory = useCallback((s: Slide[]) => {
@@ -427,6 +598,25 @@ export default function SlidesEditor({ presId }: { presId: string }) {
     setActiveIdx(to);
   };
 
+  // Reorder a slide from `from` to land at visual position `to` (drop index).
+  // `to` is the gap index in [0, slides.length]; the dragged slide is removed
+  // first, then inserted so it lands at the intended slot.
+  const reorderSlide = (from: number, to: number) => {
+    if (from < 0 || from >= slides.length) return;
+    let target = to;
+    if (target > from) target -= 1; // account for removal of the dragged item
+    if (target === from) { setActiveIdx(from); return; }
+    setSlides(prev => {
+      const next = [...prev];
+      const [moved] = next.splice(from, 1);
+      const clamped = Math.max(0, Math.min(target, next.length));
+      next.splice(clamped, 0, moved);
+      pushHistory(next); scheduleSave(next, title);
+      setActiveIdx(clamped);
+      return next;
+    });
+  };
+
   // ── Drag to move elements ─────────────────────────────────────────────────
   const canvasRef = useRef<HTMLDivElement>(null);
   const dragging = useRef<{ id: string; startX: number; startY: number; origX: number; origY: number } | null>(null);
@@ -438,11 +628,12 @@ export default function SlidesEditor({ presId }: { presId: string }) {
     if (!el || el.locked) return;
     setSelectedElId(id);
     dragging.current = { id, startX: e.clientX, startY: e.clientY, origX: el.x, origY: el.y };
+    const snap = (n: number) => snapToGrid ? Math.round(n / GRID) * GRID : n;
     const onMove = (ev: MouseEvent) => {
       if (!dragging.current) return;
       updateElement(id, {
-        x: Math.max(0, dragging.current.origX + (ev.clientX - dragging.current.startX) / zoom),
-        y: Math.max(0, dragging.current.origY + (ev.clientY - dragging.current.startY) / zoom),
+        x: snap(Math.max(0, dragging.current.origX + (ev.clientX - dragging.current.startX) / zoom)),
+        y: snap(Math.max(0, dragging.current.origY + (ev.clientY - dragging.current.startY) / zoom)),
       });
     };
     const onUp = () => { dragging.current = null; window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
@@ -455,11 +646,12 @@ export default function SlidesEditor({ presId }: { presId: string }) {
     const el = activeSlide.elements.find(el => el.id === id);
     if (!el) return;
     resizing.current = { id, startX: e.clientX, startY: e.clientY, origW: el.w, origH: el.h };
+    const snap = (n: number) => snapToGrid ? Math.round(n / GRID) * GRID : n;
     const onMove = (ev: MouseEvent) => {
       if (!resizing.current) return;
       updateElement(id, {
-        w: Math.max(40, resizing.current.origW + (ev.clientX - resizing.current.startX) / zoom),
-        h: Math.max(20, resizing.current.origH + (ev.clientY - resizing.current.startY) / zoom),
+        w: snap(Math.max(40, resizing.current.origW + (ev.clientX - resizing.current.startX) / zoom)),
+        h: snap(Math.max(20, resizing.current.origH + (ev.clientY - resizing.current.startY) / zoom)),
       });
     };
     const onUp = () => { resizing.current = null; window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
@@ -486,6 +678,112 @@ export default function SlidesEditor({ presId }: { presId: string }) {
     });
     setShowThemes(false);
     toast.success(`Theme: ${t.name}`);
+  };
+
+  // ── Layout presets (Feature 1) ─────────────────────────────────────────────
+  const applyLayout = (preset: typeof LAYOUT_PRESETS[0]) => {
+    const els = preset.build().map((el, i) => ({ ...el, id: `el_${Date.now()}_${i}`, zIndex: i + 1 }) as SlideElement);
+    updateSlide({ elements: els });
+    setSelectedElId(null);
+    setShowLayout(false);
+    toast.success(`Layout: ${preset.name}`);
+  };
+
+  // ── Master background: apply current slide's background to all (Feature 1) ──
+  const applyBackgroundToAll = () => {
+    const bg = activeSlide.background;
+    const bgImage = activeSlide.backgroundImage;
+    setSlides(prev => {
+      const next = prev.map(s => ({ ...s, background: bg, backgroundImage: bgImage }));
+      pushHistory(next); scheduleSave(next, title);
+      return next;
+    });
+    setShowLayout(false);
+    toast.success("Background applied to all slides");
+  };
+
+  // ── Sections (Feature 2) ───────────────────────────────────────────────────
+  const setSlideSection = (idx: number, name: string | undefined) => {
+    setSlides(prev => {
+      const next = prev.map((s, i) => i === idx ? { ...s, section: name && name.trim() ? name.trim() : undefined } : s);
+      pushHistory(next); scheduleSave(next, title);
+      return next;
+    });
+  };
+
+  const promptSection = (idx: number) => {
+    const current = slides[idx].section ?? "";
+    const name = prompt("Section name (blank to remove):", current);
+    if (name === null) return;
+    setSlideSection(idx, name);
+  };
+
+  const toggleSection = (name: string) => {
+    setCollapsedSections(prev => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name); else next.add(name);
+      return next;
+    });
+  };
+
+  // ── Hide / show slide (Feature 3) ──────────────────────────────────────────
+  const toggleHidden = (idx: number) => {
+    setSlides(prev => {
+      const next = prev.map((s, i) => i === idx ? { ...s, hidden: !s.hidden } : s);
+      pushHistory(next); scheduleSave(next, title);
+      return next;
+    });
+  };
+
+  // Compute the active section a slide falls under (the nearest preceding section)
+  const sectionForIndex = (idx: number): string | undefined => {
+    for (let i = idx; i >= 0; i--) {
+      if (slides[i].section) return slides[i].section;
+    }
+    return undefined;
+  };
+
+  // Next / previous non-hidden slide index for presenter navigation
+  const nextVisibleIndex = (from: number): number => {
+    for (let i = from + 1; i < slides.length; i++) if (!slides[i].hidden) return i;
+    return from;
+  };
+  const prevVisibleIndex = (from: number): number => {
+    for (let i = from - 1; i >= 0; i--) if (!slides[i].hidden) return i;
+    return from;
+  };
+
+  // ── Presenter elapsed-time timer (Feature 3) ───────────────────────────────
+  useEffect(() => {
+    if (!presenterMode) return;
+    setElapsed(0);
+    const t = setInterval(() => setElapsed(e => e + 1), 1000);
+    return () => clearInterval(t);
+  }, [presenterMode]);
+
+  // Ctrl/Cmd+F opens Find & Replace (Feature 1)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === "f" || e.key === "F")) {
+        e.preventDefault();
+        setShowFindReplace(true);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  const fmtTime = (secs: number): string => {
+    const m = Math.floor(secs / 60);
+    const sec = secs % 60;
+    return String(m).padStart(2, "0") + ":" + String(sec).padStart(2, "0");
+  };
+  // Count of visible slides + the position of the current presenter slide within them.
+  const visibleSlideCount = slides.filter(s => !s.hidden).length;
+  const visiblePositionOf = (idx: number): number => {
+    let pos = 0;
+    for (let i = 0; i <= idx && i < slides.length; i++) if (!slides[i].hidden) pos++;
+    return pos;
   };
 
   // ── Apply layer operations ────────────────────────────────────────────────
@@ -555,27 +853,195 @@ export default function SlidesEditor({ presId }: { presId: string }) {
     finally { setAILoading(false); setShowAI(false); }
   };
 
+  // ── Find & Replace across all slides (Feature 1) ───────────────────────────
+  // Returns the searchable text of a text-bearing element, or null if not searchable.
+  const elementSearchText = (el: SlideElement): string | null => {
+    if (el.type === "text" || el.type === "code") return el.content ?? "";
+    if (el.type === "table" && el.tableRows) return el.tableRows.map(r => r.join("\t")).join("\n");
+    return null;
+  };
+
+  const countOccurrences = (haystack: string, needle: string): number => {
+    if (!needle) return 0;
+    const h = matchCase ? haystack : haystack.toLowerCase();
+    const n = matchCase ? needle : needle.toLowerCase();
+    let count = 0, from = 0, idx;
+    while ((idx = h.indexOf(n, from)) !== -1) { count++; from = idx + n.length; }
+    return count;
+  };
+
+  // Move selection to the next match after the current cursor position. Wraps around.
+  const findNext = () => {
+    const needle = findText;
+    if (!needle) { toast.info("Enter text to find"); return; }
+    const cur = findCursor.current;
+    const total = slides.length;
+    // Walk slides/elements starting just after the current cursor.
+    for (let step = 0; step <= total; step++) {
+      const si = (cur.slide + step) % total;
+      const sl = slides[si];
+      const startEl = step === 0 ? cur.el : -1;
+      for (let ei = startEl + 1; ei < sl.elements.length; ei++) {
+        const txt = elementSearchText(sl.elements[ei]);
+        if (txt && countOccurrences(txt, needle) > 0) {
+          findCursor.current = { slide: si, el: ei, occ: 0 };
+          setActiveIdx(si);
+          setSelectedElId(sl.elements[ei].id);
+          return;
+        }
+      }
+    }
+    // Restart from the very beginning if cursor was mid-deck and nothing found ahead.
+    for (let si = 0; si < total; si++) {
+      const sl = slides[si];
+      for (let ei = 0; ei < sl.elements.length; ei++) {
+        const txt = elementSearchText(sl.elements[ei]);
+        if (txt && countOccurrences(txt, needle) > 0) {
+          findCursor.current = { slide: si, el: ei, occ: 0 };
+          setActiveIdx(si);
+          setSelectedElId(sl.elements[ei].id);
+          return;
+        }
+      }
+    }
+    toast.info("No matches found");
+  };
+
+  // Replace text in a single string (case-sensitive or insensitive).
+  const replaceInString = (haystack: string, needle: string, repl: string): { out: string; count: number } => {
+    if (!needle) return { out: haystack, count: 0 };
+    if (matchCase) {
+      let count = 0, out = "", from = 0, idx;
+      while ((idx = haystack.indexOf(needle, from)) !== -1) {
+        out += haystack.slice(from, idx) + repl;
+        from = idx + needle.length;
+        count++;
+      }
+      out += haystack.slice(from);
+      return { out, count };
+    }
+    const lower = haystack.toLowerCase();
+    const nLower = needle.toLowerCase();
+    let count = 0, out = "", from = 0, idx;
+    while ((idx = lower.indexOf(nLower, from)) !== -1) {
+      out += haystack.slice(from, idx) + repl;
+      from = idx + needle.length;
+      count++;
+    }
+    out += haystack.slice(from);
+    return { out, count };
+  };
+
+  // Apply replacement to a single element, returning the patched element + count.
+  const replaceInElement = (el: SlideElement, needle: string, repl: string): { el: SlideElement; count: number } => {
+    if (el.type === "text" || el.type === "code") {
+      const r = replaceInString(el.content ?? "", needle, repl);
+      return { el: r.count ? { ...el, content: r.out } : el, count: r.count };
+    }
+    if (el.type === "table" && el.tableRows) {
+      let count = 0;
+      const rows = el.tableRows.map(row => row.map(cell => {
+        const r = replaceInString(cell, needle, repl);
+        count += r.count;
+        return r.out;
+      }));
+      return { el: count ? { ...el, tableRows: rows } : el, count };
+    }
+    return { el, count: 0 };
+  };
+
+  // Replace only the currently selected match's element (single element scope).
+  const replaceCurrent = () => {
+    if (!findText) { toast.info("Enter text to find"); return; }
+    if (!selectedElId) { findNext(); return; }
+    let replaced = 0;
+    setSlides(prev => {
+      const next = prev.map(sl => ({
+        ...sl,
+        elements: sl.elements.map(e => {
+          if (e.id !== selectedElId) return e;
+          const r = replaceInElement(e, findText, replaceText);
+          replaced += r.count;
+          return r.el;
+        }),
+      }));
+      if (replaced) { pushHistory(next); scheduleSave(next, title); }
+      return next;
+    });
+    if (replaced) toast.success("Replaced " + replaced + " in this element");
+    else toast.info("No match in the selected element");
+    // Advance to the next match after replacing.
+    setTimeout(findNext, 0);
+  };
+
+  const replaceAll = () => {
+    if (!findText) { toast.info("Enter text to find"); return; }
+    let total = 0;
+    setSlides(prev => {
+      const next = prev.map(sl => ({
+        ...sl,
+        elements: sl.elements.map(e => {
+          const r = replaceInElement(e, findText, replaceText);
+          total += r.count;
+          return r.el;
+        }),
+      }));
+      if (total) { pushHistory(next); scheduleSave(next, title); }
+      return next;
+    });
+    if (total) toast.success("Replaced " + total + " occurrence" + (total === 1 ? "" : "s"));
+    else toast.info("No matches found");
+  };
+
   // ── Presenter mode ────────────────────────────────────────────────────────
   if (presenterMode) {
     const ps = slides[presenterSlide] ?? slides[0];
     return (
       <div className="fixed inset-0 bg-black z-50 flex">
         <div className="flex-1 flex flex-col items-center justify-center">
-          <div style={{ width: "80vw", aspectRatio: "16/9", position: "relative", background: ps.background }}>
-            {ps.elements.sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0)).map(el => (
-              <SlideElementView key={el.id} el={el} zoom={window.innerWidth * 0.8 / CANVAS_W} theme={theme} />
+          <div
+            key={presenterSlide}
+            style={{
+              width: "80vw", aspectRatio: "16/9", position: "relative", background: ps.background, overflow: "hidden",
+              ...(ps.transition && ps.transition !== "none" && TRANSITION_KEYFRAME[ps.transition]
+                ? { animation: `${TRANSITION_KEYFRAME[ps.transition]} 0.5s ease both` } : {}),
+            }}
+          >
+            {ps.elements.slice().sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0)).map((el, i) => (
+              <SlideElementView key={el.id} el={el} zoom={window.innerWidth * 0.8 / CANVAS_W} theme={theme} anim animDelay={150 + i * 120} />
             ))}
+            {/* Deck footer overlay (Feature 2) */}
+            {showFooter && footerText.trim() && (
+              <div className="absolute bottom-3 left-5 right-24 text-sm font-medium select-none pointer-events-none truncate" style={{ color: theme.secondary }}>
+                {footerText}
+              </div>
+            )}
+            {/* Slide number overlay (Feature 2) */}
+            {showNumbers && (
+              <div className="absolute bottom-3 right-5 text-sm font-medium select-none pointer-events-none" style={{ color: theme.secondary }}>
+                {visiblePositionOf(presenterSlide) + " / " + visibleSlideCount}
+              </div>
+            )}
           </div>
           {/* Controls */}
           <div className="flex items-center gap-6 mt-6">
-            <button disabled={presenterSlide === 0} onClick={() => setPresenterSlide(p => p - 1)} className="text-white/70 hover:text-white disabled:opacity-30">
+            <button disabled={prevVisibleIndex(presenterSlide) === presenterSlide} onClick={() => setPresenterSlide(p => prevVisibleIndex(p))} className="text-white/70 hover:text-white disabled:opacity-30">
               <ChevronLeft className="h-8 w-8" />
             </button>
-            <span className="text-white/70 text-sm">{presenterSlide + 1} / {slides.length}</span>
-            <button disabled={presenterSlide === slides.length - 1} onClick={() => setPresenterSlide(p => p + 1)} className="text-white/70 hover:text-white disabled:opacity-30">
+            <span className="text-white text-base font-semibold tabular-nums">
+              {"Slide " + visiblePositionOf(presenterSlide) + " of " + visibleSlideCount}
+            </span>
+            <button disabled={nextVisibleIndex(presenterSlide) === presenterSlide} onClick={() => setPresenterSlide(p => nextVisibleIndex(p))} className="text-white/70 hover:text-white disabled:opacity-30">
               <ChevronRight className="h-8 w-8" />
             </button>
-            <button onClick={() => setPresenterMode(false)} className="text-white/70 hover:text-white ml-6">
+            <div className="flex items-center gap-1.5 ml-2 px-3 py-1.5 rounded-lg bg-white/10 text-white/90 text-sm font-medium tabular-nums">
+              <Timer className="h-4 w-4 text-white/70" />
+              {fmtTime(elapsed)}
+              <button onClick={() => setElapsed(0)} title="Reset timer" className="ml-1 text-white/50 hover:text-white">
+                <RotateCcw className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            <button onClick={() => setPresenterMode(false)} className="text-white/70 hover:text-white ml-4" title="Exit presenter">
               <X className="h-6 w-6" />
             </button>
           </div>
@@ -622,13 +1088,32 @@ export default function SlidesEditor({ presId }: { presId: string }) {
           <button onClick={() => setShowAI(v => !v)} className={`flex items-center gap-1 px-2 py-1.5 text-xs font-medium rounded-lg transition-colors ${showAI ? "bg-purple-100 text-purple-700" : "text-[#5f6368] hover:bg-[#f1f3f4]"}`}>
             <Sparkles className="h-3.5 w-3.5" /> AI
           </button>
+          <button onClick={() => setShowFindReplace(true)} title="Find & replace (Ctrl/Cmd+F)" className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-[#5f6368] hover:bg-[#f1f3f4] rounded-lg">
+            <Search className="h-3.5 w-3.5" /> Find
+          </button>
+          <button onClick={() => setShowDeckSettings(true)} title="Slide numbers & footer" className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-[#5f6368] hover:bg-[#f1f3f4] rounded-lg">
+            <Hash className="h-3.5 w-3.5" /> Footer
+          </button>
           <button onClick={() => setShowThemes(v => !v)} className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-[#5f6368] hover:bg-[#f1f3f4] rounded-lg">
             <Layers className="h-3.5 w-3.5" /> Theme
+          </button>
+          <button onClick={() => setShowLayout(v => !v)} className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-[#5f6368] hover:bg-[#f1f3f4] rounded-lg">
+            <LayoutTemplate className="h-3.5 w-3.5" /> Layout
           </button>
           <button onClick={() => setShowTemplates(v => !v)} className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-[#5f6368] hover:bg-[#f1f3f4] rounded-lg">
             <Grid3x3 className="h-3.5 w-3.5" /> Templates
           </button>
-          <button onClick={() => { setPresenterSlide(activeIdx); setPresenterMode(true); }} className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-[#5f6368] hover:bg-[#f1f3f4] rounded-lg">
+          <button onClick={() => { setSorterView(v => !v); setSelectedElId(null); }} title="Slide sorter — grid overview of all slides" className={"flex items-center gap-1 px-2 py-1.5 text-xs font-medium rounded-lg transition-colors " + (sorterView ? "bg-[#e8f0fe] text-[#1a56db]" : "text-[#5f6368] hover:bg-[#f1f3f4]")}>
+            <LayoutGrid className="h-3.5 w-3.5" /> Sorter
+          </button>
+          <button onClick={() => {
+            let start = activeIdx;
+            if (slides[start]?.hidden) {
+              const fwd = nextVisibleIndex(start);
+              start = fwd !== start ? fwd : prevVisibleIndex(start);
+            }
+            setPresenterSlide(start); setPresenterMode(true);
+          }} className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-[#5f6368] hover:bg-[#f1f3f4] rounded-lg">
             <Play className="h-3.5 w-3.5" /> Present
           </button>
           <button onClick={() => void exportPPTX(slides, title)} className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-[#5f6368] hover:bg-[#f1f3f4] rounded-lg">
@@ -650,10 +1135,15 @@ export default function SlidesEditor({ presId }: { presId: string }) {
         <ToolBtn icon={<Type className="h-3.5 w-3.5" />} title="Text box" onClick={() => addElement({ type: "text", x: 100, y: 100, w: 400, h: 60, content: "Click to edit text", style: { fontSize: 24, color: theme.text } })} />
         <ToolBtn icon={<Square className="h-3.5 w-3.5" />} title="Rectangle" onClick={() => addElement({ type: "shape", x: 100, y: 100, w: 200, h: 120, shapeType: "rect", style: { bg: theme.accent + "20", borderColor: theme.accent, borderWidth: 2 } })} />
         <ToolBtn icon={<Circle className="h-3.5 w-3.5" />} title="Circle" onClick={() => addElement({ type: "shape", x: 100, y: 100, w: 120, h: 120, shapeType: "circle", style: { bg: theme.accent + "30", borderColor: theme.accent, borderWidth: 2 } })} />
+        <ToolBtn icon={<Triangle className="h-3.5 w-3.5" />} title="Triangle" onClick={() => addElement({ type: "shape", x: 100, y: 100, w: 140, h: 130, shapeType: "triangle", style: { bg: theme.accent + "40" } })} />
+        <ToolBtn icon={<MoveRight className="h-3.5 w-3.5" />} title="Arrow" onClick={() => addElement({ type: "shape", x: 100, y: 120, w: 200, h: 100, shapeType: "arrow", style: { bg: theme.accent + "40" } })} />
+        <ToolBtn icon={<Minus className="h-3.5 w-3.5" />} title="Line" onClick={() => addElement({ type: "shape", x: 100, y: 160, w: 240, h: 12, shapeType: "line", style: { borderColor: theme.accent, borderWidth: 3 } })} />
+        <ToolBtn icon={<Star className="h-3.5 w-3.5" />} title="Star" onClick={() => addElement({ type: "shape", x: 100, y: 100, w: 140, h: 140, shapeType: "star", style: { bg: theme.accent + "40" } })} />
         <ToolBtn icon={<ImageIcon className="h-3.5 w-3.5" />} title="Image" onClick={() => { const u = prompt("Image URL:"); if (u) addElement({ type: "image", x: 100, y: 100, w: 300, h: 200, src: u }); }} />
         <ToolBtn icon={<BarChart3 className="h-3.5 w-3.5" />} title="Bar chart" onClick={() => addElement({ type: "chart", x: 200, y: 120, w: 400, h: 300, chartType: "bar", chartData: [{ name: "Q1", value: 40 }, { name: "Q2", value: 65 }, { name: "Q3", value: 50 }, { name: "Q4", value: 80 }] })} />
         <ToolBtn icon={<Table className="h-3.5 w-3.5" />} title="Table" onClick={() => addElement({ type: "table", x: 100, y: 120, w: 500, h: 200, tableRows: [["Header 1", "Header 2", "Header 3"], ["Row 1 A", "Row 1 B", "Row 1 C"], ["Row 2 A", "Row 2 B", "Row 2 C"]] })} />
         <ToolBtn icon={<Code2 className="h-3.5 w-3.5" />} title="Code block" onClick={() => addElement({ type: "code", x: 100, y: 120, w: 600, h: 200, content: "// Your code here\nconst hello = 'world';\nconsole.log(hello);" })} />
+        <ToolBtn icon={<Video className="h-3.5 w-3.5" />} title="Embed video (YouTube/Vimeo/MP4 URL)" onClick={() => { const u = prompt("Video URL (YouTube, Vimeo, or direct .mp4):"); if (u && u.trim()) addElement({ type: "video", x: 180, y: 120, w: 480, h: 270, src: u.trim() }); }} />
         <Sep />
 
         {/* Element style (when selected) */}
@@ -681,10 +1171,22 @@ export default function SlidesEditor({ presId }: { presId: string }) {
             <Sep />
             <ToolBtn icon={<ChevronUp className="h-3.5 w-3.5" />} title="Bring forward" onClick={() => layerOp(selectedEl.id, "forward")} />
             <ToolBtn icon={<ChevronDown className="h-3.5 w-3.5" />} title="Send back" onClick={() => layerOp(selectedEl.id, "backward")} />
+            <Sep />
+            <span className="text-[11px] text-[#80868b] flex items-center gap-1"><Sparkles className="h-3 w-3" />Animate</span>
+            <select
+              title="Entrance animation (plays in Present mode)"
+              className="text-xs border border-[#e8eaed] rounded px-1 py-0.5 h-7 bg-white"
+              value={selectedEl.animIn ?? "none"}
+              onChange={e => updateElement(selectedEl.id, { animIn: e.target.value as SlideElement["animIn"] })}
+            >
+              {ANIM_LABELS.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
+            </select>
           </>
         )}
 
         <div className="ml-auto flex items-center gap-1">
+          <ToolBtn icon={<Grid className="h-3.5 w-3.5" />} title={snapToGrid ? "Snap to grid: on" : "Snap to grid: off"} active={snapToGrid} onClick={() => setSnapToGrid(v => !v)} />
+          <Sep />
           <ToolBtn icon={<ZoomOut className="h-3.5 w-3.5" />} title="Zoom out" onClick={() => setZoom(z => Math.max(0.3, z - 0.1))} />
           <span className="text-xs text-[#5f6368] w-10 text-center">{Math.round(zoom * 100)}%</span>
           <ToolBtn icon={<ZoomIn className="h-3.5 w-3.5" />} title="Zoom in" onClick={() => setZoom(z => Math.min(1.5, z + 0.1))} />
@@ -696,29 +1198,62 @@ export default function SlidesEditor({ presId }: { presId: string }) {
 
         {/* Slide panel */}
         <div className="w-44 border-r border-[#e8eaed] bg-[#f8f9fa] overflow-y-auto flex-shrink-0 py-2">
-          {slides.map((slide, idx) => (
-            <div key={slide.id} className={`group relative mx-2 mb-2 rounded cursor-pointer border-2 ${idx === activeIdx ? "border-[#1a56db]" : "border-transparent hover:border-[#d0d5dd]"}`}
-              onClick={() => { setActiveIdx(idx); setSelectedElId(null); }}>
-              <div className="overflow-hidden rounded" style={{ width: "100%", aspectRatio: "16/9", position: "relative", background: slide.background, minHeight: 72 }}>
-                {slide.elements.map(el => (
-                  <SlideElementView key={el.id} el={el} zoom={140 / CANVAS_W} theme={theme} />
-                ))}
+          {slides.map((slide, idx) => {
+            // Section header rendered above the slide that starts a section
+            const sectionHeader = slide.section ? (
+              <div key={"sec_" + slide.id} className="flex items-center gap-1 mx-2 mt-2 mb-1 group/sec">
+                <button onClick={() => toggleSection(slide.section!)} className="flex items-center gap-1 flex-1 min-w-0 text-left">
+                  <ChevronRightIcon className={"h-3 w-3 text-[#80868b] transition-transform " + (collapsedSections.has(slide.section!) ? "" : "rotate-90")} />
+                  <span className="text-[10px] font-semibold text-[#5f6368] truncate uppercase tracking-tight">{slide.section}</span>
+                </button>
+                <button onClick={() => promptSection(idx)} title="Rename section" className="opacity-0 group-hover/sec:opacity-100 text-[#80868b] hover:text-[#202124]">
+                  <FolderPlus className="h-3 w-3" />
+                </button>
               </div>
-              <div className="absolute inset-x-0 top-0 flex items-center justify-between p-1 opacity-0 group-hover:opacity-100 bg-black/20 rounded-t">
-                <span className="text-[9px] text-white font-bold">{idx + 1}</span>
-                <div className="flex gap-0.5">
-                  <button onClick={e => { e.stopPropagation(); duplicateSlide(idx); }} className="p-0.5 rounded bg-white/80 text-[#202124]"><Copy className="h-2.5 w-2.5" /></button>
-                  <button onClick={e => { e.stopPropagation(); deleteSlide(idx); }} className="p-0.5 rounded bg-white/80 text-[#ea4335]"><Trash2 className="h-2.5 w-2.5" /></button>
+            ) : null;
+
+            // If this slide is under a collapsed section, hide its thumbnail (but still show the header)
+            const owningSection = sectionForIndex(idx);
+            const collapsed = owningSection ? collapsedSections.has(owningSection) : false;
+
+            const thumb = collapsed ? null : (
+              <div key={slide.id} className={"group relative mx-2 mb-2 rounded cursor-pointer border-2 " + (idx === activeIdx ? "border-[#1a56db]" : "border-transparent hover:border-[#d0d5dd]") + (slide.hidden ? " opacity-50" : "")}
+                onClick={() => { setActiveIdx(idx); setSelectedElId(null); }}>
+                <div className="overflow-hidden rounded" style={{ width: "100%", aspectRatio: "16/9", position: "relative", background: slide.background, minHeight: 72 }}>
+                  {slide.elements.map(el => (
+                    <SlideElementView key={el.id} el={el} zoom={140 / CANVAS_W} theme={theme} editMode />
+                  ))}
+                  {slide.hidden && (
+                    <span className="absolute bottom-1 left-1 px-1 py-0.5 rounded bg-[#5f6368] text-white text-[8px] font-semibold leading-none">Hidden</span>
+                  )}
                 </div>
+                <div className="absolute inset-x-0 top-0 flex items-center justify-between p-1 opacity-0 group-hover:opacity-100 bg-black/20 rounded-t">
+                  <span className="text-[9px] text-white font-bold">{idx + 1}</span>
+                  <div className="flex gap-0.5">
+                    <button onClick={e => { e.stopPropagation(); toggleHidden(idx); }} title={slide.hidden ? "Show slide" : "Hide slide"} className="p-0.5 rounded bg-white/80 text-[#202124]">
+                      {slide.hidden ? <EyeOff className="h-2.5 w-2.5" /> : <Eye className="h-2.5 w-2.5" />}
+                    </button>
+                    <button onClick={e => { e.stopPropagation(); promptSection(idx); }} title="Add / rename section" className="p-0.5 rounded bg-white/80 text-[#202124]"><FolderPlus className="h-2.5 w-2.5" /></button>
+                    <button onClick={e => { e.stopPropagation(); duplicateSlide(idx); }} title="Duplicate" className="p-0.5 rounded bg-white/80 text-[#202124]"><Copy className="h-2.5 w-2.5" /></button>
+                    <button onClick={e => { e.stopPropagation(); deleteSlide(idx); }} title="Delete" className="p-0.5 rounded bg-white/80 text-[#ea4335]"><Trash2 className="h-2.5 w-2.5" /></button>
+                  </div>
+                </div>
+                {idx === activeIdx && (
+                  <div className="flex justify-between px-1 mt-0.5">
+                    <button onClick={e => { e.stopPropagation(); moveSlide(idx, "up"); }} disabled={idx === 0} className="text-[#80868b] disabled:opacity-30"><ChevronUp className="h-3 w-3" /></button>
+                    <button onClick={e => { e.stopPropagation(); moveSlide(idx, "down"); }} disabled={idx === slides.length - 1} className="text-[#80868b] disabled:opacity-30"><ChevronDown className="h-3 w-3" /></button>
+                  </div>
+                )}
               </div>
-              {idx === activeIdx && (
-                <div className="flex justify-between px-1 mt-0.5">
-                  <button onClick={e => { e.stopPropagation(); moveSlide(idx, "up"); }} disabled={idx === 0} className="text-[#80868b] disabled:opacity-30"><ChevronUp className="h-3 w-3" /></button>
-                  <button onClick={e => { e.stopPropagation(); moveSlide(idx, "down"); }} disabled={idx === slides.length - 1} className="text-[#80868b] disabled:opacity-30"><ChevronDown className="h-3 w-3" /></button>
-                </div>
-              )}
-            </div>
-          ))}
+            );
+
+            return (
+              <div key={"wrap_" + slide.id}>
+                {sectionHeader}
+                {thumb}
+              </div>
+            );
+          })}
           <button onClick={() => addSlide()} className="w-full mx-auto flex items-center justify-center gap-1 py-2 text-xs text-[#5f6368] hover:text-[#1a56db] hover:bg-[#e8f0fe] rounded-lg transition-colors">
             <Plus className="h-3.5 w-3.5" /> New slide
           </button>
@@ -727,7 +1262,12 @@ export default function SlidesEditor({ presId }: { presId: string }) {
         {/* Canvas */}
         <div className="flex-1 overflow-auto bg-[#f4f6f8] flex flex-col items-center justify-start py-8" onClick={() => setSelectedElId(null)}>
           <div ref={canvasRef} className="relative shadow-lg"
-            style={{ width: CANVAS_W * zoom, height: CANVAS_H * zoom, background: activeSlide.background, flexShrink: 0 }}>
+            style={{ width: CANVAS_W * zoom, height: CANVAS_H * zoom, background: activeSlide.background, flexShrink: 0,
+              ...(snapToGrid ? {
+                backgroundImage: "linear-gradient(to right, rgba(26,86,219,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(26,86,219,0.08) 1px, transparent 1px)",
+                backgroundSize: (GRID * zoom) + "px " + (GRID * zoom) + "px",
+              } : {}),
+            }}>
 
             {activeSlide.elements.sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0)).map(el => {
               const isSelected = el.id === selectedElId;
@@ -766,14 +1306,24 @@ export default function SlidesEditor({ presId }: { presId: string }) {
 
               return (
                 <div key={el.id} style={base} onMouseDown={e => onElMouseDown(e, el.id)} onClick={e => e.stopPropagation()}>
-                  <SlideElementView el={el} zoom={zoom} theme={theme} />
+                  <SlideElementView el={el} zoom={zoom} theme={theme} editMode />
                   {isSelected && <div className="absolute bottom-0 right-0 w-3 h-3 bg-[#1a56db] cursor-se-resize z-10" onMouseDown={e => onResizeMouseDown(e, el.id)} />}
                 </div>
               );
             })}
 
-            {/* Slide number */}
-            <div className="absolute bottom-2 right-3 text-[10px] text-white/40 font-medium select-none">{activeIdx + 1} / {slides.length}</div>
+            {/* Deck footer overlay (Feature 2) */}
+            {showFooter && footerText.trim() && (
+              <div className="absolute bottom-2 left-3 right-16 text-[10px] font-medium select-none pointer-events-none truncate" style={{ color: "#80868b", fontSize: 10 * zoom }}>
+                {footerText}
+              </div>
+            )}
+            {/* Slide number overlay (Feature 2) */}
+            {showNumbers && (
+              <div className="absolute bottom-2 right-3 font-medium select-none pointer-events-none" style={{ color: "#80868b", fontSize: 10 * zoom }}>
+                {(activeIdx + 1) + " / " + slides.length}
+              </div>
+            )}
           </div>
 
           {/* Speaker notes */}
@@ -858,11 +1408,14 @@ export default function SlidesEditor({ presId }: { presId: string }) {
         </div>
 
         {/* Transition */}
+        <span className="flex items-center gap-1"><Play className="h-3 w-3" />Transition:</span>
         <select className="text-xs border border-[#e8eaed] rounded px-1 py-0.5 bg-white" value={activeSlide.transition ?? "none"} onChange={e => updateSlide({ transition: e.target.value as Slide["transition"] })}>
-          <option value="none">No transition</option>
+          <option value="none">None</option>
           <option value="fade">Fade</option>
-          <option value="slide">Slide</option>
+          <option value="slide">Push</option>
           <option value="zoom">Zoom</option>
+          <option value="cover">Cover</option>
+          <option value="morph">Morph</option>
         </select>
       </div>
 
@@ -901,6 +1454,112 @@ export default function SlidesEditor({ presId }: { presId: string }) {
                 <p className="text-xs font-medium text-[#202124]">{t.name}</p>
               </button>
             ))}
+          </div>
+        </Modal>
+      )}
+
+      {/* Layout overlay */}
+      {showLayout && (
+        <Modal title="Layout" onClose={() => setShowLayout(false)}>
+          <div className="p-4 space-y-4">
+            <div>
+              <p className="text-[11px] font-medium text-[#5f6368] mb-2">Apply a layout to the current slide</p>
+              <div className="grid grid-cols-2 gap-3">
+                {LAYOUT_PRESETS.map(preset => (
+                  <button key={preset.name} onClick={() => applyLayout(preset)}
+                    className="flex flex-col gap-2 p-3 rounded-xl border border-[#e8eaed] hover:border-[#1a56db]/40 hover:shadow text-left transition-all">
+                    <div className="w-full rounded" style={{ aspectRatio: "16/9", background: activeSlide.background, position: "relative", overflow: "hidden" }}>
+                      {preset.build().map((el, i) => (
+                        <SlideElementView key={i} el={{ ...el, id: "preview_" + i }} zoom={200 / CANVAS_W} theme={theme} />
+                      ))}
+                    </div>
+                    <p className="text-xs font-medium text-[#202124]">{preset.name}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="border-t border-[#e8eaed] pt-4">
+              <p className="text-[11px] font-medium text-[#5f6368] mb-2">Master background</p>
+              <button onClick={applyBackgroundToAll}
+                className="w-full flex items-center justify-center gap-2 py-2 text-xs font-semibold bg-[#1a56db] text-white rounded-lg hover:bg-[#1648c7] transition-colors">
+                <Images className="h-3.5 w-3.5" /> Apply this slide&apos;s background to all
+              </button>
+              <p className="text-[11px] text-[#80868b] mt-2">Sets every slide&apos;s background to match the current slide.</p>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Find & Replace overlay (Feature 1) */}
+      {showFindReplace && (
+        <Modal title="Find & Replace" onClose={() => setShowFindReplace(false)}>
+          <div className="p-4 space-y-3">
+            <div>
+              <label className="block text-[11px] font-medium text-[#5f6368] mb-1">Find</label>
+              <input
+                autoFocus
+                className="w-full px-3 py-2 bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg text-sm text-[#202124] placeholder:text-[#80868b] focus:outline-none focus:border-[#1a56db]/60 focus:ring-2 focus:ring-[#1a56db]/20 transition-colors"
+                placeholder="Text to find…"
+                value={findText}
+                onChange={e => { setFindText(e.target.value); findCursor.current = { slide: activeIdx, el: -1, occ: -1 }; }}
+                onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); findNext(); } }}
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-medium text-[#5f6368] mb-1">Replace with</label>
+              <input
+                className="w-full px-3 py-2 bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg text-sm text-[#202124] placeholder:text-[#80868b] focus:outline-none focus:border-[#1a56db]/60 focus:ring-2 focus:ring-[#1a56db]/20 transition-colors"
+                placeholder="Replacement text…"
+                value={replaceText}
+                onChange={e => setReplaceText(e.target.value)}
+              />
+            </div>
+            <label className="flex items-center gap-2 text-xs text-[#5f6368] select-none cursor-pointer">
+              <input type="checkbox" className="accent-[#1a56db]" checked={matchCase} onChange={e => { setMatchCase(e.target.checked); findCursor.current = { slide: activeIdx, el: -1, occ: -1 }; }} />
+              Match case
+            </label>
+            <div className="flex items-center gap-2 pt-1">
+              <button onClick={findNext}
+                className="px-3 py-1.5 text-[13px] font-medium rounded-md text-[#5f6368] hover:text-[#202124] hover:bg-[#f1f3f4] transition-colors border border-[#e8eaed]">
+                Find next
+              </button>
+              <button onClick={replaceCurrent}
+                className="px-3 py-1.5 text-[13px] font-medium rounded-md text-[#5f6368] hover:text-[#202124] hover:bg-[#f1f3f4] transition-colors border border-[#e8eaed]">
+                Replace
+              </button>
+              <button onClick={replaceAll}
+                className="ml-auto px-4 py-2 text-sm font-semibold rounded-lg bg-[#1a56db] text-white hover:bg-[#1648c7] transition-colors">
+                Replace all
+              </button>
+            </div>
+            <p className="text-[11px] text-[#80868b]">Searches text boxes, code blocks and table cells across every slide.</p>
+          </div>
+        </Modal>
+      )}
+
+      {/* Deck settings: slide numbers & footer (Feature 2) */}
+      {showDeckSettings && (
+        <Modal title="Slide numbers & footer" onClose={() => { setShowDeckSettings(false); scheduleSave(slides, title); }}>
+          <div className="p-4 space-y-4">
+            <label className="flex items-center justify-between gap-3 cursor-pointer">
+              <span className="text-sm text-[#202124]">Show slide numbers</span>
+              <input type="checkbox" className="accent-[#1a56db] h-4 w-4" checked={showNumbers} onChange={e => setShowNumbers(e.target.checked)} />
+            </label>
+            <label className="flex items-center justify-between gap-3 cursor-pointer">
+              <span className="text-sm text-[#202124]">Show footer text</span>
+              <input type="checkbox" className="accent-[#1a56db] h-4 w-4" checked={showFooter} onChange={e => setShowFooter(e.target.checked)} />
+            </label>
+            <div>
+              <label className="block text-[11px] font-medium text-[#5f6368] mb-1">Footer text</label>
+              <input
+                className="w-full px-3 py-2 bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg text-sm text-[#202124] placeholder:text-[#80868b] focus:outline-none focus:border-[#1a56db]/60 focus:ring-2 focus:ring-[#1a56db]/20 transition-colors disabled:opacity-50"
+                placeholder="e.g. Cybersage — Confidential"
+                value={footerText}
+                disabled={!showFooter}
+                onChange={e => setFooterText(e.target.value)}
+              />
+            </div>
+            <p className="text-[11px] text-[#80868b]">Applied to every slide in the editor and in presenter mode.</p>
           </div>
         </Modal>
       )}

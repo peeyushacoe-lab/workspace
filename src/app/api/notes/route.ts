@@ -29,6 +29,7 @@ export async function GET(request: Request) {
       content: true,
       pinned: true,
       color: true,
+      folder: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -45,6 +46,7 @@ export async function POST(request: Request) {
     title?: string;
     content?: string;
     color?: string;
+    folder?: string | null;
   };
 
   const note = await prisma.note.create({
@@ -52,6 +54,7 @@ export async function POST(request: Request) {
       title: body.title?.trim() || "Untitled Note",
       content: body.content ?? "",
       color: body.color ?? null,
+      folder: body.folder ?? null,
       userId: user.id,
     },
   });
