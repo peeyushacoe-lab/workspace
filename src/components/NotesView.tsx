@@ -12,7 +12,7 @@ import {
   Plus, Search, Trash2, Pin, PinOff, StickyNote, Palette, MoreVertical,
 Folder, Check, X, Sparkles, Loader2,   Bold, Italic, Strikethrough, Code, List, ListOrdered, ListChecks,
   Quote, Minus, Link2, Image as ImageIcon, Type, Hash,   Download, Copy,
-  LayoutTemplate, WifiOff, Mic, Paperclip,
+  LayoutTemplate, WifiOff, Mic, Paperclip, Archive, ArchiveRestore, Bell, BellOff,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow, format } from "date-fns";
@@ -53,6 +53,14 @@ function notePreview(content: string): string {
 
 function countWords(content: string): number {
   return content.replace(/<[^>]+>/g, " ").trim().split(/\s+/).filter(Boolean).length;
+}
+
+// Extract #hashtags from a note's title + content (plain text).
+function noteTags(title: string, content: string): string[] {
+  const text = title + " " + content.replace(/<[^>]+>/g, " ");
+  const found = text.match(/(^|\s)#([A-Za-z0-9_-]{1,30})/g) ?? [];
+  const tags = found.map(m => m.trim().replace(/^#/, "").toLowerCase());
+  return [...new Set(tags)];
 }
 
 // ─── Note templates ─────────────────────────────────────────────────────────────
@@ -102,6 +110,39 @@ const NOTE_TEMPLATES: { id: string; label: string; html: string }[] = [
 
 function notesDraftKey(id: string): string {
   return "nexus_notes_draft_" + id;
+}
+
+// ─── Archive + reminders (client-side localStorage) ──────────────────────────
+
+const ARCHIVE_KEY = "nexus_notes_archived";
+const REMINDERS_KEY = "nexus_notes_reminders";
+
+function loadArchived(): Set<string> {
+  try {
+    const raw = localStorage.getItem(ARCHIVE_KEY);
+    if (!raw) return new Set();
+    const arr = JSON.parse(raw) as unknown;
+    if (Array.isArray(arr)) return new Set(arr.filter((x): x is string => typeof x === "string"));
+  } catch { /* ignore */ }
+  return new Set();
+}
+
+function saveArchived(set: Set<string>) {
+  try { localStorage.setItem(ARCHIVE_KEY, JSON.stringify([...set])); } catch { /* ignore */ }
+}
+
+function loadReminders(): Record<string, string> {
+  try {
+    const raw = localStorage.getItem(REMINDERS_KEY);
+    if (!raw) return {};
+    const obj = JSON.parse(raw) as unknown;
+    if (obj && typeof obj === "object") return obj as Record<string, string>;
+  } catch { /* ignore */ }
+  return {};
+}
+
+function saveReminders(map: Record<string, string>) {
+  try { localStorage.setItem(REMINDERS_KEY, JSON.stringify(map)); } catch { /* ignore */ }
 }
 
 // ─── Toolbar button ───────────────────────────────────────────────────────────
@@ -340,12 +381,15 @@ function RichEditor({ value, onChange, placeholder }: {
 
 // ─── Note card (grid view) ────────────────────────────────────────────────────
 
-function NoteCard({ note, selected, onSelect, onPin, onDelete, onColor }: {
+function NoteCard({ note, selected, onSelect, onPin, onDelete, onColor, onArchive, isArchived, reminderIso }: {
   note: Note; selected: boolean;
   onSelect: () => void;
   onPin: (e: React.MouseEvent) => void;
   onDelete: (e: React.MouseEvent) => void;
   onColor: (color: string, e: React.MouseEvent) => void;
+  onArchive: (e: React.MouseEvent) => void;
+  isArchived: boolean;
+  reminderIso?: string;
 }) {
   const [showMenu, setShowMenu] = useState(false);
   const _colorInfo = getNoteColor(note.color);
@@ -359,7 +403,14 @@ function NoteCard({ note, selected, onSelect, onPin, onDelete, onColor }: {
       {note.pinned && <Pin className="absolute top-2 right-2 h-3.5 w-3.5 text-[#f4b400]" />}
       <p className="text-xs font-semibold text-[#202124] mb-1 pr-5 line-clamp-2">{note.title || "Untitled"}</p>
       <p className="text-[11px] text-[#5f6368] line-clamp-4 leading-relaxed">{notePreview(note.content)}</p>
-      <p className="text-[10px] text-[#bdc1c6] mt-2">{formatDistanceToNow(new Date(note.updatedAt), { addSuffix: true })}</p>
+      <div className="flex items-center gap-2 mt-2 flex-wrap">
+        <p className="text-[10px] text-[#bdc1c6]">{formatDistanceToNow(new Date(note.updatedAt), { addSuffix: true })}</p>
+        {reminderIso && (
+          <span className="inline-flex items-center gap-0.5 text-[10px] text-[#1a56db]">
+            <Bell className="h-2.5 w-2.5" /> {format(new Date(reminderIso), "MMM d, h:mm a")}
+          </span>
+        )}
+      </div>
 
       {/* Hover actions */}
       <div className="absolute bottom-2 right-2 hidden group-hover:flex items-center gap-1">
@@ -378,6 +429,9 @@ function NoteCard({ note, selected, onSelect, onPin, onDelete, onColor }: {
                   style={{ background: c.value || "#ffffff" }} />
               ))}
             </div>
+            <button onClick={e => { onArchive(e); setShowMenu(false); }} className="w-full text-left flex items-center gap-2 px-3 py-1.5 text-xs text-[#202124] hover:bg-[#f1f3f4] border-t border-[#e8eaed]">
+              {isArchived ? <><ArchiveRestore className="h-3 w-3" /> Unarchive</> : <><Archive className="h-3 w-3" /> Archive</>}
+            </button>
             <button onClick={e => { onDelete(e); setShowMenu(false); }} className="w-full text-left flex items-center gap-2 px-3 py-1.5 text-xs text-[#ea4335] hover:bg-red-50 border-t border-[#e8eaed]">
               <Trash2 className="h-3 w-3" /> Delete
             </button>
@@ -408,7 +462,13 @@ export function NotesView() {
     { id: "meetings", name: "Meetings" },
   ]);
   const [activeFolder, setActiveFolder] = useState("all");
-  const [_activeTag, _setActiveTag] = useState<string | null>(null);
+  const [activeTag, setActiveTag] = useState<string | null>(null);
+
+  // Archive + reminders (client-side)
+  const [archived, setArchived] = useState<Set<string>>(new Set());
+  const [reminders, setReminders] = useState<Record<string, string>>({});
+  const [showReminder, setShowReminder] = useState(false);
+  const firedRemindersRef = useRef<Set<string>>(new Set());
 
   // UI
   const [showAI, setShowAI] = useState(false);
@@ -427,6 +487,57 @@ export function NotesView() {
       .then(r => r.json())
       .then((d: Note[]) => { setNotes(d); setLoading(false); })
       .catch(() => setLoading(false));
+  }, []);
+
+  // ── Load archive + reminders from localStorage ────────────────────────────
+  useEffect(() => {
+    setArchived(loadArchived());
+    setReminders(loadReminders());
+  }, []);
+
+  // ── Reminder checker (on mount + every minute) ────────────────────────────
+  useEffect(() => {
+    const check = () => {
+      const map = reminders;
+      const now = Date.now();
+      for (const id of Object.keys(map)) {
+        const iso = map[id];
+        const due = new Date(iso).getTime();
+        if (Number.isNaN(due) || due > now) continue;
+        if (firedRemindersRef.current.has(id)) continue;
+        firedRemindersRef.current.add(id);
+        const note = notes.find(n => n.id === id);
+        const noteTitle = note?.title?.trim() || "Untitled";
+        toast("Reminder: " + noteTitle, { icon: undefined });
+      }
+    };
+    check();
+    const t = setInterval(check, 60_000);
+    return () => clearInterval(t);
+  }, [reminders, notes]);
+
+  // ── Archive toggle ────────────────────────────────────────────────────────
+  const toggleArchive = useCallback((id: string) => {
+    setArchived(prev => {
+      const next = new Set(prev);
+      const wasArchived = next.has(id);
+      if (wasArchived) next.delete(id);
+      else next.add(id);
+      saveArchived(next);
+      toast.success(wasArchived ? "Note unarchived" : "Note archived");
+      return next;
+    });
+  }, []);
+
+  // ── Reminder set / clear ──────────────────────────────────────────────────
+  const setReminder = useCallback((id: string, iso: string | null) => {
+    setReminders(prev => {
+      const next = { ...prev };
+      if (iso) { next[id] = iso; firedRemindersRef.current.delete(id); }
+      else delete next[id];
+      saveReminders(next);
+      return next;
+    });
   }, []);
 
   // ── Offline indicator ─────────────────────────────────────────────────────
@@ -608,11 +719,17 @@ export function NotesView() {
   };
 
   // ── Derived ───────────────────────────────────────────────────────────────
+  const allTags = [...new Set(notes.flatMap(n => noteTags(n.title, n.content)))].sort();
   const filteredNotes = notes.filter(n => {
     const q = search.toLowerCase();
     const matchesSearch = !q || n.title.toLowerCase().includes(q) || notePreview(n.content).toLowerCase().includes(q);
-    const matchesFolder = activeFolder === "all" || n.folder === activeFolder;
-    return matchesSearch && matchesFolder;
+    const isArchived = archived.has(n.id);
+    let matchesFolder: boolean;
+    if (activeFolder === "archive") matchesFolder = isArchived;
+    else if (isArchived) matchesFolder = false; // hide archived from normal views
+    else matchesFolder = activeFolder === "all" || n.folder === activeFolder;
+    const matchesTag = !activeTag || noteTags(n.title, n.content).includes(activeTag);
+    return matchesSearch && matchesFolder && matchesTag;
   });
   const pinnedNotes = filteredNotes.filter(n => n.pinned);
   const unpinnedNotes = filteredNotes.filter(n => !n.pinned);
@@ -622,7 +739,7 @@ export function NotesView() {
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div className="flex h-screen bg-white overflow-hidden text-[#202124]" onClick={() => { setShowColorPicker(false); setShowTemplateMenu(false); }}>
+    <div className="flex h-screen bg-white overflow-hidden text-[#202124]" onClick={() => { setShowColorPicker(false); setShowTemplateMenu(false); setShowReminder(false); }}>
 
       {/* ── Left sidebar (folders + list) ── */}
       <aside className="w-72 flex flex-col border-r border-[#e8eaed] bg-[#f8f9fa] overflow-hidden flex-shrink-0">
@@ -652,11 +769,37 @@ export function NotesView() {
               className={`w-full flex items-center gap-2 px-2 py-1.5 text-xs rounded-lg transition-colors ${activeFolder === f.id ? "bg-[#e8f0fe] text-[#1a56db] font-semibold" : "text-[#5f6368] hover:bg-[#e8eaed]"}`}>
               <Folder className="h-3.5 w-3.5" /> {f.name}
               <span className="ml-auto text-[10px] text-[#bdc1c6]">
-                {f.id === "all" ? notes.length : 0}
+                {f.id === "all" ? notes.filter(n => !archived.has(n.id)).length : 0}
               </span>
             </button>
           ))}
+          <button onClick={() => setActiveFolder("archive")}
+            className={`w-full flex items-center gap-2 px-2 py-1.5 text-xs rounded-lg transition-colors ${activeFolder === "archive" ? "bg-[#e8f0fe] text-[#1a56db] font-semibold" : "text-[#5f6368] hover:bg-[#e8eaed]"}`}>
+            <Archive className="h-3.5 w-3.5" /> Archive
+            <span className="ml-auto text-[10px] text-[#bdc1c6]">{archived.size}</span>
+          </button>
         </div>
+
+        {/* Tags (from #hashtags in notes) */}
+        {allTags.length > 0 && (
+          <div className="px-2 py-2 border-b border-[#e8eaed]">
+            <p className="px-2 text-[10px] font-semibold text-[#80868b] uppercase tracking-wider mb-1.5">Tags</p>
+            <div className="flex flex-wrap gap-1 px-1">
+              {activeTag && (
+                <button onClick={() => setActiveTag(null)}
+                  className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#f1f3f4] text-[#5f6368] hover:bg-[#e8eaed]">
+                  Clear ✕
+                </button>
+              )}
+              {allTags.map(t => (
+                <button key={t} onClick={() => setActiveTag(activeTag === t ? null : t)}
+                  className={`px-2 py-0.5 rounded-full text-[11px] font-medium transition-colors ${activeTag === t ? "bg-[#1a56db] text-white" : "bg-[#e8f0fe] text-[#1a56db] hover:bg-[#d2e3fc]"}`}>
+                  #{t}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Note list */}
         <div className="flex-1 overflow-y-auto">
@@ -667,13 +810,13 @@ export function NotesView() {
               {pinnedNotes.length > 0 && (
                 <div className="pt-2">
                   <p className="px-3 py-1 text-[10px] font-semibold text-[#80868b] uppercase tracking-wider">Pinned</p>
-                  {pinnedNotes.map(n => <NoteListItem key={n.id} note={n} selected={n.id === selectedId} onClick={() => selectNote(n)} />)}
+                  {pinnedNotes.map(n => <NoteListItem key={n.id} note={n} selected={n.id === selectedId} onClick={() => selectNote(n)} reminderIso={reminders[n.id]} />)}
                 </div>
               )}
               {unpinnedNotes.length > 0 && (
                 <div className="pt-2">
                   {pinnedNotes.length > 0 && <p className="px-3 py-1 text-[10px] font-semibold text-[#80868b] uppercase tracking-wider">Notes</p>}
-                  {unpinnedNotes.map(n => <NoteListItem key={n.id} note={n} selected={n.id === selectedId} onClick={() => selectNote(n)} />)}
+                  {unpinnedNotes.map(n => <NoteListItem key={n.id} note={n} selected={n.id === selectedId} onClick={() => selectNote(n)} reminderIso={reminders[n.id]} />)}
                 </div>
               )}
               {filteredNotes.length === 0 && (
@@ -772,6 +915,43 @@ export function NotesView() {
               <Sparkles className="h-4 w-4" />
             </button>
 
+            {/* Reminder */}
+            <div className="relative" onClick={e => e.stopPropagation()}>
+              <button onClick={() => setShowReminder(v => !v)} title="Remind me"
+                className={`p-1.5 rounded transition-colors ${reminders[selectedId] ? "text-[#1a56db] bg-[#e8f0fe]" : showReminder ? "bg-[#e8f0fe] text-[#1a56db]" : "text-[#5f6368] hover:bg-[#f1f3f4]"}`}>
+                <Bell className="h-4 w-4" />
+              </button>
+              {showReminder && (
+                <div className="absolute right-0 top-full mt-1 w-60 bg-white border border-[#e8eaed] rounded-lg shadow-lg z-50 p-3 space-y-2">
+                  <p className="text-[11px] font-medium text-[#5f6368]">Set a reminder</p>
+                  <input
+                    type="datetime-local"
+                    value={reminders[selectedId] ? new Date(reminders[selectedId]).toISOString().slice(0, 16) : ""}
+                    onChange={e => {
+                      const v = e.target.value;
+                      if (v) setReminder(selectedId, new Date(v).toISOString());
+                    }}
+                    className="w-full px-2 py-1.5 bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg text-xs text-[#202124] focus:outline-none focus:border-[#1a56db]/60"
+                  />
+                  {reminders[selectedId] && (
+                    <div className="flex items-center justify-between text-[11px] text-[#5f6368]">
+                      <span>{format(new Date(reminders[selectedId]), "MMM d, h:mm a")}</span>
+                      <button onClick={() => { setReminder(selectedId, null); setShowReminder(false); }}
+                        className="flex items-center gap-1 text-[#ea4335] hover:underline">
+                        <BellOff className="h-3 w-3" /> Clear
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Archive */}
+            <button onClick={() => toggleArchive(selectedId)} title={archived.has(selectedId) ? "Unarchive" : "Archive"}
+              className={`p-1.5 rounded transition-colors ${archived.has(selectedId) ? "text-[#1a56db] bg-[#e8f0fe]" : "text-[#5f6368] hover:bg-[#f1f3f4]"}`}>
+              {archived.has(selectedId) ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
+            </button>
+
             <button onClick={duplicateNote} title="Duplicate" className="p-1.5 rounded text-[#5f6368] hover:bg-[#f1f3f4]"><Copy className="h-4 w-4" /></button>
             <button onClick={exportNote} title="Export" className="p-1.5 rounded text-[#5f6368] hover:bg-[#f1f3f4]"><Download className="h-4 w-4" /></button>
             <button onClick={e => void deleteNote(selectedId, e)} title="Delete" className="p-1.5 rounded text-[#5f6368] hover:text-[#ea4335] hover:bg-red-50"><Trash2 className="h-4 w-4" /></button>
@@ -843,7 +1023,7 @@ export function NotesView() {
         <div className="flex-1 flex flex-col overflow-hidden bg-white">
           <div className="flex items-center justify-between px-4 py-3 border-b border-[#e8eaed]">
             <h2 className="text-sm font-semibold text-[#202124]">
-              {folders.find(f => f.id === activeFolder)?.name ?? "All Notes"}
+              {activeFolder === "archive" ? "Archive" : (folders.find(f => f.id === activeFolder)?.name ?? "All Notes")}
               <span className="ml-2 text-[#80868b] font-normal">{filteredNotes.length}</span>
             </h2>
             <button onClick={() => void createNote()}
@@ -876,6 +1056,9 @@ export function NotesView() {
                           onPin={e => void pinNote(n.id, n.pinned, e)}
                           onDelete={e => void deleteNote(n.id, e)}
                           onColor={(c, e) => void colorNote(n.id, c, e)}
+                          onArchive={e => { e.stopPropagation(); toggleArchive(n.id); }}
+                          isArchived={archived.has(n.id)}
+                          reminderIso={reminders[n.id]}
                         />
                       ))}
                     </div>
@@ -891,6 +1074,9 @@ export function NotesView() {
                           onPin={e => void pinNote(n.id, n.pinned, e)}
                           onDelete={e => void deleteNote(n.id, e)}
                           onColor={(c, e) => void colorNote(n.id, c, e)}
+                          onArchive={e => { e.stopPropagation(); toggleArchive(n.id); }}
+                          isArchived={archived.has(n.id)}
+                          reminderIso={reminders[n.id]}
                         />
                       ))}
                     </div>
@@ -907,7 +1093,7 @@ export function NotesView() {
 
 // ─── Note list item (sidebar) ─────────────────────────────────────────────────
 
-function NoteListItem({ note, selected, onClick }: { note: Note; selected: boolean; onClick: () => void }) {
+function NoteListItem({ note, selected, onClick, reminderIso }: { note: Note; selected: boolean; onClick: () => void; reminderIso?: string }) {
   const _colorInfo = getNoteColor(note.color);
   return (
     <div onClick={onClick}
@@ -919,7 +1105,14 @@ function NoteListItem({ note, selected, onClick }: { note: Note; selected: boole
           {note.pinned && <Pin className="inline h-2.5 w-2.5 text-[#f4b400] ml-1" />}
         </p>
         <p className="text-[10px] text-[#80868b] truncate">{notePreview(note.content)}</p>
-        <p className="text-[10px] text-[#bdc1c6]">{formatDistanceToNow(new Date(note.updatedAt), { addSuffix: true })}</p>
+        <div className="flex items-center gap-2">
+          <p className="text-[10px] text-[#bdc1c6]">{formatDistanceToNow(new Date(note.updatedAt), { addSuffix: true })}</p>
+          {reminderIso && (
+            <span className="inline-flex items-center gap-0.5 text-[10px] text-[#1a56db]">
+              <Bell className="h-2.5 w-2.5" /> {format(new Date(reminderIso), "MMM d, h:mm a")}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );

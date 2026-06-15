@@ -17,7 +17,7 @@ import {
   IndentDecrease, IndentIncrease, Type,
   BookOpen, Clock, LayoutTemplate, WifiOff,
   Superscript as SuperscriptIcon, Subscript as SubscriptIcon, RemoveFormatting, Highlighter,
-  FileCog, PanelTop, BarChart3,
+  FileCog, PanelTop, BarChart3, AlignVerticalSpaceAround, Sigma, ListTree,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow, format } from "date-fns";
@@ -396,7 +396,15 @@ export function DocsView() {
   const [headingMenu, setHeadingMenu] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
   const [showPageSetupMenu, setShowPageSetupMenu] = useState(false);
+  const [docColumns, setDocColumns] = useState(1);
+  const [showFindReplace, setShowFindReplace] = useState(false);
+  const [frFind, setFrFind] = useState("");
+  const [frReplace, setFrReplace] = useState("");
+  const [frCase, setFrCase] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  const [lineHeight, setLineHeight] = useState("1.5");
+  const [showLineSpacing, setShowLineSpacing] = useState(false);
+  const [showSymbols, setShowSymbols] = useState(false);
 
   // Page setup, header/footer (per-doc, persisted)
   const [pageSetup, setPageSetup] = useState<PageSetup>(DEFAULT_PAGE_SETUP);
@@ -733,8 +741,78 @@ blockquote{border-left:4px solid #1a56db;margin:0;padding-left:1em;color:#5f6368
 
   const rightPanelOpen = showAI || showComments || showHistory;
 
+  // Count matches in the document's visible text (for the Find dialog).
+  const frCount = (() => {
+    if (!editor || !frFind) return 0;
+    const text = editor.getText();
+    const esc = frFind.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return (text.match(new RegExp(esc, frCase ? "g" : "gi")) ?? []).length;
+  })();
+
+  const insertFootnote = () => {
+    if (!editor) return;
+    const text = prompt("Footnote text:");
+    if (!text || !text.trim()) return;
+    const html = editor.getHTML();
+    // Each footnote contributes two "[n]" markers (the inline ref + the list item),
+    // so existing count = matches / 2. Class attributes get stripped by Tiptap, so
+    // we count by the bracketed-number text which survives.
+    const refs = (html.match(/\[\d+\]/g) ?? []).length;
+    const n = Math.floor(refs / 2) + 1;
+    const esc = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    editor.chain().focus().insertContent("<sup>[" + n + "]</sup>").run();
+    const hasSection = html.includes("Footnotes</strong>");
+    let foot = "";
+    if (!hasSection) foot += "<hr><p><strong>Footnotes</strong></p>";
+    foot += "<p><sup>[" + n + "]</sup> " + esc + "</p>";
+    editor.chain().focus("end").insertContent(foot).run();
+  };
+
+  const docReplaceAll = () => {
+    if (!editor || !frFind) return;
+    const parts = editor.getHTML().split(/(<[^>]+>)/);
+    const esc = frFind.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const re = new RegExp(esc, frCase ? "g" : "gi");
+    let count = 0;
+    for (let i = 0; i < parts.length; i++) {
+      if (i % 2 === 1) continue; // skip HTML tags
+      parts[i] = parts[i].replace(re, () => { count++; return frReplace; });
+    }
+    if (count > 0) {
+      editor.commands.setContent(parts.join(""), { emitUpdate: true });
+      toast.success("Replaced " + count + (count === 1 ? " match" : " matches"));
+    } else {
+      toast("No matches found");
+    }
+  };
+
   // Close menus on outside click
-  const closeMenus = () => { setHeadingMenu(false); setShowExportMenu(false); setShowSecurityMenu(false); setShowTemplateMenu(false); setShowPageSetupMenu(false); setShowStats(false); };
+  const closeMenus = () => { setHeadingMenu(false); setShowExportMenu(false); setShowSecurityMenu(false); setShowTemplateMenu(false); setShowPageSetupMenu(false); setShowStats(false); setShowLineSpacing(false); setShowSymbols(false); };
+
+  // ── Symbols ───────────────────────────────────────────────────────────────
+  const insertSymbol = (sym: string) => {
+    editor?.chain().focus().insertContent(sym).run();
+  };
+
+  // ── Table of contents (static snapshot of headings) ───────────────────────
+  const insertTOC = () => {
+    if (!editor) return;
+    const heads: { level: number; text: string }[] = [];
+    editor.state.doc.descendants(node => {
+      if (node.type.name === "heading") {
+        const t = node.textContent.trim();
+        if (t) heads.push({ level: node.attrs.level as number, text: t });
+      }
+    });
+    if (heads.length === 0) { toast("No headings found to build a table of contents"); return; }
+    const items = heads.map(h => {
+      const indent = (h.level - 1) * 24;
+      return '<li style="margin-left:' + indent + 'px">' + h.text + "</li>";
+    }).join("");
+    const html = "<p><strong>Table of Contents</strong></p><ul>" + items + "</ul><p></p>";
+    editor.chain().focus().insertContent(html).run();
+    toast.success("Table of contents inserted");
+  };
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
@@ -837,6 +915,15 @@ blockquote{border-left:4px solid #1a56db;margin:0;padding-left:1em;color:#5f6368
             </span>
 
             <div className="flex items-center gap-0.5">
+              {/* Find & replace */}
+              <IconBtn icon={<Search className="h-4 w-4" />} title="Find & replace (⌘H)" onClick={() => setShowFindReplace(true)} />
+              {/* Columns */}
+              <select value={docColumns} onChange={e => setDocColumns(Number(e.target.value))} title="Text columns"
+                className="text-xs border border-[#e8eaed] rounded px-1 h-7 bg-white text-[#5f6368] cursor-pointer">
+                <option value={1}>1 col</option>
+                <option value={2}>2 cols</option>
+                <option value={3}>3 cols</option>
+              </select>
               {/* Page setup */}
               <div className="relative" onClick={e => e.stopPropagation()}>
                 <IconBtn icon={<FileCog className="h-4 w-4" />} title="Page setup" active={showPageSetupMenu} onClick={() => { setShowPageSetupMenu(v => !v); setShowStats(false); }} />
@@ -1069,8 +1156,48 @@ blockquote{border-left:4px solid #1a56db;margin:0;padding-left:1em;color:#5f6368
             <TSep />
 
             <TB icon={<SuperscriptIcon className="h-3.5 w-3.5" />} title="Superscript" active={editor?.isActive("superscript")} onClick={() => (editor?.chain().focus() as unknown as { toggleSuperscript: () => { run: () => void } } | undefined)?.toggleSuperscript().run()} />
+            <TB icon={<span className="text-[10px] font-bold leading-none">[1]</span>} title="Insert footnote" onClick={insertFootnote} />
             <TB icon={<SubscriptIcon className="h-3.5 w-3.5" />} title="Subscript" active={editor?.isActive("subscript")} onClick={() => (editor?.chain().focus() as unknown as { toggleSubscript: () => { run: () => void } } | undefined)?.toggleSubscript().run()} />
             <TB icon={<RemoveFormatting className="h-3.5 w-3.5" />} title="Clear formatting" onClick={() => editor?.chain().focus().unsetAllMarks().clearNodes().run()} />
+            <TSep />
+
+            {/* Line spacing */}
+            <div className="relative" onClick={e => e.stopPropagation()}>
+              <TB icon={<AlignVerticalSpaceAround className="h-3.5 w-3.5" />} title="Line spacing" active={showLineSpacing} onClick={() => { setShowLineSpacing(v => !v); setShowSymbols(false); }} />
+              {showLineSpacing && (
+                <div className="absolute top-full left-0 mt-1 w-28 bg-white border border-[#e8eaed] rounded-lg shadow-lg z-50 py-1">
+                  <p className="px-3 py-1 text-[10px] font-medium text-[#80868b]">Line spacing</p>
+                  {["1.0", "1.15", "1.5", "2.0"].map(ls => (
+                    <button key={ls} onClick={() => { setLineHeight(ls); setShowLineSpacing(false); }}
+                      className={`w-full text-left flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-[#f1f3f4] ${lineHeight === ls ? "text-[#1a56db] font-semibold" : "text-[#202124]"}`}>
+                      {ls}
+                      {lineHeight === ls && <Check className="h-3 w-3 ml-auto" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Symbols */}
+            <div className="relative" onClick={e => e.stopPropagation()}>
+              <TB icon={<Sigma className="h-3.5 w-3.5" />} title="Insert symbol" active={showSymbols} onClick={() => { setShowSymbols(v => !v); setShowLineSpacing(false); }} />
+              {showSymbols && (
+                <div className="absolute top-full left-0 mt-1 w-56 bg-white border border-[#e8eaed] rounded-lg shadow-lg z-50 p-2">
+                  <p className="px-1 pb-1.5 text-[10px] font-medium text-[#80868b]">Insert symbol</p>
+                  <div className="grid grid-cols-8 gap-0.5">
+                    {["©","®","™","…","—","–","•","§","¶","†","‡","→","←","↑","↓","°","±","×","÷","≤","≥","≠","∞","€","£","¥","✓","✗","★","♥"].map(sym => (
+                      <button key={sym} onClick={() => insertSymbol(sym)}
+                        className="flex items-center justify-center h-6 w-6 rounded text-sm text-[#202124] hover:bg-[#e8f0fe] hover:text-[#1a56db]">
+                        {sym}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Table of contents */}
+            <TB icon={<ListTree className="h-3.5 w-3.5" />} title="Insert table of contents" onClick={insertTOC} />
             <TSep />
 
             <span className="text-[11px] text-[#80868b] px-1 whitespace-nowrap">{wordCount} words</span>
@@ -1113,7 +1240,7 @@ blockquote{border-left:4px solid #1a56db;margin:0;padding-left:1em;color:#5f6368
                     />
                   </div>
                 )}
-                <div className="flex-1" style={{ paddingLeft: marginPx.h, paddingRight: marginPx.h, paddingTop: marginPx.v, paddingBottom: marginPx.v }}>
+                <div className="flex-1" style={{ paddingLeft: marginPx.h, paddingRight: marginPx.h, paddingTop: marginPx.v, paddingBottom: marginPx.v, columnCount: docColumns > 1 ? docColumns : undefined, columnGap: docColumns > 1 ? "32px" : undefined, lineHeight: lineHeight }}>
                   <EditorContent editor={editor} />
                 </div>
                 {headerFooter.enabled && (
@@ -1273,6 +1400,31 @@ blockquote{border-left:4px solid #1a56db;margin:0;padding-left:1em;color:#5f6368
 
       {showShare && selectedDoc && (
         <DocShareModal docId={selectedDoc.id} docType="sheet" onClose={() => setShowShare(false)} />
+      )}
+
+      {showFindReplace && (
+        <div className="fixed inset-0 bg-black/30 z-50 flex items-start justify-center pt-24" onClick={() => setShowFindReplace(false)}>
+          <div className="bg-white rounded-xl border border-[#e8eaed] shadow-xl w-full max-w-sm p-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-[#202124]">Find & replace</h3>
+              <button onClick={() => setShowFindReplace(false)} className="p-1 rounded hover:bg-[#f1f3f4] text-[#5f6368]"><X className="h-4 w-4" /></button>
+            </div>
+            <input autoFocus value={frFind} onChange={e => setFrFind(e.target.value)} placeholder="Find"
+              className="w-full px-3 py-2 mb-2 text-sm bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg focus:outline-none focus:border-[#1a56db]/60" />
+            <input value={frReplace} onChange={e => setFrReplace(e.target.value)} placeholder="Replace with"
+              className="w-full px-3 py-2 mb-2 text-sm bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg focus:outline-none focus:border-[#1a56db]/60" />
+            <div className="flex items-center justify-between mb-3">
+              <label className="flex items-center gap-2 text-xs text-[#5f6368] cursor-pointer">
+                <input type="checkbox" checked={frCase} onChange={e => setFrCase(e.target.checked)} /> Match case
+              </label>
+              <span className="text-xs text-[#80868b]">{frFind ? frCount + (frCount === 1 ? " match" : " matches") : ""}</span>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setShowFindReplace(false)} className="flex-1 px-4 py-2 text-sm border border-[#e8eaed] rounded-lg text-[#5f6368] hover:bg-[#f1f3f4]">Close</button>
+              <button onClick={docReplaceAll} disabled={!frFind} className="flex-1 px-4 py-2 text-sm font-semibold bg-[#1a56db] text-white rounded-lg hover:bg-[#1648c7] disabled:opacity-50">Replace all</button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -15,9 +15,10 @@ import {
   Plus, Download, Upload, Share2, Loader2,
   BarChart3, SortAsc, SortDesc, Filter, Sparkles,
   ChevronDown, Paintbrush, Type, Merge, X, Check,
-  Undo2, Redo2, WrapText, EyeOff, Tag, ListChecks, Table,
+  Undo2, Redo2, WrapText, EyeOff, Tag, ListChecks, Table, Grid2x2,
   Columns, LayoutGrid, Search, Replace, Brush,
   MessageSquare, CopyMinus, SplitSquareHorizontal,
+  Lock,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -48,6 +49,7 @@ type CellStyle = {
   accounting?: boolean; // accounting presentation (currency + right align)
   wrap?: boolean;
   indent?: number;
+  border?: { top?: boolean; bottom?: boolean; left?: boolean; right?: boolean };
 };
 
 type Cell = {
@@ -56,12 +58,13 @@ type Cell = {
   merged?: boolean;    // true if consumed by a merge
   mergeSpan?: { rows: number; cols: number };
   note?: string;       // cell comment / note (travels with the cell)
+  spark?: Sparkline;   // inline sparkline chart definition
 };
 
 type ConditionalRule = {
   id: string;
   range: { r1: number; c1: number; r2: number; c2: number };
-  type: "gt" | "lt" | "eq" | "between" | "not_empty" | "contains" | "top_n" | "bottom_n" | "color_scale";
+  type: "gt" | "lt" | "eq" | "between" | "not_empty" | "contains" | "top_n" | "bottom_n" | "color_scale" | "data_bar";
   value?: string;
   value2?: string;
   style: Pick<CellStyle, "color" | "background" | "bold">;
@@ -79,13 +82,20 @@ type ChartDef = {
 type SortRule = { col: number; dir: "asc" | "desc" };
 type FilterState = Record<number, string[]>; // col → allowed values
 
+type NumberOp = "between" | "gt" | "lt" | "gte" | "lte" | "eq" | "neq";
 type DataValidation = {
   id: string;
   range: { r1: number; c1: number; r2: number; c2: number };
-  type: "list";
-  values: string[];   // allowed dropdown values
-  strict: boolean;    // reject values not in the list
+  type: "list" | "number";
+  values: string[];   // allowed dropdown values (list type)
+  strict: boolean;    // reject values not in the list / out of range
+  op?: NumberOp;      // number type: comparison operator
+  min?: number;       // number type: lower bound
+  max?: number;       // number type: upper bound (for "between")
 };
+
+// Sparkline definition stored per cell (renders a tiny inline chart).
+type Sparkline = { range: string; mode: "bar" | "line"; color: string };
 
 type PivotAgg = "sum" | "count" | "average" | "min" | "max";
 type PivotDef = {
@@ -114,6 +124,8 @@ type SheetTab = {
   protectedRanges: string[];
   dataValidations: DataValidation[];
   pivots: PivotDef[];
+  slicers: number[];     // columns shown as interactive slicer panels
+  protected?: boolean;   // whole-sheet protection (blocks all edits)
 };
 
 // WorkbookDoc type removed (unused)
@@ -152,6 +164,8 @@ function blankSheet(id: string, name: string): SheetTab {
     protectedRanges: [],
     dataValidations: [],
     pivots: [],
+    slicers: [],
+    protected: false,
   };
 }
 
@@ -217,6 +231,23 @@ function computePivot(rows: string[][], def: PivotDef): PivotResult {
 // ─── Cell key ────────────────────────────────────────────────────────────────
 
 function ck(r: number, c: number) { return `${r}:${c}`; }
+
+// ─── Number validation (pure) ──────────────────────────────────────────────────
+
+function validateNumber(n: number, dv: DataValidation): boolean {
+  const min = dv.min ?? -Infinity;
+  const max = dv.max ?? Infinity;
+  switch (dv.op ?? "between") {
+    case "between": return n >= min && n <= max;
+    case "gt": return n > min;
+    case "lt": return n < min;
+    case "gte": return n >= min;
+    case "lte": return n <= min;
+    case "eq": return n === min;
+    case "neq": return n !== min;
+    default: return true;
+  }
+}
 
 // ─── A1 notation ─────────────────────────────────────────────────────────────
 
@@ -330,6 +361,7 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
   const [showNames, setShowNames] = useState(false);
   const [showValidation, setShowValidation] = useState(false);
   const [showPivot, setShowPivot] = useState(false);
+  const [cellCtx, setCellCtx] = useState<{ x: number; y: number; r: number; c: number } | null>(null);
   const [showFindReplace, setShowFindReplace] = useState(false);
   const [showNote, setShowNote] = useState(false);
   const [showRemoveDupes, setShowRemoveDupes] = useState(false);
@@ -344,6 +376,7 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
   const [sortMenuOpen, setSortMenuOpen] = useState(false);
   const [freezeMenuOpen, setFreezeMenuOpen] = useState(false);
   const [currencyMenuOpen, setCurrencyMenuOpen] = useState(false);
+  const [borderMenuOpen, setBorderMenuOpen] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -557,6 +590,91 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
     return () => window.removeEventListener("mouseup", onUp);
   }, []);
 
+  // ── Clipboard: copy / paste / cut a range (TSV, Excel-compatible) ──────────
+  const selRect = useCallback(() => ({
+    r1: selEnd ? Math.min(sel.r, selEnd.r) : sel.r,
+    r2: selEnd ? Math.max(sel.r, selEnd.r) : sel.r,
+    c1: selEnd ? Math.min(sel.c, selEnd.c) : sel.c,
+    c2: selEnd ? Math.max(sel.c, selEnd.c) : sel.c,
+  }), [sel, selEnd]);
+
+  const copySelection = useCallback(async () => {
+    const { r1, r2, c1, c2 } = selRect();
+    const lines: string[] = [];
+    for (let r = r1; r <= r2; r++) {
+      const cols: string[] = [];
+      for (let c = c1; c <= c2; c++) cols.push(activeSheet.cells[ck(r, c)]?.v ?? "");
+      lines.push(cols.join("\t"));
+    }
+    try { await navigator.clipboard.writeText(lines.join("\n")); } catch { /* clipboard blocked */ }
+  }, [selRect, activeSheet]);
+
+  const pasteFromClipboard = useCallback(async () => {
+    let text = "";
+    try { text = await navigator.clipboard.readText(); } catch { toast.error("Clipboard access blocked"); return; }
+    if (!text) return;
+    const grid = text.replace(/\r/g, "").split("\n").map(l => l.split("\t"));
+    if (grid.length > 1 && grid[grid.length - 1].length === 1 && grid[grid.length - 1][0] === "") grid.pop();
+    setSheets(prev => {
+      const next = prev.map(sh => {
+        if (sh.id !== activeSheetId) return sh;
+        const cells = { ...sh.cells };
+        grid.forEach((cols, dr) => cols.forEach((v, dc) => {
+          const rr = sel.r + dr, cc = sel.c + dc;
+          if (rr >= ROWS || cc >= COLS) return;
+          if (v === "") delete cells[ck(rr, cc)];
+          else cells[ck(rr, cc)] = { ...cells[ck(rr, cc)], v };
+        }));
+        return { ...sh, cells };
+      });
+      pushHistory(next); scheduleSave(next, title); return next;
+    });
+    const h = grid.length, w = Math.max(...grid.map(g => g.length));
+    setSelEnd({ r: Math.min(ROWS - 1, sel.r + h - 1), c: Math.min(COLS - 1, sel.c + w - 1) });
+  }, [sel, activeSheetId, pushHistory, scheduleSave, title]);
+
+  const cutSelection = useCallback(async () => {
+    await copySelection();
+    const { r1, r2, c1, c2 } = selRect();
+    setSheets(prev => {
+      const next = prev.map(sh => {
+        if (sh.id !== activeSheetId) return sh;
+        const cells = { ...sh.cells };
+        for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) delete cells[ck(r, c)];
+        return { ...sh, cells };
+      });
+      pushHistory(next); scheduleSave(next, title); return next;
+    });
+  }, [copySelection, selRect, activeSheetId, pushHistory, scheduleSave, title]);
+
+  // ── Cell borders ───────────────────────────────────────────────────────────
+  const applyBorders = useCallback((kind: "all" | "outer" | "top" | "bottom" | "left" | "right" | "none") => {
+    const { r1, r2, c1, c2 } = selRect();
+    setSheets(prev => {
+      const next = prev.map(sh => {
+        if (sh.id !== activeSheetId) return sh;
+        const cells = { ...sh.cells };
+        for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) {
+          const k = ck(r, c);
+          const ps = cells[k]?.s ?? {};
+          let b = { ...(ps.border ?? {}) };
+          if (kind === "none") b = {};
+          else if (kind === "all") b = { top: true, bottom: true, left: true, right: true };
+          else if (kind === "outer") b = { top: r === r1 ? true : b.top, bottom: r === r2 ? true : b.bottom, left: c === c1 ? true : b.left, right: c === c2 ? true : b.right };
+          else if (kind === "top" && r === r1) b.top = true;
+          else if (kind === "bottom" && r === r2) b.bottom = true;
+          else if (kind === "left" && c === c1) b.left = true;
+          else if (kind === "right" && c === c2) b.right = true;
+          const hasB = b.top || b.bottom || b.left || b.right;
+          cells[k] = { ...cells[k], v: cells[k]?.v ?? "", s: { ...ps, border: hasB ? b : undefined } };
+        }
+        return { ...sh, cells };
+      });
+      pushHistory(next); scheduleSave(next, title); return next;
+    });
+    setBorderMenuOpen(false);
+  }, [selRect, activeSheetId, pushHistory, scheduleSave, title]);
+
   // ── Apply style to selection ──────────────────────────────────────────────
   const applyStyle = useCallback((stylePatch: Partial<CellStyle>) => {
     const r1 = selEnd ? Math.min(sel.r, selEnd.r) : sel.r;
@@ -714,8 +832,17 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
     } else if (e.key === "z" && (e.metaKey || e.ctrlKey)) {
       e.preventDefault(); if (e.shiftKey) redo(); else undo();
     } else if (e.key === "c" && (e.metaKey || e.ctrlKey)) {
-      const val = getCellDisplayValue(sel.r, sel.c, activeSheet);
-      void navigator.clipboard.writeText(val);
+      e.preventDefault(); void copySelection();
+    } else if (e.key === "v" && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault(); void pasteFromClipboard();
+    } else if (e.key === "x" && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault(); void cutSelection();
+    } else if ((e.key === "b" || e.key === "i" || e.key === "u") && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      const cur = activeSheet.cells[ck(sel.r, sel.c)]?.s ?? {};
+      if (e.key === "b") applyStyle({ bold: !cur.bold });
+      else if (e.key === "i") applyStyle({ italic: !cur.italic });
+      else applyStyle({ underline: !cur.underline });
     } else if (e.key === "F2") {
       const cell = activeSheet.cells[ck(sel.r, sel.c)];
       setEditVal(cell?.v ?? "");
@@ -726,7 +853,7 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
       setEditing(true);
       setTimeout(() => cellInputRef.current?.focus(), 0);
     }
-  }, [editing, sel, activeSheet, updateCell, undo, redo, getCellDisplayValue]);
+  }, [editing, sel, activeSheet, updateCell, undo, redo, copySelection, pasteFromClipboard, cutSelection, applyStyle]);
 
   // Update formula bar on selection change
   useEffect(() => {
@@ -735,20 +862,46 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
   }, [sel, activeSheet]);
 
   // ── Commit edit ──────────────────────────────────────────────────────────
+  const isProtected = useCallback((r: number, c: number): boolean => {
+    for (const rangeStr of activeSheet.protectedRanges ?? []) {
+      const pr = parseRange(rangeStr);
+      if (pr && r >= pr.startRow && r <= pr.endRow && c >= pr.startCol && c <= pr.endCol) return true;
+    }
+    return false;
+  }, [activeSheet]);
+
   const commitEdit = useCallback((moveDir: "down" | "right" | "none" = "down") => {
-    // Enforce strict list validation on the cell, if any.
+    if (activeSheet.protected) {
+      toast.error("This sheet is protected");
+      setEditing(false); focusGrid(); return;
+    }
+    if (isProtected(sel.r, sel.c)) {
+      toast.error("This cell is in a protected range");
+      setEditing(false); focusGrid(); return;
+    }
+    // Enforce strict validation on the cell, if any.
     const dv = (activeSheet.dataValidations ?? []).find(d =>
       sel.r >= d.range.r1 && sel.r <= d.range.r2 && sel.c >= d.range.c1 && sel.c <= d.range.c2);
-    if (dv && dv.strict && editVal !== "" && !editVal.startsWith("=") && !dv.values.includes(editVal)) {
-      toast.error(`"${editVal}" is not an allowed value`);
-      return; // keep editing
+    if (dv && dv.strict && editVal !== "" && !editVal.startsWith("=")) {
+      if (dv.type === "list" && !dv.values.includes(editVal)) {
+        toast.error(`"` + editVal + `" is not an allowed value`);
+        return; // keep editing
+      }
+      if (dv.type === "number") {
+        const n = Number(editVal);
+        const okNum = !isNaN(n) && validateNumber(n, dv);
+        if (!okNum) {
+          toast.error(`"` + editVal + `" is out of the allowed range`);
+          return; // keep editing
+        }
+      }
     }
     updateCell(sel.r, sel.c, editVal);
     setEditing(false);
     if (moveDir === "down") setSel(s => ({ r: Math.min(ROWS - 1, s.r + 1), c: s.c }));
     else if (moveDir === "right") setSel(s => ({ r: s.r, c: Math.min(COLS - 1, s.c + 1) }));
     focusGrid();
-  }, [sel, editVal, updateCell, activeSheet, focusGrid]);
+  }, [sel, editVal, updateCell, activeSheet, focusGrid, isProtected]);
 
   // ── Add / remove sheet ────────────────────────────────────────────────────
   const addSheet = () => {
@@ -767,6 +920,59 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
     if (activeSheetId === id) setActiveSheetId(next[0].id);
     scheduleSave(next, title);
   };
+
+  // ── Insert / delete rows & columns (remap cell keys) ───────────────────────
+  const remapCells = useCallback((mapFn: (r: number, c: number) => { r: number; c: number } | null) => {
+    setSheets(prev => {
+      const next = prev.map(sh => {
+        if (sh.id !== activeSheetId) return sh;
+        const cells: Record<string, Cell> = {};
+        for (const [k, v] of Object.entries(sh.cells)) {
+          const [r, c] = k.split(":").map(Number);
+          const m = mapFn(r, c);
+          if (m && m.r >= 0 && m.r < ROWS && m.c >= 0 && m.c < COLS) cells[ck(m.r, m.c)] = v;
+        }
+        return { ...sh, cells };
+      });
+      pushHistory(next);
+      scheduleSave(next, title);
+      return next;
+    });
+  }, [activeSheetId, pushHistory, scheduleSave, title]);
+
+  const insertRow = useCallback((at: number) => remapCells((r, c) => ({ r: r >= at ? r + 1 : r, c })), [remapCells]);
+  const deleteRowAt = useCallback((at: number) => remapCells((r, c) => r === at ? null : ({ r: r > at ? r - 1 : r, c })), [remapCells]);
+  const insertCol = useCallback((at: number) => remapCells((r, c) => ({ r, c: c >= at ? c + 1 : c })), [remapCells]);
+  const deleteColAt = useCallback((at: number) => remapCells((r, c) => c === at ? null : ({ r, c: c > at ? c - 1 : c })), [remapCells]);
+
+  // ── Protected ranges ───────────────────────────────────────────────────────
+  const protectSelection = useCallback(() => {
+    const r1 = selEnd ? Math.min(sel.r, selEnd.r) : sel.r;
+    const r2 = selEnd ? Math.max(sel.r, selEnd.r) : sel.r;
+    const c1 = selEnd ? Math.min(sel.c, selEnd.c) : sel.c;
+    const c2 = selEnd ? Math.max(sel.c, selEnd.c) : sel.c;
+    const a1 = toA1(r1, c1) + ":" + toA1(r2, c2);
+    setSheets(prev => {
+      const next = prev.map(sh => sh.id === activeSheetId ? { ...sh, protectedRanges: [...(sh.protectedRanges ?? []), a1] } : sh);
+      scheduleSave(next, title); return next;
+    });
+    toast.success("Range protected");
+  }, [sel, selEnd, activeSheetId, scheduleSave, title]);
+
+  const unprotectAt = useCallback((r: number, c: number) => {
+    setSheets(prev => {
+      const next = prev.map(sh => {
+        if (sh.id !== activeSheetId) return sh;
+        const kept = (sh.protectedRanges ?? []).filter(rs => {
+          const pr = parseRange(rs);
+          return !(pr && r >= pr.startRow && r <= pr.endRow && c >= pr.startCol && c <= pr.endCol);
+        });
+        return { ...sh, protectedRanges: kept };
+      });
+      scheduleSave(next, title); return next;
+    });
+    toast.success("Range unprotected");
+  }, [activeSheetId, scheduleSave, title]);
 
   // ── Sort ──────────────────────────────────────────────────────────────────
   const sortByCol = (col: number, dir: "asc" | "desc") => {
@@ -858,6 +1064,19 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
           const pct = mx === mn ? 0.5 : (num - mn) / (mx - mn);
           const r2 = Math.round(255 * pct), g = Math.round(255 * (1 - pct));
           return { background: `rgb(${r2},${g},0)`, color: "#fff" };
+        }
+        case "data_bar": {
+          const rangeNums = Object.keys(sheet.cells)
+            .filter(k => {
+              const [rr, cc] = k.split(":").map(Number);
+              return rr >= rule.range.r1 && rr <= rule.range.r2 && cc >= rule.range.c1 && cc <= rule.range.c2;
+            })
+            .map(k => Number(computeCell(sheet.cells[k]?.v ?? "", sheet))).filter(n => !isNaN(n));
+          if (rangeNums.length === 0 || isNaN(num)) break;
+          const mn = Math.min(0, ...rangeNums), mx = Math.max(...rangeNums);
+          const pct = mx === mn ? 0 : Math.max(0, Math.min(1, (num - mn) / (mx - mn)));
+          const w = Math.round(pct * 100);
+          return { background: "linear-gradient(to right, #9ec5fe " + w + "%, transparent " + w + "%)" };
         }
       }
       if (match) return rule.style;
@@ -1011,6 +1230,63 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
     toast.success("Cells merged");
   };
 
+  // Unmerge the merged block anchored at (or containing) the given cell.
+  const unmergeAt = (r: number, c: number) => {
+    setSheets(prev => {
+      let found = false;
+      const next = prev.map(sh => {
+        if (sh.id !== activeSheetId) return sh;
+        const cells = { ...sh.cells };
+        // Find the anchor: scan up/left for a mergeSpan that covers (r,c).
+        for (let ar = 0; ar <= r; ar++) for (let ac = 0; ac <= c; ac++) {
+          const span = cells[ck(ar, ac)]?.mergeSpan;
+          if (!span) continue;
+          if (r >= ar && r < ar + span.rows && c >= ac && c < ac + span.cols) {
+            for (let rr = ar; rr < ar + span.rows; rr++) for (let cc = ac; cc < ac + span.cols; cc++) {
+              const cur = cells[ck(rr, cc)];
+              if (!cur) continue;
+              const { merged: _m, mergeSpan: _s, ...rest } = cur;
+              void _m; void _s;
+              cells[ck(rr, cc)] = rest as Cell;
+            }
+            found = true;
+          }
+        }
+        return { ...sh, cells };
+      });
+      if (found) { scheduleSave(next, title); }
+      return next;
+    });
+  };
+
+  // ── Sparklines ──────────────────────────────────────────────────────────────
+  // Store a sparkline def on the selected cell, referencing the rest of the
+  // selected range (or, for a single cell, the contiguous run to its right).
+  const insertSparkline = () => {
+    let range: string;
+    if (selEnd && (selEnd.r !== sel.r || selEnd.c !== sel.c)) {
+      const r1 = Math.min(sel.r, selEnd.r), r2 = Math.max(sel.r, selEnd.r);
+      const c1 = Math.min(sel.c, selEnd.c), c2 = Math.max(sel.c, selEnd.c);
+      range = toA1(r1, c1) + ":" + toA1(r2, c2);
+    } else {
+      let cc = sel.c + 1;
+      while (cc < COLS && (activeSheet.cells[ck(sel.r, cc)]?.v ?? "") !== "") cc++;
+      if (cc - 1 <= sel.c) { toast.error("Select a data range, or put values to the right of this cell"); return; }
+      range = toA1(sel.r, sel.c + 1) + ":" + toA1(sel.r, cc - 1);
+    }
+    setSheets(prev => {
+      const next = prev.map(sh => {
+        if (sh.id !== activeSheetId) return sh;
+        const cells = { ...sh.cells };
+        const k = ck(sel.r, sel.c);
+        cells[k] = { ...cells[k], v: cells[k]?.v ?? "", spark: { range, mode: "bar", color: "#1a56db" } };
+        return { ...sh, cells };
+      });
+      pushHistory(next); scheduleSave(next, title); return next;
+    });
+    toast.success("Sparkline inserted (" + range + ")");
+  };
+
   // ── Freeze panes ───────────────────────────────────────────────────────────
   const setFreeze = useCallback((patch: { frozenRows?: number; frozenCols?: number }) => {
     setSheets(prev => {
@@ -1019,6 +1295,17 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
       return next;
     });
     setFreezeMenuOpen(false);
+  }, [activeSheetId, scheduleSave, title]);
+
+  // ── Whole-sheet protection toggle ───────────────────────────────────────────
+  const toggleSheetProtect = useCallback(() => {
+    setSheets(prev => {
+      const next = prev.map(sh => sh.id === activeSheetId ? { ...sh, protected: !sh.protected } : sh);
+      const now = next.find(s => s.id === activeSheetId)?.protected;
+      toast.success(now ? "Sheet protected — edits blocked" : "Sheet protection removed");
+      scheduleSave(next, title);
+      return next;
+    });
   }, [activeSheetId, scheduleSave, title]);
 
   // ── Templates ──────────────────────────────────────────────────────────────
@@ -1219,7 +1506,7 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
   );
 
   return (
-    <div className="flex flex-col h-screen bg-white overflow-hidden" onClick={() => { setColorPickerTarget(null); setSortMenuOpen(false); setFreezeMenuOpen(false); setDvDropdown(null); setCurrencyMenuOpen(false); }}>
+    <div className="flex flex-col h-screen bg-white overflow-hidden" onClick={() => { setColorPickerTarget(null); setSortMenuOpen(false); setFreezeMenuOpen(false); setDvDropdown(null); setCurrencyMenuOpen(false); setBorderMenuOpen(false); setCellCtx(null); }}>
 
       {/* ── Title bar ── */}
       <div className="flex items-center gap-2 px-4 py-2 border-b border-[#e8eaed] bg-white z-20">
@@ -1386,6 +1673,27 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
 
         {/* Merge */}
         <ToolBtn icon={<Merge className="h-3.5 w-3.5" />} title="Merge cells" onClick={mergeCells} />
+
+        {/* Borders */}
+        <div className="relative">
+          <ToolBtn
+            icon={<div className="flex items-center gap-0.5"><Grid2x2 className="h-3.5 w-3.5" /><ChevronDown className="h-2.5 w-2.5" /></div>}
+            title="Borders"
+            onClick={e => { e.stopPropagation(); setBorderMenuOpen(v => !v); }}
+          />
+          {borderMenuOpen && (
+            <div className="absolute top-full left-0 mt-1 w-40 bg-white border border-[#e8eaed] rounded-lg shadow-lg z-50 py-1" onClick={e => e.stopPropagation()}>
+              <MenuItem onClick={() => applyBorders("all")}><Grid2x2 className="h-3 w-3" /> All borders</MenuItem>
+              <MenuItem onClick={() => applyBorders("outer")}><Table className="h-3 w-3" /> Outer border</MenuItem>
+              <MenuItem onClick={() => applyBorders("top")}>Top border</MenuItem>
+              <MenuItem onClick={() => applyBorders("bottom")}>Bottom border</MenuItem>
+              <MenuItem onClick={() => applyBorders("left")}>Left border</MenuItem>
+              <MenuItem onClick={() => applyBorders("right")}>Right border</MenuItem>
+              <div className="border-t border-[#e8eaed] my-1" />
+              <MenuItem onClick={() => applyBorders("none")}><X className="h-3 w-3" /> No borders</MenuItem>
+            </div>
+          )}
+        </div>
         <Sep />
 
         {/* Freeze panes */}
@@ -1450,6 +1758,9 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
         {/* Data validation */}
         <ToolBtn icon={<ListChecks className="h-3.5 w-3.5" />} title="Data validation (dropdowns)" active={(activeSheet.dataValidations?.length ?? 0) > 0} onClick={() => setShowValidation(true)} />
 
+        {/* Sheet protection */}
+        <ToolBtn icon={<Lock className="h-3.5 w-3.5" />} title={activeSheet.protected ? "Sheet protected — click to unlock" : "Protect entire sheet"} active={!!activeSheet.protected} onClick={toggleSheetProtect} />
+
         {/* Named ranges */}
         <ToolBtn icon={<Tag className="h-3.5 w-3.5" />} title="Named ranges" active={Object.keys(namedRanges).length > 0} onClick={() => setShowNames(true)} />
 
@@ -1512,7 +1823,7 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
       <div className="flex flex-1 min-h-0">
         {/* Grid */}
         <div className="flex-1 overflow-auto outline-none" ref={gridRef} tabIndex={0} onKeyDown={handleGridKey}>
-          <div style={{ display: "grid", gridTemplateColumns: `${ROW_HEADER_W}px ${Array.from({ length: COLS }, (_, c) => `${activeSheet.colWidths[c] ?? DEFAULT_COL_W}px`).join(" ")}` }}>
+          <div style={{ display: "grid", gridTemplateColumns: `${ROW_HEADER_W}px ${Array.from({ length: COLS }, (_, c) => `${activeSheet.hiddenCols.has(c) ? 6 : (activeSheet.colWidths[c] ?? DEFAULT_COL_W)}px`).join(" ")}` }}>
             {/* Column headers */}
             <div className="sticky top-0 left-0 z-20 bg-[#f8f9fa] border-r border-b border-[#e8eaed]" style={{ height: COL_HEADER_H }} />
             {Array.from({ length: COLS }, (_, c) => (
@@ -1524,6 +1835,12 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
                 hidden={activeSheet.hiddenCols.has(c)}
                 selected={selEnd ? (c >= Math.min(sel.c, selEnd.c) && c <= Math.max(sel.c, selEnd.c)) : c === sel.c}
                 onResize={(w) => setSheets(prev => prev.map(sh => sh.id === activeSheetId ? { ...sh, colWidths: { ...sh.colWidths, [c]: w } } : sh))}
+                onAutofit={() => {
+                  let maxLen = indexToCol(c).length;
+                  for (let r = 0; r < ROWS; r++) { const v = getCellDisplayValue(r, c, activeSheet); if (v.length > maxLen) maxLen = v.length; }
+                  const w = Math.max(48, Math.min(400, maxLen * 8 + 18));
+                  setSheets(prev => { const next = prev.map(sh => sh.id === activeSheetId ? { ...sh, colWidths: { ...sh.colWidths, [c]: w } } : sh); scheduleSave(next, title); return next; });
+                }}
                 onHide={() => setSheets(prev => prev.map(sh => {
                   if (sh.id !== activeSheetId) return sh;
                   const hs = new Set(sh.hiddenCols);
@@ -1573,6 +1890,13 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
                     if (shiftKey) { setSelEnd({ r: rr, c: cc }); }
                     else { setSel({ r: rr, c: cc }); setSelEnd(null); setEditing(false); selecting.current = true; }
                     focusGrid();
+                  }}
+                  onCellContextMenu={(rr, cc, x, y) => {
+                    const inSel = selEnd
+                      ? rr >= Math.min(sel.r, selEnd.r) && rr <= Math.max(sel.r, selEnd.r) && cc >= Math.min(sel.c, selEnd.c) && cc <= Math.max(sel.c, selEnd.c)
+                      : rr === sel.r && cc === sel.c;
+                    if (!inSel) { setSel({ r: rr, c: cc }); setSelEnd(null); }
+                    setCellCtx({ x, y, r: rr, c: cc });
                   }}
                   onCellClick={(rr, cc, shiftKey) => {
                     if (painterStyle) {
@@ -1637,6 +1961,39 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
               onRemove={() => removePivot(pivot.id)}
             />
           ))}
+
+          {/* Slicers */}
+          {(activeSheet.slicers ?? []).map(col => {
+            const values = getUniqueColValues(col);
+            const allowed = activeSheet.filters[col] ?? [];
+            const isOn = (v: string) => allowed.length === 0 || allowed.includes(v);
+            const setAllowed = (next: string[]) => setSheets(prev => { const n = prev.map(sh => sh.id === activeSheetId ? { ...sh, filters: { ...sh.filters, [col]: next } } : sh); scheduleSave(n, title); return n; });
+            const toggle = (v: string) => {
+              if (allowed.length === 0) setAllowed(values.filter(x => x !== v));
+              else if (allowed.includes(v)) setAllowed(allowed.filter(x => x !== v));
+              else setAllowed([...allowed, v]);
+            };
+            return (
+              <div key={"slicer_" + col} className="mx-4 my-4 inline-block align-top bg-white border border-[#e8eaed] rounded-xl p-3 shadow-sm" style={{ minWidth: 180, maxWidth: 240 }}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-semibold text-[#202124]">Slicer · {indexToCol(col)}</span>
+                  <div className="flex items-center gap-1">
+                    <button onClick={() => setAllowed([])} title="Show all" className="text-[10px] text-[#5f6368] hover:text-[#1a56db] px-1">All</button>
+                    <button onClick={() => setSheets(prev => prev.map(sh => sh.id === activeSheetId ? { ...sh, slicers: (sh.slicers ?? []).filter(x => x !== col) } : sh))} className="text-[#80868b] hover:text-[#ea4335]"><X className="h-3.5 w-3.5" /></button>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-1 max-h-44 overflow-y-auto">
+                  {values.length === 0 && <span className="text-[11px] text-[#80868b]">No values</span>}
+                  {values.map(v => (
+                    <button key={v} onClick={() => toggle(v)}
+                      className={`px-2 py-0.5 rounded text-[11px] border transition-colors ${isOn(v) ? "bg-[#e8f0fe] text-[#1a56db] border-[#1a56db]/30" : "bg-white text-[#80868b] border-[#e8eaed] line-through"}`}>
+                      {v}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         {/* AI Panel */}
@@ -1699,6 +2056,47 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
           </div>
         )}
       </div>
+
+      {/* ── Right-click context menu ── */}
+      {cellCtx && (
+        <div
+          className="fixed z-[60] w-52 bg-white border border-[#e8eaed] rounded-lg shadow-lg py-1 text-[#202124]"
+          style={{ left: Math.min(cellCtx.x, (typeof window !== "undefined" ? window.innerWidth : 1200) - 220), top: Math.min(cellCtx.y, (typeof window !== "undefined" ? window.innerHeight : 800) - 380) }}
+          onClick={e => e.stopPropagation()}
+        >
+          <MenuItem onClick={() => { void cutSelection(); setCellCtx(null); }}>Cut</MenuItem>
+          <MenuItem onClick={() => { void copySelection(); setCellCtx(null); }}>Copy</MenuItem>
+          <MenuItem onClick={() => { void pasteFromClipboard(); setCellCtx(null); }}>Paste</MenuItem>
+          <div className="border-t border-[#e8eaed] my-1" />
+          <MenuItem onClick={() => { insertRow(cellCtx.r); setCellCtx(null); }}>Insert row above</MenuItem>
+          <MenuItem onClick={() => { insertRow(cellCtx.r + 1); setCellCtx(null); }}>Insert row below</MenuItem>
+          <MenuItem onClick={() => { deleteRowAt(cellCtx.r); setCellCtx(null); }}>Delete row</MenuItem>
+          <div className="border-t border-[#e8eaed] my-1" />
+          <MenuItem onClick={() => { insertCol(cellCtx.c); setCellCtx(null); }}>Insert column left</MenuItem>
+          <MenuItem onClick={() => { insertCol(cellCtx.c + 1); setCellCtx(null); }}>Insert column right</MenuItem>
+          <MenuItem onClick={() => { deleteColAt(cellCtx.c); setCellCtx(null); }}>Delete column</MenuItem>
+          <div className="border-t border-[#e8eaed] my-1" />
+          <MenuItem onClick={() => { sortByCol(cellCtx.c, "asc"); setCellCtx(null); }}>Sort sheet A → Z (this column)</MenuItem>
+          <MenuItem onClick={() => { sortByCol(cellCtx.c, "desc"); setCellCtx(null); }}>Sort sheet Z → A (this column)</MenuItem>
+          <MenuItem onClick={() => { setSheets(prev => { const next = prev.map(sh => sh.id === activeSheetId ? { ...sh, slicers: [...new Set([...(sh.slicers ?? []), cellCtx.c])] } : sh); scheduleSave(next, title); return next; }); setCellCtx(null); }}>Insert slicer (this column)</MenuItem>
+          <div className="border-t border-[#e8eaed] my-1" />
+          <MenuItem onClick={() => { setFreeze({ frozenRows: cellCtx.r + 1 }); setCellCtx(null); }}>Freeze up to this row</MenuItem>
+          <MenuItem onClick={() => { setFreeze({ frozenCols: cellCtx.c + 1 }); setCellCtx(null); }}>Freeze up to this column</MenuItem>
+          <MenuItem onClick={() => { setFreeze({ frozenRows: 0, frozenCols: 0 }); setCellCtx(null); }}>Unfreeze</MenuItem>
+          <div className="border-t border-[#e8eaed] my-1" />
+          <MenuItem onClick={() => { mergeCells(); setCellCtx(null); }}>Merge cells</MenuItem>
+          <MenuItem onClick={() => { unmergeAt(cellCtx.r, cellCtx.c); setCellCtx(null); }}>Unmerge</MenuItem>
+          <div className="border-t border-[#e8eaed] my-1" />
+          <MenuItem onClick={() => { insertSparkline(); setCellCtx(null); }}>Insert sparkline</MenuItem>
+          <div className="border-t border-[#e8eaed] my-1" />
+          <MenuItem onClick={() => { updateCell(cellCtx.r, cellCtx.c, ""); setCellCtx(null); }}>Clear contents</MenuItem>
+          <MenuItem onClick={() => { setSheets(prev => { const next = prev.map(sh => sh.id === activeSheetId ? { ...sh, hiddenRows: new Set<number>(), hiddenCols: new Set<number>() } : sh); scheduleSave(next, title); return next; }); setCellCtx(null); }}>Show all hidden rows/columns</MenuItem>
+          <div className="border-t border-[#e8eaed] my-1" />
+          {isProtected(cellCtx.r, cellCtx.c)
+            ? <MenuItem onClick={() => { unprotectAt(cellCtx.r, cellCtx.c); setCellCtx(null); }}>Unprotect range</MenuItem>
+            : <MenuItem onClick={() => { protectSelection(); setCellCtx(null); }}>Protect selection</MenuItem>}
+        </div>
+      )}
 
       {/* ── Modals ── */}
       {showShare && <DocShareModal docId={sheetId} docType="sheet" onClose={() => setShowShare(false)} />}
@@ -1843,15 +2241,21 @@ function ColorPicker({ onSelect }: { onSelect: (c: string) => void }) {
 
 // ─── Column header ──────────────────────────────────────────────────────────
 
-function ColHeader({ col: _col, label, width, hidden, selected, onResize, onHide, onSort, onFilter, filterActive }: {
+function ColHeader({ col: _col, label, width, hidden, selected, onResize, onAutofit, onHide, onSort, onFilter, filterActive }: {
   col: number; label: string; width: number; hidden: boolean; selected: boolean;
-  onResize: (w: number) => void; onHide: () => void; onSort: (d: "asc" | "desc") => void;
+  onResize: (w: number) => void; onAutofit: () => void; onHide: () => void; onSort: (d: "asc" | "desc") => void;
   onFilter: () => void; filterActive: boolean;
 }) {
   const [menu, setMenu] = useState(false);
   const resizing = useRef<{ startX: number; startW: number } | null>(null);
 
-  if (hidden) return <div style={{ width: 4, height: COL_HEADER_H, background: "#e8eaed", cursor: "col-resize", borderRight: "1px solid #e8eaed" }} />;
+  if (hidden) return (
+    <div
+      title={"Show column " + label}
+      onClick={onHide}
+      style={{ width: 6, height: COL_HEADER_H, background: "#d0d5dd", cursor: "pointer", borderRight: "1px solid #9aa0a6", borderLeft: "1px solid #9aa0a6" }}
+    />
+  );
 
   return (
     <div
@@ -1864,6 +2268,8 @@ function ColHeader({ col: _col, label, width, hidden, selected, onResize, onHide
       {/* Resize handle */}
       <div
         className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-[#1a56db]"
+        title="Drag to resize · double-click to autofit"
+        onDoubleClick={e => { e.stopPropagation(); onAutofit(); }}
         onMouseDown={e => {
           e.preventDefault();
           resizing.current = { startX: e.clientX, startW: width };
@@ -2029,7 +2435,7 @@ function TemplatesDialog({ hasData, onClose, onApply }: {
 
 // ─── Row ─────────────────────────────────────────────────────────────────────
 
-function Row({ row, cols, sheet, sel, selEnd, editing, editVal, cellInputRef, colWidths, rowHeight, frozenRows, frozenCols, frozenColLefts, frozenRowTops, getCellDisplayValue, getCFStyle, getCellValidation, dvDropdown, onOpenDropdown, onPickValidation, onCloseDropdown, fillDrag, fillTo, onStartFill, onCellEnter, onCellMouseDown, onCellClick, onCellDoubleClick, onEditChange, onEditCommit, onEditCancel, onRowResize, onHideRow }: {
+function Row({ row, cols, sheet, sel, selEnd, editing, editVal, cellInputRef, colWidths, rowHeight, frozenRows, frozenCols, frozenColLefts, frozenRowTops, getCellDisplayValue, getCFStyle, getCellValidation, dvDropdown, onOpenDropdown, onPickValidation, onCloseDropdown, fillDrag, fillTo, onStartFill, onCellEnter, onCellMouseDown, onCellContextMenu, onCellClick, onCellDoubleClick, onEditChange, onEditCommit, onEditCancel, onRowResize, onHideRow }: {
   row: number; cols: number; sheet: SheetTab; sel: { r: number; c: number }; selEnd: { r: number; c: number } | null;
   editing: boolean; editVal: string; cellInputRef: React.RefObject<HTMLInputElement | null>;
   colWidths: Record<number, number>; rowHeight: number;
@@ -2047,6 +2453,7 @@ function Row({ row, cols, sheet, sel, selEnd, editing, editVal, cellInputRef, co
   onStartFill: () => void;
   onCellEnter: (r: number, c: number) => void;
   onCellMouseDown: (r: number, c: number, shift: boolean) => void;
+  onCellContextMenu: (r: number, c: number, x: number, y: number) => void;
   onCellClick: (r: number, c: number, shift: boolean) => void;
   onCellDoubleClick: (r: number, c: number) => void;
   onEditChange: (v: string) => void;
@@ -2167,6 +2574,10 @@ function Row({ row, cols, sheet, sel, selEnd, editing, editVal, cellInputRef, co
           ...stickyFreeze,
           ...(isLastFrozenCol ? { borderRight: "2px solid #d0d5dd" } : {}),
           ...(cellIsLastFrozenRow ? { borderBottom: "2px solid #d0d5dd" } : {}),
+          ...(style.border?.top ? { borderTop: "1px solid #5f6368" } : {}),
+          ...(style.border?.bottom ? { borderBottom: "1px solid #5f6368" } : {}),
+          ...(style.border?.left ? { borderLeft: "1px solid #5f6368" } : {}),
+          ...(style.border?.right ? { borderRight: "1px solid #5f6368" } : {}),
         };
 
         const isFillPreview = inFillPreview(c);
@@ -2182,6 +2593,7 @@ function Row({ row, cols, sheet, sel, selEnd, editing, editVal, cellInputRef, co
             onMouseDown={e => { if (e.button === 0) onCellMouseDown(row, c, e.shiftKey); }}
             onClick={e => onCellClick(row, c, e.shiftKey)}
             onDoubleClick={() => onCellDoubleClick(row, c)}
+            onContextMenu={e => { e.preventDefault(); onCellContextMenu(row, c, e.clientX, e.clientY); }}
             onMouseEnter={() => onCellEnter(row, c)}
           >
             {isEditing ? (
@@ -2199,6 +2611,8 @@ function Row({ row, cols, sheet, sel, selEnd, editing, editVal, cellInputRef, co
                 }}
                 onBlur={() => onEditCommit("none")}
               />
+            ) : cell?.spark ? (
+              <SparklineCell spark={cell.spark} sheet={sheet} getCellDisplayValue={getCellDisplayValue} height={rowHeight} />
             ) : (
               <span className="text-xs leading-none flex items-center h-full" style={{ fontSize: style.fontSize ?? 12, paddingLeft: (style.indent ?? 0) * 12 }}>
                 {display}
@@ -2206,7 +2620,7 @@ function Row({ row, cols, sheet, sel, selEnd, editing, editVal, cellInputRef, co
             )}
 
             {/* Data-validation dropdown caret */}
-            {validation && !isEditing && (
+            {validation && validation.type === "list" && !isEditing && (
               <button
                 title="Choose from list"
                 onClick={e => { e.stopPropagation(); onOpenDropdown(row, c, validation.values); }}
@@ -2483,9 +2897,10 @@ function CFDialog({ defaultRange, onClose, onAdd }: {
             <option value="top_n">Top N values</option>
             <option value="bottom_n">Bottom N values</option>
             <option value="color_scale">Color scale</option>
+            <option value="data_bar">Data bars</option>
           </select>
         </div>
-        {ruleType !== "not_empty" && ruleType !== "color_scale" && (
+        {ruleType !== "not_empty" && ruleType !== "color_scale" && ruleType !== "data_bar" && (
           <div className="flex gap-2">
             <input placeholder="Value" className="flex-1 px-3 py-2 bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg text-sm focus:outline-none focus:border-[#1a56db]/60"
               value={value} onChange={e => setValue(e.target.value)} />
@@ -2495,7 +2910,7 @@ function CFDialog({ defaultRange, onClose, onAdd }: {
             )}
           </div>
         )}
-        {ruleType !== "color_scale" && (
+        {ruleType !== "color_scale" && ruleType !== "data_bar" && (
           <div className="flex gap-3 items-center">
             <div>
               <label className="text-[10px] text-[#5f6368] block mb-1">Background</label>
@@ -2694,6 +3109,52 @@ function NamesDialog({ names, defaultRange, onClose, onSave }: {
 
 // ─── Data Validation Dialog ───────────────────────────────────────────────────
 
+// ─── Sparkline cell renderer ────────────────────────────────────────────────
+
+function SparklineCell({ spark, sheet, getCellDisplayValue, height }: {
+  spark: Sparkline;
+  sheet: SheetTab;
+  getCellDisplayValue: (r: number, c: number, s: SheetTab) => string;
+  height: number;
+}) {
+  const pr = parseRange(spark.range.toUpperCase());
+  const vals: number[] = [];
+  if (pr) {
+    for (let r = pr.startRow; r <= pr.endRow; r++)
+      for (let c = pr.startCol; c <= pr.endCol; c++) {
+        const n = Number(getCellDisplayValue(r, c, sheet).replace(/[^0-9.\-]/g, ""));
+        if (!isNaN(n)) vals.push(n);
+      }
+  }
+  if (!vals.length) return <span className="text-[10px] text-[#80868b] flex items-center h-full">(no data)</span>;
+
+  const w = 80;
+  const h = Math.max(12, Math.min(height - 4, 22));
+  const max = Math.max(...vals, 0);
+  const min = Math.min(...vals, 0);
+  const span = max - min || 1;
+  const norm = (v: number) => h - ((v - min) / span) * h;
+
+  return (
+    <svg width={w} height={h} viewBox={"0 0 " + w + " " + h} className="block" preserveAspectRatio="none">
+      {spark.mode === "line" ? (
+        <polyline
+          fill="none"
+          stroke={spark.color}
+          strokeWidth={1.5}
+          points={vals.map((v, i) => (vals.length === 1 ? w / 2 : (i / (vals.length - 1)) * w) + "," + norm(v)).join(" ")}
+        />
+      ) : (
+        vals.map((v, i) => {
+          const bw = w / vals.length;
+          const top = norm(v);
+          return <rect key={i} x={i * bw + 0.5} y={top} width={Math.max(1, bw - 1)} height={Math.max(1, h - top)} fill={spark.color} />;
+        })
+      )}
+    </svg>
+  );
+}
+
 function ValidationDialog({ defaultRange, rules, onClose, onAdd, onRemove }: {
   defaultRange: string;
   rules: DataValidation[];
@@ -2702,27 +3163,58 @@ function ValidationDialog({ defaultRange, rules, onClose, onAdd, onRemove }: {
   onRemove: (id: string) => void;
 }) {
   const [range, setRange] = useState(defaultRange);
+  const [kind, setKind] = useState<"list" | "number">("list");
   const [values, setValues] = useState("");
   const [strict, setStrict] = useState(true);
+  const [op, setOp] = useState<NumberOp>("between");
+  const [minV, setMinV] = useState("");
+  const [maxV, setMaxV] = useState("");
 
   const add = () => {
     const pr = parseRange(range.toUpperCase());
     const single = parseRef(range.toUpperCase());
     if (!pr && !single) return toast.error("Invalid range (e.g. A1:A10)");
+    const r = pr ?? { startRow: single!.row, startCol: single!.col, endRow: single!.row, endCol: single!.col };
+    const baseRange = { r1: r.startRow, c1: r.startCol, r2: r.endRow, c2: r.endCol };
+    if (kind === "number") {
+      const min = Number(minV);
+      if (minV === "" || isNaN(min)) return toast.error("Enter a numeric value");
+      const max = op === "between" ? Number(maxV) : undefined;
+      if (op === "between" && (maxV === "" || isNaN(Number(maxV)))) return toast.error("Enter a maximum value");
+      onAdd({ range: baseRange, type: "number", values: [], strict, op, min, max });
+      setMinV(""); setMaxV("");
+      toast.success("Number rule added");
+      return;
+    }
     const list = values.split(",").map(v => v.trim()).filter(Boolean);
     if (!list.length) return toast.error("Enter at least one option (comma-separated)");
-    const r = pr ?? { startRow: single!.row, startCol: single!.col, endRow: single!.row, endCol: single!.col };
-    onAdd({ range: { r1: r.startRow, c1: r.startCol, r2: r.endRow, c2: r.endCol }, type: "list", values: list, strict });
+    onAdd({ range: baseRange, type: "list", values: list, strict });
     setValues("");
     toast.success("Dropdown added");
   };
 
   const rangeLabel = (r: DataValidation["range"]) => `${indexToCol(r.c1)}${r.r1 + 1}:${indexToCol(r.c2)}${r.r2 + 1}`;
+  const opLabel = (o: NumberOp, mn?: number, mx?: number) =>
+    o === "between" ? "between " + mn + " and " + mx :
+    o === "gt" ? "> " + mn : o === "lt" ? "< " + mn :
+    o === "gte" ? "≥ " + mn : o === "lte" ? "≤ " + mn :
+    o === "eq" ? "= " + mn : "≠ " + mn;
+  const ruleSummary = (rule: DataValidation) =>
+    rule.type === "number" ? opLabel(rule.op ?? "between", rule.min, rule.max) : rule.values.join(", ");
 
   return (
     <Modal title="Data validation" onClose={onClose}>
       <div className="space-y-3 p-4">
-        <p className="text-xs text-[#5f6368]">Turn a range into dropdowns. Cells show a ▾ caret to pick from your list.</p>
+        <p className="text-xs text-[#5f6368]">Restrict what a range accepts — a dropdown list, or a numeric range.</p>
+
+        <div className="flex gap-1 bg-[#f1f3f4] rounded-lg p-0.5">
+          {(["list", "number"] as const).map(k => (
+            <button key={k} onClick={() => setKind(k)}
+              className={"flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors " + (kind === k ? "bg-white text-[#1a56db] shadow-sm" : "text-[#5f6368] hover:text-[#202124]")}>
+              {k === "list" ? "List" : "Number"}
+            </button>
+          ))}
+        </div>
 
         {rules.length > 0 && (
           <div className="space-y-1.5 max-h-36 overflow-y-auto">
@@ -2730,7 +3222,7 @@ function ValidationDialog({ defaultRange, rules, onClose, onAdd, onRemove }: {
               <div key={rule.id} className="flex items-center gap-2 bg-[#f8f9fa] border border-[#e8eaed] rounded-lg px-3 py-1.5">
                 <ListChecks className="h-3.5 w-3.5 text-[#1a56db] flex-shrink-0" />
                 <span className="text-xs font-mono font-semibold text-[#202124] flex-shrink-0">{rangeLabel(rule.range)}</span>
-                <span className="text-xs text-[#5f6368] ml-1 truncate flex-1">{rule.values.join(", ")}</span>
+                <span className="text-xs text-[#5f6368] ml-1 truncate flex-1">{rule.type === "number" ? "#" : ""} {ruleSummary(rule)}</span>
                 <button onClick={() => onRemove(rule.id)}
                   className="p-1 rounded hover:bg-[#f1f3f4] text-[#80868b] hover:text-[#ea4335] flex-shrink-0"><X className="h-3.5 w-3.5" /></button>
               </div>
@@ -2743,20 +3235,48 @@ function ValidationDialog({ defaultRange, rules, onClose, onAdd, onRemove }: {
           <input value={range} onChange={e => setRange(e.target.value)} placeholder="A1:A10"
             className="w-full px-2.5 py-1.5 bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg text-xs font-mono focus:outline-none focus:border-[#1a56db]/60" />
         </div>
-        <div>
-          <label className="text-[11px] font-medium text-[#5f6368] mb-1 block">Options (comma-separated)</label>
-          <input value={values} onChange={e => setValues(e.target.value)} placeholder="Low, Medium, High, Critical"
-            onKeyDown={e => e.key === "Enter" && add()}
-            className="w-full px-2.5 py-1.5 bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg text-xs focus:outline-none focus:border-[#1a56db]/60" />
-        </div>
+        {kind === "list" ? (
+          <div>
+            <label className="text-[11px] font-medium text-[#5f6368] mb-1 block">Options (comma-separated)</label>
+            <input value={values} onChange={e => setValues(e.target.value)} placeholder="Low, Medium, High, Critical"
+              onKeyDown={e => e.key === "Enter" && add()}
+              className="w-full px-2.5 py-1.5 bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg text-xs focus:outline-none focus:border-[#1a56db]/60" />
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <div>
+              <label className="text-[11px] font-medium text-[#5f6368] mb-1 block">Condition</label>
+              <select value={op} onChange={e => setOp(e.target.value as NumberOp)}
+                className="w-full px-2.5 py-1.5 bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg text-xs focus:outline-none focus:border-[#1a56db]/60">
+                <option value="between">Between</option>
+                <option value="gt">Greater than</option>
+                <option value="gte">Greater than or equal</option>
+                <option value="lt">Less than</option>
+                <option value="lte">Less than or equal</option>
+                <option value="eq">Equal to</option>
+                <option value="neq">Not equal to</option>
+              </select>
+            </div>
+            <div className="flex gap-2">
+              <input type="number" value={minV} onChange={e => setMinV(e.target.value)} placeholder={op === "between" ? "Min" : "Value"}
+                onKeyDown={e => e.key === "Enter" && op !== "between" && add()}
+                className="flex-1 px-2.5 py-1.5 bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg text-xs focus:outline-none focus:border-[#1a56db]/60" />
+              {op === "between" && (
+                <input type="number" value={maxV} onChange={e => setMaxV(e.target.value)} placeholder="Max"
+                  onKeyDown={e => e.key === "Enter" && add()}
+                  className="flex-1 px-2.5 py-1.5 bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg text-xs focus:outline-none focus:border-[#1a56db]/60" />
+              )}
+            </div>
+          </div>
+        )}
         <label className="flex items-center gap-2 text-xs text-[#5f6368] cursor-pointer">
           <input type="checkbox" checked={strict} onChange={e => setStrict(e.target.checked)} />
-          Reject input outside the list
+          {kind === "list" ? "Reject input outside the list" : "Reject out-of-range numbers"}
         </label>
 
         <div className="flex gap-2 pt-1">
           <button onClick={onClose} className="flex-1 px-4 py-2 text-sm border border-[#e8eaed] rounded-lg text-[#5f6368] hover:bg-[#f1f3f4]">Done</button>
-          <button onClick={add} className="flex-1 px-4 py-2 text-sm font-semibold bg-[#1a56db] text-white rounded-lg hover:bg-[#1648c7]">Add dropdown</button>
+          <button onClick={add} className="flex-1 px-4 py-2 text-sm font-semibold bg-[#1a56db] text-white rounded-lg hover:bg-[#1648c7]">{kind === "list" ? "Add dropdown" : "Add rule"}</button>
         </div>
       </div>
     </Modal>
@@ -2766,6 +3286,7 @@ function ValidationDialog({ defaultRange, rules, onClose, onAdd, onRemove }: {
 // ─── Pivot Widget ─────────────────────────────────────────────────────────────
 
 function PivotWidget({ def, rows, onRemove }: { def: PivotDef; rows: string[][]; onRemove: () => void }) {
+  const [pivotView, setPivotView] = useState<"table" | "chart">("table");
   if (!rows.length) {
     return (
       <div className="mx-4 my-4 bg-white border border-[#e8eaed] rounded-xl p-4 relative shadow-sm inline-block">
@@ -2780,6 +3301,13 @@ function PivotWidget({ def, rows, onRemove }: { def: PivotDef; rows: string[][];
   const fmt = (n: number) => Number.isInteger(n) ? n.toLocaleString() : n.toLocaleString(undefined, { maximumFractionDigits: 2 });
   const showColHeader = def.colField !== null;
 
+  const seriesKeys = piv.colKeys.map(ck => ck === "__ALL__" ? aggLabel : ck);
+  const chartData = piv.rowKeys.map(rk => {
+    const row: Record<string, string | number> = { name: rk || "(blank)" };
+    piv.colKeys.forEach((ck, i) => { row[seriesKeys[i]] = piv.cells[rk + PIVOT_SEP + ck] ?? 0; });
+    return row;
+  });
+
   return (
     <div className="mx-4 my-4 bg-white border border-[#e8eaed] rounded-xl p-4 relative shadow-sm inline-block max-w-full overflow-x-auto">
       <div className="flex items-center justify-between mb-2 gap-6">
@@ -2787,8 +3315,28 @@ function PivotWidget({ def, rows, onRemove }: { def: PivotDef; rows: string[][];
           Pivot · {aggLabel} of {headers[def.valueField] ?? `col ${def.valueField}`} by {headers[def.rowField] ?? `col ${def.rowField}`}
           {showColHeader ? ` × ${headers[def.colField!] ?? ""}` : ""}
         </span>
-        <button onClick={onRemove} className="text-[#80868b] hover:text-[#ea4335]"><X className="h-3.5 w-3.5" /></button>
+        <div className="flex items-center gap-1">
+          <button onClick={() => setPivotView(v => v === "table" ? "chart" : "table")} title={pivotView === "table" ? "Show chart" : "Show table"}
+            className="flex items-center gap-1 px-2 py-0.5 text-[11px] rounded text-[#5f6368] hover:bg-[#f1f3f4]">
+            <BarChart3 className="h-3.5 w-3.5" /> {pivotView === "table" ? "Chart" : "Table"}
+          </button>
+          <button onClick={onRemove} className="text-[#80868b] hover:text-[#ea4335]"><X className="h-3.5 w-3.5" /></button>
+        </div>
       </div>
+      {pivotView === "chart" ? (
+        <div style={{ width: Math.max(360, Math.min(720, chartData.length * 70 + 120)), height: 280 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e8eaed" />
+              <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+              <YAxis tick={{ fontSize: 11 }} />
+              <Tooltip />
+              <Legend />
+              {seriesKeys.map((k, i) => <Bar key={k} dataKey={k} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      ) : (
       <table className="text-xs border-collapse">
         <thead>
           <tr>
@@ -2818,6 +3366,7 @@ function PivotWidget({ def, rows, onRemove }: { def: PivotDef; rows: string[][];
           </tr>
         </tbody>
       </table>
+      )}
     </div>
   );
 }

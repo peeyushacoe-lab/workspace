@@ -17,7 +17,7 @@ import {
   Sparkles, Layers, Grid3x3, LayoutGrid,   Undo2, Redo2, ZoomIn, ZoomOut,
   LayoutTemplate, Eye, EyeOff, FolderPlus, ChevronRight as ChevronRightIcon, Images,
   Triangle, Star, MoveRight, Minus, Grid, Timer, RotateCcw,
-  Search, Replace, Video, Hash,
+  Search, Replace, Video, Hash, Lock, Unlock, Music, Volume2,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -36,17 +36,46 @@ type ElementStyle = {
   underline?: boolean;
   color?: string;
   bg?: string;
+  bg2?: string;
+  gradient?: boolean;
   borderColor?: string;
   borderWidth?: number;
   borderRadius?: number;
   opacity?: number;
   align?: "left" | "center" | "right";
+  valign?: "top" | "middle" | "bottom";
   shadow?: boolean;
+  rotation?: number;
 };
+
+const VALIGN_JUSTIFY: Record<string, string> = { top: "flex-start", middle: "center", bottom: "flex-end" };
+
+// SmartArt (v1): preset diagrams built from shape + text element groups.
+type SmartArtKind = "list" | "process" | "cycle" | "hierarchy";
+function buildSmartArt(kind: SmartArtKind, acc: string, textColor: string): Omit<SlideElement, "id">[] {
+  const box = (x: number, y: number, w: number, h: number, label: string): Omit<SlideElement, "id">[] => ([
+    { type: "shape", x, y, w, h, shapeType: "rect", style: { bg: acc + "22", borderColor: acc, borderWidth: 2, borderRadius: 12 } },
+    { type: "text", x: x + 8, y, w: w - 16, h, content: label, style: { fontSize: 18, color: textColor, align: "center", valign: "middle" } },
+  ]);
+  const out: Omit<SlideElement, "id">[] = [];
+  if (kind === "list") {
+    for (let i = 0; i < 4; i++) out.push(...box(200, 70 + i * 105, 560, 80, "Item " + (i + 1)));
+  } else if (kind === "process") {
+    const w = 200, gap = 28; let x = 50;
+    for (let i = 0; i < 4; i++) { out.push(...box(x, 230, w, 110, "Step " + (i + 1))); if (i < 3) out.push({ type: "text", x: x + w, y: 230, w: gap, h: 110, content: "›", style: { fontSize: 30, color: acc, align: "center", valign: "middle" } }); x += w + gap; }
+  } else if (kind === "cycle") {
+    const pos = [[380, 70], [700, 225], [380, 380], [140, 225]];
+    pos.forEach((p, i) => out.push(...box(p[0], p[1], 200, 90, "Phase " + (i + 1))));
+  } else {
+    out.push(...box(380, 70, 200, 90, "Top"));
+    for (let i = 0; i < 3; i++) out.push(...box(140 + i * 240, 290, 200, 90, "Child " + (i + 1)));
+  }
+  return out;
+}
 
 type SlideElement = {
   id: string;
-  type: "text" | "shape" | "image" | "chart" | "table" | "code" | "video";
+  type: "text" | "shape" | "image" | "chart" | "table" | "code" | "video" | "audio";
   x: number; y: number; w: number; h: number;
   content?: string;
   src?: string;
@@ -275,18 +304,22 @@ function SlideElementView({ el, zoom, theme, anim, animDelay = 0, editMode = fal
     width: el.w * zoom, height: el.h * zoom,
     opacity: s.opacity ?? 1,
     zIndex: el.zIndex ?? 1,
+    ...(s.rotation ? { transform: "rotate(" + s.rotation + "deg)" } : {}),
     ...(kf ? { animation: `${kf} 0.6s ease both`, animationDelay: `${animDelay}ms` } : {}),
   };
 
   if (el.type === "text") {
     return (
-      <div style={{ ...base, fontSize: (s.fontSize ?? 18) * zoom, fontWeight: s.bold ? "bold" : "normal", fontStyle: s.italic ? "italic" : "normal", textDecoration: s.underline ? "underline" : "none", color: s.color ?? theme.text, textAlign: s.align ?? "left", whiteSpace: "pre-wrap", lineHeight: 1.4, overflow: "hidden" }}>
+      <div style={{ ...base, display: "flex", flexDirection: "column", justifyContent: VALIGN_JUSTIFY[s.valign ?? "top"], fontSize: (s.fontSize ?? 18) * zoom, fontWeight: s.bold ? "bold" : "normal", fontStyle: s.italic ? "italic" : "normal", textDecoration: s.underline ? "underline" : "none", color: s.color ?? theme.text, textAlign: s.align ?? "left", whiteSpace: "pre-wrap", lineHeight: 1.4, overflow: "hidden" }}>
         {el.content}
       </div>
     );
   }
   if (el.type === "shape") {
-    const fill = s.bg ?? theme.secondary + "40";
+    const solid = s.bg ?? theme.secondary + "40";
+    const fill = s.gradient && s.bg2
+      ? "linear-gradient(135deg, " + (s.bg ?? theme.secondary) + ", " + s.bg2 + ")"
+      : solid;
     const stroke = s.borderColor ?? "transparent";
     const strokeW = s.borderWidth ?? 0;
     const st = el.shapeType ?? "rect";
@@ -400,6 +433,31 @@ function SlideElementView({ el, zoom, theme, anim, animDelay = 0, editMode = fal
       </div>
     );
   }
+  if (el.type === "audio") {
+    // Edit mode: a non-interactive speaker poster so the element can be selected / dragged.
+    if (editMode) {
+      return (
+        <div style={{ ...base, background: "#e8f0fe", border: "1px solid #1a56db", borderRadius: 8 * zoom, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#1a56db", pointerEvents: "none" }}>
+          <Volume2 style={{ width: 24 * zoom, height: 24 * zoom }} />
+          <span style={{ fontSize: 10 * zoom, marginTop: 4 * zoom, opacity: 0.8, maxWidth: "90%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {el.src ? "Audio clip" : "No audio URL"}
+          </span>
+        </div>
+      );
+    }
+    if (el.src) {
+      return (
+        <div style={{ ...base, display: "flex", alignItems: "center", justifyContent: "center", padding: 8 * zoom }}>
+          <audio controls src={el.src} style={{ width: "100%" }} />
+        </div>
+      );
+    }
+    return (
+      <div style={{ ...base, background: "#f1f3f4", borderRadius: 8 * zoom, display: "flex", alignItems: "center", justifyContent: "center", color: "#80868b", fontSize: 12 * zoom }}>
+        No audio URL
+      </div>
+    );
+  }
   return null;
 }
 
@@ -441,6 +499,7 @@ export default function SlidesEditor({ presId }: { presId: string }) {
   const [showNumbers, setShowNumbers] = useState(false);
   const [showFooter, setShowFooter] = useState(false);
   const [footerText, setFooterText] = useState("");
+  const [masterLogo, setMasterLogo] = useState("");
   const [showDeckSettings, setShowDeckSettings] = useState(false);
 
   // Find & Replace (Feature 1)
@@ -474,13 +533,14 @@ export default function SlidesEditor({ presId }: { presId: string }) {
         if (d.title) setTitle(d.title);
         if (d.content) {
           try {
-            const parsed = JSON.parse(d.content) as { slides?: Slide[]; themeId?: string; deck?: { showNumbers?: boolean; showFooter?: boolean; footerText?: string } };
+            const parsed = JSON.parse(d.content) as { slides?: Slide[]; themeId?: string; deck?: { showNumbers?: boolean; showFooter?: boolean; footerText?: string; masterLogo?: string } };
             if (parsed.slides?.length) setSlides(parsed.slides);
             if (parsed.themeId) setTheme(THEMES.find(t => t.id === parsed.themeId) ?? THEMES[0]);
             if (parsed.deck) {
               if (typeof parsed.deck.showNumbers === "boolean") setShowNumbers(parsed.deck.showNumbers);
               if (typeof parsed.deck.showFooter === "boolean") setShowFooter(parsed.deck.showFooter);
               if (typeof parsed.deck.footerText === "string") setFooterText(parsed.deck.footerText);
+              if (typeof parsed.deck.masterLogo === "string") setMasterLogo(parsed.deck.masterLogo);
             }
           } catch { /* fresh */ }
         }
@@ -498,11 +558,11 @@ export default function SlidesEditor({ presId }: { presId: string }) {
         await fetch(`/api/slides/${presId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title: t, content: JSON.stringify({ slides: s, themeId: theme.id, deck: { showNumbers, showFooter, footerText } }) }),
+          body: JSON.stringify({ title: t, content: JSON.stringify({ slides: s, themeId: theme.id, deck: { showNumbers, showFooter, footerText, masterLogo } }) }),
         });
       } finally { setSaving(false); }
     }, 1500);
-  }, [presId, theme.id, showNumbers, showFooter, footerText]);
+  }, [presId, theme.id, showNumbers, showFooter, footerText, masterLogo]);
 
   // ── History ───────────────────────────────────────────────────────────────
   const pushHistory = useCallback((s: Slide[]) => {
@@ -535,6 +595,13 @@ export default function SlidesEditor({ presId }: { presId: string }) {
     const newEl: SlideElement = { ...el, id: `el_${Date.now()}`, zIndex: activeSlide.elements.length + 1 };
     updateSlide({ elements: [...activeSlide.elements, newEl] });
     setSelectedElId(newEl.id);
+  }, [activeSlide, updateSlide]);
+
+  const addElements = useCallback((els: Omit<SlideElement, "id">[]) => {
+    const baseZ = activeSlide.elements.length + 1;
+    const withIds: SlideElement[] = els.map((el, i) => ({ ...el, id: "el_" + Date.now() + "_" + i, zIndex: baseZ + i }));
+    updateSlide({ elements: [...activeSlide.elements, ...withIds] });
+    setSelectedElId(null);
   }, [activeSlide, updateSlide]);
 
   const deleteElement = useCallback((id: string) => {
@@ -644,7 +711,7 @@ export default function SlidesEditor({ presId }: { presId: string }) {
   const onResizeMouseDown = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     const el = activeSlide.elements.find(el => el.id === id);
-    if (!el) return;
+    if (!el || el.locked) return;
     resizing.current = { id, startX: e.clientX, startY: e.clientY, origW: el.w, origH: el.h };
     const snap = (n: number) => snapToGrid ? Math.round(n / GRID) * GRID : n;
     const onMove = (ev: MouseEvent) => {
@@ -1010,6 +1077,10 @@ export default function SlidesEditor({ presId }: { presId: string }) {
             {ps.elements.slice().sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0)).map((el, i) => (
               <SlideElementView key={el.id} el={el} zoom={window.innerWidth * 0.8 / CANVAS_W} theme={theme} anim animDelay={150 + i * 120} />
             ))}
+            {/* Master logo overlay */}
+            {masterLogo && (
+              <img src={masterLogo} alt="" className="absolute top-3 right-4 pointer-events-none select-none" style={{ maxHeight: "12%", maxWidth: "22%", objectFit: "contain" }} />
+            )}
             {/* Deck footer overlay (Feature 2) */}
             {showFooter && footerText.trim() && (
               <div className="absolute bottom-3 left-5 right-24 text-sm font-medium select-none pointer-events-none truncate" style={{ color: theme.secondary }}>
@@ -1154,6 +1225,7 @@ export default function SlidesEditor({ presId }: { presId: string }) {
         <ToolBtn icon={<Triangle className="h-3.5 w-3.5" />} title="Triangle" onClick={() => addElement({ type: "shape", x: 100, y: 100, w: 140, h: 130, shapeType: "triangle", style: { bg: theme.accent + "40" } })} />
         <ToolBtn icon={<MoveRight className="h-3.5 w-3.5" />} title="Arrow" onClick={() => addElement({ type: "shape", x: 100, y: 120, w: 200, h: 100, shapeType: "arrow", style: { bg: theme.accent + "40" } })} />
         <ToolBtn icon={<Minus className="h-3.5 w-3.5" />} title="Line" onClick={() => addElement({ type: "shape", x: 100, y: 160, w: 240, h: 12, shapeType: "line", style: { borderColor: theme.accent, borderWidth: 3 } })} />
+        <ToolBtn icon={<MoveRight className="h-3.5 w-3.5 -rotate-45" />} title="Connector (diagonal line)" onClick={() => addElement({ type: "shape", x: 140, y: 140, w: 240, h: 12, shapeType: "line", style: { borderColor: theme.accent, borderWidth: 3, rotation: -30 } })} />
         <ToolBtn icon={<Star className="h-3.5 w-3.5" />} title="Star" onClick={() => addElement({ type: "shape", x: 100, y: 100, w: 140, h: 140, shapeType: "star", style: { bg: theme.accent + "40" } })} />
         <label title="Insert image (upload)" className="flex items-center justify-center h-7 w-7 rounded text-sm text-[#5f6368] hover:bg-[#f1f3f4] cursor-pointer transition-colors">
           <ImageIcon className="h-3.5 w-3.5" />
@@ -1170,7 +1242,17 @@ export default function SlidesEditor({ presId }: { presId: string }) {
         <ToolBtn icon={<BarChart3 className="h-3.5 w-3.5" />} title="Bar chart" onClick={() => addElement({ type: "chart", x: 200, y: 120, w: 400, h: 300, chartType: "bar", chartData: [{ name: "Q1", value: 40 }, { name: "Q2", value: 65 }, { name: "Q3", value: 50 }, { name: "Q4", value: 80 }] })} />
         <ToolBtn icon={<Table className="h-3.5 w-3.5" />} title="Table" onClick={() => addElement({ type: "table", x: 100, y: 120, w: 500, h: 200, tableRows: [["Header 1", "Header 2", "Header 3"], ["Row 1 A", "Row 1 B", "Row 1 C"], ["Row 2 A", "Row 2 B", "Row 2 C"]] })} />
         <ToolBtn icon={<Code2 className="h-3.5 w-3.5" />} title="Code block" onClick={() => addElement({ type: "code", x: 100, y: 120, w: 600, h: 200, content: "// Your code here\nconst hello = 'world';\nconsole.log(hello);" })} />
+        <select title="Insert SmartArt diagram" className="text-xs border border-[#e8eaed] rounded px-1 py-0.5 h-7 bg-white text-[#5f6368] cursor-pointer"
+          value=""
+          onChange={e => { const k = e.target.value as SmartArtKind; if (k) addElements(buildSmartArt(k, theme.accent, theme.text)); }}>
+          <option value="">SmartArt ▾</option>
+          <option value="list">List</option>
+          <option value="process">Process</option>
+          <option value="cycle">Cycle</option>
+          <option value="hierarchy">Hierarchy</option>
+        </select>
         <ToolBtn icon={<Video className="h-3.5 w-3.5" />} title="Embed video (YouTube/Vimeo/MP4 URL)" onClick={() => { const u = prompt("Video URL (YouTube, Vimeo, or direct .mp4):"); if (u && u.trim()) addElement({ type: "video", x: 180, y: 120, w: 480, h: 270, src: u.trim() }); }} />
+        <ToolBtn icon={<Music className="h-3.5 w-3.5" />} title="Embed audio (direct .mp3/.wav/.ogg URL)" onClick={() => { const u = prompt("Audio URL (direct .mp3, .wav or .ogg):"); if (u && u.trim()) addElement({ type: "audio", x: 200, y: 180, w: 360, h: 64, src: u.trim() }); }} />
         <Sep />
 
         {/* Element style (when selected) */}
@@ -1182,6 +1264,13 @@ export default function SlidesEditor({ presId }: { presId: string }) {
             <ToolBtn icon={<AlignLeft className="h-3.5 w-3.5" />} title="Left" active={selectedEl.style?.align === "left"} onClick={() => updateElement(selectedEl.id, { style: { ...selectedEl.style, align: "left" } })} />
             <ToolBtn icon={<AlignCenter className="h-3.5 w-3.5" />} title="Center" active={selectedEl.style?.align === "center"} onClick={() => updateElement(selectedEl.id, { style: { ...selectedEl.style, align: "center" } })} />
             <ToolBtn icon={<AlignRight className="h-3.5 w-3.5" />} title="Right" active={selectedEl.style?.align === "right"} onClick={() => updateElement(selectedEl.id, { style: { ...selectedEl.style, align: "right" } })} />
+            <select title="Vertical align" className="text-xs border border-[#e8eaed] rounded px-1 py-0.5 h-7 bg-white text-[#5f6368]"
+              value={selectedEl.style?.valign ?? "top"}
+              onChange={e => updateElement(selectedEl.id, { style: { ...selectedEl.style, valign: e.target.value as ElementStyle["valign"] } })}>
+              <option value="top">⊤ Top</option>
+              <option value="middle">⊟ Middle</option>
+              <option value="bottom">⊥ Bottom</option>
+            </select>
             <Sep />
             <select className="text-xs border border-[#e8eaed] rounded px-1 py-0.5 h-7 bg-white" value={selectedEl.style?.fontSize ?? 18} onChange={e => updateElement(selectedEl.id, { style: { ...selectedEl.style, fontSize: Number(e.target.value) } })}>
               {[12,14,16,18,20,24,28,32,36,40,48,56,64,72].map(s => <option key={s}>{s}</option>)}
@@ -1191,13 +1280,69 @@ export default function SlidesEditor({ presId }: { presId: string }) {
           </>
         )}
 
+        {/* Shape fill controls — solid + gradient (Feature 2) */}
+        {selectedEl && selectedEl.type === "shape" && (
+          <>
+            <span className="text-[11px] text-[#80868b] flex items-center gap-1">Fill</span>
+            <input type="color" title="Fill color" className="h-7 w-7 cursor-pointer border border-[#e8eaed] rounded" value={selectedEl.style?.bg ?? "#1a56db"} onChange={e => updateElement(selectedEl.id, { style: { ...selectedEl.style, bg: e.target.value } })} />
+            <ToolBtn
+              icon={<Layers className="h-3.5 w-3.5" />}
+              title={selectedEl.style?.gradient ? "Gradient fill: on" : "Gradient fill: off"}
+              active={selectedEl.style?.gradient}
+              onClick={() => updateElement(selectedEl.id, { style: { ...selectedEl.style, gradient: !selectedEl.style?.gradient, bg2: selectedEl.style?.bg2 ?? "#7c3aed" } })}
+            />
+            {selectedEl.style?.gradient && (
+              <input type="color" title="Gradient second color" className="h-7 w-7 cursor-pointer border border-[#e8eaed] rounded" value={selectedEl.style?.bg2 ?? "#7c3aed"} onChange={e => updateElement(selectedEl.id, { style: { ...selectedEl.style, bg2: e.target.value } })} />
+            )}
+            <Sep />
+          </>
+        )}
+
         {selectedEl && (
           <>
             <ToolBtn icon={<Copy className="h-3.5 w-3.5" />} title="Duplicate" onClick={() => duplicateElement(selectedEl.id)} />
-            <ToolBtn icon={<Trash2 className="h-3.5 w-3.5" />} title="Delete" onClick={() => deleteElement(selectedEl.id)} />
+            <ToolBtn icon={selectedEl.locked ? <Lock className="h-3.5 w-3.5" /> : <Unlock className="h-3.5 w-3.5" />} title={selectedEl.locked ? "Unlock element" : "Lock element"} active={selectedEl.locked} onClick={() => updateElement(selectedEl.id, { locked: !selectedEl.locked })} />
+            <ToolBtn icon={<Trash2 className="h-3.5 w-3.5" />} title="Delete" onClick={() => { if (!selectedEl.locked) deleteElement(selectedEl.id); }} />
             <Sep />
             <ToolBtn icon={<ChevronUp className="h-3.5 w-3.5" />} title="Bring forward" onClick={() => layerOp(selectedEl.id, "forward")} />
             <ToolBtn icon={<ChevronDown className="h-3.5 w-3.5" />} title="Send back" onClick={() => layerOp(selectedEl.id, "backward")} />
+            <Sep />
+            <select
+              title="Align element on the slide"
+              className="text-xs border border-[#e8eaed] rounded px-1 py-0.5 h-7 bg-white text-[#5f6368]"
+              value=""
+              onChange={e => {
+                const v = e.target.value; const el = selectedEl;
+                if (v === "left") updateElement(el.id, { x: 0 });
+                else if (v === "hcenter") updateElement(el.id, { x: Math.round((CANVAS_W - el.w) / 2) });
+                else if (v === "right") updateElement(el.id, { x: CANVAS_W - el.w });
+                else if (v === "top") updateElement(el.id, { y: 0 });
+                else if (v === "vcenter") updateElement(el.id, { y: Math.round((CANVAS_H - el.h) / 2) });
+                else if (v === "bottom") updateElement(el.id, { y: CANVAS_H - el.h });
+              }}
+            >
+              <option value="">Align ▾</option>
+              <option value="left">Left edge</option>
+              <option value="hcenter">Center (horizontal)</option>
+              <option value="right">Right edge</option>
+              <option value="top">Top edge</option>
+              <option value="vcenter">Middle (vertical)</option>
+              <option value="bottom">Bottom edge</option>
+            </select>
+            <ToolBtn
+              icon={<Grid3x3 className="h-3.5 w-3.5" />}
+              title="Center on slide (both axes)"
+              onClick={() => updateElement(selectedEl.id, { x: Math.round((CANVAS_W - selectedEl.w) / 2), y: Math.round((CANVAS_H - selectedEl.h) / 2) })}
+            />
+            <Sep />
+            <span className="text-[11px] text-[#80868b] flex items-center gap-1"><RotateCcw className="h-3 w-3" /></span>
+            <input
+              type="number" title="Rotation (degrees)" step={15}
+              className="w-14 text-xs border border-[#e8eaed] rounded px-1 py-0.5 h-7 bg-white"
+              value={selectedEl.style?.rotation ?? 0}
+              onChange={e => updateElement(selectedEl.id, { style: { ...selectedEl.style, rotation: Number(e.target.value) || 0 } })}
+            />
+            <span className="text-[11px] text-[#80868b]">°</span>
             <Sep />
             <span className="text-[11px] text-[#80868b] flex items-center gap-1"><Sparkles className="h-3 w-3" />Animate</span>
             <select
@@ -1377,6 +1522,7 @@ export default function SlidesEditor({ presId }: { presId: string }) {
                 width: el.w * zoom, height: el.h * zoom,
                 opacity: s.opacity ?? 1,
                 zIndex: el.zIndex ?? 1,
+                ...(s.rotation ? { transform: "rotate(" + s.rotation + "deg)" } : {}),
                 outline: isSelected ? "2px solid #1a56db" : "none",
                 cursor: el.locked ? "default" : "move",
               };
@@ -1394,7 +1540,7 @@ export default function SlidesEditor({ presId }: { presId: string }) {
                         onClick={e2 => e2.stopPropagation()}
                       />
                     ) : (
-                      <div style={{ fontSize: (s.fontSize ?? 18) * zoom, fontWeight: s.bold ? "bold" : "normal", fontStyle: s.italic ? "italic" : "normal", textDecoration: s.underline ? "underline" : "none", color: s.color ?? theme.text, textAlign: s.align ?? "left", whiteSpace: "pre-wrap", lineHeight: 1.4, width: "100%", height: "100%", overflow: "hidden" }}>
+                      <div style={{ display: "flex", flexDirection: "column", justifyContent: VALIGN_JUSTIFY[s.valign ?? "top"], fontSize: (s.fontSize ?? 18) * zoom, fontWeight: s.bold ? "bold" : "normal", fontStyle: s.italic ? "italic" : "normal", textDecoration: s.underline ? "underline" : "none", color: s.color ?? theme.text, textAlign: s.align ?? "left", whiteSpace: "pre-wrap", lineHeight: 1.4, width: "100%", height: "100%", overflow: "hidden" }}>
                         {el.content}
                       </div>
                     )}
@@ -1411,6 +1557,10 @@ export default function SlidesEditor({ presId }: { presId: string }) {
               );
             })}
 
+            {/* Master logo overlay */}
+            {masterLogo && (
+              <img src={masterLogo} alt="" className="absolute top-2 right-3 pointer-events-none select-none" style={{ maxHeight: "12%", maxWidth: "22%", objectFit: "contain" }} />
+            )}
             {/* Deck footer overlay (Feature 2) */}
             {showFooter && footerText.trim() && (
               <div className="absolute bottom-2 left-3 right-16 text-[10px] font-medium select-none pointer-events-none truncate" style={{ color: "#80868b", fontSize: 10 * zoom }}>
@@ -1659,6 +1809,25 @@ export default function SlidesEditor({ presId }: { presId: string }) {
                 disabled={!showFooter}
                 onChange={e => setFooterText(e.target.value)}
               />
+            </div>
+            <div>
+              <label className="block text-[11px] font-medium text-[#5f6368] mb-1">Master logo (shown on every slide)</label>
+              <div className="flex items-center gap-2">
+                {masterLogo && <img src={masterLogo} alt="" className="h-8 w-12 object-contain border border-[#e8eaed] rounded bg-white" />}
+                <label className="px-3 py-1.5 text-xs font-medium rounded-lg bg-[#e8f0fe] text-[#1a56db] hover:bg-[#d2e3fc] cursor-pointer">
+                  {masterLogo ? "Replace" : "Upload logo"}
+                  <input type="file" accept="image/*" className="hidden" onChange={e => {
+                    const f = e.target.files?.[0];
+                    if (!f) return;
+                    if (f.size > 2 * 1024 * 1024) { toast.error("Logo too large (max 2MB)"); return; }
+                    const reader = new FileReader();
+                    reader.onload = () => setMasterLogo(String(reader.result));
+                    reader.readAsDataURL(f);
+                    e.currentTarget.value = "";
+                  }} />
+                </label>
+                {masterLogo && <button onClick={() => setMasterLogo("")} className="px-2 py-1.5 text-xs text-[#5f6368] hover:text-[#ea4335]">Remove</button>}
+              </div>
             </div>
             <p className="text-[11px] text-[#80868b]">Applied to every slide in the editor and in presenter mode.</p>
           </div>

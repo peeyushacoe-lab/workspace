@@ -216,6 +216,10 @@ function evalFn(name: string, rawArgs: string[], g: CellGetter): CellValue {
       const mid = Math.floor(sorted.length / 2);
       return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
     }
+    case "COUNTUNIQUE": {
+      const vals = rawArgs.flatMap(a => getVals(a)).filter(v => v !== null && v !== "");
+      return new Set(vals.map(toStr)).size;
+    }
     case "MODE": {
       const ns = allNums(rawArgs);
       const freq = ns.reduce<Record<number, number>>((m, n) => { m[n] = (m[n] ?? 0) + 1; return m; }, {});

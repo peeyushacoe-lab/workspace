@@ -453,6 +453,85 @@ function ShareModalDialog({
   );
 }
 
+// ── Move Modal ────────────────────────────────────────────────────────────────
+
+function MoveModalDialog({
+  name,
+  folders,
+  currentFolderId,
+  onClose,
+  onMove,
+}: {
+  name: string;
+  folders: DriveFolder[];
+  currentFolderId: string | null;
+  onClose: () => void;
+  onMove: (targetFolderId: string | null) => void;
+}) {
+  const [target, setTarget] = useState<string | null>(null);
+
+  const renderTree = (list: DriveFolder[], depth: number): React.ReactNode =>
+    list.map((f) => (
+      <div key={f.id}>
+        <button
+          onClick={() => setTarget(f.id)}
+          className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors ${
+            target === f.id
+              ? "bg-[#e8f0fe] text-[#1a56db] font-medium"
+              : "text-[#5f6368] hover:bg-[#f1f3f4]"
+          }`}
+          style={{ paddingLeft: 8 + depth * 16 + "px" }}
+        >
+          <Folder className="h-4 w-4 shrink-0 text-yellow-500" />
+          <span className="truncate">{f.name}</span>
+        </button>
+        {f.children && f.children.length > 0 && renderTree(f.children, depth + 1)}
+      </div>
+    ));
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-[#e8eaed]">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-base font-semibold text-[#202124]">Move &ldquo;{name}&rdquo;</h2>
+          <button onClick={onClose} className="rounded-lg p-1 hover:bg-[#f1f3f4] transition-colors">
+            <X className="h-4 w-4 text-[#5f6368]" />
+          </button>
+        </div>
+        <div className="max-h-72 overflow-y-auto rounded-xl border border-[#e8eaed] p-1.5 mb-4">
+          <button
+            onClick={() => setTarget(null)}
+            className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors ${
+              target === null
+                ? "bg-[#e8f0fe] text-[#1a56db] font-medium"
+                : "text-[#5f6368] hover:bg-[#f1f3f4]"
+            }`}
+          >
+            <HardDrive className="h-4 w-4 shrink-0" />
+            My Drive
+          </button>
+          {renderTree(folders, 0)}
+        </div>
+        <div className="flex justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="rounded-lg border border-[#e8eaed] px-4 py-2 text-sm font-medium text-[#5f6368] hover:bg-[#f1f3f4] transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => onMove(target)}
+            disabled={target === currentFolderId}
+            className="rounded-lg bg-[#1a56db] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1648c7] disabled:opacity-50 transition-colors"
+          >
+            Move here
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── File Detail Side Panel ────────────────────────────────────────────────────
 
 function FileDetailPanel({
@@ -593,6 +672,12 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [showNewMenu, setShowNewMenu] = useState(false);
   const [moveModal, setMoveModal] = useState<{ id: string; name: string; isFolder: boolean } | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [typeFilter, setTypeFilter] = useState<"all" | "folders" | "images" | "docs" | "pdf">("all");
+  const [starredOnly, setStarredOnly] = useState(false);
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
+  const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null);
+  const filterMenuRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
   const sortMenuRef = useRef<HTMLDivElement>(null);
@@ -708,6 +793,9 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
       }
       if (newMenuRef.current && !newMenuRef.current.contains(e.target as Node)) {
         setShowNewMenu(false);
+      }
+      if (filterMenuRef.current && !filterMenuRef.current.contains(e.target as Node)) {
+        setShowFilterMenu(false);
       }
       setContextMenu(null);
     };
@@ -952,6 +1040,56 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
   const getContextFolder = () =>
     contextMenu?.folderId ? folders.find((f) => f.id === contextMenu.folderId) ?? null : null;
 
+  // Selection
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+  const clearSelection = () => setSelectedIds(new Set());
+
+  // Clear selection when navigating / changing section
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [currentFolderId, section]);
+
+  // Bulk actions — wire to existing per-item handlers in a loop
+  const bulkTrash = async () => {
+    const ids = Array.from(selectedIds);
+    for (const id of ids) {
+      const isFolder = folders.some((f) => f.id === id);
+      await handleTrash(id, isFolder);
+    }
+    clearSelection();
+  };
+  const bulkStar = async () => {
+    const ids = Array.from(selectedIds);
+    for (const id of ids) {
+      const file = files.find((f) => f.id === id);
+      if (file && !file.isStarred) await handleStar(file.id, file.isStarred);
+    }
+    clearSelection();
+  };
+  const bulkMove = async (targetFolderId: string | null) => {
+    const ids = Array.from(selectedIds);
+    for (const id of ids) {
+      const isFolder = folders.some((f) => f.id === id);
+      await handleMove(id, isFolder, targetFolderId);
+    }
+    clearSelection();
+  };
+
+  // Drag-to-move: move a file into a folder
+  const handleDropOnFolder = async (fileId: string, targetFolderId: string) => {
+    setDragOverFolderId(null);
+    if (fileId === targetFolderId) return;
+    const isFolder = folders.some((f) => f.id === fileId);
+    await handleMove(fileId, isFolder, targetFolderId);
+  };
+
   // Sorting
   const sortFn = (a: DriveFile, b: DriveFile): number => {
     let cmp = 0;
@@ -961,12 +1099,35 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
     return sortDir === "asc" ? cmp : -cmp;
   };
 
-  const filteredFolders = folders.filter((f) =>
-    f.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const matchesTypeFilter = (file: DriveFile): boolean => {
+    if (typeFilter === "all") return true;
+    if (typeFilter === "folders") return false;
+    if (typeFilter === "images") return file.mimeType.startsWith("image/");
+    if (typeFilter === "pdf") return file.mimeType === "application/pdf";
+    if (typeFilter === "docs")
+      return (
+        file.mimeType.includes("word") ||
+        file.mimeType.includes("document") ||
+        file.mimeType === "text/plain" ||
+        file.mimeType.includes("sheet") ||
+        file.mimeType.includes("excel") ||
+        file.mimeType === "text/csv" ||
+        file.mimeType.includes("presentation") ||
+        file.mimeType.includes("powerpoint")
+      );
+    return true;
+  };
+
+  const showFolders = typeFilter === "all" || typeFilter === "folders";
+  const filteredFolders = (showFolders && !starredOnly ? folders : [])
+    .filter((f) => f.name.toLowerCase().includes(searchQuery.toLowerCase()));
   const filteredFiles = files
     .filter((f) => f.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    .filter(matchesTypeFilter)
+    .filter((f) => (starredOnly ? f.isStarred : true))
     .sort(sortFn);
+
+  const filtersActive = typeFilter !== "all" || starredOnly;
 
   const storagePercent = storage
     ? Math.min((storage.usedMB / (storage.totalMB || 15360)) * 100, 100)
@@ -1130,8 +1291,8 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
         )}
 
         {/* Top search bar */}
-        <div className="px-6 pt-4 pb-2 bg-white">
-          <div className="relative max-w-2xl">
+        <div className="px-6 pt-4 pb-2 bg-white flex items-center gap-3">
+          <div className="relative flex-1 max-w-2xl">
             <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#5f6368]" />
             <input
               value={searchQuery}
@@ -1140,7 +1301,130 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
               className="w-full bg-[#f1f3f4] rounded-full pl-11 py-2.5 text-sm focus:bg-white focus:ring-1 focus:ring-[#1a56db]/40 focus:shadow-sm outline-none pr-4 text-[#202124] placeholder:text-[#5f6368] transition-colors"
             />
           </div>
+
+          {/* Filter dropdown */}
+          <div className="relative" ref={filterMenuRef}>
+            <button
+              onClick={() => setShowFilterMenu((v) => !v)}
+              className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[13px] font-medium transition-colors ${
+                filtersActive
+                  ? "border-[#1a56db] bg-[#e8f0fe] text-[#1a56db]"
+                  : "border-[#e8eaed] text-[#5f6368] hover:bg-[#f1f3f4]"
+              }`}
+            >
+              <SortAsc className="h-4 w-4" />
+              Filters
+              {filtersActive && <span className="ml-0.5 h-1.5 w-1.5 rounded-full bg-[#1a56db]" />}
+            </button>
+            {showFilterMenu && (
+              <div className="absolute right-0 top-full mt-1 z-30 w-56 rounded-lg border border-[#e8eaed] bg-white py-2 shadow-lg">
+                <p className="px-4 pb-1 text-xs font-medium text-[#80868b]">File type</p>
+                {(
+                  [
+                    { key: "all", label: "All items" },
+                    { key: "folders", label: "Folders" },
+                    { key: "images", label: "Images" },
+                    { key: "docs", label: "Documents" },
+                    { key: "pdf", label: "PDFs" },
+                  ] as const
+                ).map(({ key, label }) => (
+                  <button
+                    key={key}
+                    onClick={() => setTypeFilter(key)}
+                    className={`flex w-full items-center justify-between px-4 py-1.5 text-sm transition-colors hover:bg-[#f1f3f4] ${
+                      typeFilter === key ? "text-[#1a56db] font-medium" : "text-[#5f6368]"
+                    }`}
+                  >
+                    {label}
+                    {typeFilter === key && <Check className="h-4 w-4 text-[#1a56db]" />}
+                  </button>
+                ))}
+                <div className="my-1.5 border-t border-[#e8eaed]" />
+                <button
+                  onClick={() => setStarredOnly((v) => !v)}
+                  className={`flex w-full items-center justify-between px-4 py-1.5 text-sm transition-colors hover:bg-[#f1f3f4] ${
+                    starredOnly ? "text-[#1a56db] font-medium" : "text-[#5f6368]"
+                  }`}
+                >
+                  <span className="flex items-center gap-2">
+                    <Star className={`h-4 w-4 ${starredOnly ? "fill-yellow-400 text-yellow-400" : ""}`} />
+                    Starred only
+                  </span>
+                  {starredOnly && <Check className="h-4 w-4 text-[#1a56db]" />}
+                </button>
+                {filtersActive && (
+                  <>
+                    <div className="my-1.5 border-t border-[#e8eaed]" />
+                    <button
+                      onClick={() => { setTypeFilter("all"); setStarredOnly(false); }}
+                      className="flex w-full items-center gap-2 px-4 py-1.5 text-sm text-[#5f6368] hover:bg-[#f1f3f4] transition-colors"
+                    >
+                      <X className="h-4 w-4" />
+                      Clear filters
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         </div>
+
+        {/* Active filter chips */}
+        {filtersActive && (
+          <div className="px-6 pb-1 flex items-center gap-2 flex-wrap">
+            {typeFilter !== "all" && (
+              <span className="flex items-center gap-1.5 rounded-full bg-[#e8f0fe] px-3 py-1 text-xs font-medium text-[#1a56db]">
+                {typeFilter === "folders" ? "Folders"
+                  : typeFilter === "images" ? "Images"
+                  : typeFilter === "docs" ? "Documents"
+                  : "PDFs"}
+                <button onClick={() => setTypeFilter("all")} className="hover:text-[#1648c7]">
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            )}
+            {starredOnly && (
+              <span className="flex items-center gap-1.5 rounded-full bg-[#e8f0fe] px-3 py-1 text-xs font-medium text-[#1a56db]">
+                Starred
+                <button onClick={() => setStarredOnly(false)} className="hover:text-[#1648c7]">
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Bulk action bar */}
+        {selectedIds.size > 0 && (
+          <div className="mx-6 mt-1 mb-1 flex items-center gap-2 rounded-xl border border-[#1a56db]/30 bg-[#e8f0fe] px-4 py-2">
+            <span className="text-sm font-medium text-[#1a56db]">{selectedIds.size} selected</span>
+            <div className="flex-1" />
+            <button
+              onClick={bulkStar}
+              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[13px] font-medium text-[#1a56db] hover:bg-white/60 transition-colors"
+            >
+              <Star className="h-4 w-4" /> Star all
+            </button>
+            <button
+              onClick={() => { setMoveModal({ id: "__bulk__", name: selectedIds.size + " items", isFolder: false }); }}
+              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[13px] font-medium text-[#1a56db] hover:bg-white/60 transition-colors"
+            >
+              <Move className="h-4 w-4" /> Move all
+            </button>
+            <button
+              onClick={bulkTrash}
+              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[13px] font-medium text-[#ea4335] hover:bg-white/60 transition-colors"
+            >
+              <Trash2 className="h-4 w-4" /> Trash all
+            </button>
+            <button
+              onClick={clearSelection}
+              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[13px] font-medium text-[#5f6368] hover:bg-white/60 transition-colors"
+            >
+              <X className="h-4 w-4" /> Clear
+            </button>
+          </div>
+        )}
 
         {/* Toolbar: breadcrumb + controls */}
         <div className="px-6 py-2 bg-white flex items-center gap-3">
@@ -1338,6 +1622,13 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                     key={folder.id}
                     folder={folder}
                     selected={selectedItem === folder.id}
+                    checked={selectedIds.has(folder.id)}
+                    onToggleCheck={() => toggleSelect(folder.id)}
+                    dragOver={dragOverFolderId === folder.id}
+                    onDragEnterFolder={() => setDragOverFolderId(folder.id)}
+                    onDragLeaveFolder={() => setDragOverFolderId((cur) => (cur === folder.id ? null : cur))}
+                    onDropItem={(itemId) => handleDropOnFolder(itemId, folder.id)}
+                    onMoveStart={() => setMoveModal({ id: folder.id, name: folder.name, isFolder: true })}
                     renamingId={renamingId}
                     renameValue={renameValue}
                     onSetRenameValue={setRenameValue}
@@ -1358,6 +1649,9 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                     key={file.id}
                     file={file}
                     selected={selectedItem === file.id}
+                    checked={selectedIds.has(file.id)}
+                    onToggleCheck={() => toggleSelect(file.id)}
+                    onMoveStart={() => setMoveModal({ id: file.id, name: file.name, isFolder: false })}
                     renamingId={renamingId}
                     renameValue={renameValue}
                     onSetRenameValue={setRenameValue}
@@ -1426,6 +1720,13 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                       <ListFolderRow
                         key={folder.id}
                         folder={folder}
+                        checked={selectedIds.has(folder.id)}
+                        onToggleCheck={() => toggleSelect(folder.id)}
+                        dragOver={dragOverFolderId === folder.id}
+                        onDragEnterFolder={() => setDragOverFolderId(folder.id)}
+                        onDragLeaveFolder={() => setDragOverFolderId((cur) => (cur === folder.id ? null : cur))}
+                        onDropItem={(itemId) => handleDropOnFolder(itemId, folder.id)}
+                        onMoveStart={() => setMoveModal({ id: folder.id, name: folder.name, isFolder: true })}
                         renamingId={renamingId}
                         renameValue={renameValue}
                         onSetRenameValue={setRenameValue}
@@ -1444,6 +1745,9 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                       <ListFileRow
                         key={file.id}
                         file={file}
+                        checked={selectedIds.has(file.id)}
+                        onToggleCheck={() => toggleSelect(file.id)}
+                        onMoveStart={() => setMoveModal({ id: file.id, name: file.name, isFolder: false })}
                         renamingId={renamingId}
                         renameValue={renameValue}
                         onSetRenameValue={setRenameValue}
@@ -1551,6 +1855,24 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
         </div>
       )}
 
+      {/* Move modal */}
+      {moveModal && (
+        <MoveModalDialog
+          name={moveModal.name}
+          folders={sidebarFolders}
+          currentFolderId={currentFolderId}
+          onClose={() => setMoveModal(null)}
+          onMove={(targetId) => {
+            if (moveModal.id === "__bulk__") {
+              void bulkMove(targetId);
+            } else {
+              void handleMove(moveModal.id, moveModal.isFolder, targetId);
+            }
+            setMoveModal(null);
+          }}
+        />
+      )}
+
       {/* Share modal */}
       {shareModal && (
         <ShareModalDialog
@@ -1633,6 +1955,13 @@ function CtxItem({
 function GridFolderCard({
   folder,
   selected,
+  checked,
+  onToggleCheck,
+  dragOver,
+  onDragEnterFolder,
+  onDragLeaveFolder,
+  onDropItem,
+  onMoveStart,
   renamingId,
   renameValue,
   onSetRenameValue,
@@ -1646,6 +1975,13 @@ function GridFolderCard({
 }: {
   folder: DriveFolder;
   selected: boolean;
+  checked: boolean;
+  onToggleCheck: () => void;
+  dragOver: boolean;
+  onDragEnterFolder: () => void;
+  onDragLeaveFolder: () => void;
+  onDropItem: (itemId: string) => void;
+  onMoveStart: () => void;
   renamingId: string | null;
   renameValue: string;
   onSetRenameValue: (v: string) => void;
@@ -1660,14 +1996,24 @@ function GridFolderCard({
   return (
     <div
       className={`group relative cursor-pointer rounded-xl border p-4 transition-all ${
-        selected
+        dragOver
+          ? "border-[#1a56db] bg-[#e8f0fe] ring-2 ring-[#1a56db]/30"
+          : selected || checked
           ? "border-[#1a56db]/30 bg-[#1a56db]/10"
           : "bg-white border-[#e8eaed] hover:shadow-md hover:border-[#1a56db]/30"
       }`}
       onClick={onSelect}
       onDoubleClick={onOpen}
       onContextMenu={onContextMenu}
+      onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }}
+      onDragEnter={(e) => { e.preventDefault(); onDragEnterFolder(); }}
+      onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) onDragLeaveFolder(); }}
+      onDrop={(e) => {
+        const id = e.dataTransfer.getData("application/x-drive-item");
+        if (id) { e.preventDefault(); e.stopPropagation(); onDropItem(id); }
+      }}
     >
+      <CardCheckbox checked={checked} onToggle={onToggleCheck} />
       <div className="mb-3 flex justify-center">
         <div className="w-12 h-12 rounded-lg bg-white flex items-center justify-center">
           <Folder className="h-7 w-7 text-yellow-500" />
@@ -1689,6 +2035,7 @@ function GridFolderCard({
         <p className="font-medium text-sm text-[#202124] truncate text-center">{folder.name}</p>
       )}
       <div className="absolute right-2 top-2 hidden gap-1 group-hover:flex">
+        <ActionBtn icon={Move} onClick={(e) => { e.stopPropagation(); onMoveStart(); }} title="Move" />
         <ActionBtn icon={Edit3} onClick={(e) => { e.stopPropagation(); _onRenameStart(); }} title="Rename" />
         <ActionBtn icon={Trash2} onClick={(e) => { e.stopPropagation(); onTrash(); }} title="Trash" />
         <ActionBtn icon={MoreVertical} onClick={(e) => { e.stopPropagation(); onContextMenu(e); }} title="More" />
@@ -1700,6 +2047,9 @@ function GridFolderCard({
 function GridFileCard({
   file,
   selected,
+  checked,
+  onToggleCheck,
+  onMoveStart,
   renamingId,
   renameValue,
   onSetRenameValue,
@@ -1716,6 +2066,9 @@ function GridFileCard({
 }: {
   file: DriveFile;
   selected: boolean;
+  checked: boolean;
+  onToggleCheck: () => void;
+  onMoveStart: () => void;
   renamingId: string | null;
   renameValue: string;
   onSetRenameValue: (v: string) => void;
@@ -1733,8 +2086,13 @@ function GridFileCard({
   const Icon = getMimeIcon(file.mimeType);
   return (
     <div
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.setData("application/x-drive-item", file.id);
+        e.dataTransfer.effectAllowed = "move";
+      }}
       className={`group relative cursor-pointer rounded-xl border p-4 transition-all ${
-        selected
+        selected || checked
           ? "border-[#1a56db]/30 bg-[#1a56db]/10"
           : "bg-white border-[#e8eaed] hover:shadow-md hover:border-[#1a56db]/30"
       }`}
@@ -1742,6 +2100,7 @@ function GridFileCard({
       onDoubleClick={onPreview}
       onContextMenu={onContextMenu}
     >
+      <CardCheckbox checked={checked} onToggle={onToggleCheck} />
       {/* Thumbnail area */}
       <div className="mb-3 flex justify-center">
         {file.mimeType.startsWith("image/") && file.storageUrl ? (
@@ -1791,6 +2150,7 @@ function GridFileCard({
           activeClass="text-yellow-500"
         />
         <ActionBtn icon={Share2} onClick={(e) => { e.stopPropagation(); onShare(); }} title="Share" />
+        <ActionBtn icon={Move} onClick={(e) => { e.stopPropagation(); onMoveStart(); }} title="Move" />
         <ActionBtn icon={Download} onClick={(e) => { e.stopPropagation(); onDownload(); }} title="Download" />
         <ActionBtn icon={Trash2} onClick={(e) => { e.stopPropagation(); onTrash(); }} title="Trash" />
       </div>
@@ -1802,6 +2162,13 @@ function GridFileCard({
 
 function ListFolderRow({
   folder,
+  checked,
+  onToggleCheck,
+  dragOver,
+  onDragEnterFolder,
+  onDragLeaveFolder,
+  onDropItem,
+  onMoveStart,
   renamingId,
   renameValue,
   onSetRenameValue,
@@ -1813,6 +2180,13 @@ function ListFolderRow({
   onContextMenu,
 }: {
   folder: DriveFolder;
+  checked: boolean;
+  onToggleCheck: () => void;
+  dragOver: boolean;
+  onDragEnterFolder: () => void;
+  onDragLeaveFolder: () => void;
+  onDropItem: (itemId: string) => void;
+  onMoveStart: () => void;
   renamingId: string | null;
   renameValue: string;
   onSetRenameValue: (v: string) => void;
@@ -1825,11 +2199,21 @@ function ListFolderRow({
 }) {
   return (
     <tr
-      className="border-b border-[#e8eaed] hover:bg-white transition-colors group cursor-pointer"
+      className={`border-b border-[#e8eaed] transition-colors group cursor-pointer ${
+        dragOver ? "bg-[#e8f0fe]" : checked ? "bg-[#1a56db]/10" : "hover:bg-[#f8f9fa]"
+      }`}
       onContextMenu={onContextMenu}
+      onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }}
+      onDragEnter={(e) => { e.preventDefault(); onDragEnterFolder(); }}
+      onDragLeave={(e) => { if (!(e.currentTarget as HTMLElement).contains(e.relatedTarget as Node)) onDragLeaveFolder(); }}
+      onDrop={(e) => {
+        const id = e.dataTransfer.getData("application/x-drive-item");
+        if (id) { e.preventDefault(); e.stopPropagation(); onDropItem(id); }
+      }}
     >
       <td className="px-4 py-3 text-sm text-[#202124]">
         <div className="flex items-center gap-2.5 cursor-pointer" onDoubleClick={onOpen}>
+          <RowCheckbox checked={checked} onToggle={onToggleCheck} />
           <Folder className="h-5 w-5 text-yellow-500 shrink-0" />
           {renamingId === folder.id ? (
             <input
@@ -1856,6 +2240,7 @@ function ListFolderRow({
       <td className="px-4 py-3 text-sm text-[#5f6368]">—</td>
       <td className="px-4 py-3 text-right">
         <div className="hidden gap-1 justify-end group-hover:flex">
+          <ActionBtn icon={Move} onClick={onMoveStart} title="Move" />
           <ActionBtn icon={Edit3} onClick={_onRenameStart} title="Rename" />
           <ActionBtn icon={Trash2} onClick={onTrash} title="Trash" />
         </div>
@@ -1866,6 +2251,9 @@ function ListFolderRow({
 
 function ListFileRow({
   file,
+  checked,
+  onToggleCheck,
+  onMoveStart,
   renamingId,
   renameValue,
   onSetRenameValue,
@@ -1881,6 +2269,9 @@ function ListFileRow({
   onContextMenu,
 }: {
   file: DriveFile;
+  checked: boolean;
+  onToggleCheck: () => void;
+  onMoveStart: () => void;
   renamingId: string | null;
   renameValue: string;
   onSetRenameValue: (v: string) => void;
@@ -1898,12 +2289,20 @@ function ListFileRow({
   const Icon = getMimeIcon(file.mimeType);
   return (
     <tr
-      className="border-b border-[#e8eaed] hover:bg-white transition-colors group cursor-pointer"
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.setData("application/x-drive-item", file.id);
+        e.dataTransfer.effectAllowed = "move";
+      }}
+      className={`border-b border-[#e8eaed] transition-colors group cursor-pointer ${
+        checked ? "bg-[#1a56db]/10" : "hover:bg-[#f8f9fa]"
+      }`}
       onContextMenu={onContextMenu}
       onClick={onSelect}
     >
       <td className="px-4 py-3 text-sm text-[#202124]">
         <div className="flex items-center gap-2.5 cursor-pointer" onDoubleClick={onPreview}>
+          <RowCheckbox checked={checked} onToggle={onToggleCheck} />
           <Icon className="h-5 w-5 text-[#1a56db] shrink-0" />
           {renamingId === file.id ? (
             <input
@@ -1940,6 +2339,7 @@ function ListFileRow({
             activeClass="text-yellow-500"
           />
           <ActionBtn icon={Share2} onClick={onShare} title="Share" />
+          <ActionBtn icon={Move} onClick={onMoveStart} title="Move" />
           <ActionBtn icon={Download} onClick={onDownload} title="Download" />
           <ActionBtn icon={Trash2} onClick={onTrash} title="Trash" />
         </div>
@@ -1972,6 +2372,40 @@ function ActionBtn({
       }`}
     >
       <Icon className="h-3.5 w-3.5" />
+    </button>
+  );
+}
+
+// ── Selection checkboxes ──────────────────────────────────────────────────────
+
+function CardCheckbox({ checked, onToggle }: { checked: boolean; onToggle: () => void }) {
+  return (
+    <button
+      onClick={(e) => { e.stopPropagation(); onToggle(); }}
+      title={checked ? "Deselect" : "Select"}
+      className={`absolute left-2 top-2 z-10 flex h-5 w-5 items-center justify-center rounded border transition-all ${
+        checked
+          ? "border-[#1a56db] bg-[#1a56db] text-white opacity-100"
+          : "border-[#d0d5dd] bg-white text-transparent opacity-0 group-hover:opacity-100"
+      }`}
+    >
+      <Check className="h-3.5 w-3.5" />
+    </button>
+  );
+}
+
+function RowCheckbox({ checked, onToggle }: { checked: boolean; onToggle: () => void }) {
+  return (
+    <button
+      onClick={(e) => { e.stopPropagation(); onToggle(); }}
+      title={checked ? "Deselect" : "Select"}
+      className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-all ${
+        checked
+          ? "border-[#1a56db] bg-[#1a56db] text-white opacity-100"
+          : "border-[#d0d5dd] bg-white text-transparent opacity-0 group-hover:opacity-100"
+      }`}
+    >
+      <Check className="h-3 w-3" />
     </button>
   );
 }
