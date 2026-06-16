@@ -713,64 +713,159 @@ function AppearanceTab() {
 
 // ─── Notifications Tab ────────────────────────────────────────────────────────
 
+type NotifChannel = { inApp: boolean; push: boolean; email: boolean };
+type NotifMatrix = Record<string, NotifChannel>;
+
+const DEFAULT_MATRIX: NotifMatrix = {
+  newMail:           { inApp: true,  push: true,  email: false },
+  chatMentions:      { inApp: true,  push: true,  email: false },
+  calendarReminders: { inApp: true,  push: true,  email: false },
+  meetingInvite:     { inApp: true,  push: true,  email: false },
+  taskAssigned:      { inApp: true,  push: false, email: false },
+  fileShared:        { inApp: true,  push: false, email: false },
+  socAlerts:         { inApp: true,  push: true,  email: true  },
+  dlpAlerts:         { inApp: true,  push: true,  email: true  },
+};
+
+const NOTIF_ROWS: { key: string; label: string; description: string; locked?: boolean }[] = [
+  { key: "newMail",           label: "New mail",              description: "When email arrives in your inbox" },
+  { key: "chatMentions",      label: "Chat mentions",         description: "When someone @mentions you" },
+  { key: "calendarReminders", label: "Calendar reminders",    description: "15 min before event start" },
+  { key: "meetingInvite",     label: "Meeting invites",       description: "New meeting invitation received" },
+  { key: "taskAssigned",      label: "Task assigned",         description: "When a task is assigned to you" },
+  { key: "fileShared",        label: "File shared",           description: "When a Drive file is shared with you" },
+  { key: "socAlerts",         label: "SOC incidents",         description: "Security incidents requiring attention", locked: true },
+  { key: "dlpAlerts",         label: "DLP violations",        description: "Data loss prevention policy violations", locked: true },
+];
+
+function NotifsMatrixCell({ value, locked, onChange }: { value: boolean; locked?: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      onClick={() => !locked && onChange(!value)}
+      className={`h-8 w-8 rounded-lg flex items-center justify-center transition-colors ${
+        value
+          ? locked ? "bg-[#1a56db]/10 text-[#1a56db] cursor-default" : "bg-[#e8f0fe] text-[#1a56db] hover:bg-[#d2e3fc]"
+          : locked ? "bg-[#f8f9fa] text-[#dadce0] cursor-default" : "bg-[#f1f3f4] text-[#dadce0] hover:bg-[#e8eaed]"
+      }`}
+      title={locked ? "Always on for security" : value ? "Enabled — click to disable" : "Disabled — click to enable"}
+    >
+      {value ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
+    </button>
+  );
+}
+
 function NotificationsTab() {
-  const [prefs, setPrefs] = useState({
-    newMail: true, calendarReminders: true, socAlerts: true, dlpAlerts: true,
-    chatMentions: true, fileShared: true, emailDigest: false,
-    pushEnabled: false, soundEnabled: false, quietHoursEnabled: false,
-    quietStart: "22:00", quietEnd: "08:00",
-  });
+  const [matrix, setMatrix] = useState<NotifMatrix>(DEFAULT_MATRIX);
+  const [soundEnabled, setSoundEnabled]           = useState(false);
+  const [quietHoursEnabled, setQuietHoursEnabled] = useState(false);
+  const [quietStart, setQuietStart]               = useState("22:00");
+  const [quietEnd,   setQuietEnd]                 = useState("08:00");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     fetch("/api/profile").then(r => r.json()).then((d: UserProfile) => {
-      if (d.preferences?.notifications && typeof d.preferences.notifications === "object") {
-        setPrefs(p => ({ ...p, ...(d.preferences!.notifications as typeof prefs) }));
-      }
+      const n = d.preferences?.notifications as Record<string, unknown> | undefined;
+      if (!n) return;
+      if (n.matrix && typeof n.matrix === "object") setMatrix(m => ({ ...m, ...(n.matrix as NotifMatrix) }));
+      if (typeof n.soundEnabled === "boolean") setSoundEnabled(n.soundEnabled);
+      if (typeof n.quietHoursEnabled === "boolean") setQuietHoursEnabled(n.quietHoursEnabled);
+      if (typeof n.quietStart === "string") setQuietStart(n.quietStart);
+      if (typeof n.quietEnd === "string") setQuietEnd(n.quietEnd);
     }).catch(() => {});
   }, []);
 
-  const update = (key: keyof typeof prefs, val: boolean | string) => setPrefs(p => ({ ...p, [key]: val }));
+  const setCell = (key: string, channel: keyof NotifChannel, val: boolean) =>
+    setMatrix(m => ({ ...m, [key]: { ...m[key], [channel]: val } }));
 
   const save = async () => {
     setSaving(true);
     try {
-      await fetch("/api/profile", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ preferences: { notifications: prefs } }) });
+      await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ preferences: { notifications: { matrix, soundEnabled, quietHoursEnabled, quietStart, quietEnd } } }),
+      });
       toast.success("Notification preferences saved");
     } catch { toast.error("Save failed"); }
     finally { setSaving(false); }
   };
 
+  const channels: { key: keyof NotifChannel; label: string }[] = [
+    { key: "inApp", label: "In-app" },
+    { key: "push",  label: "Push" },
+    { key: "email", label: "Email digest" },
+  ];
+
   return (
     <>
-      <SectionCard title="Email & App Alerts">
-        <SettingRow label="New mail received" description="Alert when email arrives in your inbox"><Toggle value={prefs.newMail} onChange={(v) => update("newMail", v)} /></SettingRow>
-        <SettingRow label="Calendar reminders" description="Event start notifications"><Toggle value={prefs.calendarReminders} onChange={(v) => update("calendarReminders", v)} /></SettingRow>
-        <SettingRow label="Chat mentions" description="When someone @mentions you"><Toggle value={prefs.chatMentions} onChange={(v) => update("chatMentions", v)} /></SettingRow>
-        <SettingRow label="File shared with me" description="When a Drive file is shared"><Toggle value={prefs.fileShared} onChange={(v) => update("fileShared", v)} /></SettingRow>
+      {/* Matrix table */}
+      <SectionCard title="Notification channels" description="Choose how you receive each type of notification">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr>
+                <th className="text-left py-2 pr-4 font-medium text-[#5f6368] w-full">Notification type</th>
+                {channels.map(ch => (
+                  <th key={ch.key} className="text-center py-2 px-3 font-medium text-[#5f6368] whitespace-nowrap min-w-[80px]">{ch.label}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#f1f3f4]">
+              {NOTIF_ROWS.map((row, i) => (
+                <tr key={row.key} className={i % 2 === 0 ? "" : "bg-[#f8f9fa]/40"}>
+                  <td className="py-3 pr-4">
+                    <div className="font-medium text-[#202124]">{row.label}</div>
+                    <div className="text-xs text-[#80868b] mt-0.5">{row.description}</div>
+                    {row.locked && <span className="text-[10px] font-medium text-[#1a56db] bg-[#e8f0fe] rounded px-1.5 py-0.5 mt-1 inline-block">Always on</span>}
+                  </td>
+                  {channels.map(ch => (
+                    <td key={ch.key} className="py-3 px-3 text-center">
+                      <div className="flex justify-center">
+                        <NotifsMatrixCell
+                          value={matrix[row.key]?.[ch.key] ?? false}
+                          locked={row.locked}
+                          onChange={(v) => setCell(row.key, ch.key, v)}
+                        />
+                      </div>
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </SectionCard>
-      <SectionCard title="Security Alerts" description="Always recommended">
-        <SettingRow label="SOC incidents"><Toggle value={prefs.socAlerts} onChange={(v) => update("socAlerts", v)} /></SettingRow>
-        <SettingRow label="DLP violations"><Toggle value={prefs.dlpAlerts} onChange={(v) => update("dlpAlerts", v)} /></SettingRow>
+
+      {/* Sound */}
+      <SectionCard title="Sound & focus">
+        <SettingRow label="Sound alerts" description="Play a sound for incoming notifications">
+          <Toggle value={soundEnabled} onChange={setSoundEnabled} />
+        </SettingRow>
       </SectionCard>
-      <SectionCard title="Delivery Preferences">
-        <SettingRow label="Daily email digest" description="Morning activity summary"><Toggle value={prefs.emailDigest} onChange={(v) => update("emailDigest", v)} /></SettingRow>
-        <SettingRow label="Browser push" description="Push when tab is not focused"><Toggle value={prefs.pushEnabled} onChange={(v) => update("pushEnabled", v)} /></SettingRow>
-        <SettingRow label="Sound alerts"><Toggle value={prefs.soundEnabled} onChange={(v) => update("soundEnabled", v)} /></SettingRow>
-      </SectionCard>
-      <SectionCard title="Quiet Hours">
-        <SettingRow label="Enable quiet hours"><Toggle value={prefs.quietHoursEnabled} onChange={(v) => update("quietHoursEnabled", v)} /></SettingRow>
-        {prefs.quietHoursEnabled && (
+
+      {/* Quiet hours */}
+      <SectionCard title="Quiet hours" description="Suppress push notifications during these hours">
+        <SettingRow label="Enable quiet hours" description="No push or sound during the window below">
+          <Toggle value={quietHoursEnabled} onChange={setQuietHoursEnabled} />
+        </SettingRow>
+        {quietHoursEnabled && (
           <div className="flex items-center gap-4 mt-4">
-            <div><label className="text-xs text-[#5f6368]">From</label><input type="time" value={prefs.quietStart} onChange={(e) => update("quietStart", e.target.value)} className={`block mt-1 ${selectClass}`} /></div>
-            <div><label className="text-xs text-[#5f6368]">To</label><input type="time" value={prefs.quietEnd} onChange={(e) => update("quietEnd", e.target.value)} className={`block mt-1 ${selectClass}`} /></div>
+            <div>
+              <label className="text-xs text-[#5f6368]">From</label>
+              <input type="time" value={quietStart} onChange={e => setQuietStart(e.target.value)} className={`block mt-1 ${selectClass}`} />
+            </div>
+            <div>
+              <label className="text-xs text-[#5f6368]">To</label>
+              <input type="time" value={quietEnd} onChange={e => setQuietEnd(e.target.value)} className={`block mt-1 ${selectClass}`} />
+            </div>
           </div>
         )}
       </SectionCard>
+
       <div className="flex justify-end">
         <button onClick={() => void save()} disabled={saving} className={btnPrimary}>
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-          {saving ? "Saving…" : "Save Preferences"}
+          {saving ? "Saving…" : "Save preferences"}
         </button>
       </div>
     </>

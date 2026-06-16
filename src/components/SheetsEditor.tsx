@@ -281,7 +281,7 @@ function fillSeries(source: string[], count: number): string[] {
   if (n === 0 || count <= 0) return out;
   const nums = source.map(s => (s.trim() !== "" && !isNaN(Number(s)) ? Number(s) : NaN));
   if (nums.every(x => !isNaN(x))) {
-    const step = n >= 2 ? nums[n - 1] - nums[n - 2] : 0; // single number copies (Excel default)
+    const step = n >= 2 ? nums[n - 1] - nums[n - 2] : 1; // single number increments by 1 (Excel default)
     let last = nums[n - 1];
     for (let k = 1; k <= count; k++) { last += step; out.push(fmtNum(last)); }
     return out;
@@ -344,6 +344,8 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
   const [fillDrag, setFillDrag] = useState<{ r1: number; c1: number; r2: number; c2: number } | null>(null);
   const [fillTo, setFillTo] = useState<{ r: number; c: number } | null>(null);
   const selecting = useRef(false);
+  const didDrag = useRef(false); // true when mouse moved to a different cell during a drag
+  const selRef = useRef<{ r: number; c: number }>({ r: 0, c: 0 }); // always mirrors sel for closures
   const [editing, setEditing] = useState(false);
   const [editVal, setEditVal] = useState("");
   const [formulaBarVal, setFormulaBarVal] = useState("");
@@ -861,8 +863,35 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
     });
   }, [activeSheetId, pushHistory, scheduleSave, title]);
 
-  // ── Keyboard navigation (on the focused grid container) ────────────────────
+  // ── Keyboard navigation ────────────────────────────────────────────────────
   const focusGrid = useCallback(() => { setTimeout(() => gridRef.current?.focus(), 0); }, []);
+
+  // Global keydown so arrow keys work even when toolbar buttons steal focus
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      // If the grid div itself has focus, handleGridKey handles it — don't double-process
+      if (document.activeElement === gridRef.current) return;
+      // If focus is in a real text input (formula bar, cell edit, find box) — skip
+      const tag = (document.activeElement?.tagName ?? "").toLowerCase();
+      const isInput = tag === "input" || tag === "textarea" || (document.activeElement as HTMLElement)?.isContentEditable;
+      if (isInput) return;
+      if (!["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.key)) return;
+      e.preventDefault();
+      const dr = e.key === "ArrowUp" ? -1 : e.key === "ArrowDown" ? 1 : 0;
+      const dc = e.key === "ArrowLeft" ? -1 : e.key === "ArrowRight" ? 1 : 0;
+      if (e.shiftKey) {
+        setSelEnd(prev => {
+          const base = prev ?? selRef.current;
+          return { r: Math.max(0, Math.min(ROWS - 1, base.r + dr)), c: Math.max(0, Math.min(COLS - 1, base.c + dc)) };
+        });
+      } else {
+        setSel(s => ({ r: Math.max(0, Math.min(ROWS - 1, s.r + dr)), c: Math.max(0, Math.min(COLS - 1, s.c + dc)) }));
+        setSelEnd(null);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleGridKey = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
     if ((e.key === "h" || e.key === "H") && (e.metaKey || e.ctrlKey)) {
@@ -874,10 +903,18 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
       setSel(s => ({ r: Math.max(0, Math.min(ROWS - 1, s.r + dr)), c: Math.max(0, Math.min(COLS - 1, s.c + dc)) }));
       setSelEnd(null);
     };
-    if (e.key === "ArrowUp") move(-1, 0);
-    else if (e.key === "ArrowDown") move(1, 0);
-    else if (e.key === "ArrowLeft") move(0, -1);
-    else if (e.key === "ArrowRight") move(0, 1);
+    const arrowKeys = ["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"];
+    if (arrowKeys.includes(e.key)) {
+      const dr = e.key === "ArrowUp" ? -1 : e.key === "ArrowDown" ? 1 : 0;
+      const dc = e.key === "ArrowLeft" ? -1 : e.key === "ArrowRight" ? 1 : 0;
+      if (e.shiftKey) {
+        e.preventDefault();
+        setSelEnd(prev => {
+          const base = prev ?? selRef.current;
+          return { r: Math.max(0, Math.min(ROWS - 1, base.r + dr)), c: Math.max(0, Math.min(COLS - 1, base.c + dc)) };
+        });
+      } else { move(dr, dc); }
+    }
     else if (e.key === "Tab") { e.preventDefault(); move(0, e.shiftKey ? -1 : 1); }
     else if (e.key === "Enter") move(1, 0);
     else if (e.key === "Delete" || e.key === "Backspace") {
@@ -907,6 +944,9 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
       setTimeout(() => cellInputRef.current?.focus(), 0);
     }
   }, [editing, sel, activeSheet, updateCell, undo, redo, copySelection, pasteFromClipboard, cutSelection, applyStyle]);
+
+  // Keep selRef in sync (used by global keydown listener closure)
+  useEffect(() => { selRef.current = sel; }, [sel]);
 
   // Update formula bar on selection change
   useEffect(() => {
@@ -1905,7 +1945,7 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
               if (r !== undefined && c !== undefined) {
                 const rr = Number(r); const cc = Number(c);
                 if (fillDrag) setFillTo(prev => (!prev || prev.r !== rr || prev.c !== cc) ? { r: rr, c: cc } : prev);
-                else setSelEnd(prev => (!prev || prev.r !== rr || prev.c !== cc) ? { r: rr, c: cc } : prev);
+                else { setSelEnd(prev => (!prev || prev.r !== rr || prev.c !== cc) ? { r: rr, c: cc } : prev); didDrag.current = true; }
                 return;
               }
               el = el.parentElement;
@@ -1973,11 +2013,11 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
                   fillDrag={fillDrag}
                   fillTo={fillTo}
                   onStartFill={startFill}
-                  onCellEnter={(rr, cc) => { if (fillDrag) setFillTo({ r: rr, c: cc }); else if (selecting.current) setSelEnd({ r: rr, c: cc }); }}
+                  onCellEnter={(rr, cc) => { if (fillDrag) setFillTo({ r: rr, c: cc }); else if (selecting.current) { setSelEnd({ r: rr, c: cc }); didDrag.current = true; } }}
                   onCellMouseDown={(rr, cc, shiftKey) => {
                     if (painterStyle) return; // let click handle the painter
                     if (shiftKey) { setSelEnd({ r: rr, c: cc }); }
-                    else { setSel({ r: rr, c: cc }); setSelEnd(null); setEditing(false); selecting.current = true; }
+                    else { setSel({ r: rr, c: cc }); setSelEnd(null); setEditing(false); selecting.current = true; didDrag.current = false; }
                     focusGrid();
                   }}
                   onCellContextMenu={(rr, cc, x, y) => {
@@ -2001,11 +2041,14 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
                     }
                     if (shiftKey) {
                       setSelEnd({ r: rr, c: cc });
-                    } else {
+                    } else if (!didDrag.current) {
+                      // Only update for a plain click — drag-select already set sel/selEnd via onCellEnter/onMouseMove
                       setSel({ r: rr, c: cc });
                       setSelEnd(null);
                       setEditing(false);
                     }
+                    // reset for next interaction
+                    didDrag.current = false;
                     focusGrid();
                   }}
                   onCellDoubleClick={(rr, cc) => {

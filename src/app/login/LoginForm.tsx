@@ -46,9 +46,9 @@ export function LoginForm({ next, error: initialError }: { next: string; error: 
         <div className="absolute bottom-0 right-0 w-96 h-96 rounded-full bg-[#1a56db]/15 blur-3xl pointer-events-none" />
 
         <img
-          src="/nexusLogo.png"
+          src="/nexusLogo-dark.png"
           alt="CyberSage Nexus"
-          className="relative h-16 w-auto object-contain max-w-[280px] brightness-0 invert"
+          className="relative w-[65%] max-w-[340px] h-auto object-contain"
         />
 
         <div className="relative space-y-10">
@@ -88,7 +88,7 @@ export function LoginForm({ next, error: initialError }: { next: string; error: 
 
         {/* Mobile logo */}
         <div className="lg:hidden mb-10">
-          <img src="/nexusLogo.png" alt="CyberSage Nexus" className="h-14 w-auto object-contain max-w-[260px]" />
+          <img src="/nexusLogo.png" alt="CyberSage Nexus" className="h-12 w-auto object-contain max-w-[240px]" />
         </div>
 
         <div className="w-full max-w-[400px]">

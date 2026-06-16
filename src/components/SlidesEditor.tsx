@@ -260,8 +260,8 @@ async function exportPPTX(slides: Slide[], title: string) {
 
 // ─── Slide canvas element ─────────────────────────────────────────────────────
 
-function _SlideCanvas({ slide, selected, onSelect, theme, zoom = 1 }: {
-  slide: Slide; selected: boolean; onSelect: () => void; theme: Theme; zoom?: number;
+function _SlideCanvas({ slide, selected, onSelect, theme, zoom = 1, masterElements = [] }: {
+  slide: Slide; selected: boolean; onSelect: () => void; theme: Theme; zoom?: number; masterElements?: SlideElement[];
 }) {
   const isGradient = slide.background.includes("gradient");
   return (
@@ -270,6 +270,10 @@ function _SlideCanvas({ slide, selected, onSelect, theme, zoom = 1 }: {
       style={{ width: CANVAS_W * zoom, height: CANVAS_H * zoom, background: isGradient ? slide.background : slide.background }}
       onClick={onSelect}
     >
+      {/* Master elements rendered first (behind slide content) */}
+      {masterElements.map(el => (
+        <SlideElementView key={`master-${el.id}`} el={el} zoom={zoom} theme={theme} />
+      ))}
       {slide.elements.sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0)).map(el => (
         <SlideElementView key={el.id} el={el} zoom={zoom} theme={theme} />
       ))}
@@ -500,6 +504,8 @@ export default function SlidesEditor({ presId }: { presId: string }) {
   const [showFooter, setShowFooter] = useState(false);
   const [footerText, setFooterText] = useState("");
   const [masterLogo, setMasterLogo] = useState("");
+  const [masterElements, setMasterElements] = useState<SlideElement[]>([]); // shown on every slide
+  const [_editingMasterEl, _setEditingMasterEl] = useState<string | null>(null); // reserved for future inline master-element editing
   const [showDeckSettings, setShowDeckSettings] = useState(false);
 
   // Find & Replace (Feature 1)
@@ -540,7 +546,7 @@ export default function SlidesEditor({ presId }: { presId: string }) {
         if (d.title) setTitle(d.title);
         if (d.content) {
           try {
-            const parsed = JSON.parse(d.content) as { slides?: Slide[]; themeId?: string; deck?: { showNumbers?: boolean; showFooter?: boolean; footerText?: string; masterLogo?: string } };
+            const parsed = JSON.parse(d.content) as { slides?: Slide[]; themeId?: string; deck?: { showNumbers?: boolean; showFooter?: boolean; footerText?: string; masterLogo?: string; masterElements?: SlideElement[] } };
             if (parsed.slides?.length) setSlides(parsed.slides);
             if (parsed.themeId) setTheme(THEMES.find(t => t.id === parsed.themeId) ?? THEMES[0]);
             if (parsed.deck) {
@@ -548,6 +554,7 @@ export default function SlidesEditor({ presId }: { presId: string }) {
               if (typeof parsed.deck.showFooter === "boolean") setShowFooter(parsed.deck.showFooter);
               if (typeof parsed.deck.footerText === "string") setFooterText(parsed.deck.footerText);
               if (typeof parsed.deck.masterLogo === "string") setMasterLogo(parsed.deck.masterLogo);
+              if (Array.isArray(parsed.deck.masterElements)) setMasterElements(parsed.deck.masterElements);
             }
           } catch { /* fresh */ }
         }
@@ -565,11 +572,11 @@ export default function SlidesEditor({ presId }: { presId: string }) {
         await fetch(`/api/slides/${presId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title: t, content: JSON.stringify({ slides: s, themeId: theme.id, deck: { showNumbers, showFooter, footerText, masterLogo } }) }),
+          body: JSON.stringify({ title: t, content: JSON.stringify({ slides: s, themeId: theme.id, deck: { showNumbers, showFooter, footerText, masterLogo, masterElements } }) }),
         });
       } finally { setSaving(false); }
     }, 1500);
-  }, [presId, theme.id, showNumbers, showFooter, footerText, masterLogo]);
+  }, [presId, theme.id, showNumbers, showFooter, footerText, masterLogo, masterElements]);
 
   // ── History ───────────────────────────────────────────────────────────────
   const pushHistory = useCallback((s: Slide[]) => {
@@ -1451,6 +1458,9 @@ export default function SlidesEditor({ presId }: { presId: string }) {
                       </div>
                       {/* 16:9 framed thumbnail */}
                       <div className="mx-2.5 mb-2.5 rounded-lg overflow-hidden border border-[#e8eaed]" style={{ aspectRatio: "16/9", position: "relative", background: slide.background }}>
+                        {masterElements.map(el => (
+                          <SlideElementView key={`m-${el.id}`} el={el} zoom={210 / CANVAS_W} theme={theme} />
+                        ))}
                         {slide.elements.slice().sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0)).map(el => (
                           <SlideElementView key={el.id} el={el} zoom={210 / CANVAS_W} theme={theme} editMode />
                         ))}
@@ -1549,6 +1559,13 @@ export default function SlidesEditor({ presId }: { presId: string }) {
                 backgroundSize: (GRID * zoom) + "px " + (GRID * zoom) + "px",
               } : {}),
             }}>
+
+            {/* Master elements — shown on every slide, not selectable/editable on per-slide canvas */}
+            {masterElements.map(el => (
+              <div key={`master-${el.id}`} style={{ position: "absolute", left: el.x * zoom, top: el.y * zoom, width: el.w * zoom, height: el.h * zoom, pointerEvents: "none", zIndex: 0, opacity: el.style?.opacity ?? 0.7 }}>
+                <SlideElementView el={el} zoom={zoom} theme={theme} />
+              </div>
+            ))}
 
             {activeSlide.elements.sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0)).map(el => {
               const isSelected = el.id === selectedElId;
@@ -1872,6 +1889,57 @@ export default function SlidesEditor({ presId }: { presId: string }) {
               </div>
             </div>
             <p className="text-[11px] text-[#80868b]">Applied to every slide in the editor and in presenter mode.</p>
+
+            {/* Master layout elements */}
+            <div className="border-t border-[#e8eaed] pt-4 mt-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] font-medium text-[#5f6368]">Master layout elements</p>
+                <div className="flex gap-1 flex-wrap">
+                  <button onClick={() => {
+                    const el: SlideElement = { id: `mel_${Date.now()}`, type: "shape", x: 0, y: 0, w: CANVAS_W, h: 8, shapeType: "rect", style: { bg: theme.accent } };
+                    setMasterElements(p => [...p, el]);
+                  }} className="px-2 py-1 text-[11px] rounded bg-[#e8f0fe] text-[#1a56db] hover:bg-[#d2e3fc]">+ Header bar</button>
+                  <button onClick={() => {
+                    const el: SlideElement = { id: `mel_${Date.now()}`, type: "text", x: 20, y: 20, w: 300, h: 50, content: "CONFIDENTIAL", style: { fontSize: 36, color: "#ea4335", opacity: 0.1 } };
+                    setMasterElements(p => [...p, el]);
+                  }} className="px-2 py-1 text-[11px] rounded bg-[#e8f0fe] text-[#1a56db] hover:bg-[#d2e3fc]">+ Watermark</button>
+                  <button onClick={() => {
+                    const el: SlideElement = { id: `mel_${Date.now()}`, type: "shape", x: 0, y: CANVAS_H - 5, w: CANVAS_W, h: 5, shapeType: "rect", style: { bg: theme.accent } };
+                    setMasterElements(p => [...p, el]);
+                  }} className="px-2 py-1 text-[11px] rounded bg-[#e8f0fe] text-[#1a56db] hover:bg-[#d2e3fc]">+ Footer bar</button>
+                </div>
+              </div>
+              {masterElements.length === 0 ? (
+                <p className="text-[11px] text-[#80868b] italic">No master elements. Add a header bar, footer bar, or watermark that will appear on every slide.</p>
+              ) : (
+                <div className="space-y-1.5">
+                  {masterElements.map(el => (
+                    <div key={el.id} className="flex items-center gap-2 px-3 py-2 bg-[#f8f9fa] rounded-lg border border-[#e8eaed]">
+                      <div className="flex-1 min-w-0 text-xs text-[#202124] truncate">
+                        {el.type === "text" ? `Text: "${(el.content ?? "").slice(0, 24)}"` : `Shape (${el.shapeType ?? "rect"})`}
+                        <span className="ml-1.5 text-[#80868b]">{el.w}×{el.h}</span>
+                      </div>
+                      {el.type === "text" && (
+                        <input value={el.content ?? ""}
+                          onChange={e2 => setMasterElements(p => p.map(m => m.id === el.id ? { ...m, content: e2.target.value } : m))}
+                          className="w-28 px-2 py-1 text-xs border border-[#d0d5dd] rounded bg-white" placeholder="Text…" />
+                      )}
+                      <label className="flex items-center gap-1 text-[10px] text-[#5f6368] shrink-0">
+                        <input type="range" min={0.05} max={1} step={0.05}
+                          value={el.style?.opacity ?? 1}
+                          onChange={e2 => setMasterElements(p => p.map(m => m.id === el.id ? { ...m, style: { ...m.style, opacity: Number(e2.target.value) } } : m))}
+                          className="w-14 accent-[#1a56db]" />
+                        {Math.round((el.style?.opacity ?? 1) * 100)}%
+                      </label>
+                      <button onClick={() => setMasterElements(p => p.filter(m => m.id !== el.id))}
+                        className="p-1 text-[#5f6368] hover:text-[#ea4335] rounded hover:bg-[#fce8e6] transition-colors shrink-0">
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </Modal>
       )}

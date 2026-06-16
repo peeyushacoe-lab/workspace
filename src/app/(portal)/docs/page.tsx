@@ -1,5 +1,10 @@
+import { Suspense } from "react";
 import { DocsView } from "@/components/DocsView";
 
 export default function DocsPage() {
-  return <DocsView />;
+  return (
+    <Suspense>
+      <DocsView />
+    </Suspense>
+  );
 }

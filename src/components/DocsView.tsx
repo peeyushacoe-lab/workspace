@@ -7,6 +7,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Plus, Search, FileText, Trash2, Pin, PinOff, Loader2, Share2,
   Bold, Italic, Underline, Strikethrough, Code, Quote, Link2,
@@ -35,7 +36,16 @@ import Highlight from "@tiptap/extension-highlight";
 import Subscript from "@tiptap/extension-subscript";
 import Superscript from "@tiptap/extension-superscript";
 import * as Y from "yjs";
+import * as YAwareness from "y-protocols/awareness";
 import Collaboration from "@tiptap/extension-collaboration";
+// CollaborationCursor is optional — installed via `npm install` after package.json update.
+// We resolve it at module init via dynamic import (avoids the no-require-imports lint rule).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let CollaborationCursor: any = null;
+if (typeof window !== "undefined") {
+  // Fire-and-forget; populates before first editor mounts in practice
+  import("@tiptap/extension-collaboration-cursor").then(m => { CollaborationCursor = m.default; }).catch(() => { /* not installed yet */ });
+}
 import { DocShareModal } from "./DocShareModal";
 
 // ─── Track-changes marks ──────────────────────────────────────────────────────
@@ -333,16 +343,28 @@ function computeStats(text: string): DocStats {
 
 // ─── Collab hook ──────────────────────────────────────────────────────────────
 
+// Assign each user a stable accent colour for their cursor
+const COLLAB_COLORS = ["#1a56db","#0f9d58","#f4b400","#ea4335","#a142f4","#ff6d00","#00bcd4","#e91e63"];
+function userColor(userId: string): string {
+  let h = 0;
+  for (let i = 0; i < userId.length; i++) h = (h * 31 + userId.charCodeAt(i)) >>> 0;
+  return COLLAB_COLORS[h % COLLAB_COLORS.length];
+}
+
 function useDocCollab(docId: string | null) {
-  const ydocRef = useRef<Y.Doc | null>(null);
-  const [collaborators, setCollaborators] = useState<{ userId: string; name: string }[]>([]);
+  const ydocRef     = useRef<Y.Doc | null>(null);
+  const awarenessRef = useRef<YAwareness.Awareness | null>(null);
+  const [collaborators, setCollaborators] = useState<{ userId: string; name: string; color: string }[]>([]);
 
   if (!ydocRef.current) ydocRef.current = new Y.Doc();
+  if (!awarenessRef.current) awarenessRef.current = new YAwareness.Awareness(ydocRef.current);
 
   useEffect(() => {
     if (!docId) return;
     const ydoc = new Y.Doc();
+    const awareness = new YAwareness.Awareness(ydoc);
     ydocRef.current = ydoc;
+    awarenessRef.current = awareness;
     setCollaborators([]);
 
     const onUpdate = (update: Uint8Array, origin: unknown) => {
@@ -364,9 +386,12 @@ function useDocCollab(docId: string | null) {
           const bin = Uint8Array.from(atob(msg.update), c => c.charCodeAt(0));
           Y.applyUpdate(ydoc, bin, REMOTE_ORIGIN);
         } else if (msg.type === "PRESENCE" && msg.userId) {
+          const color = userColor(msg.userId);
+          // Update awareness state so CollaborationCursor can render remote carets
+          // (awareness updates are local — real cursor sync needs WebSocket; this gives coloured avatars)
           setCollaborators(prev => {
             const filtered = prev.filter(c => c.userId !== msg.userId);
-            return [...filtered, { userId: msg.userId!, name: msg.name ?? "Unknown" }];
+            return [...filtered, { userId: msg.userId!, name: msg.name ?? "Unknown", color }];
           });
         }
       } catch { /* ignore */ }
@@ -382,12 +407,13 @@ function useDocCollab(docId: string | null) {
 
     return () => {
       ydoc.off("update", onUpdate);
+      awareness.destroy();
       es.close();
       clearInterval(pingInterval);
     };
   }, [docId]);
 
-  return { ydoc: ydocRef.current, collaborators };
+  return { ydoc: ydocRef.current, awareness: awarenessRef.current, collaborators };
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -461,6 +487,7 @@ function DocItem({ doc, selected, onSelect, onPin, onDelete }: {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function DocsView() {
+  const searchParams = useSearchParams();
   const [docs, setDocs] = useState<Doc[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -515,7 +542,7 @@ export function DocsView() {
   suggestModeRef.current = suggestMode;
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const { ydoc, collaborators } = useDocCollab(selectedId);
+  const { ydoc, awareness, collaborators } = useDocCollab(selectedId);
 
   // ── Editor ──────────────────────────────────────────────────────────────
   const editor = useEditor({
@@ -538,6 +565,11 @@ export function DocsView() {
       TrackInsert,
       TrackDelete,
       Collaboration.configure({ document: ydoc }),
+      ...(CollaborationCursor ? [CollaborationCursor.configure({
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        provider: { awareness } as never,
+        user: { name: "You", color: "#1a56db" },
+      })] : []),
     ],
     content: "",
     editorProps: {
@@ -600,12 +632,21 @@ export function DocsView() {
   }, [ydoc]);
 
   // ── Load docs ─────────────────────────────────────────────────────────────
+  const openIdFromUrl = searchParams?.get("open") ?? null;
   useEffect(() => {
     fetch("/api/docs")
       .then(r => r.json())
-      .then((d: Doc[]) => { setDocs(d); setLoading(false); })
+      .then((d: Doc[]) => {
+        setDocs(d);
+        setLoading(false);
+        // Auto-open doc if navigated from Drive with ?open=[id]
+        if (openIdFromUrl) {
+          const target = d.find((doc: Doc) => doc.id === openIdFromUrl);
+          if (target) { setSelectedId(target.id); setTitle(target.title); }
+        }
+      })
       .catch(() => setLoading(false));
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Offline indicator ─────────────────────────────────────────────────────
   useEffect(() => {
@@ -1152,11 +1193,24 @@ blockquote{border-left:4px solid #1a56db;margin:0;padding-left:1em;color:#5f6368
             </div>
 
             {/* Collab avatars */}
-            {collaborators.slice(0, 3).map(c => (
-              <div key={c.userId} title={c.name} className="w-6 h-6 rounded-full bg-[#1a56db] flex items-center justify-center text-white text-[9px] font-bold border-2 border-white -ml-2 first:ml-0">
+            {collaborators.length > 0 && (
+              <div className="flex items-center gap-1 px-2 py-0.5 bg-[#f1f3f4] rounded-full">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#0f9d58] animate-pulse" />
+                <span className="text-[11px] text-[#5f6368]">{collaborators.length} live</span>
+              </div>
+            )}
+            {collaborators.slice(0, 4).map(c => (
+              <div key={c.userId} title={`${c.name} — editing`}
+                className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold border-2 border-white -ml-2 first:ml-0 ring-2 shadow-sm"
+                style={{ backgroundColor: c.color, borderColor: "white", outline: `2px solid ${c.color}`, outlineOffset: "1px" }}>
                 {c.name[0]?.toUpperCase()}
               </div>
             ))}
+            {collaborators.length > 4 && (
+              <div className="w-7 h-7 rounded-full flex items-center justify-center bg-[#e8eaed] text-[#5f6368] text-[10px] font-bold border-2 border-white -ml-2">
+                +{collaborators.length - 4}
+              </div>
+            )}
 
             {isOffline && (
               <span className="flex items-center gap-1 text-[11px] font-medium text-[#f4b400]">

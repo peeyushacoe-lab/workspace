@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   File,
   FileText,
@@ -645,6 +646,7 @@ function FileDetailPanel({
 // ── Main DriveView ────────────────────────────────────────────────────────────
 
 export function DriveView({ currentUserId }: { currentUserId: string }) {
+  const router = useRouter();
   const [section, setSection] = useState<SidebarSection>("my-drive");
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [breadcrumb, setBreadcrumb] = useState<DriveFolder[]>([]);
@@ -1024,6 +1026,26 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
     if (folderInputRef.current) folderInputRef.current.value = "";
   };
 
+  // Create native Nexus document/spreadsheet/presentation from Drive
+  const createNativeFile = async (type: "doc" | "sheet" | "slide") => {
+    setShowNewMenu(false);
+    const apiMap = { doc: "/api/docs", sheet: "/api/sheets", slide: "/api/slides" };
+    const titleMap = { doc: "Untitled Document", sheet: "Untitled Spreadsheet", slide: "Untitled Presentation" };
+    const navMap = { doc: (id: string) => `/docs?open=${id}`, sheet: (id: string) => `/apps/sheets/${id}`, slide: (id: string) => `/apps/slides/${id}` };
+    try {
+      const res = await fetch(apiMap[type], {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: titleMap[type] }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      const data = await res.json() as { id: string };
+      router.push(navMap[type](data.id));
+    } catch {
+      toast.error(`Could not create ${titleMap[type]}`);
+    }
+  };
+
   // Right-click context menu
   const handleContextMenu = (
     e: React.MouseEvent,
@@ -1185,6 +1207,10 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                   setShowNewMenu(false);
                 }}
               />
+              <div className="my-1 border-t border-[#e8eaed]" />
+              <NewMenuItem icon={FileText} label="New document" onClick={() => createNativeFile("doc")} />
+              <NewMenuItem icon={FileSpreadsheet} label="New spreadsheet" onClick={() => createNativeFile("sheet")} />
+              <NewMenuItem icon={Presentation} label="New presentation" onClick={() => createNativeFile("slide")} />
               <div className="my-1 border-t border-[#e8eaed]" />
               <NewMenuItem
                 icon={Upload}
