@@ -13,15 +13,18 @@ import {
   List, ListOrdered, ListChecks, AlignLeft, AlignCenter, AlignRight, AlignJustify,
   Minus, Table, Image as ImageIcon,
   Undo2, Redo2, ChevronDown, Sparkles, MessageSquare, History,
-  Download, Shield, X, Check,
+  Download, Shield, X, Check, CheckCheck, XCircle,
   IndentDecrease, IndentIncrease, Type,
   BookOpen, Clock, LayoutTemplate, WifiOff,
   Superscript as SuperscriptIcon, Subscript as SubscriptIcon, RemoveFormatting, Highlighter,
   FileCog, PanelTop, BarChart3, AlignVerticalSpaceAround, Sigma, ListTree,
+  BookmarkPlus, GitMerge,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow, format } from "date-fns";
 import { useEditor, EditorContent } from "@tiptap/react";
+import { Mark } from "@tiptap/core";
+import { ReplaceStep } from "prosemirror-transform";
 import StarterKit from "@tiptap/starter-kit";
 import TextAlign from "@tiptap/extension-text-align";
 import Image from "@tiptap/extension-image";
@@ -34,6 +37,42 @@ import Superscript from "@tiptap/extension-superscript";
 import * as Y from "yjs";
 import Collaboration from "@tiptap/extension-collaboration";
 import { DocShareModal } from "./DocShareModal";
+
+// ─── Track-changes marks ──────────────────────────────────────────────────────
+
+const genSuggId = () => Math.random().toString(36).slice(2, 9);
+
+const TrackInsert = Mark.create({
+  name: "trackInsert",
+  spanning: true,
+  addAttributes() {
+    return {
+      id:     { default: null },
+      author: { default: "You" },
+    };
+  },
+  parseHTML() { return [{ tag: "ins[data-sugg]" }]; },
+  renderHTML({ HTMLAttributes }) {
+    return ["ins", { "data-sugg": "", "data-id": HTMLAttributes.id, "data-author": HTMLAttributes.author,
+      style: "color:#0f9d58;text-decoration:underline;background:rgba(15,157,88,0.08);border-radius:2px;" }, 0];
+  },
+});
+
+const TrackDelete = Mark.create({
+  name: "trackDelete",
+  spanning: true,
+  addAttributes() {
+    return {
+      id:     { default: null },
+      author: { default: "You" },
+    };
+  },
+  parseHTML() { return [{ tag: "del[data-sugg]" }]; },
+  renderHTML({ HTMLAttributes }) {
+    return ["del", { "data-sugg": "", "data-id": HTMLAttributes.id, "data-author": HTMLAttributes.author,
+      style: "color:#ea4335;text-decoration:line-through;background:rgba(234,67,53,0.07);border-radius:2px;opacity:0.85;" }, 0];
+  },
+});
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -56,10 +95,9 @@ type Comment = {
 
 type VersionSnapshot = {
   id: string;
-  title: string;
-  content: string;
-  savedAt: string;
-  wordCount: number;
+  label: string;
+  timestamp: number;
+  content: string; // JSON string of Tiptap doc content
 };
 
 type SecurityLabel = "PUBLIC" | "INTERNAL" | "CONFIDENTIAL" | "RESTRICTED";
@@ -189,6 +227,52 @@ function pageSetupKey(id: string): string {
 
 function headerFooterKey(id: string): string {
   return "nexus_docs_headerfooter_" + id;
+}
+
+// ─── Version history (localStorage) ──────────────────────────────────────────
+
+function versionHistoryKey(id: string): string {
+  return "nexus_doc_versions_" + id;
+}
+
+const MAX_VERSIONS = 20;
+
+function loadVersions(docId: string): VersionSnapshot[] {
+  try {
+    const raw = localStorage.getItem(versionHistoryKey(docId));
+    if (!raw) return [];
+    const arr = JSON.parse(raw) as VersionSnapshot[];
+    if (!Array.isArray(arr)) return [];
+    return arr;
+  } catch {
+    try { localStorage.removeItem(versionHistoryKey(docId)); } catch { /* ignore */ }
+    return [];
+  }
+}
+
+function saveVersions(docId: string, snapshots: VersionSnapshot[]): void {
+  try {
+    localStorage.setItem(versionHistoryKey(docId), JSON.stringify(snapshots));
+  } catch { /* storage may be full */ }
+}
+
+function pushVersion(docId: string, snapshot: VersionSnapshot): VersionSnapshot[] {
+  const existing = loadVersions(docId);
+  const next = [snapshot, ...existing].slice(0, MAX_VERSIONS);
+  saveVersions(docId, next);
+  return next;
+}
+
+function relativeTime(timestamp: number): string {
+  const diff = Date.now() - timestamp;
+  const secs = Math.floor(diff / 1000);
+  if (secs < 60) return "just now";
+  const mins = Math.floor(secs / 60);
+  if (mins < 60) return mins + " min ago";
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + " hr ago";
+  const days = Math.floor(hrs / 24);
+  return days + " day" + (days === 1 ? "" : "s") + " ago";
 }
 
 function loadPageSetup(id: string): PageSetup {
@@ -424,6 +508,12 @@ export function DocsView() {
   const [aiLoading, setAILoading] = useState(false);
   const [aiResult, setAIResult] = useState("");
 
+  // Track-changes / Suggest mode
+  const [suggestMode, setSuggestMode] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const suggestModeRef = useRef(false);
+  suggestModeRef.current = suggestMode;
+
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { ydoc, collaborators } = useDocCollab(selectedId);
 
@@ -445,11 +535,55 @@ export function DocsView() {
       Highlight.configure({ multicolor: true }),
       Subscript,
       Superscript,
+      TrackInsert,
+      TrackDelete,
       Collaboration.configure({ document: ydoc }),
     ],
     content: "",
     editorProps: {
       attributes: { class: "docs-editor-content outline-none min-h-[600px]" },
+    },
+    onCreate({ editor: ed }) {
+      // Override dispatchTransaction on the ProseMirror view for suggest-mode interception
+      const origDispatch = ed.view.dispatch.bind(ed.view);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (ed.view as any).dispatch = (transaction: any) => {
+        if (!suggestModeRef.current || !transaction.docChanged) {
+          origDispatch(transaction);
+          return;
+        }
+        const state = ed.view.state;
+        const schema = state.schema;
+        const insertMark = schema.marks.trackInsert?.create({ id: genSuggId(), author: "You" });
+        const deleteMark = schema.marks.trackDelete?.create({ id: genSuggId(), author: "You" });
+
+        let tr = state.tr;
+        let offset = 0;
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        for (const step of (transaction.steps as any[])) {
+          if (!(step instanceof ReplaceStep)) {
+            try { tr = tr.step(step); } catch { /* skip non-applicable steps */ }
+            continue;
+          }
+          const rs = step as ReplaceStep;
+          const from = rs.from + offset;
+          const to   = rs.to   + offset;
+          const sliceSize = rs.slice.content.size;
+
+          if (to > from && deleteMark) {
+            tr = tr.addMark(from, to, deleteMark);
+          }
+          if (sliceSize > 0 && insertMark) {
+            const insertPos = to;
+            tr = tr.insert(insertPos, rs.slice.content);
+            tr = tr.addMark(insertPos, insertPos + sliceSize, insertMark);
+            offset += sliceSize;
+          }
+        }
+
+        origDispatch(tr);
+      };
     },
     onUpdate: ({ editor: ed }) => {
       const heads: { level: number; text: string }[] = [];
@@ -486,6 +620,21 @@ export function DocsView() {
     };
   }, []);
 
+  // ── Version auto-save every 5 minutes ────────────────────────────────────
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!selectedId) return;
+    const interval = setInterval(() => {
+      if (!editor || !selectedId) return;
+      const c = editor.getJSON ? JSON.stringify(editor.getJSON()) : editor.getHTML();
+      if (!c || c === "{}" || c === "null") return;
+      const snap: VersionSnapshot = { id: String(Date.now()), label: "Auto-save", timestamp: Date.now(), content: c };
+      const next = pushVersion(selectedId, snap);
+      setVersions(next);
+    }, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [selectedId, editor]);
+
   // ── Page setup persistence ────────────────────────────────────────────────
   const updatePageSetup = useCallback((patch: Partial<PageSetup>) => {
     setPageSetup(prev => {
@@ -517,6 +666,7 @@ export function DocsView() {
   const selectDoc = useCallback((doc: Doc) => {
     setSelectedId(doc.id);
     setComments([]);
+    setVersions(loadVersions(doc.id));
     setPageSetup(loadPageSetup(doc.id));
     setHeaderFooter(loadHeaderFooter(doc.id));
 
@@ -615,25 +765,52 @@ export function DocsView() {
     setDocs(prev => prev.map(d => d.id === id ? { ...d, pinned: !pinned } : d));
   };
 
-  // ── Version history ───────────────────────────────────────────────────────
-  const saveVersion = useCallback(() => {
+  // ── Version history (localStorage) ────────────────────────────────────────
+  const saveVersion = useCallback((label?: string) => {
     if (!editor || !selectedId) return;
+    const content = editor.getJSON ? JSON.stringify(editor.getJSON()) : editor.getHTML();
     const snap: VersionSnapshot = {
-      id: `v_${Date.now()}`,
-      title,
-      content: editor.getHTML(),
-      savedAt: new Date().toISOString(),
-      wordCount: countWords(editor.getHTML()),
+      id: String(Date.now()),
+      label: label ?? "Manual save",
+      timestamp: Date.now(),
+      content,
     };
-    setVersions(prev => [snap, ...prev.slice(0, 19)]);
+    const next = pushVersion(selectedId, snap);
+    setVersions(next);
     toast.success("Version saved");
-  }, [editor, selectedId, title]);
+  }, [editor, selectedId]);
+
+  const saveVersionAuto = useCallback(() => {
+    if (!editor || !selectedId) return;
+    const content = editor.getJSON ? JSON.stringify(editor.getJSON()) : editor.getHTML();
+    if (!content || content === "{}" || content === "null") return;
+    const snap: VersionSnapshot = {
+      id: String(Date.now()),
+      label: "Auto-save",
+      timestamp: Date.now(),
+      content,
+    };
+    const next = pushVersion(selectedId, snap);
+    setVersions(next);
+  }, [editor, selectedId]);
 
   const restoreVersion = (v: VersionSnapshot) => {
-    editor?.commands.setContent(v.content, { emitUpdate: false });
-    setTitle(v.title);
+    if (!editor) return;
+    try {
+      const parsed = JSON.parse(v.content) as object;
+      editor.commands.setContent(parsed, { emitUpdate: false });
+    } catch {
+      editor.commands.setContent(v.content, { emitUpdate: false });
+    }
     toast.success("Version restored");
     setShowHistory(false);
+  };
+
+  const deleteVersion = (id: string) => {
+    if (!selectedId) return;
+    const next = versions.filter(v => v.id !== id);
+    saveVersions(selectedId, next);
+    setVersions(next);
   };
 
   // ── Comments ──────────────────────────────────────────────────────────────
@@ -720,6 +897,83 @@ blockquote{border-left:4px solid #1a56db;margin:0;padding-left:1em;color:#5f6368
     setShowAI(false);
   };
 
+  // ── Track-changes helpers ─────────────────────────────────────────────────
+
+  type Suggestion = { id: string; type: "insert" | "delete"; text: string; author: string; from: number; to: number };
+
+  const getSuggestions = useCallback((): Suggestion[] => {
+    if (!editor) return [];
+    const list: Suggestion[] = [];
+    const seen = new Set<string>();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    editor.state.doc.descendants((node: any, pos: number) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      node.marks.forEach((mark: any) => {
+        if ((mark.type.name === "trackInsert" || mark.type.name === "trackDelete") && mark.attrs.id && !seen.has(mark.attrs.id)) {
+          seen.add(mark.attrs.id as string);
+          list.push({
+            id: mark.attrs.id as string,
+            type: mark.type.name === "trackInsert" ? "insert" : "delete",
+            text: node.textContent as string,
+            author: mark.attrs.author as string,
+            from: pos,
+            to: pos + (node.nodeSize as number),
+          });
+        }
+      });
+    });
+    return list;
+  }, [editor]);
+
+  const acceptSuggestion = useCallback((sugg: Suggestion) => {
+    if (!editor) return;
+    if (sugg.type === "insert") {
+      // Keep text, remove mark
+      editor.chain().focus()
+        .setTextSelection({ from: sugg.from, to: sugg.to })
+        .unsetMark("trackInsert")
+        .run();
+    } else {
+      // Delete the marked text
+      editor.chain().focus()
+        .setTextSelection({ from: sugg.from, to: sugg.to })
+        .deleteSelection()
+        .run();
+    }
+  }, [editor]);
+
+  const rejectSuggestion = useCallback((sugg: Suggestion) => {
+    if (!editor) return;
+    if (sugg.type === "insert") {
+      // Delete the inserted text
+      editor.chain().focus()
+        .setTextSelection({ from: sugg.from, to: sugg.to })
+        .deleteSelection()
+        .run();
+    } else {
+      // Keep text, remove delete mark
+      editor.chain().focus()
+        .setTextSelection({ from: sugg.from, to: sugg.to })
+        .unsetMark("trackDelete")
+        .run();
+    }
+  }, [editor]);
+
+  const acceptAllSuggestions = useCallback(() => {
+    if (!editor) return;
+    // Process in reverse order so positions don't shift
+    const all = getSuggestions().reverse();
+    for (const s of all) acceptSuggestion(s);
+    toast.success("All suggestions accepted");
+  }, [editor, getSuggestions, acceptSuggestion]);
+
+  const rejectAllSuggestions = useCallback(() => {
+    if (!editor) return;
+    const all = getSuggestions().reverse();
+    for (const s of all) rejectSuggestion(s);
+    toast.success("All suggestions rejected");
+  }, [editor, getSuggestions, rejectSuggestion]);
+
   // ── Derived ───────────────────────────────────────────────────────────────
   const filteredDocs = docs.filter(d =>
     d.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -739,7 +993,7 @@ blockquote{border-left:4px solid #1a56db;margin:0;padding-left:1em;color:#5f6368
   // Estimated page count from content height vs page height (best-effort).
   const estimatedPages = Math.max(1, Math.ceil((wordCount * 6.2) / Math.max(1, (paperH - marginPx.v * 2))) || 1);
 
-  const rightPanelOpen = showAI || showComments || showHistory;
+  const rightPanelOpen = showAI || showComments || showHistory || showSuggestions;
 
   // Count matches in the document's visible text (for the Find dialog).
   const frCount = (() => {
@@ -1013,9 +1267,28 @@ blockquote{border-left:4px solid #1a56db;margin:0;padding-left:1em;color:#5f6368
                 )}
               </div>
               <IconBtn icon={<BookOpen className="h-4 w-4" />} title="Document outline" active={showOutline} onClick={() => setShowOutline(v => !v)} />
-              <IconBtn icon={<MessageSquare className="h-4 w-4" />} title="Comments" active={showComments} onClick={() => { setShowComments(v => !v); setShowAI(false); setShowHistory(false); }} />
-              <IconBtn icon={<History className="h-4 w-4" />} title="Version history" active={showHistory} onClick={() => { setShowHistory(v => !v); setShowAI(false); setShowComments(false); }} />
-              <IconBtn icon={<Sparkles className="h-4 w-4" />} title="AI assistant" active={showAI} activeClass="text-purple-600 bg-purple-50" onClick={() => { setShowAI(v => !v); setShowComments(false); setShowHistory(false); }} />
+              <IconBtn icon={<MessageSquare className="h-4 w-4" />} title="Comments" active={showComments} onClick={() => { setShowComments(v => !v); setShowAI(false); setShowHistory(false); setShowSuggestions(false); }} />
+              <IconBtn icon={<BookmarkPlus className="h-4 w-4" />} title="Save version" onClick={() => { const label = window.prompt("Version label (optional):", "Manual save"); if (label !== null) saveVersion(label || "Manual save"); }} />
+              <IconBtn icon={<History className="h-4 w-4" />} title="Version history" active={showHistory} onClick={() => { setShowHistory(v => !v); setShowAI(false); setShowComments(false); setShowSuggestions(false); }} />
+              {/* Suggest mode toggle */}
+              <button
+                title={suggestMode ? "Exit suggesting mode" : "Suggesting mode — track changes"}
+                onClick={() => {
+                  const next = !suggestMode;
+                  setSuggestMode(next);
+                  if (next) { setShowSuggestions(true); setShowAI(false); setShowComments(false); setShowHistory(false); }
+                  toast(next ? "Suggesting mode on — changes are tracked" : "Suggesting mode off");
+                }}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+                  suggestMode
+                    ? "bg-[#e6f4ea] text-[#0f9d58] border-[#0f9d58]/30"
+                    : "border-[#e8eaed] text-[#5f6368] hover:bg-[#f1f3f4]"
+                }`}
+              >
+                <GitMerge className="h-3.5 w-3.5" />
+                {suggestMode ? "Suggesting" : "Suggest"}
+              </button>
+              <IconBtn icon={<Sparkles className="h-4 w-4" />} title="AI assistant" active={showAI} activeClass="text-purple-600 bg-purple-50" onClick={() => { setShowAI(v => !v); setShowComments(false); setShowHistory(false); setShowSuggestions(false); }} />
               <div className="relative" onClick={e => e.stopPropagation()}>
                 <IconBtn icon={<Download className="h-4 w-4" />} title="Export" onClick={() => setShowExportMenu(v => !v)} />
                 {showExportMenu && (
@@ -1266,10 +1539,11 @@ blockquote{border-left:4px solid #1a56db;margin:0;padding-left:1em;color:#5f6368
             {rightPanelOpen && (
               <div className="w-80 border-l border-[#e8eaed] bg-white flex flex-col overflow-hidden flex-shrink-0">
                 <div className="flex items-center border-b border-[#e8eaed]">
-                  {showAI      && <PanelTab active icon={<Sparkles className="h-3.5 w-3.5" />} label="AI" onClick={() => {}} />}
-                  {showComments && <PanelTab active icon={<MessageSquare className="h-3.5 w-3.5" />} label="Comments" onClick={() => {}} />}
-                  {showHistory  && <PanelTab active icon={<History className="h-3.5 w-3.5" />} label="History" onClick={() => {}} />}
-                  <button className="ml-auto p-2 text-[#80868b] hover:text-[#202124]" onClick={() => { setShowAI(false); setShowComments(false); setShowHistory(false); }}>
+                  {showAI          && <PanelTab active icon={<Sparkles className="h-3.5 w-3.5" />} label="AI" onClick={() => {}} />}
+                  {showComments    && <PanelTab active icon={<MessageSquare className="h-3.5 w-3.5" />} label="Comments" onClick={() => {}} />}
+                  {showHistory     && <PanelTab active icon={<History className="h-3.5 w-3.5" />} label="History" onClick={() => {}} />}
+                  {showSuggestions && <PanelTab active icon={<GitMerge className="h-3.5 w-3.5" />} label="Suggestions" onClick={() => {}} />}
+                  <button className="ml-auto p-2 text-[#80868b] hover:text-[#202124]" onClick={() => { setShowAI(false); setShowComments(false); setShowHistory(false); setShowSuggestions(false); setSuggestMode(false); }}>
                     <X className="h-3.5 w-3.5" />
                   </button>
                 </div>
@@ -1342,31 +1616,108 @@ blockquote{border-left:4px solid #1a56db;margin:0;padding-left:1em;color:#5f6368
                   </div>
                 )}
 
+                {/* Suggestions Panel */}
+                {showSuggestions && (() => {
+                  const suggestions = getSuggestions();
+                  return (
+                    <div className="flex flex-col h-full overflow-hidden">
+                      <div className="flex items-center justify-between px-3 pt-3 pb-2 border-b border-[#e8eaed] flex-shrink-0">
+                        <div>
+                          <p className="text-xs font-semibold text-[#202124]">Tracked changes</p>
+                          <p className="text-[10px] text-[#80868b]">{suggestions.length} pending suggestion{suggestions.length !== 1 ? "s" : ""}</p>
+                        </div>
+                        {suggestions.length > 0 && (
+                          <div className="flex gap-1">
+                            <button onClick={acceptAllSuggestions} title="Accept all" className="p-1.5 rounded-lg text-[#0f9d58] hover:bg-[#e6f4ea] transition-colors">
+                              <CheckCheck className="h-3.5 w-3.5" />
+                            </button>
+                            <button onClick={rejectAllSuggestions} title="Reject all" className="p-1.5 rounded-lg text-[#ea4335] hover:bg-red-50 transition-colors">
+                              <XCircle className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                        {/* Suggest-mode banner */}
+                        <div className={`flex items-center gap-2 px-2.5 py-2 rounded-lg text-[11px] font-medium border ${suggestMode ? "bg-[#e6f4ea] border-[#0f9d58]/30 text-[#0f9d58]" : "bg-[#f8f9fa] border-[#e8eaed] text-[#5f6368]"}`}>
+                          <GitMerge className="h-3.5 w-3.5 flex-shrink-0" />
+                          {suggestMode ? "Suggesting mode is ON — edits are tracked" : "Suggesting mode is OFF — edits apply directly"}
+                        </div>
+                        {suggestions.length === 0 ? (
+                          <div className="text-center py-10">
+                            <GitMerge className="h-8 w-8 mx-auto mb-2 text-[#bdc1c6]" />
+                            <p className="text-xs text-[#80868b]">No pending suggestions</p>
+                            <p className="text-[11px] text-[#80868b] mt-1">Enable suggesting mode and start editing</p>
+                          </div>
+                        ) : suggestions.map(s => (
+                          <div key={s.id} className={`rounded-lg border p-3 space-y-1.5 ${s.type === "insert" ? "bg-[#f6fef9] border-[#0f9d58]/20" : "bg-[#fff8f8] border-[#ea4335]/20"}`}>
+                            <div className="flex items-center gap-2">
+                              <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${s.type === "insert" ? "bg-[#e6f4ea] text-[#0f9d58]" : "bg-red-50 text-[#ea4335]"}`}>
+                                {s.type === "insert" ? "+ Insertion" : "− Deletion"}
+                              </span>
+                              <span className="text-[10px] text-[#80868b] ml-auto">{s.author}</span>
+                            </div>
+                            <p className="text-xs text-[#202124] font-mono bg-white border border-[#e8eaed] rounded px-2 py-1 truncate">&ldquo;{s.text}&rdquo;</p>
+                            <div className="flex gap-2 pt-0.5">
+                              <button onClick={() => acceptSuggestion(s)} className="flex items-center gap-1 text-[11px] font-medium text-[#0f9d58] hover:underline">
+                                <Check className="h-3 w-3" /> Accept
+                              </button>
+                              <button onClick={() => rejectSuggestion(s)} className="flex items-center gap-1 text-[11px] font-medium text-[#ea4335] hover:underline">
+                                <X className="h-3 w-3" /> Reject
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {/* History Panel */}
                 {showHistory && (
-                  <div className="flex-1 overflow-y-auto p-3 space-y-2">
-                    <div className="flex items-center justify-between mb-1">
-                      <p className="text-xs font-medium text-[#5f6368]">Saved versions</p>
-                      <button onClick={saveVersion} className="text-xs text-[#1a56db] hover:underline">Save now</button>
+                  <div className="flex flex-col h-full overflow-hidden">
+                    <div className="flex items-center justify-between px-3 pt-3 pb-2 border-b border-[#e8eaed] flex-shrink-0">
+                      <p className="text-xs font-semibold text-[#202124]">
+                        {versions.length > 0 ? versions.length + " saved version" + (versions.length === 1 ? "" : "s") : "Version history"}
+                      </p>
+                      <button
+                        onClick={() => { const label = window.prompt("Version label (optional):", "Manual save"); if (label !== null) saveVersion(label || "Manual save"); }}
+                        className="flex items-center gap-1 text-xs font-medium text-[#1a56db] hover:text-[#1648c7]">
+                        <BookmarkPlus className="h-3.5 w-3.5" /> Save now
+                      </button>
                     </div>
-                    {versions.length === 0 ? (
-                      <div className="text-center py-8">
-                        <Clock className="h-8 w-8 mx-auto mb-2 text-[#bdc1c6]" />
-                        <p className="text-xs text-[#80868b] mb-3">No saved versions</p>
-                        <button onClick={saveVersion} className="px-3 py-1.5 text-xs font-semibold bg-[#1a56db] text-white rounded-lg hover:bg-[#1648c7]">
-                          Save current version
-                        </button>
-                      </div>
-                    ) : versions.map(v => (
-                      <div key={v.id} className="border border-[#e8eaed] rounded-lg p-3 bg-[#f8f9fa]">
-                        <div className="flex items-center justify-between mb-0.5">
-                          <span className="text-xs font-medium text-[#202124] truncate">{v.title}</span>
-                          <span className="text-[10px] text-[#80868b]">{v.wordCount}w</span>
+                    <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                      {versions.length === 0 ? (
+                        <div className="text-center py-10">
+                          <Clock className="h-8 w-8 mx-auto mb-2 text-[#bdc1c6]" />
+                          <p className="text-xs text-[#80868b] mb-3">No saved versions yet.</p>
+                          <p className="text-[11px] text-[#80868b] mb-4">Versions auto-save every 5 minutes, or click Save now.</p>
+                          <button
+                            onClick={() => saveVersion("Manual save")}
+                            className="px-3 py-1.5 text-xs font-semibold bg-[#1a56db] text-white rounded-lg hover:bg-[#1648c7]">
+                            Save current version
+                          </button>
                         </div>
-                        <p className="text-[10px] text-[#80868b] mb-1.5">{format(new Date(v.savedAt), "MMM d, h:mm a")}</p>
-                        <button onClick={() => restoreVersion(v)} className="text-xs text-[#1a56db] font-medium hover:underline">Restore</button>
-                      </div>
-                    ))}
+                      ) : versions.map(v => (
+                        <div key={v.id} className="border border-[#e8eaed] rounded-lg p-3 bg-[#f8f9fa]">
+                          <div className="flex items-start justify-between gap-2 mb-1">
+                            <span className="text-xs font-medium text-[#202124] truncate flex-1">{v.label}</span>
+                            <button
+                              onClick={() => deleteVersion(v.id)}
+                              title="Delete this version"
+                              className="flex-shrink-0 text-[#80868b] hover:text-[#ea4335] transition-colors">
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                          <p className="text-[10px] text-[#80868b] mb-2">{relativeTime(v.timestamp)}</p>
+                          <button
+                            onClick={() => restoreVersion(v)}
+                            className="text-xs font-medium text-[#1a56db] hover:underline">
+                            Restore
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>

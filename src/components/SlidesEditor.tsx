@@ -17,7 +17,7 @@ import {
   Sparkles, Layers, Grid3x3, LayoutGrid,   Undo2, Redo2, ZoomIn, ZoomOut,
   LayoutTemplate, Eye, EyeOff, FolderPlus, ChevronRight as ChevronRightIcon, Images,
   Triangle, Star, MoveRight, Minus, Grid, Timer, RotateCcw,
-  Search, Replace, Video, Hash, Lock, Unlock, Music, Volume2,
+  Search, Replace, Video, Hash, Lock, Unlock, Music, Volume2, Printer,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -509,6 +509,13 @@ export default function SlidesEditor({ presId }: { presId: string }) {
   const [matchCase, setMatchCase] = useState(false);
   const findCursor = useRef<{ slide: number; el: number; occ: number }>({ slide: 0, el: -1, occ: -1 });
 
+  // Print / Export PDF
+  const [printing, setPrinting] = useState(false);
+  const printRef = useRef<HTMLDivElement>(null);
+
+  // Presenter mode live clock
+  const [presenterTime, setPresenterTime] = useState(() => new Date().toLocaleTimeString());
+
   // AI
   const [aiPrompt, setAIPrompt] = useState("");
   const [aiLoading, setAILoading] = useState(false);
@@ -828,6 +835,14 @@ export default function SlidesEditor({ presId }: { presId: string }) {
     return () => clearInterval(t);
   }, [presenterMode]);
 
+  // ── Presenter live clock ───────────────────────────────────────────────────
+  useEffect(() => {
+    if (!presenterMode) return;
+    setPresenterTime(new Date().toLocaleTimeString());
+    const t = setInterval(() => setPresenterTime(new Date().toLocaleTimeString()), 1000);
+    return () => clearInterval(t);
+  }, [presenterMode]);
+
   // Ctrl/Cmd+F opens Find & Replace (Feature 1)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -1060,84 +1075,106 @@ export default function SlidesEditor({ presId }: { presId: string }) {
     else toast.info("No matches found");
   };
 
+  // ── Print / Export PDF ────────────────────────────────────────────────────
+  const handlePrint = () => {
+    setPrinting(true);
+    setTimeout(() => {
+      window.print();
+      setTimeout(() => setPrinting(false), 500);
+    }, 100);
+  };
+
   // ── Presenter mode ────────────────────────────────────────────────────────
   if (presenterMode) {
     const ps = slides[presenterSlide] ?? slides[0];
     return (
-      <div className="fixed inset-0 bg-black z-50 flex">
-        <div className="flex-1 flex flex-col items-center justify-center">
-          <div
-            key={presenterSlide}
-            style={{
-              width: "80vw", aspectRatio: "16/9", position: "relative", background: ps.background, overflow: "hidden",
-              ...(ps.transition && ps.transition !== "none" && TRANSITION_KEYFRAME[ps.transition]
-                ? { animation: `${TRANSITION_KEYFRAME[ps.transition]} 0.5s ease both` } : {}),
-            }}
-          >
-            {ps.elements.slice().sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0)).map((el, i) => (
-              <SlideElementView key={el.id} el={el} zoom={window.innerWidth * 0.8 / CANVAS_W} theme={theme} anim animDelay={150 + i * 120} />
-            ))}
-            {/* Master logo overlay */}
-            {masterLogo && (
-              <img src={masterLogo} alt="" className="absolute top-3 right-4 pointer-events-none select-none" style={{ maxHeight: "12%", maxWidth: "22%", objectFit: "contain" }} />
-            )}
-            {/* Deck footer overlay (Feature 2) */}
-            {showFooter && footerText.trim() && (
-              <div className="absolute bottom-3 left-5 right-24 text-sm font-medium select-none pointer-events-none truncate" style={{ color: theme.secondary }}>
-                {footerText}
+      <div className="fixed inset-0 bg-black z-50 flex flex-col">
+        {/* Top row: slide + next-slide preview */}
+        <div className="flex flex-1 min-h-0">
+          {/* Main slide */}
+          <div className="flex-1 flex flex-col items-center justify-center px-6 pt-6">
+            <div
+              key={presenterSlide}
+              style={{
+                width: "80vw", aspectRatio: "16/9", position: "relative", background: ps.background, overflow: "hidden",
+                ...(ps.transition && ps.transition !== "none" && TRANSITION_KEYFRAME[ps.transition]
+                  ? { animation: `${TRANSITION_KEYFRAME[ps.transition]} 0.5s ease both` } : {}),
+              }}
+            >
+              {ps.elements.slice().sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0)).map((el, i) => (
+                <SlideElementView key={el.id} el={el} zoom={window.innerWidth * 0.8 / CANVAS_W} theme={theme} anim animDelay={150 + i * 120} />
+              ))}
+              {masterLogo && (
+                <img src={masterLogo} alt="" className="absolute top-3 right-4 pointer-events-none select-none" style={{ maxHeight: "12%", maxWidth: "22%", objectFit: "contain" }} />
+              )}
+              {showFooter && footerText.trim() && (
+                <div className="absolute bottom-3 left-5 right-24 text-sm font-medium select-none pointer-events-none truncate" style={{ color: theme.secondary }}>
+                  {footerText}
+                </div>
+              )}
+              {showNumbers && (
+                <div className="absolute bottom-3 right-5 text-sm font-medium select-none pointer-events-none" style={{ color: theme.secondary }}>
+                  {visiblePositionOf(presenterSlide) + " / " + visibleSlideCount}
+                </div>
+              )}
+            </div>
+            {/* Controls */}
+            <div className="flex items-center gap-6 mt-4 pb-2">
+              <button disabled={prevVisibleIndex(presenterSlide) === presenterSlide} onClick={() => setPresenterSlide(p => prevVisibleIndex(p))} className="text-white/70 hover:text-white disabled:opacity-30">
+                <ChevronLeft className="h-8 w-8" />
+              </button>
+              <span className="text-white text-base font-semibold tabular-nums">
+                {"Slide " + visiblePositionOf(presenterSlide) + " of " + visibleSlideCount}
+              </span>
+              <button disabled={nextVisibleIndex(presenterSlide) === presenterSlide} onClick={() => setPresenterSlide(p => nextVisibleIndex(p))} className="text-white/70 hover:text-white disabled:opacity-30">
+                <ChevronRight className="h-8 w-8" />
+              </button>
+              <div className="flex items-center gap-1.5 ml-2 px-3 py-1.5 rounded-lg bg-white/10 text-white/90 text-sm font-medium tabular-nums">
+                <Timer className="h-4 w-4 text-white/70" />
+                {fmtTime(elapsed)}
+                <button onClick={() => setElapsed(0)} title="Reset timer" className="ml-1 text-white/50 hover:text-white">
+                  <RotateCcw className="h-3.5 w-3.5" />
+                </button>
               </div>
-            )}
-            {/* Slide number overlay (Feature 2) */}
-            {showNumbers && (
-              <div className="absolute bottom-3 right-5 text-sm font-medium select-none pointer-events-none" style={{ color: theme.secondary }}>
-                {visiblePositionOf(presenterSlide) + " / " + visibleSlideCount}
-              </div>
-            )}
-          </div>
-          {/* Controls */}
-          <div className="flex items-center gap-6 mt-6">
-            <button disabled={prevVisibleIndex(presenterSlide) === presenterSlide} onClick={() => setPresenterSlide(p => prevVisibleIndex(p))} className="text-white/70 hover:text-white disabled:opacity-30">
-              <ChevronLeft className="h-8 w-8" />
-            </button>
-            <span className="text-white text-base font-semibold tabular-nums">
-              {"Slide " + visiblePositionOf(presenterSlide) + " of " + visibleSlideCount}
-            </span>
-            <button disabled={nextVisibleIndex(presenterSlide) === presenterSlide} onClick={() => setPresenterSlide(p => nextVisibleIndex(p))} className="text-white/70 hover:text-white disabled:opacity-30">
-              <ChevronRight className="h-8 w-8" />
-            </button>
-            <div className="flex items-center gap-1.5 ml-2 px-3 py-1.5 rounded-lg bg-white/10 text-white/90 text-sm font-medium tabular-nums">
-              <Timer className="h-4 w-4 text-white/70" />
-              {fmtTime(elapsed)}
-              <button onClick={() => setElapsed(0)} title="Reset timer" className="ml-1 text-white/50 hover:text-white">
-                <RotateCcw className="h-3.5 w-3.5" />
+              <button onClick={() => setPresenterMode(false)} className="text-white/70 hover:text-white ml-4" title="Exit presenter">
+                <X className="h-6 w-6" />
               </button>
             </div>
-            <button onClick={() => setPresenterMode(false)} className="text-white/70 hover:text-white ml-4" title="Exit presenter">
-              <X className="h-6 w-6" />
-            </button>
+          </div>
+
+          {/* Right sidebar: next slide */}
+          <div className="w-64 border-l border-white/10 p-4 flex flex-col gap-4 overflow-y-auto flex-shrink-0">
+            <div>
+              <p className="text-white/50 text-xs font-semibold uppercase mb-2">Next slide</p>
+              {(() => {
+                const ni = nextVisibleIndex(presenterSlide);
+                if (ni === presenterSlide) return <p className="text-white/40 text-sm">End of presentation</p>;
+                const nx = slides[ni];
+                const z = 224 / CANVAS_W;
+                return (
+                  <div className="rounded overflow-hidden border border-white/15" style={{ width: 224, aspectRatio: "16/9", position: "relative", background: nx.background }}>
+                    {nx.elements.slice().sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0)).map(el => (
+                      <SlideElementView key={el.id} el={el} zoom={z} theme={theme} editMode />
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
           </div>
         </div>
-        <div className="w-72 border-l border-white/10 p-6 flex flex-col gap-5 overflow-y-auto">
-          <div>
-            <p className="text-white/50 text-xs font-semibold uppercase mb-2">Next slide</p>
-            {(() => {
-              const ni = nextVisibleIndex(presenterSlide);
-              if (ni === presenterSlide) return <p className="text-white/40 text-sm">End of presentation</p>;
-              const nx = slides[ni];
-              const z = 240 / CANVAS_W;
-              return (
-                <div className="rounded overflow-hidden border border-white/15" style={{ width: 240, aspectRatio: "16/9", position: "relative", background: nx.background }}>
-                  {nx.elements.slice().sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0)).map(el => (
-                    <SlideElementView key={el.id} el={el} zoom={z} theme={theme} editMode />
-                  ))}
-                </div>
-              );
-            })()}
+
+        {/* Bottom notes panel */}
+        <div style={{ background: "#1e1e1e", borderTop: "1px solid rgba(255,255,255,0.1)", minHeight: 140, maxHeight: 200 }} className="flex-shrink-0 px-6 py-4 flex flex-col gap-2">
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-white/50 text-xs font-semibold uppercase">Speaker notes</p>
+            <div className="flex items-center gap-4 text-xs text-white/50 tabular-nums">
+              <span>{"Slide " + visiblePositionOf(presenterSlide) + " of " + visibleSlideCount}</span>
+              <span>{presenterTime}</span>
+            </div>
           </div>
-          <div className="flex-1 min-h-0">
-            <p className="text-white/50 text-xs font-semibold uppercase mb-2">Speaker notes</p>
-            <p className="text-white/80 text-sm leading-relaxed whitespace-pre-wrap">{ps.notes || "No notes for this slide."}</p>
-          </div>
+          <p className="text-white/85 text-sm leading-relaxed whitespace-pre-wrap overflow-y-auto">
+            {ps.notes || "No speaker notes for this slide."}
+          </p>
         </div>
       </div>
     );
@@ -1538,6 +1575,13 @@ export default function SlidesEditor({ presId }: { presId: string }) {
                         value={el.content ?? ""}
                         onChange={e2 => updateElement(el.id, { content: e2.target.value })}
                         onClick={e2 => e2.stopPropagation()}
+                        onKeyDown={e2 => {
+                          if (e2.ctrlKey || e2.metaKey) {
+                            if (e2.key === "b" || e2.key === "B") { e2.preventDefault(); updateElement(el.id, { style: { ...el.style, bold: !s.bold } }); }
+                            if (e2.key === "i" || e2.key === "I") { e2.preventDefault(); updateElement(el.id, { style: { ...el.style, italic: !s.italic } }); }
+                            if (e2.key === "u" || e2.key === "U") { e2.preventDefault(); updateElement(el.id, { style: { ...el.style, underline: !s.underline } }); }
+                          }
+                        }}
                       />
                     ) : (
                       <div style={{ display: "flex", flexDirection: "column", justifyContent: VALIGN_JUSTIFY[s.valign ?? "top"], fontSize: (s.fontSize ?? 18) * zoom, fontWeight: s.bold ? "bold" : "normal", fontStyle: s.italic ? "italic" : "normal", textDecoration: s.underline ? "underline" : "none", color: s.color ?? theme.text, textAlign: s.align ?? "left", whiteSpace: "pre-wrap", lineHeight: 1.4, width: "100%", height: "100%", overflow: "hidden" }}>
@@ -1575,18 +1619,16 @@ export default function SlidesEditor({ presId }: { presId: string }) {
             )}
           </div>
 
-          {/* Speaker notes */}
-          {showNotes && (
-            <div className="mt-4 w-full max-w-3xl" style={{ width: CANVAS_W * zoom }}>
-              <textarea
-                className="w-full px-3 py-2 text-sm border border-[#e8eaed] rounded-lg bg-white text-[#5f6368] resize-none focus:outline-none focus:border-[#1a56db]/60"
-                rows={3}
-                placeholder="Speaker notes…"
-                value={activeSlide.notes}
-                onChange={e => updateSlide({ notes: e.target.value })}
-              />
-            </div>
-          )}
+          {/* Speaker notes — always visible below canvas */}
+          <div className="mt-4 flex-shrink-0" style={{ width: CANVAS_W * zoom }}>
+            <p className="text-[11px] font-medium text-[#5f6368] mb-1">Speaker notes</p>
+            <textarea
+              className="w-full px-3 py-2 text-sm text-[#202124] placeholder:text-[#80868b] bg-[#f8f9fa] border border-[#e8eaed] rounded-lg resize-none h-24 focus:outline-none focus:border-[#1a56db]/60 focus:ring-2 focus:ring-[#1a56db]/20 transition-colors"
+              placeholder="Click to add speaker notes…"
+              value={activeSlide.notes}
+              onChange={e => updateSlide({ notes: e.target.value })}
+            />
+          </div>
         </div>
         </>
         )}

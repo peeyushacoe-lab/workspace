@@ -12,7 +12,7 @@ import {
   Plus, Search, Trash2, Pin, PinOff, StickyNote, Palette, MoreVertical,
 Folder, Check, X, Sparkles, Loader2,   Bold, Italic, Strikethrough, Code, List, ListOrdered, ListChecks,
   Quote, Minus, Link2, Image as ImageIcon, Type, Hash,   Download, Copy,
-  LayoutTemplate, WifiOff, Mic, Paperclip, Archive, ArchiveRestore, Bell, BellOff,
+  LayoutTemplate, WifiOff, Mic, Paperclip, Archive, ArchiveRestore, Bell, BellOff, Tag,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow, format } from "date-fns";
@@ -48,19 +48,15 @@ function getNoteColor(color: string | null) {
 }
 
 function notePreview(content: string): string {
-  return content.replace(/<[^>]+>/g, "").replace(/\n/g, " ").slice(0, 100) || "Empty note";
+  return getBody(content).replace(/<[^>]+>/g, "").replace(/\n/g, " ").slice(0, 100) || "Empty note";
 }
 
 function countWords(content: string): number {
-  return content.replace(/<[^>]+>/g, " ").trim().split(/\s+/).filter(Boolean).length;
+  return getBody(content).replace(/<[^>]+>/g, " ").trim().split(/\s+/).filter(Boolean).length;
 }
 
-// Extract #hashtags from a note's title + content (plain text).
-function noteTags(title: string, content: string): string[] {
-  const text = title + " " + content.replace(/<[^>]+>/g, " ");
-  const found = text.match(/(^|\s)#([A-Za-z0-9_-]{1,30})/g) ?? [];
-  const tags = found.map(m => m.trim().replace(/^#/, "").toLowerCase());
-  return [...new Set(tags)];
+function getNoteTags(_title: string, content: string): string[] {
+  try { const p = JSON.parse(content); return Array.isArray(p?.tags) ? p.tags : []; } catch { return []; }
 }
 
 // ─── Note templates ─────────────────────────────────────────────────────────────
@@ -110,6 +106,41 @@ const NOTE_TEMPLATES: { id: string; label: string; html: string }[] = [
 
 function notesDraftKey(id: string): string {
   return "nexus_notes_draft_" + id;
+}
+
+// ─── Content JSON helpers (tags stored inside content JSON) ──────────────────
+
+type ContentJSON = { body: string; tags?: string[] };
+
+/** Parse the content string: if it's JSON with a body field, use that; else treat whole string as body. */
+function parseContent(raw: string): ContentJSON {
+  if (!raw) return { body: "", tags: [] };
+  try {
+    const obj = JSON.parse(raw) as unknown;
+    if (obj && typeof obj === "object" && "body" in (obj as object)) {
+      const o = obj as { body: unknown; tags?: unknown };
+      return {
+        body: typeof o.body === "string" ? o.body : "",
+        tags: Array.isArray(o.tags) ? (o.tags as string[]).filter(t => typeof t === "string") : [],
+      };
+    }
+  } catch { /* not JSON */ }
+  return { body: raw, tags: [] };
+}
+
+/** Encode body + tags back into a JSON string for storage. */
+function encodeContent(body: string, tags: string[]): string {
+  return JSON.stringify({ body, tags });
+}
+
+/** Extract just the HTML body from a raw content string. */
+function getBody(raw: string): string {
+  return parseContent(raw).body;
+}
+
+/** Extract tags from a raw content string. */
+function getTags(raw: string): string[] {
+  return parseContent(raw).tags ?? [];
 }
 
 // ─── Archive + reminders (client-side localStorage) ──────────────────────────
@@ -450,7 +481,9 @@ export function NotesView() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
+  const [content, setContent] = useState(""); // HTML body only (no JSON)
+  const [selectedNoteTags, setSelectedNoteTags] = useState<string[]>([]); // tags for the selected note
+  const [tagInput, setTagInput] = useState("");
   const [search, setSearch] = useState("");
   const [_viewMode, _setViewMode] = useState<"grid" | "list">("grid");
 
@@ -558,7 +591,7 @@ export function NotesView() {
     setSelectedId(note.id);
 
     let nextTitle = note.title;
-    let nextContent = note.content;
+    let nextRawContent = note.content;
     // Restore from offline draft if we have no network.
     if (typeof navigator !== "undefined" && !navigator.onLine) {
       try {
@@ -566,13 +599,16 @@ export function NotesView() {
         if (raw) {
           const draft = JSON.parse(raw) as { title?: string; content?: string };
           if (typeof draft.title === "string") nextTitle = draft.title;
-          if (typeof draft.content === "string") nextContent = draft.content;
+          if (typeof draft.content === "string") nextRawContent = draft.content;
         }
       } catch { /* ignore corrupt draft */ }
     }
 
+    const parsed = parseContent(nextRawContent);
     setTitle(nextTitle);
-    setContent(nextContent);
+    setContent(parsed.body);
+    setSelectedNoteTags(parsed.tags ?? []);
+    setTagInput("");
     setAIResult("");
   }, []);
 
@@ -719,7 +755,7 @@ export function NotesView() {
   };
 
   // ── Derived ───────────────────────────────────────────────────────────────
-  const allTags = [...new Set(notes.flatMap(n => noteTags(n.title, n.content)))].sort();
+  const allTags = [...new Set(notes.flatMap(n => getNoteTags(n.title, n.content)))].sort();
   const filteredNotes = notes.filter(n => {
     const q = search.toLowerCase();
     const matchesSearch = !q || n.title.toLowerCase().includes(q) || notePreview(n.content).toLowerCase().includes(q);
@@ -728,7 +764,7 @@ export function NotesView() {
     if (activeFolder === "archive") matchesFolder = isArchived;
     else if (isArchived) matchesFolder = false; // hide archived from normal views
     else matchesFolder = activeFolder === "all" || n.folder === activeFolder;
-    const matchesTag = !activeTag || noteTags(n.title, n.content).includes(activeTag);
+    const matchesTag = !activeTag || getNoteTags(n.title, n.content).includes(activeTag);
     return matchesSearch && matchesFolder && matchesTag;
   });
   const pinnedNotes = filteredNotes.filter(n => n.pinned);

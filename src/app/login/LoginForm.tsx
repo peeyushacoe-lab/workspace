@@ -48,7 +48,7 @@ export function LoginForm({ next, error: initialError }: { next: string; error: 
         <img
           src="/nexusLogo.png"
           alt="CyberSage Nexus"
-          className="relative h-9 w-auto object-contain max-w-[180px] brightness-0 invert"
+          className="relative h-16 w-auto object-contain max-w-[280px] brightness-0 invert"
         />
 
         <div className="relative space-y-10">
@@ -88,7 +88,7 @@ export function LoginForm({ next, error: initialError }: { next: string; error: 
 
         {/* Mobile logo */}
         <div className="lg:hidden mb-10">
-          <img src="/nexusLogo.png" alt="CyberSage Nexus" className="h-9 w-auto object-contain max-w-[180px]" />
+          <img src="/nexusLogo.png" alt="CyberSage Nexus" className="h-14 w-auto object-contain max-w-[260px]" />
         </div>
 
         <div className="w-full max-w-[400px]">

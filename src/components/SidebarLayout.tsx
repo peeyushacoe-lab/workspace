@@ -168,7 +168,7 @@ export function SidebarLayout({
           >
             {collapsed
               ? <img src="/nexus.png" alt="Nexus" className="h-8 w-8 flex-shrink-0 object-contain" />
-              : <img src="/nexusLogo.png" alt="CyberSage Nexus" className="h-[26px] w-auto flex-shrink-0 object-contain max-w-[140px]" />
+              : <img src="/nexusLogo.png" alt="CyberSage Nexus" className="h-[34px] w-auto flex-shrink-0 object-contain max-w-[160px]" />
             }
             {!collapsed && (
               <>

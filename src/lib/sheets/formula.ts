@@ -6,6 +6,17 @@
 export type CellValue = string | number | boolean | null;
 export type CellGetter = (row: number, col: number) => CellValue;
 
+// ─── Spill / Array result ──────────────────────────────────────────────────
+export type SpillResult = { __spill: true; values: CellValue[][] };
+export function isSpill(v: unknown): v is SpillResult {
+  return !!(v && typeof v === "object" && (v as SpillResult).__spill === true);
+}
+function spill(values: CellValue[][]): SpillResult { return { __spill: true, values }; }
+// Unwrap a SpillResult to its first cell (used inside scalar contexts)
+function asVal(v: CellValue | SpillResult): CellValue {
+  return isSpill(v) ? (v.values[0]?.[0] ?? null) : v;
+}
+
 // ─── Cell reference helpers ────────────────────────────────────────────────
 
 export function colToIndex(col: string): number {
@@ -109,9 +120,9 @@ function splitArgs(s: string): string[] {
 
 // ─── Function evaluator ────────────────────────────────────────────────────
 
-function evalFn(name: string, rawArgs: string[], g: CellGetter): CellValue {
+function evalFn(name: string, rawArgs: string[], g: CellGetter): CellValue | SpillResult {
   const fn = name.toUpperCase();
-  const e = (a: string) => evalE(a, g);
+  const e = (a: string): CellValue => asVal(evalE(a, g));
   const getVals = (a: string): CellValue[] => a.includes(":") ? getRangeVals(a.trim(), g) : [e(a)];
   const nums = (a: string) => getVals(a).map(toN);
   const allNums = (args: string[]) => args.flatMap(a => nums(a));
@@ -501,15 +512,90 @@ function evalFn(name: string, rawArgs: string[], g: CellGetter): CellValue {
       return rate;
     }
 
-    // ── Array-like ────────────────────────────────────────────────────────
+    // ── Array / Spill ─────────────────────────────────────────────────────
     case "UNIQUE": {
-      const vals = getRangeVals(rawArgs[0], g);
-      return [...new Set(vals.map(toStr))].join(", ");
+      const r = parseRange(rawArgs[0]);
+      if (!r) return "#REF!";
+      const rows: CellValue[][] = [];
+      const seen = new Set<string>();
+      for (let row = r.startRow; row <= r.endRow; row++) {
+        const cells: CellValue[] = [];
+        for (let col = r.startCol; col <= r.endCol; col++) cells.push(g(row, col));
+        const key = cells.map(toStr).join("\x00");
+        if (!seen.has(key)) { seen.add(key); rows.push(cells); }
+      }
+      return spill(rows);
     }
     case "SORT": {
-      const vals = getRangeVals(rawArgs[0], g);
-      const asc = rawArgs[1] ? toN(e(rawArgs[1])) !== -1 : true;
-      return [...vals].sort((a, b) => asc ? toStr(a).localeCompare(toStr(b)) : toStr(b).localeCompare(toStr(a))).join(", ");
+      const r = parseRange(rawArgs[0]);
+      if (!r) return "#REF!";
+      const colIdx = rawArgs[1] ? toN(e(rawArgs[1])) - 1 : 0;
+      const asc = rawArgs[2] ? toN(e(rawArgs[2])) !== -1 : true;
+      const rows: CellValue[][] = [];
+      for (let row = r.startRow; row <= r.endRow; row++) {
+        const cells: CellValue[] = [];
+        for (let col = r.startCol; col <= r.endCol; col++) cells.push(g(row, col));
+        rows.push(cells);
+      }
+      rows.sort((a, b) => {
+        const av = a[colIdx] ?? null, bv = b[colIdx] ?? null;
+        const an = toN(av), bn = toN(bv);
+        const numComp = !isNaN(an) && !isNaN(bn) ? (asc ? an - bn : bn - an) : 0;
+        if (numComp !== 0) return numComp;
+        return asc ? toStr(av).localeCompare(toStr(bv)) : toStr(bv).localeCompare(toStr(av));
+      });
+      return spill(rows);
+    }
+    case "FILTER": {
+      const r = parseRange(rawArgs[0]);
+      const cr = parseRange(rawArgs[1]);
+      if (!r || !cr) return "#REF!";
+      const ifEmpty: CellValue = rawArgs[2] ? e(rawArgs[2]) : "#CALC!";
+      const rows: CellValue[][] = [];
+      const condCols = cr.endCol - cr.startCol;
+      for (let row = r.startRow; row <= r.endRow; row++) {
+        // Multi-column condition: all must be truthy
+        let include = true;
+        for (let dc = 0; dc <= condCols; dc++) {
+          if (!toBool(g(cr.startRow + (row - r.startRow), cr.startCol + dc))) { include = false; break; }
+        }
+        if (include) {
+          const cells: CellValue[] = [];
+          for (let col = r.startCol; col <= r.endCol; col++) cells.push(g(row, col));
+          rows.push(cells);
+        }
+      }
+      if (rows.length === 0) return ifEmpty;
+      return spill(rows);
+    }
+    case "SEQUENCE": {
+      const rows2 = toN(e(rawArgs[0]));
+      const cols2 = rawArgs[1] ? toN(e(rawArgs[1])) : 1;
+      const start = rawArgs[2] ? toN(e(rawArgs[2])) : 1;
+      const step = rawArgs[3] ? toN(e(rawArgs[3])) : 1;
+      const grid: CellValue[][] = [];
+      let cur = start;
+      for (let ri = 0; ri < rows2; ri++) {
+        const row: CellValue[] = [];
+        for (let ci = 0; ci < cols2; ci++) { row.push(cur); cur += step; }
+        grid.push(row);
+      }
+      return spill(grid);
+    }
+    case "TRANSPOSE": {
+      const r = parseRange(rawArgs[0]);
+      if (!r) return "#REF!";
+      const grid: CellValue[][] = [];
+      for (let col = r.startCol; col <= r.endCol; col++) {
+        const row: CellValue[] = [];
+        for (let row2 = r.startRow; row2 <= r.endRow; row2++) row.push(g(row2, col));
+        grid.push(row);
+      }
+      return spill(grid);
+    }
+    case "ARRAYFORMULA": {
+      // Evaluate the inner expression and return as-is (already a spill if array)
+      return e(rawArgs[0]);
     }
 
     default:
@@ -547,8 +633,8 @@ function evalBinOps(expr: string, g: CellGetter): CellValue | undefined {
         // Skip unary context
         if ((op === "-" || op === "+") && /[+\-*/^(=<>&,]$/.test(left)) continue;
 
-        const l = evalE(left, g);
-        const r = evalE(right, g);
+        const l = asVal(evalE(left, g));
+        const r = asVal(evalE(right, g));
         switch (op) {
           case "+": return toN(l) + toN(r);
           case "-": return toN(l) - toN(r);
@@ -571,7 +657,7 @@ function evalBinOps(expr: string, g: CellGetter): CellValue | undefined {
 
 // ─── Main expression evaluator ─────────────────────────────────────────────
 
-export function evalE(expr: string, g: CellGetter): CellValue {
+export function evalE(expr: string, g: CellGetter): CellValue | SpillResult {
   expr = expr.trim();
   if (!expr) return null;
 
@@ -608,7 +694,7 @@ export function evalE(expr: string, g: CellGetter): CellValue {
   if (binResult !== undefined) return binResult;
 
   // Unary minus
-  if (expr.startsWith("-")) return -toN(evalE(expr.slice(1), g));
+  if (expr.startsWith("-")) return -toN(asVal(evalE(expr.slice(1), g)));
 
   // Parenthesized
   if (expr.startsWith("(") && expr.endsWith(")")) return evalE(expr.slice(1, -1), g);
@@ -640,7 +726,7 @@ export function substituteNames(expr: string, names: Record<string, string>): st
   return parts.join("");
 }
 
-export function evaluateFormula(formula: string, getter: CellGetter, names?: Record<string, string>): CellValue {
+export function evaluateFormula(formula: string, getter: CellGetter, names?: Record<string, string>): CellValue | SpillResult {
   if (!formula.startsWith("=")) return formula;
   try {
     const body = names ? substituteNames(formula.slice(1), names) : formula.slice(1);

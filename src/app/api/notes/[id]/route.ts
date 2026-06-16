@@ -52,6 +52,11 @@ export async function PUT(request: Request, { params }: Params) {
   return NextResponse.json(updated);
 }
 
+// PATCH is used by the frontend for partial updates (pinned, color, folder)
+export async function PATCH(request: Request, { params }: Params) {
+  return PUT(request, { params });
+}
+
 export async function DELETE(_request: Request, { params }: Params) {
   const user = getSessionUserFromCookieStore(await cookies());
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

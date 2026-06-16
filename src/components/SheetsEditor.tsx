@@ -6,7 +6,7 @@
  * number formats, column/row resize, freeze panes, merge cells, AI assistant
  */
 
-import { useCallback, useEffect, useRef, useState, useId } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useId } from "react";
 import { useRouter } from "next/navigation";
 import {
   Bold, Italic, Underline, Strikethrough,
@@ -18,7 +18,7 @@ import {
   Undo2, Redo2, WrapText, EyeOff, Tag, ListChecks, Table, Grid2x2,
   Columns, LayoutGrid, Search, Replace, Brush,
   MessageSquare, CopyMinus, SplitSquareHorizontal,
-  Lock,
+  Lock, ListFilter,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -28,8 +28,8 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
 import { DocShareModal } from "./DocShareModal";
-import { evaluateFormula, formatValue, indexToCol, parseRange, parseRef, getRangeVals } from "@/lib/sheets/formula";
-import type { CellValue, NumberFormat } from "@/lib/sheets/formula";
+import { evaluateFormula, formatValue, indexToCol, parseRange, parseRef, getRangeVals, isSpill } from "@/lib/sheets/formula";
+import type { CellValue, NumberFormat, SpillResult } from "@/lib/sheets/formula";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -64,7 +64,7 @@ type Cell = {
 type ConditionalRule = {
   id: string;
   range: { r1: number; c1: number; r2: number; c2: number };
-  type: "gt" | "lt" | "eq" | "between" | "not_empty" | "contains" | "top_n" | "bottom_n" | "color_scale" | "data_bar";
+  type: "gt" | "lt" | "gte" | "lte" | "eq" | "neq" | "between" | "not_empty" | "contains" | "formula" | "top_n" | "bottom_n" | "aboveAvg" | "belowAvg" | "color_scale" | "data_bar";
   value?: string;
   value2?: string;
   style: Pick<CellStyle, "color" | "background" | "bold">;
@@ -385,24 +385,77 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
 
   const activeSheet = sheets.find(s => s.id === activeSheetId) ?? sheets[0];
 
+  // ── Spill map — computed once per activeSheet change ────────────────────
+  // Maps "r:c" → spilled CellValue for non-anchor cells; anchors tracked separately.
+  const spillMapRef = useRef<Map<string, CellValue>>(new Map());
+  const spillAnchorsRef = useRef<Set<string>>(new Set());
+  useMemo(() => {
+    const map = new Map<string, CellValue>();
+    const anchors = new Set<string>();
+    const names = namedRangesRef.current;
+    const cells = activeSheet.cells;
+    const simpleGet = (r: number, c: number): CellValue => {
+      const cell = cells[ck(r, c)];
+      if (!cell?.v || cell.v.startsWith("=")) return null;
+      return isNaN(Number(cell.v)) ? cell.v : Number(cell.v);
+    };
+    for (const key of Object.keys(cells)) {
+      const cell = cells[key];
+      if (!cell?.v?.startsWith("=")) continue;
+      const [rs, cs] = key.split(":").map(Number);
+      const result = evaluateFormula(cell.v, simpleGet, names);
+      if (!isSpill(result)) continue;
+      anchors.add(key);
+      (result as SpillResult).values.forEach((row, dr) => {
+        row.forEach((val, dc) => {
+          if (dr === 0 && dc === 0) return; // anchor cell handled by getCellDisplayValue
+          map.set(ck(rs + dr, cs + dc), val);
+        });
+      });
+    }
+    spillMapRef.current = map;
+    spillAnchorsRef.current = anchors;
+  }, [activeSheet.cells, activeSheet.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Compute cell value ───────────────────────────────────────────────────
   const computeCell = useCallback((raw: string, sheet: SheetTab): CellValue => {
     if (!raw.startsWith("=")) return raw === "" ? null : isNaN(Number(raw)) ? raw : Number(raw);
     const names = namedRangesRef.current;
-    return evaluateFormula(raw, (r, c) => {
+    const result = evaluateFormula(raw, (r, c) => {
       const cell = sheet.cells[ck(r, c)];
       if (!cell?.v) return null;
-      if (cell.v.startsWith("=")) return evaluateFormula(cell.v, (r2, c2) => {
-        const c2ell = sheet.cells[ck(r2, c2)];
-        return c2ell?.v ? (c2ell.v.startsWith("=") ? null : (isNaN(Number(c2ell.v)) ? c2ell.v : Number(c2ell.v))) : null;
-      }, names);
+      if (cell.v.startsWith("=")) {
+        const inner = evaluateFormula(cell.v, (r2, c2) => {
+          const c2ell = sheet.cells[ck(r2, c2)];
+          return c2ell?.v ? (c2ell.v.startsWith("=") ? null : (isNaN(Number(c2ell.v)) ? c2ell.v : Number(c2ell.v))) : null;
+        }, names);
+        return isSpill(inner) ? (inner.values[0]?.[0] ?? null) : inner;
+      }
       return isNaN(Number(cell.v)) ? cell.v : Number(cell.v);
     }, names);
+    if (isSpill(result)) return result.values[0]?.[0] ?? null;
+    return result;
   }, []);
 
   const getCellDisplayValue = useCallback((r: number, c: number, sheet: SheetTab): string => {
+    // Non-anchor spill cells: return value from spillMap
+    const spillVal = spillMapRef.current.get(ck(r, c));
+    if (spillVal !== undefined) return formatValue(spillVal, "general", 2);
+
     const cell = sheet.cells[ck(r, c)];
     if (!cell?.v) return "";
+
+    // Anchor spill cell: evaluate formula directly and return [0][0]
+    if (cell.v.startsWith("=") && spillAnchorsRef.current.has(ck(r, c))) {
+      const names = namedRangesRef.current;
+      const result = evaluateFormula(cell.v, (rr, cc) => {
+        const sc = sheet.cells[ck(rr, cc)];
+        if (!sc?.v || sc.v.startsWith("=")) return null;
+        return isNaN(Number(sc.v)) ? sc.v : Number(sc.v);
+      }, names);
+      if (isSpill(result)) return formatValue(result.values[0]?.[0] ?? null, cell.s?.format ?? "general", cell.s?.decimals ?? 2);
+    }
+
     const val = computeCell(cell.v, sheet);
     if (val === null) return "";
     const fmt = cell.s?.format ?? "general";
@@ -1040,10 +1093,30 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
       switch (rule.type) {
         case "gt": match = !isNaN(num) && num > v; break;
         case "lt": match = !isNaN(num) && num < v; break;
+        case "gte": match = !isNaN(num) && num >= v; break;
+        case "lte": match = !isNaN(num) && num <= v; break;
         case "eq": match = String(val).toLowerCase() === (rule.value ?? "").toLowerCase(); break;
+        case "neq": match = String(val).toLowerCase() !== (rule.value ?? "").toLowerCase(); break;
         case "not_empty": match = val !== null && val !== ""; break;
         case "contains": match = String(val).toLowerCase().includes((rule.value ?? "").toLowerCase()); break;
+        case "formula": break; // not evaluated client-side
         case "between": match = !isNaN(num) && num >= v && num <= Number(rule.value2); break;
+        case "aboveAvg": {
+          const avNums = Object.keys(sheet.cells)
+            .filter(k => { const [rr, cc] = k.split(":").map(Number); return rr >= rule.range.r1 && rr <= rule.range.r2 && cc >= rule.range.c1 && cc <= rule.range.c2; })
+            .map(k => Number(computeCell(sheet.cells[k]?.v ?? "", sheet))).filter(n => !isNaN(n));
+          const avg2 = avNums.length ? avNums.reduce((s, n) => s + n, 0) / avNums.length : 0;
+          match = !isNaN(num) && num > avg2;
+          break;
+        }
+        case "belowAvg": {
+          const avNums2 = Object.keys(sheet.cells)
+            .filter(k => { const [rr, cc] = k.split(":").map(Number); return rr >= rule.range.r1 && rr <= rule.range.r2 && cc >= rule.range.c1 && cc <= rule.range.c2; })
+            .map(k => Number(computeCell(sheet.cells[k]?.v ?? "", sheet))).filter(n => !isNaN(n));
+          const avg3 = avNums2.length ? avNums2.reduce((s, n) => s + n, 0) / avNums2.length : 0;
+          match = !isNaN(num) && num < avg3;
+          break;
+        }
         case "top_n": {
           const rangeVals = getRangeVals(`${indexToCol(rule.range.c1)}${rule.range.r1 + 1}:${indexToCol(rule.range.c2)}${rule.range.r2 + 1}`, (rr, cc) => {
             const cell = sheet.cells[ck(rr, cc)];
@@ -1753,7 +1826,7 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
         <ToolBtn icon={<Filter className="h-3.5 w-3.5" />} title="Filter" active={Object.values(activeSheet.filters).some(v => v.length > 0)} onClick={() => setShowFilter(v => !v)} />
 
         {/* Conditional format */}
-        <ToolBtn icon={<Paintbrush className="h-3.5 w-3.5" />} title="Conditional formatting" onClick={() => setShowCF(true)} />
+        <ToolBtn icon={<ListFilter className="h-3.5 w-3.5" />} title="Conditional formatting" active={(activeSheet.conditionalRules?.length ?? 0) > 0} onClick={() => setShowCF(true)} />
 
         {/* Data validation */}
         <ToolBtn icon={<ListChecks className="h-3.5 w-3.5" />} title="Data validation (dropdowns)" active={(activeSheet.dataValidations?.length ?? 0) > 0} onClick={() => setShowValidation(true)} />
@@ -1822,7 +1895,23 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
       {/* ── Main area ── */}
       <div className="flex flex-1 min-h-0">
         {/* Grid */}
-        <div className="flex-1 overflow-auto outline-none" ref={gridRef} tabIndex={0} onKeyDown={handleGridKey}>
+        <div className="flex-1 overflow-auto outline-none" ref={gridRef} tabIndex={0} onKeyDown={handleGridKey}
+          onMouseMove={e => {
+            if (!selecting.current && !fillDrag) return;
+            // Walk up from event target to find the cell with data-cellrow/data-cellcol
+            let el = e.target as HTMLElement | null;
+            while (el && el !== gridRef.current) {
+              const r = el.dataset.cellrow; const c = el.dataset.cellcol;
+              if (r !== undefined && c !== undefined) {
+                const rr = Number(r); const cc = Number(c);
+                if (fillDrag) setFillTo(prev => (!prev || prev.r !== rr || prev.c !== cc) ? { r: rr, c: cc } : prev);
+                else setSelEnd(prev => (!prev || prev.r !== rr || prev.c !== cc) ? { r: rr, c: cc } : prev);
+                return;
+              }
+              el = el.parentElement;
+            }
+          }}
+        >
           <div style={{ display: "grid", gridTemplateColumns: `${ROW_HEADER_W}px ${Array.from({ length: COLS }, (_, c) => `${activeSheet.hiddenCols.has(c) ? 6 : (activeSheet.colWidths[c] ?? DEFAULT_COL_W)}px`).join(" ")}` }}>
             {/* Column headers */}
             <div className="sticky top-0 left-0 z-20 bg-[#f8f9fa] border-r border-b border-[#e8eaed]" style={{ height: COL_HEADER_H }} />
@@ -2114,11 +2203,15 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
       {showCF && (
         <CFDialog
           defaultRange={selEnd ? `${toA1(Math.min(sel.r, selEnd.r), Math.min(sel.c, selEnd.c))}:${toA1(Math.max(sel.r, selEnd.r), Math.max(sel.c, selEnd.c))}` : toA1(sel.r, sel.c)}
+          rules={activeSheet.conditionalRules ?? []}
           onClose={() => setShowCF(false)}
           onAdd={(rule) => {
-            setSheets(prev => prev.map(sh => sh.id === activeSheetId ? { ...sh, conditionalRules: [...sh.conditionalRules, { ...rule, id: `cf_${Date.now()}` }] } : sh));
+            setSheets(prev => prev.map(sh => sh.id === activeSheetId ? { ...sh, conditionalRules: [...(sh.conditionalRules ?? []), { ...rule, id: `cf_${Date.now()}` }] } : sh));
             setShowCF(false);
             toast.success("Rule added");
+          }}
+          onRemove={(id) => {
+            setSheets(prev => prev.map(sh => sh.id === activeSheetId ? { ...sh, conditionalRules: (sh.conditionalRules ?? []).filter(r => r.id !== id) } : sh));
           }}
         />
       )}
@@ -2590,6 +2683,8 @@ function Row({ row, cols, sheet, sel, selEnd, editing, editVal, cellInputRef, co
               ${isSelected ? "outline outline-2 outline-[#1a56db] z-[5]" : isInRange ? "bg-[#e8f0fe]/60" : ""}
               ${isFillPreview ? "outline-dashed outline-1 outline-[#1a56db]/60 bg-[#e8f0fe]/40" : ""}`}
             style={cellStyle}
+            data-cellrow={row}
+            data-cellcol={c}
             onMouseDown={e => { if (e.button === 0) onCellMouseDown(row, c, e.shiftKey); }}
             onClick={e => onCellClick(row, c, e.shiftKey)}
             onDoubleClick={() => onCellDoubleClick(row, c)}
@@ -2857,28 +2952,59 @@ function ChartDialog({ defaultRange, onClose, onInsert }: {
 
 // ─── Conditional Formatting Dialog ────────────────────────────────────────────
 
-function CFDialog({ defaultRange, onClose, onAdd }: {
-  defaultRange: string; onClose: () => void;
+const CF_SWATCHES = [
+  { bg: "#fce8e6", color: "#ea4335", label: "Red" },
+  { bg: "#fef3e2", color: "#f57c00", label: "Orange" },
+  { bg: "#fef9e0", color: "#f4b400", label: "Yellow" },
+  { bg: "#e6f4ea", color: "#0f9d58", label: "Green" },
+  { bg: "#e8f0fe", color: "#1a56db", label: "Blue" },
+  { bg: "#f3e8fd", color: "#9334e6", label: "Purple" },
+];
+
+function CFDialog({ defaultRange, rules, onClose, onAdd, onRemove }: {
+  defaultRange: string;
+  rules: ConditionalRule[];
+  onClose: () => void;
   onAdd: (r: Omit<ConditionalRule, "id">) => void;
+  onRemove: (id: string) => void;
 }) {
   const [range, setRange] = useState(defaultRange);
   const [ruleType, setRuleType] = useState<ConditionalRule["type"]>("gt");
   const [value, setValue] = useState("");
   const [value2, setValue2] = useState("");
-  const [bg, setBg] = useState("#fad2cf");
-  const [color, setColor] = useState("#ea4335");
+  const [bg, setBg] = useState(CF_SWATCHES[0].bg);
+  const [color, setColor] = useState(CF_SWATCHES[0].color);
   const [bold, setBold] = useState(false);
+  const [useTextColor, setUseTextColor] = useState(false);
 
   const parsedRange = parseRange(range.toUpperCase());
+  const noValue = ruleType === "not_empty" || ruleType === "color_scale" || ruleType === "data_bar" || ruleType === "aboveAvg" || ruleType === "belowAvg";
+  const noStyle = ruleType === "color_scale" || ruleType === "data_bar";
 
   const handleAdd = () => {
     if (!parsedRange) return toast.error("Invalid range");
-    onAdd({ range: { r1: parsedRange.startRow, c1: parsedRange.startCol, r2: parsedRange.endRow, c2: parsedRange.endCol }, type: ruleType, value, value2, style: { background: bg, color, bold } });
+    onAdd({
+      range: { r1: parsedRange.startRow, c1: parsedRange.startCol, r2: parsedRange.endRow, c2: parsedRange.endCol },
+      type: ruleType, value, value2,
+      style: { background: bg, color: useTextColor ? color : undefined, bold: bold || undefined },
+    });
+  };
+
+  const ruleLabel = (type: ConditionalRule["type"]) => {
+    const map: Record<string, string> = {
+      gt: "> Greater than", lt: "< Less than", gte: ">= Greater than or equal",
+      lte: "<= Less than or equal", eq: "= Equal to", neq: "<> Not equal to",
+      between: "Between", not_empty: "Not empty", contains: "Contains text",
+      formula: "Formula is", top_n: "Top N", bottom_n: "Bottom N",
+      aboveAvg: "Above average", belowAvg: "Below average",
+      color_scale: "Color scale", data_bar: "Data bars",
+    };
+    return map[type] ?? type;
   };
 
   return (
     <Modal title="Conditional Formatting" onClose={onClose}>
-      <div className="space-y-3 p-4">
+      <div className="space-y-3 p-4 max-h-[80vh] overflow-y-auto">
         <div>
           <label className="text-xs font-medium text-[#5f6368] mb-1 block">Range</label>
           <input className="w-full px-3 py-2 bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg text-sm font-mono focus:outline-none focus:border-[#1a56db]/60"
@@ -2890,19 +3016,25 @@ function CFDialog({ defaultRange, onClose, onAdd }: {
             value={ruleType} onChange={e => setRuleType(e.target.value as ConditionalRule["type"])}>
             <option value="gt">Greater than</option>
             <option value="lt">Less than</option>
+            <option value="gte">Greater than or equal</option>
+            <option value="lte">Less than or equal</option>
             <option value="eq">Equal to</option>
+            <option value="neq">Not equal to</option>
             <option value="between">Between</option>
             <option value="not_empty">Not empty</option>
-            <option value="contains">Contains</option>
+            <option value="contains">Contains text</option>
+            <option value="formula">Formula is</option>
             <option value="top_n">Top N values</option>
             <option value="bottom_n">Bottom N values</option>
+            <option value="aboveAvg">Above average</option>
+            <option value="belowAvg">Below average</option>
             <option value="color_scale">Color scale</option>
             <option value="data_bar">Data bars</option>
           </select>
         </div>
-        {ruleType !== "not_empty" && ruleType !== "color_scale" && ruleType !== "data_bar" && (
+        {!noValue && (
           <div className="flex gap-2">
-            <input placeholder="Value" className="flex-1 px-3 py-2 bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg text-sm focus:outline-none focus:border-[#1a56db]/60"
+            <input placeholder={ruleType === "formula" ? "=A1>10" : "Value"} className="flex-1 px-3 py-2 bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg text-sm focus:outline-none focus:border-[#1a56db]/60"
               value={value} onChange={e => setValue(e.target.value)} />
             {ruleType === "between" && (
               <input placeholder="And" className="flex-1 px-3 py-2 bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg text-sm focus:outline-none focus:border-[#1a56db]/60"
@@ -2910,25 +3042,60 @@ function CFDialog({ defaultRange, onClose, onAdd }: {
             )}
           </div>
         )}
-        {ruleType !== "color_scale" && ruleType !== "data_bar" && (
-          <div className="flex gap-3 items-center">
+        {!noStyle && (
+          <>
             <div>
-              <label className="text-[10px] text-[#5f6368] block mb-1">Background</label>
-              <input type="color" value={bg} onChange={e => setBg(e.target.value)} className="h-7 w-14 cursor-pointer" />
+              <label className="text-xs font-medium text-[#5f6368] mb-1.5 block">Fill color</label>
+              <div className="flex gap-1.5 flex-wrap">
+                {CF_SWATCHES.map(sw => (
+                  <button key={sw.bg} title={sw.label} onClick={() => { setBg(sw.bg); setColor(sw.color); }}
+                    className={"h-6 w-6 rounded border-2 transition-all " + (bg === sw.bg ? "border-[#1a56db] scale-110" : "border-[#e8eaed] hover:scale-105")}
+                    style={{ background: sw.bg }} />
+                ))}
+                <input type="color" value={bg} onChange={e => setBg(e.target.value)} className="h-6 w-10 cursor-pointer rounded border border-[#e8eaed]" title="Custom fill" />
+              </div>
             </div>
-            <div>
-              <label className="text-[10px] text-[#5f6368] block mb-1">Text</label>
-              <input type="color" value={color} onChange={e => setColor(e.target.value)} className="h-7 w-14 cursor-pointer" />
+            <div className="flex items-center gap-3">
+              <label className="flex items-center gap-1.5 text-xs cursor-pointer text-[#5f6368]">
+                <input type="checkbox" checked={useTextColor} onChange={e => setUseTextColor(e.target.checked)} />
+                Custom text color
+              </label>
+              {useTextColor && (
+                <input type="color" value={color} onChange={e => setColor(e.target.value)} className="h-6 w-10 cursor-pointer rounded border border-[#e8eaed]" />
+              )}
+              <label className="flex items-center gap-1.5 text-xs cursor-pointer text-[#5f6368] ml-2">
+                <input type="checkbox" checked={bold} onChange={e => setBold(e.target.checked)} />
+                Bold
+              </label>
             </div>
-            <label className="flex items-center gap-1 text-xs cursor-pointer mt-3">
-              <input type="checkbox" checked={bold} onChange={e => setBold(e.target.checked)} /> Bold
-            </label>
-          </div>
+          </>
         )}
         <div className="flex gap-2 pt-1">
           <button onClick={onClose} className="flex-1 px-4 py-2 text-sm border border-[#e8eaed] rounded-lg text-[#5f6368] hover:bg-[#f1f3f4]">Cancel</button>
           <button onClick={handleAdd} className="flex-1 px-4 py-2 text-sm font-semibold bg-[#1a56db] text-white rounded-lg hover:bg-[#1648c7]">Add Rule</button>
         </div>
+
+        {rules.length > 0 && (
+          <>
+            <div className="border-t border-[#e8eaed] pt-3">
+              <div className="text-xs font-medium text-[#5f6368] mb-2">Manage Rules ({rules.length})</div>
+              <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                {rules.map(rule => (
+                  <div key={rule.id} className="flex items-center gap-2 bg-[#f8f9fa] border border-[#e8eaed] rounded-lg px-3 py-1.5">
+                    <div className="h-3.5 w-3.5 rounded flex-shrink-0 border border-[#e8eaed]" style={{ background: rule.style.background ?? "#f8f9fa" }} />
+                    <span className="text-[11px] font-mono text-[#5f6368] flex-shrink-0">
+                      {indexToCol(rule.range.c1)}{rule.range.r1 + 1}:{indexToCol(rule.range.c2)}{rule.range.r2 + 1}
+                    </span>
+                    <span className="text-[11px] text-[#202124] truncate flex-1">{ruleLabel(rule.type)}{rule.value ? " " + rule.value : ""}{rule.value2 ? "–" + rule.value2 : ""}</span>
+                    <button onClick={() => onRemove(rule.id)} className="p-0.5 rounded text-[#80868b] hover:text-[#ea4335] flex-shrink-0">
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </Modal>
   );
