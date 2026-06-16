@@ -384,6 +384,12 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const cellInputRef = useRef<HTMLInputElement>(null);
+  // sheetActive: true after user first clicks a cell — enables global arrow key handler
+  const sheetActive = useRef(false);
+  // editingRef: mirrors editing state for use in empty-dep closures
+  const editingRef = useRef(false);
+  // fillDragRef: mirrors fillDrag state for use in empty-dep closures
+  const fillDragRef = useRef<{ r1: number; c1: number; r2: number; c2: number } | null>(null);
 
   const activeSheet = sheets.find(s => s.id === activeSheetId) ?? sheets[0];
 
@@ -645,6 +651,33 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
     return () => window.removeEventListener("mouseup", onUp);
   }, []);
 
+  // Global mousemove: reliable drag-select via elementFromPoint.
+  // More robust than the grid container's onMouseMove because it works even during
+  // fast drags (where onMouseEnter per-cell misses cells) and outside the grid boundary.
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      if (!selecting.current && !fillDragRef.current) return;
+      let node = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null;
+      while (node) {
+        const cr = node.dataset?.cellrow;
+        const cc = node.dataset?.cellcol;
+        if (cr !== undefined && cc !== undefined) {
+          const rr = Number(cr); const ccn = Number(cc);
+          if (fillDragRef.current) {
+            setFillTo(prev => (!prev || prev.r !== rr || prev.c !== ccn) ? { r: rr, c: ccn } : prev);
+          } else if (selecting.current) {
+            setSelEnd(prev => (!prev || prev.r !== rr || prev.c !== ccn) ? { r: rr, c: ccn } : prev);
+            didDrag.current = true;
+          }
+          return;
+        }
+        node = node.parentElement;
+      }
+    };
+    window.addEventListener("mousemove", onMove);
+    return () => window.removeEventListener("mousemove", onMove);
+  }, []);
+
   // ── Clipboard: copy / paste / cut a range (TSV, Excel-compatible) ──────────
   const selRect = useCallback(() => ({
     r1: selEnd ? Math.min(sel.r, selEnd.r) : sel.r,
@@ -864,18 +897,18 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
   }, [activeSheetId, pushHistory, scheduleSave, title]);
 
   // ── Keyboard navigation ────────────────────────────────────────────────────
-  const focusGrid = useCallback(() => { setTimeout(() => gridRef.current?.focus(), 0); }, []);
+  const focusGrid = useCallback(() => { gridRef.current?.focus(); }, []);
 
-  // Global keydown so arrow keys work even when toolbar buttons steal focus
+  // Global arrow-key handler. Uses sheetActive ref so it works regardless of DOM focus state.
+  // Guards: not editing, sheet was interacted with, no text input focused.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      // If the grid div itself has focus, handleGridKey handles it — don't double-process
-      if (document.activeElement === gridRef.current) return;
-      // If focus is in a real text input (formula bar, cell edit, find box) — skip
-      const tag = (document.activeElement?.tagName ?? "").toLowerCase();
-      const isInput = tag === "input" || tag === "textarea" || (document.activeElement as HTMLElement)?.isContentEditable;
-      if (isInput) return;
+      if (editingRef.current) return;
+      if (!sheetActive.current) return;
       if (!["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.key)) return;
+      // Skip if a real text input (formula bar, find box, modal input) currently has focus
+      const tag = (document.activeElement?.tagName ?? "").toLowerCase();
+      if (tag === "input" || tag === "textarea" || (document.activeElement as HTMLElement)?.isContentEditable) return;
       e.preventDefault();
       const dr = e.key === "ArrowUp" ? -1 : e.key === "ArrowDown" ? 1 : 0;
       const dc = e.key === "ArrowLeft" ? -1 : e.key === "ArrowRight" ? 1 : 0;
@@ -891,7 +924,7 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleGridKey = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
     if ((e.key === "h" || e.key === "H") && (e.metaKey || e.ctrlKey)) {
@@ -947,6 +980,9 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
 
   // Keep selRef in sync (used by global keydown listener closure)
   useEffect(() => { selRef.current = sel; }, [sel]);
+  // Keep editingRef and fillDragRef in sync for empty-dep closure use
+  useEffect(() => { editingRef.current = editing; }, [editing]);
+  useEffect(() => { fillDragRef.current = fillDrag; }, [fillDrag]);
 
   // Update formula bar on selection change
   useEffect(() => {
@@ -1935,23 +1971,7 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
       {/* ── Main area ── */}
       <div className="flex flex-1 min-h-0">
         {/* Grid */}
-        <div className="flex-1 overflow-auto outline-none" ref={gridRef} tabIndex={0} onKeyDown={handleGridKey}
-          onMouseMove={e => {
-            if (!selecting.current && !fillDrag) return;
-            // Walk up from event target to find the cell with data-cellrow/data-cellcol
-            let el = e.target as HTMLElement | null;
-            while (el && el !== gridRef.current) {
-              const r = el.dataset.cellrow; const c = el.dataset.cellcol;
-              if (r !== undefined && c !== undefined) {
-                const rr = Number(r); const cc = Number(c);
-                if (fillDrag) setFillTo(prev => (!prev || prev.r !== rr || prev.c !== cc) ? { r: rr, c: cc } : prev);
-                else { setSelEnd(prev => (!prev || prev.r !== rr || prev.c !== cc) ? { r: rr, c: cc } : prev); didDrag.current = true; }
-                return;
-              }
-              el = el.parentElement;
-            }
-          }}
-        >
+        <div className="flex-1 overflow-auto outline-none" ref={gridRef} tabIndex={0} onKeyDown={handleGridKey}>
           <div style={{ display: "grid", gridTemplateColumns: `${ROW_HEADER_W}px ${Array.from({ length: COLS }, (_, c) => `${activeSheet.hiddenCols.has(c) ? 6 : (activeSheet.colWidths[c] ?? DEFAULT_COL_W)}px`).join(" ")}` }}>
             {/* Column headers */}
             <div className="sticky top-0 left-0 z-20 bg-[#f8f9fa] border-r border-b border-[#e8eaed]" style={{ height: COL_HEADER_H }} />
@@ -2016,6 +2036,7 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
                   onCellEnter={(rr, cc) => { if (fillDrag) setFillTo({ r: rr, c: cc }); else if (selecting.current) { setSelEnd({ r: rr, c: cc }); didDrag.current = true; } }}
                   onCellMouseDown={(rr, cc, shiftKey) => {
                     if (painterStyle) return; // let click handle the painter
+                    sheetActive.current = true; // arm global arrow-key handler
                     if (shiftKey) { setSelEnd({ r: rr, c: cc }); }
                     else { setSel({ r: rr, c: cc }); setSelEnd(null); setEditing(false); selecting.current = true; didDrag.current = false; }
                     focusGrid();
