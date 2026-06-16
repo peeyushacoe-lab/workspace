@@ -38,14 +38,7 @@ import Superscript from "@tiptap/extension-superscript";
 import * as Y from "yjs";
 import * as YAwareness from "y-protocols/awareness";
 import Collaboration from "@tiptap/extension-collaboration";
-// CollaborationCursor is optional — installed via `npm install` after package.json update.
-// We resolve it at module init via dynamic import (avoids the no-require-imports lint rule).
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let CollaborationCursor: any = null;
-if (typeof window !== "undefined") {
-  // Fire-and-forget; populates before first editor mounts in practice
-  import("@tiptap/extension-collaboration-cursor").then(m => { CollaborationCursor = m.default; }).catch(() => { /* not installed yet */ });
-}
+
 import { DocShareModal } from "./DocShareModal";
 
 // ─── Track-changes marks ──────────────────────────────────────────────────────
@@ -542,7 +535,7 @@ export function DocsView() {
   suggestModeRef.current = suggestMode;
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const { ydoc, awareness, collaborators } = useDocCollab(selectedId);
+  const { ydoc, collaborators } = useDocCollab(selectedId);
 
   // ── Editor ──────────────────────────────────────────────────────────────
   const editor = useEditor({
@@ -565,11 +558,6 @@ export function DocsView() {
       TrackInsert,
       TrackDelete,
       Collaboration.configure({ document: ydoc }),
-      ...(CollaborationCursor ? [CollaborationCursor.configure({
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        provider: { awareness } as never,
-        user: { name: "You", color: "#1a56db" },
-      })] : []),
     ],
     content: "",
     editorProps: {
