@@ -328,10 +328,19 @@ function AnnouncementsTab({ isMentor, userId }: { isMentor: boolean; userId: str
     toast.success("Announcement deleted");
   };
 
+  const toggleReaction = async (annId: string, emoji: string) => {
+    await fetch("/api/internship/reactions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ emoji, announcementId: annId }),
+    }).catch(() => {});
+    load();
+  };
+
   const addComment = async (annId: string) => {
     const text = commentText[annId]?.trim();
     if (!text) return;
-    await fetch("/api/internship/findings/comment", { // reuse comment endpoint
+    await fetch("/api/internship/comments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ body: text, announcementId: annId }),
@@ -408,13 +417,14 @@ function AnnouncementsTab({ isMentor, userId }: { isMentor: boolean; userId: str
             </div>
             <MarkdownBody content={ann.body} />
 
-            {/* Reactions */}
+            {/* Reactions — one per user, clicking same removes, clicking different switches */}
             <div className="flex items-center gap-2 mt-4">
               {["👍", "🙌", "❤️", "🎯"].map(emoji => {
                 const count = ann.reactions.filter(r => r.emoji === emoji).length;
                 const mine = ann.reactions.some(r => r.emoji === emoji && r.userId === userId);
                 return (
-                  <button key={emoji} className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-sm border transition-colors ${mine ? "border-[#1a56db] bg-[#e8f0fe]" : "border-[#e8eaed] hover:bg-[#f1f3f4]"}`}>
+                  <button key={emoji} onClick={() => void toggleReaction(ann.id, emoji)}
+                    className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-sm border transition-colors ${mine ? "border-[#1a56db] bg-[#e8f0fe]" : "border-[#e8eaed] hover:bg-[#f1f3f4]"}`}>
                     {emoji} {count > 0 && <span className="text-xs text-[#5f6368]">{count}</span>}
                   </button>
                 );
@@ -680,6 +690,8 @@ function TasksTab({ isMentor, userId }: { isMentor: boolean; userId: string }) {
 function TaskDetail({ task: initialTask, isMentor, userId, onBack }: { task: InternTask; isMentor: boolean; userId: string; onBack: () => void }) {
   const [task, setTask] = useState<InternTask & { discussions?: Discussion[] }>(initialTask);
   const [subForm, setSubForm] = useState({ notes: "", links: "" });
+  const [subFiles, setSubFiles] = useState<{ name: string; url: string | null; type: string; size: number }[]>([]);
+  const [uploadingFile, setUploadingFile] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [msgForm, setMsgForm] = useState("");
   const [sending, setSending] = useState(false);
@@ -694,17 +706,18 @@ function TaskDetail({ task: initialTask, isMentor, userId, onBack }: { task: Int
   const mySubmissions = (task.submissions ?? []).filter(s => s.submitter?.id === userId || isMentor);
 
   const submit = async () => {
-    if (!subForm.notes.trim() && !subForm.links.trim()) { toast.error("Add a note or link"); return; }
+    if (!subForm.notes.trim() && !subForm.links.trim() && subFiles.length === 0) { toast.error("Add a note, link, or file"); return; }
     setSubmitting(true);
     try {
       const links = subForm.links.split("\n").map(l => l.trim()).filter(Boolean);
       await fetch("/api/internship/submissions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ taskId: task.id, notes: subForm.notes, links }),
+        body: JSON.stringify({ taskId: task.id, notes: subForm.notes, links, files: subFiles }),
       });
       toast.success("Submitted!");
       setSubForm({ notes: "", links: "" });
+      setSubFiles([]);
       const updated = await fetch(`/api/internship/tasks/${task.id}`).then(r => r.json());
       setTask(updated);
     } catch { toast.error("Submission failed"); }
@@ -772,9 +785,41 @@ function TaskDetail({ task: initialTask, isMentor, userId, onBack }: { task: Int
                 placeholder="Notes about your submission…"
                 value={subForm.notes} onChange={e => setSubForm(p => ({ ...p, notes: e.target.value }))} />
               <textarea rows={2}
-                className="w-full px-3 py-2 bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg text-sm text-[#202124] placeholder:text-[#80868b] focus:outline-none focus:border-[#1a56db]/60 resize-none mb-3"
+                className="w-full px-3 py-2 bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg text-sm text-[#202124] placeholder:text-[#80868b] focus:outline-none focus:border-[#1a56db]/60 resize-none mb-2"
                 placeholder="GitHub / links (one per line)…"
                 value={subForm.links} onChange={e => setSubForm(p => ({ ...p, links: e.target.value }))} />
+              {/* File upload */}
+              <div className="mb-3">
+                <label className={`flex items-center gap-2 px-3 py-2 border border-dashed border-[#d0d5dd] rounded-lg text-sm text-[#5f6368] cursor-pointer hover:border-[#1a56db]/60 hover:bg-[#f8f9fa] transition-colors ${uploadingFile ? "opacity-50 pointer-events-none" : ""}`}>
+                  {uploadingFile ? <Loader2 className="w-4 h-4 animate-spin text-[#1a56db]" /> : <FileText className="w-4 h-4 text-[#5f6368]" />}
+                  {uploadingFile ? "Uploading…" : "Attach PDF or Word document"}
+                  <input type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    className="hidden" onChange={async e => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      setUploadingFile(true);
+                      const fd = new FormData(); fd.append("file", file);
+                      const res = await fetch("/api/internship/findings/upload", { method: "POST", body: fd }).catch(() => null);
+                      if (res?.ok) {
+                        const data = await res.json() as { name: string; url: string | null; type: string; size: number };
+                        setSubFiles(p => [...p, data]);
+                        toast.success(`${file.name} attached`);
+                      } else { toast.error("Upload failed"); }
+                      setUploadingFile(false);
+                      e.target.value = "";
+                    }} />
+                </label>
+                {subFiles.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    {subFiles.map((f, i) => (
+                      <div key={i} className="flex items-center justify-between bg-[#f8f9fa] rounded px-3 py-1.5 text-xs text-[#3c4043]">
+                        <span className="flex items-center gap-1.5"><FileText className="w-3.5 h-3.5 text-[#1a56db]" />{f.name}</span>
+                        <button onClick={() => setSubFiles(p => p.filter((_, j) => j !== i))} className="text-[#80868b] hover:text-[#ea4335]"><X className="w-3.5 h-3.5" /></button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
               <button onClick={submit} disabled={submitting}
                 className="w-full px-4 py-2 bg-[#1a56db] text-white text-sm font-semibold rounded-lg hover:bg-[#1648c7] disabled:opacity-50 flex items-center justify-center gap-2">
                 {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Upload className="w-4 h-4" /> Submit</>}
@@ -1848,11 +1893,13 @@ function WeekDetail({ week, userId, isMentor, completed, onMarkComplete, onBack 
 
 // ─── MENTOR PANEL TAB ─────────────────────────────────────────────────────────
 
-type MentorSubTab = "weeks" | "edit_week" | "new_week" | "seed";
+type MentorSubTab = "weeks" | "edit_week" | "new_week" | "seed" | "submissions";
 
 function MentorPanelTab() {
-  const [subTab, setSubTab] = useState<MentorSubTab>("weeks");
+  const [subTab, setSubTab] = useState<MentorSubTab>("submissions");
   const [weeks, setWeeks] = useState<InternWeek[]>([]);
+  const [allSubmissions, setAllSubmissions] = useState<Submission[]>([]);
+  const [subsLoading, setSubsLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [seedLoading, setSeedLoading] = useState(false);
   const [noteText, setNoteText] = useState<Record<string, string>>({});
@@ -1877,6 +1924,14 @@ function MentorPanelTab() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (subTab !== "submissions") return;
+    setSubsLoading(true);
+    fetch("/api/internship/submissions")
+      .then(r => r.json()).then(setAllSubmissions).catch(() => setAllSubmissions([]))
+      .finally(() => setSubsLoading(false));
+  }, [subTab]);
 
   const openEditor = (week: InternWeek) => {
     setEditingWeek(week);
@@ -1977,6 +2032,7 @@ function MentorPanelTab() {
       {/* Sub-tab bar */}
       <div className="flex gap-1 border-b border-[#e8eaed] pb-0 flex-wrap">
         {([
+          { id: "submissions" as MentorSubTab, label: "Submissions", icon: Upload },
           { id: "weeks" as MentorSubTab, label: "Weeks", icon: BookOpen },
           { id: "new_week" as MentorSubTab, label: "Add Week", icon: Plus },
           { id: "seed" as MentorSubTab, label: "Seed Handbook", icon: GraduationCap },
