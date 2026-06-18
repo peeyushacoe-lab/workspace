@@ -94,7 +94,7 @@ export async function POST(request: Request) {
     }
   }
 
-  const sigTemplate = signature ? {
+  let sigTemplate = signature ? {
     fullName: signature.fullName ?? user.fullName,
     title: signature.title ?? "",
     phone: signature.phone ?? undefined,
@@ -103,6 +103,20 @@ export async function POST(request: Request) {
     avatarUrl: signature.avatarUrl ?? undefined,
     html: signature.html ?? undefined,
   } : undefined;
+
+  // Interns always get a fixed signature (name · Intern, CyberSage · website).
+  // They can't choose or edit it — enforced here regardless of any signatureId sent.
+  if (user.role === "INTERNSHIP") {
+    const safeName = (user.fullName ?? "")
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const internHtml =
+      `<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#202124;line-height:1.6;margin-top:10px;">` +
+      `<div style="font-weight:700;">${safeName}</div>` +
+      `<div>Intern, CyberSage</div>` +
+      `<div><a href="https://www.cybersage.uk" style="color:#1a56db;text-decoration:none;">www.cybersage.uk</a></div>` +
+      `</div>`;
+    sigTemplate = { fullName: user.fullName, title: "Intern", phone: undefined, linkedinUrl: undefined, website: "https://www.cybersage.uk", avatarUrl: undefined, html: internHtml };
+  }
   const finalHtml = htmlBody ?? renderComposeHtml(textBody, { email: toAddr, name: toAddr.split("@")[0], status: "Direct" }, sigTemplate);
 
   if (isInternal(toAddr)) {
@@ -236,15 +250,7 @@ export async function POST(request: Request) {
       subject,
       textBody,
       { email: toAddr, name: toAddr.split("@")[0], status: "Direct" },
-      signature ? {
-        fullName: signature.fullName ?? user.fullName,
-        title: signature.title ?? "",
-        phone: signature.phone ?? undefined,
-        linkedinUrl: signature.linkedinUrl ?? undefined,
-        website: signature.website ?? undefined,
-        avatarUrl: signature.avatarUrl ?? undefined,
-        html: signature.html ?? undefined,
-      } : undefined,
+      sigTemplate,
       `${user.fullName} <${fromAddr}>`,
       parsed.data.cc,
       parsed.data.bcc,

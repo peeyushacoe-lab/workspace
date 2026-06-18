@@ -332,6 +332,8 @@ export function SimpleComposer({
   }, [userRole]);
 
   useEffect(() => {
+    // Interns use a fixed server-side signature — no selector, nothing to load.
+    if (userRole === "INTERNSHIP") return;
     const loadSignatures = async () => {
       try {
         const response = await fetch("/api/signatures");
@@ -345,7 +347,7 @@ export function SimpleComposer({
       }
     };
     loadSignatures();
-  }, []);
+  }, [userRole]);
 
   const doActualSend = async (payload: { to: string; subject: string; body: string; signatureId?: string; cc?: string[]; bcc?: string[]; replyToThreadId?: string; priority?: string }) => {
     let requestInit: RequestInit;
@@ -486,16 +488,22 @@ export function SimpleComposer({
           <label className="block text-xs font-medium text-[#5f6368] mb-1.5">
             Signature
           </label>
-          <select
-            value={selectedSignatureId}
-            onChange={(e) => setSelectedSignatureId(e.target.value)}
-            className="block w-full py-2.5 border border-[#d0d5dd] rounded-md bg-[#f1f3f4] text-[#202124] focus:ring-2 focus:ring-[#1a56db]/20 focus:border-[#1a56db]/60 text-sm px-3"
-          >
-            <option value="">No Signature</option>
-            {signatures.map(s => (
-              <option key={s.id} value={s.id}>{s.fullName} ({s.title})</option>
-            ))}
-          </select>
+          {userRole === "INTERNSHIP" ? (
+            <div className="block w-full py-2.5 border border-[#d0d5dd] rounded-md bg-[#f1f3f4] text-[#5f6368] text-sm px-3">
+              Intern signature (added automatically)
+            </div>
+          ) : (
+            <select
+              value={selectedSignatureId}
+              onChange={(e) => setSelectedSignatureId(e.target.value)}
+              className="block w-full py-2.5 border border-[#d0d5dd] rounded-md bg-[#f1f3f4] text-[#202124] focus:ring-2 focus:ring-[#1a56db]/20 focus:border-[#1a56db]/60 text-sm px-3"
+            >
+              <option value="">No Signature</option>
+              {signatures.map(s => (
+                <option key={s.id} value={s.id}>{s.fullName} ({s.title})</option>
+              ))}
+            </select>
+          )}
         </div>
       </div>
 

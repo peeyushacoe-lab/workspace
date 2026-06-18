@@ -7,7 +7,7 @@ import type { IncidentSeverity, IncidentStatus } from "@/generated/prisma/enums"
 export async function GET(request: Request) {
   const user = getSessionUserFromCookieStore(await cookies());
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!["ADMIN", "CISO"].includes(user.role)) {
+  if (!["ADMIN", "CISO", "CEO"].includes(user.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -33,7 +33,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const user = getSessionUserFromCookieStore(await cookies());
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!["ADMIN", "CISO"].includes(user.role)) {
+  if (!["ADMIN", "CISO", "CEO"].includes(user.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
