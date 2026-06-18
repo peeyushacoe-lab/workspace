@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
   });
 
   if (resend) {
-    const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/invite/${invite.token}`;
+    const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? "https://nexus.cybersage.uk"}/invite/${invite.token}`;
     resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL ?? "CyberSage <noreply@cybersage.uk>",
       to: email,

@@ -15,6 +15,7 @@ const GRANTABLE_ACCESS = [
   "Executive",
   "IT",
   "R&D",
+  "Mentor",
 ] as const;
 
 type GrantableAccess = (typeof GRANTABLE_ACCESS)[number];

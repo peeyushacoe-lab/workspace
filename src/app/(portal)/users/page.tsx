@@ -17,7 +17,7 @@ import type { UserRole } from "@/generated/prisma/enums";
 
 const GRANTABLE_ACCESS = [
   "HR", "Finance", "Legal", "Marketing", "Security Operations",
-  "Operations", "Executive", "IT", "R&D",
+  "Operations", "Executive", "IT", "R&D", "Mentor",
 ] as const;
 type GrantableAccess = (typeof GRANTABLE_ACCESS)[number];
 
