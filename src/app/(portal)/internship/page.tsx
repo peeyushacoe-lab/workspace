@@ -12,6 +12,55 @@ import {
 import { toast } from "sonner";
 import { PageHeader } from "@/components/Shell";
 
+// ─── Markdown renderer ───────────────────────────────────────────────────────
+
+function renderMarkdown(md: string): string {
+  let html = md
+    // Escape HTML entities first
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    // Fenced code blocks ```lang\n...\n```
+    .replace(/```[\w]*\n?([\s\S]*?)```/g, (_m, code) =>
+      `<pre style="background:#f1f3f4;border-radius:6px;padding:12px 16px;overflow-x:auto;margin:12px 0;font-size:13px;line-height:1.6;"><code style="font-family:monospace;color:#202124;">${code.trim()}</code></pre>`)
+    // Headings
+    .replace(/^### (.+)$/gm, '<h3 style="font-size:14px;font-weight:700;color:#202124;margin:20px 0 6px;">$1</h3>')
+    .replace(/^## (.+)$/gm,  '<h2 style="font-size:15px;font-weight:700;color:#202124;margin:24px 0 8px;padding-bottom:4px;border-bottom:1px solid #e8eaed;">$1</h2>')
+    .replace(/^# (.+)$/gm,   '<h1 style="font-size:17px;font-weight:700;color:#202124;margin:28px 0 10px;">$1</h1>')
+    // Bold + italic
+    .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#202124;font-weight:600;">$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em style="color:#3c4043;">$1</em>')
+    // Inline code
+    .replace(/`([^`]+)`/g, '<code style="background:#f1f3f4;border-radius:4px;padding:1px 6px;font-size:12px;font-family:monospace;color:#1a56db;">$1</code>')
+    // Horizontal rule
+    .replace(/^---$/gm, '<hr style="border:none;border-top:1px solid #e8eaed;margin:20px 0;"/>')
+    // Unordered lists (- item or * item)
+    .replace(/^[\-\*] (.+)$/gm, '<li style="margin:4px 0;color:#3c4043;font-size:14px;line-height:1.6;">$1</li>')
+    // Ordered lists (1. item)
+    .replace(/^\d+\. (.+)$/gm, '<li style="margin:4px 0;color:#3c4043;font-size:14px;line-height:1.6;list-style-type:decimal;">$1</li>')
+    // Wrap consecutive <li> in <ul>/<ol>
+    .replace(/(<li[^>]*>.*?<\/li>\n?)+/g, m => `<ul style="padding-left:20px;margin:8px 0;">${m}</ul>`)
+    // Paragraphs — blank line separated blocks not already wrapped in HTML tags
+    .replace(/\n{2,}/g, '\n\n')
+    // Line breaks
+    .replace(/\n/g, '<br/>');
+
+  // Wrap bare text lines in <p>
+  html = html.replace(/^(?!<[a-z])(.*?)(<br\/>|$)/gm, (m, text) =>
+    text.trim() ? `<p style="margin:6px 0;color:#3c4043;font-size:14px;line-height:1.7;">${text}</p>` : m
+  );
+
+  return html;
+}
+
+function MarkdownBody({ content }: { content: string }) {
+  return (
+    <div
+      className="text-sm leading-relaxed"
+      dangerouslySetInnerHTML={{ __html: renderMarkdown(content) }}
+    />
+  );
+}
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type Tab = "announcements" | "tasks" | "submissions" | "discussion" | "findings" | "progress" | "learning" | "mentor_panel";
@@ -357,7 +406,7 @@ function AnnouncementsTab({ isMentor, userId }: { isMentor: boolean; userId: str
               <Avatar user={ann.author} size={6} />
               <span className="text-xs text-[#5f6368]">{ann.author.fullName}</span>
             </div>
-            <p className="text-sm text-[#3c4043] leading-relaxed whitespace-pre-wrap">{ann.body}</p>
+            <MarkdownBody content={ann.body} />
 
             {/* Reactions */}
             <div className="flex items-center gap-2 mt-4">
@@ -703,7 +752,7 @@ function TaskDetail({ task: initialTask, isMentor, userId, onBack }: { task: Int
               {task.deadline && <span className={`text-xs ${isPast(task.deadline) ? "text-[#ea4335]" : "text-[#80868b]"}`}><Clock className="w-3 h-3 inline mr-0.5" />{fmt(task.deadline)}</span>}
             </div>
             <h2 className="text-lg font-semibold text-[#202124]">{task.title}</h2>
-            <p className="text-sm text-[#5f6368] mt-2 leading-relaxed whitespace-pre-wrap">{task.description}</p>
+            <div className="mt-2"><MarkdownBody content={task.description} /></div>
           </div>
         </div>
         <div className="flex items-center gap-2 text-xs text-[#80868b]">
@@ -1736,10 +1785,8 @@ function WeekDetail({ week, userId, isMentor, completed, onMarkComplete, onBack 
                   : <ChevronRight className="w-4 h-4 text-[#9aa0a6] shrink-0" />}
               </button>
               {expandedTopic === topic.id && (
-                <div className="px-5 pb-5 pt-1 border-t border-[#f1f3f4]">
-                  <div className="prose prose-sm max-w-none text-[#3c4043] text-sm leading-relaxed whitespace-pre-wrap">
-                    {topic.body}
-                  </div>
+                <div className="px-5 pb-5 pt-3 border-t border-[#f1f3f4]">
+                  <MarkdownBody content={topic.body} />
                 </div>
               )}
             </div>
