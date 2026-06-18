@@ -905,25 +905,10 @@ function TaskDetail({ task: initialTask, isMentor, userId, onBack }: { task: Int
 function SubmissionFiles({ files }: { files?: Submission["files"] }) {
   if (!files || files.length === 0) return null;
   return (
-    <div className="flex flex-col gap-1 mb-2">
-      {files.map((f, i) => {
-        const url = f.url || (f.key ? `/api/internship/findings/file?key=${encodeURIComponent(f.key)}` : null);
-        const content = (
-          <span className="flex items-center gap-1.5 text-xs text-[#1a56db] truncate">
-            <FileText className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate">{f.name}</span>
-            {f.size ? <span className="text-[#80868b]">· {(f.size / 1024).toFixed(0)} KB</span> : null}
-          </span>
-        );
-        return url ? (
-          <a key={i} href={url} target="_blank" rel="noreferrer"
-            className="flex items-center bg-[#f8f9fa] hover:bg-[#eef2ff] rounded px-2 py-1.5 transition-colors">
-            {content}
-          </a>
-        ) : (
-          <div key={i} className="flex items-center bg-[#f8f9fa] rounded px-2 py-1.5">{content}</div>
-        );
-      })}
+    <div className="flex flex-col gap-2 mb-2">
+      {files.map((f, i) => (
+        <FindingAttachment key={i} att={{ name: f.name, url: f.url ?? null, key: f.key, type: f.type, ext: f.ext }} />
+      ))}
     </div>
   );
 }
@@ -991,15 +976,28 @@ function SubmissionCard({ sub, isMentor, onReview }: { sub: Submission; isMentor
 
 // ─── SUBMISSIONS TAB ──────────────────────────────────────────────────────────
 
-function SubmissionsTab({ isMentor, userId }: { isMentor: boolean; userId: string }) {
+function SubmissionsTab({ isMentor }: { isMentor: boolean; userId: string }) {
   const [subs, setSubs] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     setLoading(true);
     fetch("/api/internship/submissions")
       .then(r => r.json()).then(setSubs).catch(() => setSubs([])).finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const reviewSub = async (subId: string, verdict: string, comment: string) => {
+    const res = await fetch(`/api/internship/submissions/${subId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ verdict, comment }),
+    });
+    if (!res.ok) { toast.error("Could not save review"); return; }
+    toast.success("Review saved");
+    load();
+  };
 
   if (loading) return <LoadingSpinner />;
   if (subs.length === 0) return (
@@ -1019,7 +1017,7 @@ function SubmissionsTab({ isMentor, userId }: { isMentor: boolean; userId: strin
             <span className="w-2 h-2 rounded-full bg-[#1a56db]" /> Awaiting Review ({pending.length})
           </h3>
           <div className="space-y-3">
-            {pending.map(s => <SubmissionRow key={s.id} sub={s} />)}
+            {pending.map(s => <SubmissionRow key={s.id} sub={s} isMentor={isMentor} onReview={reviewSub} />)}
           </div>
         </div>
       )}
@@ -1029,7 +1027,7 @@ function SubmissionsTab({ isMentor, userId }: { isMentor: boolean; userId: strin
             <span className="w-2 h-2 rounded-full bg-[#9aa0a6]" /> Reviewed ({reviewed.length})
           </h3>
           <div className="space-y-3">
-            {reviewed.map(s => <SubmissionRow key={s.id} sub={s} />)}
+            {reviewed.map(s => <SubmissionRow key={s.id} sub={s} isMentor={isMentor} onReview={reviewSub} />)}
           </div>
         </div>
       )}
@@ -1037,8 +1035,11 @@ function SubmissionsTab({ isMentor, userId }: { isMentor: boolean; userId: strin
   );
 }
 
-function SubmissionRow({ sub }: { sub: Submission }) {
+function SubmissionRow({ sub, isMentor, onReview }: { sub: Submission; isMentor: boolean; onReview: (id: string, verdict: string, comment: string) => void }) {
   const latestReview = sub.reviews?.[0];
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [verdict, setVerdict] = useState("approved");
+  const [comment, setComment] = useState("");
   return (
     <div className="bg-white border border-[#e8eaed] rounded-xl p-4">
       <div className="flex items-start justify-between mb-2">
@@ -1068,6 +1069,28 @@ function SubmissionRow({ sub }: { sub: Submission }) {
           {latestReview.reviewer.fullName}: {latestReview.comment ?? latestReview.verdict}
           {latestReview.score != null && <span className="ml-1 font-semibold text-[#1a56db]">[{latestReview.score}/100]</span>}
         </div>
+      )}
+      {isMentor && sub.status === "submitted" && (
+        reviewOpen ? (
+          <div className="space-y-2 mt-3 border-t border-[#f1f3f4] pt-3">
+            <select className="w-full px-2 py-1.5 bg-[#f1f3f4] border border-[#d0d5dd] rounded text-xs"
+              value={verdict} onChange={e => setVerdict(e.target.value)}>
+              <option value="approved">Approve</option>
+              <option value="revision_requested">Request Revision</option>
+              <option value="rejected">Reject</option>
+            </select>
+            <input className="w-full px-2 py-1.5 bg-[#f1f3f4] border border-[#d0d5dd] rounded text-xs placeholder:text-[#80868b]"
+              placeholder="Feedback (optional)…" value={comment} onChange={e => setComment(e.target.value)} />
+            <div className="flex gap-1.5">
+              <button onClick={() => { onReview(sub.id, verdict, comment); setReviewOpen(false); }}
+                className="flex-1 px-2 py-1.5 bg-[#1a56db] text-white text-xs font-semibold rounded">Submit Review</button>
+              <button onClick={() => setReviewOpen(false)} className="px-2 py-1.5 text-xs text-[#5f6368] hover:bg-[#f1f3f4] rounded">Cancel</button>
+            </div>
+          </div>
+        ) : (
+          <button onClick={() => setReviewOpen(true)}
+            className="text-xs text-[#1a56db] hover:underline font-medium mt-2">Review / mark this submission →</button>
+        )
       )}
       <div className="text-[10px] text-[#80868b] mt-2">{fmt(sub.createdAt)}</div>
     </div>
@@ -1256,7 +1279,10 @@ function FindingsTab({ isMentor, userId, currentUser }: { isMentor: boolean; use
             </button>
           ))}
         </div>
-        <button onClick={() => setShowForm(v => !v)}
+        <button onClick={() => {
+            if (!showForm && typeFilter !== "all") setForm(p => ({ ...p, type: typeFilter }));
+            setShowForm(v => !v);
+          }}
           className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1a56db] text-white text-xs font-semibold rounded-lg hover:bg-[#1648c7] transition-colors">
           <Plus className="w-3.5 h-3.5" /> Report
         </button>
@@ -1648,7 +1674,11 @@ function FindingAttachment({ att }: { att: AttachmentMeta }) {
   const fileUrl = att.key
     ? `/api/internship/findings/file?key=${encodeURIComponent(att.key)}`
     : att.url;
-  const isPdf = att.type === "application/pdf" || att.name?.toLowerCase().endsWith(".pdf");
+  // Inline variant so the browser renders the file (esp. PDFs) instead of forcing a download.
+  const inlineUrl = att.key
+    ? `/api/internship/findings/file?key=${encodeURIComponent(att.key)}&inline=1`
+    : att.url;
+  const isPdf = att.type === "application/pdf" || att.ext === "pdf" || att.name?.toLowerCase().endsWith(".pdf");
   const isWord = att.type === "application/msword" ||
     att.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
     att.name?.toLowerCase().endsWith(".doc") || att.name?.toLowerCase().endsWith(".docx");
@@ -1684,7 +1714,7 @@ function FindingAttachment({ att }: { att: AttachmentMeta }) {
               className="text-xs text-[#1a56db] hover:underline font-medium px-2 py-0.5">
               {expanded ? "Hide preview" : "Preview"}
             </button>
-            <a href={fileUrl} target="_blank" rel="noreferrer"
+            <a href={isPdf ? (inlineUrl ?? fileUrl) : fileUrl} target="_blank" rel="noreferrer"
               className="flex items-center gap-1 text-xs text-[#5f6368] hover:text-[#202124] px-2 py-0.5 rounded hover:bg-[#e8eaed]">
               <ExternalLink className="w-3 h-3" /> Open
             </a>
@@ -1696,7 +1726,7 @@ function FindingAttachment({ att }: { att: AttachmentMeta }) {
         <div className="border-t border-[#e8eaed]">
           {isPdf && (
             <iframe
-              src={fileUrl}
+              src={inlineUrl ?? fileUrl}
               className="w-full h-[500px] bg-white"
               title={att.name}
             />
@@ -2187,13 +2217,11 @@ function QuizEditor({ quiz, onChange }: { quiz: Quiz; onChange: (q: Quiz) => voi
 
 // ─── MENTOR PANEL TAB ─────────────────────────────────────────────────────────
 
-type MentorSubTab = "weeks" | "edit_week" | "new_week" | "seed" | "submissions";
+type MentorSubTab = "weeks" | "edit_week" | "new_week" | "seed";
 
 function MentorPanelTab() {
-  const [subTab, setSubTab] = useState<MentorSubTab>("submissions");
+  const [subTab, setSubTab] = useState<MentorSubTab>("weeks");
   const [weeks, setWeeks] = useState<InternWeek[]>([]);
-  const [allSubmissions, setAllSubmissions] = useState<Submission[]>([]);
-  const [subsLoading, setSubsLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [seedLoading, setSeedLoading] = useState(false);
   const [noteText, setNoteText] = useState<Record<string, string>>({});
@@ -2218,14 +2246,6 @@ function MentorPanelTab() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
-
-  useEffect(() => {
-    if (subTab !== "submissions") return;
-    setSubsLoading(true);
-    fetch("/api/internship/submissions")
-      .then(r => r.json()).then(setAllSubmissions).catch(() => setAllSubmissions([]))
-      .finally(() => setSubsLoading(false));
-  }, [subTab]);
 
   const openEditor = (week: InternWeek) => {
     setEditingWeek(week);
@@ -2326,7 +2346,6 @@ function MentorPanelTab() {
       {/* Sub-tab bar */}
       <div className="flex gap-1 border-b border-[#e8eaed] pb-0 flex-wrap">
         {([
-          { id: "submissions" as MentorSubTab, label: "Submissions", icon: Upload },
           { id: "weeks" as MentorSubTab, label: "Weeks", icon: BookOpen },
           { id: "new_week" as MentorSubTab, label: "Add Week", icon: Plus },
           { id: "seed" as MentorSubTab, label: "Seed Handbook", icon: GraduationCap },

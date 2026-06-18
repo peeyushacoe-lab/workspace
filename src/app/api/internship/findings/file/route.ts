@@ -24,6 +24,7 @@ export async function GET(request: Request) {
   }
 
   const filename = key.split("/").pop() ?? "file";
-  const signedUrl = await getAttachmentUrl(key, filename);
+  const inline = searchParams.get("inline") === "1";
+  const signedUrl = await getAttachmentUrl(key, filename, inline);
   return NextResponse.redirect(signedUrl, { status: 302 });
 }
