@@ -2032,7 +2032,7 @@ function MentorPanelTab() {
             </div>
             <div className="divide-y divide-[#f1f3f4]">
               {editTopics.length === 0 && (
-                <p className="px-5 py-4 text-sm text-[#9aa0a6]">No modules yet. Click "Add Module" to create the first one.</p>
+                <p className="px-5 py-4 text-sm text-[#9aa0a6]">No modules yet. Click &ldquo;Add Module&rdquo; to create the first one.</p>
               )}
               {editTopics.map((topic, i) => (
                 <div key={i} className="p-4 space-y-2">
