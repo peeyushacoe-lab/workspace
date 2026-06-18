@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
+import { createNotification } from "@/lib/notifications";
 
 const INTERN_ROLES = ["INTERNSHIP"] as const;
 const MENTOR_ROLES = ["ADMIN", "CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER"] as const;
@@ -51,6 +52,23 @@ export async function POST(request: Request) {
       comments: true,
     },
   });
+
+  // Notify all interns of the new announcement
+  const interns = await prisma.user.findMany({
+    where: { role: "INTERNSHIP", isActive: true },
+    select: { id: true },
+  });
+  await Promise.all(
+    interns.map(intern =>
+      createNotification({
+        userId: intern.id,
+        type: "SYSTEM",
+        title: `📣 New Announcement: ${data.title}`,
+        body: data.body.slice(0, 120) + (data.body.length > 120 ? "…" : ""),
+        link: "/internship",
+      }).catch(() => {}),
+    ),
+  );
 
   return NextResponse.json(ann, { status: 201 });
 }

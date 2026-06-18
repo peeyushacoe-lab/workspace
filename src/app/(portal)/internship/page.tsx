@@ -6,13 +6,15 @@ import {
   Plus, Pin, ChevronDown, ChevronRight, Send, Loader2, X,
   CheckCircle2, Clock, AlertTriangle, ExternalLink, RefreshCw,
   Star, Flag, Lightbulb, Shield, Circle, ArrowUpRight, Sparkles,
+  BookOpen, Lock, Unlock, Settings, GraduationCap, Link2,
+  FileText, Pencil, Save, Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/Shell";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Tab = "announcements" | "tasks" | "submissions" | "discussion" | "findings" | "progress";
+type Tab = "announcements" | "tasks" | "submissions" | "discussion" | "findings" | "progress" | "learning" | "mentor_panel";
 
 interface User { id: string; fullName: string; avatarUrl?: string | null; role?: string; }
 
@@ -59,6 +61,19 @@ interface InternStats {
   assigned: number; submitted: number; approved: number;
   pendingReview: number; findings: number;
   recentReviews: (Review & { submission: { taskId: string; task: { title: string } } })[];
+}
+
+// Week types
+interface InternWeekTopic { id: string; title: string; body: string; order: number; }
+interface InternWeekResource { id: string; title: string; url: string; type: string; order: number; }
+interface InternWeekCheckpoint { id: string; title: string; order: number; }
+interface InternWeekMentorNote { id: string; body: string; createdAt: string; author: User; }
+interface InternWeek {
+  id: string; weekNumber: number; title: string; overview: string;
+  isUnlocked: boolean; unlockedAt?: string | null;
+  topics: InternWeekTopic[]; resources: InternWeekResource[];
+  checkpoints: InternWeekCheckpoint[]; completions: { internId: string }[];
+  mentorNotes: InternWeekMentorNote[];
 }
 
 interface MentorStats {
@@ -155,20 +170,22 @@ const TABS: { id: Tab; label: string; icon: React.ElementType; mentorOnly?: bool
   { id: "submissions",   label: "Submissions",   icon: Upload },
   { id: "discussion",    label: "Discussion",    icon: MessageSquare },
   { id: "findings",      label: "Findings",      icon: Bug },
+  { id: "learning",      label: "Learning",      icon: BookOpen },
   { id: "progress",      label: "Progress",      icon: BarChart2 },
+  { id: "mentor_panel",  label: "Mentor Panel",  icon: Settings, mentorOnly: true },
 ];
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 
 export default function InternshipHubPage() {
   const [tab, setTab] = useState<Tab>("announcements");
-  const [currentUser, setCurrentUser] = useState<(User & { role: string; id: string }) | null>(null);
+  const [currentUser, setCurrentUser] = useState<(User & { role: string; id: string; isMentor?: boolean }) | null>(null);
 
   useEffect(() => {
-    fetch("/api/auth/me").then(r => r.json()).then(setCurrentUser).catch(() => null);
+    fetch("/api/internship/me").then(r => r.json()).then(setCurrentUser).catch(() => null);
   }, []);
 
-  const isMentor = currentUser && ["ADMIN", "CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER"].includes(currentUser.role);
+  const isMentor = !!currentUser?.isMentor;
 
   return (
     <div className="flex flex-col h-full">
@@ -181,7 +198,7 @@ export default function InternshipHubPage() {
       {/* Tab bar */}
       <div className="border-b border-[#e8eaed] bg-white sticky top-0 z-10">
         <div className="flex gap-1 px-6 overflow-x-auto">
-          {TABS.map(t => (
+          {TABS.filter(t => !t.mentorOnly || isMentor).map(t => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
@@ -201,12 +218,14 @@ export default function InternshipHubPage() {
       <div className="flex-1 overflow-auto bg-[#f8f9fa] p-6">
         {currentUser && (
           <>
-            {tab === "announcements" && <AnnouncementsTab isMentor={!!isMentor} userId={currentUser.id} />}
-            {tab === "tasks"         && <TasksTab isMentor={!!isMentor} userId={currentUser.id} />}
-            {tab === "submissions"   && <SubmissionsTab isMentor={!!isMentor} userId={currentUser.id} />}
+            {tab === "announcements" && <AnnouncementsTab isMentor={isMentor} userId={currentUser.id} />}
+            {tab === "tasks"         && <TasksTab isMentor={isMentor} userId={currentUser.id} />}
+            {tab === "submissions"   && <SubmissionsTab isMentor={isMentor} userId={currentUser.id} />}
             {tab === "discussion"    && <DiscussionTab userId={currentUser.id} currentUser={currentUser} />}
-            {tab === "findings"      && <FindingsTab isMentor={!!isMentor} userId={currentUser.id} currentUser={currentUser} />}
-            {tab === "progress"      && <ProgressTab isMentor={!!isMentor} userId={currentUser.id} />}
+            {tab === "findings"      && <FindingsTab isMentor={isMentor} userId={currentUser.id} currentUser={currentUser} />}
+            {tab === "learning"      && <LearningTab isMentor={isMentor} userId={currentUser.id} />}
+            {tab === "progress"      && <ProgressTab isMentor={isMentor} userId={currentUser.id} />}
+            {tab === "mentor_panel"  && isMentor && <MentorPanelTab />}
           </>
         )}
       </div>
@@ -387,8 +406,9 @@ function TasksTab({ isMentor, userId }: { isMentor: boolean; userId: string }) {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [selected, setSelected] = useState<InternTask | null>(null);
-  const [form, setForm] = useState({ title: "", description: "", priority: "medium", deadline: "", assigneeIds: [] as string[] });
+  const [form, setForm] = useState({ title: "", description: "", priority: "medium", deadline: "", assigneeIds: [] as string[], assignAll: false });
   const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
   const [interns, setInterns] = useState<User[]>([]);
 
   const load = useCallback(async () => {
@@ -414,18 +434,31 @@ function TasksTab({ isMentor, userId }: { isMentor: boolean; userId: string }) {
     if (!form.title.trim() || !form.description.trim()) return;
     setCreating(true);
     try {
+      const assigneeIds = form.assignAll ? interns.map(i => i.id) : form.assigneeIds;
       const res = await fetch("/api/internship/tasks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, deadline: form.deadline || null }),
+        body: JSON.stringify({ title: form.title, description: form.description, priority: form.priority, deadline: form.deadline || null, assigneeIds }),
       });
       if (!res.ok) throw new Error();
       toast.success("Task created");
-      setForm({ title: "", description: "", priority: "medium", deadline: "", assigneeIds: [] });
+      setForm({ title: "", description: "", priority: "medium", deadline: "", assigneeIds: [], assignAll: false });
       setShowForm(false);
       load();
     } catch { toast.error("Failed to create task"); }
     finally { setCreating(false); }
+  };
+
+  const deleteTask = async (id: string) => {
+    if (!confirm("Delete this task? This cannot be undone.")) return;
+    setDeleting(id);
+    try {
+      const res = await fetch(`/api/internship/tasks/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      toast.success("Task deleted");
+      load();
+    } catch { toast.error("Failed to delete task"); }
+    finally { setDeleting(null); }
   };
 
   if (loading) return <LoadingSpinner />;
@@ -478,24 +511,39 @@ function TasksTab({ isMentor, userId }: { isMentor: boolean; userId: string }) {
           </div>
           {interns.length > 0 && (
             <div>
-              <label className="block text-xs font-medium text-[#5f6368] mb-2">Assign to interns</label>
-              <div className="flex flex-wrap gap-2">
-                {interns.map(intern => (
-                  <button key={intern.id}
-                    onClick={() => setForm(p => ({
-                      ...p, assigneeIds: p.assigneeIds.includes(intern.id)
-                        ? p.assigneeIds.filter(id => id !== intern.id)
-                        : [...p.assigneeIds, intern.id],
-                    }))}
-                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
-                      form.assigneeIds.includes(intern.id)
-                        ? "border-[#1a56db] bg-[#e8f0fe] text-[#1a56db]"
-                        : "border-[#e8eaed] text-[#5f6368] hover:bg-[#f1f3f4]"
-                    }`}>
-                    {intern.fullName}
-                  </button>
-                ))}
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-medium text-[#5f6368]">Assign to interns</label>
+                <button
+                  type="button"
+                  onClick={() => setForm(p => ({ ...p, assignAll: !p.assignAll, assigneeIds: [] }))}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border transition-colors ${
+                    form.assignAll ? "border-[#1a56db] bg-[#e8f0fe] text-[#1a56db]" : "border-[#e8eaed] text-[#5f6368] hover:bg-[#f1f3f4]"
+                  }`}>
+                  {form.assignAll ? <><CheckCircle2 className="w-3 h-3" /> All interns</> : "Assign all"}
+                </button>
               </div>
+              {!form.assignAll && (
+                <div className="flex flex-wrap gap-2">
+                  {interns.map(intern => (
+                    <button key={intern.id} type="button"
+                      onClick={() => setForm(p => ({
+                        ...p, assigneeIds: p.assigneeIds.includes(intern.id)
+                          ? p.assigneeIds.filter(id => id !== intern.id)
+                          : [...p.assigneeIds, intern.id],
+                      }))}
+                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
+                        form.assigneeIds.includes(intern.id)
+                          ? "border-[#1a56db] bg-[#e8f0fe] text-[#1a56db]"
+                          : "border-[#e8eaed] text-[#5f6368] hover:bg-[#f1f3f4]"
+                      }`}>
+                      {intern.fullName}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {form.assignAll && (
+                <p className="text-xs text-[#5f6368]">Task will be assigned to all {interns.length} intern{interns.length !== 1 ? "s" : ""}.</p>
+              )}
             </div>
           )}
           <div className="flex justify-end gap-2">
@@ -521,14 +569,21 @@ function TasksTab({ isMentor, userId }: { isMentor: boolean; userId: string }) {
             <div className="space-y-2">
               {group.map(task => (
                 <div key={task.id}
-                  onClick={() => setSelected(task)}
-                  className="bg-white border border-[#e8eaed] rounded-xl p-4 cursor-pointer hover:border-[#1a56db]/30 hover:shadow-sm transition-all group">
+                  className="bg-white border border-[#e8eaed] rounded-xl p-4 hover:border-[#1a56db]/30 hover:shadow-sm transition-all group">
                   <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setSelected(task)}>
                       <h4 className="font-semibold text-[#202124] group-hover:text-[#1a56db] transition-colors truncate">{task.title}</h4>
                       <p className="text-sm text-[#5f6368] mt-0.5 line-clamp-2">{task.description}</p>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-[#9aa0a6] shrink-0 mt-0.5" />
+                    <div className="flex items-center gap-1 shrink-0">
+                      {isMentor && (
+                        <button onClick={e => { e.stopPropagation(); deleteTask(task.id); }} disabled={deleting === task.id}
+                          className="p-1.5 text-[#9aa0a6] hover:text-[#ea4335] hover:bg-red-50 rounded-lg transition-colors">
+                          {deleting === task.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                        </button>
+                      )}
+                      <ChevronRight className="w-4 h-4 text-[#9aa0a6] cursor-pointer" onClick={() => setSelected(task)} />
+                    </div>
                   </div>
                   <div className="flex items-center gap-3 mt-3 flex-wrap">
                     {task.deadline && (
@@ -970,15 +1025,20 @@ function FindingsTab({ isMentor, userId, currentUser }: { isMentor: boolean; use
   const [expanded, setExpanded] = useState<string | null>(null);
   const [form, setForm] = useState({ type: "bug_report", title: "", description: "", severity: "medium", steps: "", useCase: "" });
   const [posting, setPosting] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<{ name: string; url: string | null; key?: string; type: string; ext?: string; size?: number }[]>([]);
   const [statusUpdate, setStatusUpdate] = useState<Record<string, string>>({});
   const [commentText, setCommentText] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
     setLoading(true);
-    const url = typeFilter !== "all" ? `/api/internship/findings?type=${typeFilter}` : "/api/internship/findings";
-    const res = await fetch(url);
-    setFindings(await res.json());
-    setLoading(false);
+    try {
+      const url = typeFilter !== "all" ? `/api/internship/findings?type=${typeFilter}` : "/api/internship/findings";
+      const res = await fetch(url);
+      if (res.ok) setFindings(await res.json());
+      else setFindings([]);
+    } catch { setFindings([]); }
+    finally { setLoading(false); }
   }, [typeFilter]);
 
   useEffect(() => { load(); }, [load]);
@@ -987,16 +1047,28 @@ function FindingsTab({ isMentor, userId, currentUser }: { isMentor: boolean; use
     if (!form.title.trim() || !form.description.trim()) return;
     setPosting(true);
     try {
-      await fetch("/api/internship/findings", {
+      const payload = {
+        type: form.type, title: form.title, description: form.description,
+        severity: form.severity, steps: form.steps || undefined, useCase: form.useCase || undefined,
+        attachments: pendingFiles,
+      };
+      const res = await fetch("/api/internship/findings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
-      toast.success("Submitted!");
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error ?? "Server error");
+      }
+      toast.success("Finding submitted!");
       setForm({ type: "bug_report", title: "", description: "", severity: "medium", steps: "", useCase: "" });
+      setPendingFiles([]);
       setShowForm(false);
       load();
-    } catch { toast.error("Failed"); }
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Failed to submit");
+    }
     finally { setPosting(false); }
   };
 
@@ -1074,9 +1146,49 @@ function FindingsTab({ isMentor, userId, currentUser }: { isMentor: boolean; use
               className="w-full px-3 py-2 bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg text-sm text-[#202124] placeholder:text-[#80868b] focus:outline-none focus:border-[#1a56db]/60 resize-none"
               placeholder="Use case / expected benefit…" value={form.useCase} onChange={e => setForm(p => ({ ...p, useCase: e.target.value }))} />
           )}
+
+          {/* File attachment */}
+          <div>
+            <label className="block text-xs font-medium text-[#5f6368] mb-1.5">Attach PDF or Word file (optional)</label>
+            <label className={`flex items-center gap-2 px-3 py-2 border border-dashed rounded-lg cursor-pointer text-sm transition-colors ${uploading ? "opacity-50 pointer-events-none" : "border-[#d0d5dd] hover:border-[#1a56db] hover:bg-[#f8f9ff]"}`}>
+              {uploading
+                ? <><Loader2 className="w-4 h-4 animate-spin text-[#1a56db]" /><span className="text-[#5f6368]">Uploading…</span></>
+                : <><Upload className="w-4 h-4 text-[#9aa0a6]" /><span className="text-[#9aa0a6]">Click to attach PDF or Word doc</span></>}
+              <input type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                className="hidden" onChange={async e => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  setUploading(true);
+                  try {
+                    const fd = new FormData();
+                    fd.append("file", file);
+                    const res = await fetch("/api/internship/findings/upload", { method: "POST", body: fd });
+                    if (!res.ok) { const err = await res.json().catch(() => ({})); toast.error(err.error ?? "Upload failed"); return; }
+                    const data = await res.json();
+                    setPendingFiles(p => [...p, data]);
+                    toast.success("File attached");
+                  } catch { toast.error("Upload failed"); }
+                  finally { setUploading(false); e.target.value = ""; }
+                }} />
+            </label>
+            {pendingFiles.length > 0 && (
+              <div className="mt-2 space-y-1.5">
+                {pendingFiles.map((f, i) => (
+                  <div key={i} className="flex items-center gap-2 px-3 py-1.5 bg-[#f8f9fa] border border-[#e8eaed] rounded-lg">
+                    <FileText className="w-3.5 h-3.5 text-[#1a56db] shrink-0" />
+                    <span className="text-xs text-[#202124] flex-1 truncate">{f.name}</span>
+                    <span className="text-[10px] text-[#9aa0a6]">{f.ext?.toUpperCase()}</span>
+                    <button onClick={() => setPendingFiles(p => p.filter((_, j) => j !== i))}
+                      className="text-[#9aa0a6] hover:text-[#ea4335]"><X className="w-3.5 h-3.5" /></button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className="flex justify-end gap-2">
-            <button onClick={() => setShowForm(false)} className="px-3 py-1.5 text-sm text-[#5f6368] hover:bg-[#f1f3f4] rounded-lg">Cancel</button>
-            <button onClick={post} disabled={posting} className="px-4 py-1.5 bg-[#1a56db] text-white text-sm font-semibold rounded-lg hover:bg-[#1648c7] disabled:opacity-50">
+            <button onClick={() => { setShowForm(false); setPendingFiles([]); }} className="px-3 py-1.5 text-sm text-[#5f6368] hover:bg-[#f1f3f4] rounded-lg">Cancel</button>
+            <button onClick={post} disabled={posting || uploading} className="px-4 py-1.5 bg-[#1a56db] text-white text-sm font-semibold rounded-lg hover:bg-[#1648c7] disabled:opacity-50">
               {posting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Submit"}
             </button>
           </div>
@@ -1123,6 +1235,19 @@ function FindingsTab({ isMentor, userId, currentUser }: { isMentor: boolean; use
                   <p className="text-sm text-[#3c4043] whitespace-pre-wrap">{f.description}</p>
                   {f.steps && <div><span className="text-xs font-semibold text-[#5f6368]">Steps to reproduce:</span><p className="text-sm text-[#3c4043] mt-1 whitespace-pre-wrap">{f.steps}</p></div>}
                   {f.useCase && <div><span className="text-xs font-semibold text-[#5f6368]">Use case:</span><p className="text-sm text-[#3c4043] mt-1">{f.useCase}</p></div>}
+
+                  {/* Attachments with in-Nexus preview */}
+                  {Array.isArray((f as Finding & { attachments?: { name: string; url: string | null; key?: string; type?: string; ext?: string }[] }).attachments) &&
+                    ((f as Finding & { attachments?: { name: string; url: string | null; key?: string; type?: string; ext?: string }[] }).attachments ?? []).length > 0 && (
+                    <div>
+                      <span className="text-xs font-semibold text-[#5f6368]">Attachments</span>
+                      <div className="mt-2 space-y-2">
+                        {((f as Finding & { attachments?: { name: string; url: string | null; key?: string; type?: string; ext?: string }[] }).attachments ?? []).map((att, ai) => (
+                          <FindingAttachment key={ai} att={att} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Comments */}
                   {f.comments.length > 0 && (
@@ -1352,6 +1477,744 @@ function ProgressTab({ isMentor, userId }: { isMentor: boolean; userId: string }
             ))}
           </div>
         </div>
+      )}
+    </div>
+  );
+}
+
+// ─── FINDING ATTACHMENT PREVIEW ───────────────────────────────────────────────
+
+type AttachmentMeta = { name: string; url: string | null; key?: string; type?: string; ext?: string };
+
+function FindingAttachment({ att }: { att: AttachmentMeta }) {
+  const [expanded, setExpanded] = useState(false);
+  const [wordHtml, setWordHtml] = useState<string | null>(null);
+  const [loadingWord, setLoadingWord] = useState(false);
+
+  const fileUrl = att.key
+    ? `/api/internship/findings/file?key=${encodeURIComponent(att.key)}`
+    : att.url;
+  const isPdf = att.type === "application/pdf" || att.name?.toLowerCase().endsWith(".pdf");
+  const isWord = att.type === "application/msword" ||
+    att.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+    att.name?.toLowerCase().endsWith(".doc") || att.name?.toLowerCase().endsWith(".docx");
+
+  const loadWordPreview = async () => {
+    if (wordHtml !== null || !fileUrl) return;
+    setLoadingWord(true);
+    try {
+      const res = await fetch(fileUrl);
+      const buf = await res.arrayBuffer();
+      // Dynamically import mammoth to keep bundle lean
+      const mammoth = await import("mammoth");
+      const result = await mammoth.convertToHtml({ arrayBuffer: buf });
+      setWordHtml(result.value);
+    } catch {
+      setWordHtml("<p class='text-red-500'>Preview unavailable — download to view.</p>");
+    } finally { setLoadingWord(false); }
+  };
+
+  const handleExpand = () => {
+    setExpanded(v => !v);
+    if (!expanded && isWord) loadWordPreview();
+  };
+
+  return (
+    <div className="border border-[#e8eaed] rounded-lg overflow-hidden">
+      <div className="flex items-center gap-2 px-3 py-2 bg-[#f8f9fa]">
+        <FileText className="w-4 h-4 text-[#1a56db] shrink-0" />
+        <span className="text-sm text-[#202124] flex-1 truncate font-medium">{att.name}</span>
+        {fileUrl && (
+          <>
+            <button onClick={handleExpand}
+              className="text-xs text-[#1a56db] hover:underline font-medium px-2 py-0.5">
+              {expanded ? "Hide preview" : "Preview"}
+            </button>
+            <a href={fileUrl} target="_blank" rel="noreferrer"
+              className="flex items-center gap-1 text-xs text-[#5f6368] hover:text-[#202124] px-2 py-0.5 rounded hover:bg-[#e8eaed]">
+              <ExternalLink className="w-3 h-3" /> Open
+            </a>
+          </>
+        )}
+      </div>
+
+      {expanded && fileUrl && (
+        <div className="border-t border-[#e8eaed]">
+          {isPdf && (
+            <iframe
+              src={fileUrl}
+              className="w-full h-[500px] bg-white"
+              title={att.name}
+            />
+          )}
+          {isWord && (
+            <div className="p-4 bg-white max-h-[500px] overflow-y-auto">
+              {loadingWord
+                ? <div className="flex items-center gap-2 text-sm text-[#5f6368]"><Loader2 className="w-4 h-4 animate-spin text-[#1a56db]" /> Converting document…</div>
+                : wordHtml
+                  ? <div className="prose prose-sm max-w-none text-[#202124]" dangerouslySetInnerHTML={{ __html: wordHtml }} />
+                  : null}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── LEARNING TAB ─────────────────────────────────────────────────────────────
+
+function LearningTab({ isMentor, userId }: { isMentor: boolean; userId: string }) {
+  const [weeks, setWeeks] = useState<InternWeek[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<InternWeek | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/internship/weeks");
+      setWeeks(await res.json());
+    } finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const markComplete = async (weekId: string, done: boolean) => {
+    await fetch(`/api/internship/weeks/${weekId}/complete`, {
+      method: done ? "DELETE" : "POST",
+    });
+    load();
+  };
+
+  if (loading) return <LoadingSpinner />;
+
+  if (selected) {
+    const week = weeks.find(w => w.id === selected.id) ?? selected;
+    const completed = week.completions.some(c => c.internId === userId);
+    return <WeekDetail week={week} userId={userId} isMentor={isMentor} completed={completed}
+      onMarkComplete={() => markComplete(week.id, completed)}
+      onBack={() => { setSelected(null); load(); }} />;
+  }
+
+  return (
+    <div className="max-w-3xl mx-auto space-y-4">
+      <p className="text-sm text-[#5f6368]">
+        Complete each week in order. Prerequisites are always available — later weeks unlock when your mentor opens them.
+      </p>
+
+      {weeks.length === 0 && (
+        <EmptyState icon={BookOpen} title="No content yet"
+          desc={isMentor ? "Use the Mentor Panel → Seed Handbook to load the curriculum." : "Your mentor hasn't loaded the curriculum yet. Check back soon."} />
+      )}
+
+      <div className="space-y-3">
+        {weeks.map(week => {
+          const isPrereq = week.weekNumber === 0;
+          const locked = !week.isUnlocked;
+          const completed = week.completions.some(c => c.internId === userId);
+          const progress = week.checkpoints.length > 0
+            ? Math.round((week.completions.length / Math.max(week.checkpoints.length, 1)) * 100)
+            : completed ? 100 : 0;
+
+          return (
+            <div key={week.id}
+              onClick={() => !locked && setSelected(week)}
+              className={`bg-white border rounded-xl p-5 transition-all ${
+                locked ? "border-[#e8eaed] opacity-60 cursor-not-allowed" :
+                "border-[#e8eaed] hover:border-[#1a56db]/30 hover:shadow-sm cursor-pointer group"
+              }`}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3 flex-1 min-w-0">
+                  <div className={`mt-0.5 shrink-0 w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold ${
+                    isPrereq ? "bg-[#e8f0fe] text-[#1a56db]" :
+                    completed ? "bg-green-50 text-[#0f9d58]" :
+                    locked ? "bg-[#f1f3f4] text-[#9aa0a6]" :
+                    "bg-[#e8f0fe] text-[#1a56db]"
+                  }`}>
+                    {isPrereq ? "P" : week.weekNumber}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                      <h3 className={`font-semibold text-sm ${locked ? "text-[#9aa0a6]" : "text-[#202124] group-hover:text-[#1a56db] transition-colors"}`}>
+                        {week.title}
+                      </h3>
+                      {isPrereq && <span className="text-[10px] bg-green-50 text-[#0f9d58] px-1.5 py-0.5 rounded font-semibold">Always open</span>}
+                      {completed && <span className="text-[10px] bg-green-50 text-[#0f9d58] px-1.5 py-0.5 rounded font-semibold flex items-center gap-0.5"><CheckCircle2 className="w-2.5 h-2.5" /> Complete</span>}
+                    </div>
+                    <p className="text-xs text-[#5f6368] line-clamp-2">{week.overview}</p>
+                    {!locked && week.checkpoints.length > 0 && (
+                      <div className="flex items-center gap-2 mt-2">
+                        <div className="flex-1 h-1.5 bg-[#e8eaed] rounded-full overflow-hidden max-w-32">
+                          <div className="h-full bg-[#1a56db] rounded-full transition-all" style={{ width: `${progress}%` }} />
+                        </div>
+                        <span className="text-[10px] text-[#80868b]">{week.topics.length} modules · {week.checkpoints.length} checkpoints</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="shrink-0">
+                  {locked ? <Lock className="w-4 h-4 text-[#9aa0a6]" /> : <ChevronRight className="w-4 h-4 text-[#9aa0a6] group-hover:text-[#1a56db]" />}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function WeekDetail({ week, userId, isMentor, completed, onMarkComplete, onBack }: {
+  week: InternWeek; userId: string; isMentor: boolean;
+  completed: boolean; onMarkComplete: () => void; onBack: () => void;
+}) {
+  const [expandedTopic, setExpandedTopic] = useState<string | null>(week.topics[0]?.id ?? null);
+
+  return (
+    <div className="max-w-3xl mx-auto">
+      <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-[#5f6368] hover:text-[#202124] mb-4 transition-colors">
+        ← Back to curriculum
+      </button>
+
+      {/* Header */}
+      <div className="bg-white border border-[#e8eaed] rounded-xl p-6 mb-4">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-xs font-semibold bg-[#e8f0fe] text-[#1a56db] px-2 py-0.5 rounded">
+                {week.weekNumber === 0 ? "Prerequisites" : `Week ${week.weekNumber}`}
+              </span>
+              {completed && <span className="text-xs font-semibold bg-green-50 text-[#0f9d58] px-2 py-0.5 rounded flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Complete</span>}
+            </div>
+            <h2 className="text-lg font-semibold text-[#202124] mb-2">{week.title}</h2>
+            <p className="text-sm text-[#5f6368] leading-relaxed">{week.overview}</p>
+          </div>
+          {!isMentor && (
+            <button onClick={onMarkComplete}
+              className={`shrink-0 flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg transition-colors ${
+                completed
+                  ? "bg-green-50 text-[#0f9d58] hover:bg-red-50 hover:text-[#ea4335]"
+                  : "bg-[#1a56db] text-white hover:bg-[#1648c7]"
+              }`}>
+              {completed ? <><CheckCircle2 className="w-3.5 h-3.5" /> Completed</> : <><Circle className="w-3.5 h-3.5" /> Mark Complete</>}
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Topics (2/3 width) */}
+        <div className="lg:col-span-2 space-y-3">
+          <h3 className="text-xs font-semibold text-[#5f6368] uppercase tracking-wide">Modules</h3>
+          {week.topics.map(topic => (
+            <div key={topic.id} className="bg-white border border-[#e8eaed] rounded-xl overflow-hidden">
+              <button
+                onClick={() => setExpandedTopic(expandedTopic === topic.id ? null : topic.id)}
+                className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-[#f8f9fa] transition-colors">
+                <div className="flex items-center gap-2">
+                  <span className="w-5 h-5 rounded-full bg-[#e8f0fe] text-[#1a56db] text-[10px] font-bold flex items-center justify-center shrink-0">
+                    {topic.order + 1}
+                  </span>
+                  <span className="text-sm font-semibold text-[#202124]">{topic.title}</span>
+                </div>
+                {expandedTopic === topic.id
+                  ? <ChevronDown className="w-4 h-4 text-[#9aa0a6] shrink-0" />
+                  : <ChevronRight className="w-4 h-4 text-[#9aa0a6] shrink-0" />}
+              </button>
+              {expandedTopic === topic.id && (
+                <div className="px-5 pb-5 pt-1 border-t border-[#f1f3f4]">
+                  <div className="prose prose-sm max-w-none text-[#3c4043] text-sm leading-relaxed whitespace-pre-wrap">
+                    {topic.body}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Sidebar (1/3 width) */}
+        <div className="space-y-4">
+          {/* Resources */}
+          {week.resources.length > 0 && (
+            <div className="bg-white border border-[#e8eaed] rounded-xl p-4">
+              <h4 className="text-xs font-semibold text-[#5f6368] uppercase tracking-wide mb-3">Resources</h4>
+              <div className="space-y-2">
+                {week.resources.map(r => (
+                  <a key={r.id} href={r.url} target="_blank" rel="noreferrer"
+                    className="flex items-center gap-2 text-sm text-[#1a56db] hover:underline">
+                    <Link2 className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">{r.title}</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Checkpoints */}
+          {week.checkpoints.length > 0 && (
+            <div className="bg-white border border-[#e8eaed] rounded-xl p-4">
+              <h4 className="text-xs font-semibold text-[#5f6368] uppercase tracking-wide mb-3">Checkpoints</h4>
+              <div className="space-y-2">
+                {week.checkpoints.map(cp => (
+                  <div key={cp.id} className="flex items-start gap-2 text-sm text-[#3c4043]">
+                    <CheckCircle2 className="w-4 h-4 text-[#dadce0] shrink-0 mt-0.5" />
+                    {cp.title}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Mentor notes */}
+          {week.mentorNotes.length > 0 && (
+            <div className="bg-[#fffbea] border border-[#f4b400]/30 rounded-xl p-4">
+              <h4 className="text-xs font-semibold text-[#b45309] uppercase tracking-wide mb-3">Mentor Notes</h4>
+              <div className="space-y-3">
+                {week.mentorNotes.map(note => (
+                  <div key={note.id}>
+                    <p className="text-xs text-[#92400e] leading-relaxed">{note.body}</p>
+                    <p className="text-[10px] text-[#b45309] mt-1">— {note.author.fullName}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── MENTOR PANEL TAB ─────────────────────────────────────────────────────────
+
+type MentorSubTab = "weeks" | "edit_week" | "new_week" | "seed";
+
+function MentorPanelTab() {
+  const [subTab, setSubTab] = useState<MentorSubTab>("weeks");
+  const [weeks, setWeeks] = useState<InternWeek[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [seedLoading, setSeedLoading] = useState(false);
+  const [noteText, setNoteText] = useState<Record<string, string>>({});
+  const [savingNote, setSavingNote] = useState<string | null>(null);
+  const [toggling, setToggling] = useState<string | null>(null);
+  // Full week editor state
+  const [editingWeek, setEditingWeek] = useState<InternWeek | null>(null);
+  const [editTopics, setEditTopics] = useState<{ id?: string; title: string; body: string; order: number }[]>([]);
+  const [editResources, setEditResources] = useState<{ id?: string; title: string; url: string; type: string; order: number }[]>([]);
+  const [editCheckpoints, setEditCheckpoints] = useState<{ id?: string; title: string; order: number }[]>([]);
+  const [editMeta, setEditMeta] = useState<{ title: string; overview: string }>({ title: "", overview: "" });
+  const [savingContent, setSavingContent] = useState(false);
+  // New week form
+  const [newWeek, setNewWeek] = useState({ weekNumber: "", title: "", overview: "" });
+  const [creatingWeek, setCreatingWeek] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try { const res = await fetch("/api/internship/weeks"); setWeeks(await res.json()); }
+    catch { setWeeks([]); }
+    finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const openEditor = (week: InternWeek) => {
+    setEditingWeek(week);
+    setEditMeta({ title: week.title, overview: week.overview });
+    setEditTopics(week.topics.map(t => ({ id: t.id, title: t.title, body: t.body, order: t.order })));
+    setEditResources(week.resources.map(r => ({ id: r.id, title: r.title, url: r.url, type: r.type, order: r.order })));
+    setEditCheckpoints(week.checkpoints.map(c => ({ id: c.id, title: c.title, order: c.order })));
+    setSubTab("edit_week");
+  };
+
+  const saveFullContent = async () => {
+    if (!editingWeek) return;
+    setSavingContent(true);
+    try {
+      const res = await fetch(`/api/internship/weeks/${editingWeek.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: editMeta.title,
+          overview: editMeta.overview,
+          topics: editTopics.map((t, i) => ({ ...t, order: i })),
+          resources: editResources.map((r, i) => ({ ...r, order: i })),
+          checkpoints: editCheckpoints.map((c, i) => ({ ...c, order: i })),
+        }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success("Week content saved");
+      load();
+    } catch { toast.error("Failed to save"); }
+    finally { setSavingContent(false); }
+  };
+
+  const toggleLock = async (week: InternWeek) => {
+    setToggling(week.id);
+    try {
+      const res = await fetch(`/api/internship/weeks/${week.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isUnlocked: !week.isUnlocked }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success(week.isUnlocked ? "Week locked" : "Week unlocked — interns notified");
+      load();
+    } catch { toast.error("Failed"); }
+    finally { setToggling(null); }
+  };
+
+  const saveNote = async (weekId: string) => {
+    const body = noteText[weekId]?.trim();
+    if (!body) return;
+    setSavingNote(weekId);
+    try {
+      await fetch(`/api/internship/weeks/${weekId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mentorNote: body }),
+      });
+      toast.success("Note added");
+      setNoteText(p => ({ ...p, [weekId]: "" }));
+      load();
+    } catch { toast.error("Failed"); }
+    finally { setSavingNote(null); }
+  };
+
+  const createWeek = async () => {
+    if (!newWeek.title.trim() || !newWeek.overview.trim() || newWeek.weekNumber === "") return;
+    setCreatingWeek(true);
+    try {
+      const res = await fetch("/api/internship/weeks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ weekNumber: Number(newWeek.weekNumber), title: newWeek.title, overview: newWeek.overview, isUnlocked: false }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success("Week created");
+      setNewWeek({ weekNumber: "", title: "", overview: "" });
+      setSubTab("weeks");
+      load();
+    } catch { toast.error("Failed to create week"); }
+    finally { setCreatingWeek(false); }
+  };
+
+  const seedHandbook = async () => {
+    setSeedLoading(true);
+    try {
+      const res = await fetch("/api/internship/seed-handbook", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) { toast.error(data.error ?? "Seed failed"); return; }
+      toast.success(`${data.seeded} weeks loaded from handbook`);
+      setSubTab("weeks");
+      load();
+    } catch { toast.error("Seed failed"); }
+    finally { setSeedLoading(false); }
+  };
+
+  return (
+    <div className="max-w-3xl mx-auto space-y-4">
+      {/* Sub-tab bar */}
+      <div className="flex gap-1 border-b border-[#e8eaed] pb-0 flex-wrap">
+        {([
+          { id: "weeks" as MentorSubTab, label: "Weeks", icon: BookOpen },
+          { id: "new_week" as MentorSubTab, label: "Add Week", icon: Plus },
+          { id: "seed" as MentorSubTab, label: "Seed Handbook", icon: GraduationCap },
+        ]).map(t => (
+          <button key={t.id} onClick={() => setSubTab(t.id)}
+            className={`flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+              subTab === t.id ? "border-[#1a56db] text-[#1a56db]" : "border-transparent text-[#5f6368] hover:text-[#202124]"
+            }`}>
+            <t.icon className="w-4 h-4" />{t.label}
+          </button>
+        ))}
+        {subTab === "edit_week" && editingWeek && (
+          <button className="flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium border-b-2 border-[#1a56db] text-[#1a56db]">
+            <Pencil className="w-4 h-4" />Editing: {editingWeek.title.slice(0, 30)}{editingWeek.title.length > 30 ? "…" : ""}
+          </button>
+        )}
+      </div>
+
+      {/* New week form */}
+      {subTab === "new_week" && (
+        <div className="bg-white border border-[#e8eaed] rounded-xl p-6 space-y-4">
+          <h3 className="font-semibold text-[#202124]">Create New Week</h3>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-[#5f6368] mb-1">Week Number</label>
+              <input type="number" min="0"
+                className="w-full px-3 py-2 bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg text-sm text-[#202124] focus:outline-none focus:border-[#1a56db]/60 focus:ring-2 focus:ring-[#1a56db]/20"
+                placeholder="e.g. 5" value={newWeek.weekNumber}
+                onChange={e => setNewWeek(p => ({ ...p, weekNumber: e.target.value }))} />
+              <p className="text-[10px] text-[#9aa0a6] mt-1">0 = Prerequisites</p>
+            </div>
+            <div className="col-span-2">
+              <label className="block text-xs font-medium text-[#5f6368] mb-1">Title</label>
+              <input
+                className="w-full px-3 py-2 bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg text-sm text-[#202124] focus:outline-none focus:border-[#1a56db]/60 focus:ring-2 focus:ring-[#1a56db]/20"
+                placeholder="Week title…" value={newWeek.title}
+                onChange={e => setNewWeek(p => ({ ...p, title: e.target.value }))} />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-[#5f6368] mb-1">Overview</label>
+            <textarea rows={3}
+              className="w-full px-3 py-2 bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg text-sm text-[#202124] resize-none focus:outline-none focus:border-[#1a56db]/60 focus:ring-2 focus:ring-[#1a56db]/20"
+              placeholder="What will interns learn this week?" value={newWeek.overview}
+              onChange={e => setNewWeek(p => ({ ...p, overview: e.target.value }))} />
+          </div>
+          <p className="text-xs text-[#5f6368]">After creating the week, open it in the Weeks tab to add modules, resources, and checkpoints.</p>
+          <div className="flex gap-2 justify-end">
+            <button onClick={() => setSubTab("weeks")} className="px-3 py-1.5 text-sm text-[#5f6368] hover:bg-[#f1f3f4] rounded-lg">Cancel</button>
+            <button onClick={createWeek} disabled={creatingWeek || !newWeek.title.trim() || !newWeek.overview.trim() || newWeek.weekNumber === ""}
+              className="flex items-center gap-1.5 px-4 py-1.5 bg-[#1a56db] text-white text-sm font-semibold rounded-lg hover:bg-[#1648c7] disabled:opacity-50">
+              {creatingWeek ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Plus className="w-4 h-4" /> Create Week</>}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Seed panel */}
+      {subTab === "seed" && (
+        <div className="bg-white border border-[#e8eaed] rounded-xl p-6 space-y-4">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-xl bg-[#e8f0fe] flex items-center justify-center shrink-0">
+              <GraduationCap className="w-6 h-6 text-[#1a56db]" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-[#202124] mb-1">Seed CyberSage Handbook</h3>
+              <p className="text-sm text-[#5f6368]">
+                Loads the full curriculum from the CyberSage Intern Handbook — Prerequisites, Weeks 1–4 with all modules, resources, and checkpoints. This can only be run once. If weeks already exist this will fail.
+              </p>
+            </div>
+          </div>
+          <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-sm text-amber-800">
+            ⚠️ This will populate the database with all handbook content. Run only on a fresh install or after clearing existing weeks.
+          </div>
+          <button onClick={seedHandbook} disabled={seedLoading}
+            className="flex items-center gap-2 px-4 py-2 bg-[#1a56db] text-white text-sm font-semibold rounded-lg hover:bg-[#1648c7] disabled:opacity-50 transition-colors">
+            {seedLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Seeding…</> : <><GraduationCap className="w-4 h-4" /> Seed Handbook</>}
+          </button>
+        </div>
+      )}
+
+      {/* Full week content editor */}
+      {subTab === "edit_week" && editingWeek && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <button onClick={() => setSubTab("weeks")} className="flex items-center gap-1.5 text-sm text-[#5f6368] hover:text-[#202124]">
+              ← Back to weeks
+            </button>
+            <button onClick={saveFullContent} disabled={savingContent}
+              className="flex items-center gap-1.5 px-4 py-2 bg-[#1a56db] text-white text-sm font-semibold rounded-lg hover:bg-[#1648c7] disabled:opacity-50">
+              {savingContent ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</> : <><Save className="w-4 h-4" /> Save all changes</>}
+            </button>
+          </div>
+
+          {/* Meta */}
+          <div className="bg-white border border-[#e8eaed] rounded-xl p-5 space-y-3">
+            <h3 className="text-xs font-semibold text-[#5f6368] uppercase tracking-wide">Week info</h3>
+            <input
+              className="w-full px-3 py-2 bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg text-sm text-[#202124] focus:outline-none focus:border-[#1a56db]/60 focus:ring-2 focus:ring-[#1a56db]/20"
+              value={editMeta.title} onChange={e => setEditMeta(p => ({ ...p, title: e.target.value }))} placeholder="Week title…" />
+            <textarea rows={2}
+              className="w-full px-3 py-2 bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg text-sm text-[#202124] resize-none focus:outline-none focus:border-[#1a56db]/60 focus:ring-2 focus:ring-[#1a56db]/20"
+              value={editMeta.overview} onChange={e => setEditMeta(p => ({ ...p, overview: e.target.value }))} placeholder="Overview…" />
+          </div>
+
+          {/* Topics / Modules */}
+          <div className="bg-white border border-[#e8eaed] rounded-xl overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-[#f1f3f4] bg-[#f8f9fa]">
+              <h3 className="text-xs font-semibold text-[#5f6368] uppercase tracking-wide">Modules ({editTopics.length})</h3>
+              <button onClick={() => setEditTopics(p => [...p, { title: "New Module", body: "", order: p.length }])}
+                className="flex items-center gap-1 px-2.5 py-1 bg-[#1a56db] text-white text-xs font-semibold rounded-lg hover:bg-[#1648c7]">
+                <Plus className="w-3 h-3" /> Add Module
+              </button>
+            </div>
+            <div className="divide-y divide-[#f1f3f4]">
+              {editTopics.length === 0 && (
+                <p className="px-5 py-4 text-sm text-[#9aa0a6]">No modules yet. Click "Add Module" to create the first one.</p>
+              )}
+              {editTopics.map((topic, i) => (
+                <div key={i} className="p-4 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-[#e8f0fe] text-[#1a56db] text-[10px] font-bold flex items-center justify-center shrink-0">{i + 1}</span>
+                    <input
+                      className="flex-1 px-3 py-1.5 bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg text-sm font-semibold text-[#202124] focus:outline-none focus:border-[#1a56db]/60"
+                      value={topic.title}
+                      onChange={e => setEditTopics(p => p.map((t, j) => j === i ? { ...t, title: e.target.value } : t))}
+                      placeholder="Module title…" />
+                    <button onClick={() => setEditTopics(p => p.filter((_, j) => j !== i))}
+                      className="p-1.5 text-[#9aa0a6] hover:text-[#ea4335] hover:bg-red-50 rounded-lg transition-colors">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <textarea rows={6}
+                    className="w-full px-3 py-2 bg-[#f8f9fa] border border-[#e8eaed] rounded-lg text-sm text-[#3c4043] font-mono resize-y focus:outline-none focus:border-[#1a56db]/60 focus:ring-1 focus:ring-[#1a56db]/20"
+                    value={topic.body}
+                    onChange={e => setEditTopics(p => p.map((t, j) => j === i ? { ...t, body: e.target.value } : t))}
+                    placeholder="Module content (Markdown supported)…" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Resources */}
+          <div className="bg-white border border-[#e8eaed] rounded-xl overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-[#f1f3f4] bg-[#f8f9fa]">
+              <h3 className="text-xs font-semibold text-[#5f6368] uppercase tracking-wide">Resources ({editResources.length})</h3>
+              <button onClick={() => setEditResources(p => [...p, { title: "", url: "", type: "link", order: p.length }])}
+                className="flex items-center gap-1 px-2.5 py-1 bg-[#1a56db] text-white text-xs font-semibold rounded-lg hover:bg-[#1648c7]">
+                <Plus className="w-3 h-3" /> Add Link
+              </button>
+            </div>
+            <div className="p-4 space-y-2">
+              {editResources.length === 0 && (
+                <p className="text-sm text-[#9aa0a6]">No resources yet.</p>
+              )}
+              {editResources.map((r, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <input
+                    className="flex-1 px-3 py-1.5 bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg text-sm text-[#202124] focus:outline-none focus:border-[#1a56db]/60"
+                    value={r.title} onChange={e => setEditResources(p => p.map((x, j) => j === i ? { ...x, title: e.target.value } : x))}
+                    placeholder="Link label…" />
+                  <input
+                    className="flex-1 px-3 py-1.5 bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg text-sm text-[#202124] focus:outline-none focus:border-[#1a56db]/60"
+                    value={r.url} onChange={e => setEditResources(p => p.map((x, j) => j === i ? { ...x, url: e.target.value } : x))}
+                    placeholder="https://…" />
+                  <button onClick={() => setEditResources(p => p.filter((_, j) => j !== i))}
+                    className="p-1.5 text-[#9aa0a6] hover:text-[#ea4335] hover:bg-red-50 rounded-lg">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Checkpoints */}
+          <div className="bg-white border border-[#e8eaed] rounded-xl overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-[#f1f3f4] bg-[#f8f9fa]">
+              <h3 className="text-xs font-semibold text-[#5f6368] uppercase tracking-wide">Checkpoints ({editCheckpoints.length})</h3>
+              <button onClick={() => setEditCheckpoints(p => [...p, { title: "", order: p.length }])}
+                className="flex items-center gap-1 px-2.5 py-1 bg-[#1a56db] text-white text-xs font-semibold rounded-lg hover:bg-[#1648c7]">
+                <Plus className="w-3 h-3" /> Add
+              </button>
+            </div>
+            <div className="p-4 space-y-2">
+              {editCheckpoints.length === 0 && <p className="text-sm text-[#9aa0a6]">No checkpoints yet.</p>}
+              {editCheckpoints.map((c, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-[#dadce0] shrink-0" />
+                  <input
+                    className="flex-1 px-3 py-1.5 bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg text-sm text-[#202124] focus:outline-none focus:border-[#1a56db]/60"
+                    value={c.title} onChange={e => setEditCheckpoints(p => p.map((x, j) => j === i ? { ...x, title: e.target.value } : x))}
+                    placeholder="e.g. Kali Linux VM installed and updated" />
+                  <button onClick={() => setEditCheckpoints(p => p.filter((_, j) => j !== i))}
+                    className="p-1.5 text-[#9aa0a6] hover:text-[#ea4335] hover:bg-red-50 rounded-lg">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex justify-end">
+            <button onClick={saveFullContent} disabled={savingContent}
+              className="flex items-center gap-1.5 px-5 py-2.5 bg-[#1a56db] text-white text-sm font-semibold rounded-lg hover:bg-[#1648c7] disabled:opacity-50">
+              {savingContent ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</> : <><Save className="w-4 h-4" /> Save all changes</>}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Weeks panel */}
+      {subTab === "weeks" && (
+        loading ? <LoadingSpinner /> :
+        weeks.length === 0 ? (
+          <EmptyState icon={BookOpen} title="No weeks yet"
+            desc="Use the Seed Handbook tab to load curriculum, or create weeks manually via the API." />
+        ) : (
+          <div className="space-y-4">
+            {weeks.map(week => {
+              return (
+                <div key={week.id} className="bg-white border border-[#e8eaed] rounded-xl overflow-hidden">
+                  {/* Week header */}
+                  <div className="flex items-center justify-between px-5 py-4 border-b border-[#f1f3f4]">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${
+                        week.weekNumber === 0 ? "bg-[#e8f0fe] text-[#1a56db]" :
+                        week.isUnlocked ? "bg-green-50 text-[#0f9d58]" : "bg-[#f1f3f4] text-[#9aa0a6]"
+                      }`}>
+                        {week.weekNumber === 0 ? "P" : week.weekNumber}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-sm text-[#202124]">{week.title}</p>
+                        <p className="text-xs text-[#80868b]">
+                          {week.topics.length} modules · {week.checkpoints.length} checkpoints · {week.completions.length} completed
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {/* Edit content button */}
+                      <button onClick={() => openEditor(week)}
+                        className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[#5f6368] hover:text-[#1a56db] hover:bg-[#e8f0fe] rounded-lg transition-colors">
+                        <Pencil className="w-3 h-3" /> Edit content
+                      </button>
+                      {/* Lock/unlock (only for non-prerequisites) */}
+                      {week.weekNumber !== 0 && (
+                        <button
+                          onClick={() => toggleLock(week)}
+                          disabled={toggling === week.id}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+                            week.isUnlocked
+                              ? "bg-green-50 text-[#0f9d58] hover:bg-red-50 hover:text-[#ea4335]"
+                              : "bg-[#f1f3f4] text-[#5f6368] hover:bg-[#e8f0fe] hover:text-[#1a56db]"
+                          }`}>
+                          {toggling === week.id
+                            ? <Loader2 className="w-3 h-3 animate-spin" />
+                            : week.isUnlocked ? <><Unlock className="w-3 h-3" /> Unlocked</> : <><Lock className="w-3 h-3" /> Locked</>}
+                        </button>
+                      )}
+                      {week.weekNumber === 0 && (
+                        <span className="text-xs bg-green-50 text-[#0f9d58] px-2 py-1 rounded font-semibold">Always open</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Mentor note input */}
+                  <div className="px-5 py-4">
+                    <p className="text-xs font-semibold text-[#5f6368] mb-2">Add a mentor note for interns</p>
+                    <div className="flex gap-2">
+                      <input
+                        className="flex-1 px-3 py-2 bg-[#f1f3f4] border border-[#e8eaed] rounded-lg text-sm text-[#202124] placeholder:text-[#80868b] focus:outline-none focus:border-[#1a56db]/60"
+                        placeholder="Tip, warning, or extra context for interns…"
+                        value={noteText[week.id] ?? ""}
+                        onChange={e => setNoteText(p => ({ ...p, [week.id]: e.target.value }))}
+                        onKeyDown={e => e.key === "Enter" && saveNote(week.id)}
+                      />
+                      <button onClick={() => saveNote(week.id)} disabled={savingNote === week.id}
+                        className="px-3 py-2 bg-[#1a56db] text-white rounded-lg hover:bg-[#1648c7] disabled:opacity-50 text-sm font-semibold">
+                        {savingNote === week.id ? <Loader2 className="w-4 h-4 animate-spin" /> : "Add"}
+                      </button>
+                    </div>
+                    {/* Existing notes preview */}
+                    {week.mentorNotes.length > 0 && (
+                      <div className="mt-3 space-y-1.5">
+                        {week.mentorNotes.slice(0, 2).map(note => (
+                          <div key={note.id} className="text-xs text-[#5f6368] bg-[#fffbea] border border-[#f4b400]/20 rounded px-3 py-2">
+                            {note.body} <span className="text-[#80868b]">— {note.author.fullName}</span>
+                          </div>
+                        ))}
+                        {week.mentorNotes.length > 2 && (
+                          <p className="text-[10px] text-[#80868b]">+{week.mentorNotes.length - 2} more notes</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )
       )}
     </div>
   );

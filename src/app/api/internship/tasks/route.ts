@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
+import { createNotification } from "@/lib/notifications";
 
 const INTERN_ROLES = ["INTERNSHIP"] as const;
 const MENTOR_ROLES = ["ADMIN", "CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER"] as const;
@@ -66,6 +67,23 @@ export async function POST(request: Request) {
       _count: { select: { discussions: true } },
     },
   });
+
+  // Notify all assigned interns
+  if (data.assigneeIds.length > 0) {
+    await Promise.all(
+      data.assigneeIds.map(internId =>
+        createNotification({
+          userId: internId,
+          type: "SYSTEM",
+          title: `New task assigned: ${data.title}`,
+          body: data.deadline
+            ? `Due ${new Date(data.deadline).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`
+            : "No deadline set",
+          link: "/internship",
+        }).catch(() => {}),
+      ),
+    );
+  }
 
   return NextResponse.json(task, { status: 201 });
 }

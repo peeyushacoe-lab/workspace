@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
+import { createNotification } from "@/lib/notifications";
 
 const MENTOR_ROLES = ["ADMIN", "CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER"] as const;
 
@@ -51,6 +52,20 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       },
     }),
   ]);
+
+  // Notify the submitter of the verdict
+  const verdictLabel: Record<string, string> = {
+    approved: "✅ Approved",
+    rejected: "❌ Rejected",
+    revision_requested: "🔄 Revision requested",
+  };
+  await createNotification({
+    userId: submission.submitter.id,
+    type: "SYSTEM",
+    title: `Submission reviewed: ${verdictLabel[data.verdict] ?? data.verdict}`,
+    body: `"${submission.task.title}"${data.score !== undefined ? ` — Score: ${data.score}/100` : ""}${data.comment ? ` — ${data.comment.slice(0, 80)}` : ""}`,
+    link: "/internship",
+  }).catch(() => {});
 
   return NextResponse.json({ review, submission });
 }

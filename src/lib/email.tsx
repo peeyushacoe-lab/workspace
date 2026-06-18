@@ -437,6 +437,154 @@ function buildWelcomeHtml(opts: {
   const isExec = EXEC_ROLES.has(role) || role === "CEO";
   const teamName = TEAM_NAMES[role] ?? role;
 
+  void workEmail; void invitedByName; void appUrl;
+
+  if (role === "INTERNSHIP") {
+    const subject = `Welcome to Cyber Sage — CISO Vision & Internship Charter`;
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/></head>
+<body style="margin:0;padding:0;background:#f1f3f4;font-family:system-ui,-apple-system,sans-serif;">
+  <div style="max-width:640px;margin:0 auto;padding:32px 16px;">
+
+    <!-- Header -->
+    <div style="background:#1a56db;border-radius:12px 12px 0 0;padding:28px 36px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.7);margin-bottom:6px;">Nexus · CyberSage</div>
+      <div style="font-size:22px;font-weight:700;color:#fff;">Welcome to Cyber Sage</div>
+    </div>
+
+    <!-- Body -->
+    <div style="background:#fff;padding:36px;border-radius:0 0 12px 12px;border:1px solid #e8eaed;border-top:none;">
+
+      <p style="font-size:15px;color:#202124;margin:0 0 6px;">Dear <strong>${firstName}</strong>,</p>
+      <p style="font-size:15px;color:#202124;margin:0 0 28px;line-height:1.7;">Welcome to Cyber Sage.</p>
+
+      <p style="font-size:14px;color:#3c4043;line-height:1.8;margin:0 0 28px;">
+        You are joining a cybersecurity learning and operations environment designed to develop real-world security thinking,
+        technical capability, and structured decision-making aligned with how modern security teams function.
+      </p>
+      <p style="font-size:14px;color:#3c4043;line-height:1.8;margin:0 0 32px;">
+        This is not a passive training program. It is a guided environment where you will learn to think, analyze,
+        and respond like a security practitioner in a real operational setting.
+      </p>
+
+      <hr style="border:none;border-top:1px solid #e8eaed;margin:0 0 28px;"/>
+
+      <!-- Section 1 -->
+      <div style="margin-bottom:28px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#1a56db;margin-bottom:10px;">1 · CISO Vision</div>
+        <p style="font-size:14px;color:#3c4043;line-height:1.8;margin:0 0 12px;">Cyber Sage exists to build cybersecurity professionals who go beyond tools and alerts. The core vision is simple:</p>
+        <ul style="margin:0;padding-left:20px;color:#3c4043;font-size:14px;line-height:2;">
+          <li>Understand systems, not just interfaces</li>
+          <li>Investigate threats, not just notifications</li>
+          <li>Build defenses, not just react to incidents</li>
+          <li>Think like attackers, operate like defenders</li>
+        </ul>
+        <p style="font-size:14px;color:#3c4043;line-height:1.8;margin:12px 0 0;">Security is not treated as a feature here. It is treated as a discipline of thinking.</p>
+      </div>
+
+      <!-- Section 2 -->
+      <div style="margin-bottom:28px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#1a56db;margin-bottom:10px;">2 · Your Role as an Intern</div>
+        <p style="font-size:14px;color:#3c4043;line-height:1.8;margin:0 0 12px;">As part of Cyber Sage, you are considered a developing security analyst in training. You will be expected to:</p>
+        <ul style="margin:0;padding-left:20px;color:#3c4043;font-size:14px;line-height:2;">
+          <li>Learn structured cybersecurity fundamentals and advanced concepts</li>
+          <li>Work through real-world inspired security scenarios</li>
+          <li>Analyze threats and document findings clearly</li>
+          <li>Complete weekly assignments and investigative tasks</li>
+          <li>Participate in discussions and collaborative problem solving</li>
+        </ul>
+        <p style="font-size:14px;color:#3c4043;line-height:1.8;margin:12px 0 0;">Your growth will be measured by capability, not time spent.</p>
+      </div>
+
+      <!-- Section 3 -->
+      <div style="margin-bottom:28px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#1a56db;margin-bottom:10px;">3 · The Cyber Sage Ecosystem</div>
+        <p style="font-size:14px;color:#3c4043;line-height:1.8;margin:0 0 16px;">You will operate across a structured internal ecosystem:</p>
+        <div style="background:#f8f9fa;border-radius:8px;padding:20px 24px;margin-bottom:10px;">
+          <div style="font-weight:700;color:#202124;font-size:14px;margin-bottom:4px;">Nexus</div>
+          <div style="font-size:13px;color:#5f6368;line-height:1.6;">Your workspace for collaboration, learning modules, task execution, submissions, and communication.</div>
+        </div>
+        <div style="background:#f8f9fa;border-radius:8px;padding:20px 24px;margin-bottom:10px;">
+          <div style="font-weight:700;color:#202124;font-size:14px;margin-bottom:4px;">Sentinel</div>
+          <div style="font-size:13px;color:#5f6368;line-height:1.6;">The security intelligence and detection layer used to study alerts, incidents, and attack behavior.</div>
+        </div>
+        <div style="background:#f8f9fa;border-radius:8px;padding:20px 24px;">
+          <div style="font-weight:700;color:#202124;font-size:14px;margin-bottom:4px;">Brain</div>
+          <div style="font-size:13px;color:#5f6368;line-height:1.6;">The analytical layer that supports reasoning, interpretation of security data, and insight generation.</div>
+        </div>
+      </div>
+
+      <!-- Section 4 -->
+      <div style="margin-bottom:28px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#1a56db;margin-bottom:10px;">4 · Learning Philosophy</div>
+        <p style="font-size:14px;color:#3c4043;line-height:1.8;margin:0 0 12px;">Cyber Sage follows a practical progression model:</p>
+        <div style="background:#e8f0fe;border-radius:8px;padding:14px 20px;margin-bottom:14px;text-align:center;">
+          <span style="font-size:13px;font-weight:700;color:#1a56db;letter-spacing:.05em;">Learn → Analyze → Apply → Defend → Improve</span>
+        </div>
+        <ul style="margin:0;padding-left:20px;color:#3c4043;font-size:14px;line-height:2;">
+          <li>Attempt solutions before seeking answers</li>
+          <li>Explain your reasoning, not just final outputs</li>
+          <li>Treat mistakes as part of the learning process</li>
+          <li>Think critically in uncertain or incomplete scenarios</li>
+        </ul>
+      </div>
+
+      <!-- Section 5 -->
+      <div style="margin-bottom:28px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#1a56db;margin-bottom:10px;">5 · Professional Standards</div>
+        <ul style="margin:0;padding-left:20px;color:#3c4043;font-size:14px;line-height:2;">
+          <li>Maintain honesty in all work and submissions</li>
+          <li>No plagiarism or copied analysis</li>
+          <li>Respect collaboration and communication standards</li>
+          <li>Treat exercises as real-world security situations</li>
+          <li>Protect confidentiality of all internal materials</li>
+        </ul>
+        <p style="font-size:14px;color:#3c4043;line-height:1.8;margin:12px 0 0;">Cybersecurity is built on trust, precision, and responsibility.</p>
+      </div>
+
+      <!-- Section 6 -->
+      <div style="margin-bottom:28px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#1a56db;margin-bottom:10px;">6 · What Success Looks Like</div>
+        <p style="font-size:14px;color:#3c4043;line-height:1.8;margin:0 0 12px;">By the end of your internship, you should be able to:</p>
+        <ul style="margin:0;padding-left:20px;color:#3c4043;font-size:14px;line-height:2;">
+          <li>Identify and analyze common and advanced attack patterns</li>
+          <li>Understand how security operations function in practice</li>
+          <li>Perform structured incident analysis</li>
+          <li>Communicate findings in a professional security format</li>
+          <li>Demonstrate readiness for SOC and junior analyst roles</li>
+        </ul>
+      </div>
+
+      <!-- Section 7 -->
+      <div style="margin-bottom:32px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#1a56db;margin-bottom:10px;">7 · Final Message</div>
+        <p style="font-size:14px;color:#3c4043;line-height:1.8;margin:0 0 12px;">Cyber Sage will challenge how you think.</p>
+        <p style="font-size:14px;color:#3c4043;line-height:1.8;margin:0 0 12px;">
+          You will not always be given direct answers. You will be given context, signals, and systems — and expected to reason through them.
+        </p>
+        <p style="font-size:14px;color:#3c4043;line-height:1.8;margin:0;">
+          If you commit to the process, you will not only gain knowledge, but the ability to operate in real security environments.
+        </p>
+      </div>
+
+      <hr style="border:none;border-top:1px solid #e8eaed;margin:0 0 24px;"/>
+
+      <!-- Signature -->
+      <div>
+        <p style="font-size:14px;font-weight:600;color:#202124;margin:0 0 2px;">Peeyush Kumar</p>
+        <p style="font-size:13px;color:#5f6368;margin:0 0 2px;">Chief Information Security Officer</p>
+        <p style="font-size:13px;color:#5f6368;margin:0;">Cyber Sage</p>
+      </div>
+    </div>
+
+    <p style="text-align:center;font-size:11px;color:#80868b;margin:16px 0 0;">Nexus · CyberSage Internal Platform</p>
+  </div>
+</body>
+</html>`;
+    return { subject, html };
+  }
+
   if (isExec) {
     const subject = `Welcome to Nexus, ${firstName}`;
     const html = `<!DOCTYPE html>

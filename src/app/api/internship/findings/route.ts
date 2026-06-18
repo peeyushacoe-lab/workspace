@@ -41,7 +41,10 @@ const createSchema = z.object({
   severity: z.enum(["low", "medium", "high", "critical"]).optional(),
   steps: z.string().optional(),
   useCase: z.string().optional(),
-  attachments: z.array(z.object({ name: z.string(), url: z.string() })).optional(),
+  attachments: z.array(z.object({
+    name: z.string(), url: z.string().nullable(), key: z.string().optional(),
+    type: z.string().optional(), ext: z.string().optional(), size: z.number().optional(),
+  })).optional(),
 });
 
 export async function POST(request: Request) {
