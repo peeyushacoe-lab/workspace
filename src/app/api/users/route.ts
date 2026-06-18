@@ -5,7 +5,7 @@ import bcrypt from "bcrypt";
 import { randomBytes } from "crypto";
 import { getCurrentUser } from "@/lib/session";
 import { CREATOR_PERMISSIONS, KEY_ROLES } from "@/lib/auth";
-import { sendInviteEmail, sendWelcomeInboxMessage } from "@/lib/email";
+import { sendInviteEmail, sendInternWelcomeEmail, sendWelcomeInboxMessage } from "@/lib/email";
 import type { UserRole } from "@/generated/prisma/enums";
 
 const createUserSchema = z.object({
@@ -143,14 +143,16 @@ export async function POST(request: Request) {
       }).catch(err => console.error("[mailbox access]", err));
     }
 
-    // Send invite email to personal address — fire-and-forget (don't block response)
-    sendInviteEmail({
+    // Send welcome email to personal address — interns get a custom email
+    const emailPayload = {
       toPersonalEmail: validated.personalEmail,
       fullName: validated.fullName,
       workEmail: validated.workEmail,
       tempPassword,
       invitedByName: currentUser.fullName,
-    }).catch(err => console.error("[invite email]", err));
+    };
+    (role === "INTERNSHIP" ? sendInternWelcomeEmail(emailPayload) : sendInviteEmail(emailPayload))
+      .catch(err => console.error("[invite email]", err));
 
     // Auto-join new user to all non-private channels so they can access team chat
     prisma.chatChannel.findMany({ where: { isPrivate: false }, select: { id: true } })

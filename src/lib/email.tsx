@@ -209,6 +209,93 @@ export async function sendInviteEmail({
   return { id: result.data?.id ?? "unknown", skipped: false };
 }
 
+export async function sendInternWelcomeEmail({
+  toPersonalEmail,
+  fullName,
+  workEmail,
+  tempPassword,
+  invitedByName,
+}: {
+  toPersonalEmail: string;
+  fullName: string;
+  workEmail: string;
+  tempPassword: string;
+  invitedByName: string;
+}) {
+  if (!resend) return { id: "dry-run", skipped: true };
+
+  const appUrl = process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "https://nexus.cybersage.uk";
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /></head>
+<body style="margin:0;padding:0;background:#f0f4ff;font-family:system-ui,sans-serif;">
+  <div style="max-width:580px;margin:0 auto;padding:32px 16px;">
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,#1a56db 0%,#1648c7 100%);border-radius:16px 16px 0 0;padding:32px;text-align:center;">
+      <div style="display:inline-block;background:rgba(255,255,255,.15);border-radius:12px;padding:10px 20px;margin-bottom:16px;">
+        <span style="color:#fff;font-size:13px;font-weight:700;letter-spacing:.1em;">NEXUS INTERNSHIP PROGRAM</span>
+      </div>
+      <h1 style="color:#fff;font-size:28px;font-weight:800;margin:0 0 8px;letter-spacing:-0.5px;">Welcome aboard, ${fullName}!</h1>
+      <p style="color:rgba(255,255,255,.8);font-size:15px;margin:0;">You&apos;ve been accepted into the CyberSage internship program.</p>
+    </div>
+    <!-- Body -->
+    <div style="background:#fff;padding:32px;border-radius:0 0 16px 16px;box-shadow:0 4px 24px rgba(26,86,219,.12);">
+      <p style="color:#3c4257;line-height:1.7;margin:0 0 20px;font-size:15px;">
+        Hi <strong>${fullName}</strong>, <strong>${invitedByName}</strong> has set up your intern account on Nexus &mdash; the CyberSage team workspace.
+        You now have access to the <strong>Internship Hub</strong> where you&apos;ll receive tasks, submit your work, and collaborate with mentors.
+      </p>
+      <!-- Credentials card -->
+      <div style="background:#f0f4ff;border:1.5px solid #c7d7f8;border-radius:12px;padding:24px;margin-bottom:28px;">
+        <div style="font-size:12px;font-weight:700;color:#1a56db;letter-spacing:.08em;text-transform:uppercase;margin-bottom:16px;">Your Login Credentials</div>
+        <table style="width:100%;border-collapse:collapse;">
+          <tr>
+            <td style="padding:8px 0;font-size:13px;color:#6b7280;width:44%;">Work Email</td>
+            <td style="padding:8px 0;font-weight:600;color:#1e293b;font-size:14px;">${workEmail}</td>
+          </tr>
+          <tr>
+            <td style="padding:8px 0;font-size:13px;color:#6b7280;">Temp Password</td>
+            <td style="padding:8px 0;font-family:monospace;font-weight:700;color:#1a56db;font-size:18px;letter-spacing:.04em;">${tempPassword}</td>
+          </tr>
+        </table>
+      </div>
+      <!-- CTA -->
+      <div style="text-align:center;margin-bottom:28px;">
+        <a href="${appUrl}/login" style="display:inline-block;background:#1a56db;color:#fff;font-weight:700;font-size:15px;padding:14px 36px;border-radius:10px;text-decoration:none;">
+          Sign in to Nexus &rarr;
+        </a>
+        <p style="color:#9ca3af;font-size:12px;margin:12px 0 0;">You will be prompted to set a new password on first sign-in.</p>
+      </div>
+      <!-- What you can do -->
+      <div style="border-top:1px solid #e5e7eb;padding-top:24px;">
+        <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:14px;">Inside the Internship Hub you can:</div>
+        <table style="width:100%;border-collapse:collapse;">
+          <tr><td style="padding:6px 0;font-size:13px;color:#4b5563;vertical-align:top;width:28px;">📢</td><td style="padding:6px 0;font-size:13px;color:#4b5563;">Read announcements &amp; team updates</td></tr>
+          <tr><td style="padding:6px 0;font-size:13px;color:#4b5563;vertical-align:top;">🧩</td><td style="padding:6px 0;font-size:13px;color:#4b5563;">View and work on assigned tasks</td></tr>
+          <tr><td style="padding:6px 0;font-size:13px;color:#4b5563;vertical-align:top;">📤</td><td style="padding:6px 0;font-size:13px;color:#4b5563;">Submit your work &amp; track revisions</td></tr>
+          <tr><td style="padding:6px 0;font-size:13px;color:#4b5563;vertical-align:top;">💬</td><td style="padding:6px 0;font-size:13px;color:#4b5563;">Discuss tasks with your mentor</td></tr>
+          <tr><td style="padding:6px 0;font-size:13px;color:#4b5563;vertical-align:top;">🐞</td><td style="padding:6px 0;font-size:13px;color:#4b5563;">Report bugs &amp; security findings</td></tr>
+        </table>
+      </div>
+      <p style="color:#9ca3af;font-size:12px;line-height:1.6;margin:20px 0 0;">
+        Do not share your temporary password. If you have questions, reply to this email or message your mentor on Nexus.
+      </p>
+    </div>
+    <p style="text-align:center;color:#9ca3af;font-size:11px;margin:16px 0 0;">CyberSage &mdash; Nexus Workspace &bull; <a href="${appUrl}" style="color:#1a56db;text-decoration:none;">${appUrl}</a></p>
+  </div>
+</body>
+</html>`;
+
+  const result = await resend.emails.send({
+    from: process.env.RESEND_FROM_EMAIL ?? "CyberSage <noreply@cybersage.uk>",
+    to: toPersonalEmail,
+    subject: `Welcome to the CyberSage Internship Program, ${fullName}!`,
+    html,
+  });
+
+  if (result.error) throw new Error(result.error.message);
+  return { id: result.data?.id ?? "unknown", skipped: false };
+}
+
 export async function sendEmail(
   subject: string,
   body: string,

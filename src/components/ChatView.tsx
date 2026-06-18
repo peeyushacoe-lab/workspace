@@ -594,14 +594,16 @@ const MessageItem = memo(function MessageItem({
           </div>
         )}
 
-        {/* Thread reply count */}
-        {!isDeleted && onReply && msg.replies.length > 0 && (
+        {/* Thread reply count / start thread link */}
+        {!isDeleted && onReply && (
           <button
             onClick={() => onReply(msg)}
-            className="mt-1.5 flex items-center gap-1.5 text-xs text-[#7dd8f5] hover:text-[#1a56db] hover:underline"
+            className="mt-1.5 flex items-center gap-1.5 text-xs text-[#1a56db] hover:underline"
           >
             <CornerDownRight className="w-3 h-3" />
-            {msg.replies.length} {msg.replies.length === 1 ? "reply" : "replies"}
+            {msg.replies.length > 0
+              ? `${msg.replies.length} ${msg.replies.length === 1 ? "reply" : "replies"}`
+              : "Reply in thread"}
           </button>
         )}
       </div>
@@ -1977,6 +1979,8 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
     setChannels((prev) =>
       prev.map((c) => (c.id === selectedChannelId ? { ...c, unreadCount: 0 } : c))
     );
+    // Persist lastReadAt so badge stays clear on next page load
+    fetch(`/api/chat/channels/${selectedChannelId}/read`, { method: 'POST' }).catch(() => {});
   }, [selectedChannelId]);
 
   // Fetch initial presence snapshot (one-time REST, no polling)

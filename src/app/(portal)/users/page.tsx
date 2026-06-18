@@ -38,11 +38,13 @@ const ROLE_LABELS: Record<string, string> = {
   CYBER_SECURITY: "Cyber Security", QA: "QA Engineer",
   MARKETING: "Marketing", RESEARCH: "Research",
   FINANCE: "Finance", OPERATIONS: "Operations", SUPPORT: "Support",
+  INTERNSHIP: "Intern",
 };
 
 const ROLE_GROUPS = [
   { label: "Leadership", roles: ["CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER"] },
   { label: "Teams", roles: ["DEVELOPER", "CYBER_SECURITY", "QA", "MARKETING", "RESEARCH", "FINANCE", "OPERATIONS", "SUPPORT"] },
+  { label: "Interns", roles: ["INTERNSHIP"] },
 ];
 
 const ROLE_COLORS: Record<string, string> = {
@@ -60,6 +62,7 @@ const ROLE_COLORS: Record<string, string> = {
   FINANCE: "bg-[#f8fafd]/10 text-[#06d6a0]",
   OPERATIONS: "bg-amber-500/10 text-amber-300",
   SUPPORT: "bg-sky-500/10 text-sky-300",
+  INTERNSHIP: "bg-[#1a56db]/10 text-[#1a56db]",
 };
 
 interface UserRow {

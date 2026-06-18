@@ -1,190 +1,33 @@
-"use client";
-
-import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Eye, EyeOff, Loader2, CheckCircle } from "lucide-react";
-import { toast } from "sonner";
-import { Suspense } from "react";
+import { ShieldCheck } from "lucide-react";
 
-const PLANS = [
-  { id: "free",       label: "Free",       price: "£0/mo",   features: "5 users · 5 GB" },
-  { id: "starter",    label: "Starter",    price: "£29/mo",  features: "25 users · 50 GB" },
-  { id: "pro",        label: "Pro",        price: "£79/mo",  features: "Unlimited users · 500 GB · AI" },
-  { id: "enterprise", label: "Enterprise", price: "Custom",  features: "Dedicated instance · SLA" },
-];
-
-function RegisterForm() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const defaultPlan = searchParams.get("plan") ?? "free";
-
-  const [form, setForm] = useState({
-    fullName: "",
-    email: "",
-    company: "",
-    password: "",
-    plan: defaultPlan,
-  });
-  const [showPw, setShowPw] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
-    setForm((p) => ({ ...p, [k]: e.target.value }));
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (form.password.length < 8) { toast.error("Password must be at least 8 characters"); return; }
-    setLoading(true);
-    try {
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      const data = await res.json() as { error?: string };
-      if (!res.ok) throw new Error(data.error ?? "Registration failed");
-      toast.success("Account created — signing you in…");
-      router.push("/onboarding");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Registration failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-[#f8fafd] text-[#202124] flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <Link href="/" className="text-2xl font-semibold text-[#1a56db]">CyberSage</Link>
-          <h1 className="text-2xl font-semibold text-white mt-4 mb-1">Create your workspace</h1>
-          <p className="text-[#8899a6] text-sm">Free forever · No card required</p>
-        </div>
-
-        <form onSubmit={submit} className="bg-white border border-[#e8eaed] rounded-2xl p-8 space-y-4">
-          {/* Full name */}
-          <div>
-            <label className="block text-xs font-medium text-[#8899a6] mb-1.5">Full name</label>
-            <input
-              required
-              value={form.fullName}
-              onChange={set("fullName")}
-              placeholder="Alex Johnson"
-              className="w-full bg-[#f8fafd] border border-[#e8eaed] rounded-lg px-3 py-2.5 text-sm text-[#202124] placeholder-[#3d4f59] outline-none focus:border-[#1a56db]/40 transition-colors"
-            />
-          </div>
-
-          {/* Work email */}
-          <div>
-            <label className="block text-xs font-medium text-[#8899a6] mb-1.5">Work email</label>
-            <input
-              required
-              type="email"
-              value={form.email}
-              onChange={set("email")}
-              placeholder="alex@company.com"
-              className="w-full bg-[#f8fafd] border border-[#e8eaed] rounded-lg px-3 py-2.5 text-sm text-[#202124] placeholder-[#3d4f59] outline-none focus:border-[#1a56db]/40 transition-colors"
-            />
-          </div>
-
-          {/* Company */}
-          <div>
-            <label className="block text-xs font-medium text-[#8899a6] mb-1.5">Company name</label>
-            <input
-              required
-              value={form.company}
-              onChange={set("company")}
-              placeholder="Acme Corp"
-              className="w-full bg-[#f8fafd] border border-[#e8eaed] rounded-lg px-3 py-2.5 text-sm text-[#202124] placeholder-[#3d4f59] outline-none focus:border-[#1a56db]/40 transition-colors"
-            />
-          </div>
-
-          {/* Password */}
-          <div>
-            <label className="block text-xs font-medium text-[#8899a6] mb-1.5">Password</label>
-            <div className="relative">
-              <input
-                required
-                type={showPw ? "text" : "password"}
-                value={form.password}
-                onChange={set("password")}
-                placeholder="Min. 8 characters"
-                className="w-full bg-[#f8fafd] border border-[#e8eaed] rounded-lg px-3 py-2.5 pr-10 text-sm text-[#202124] placeholder-[#3d4f59] outline-none focus:border-[#1a56db]/40 transition-colors"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPw((p) => !p)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9aa0a6] hover:text-[#5f6368]"
-              >
-                {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
-          </div>
-
-          {/* Plan */}
-          <div>
-            <label className="block text-xs font-medium text-[#8899a6] mb-1.5">Plan</label>
-            <div className="grid grid-cols-2 gap-2">
-              {PLANS.map((p) => (
-                <label
-                  key={p.id}
-                  className={`flex flex-col cursor-pointer rounded-lg border p-3 transition-colors ${
-                    form.plan === p.id
-                      ? "border-[#1a56db]/50 bg-[#1a56db]/8"
-                      : "border-[#e8eaed] hover:border-[rgba(255,255,255,0.11)]"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="plan"
-                    value={p.id}
-                    checked={form.plan === p.id}
-                    onChange={set("plan")}
-                    className="sr-only"
-                  />
-                  <div className="flex items-center justify-between mb-0.5">
-                    <span className={`text-xs font-semibold ${form.plan === p.id ? "text-[#1a56db]" : "text-[#202124]"}`}>{p.label}</span>
-                    {form.plan === p.id && <CheckCircle className="w-3 h-3 text-[#1a56db]" />}
-                  </div>
-                  <span className="text-xs font-semibold text-white">{p.price}</span>
-                  <span className="text-[10px] text-[#9aa0a6] mt-0.5">{p.features}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full flex items-center justify-center gap-2 py-3 bg-[#1a56db] text-white font-semibold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-60 mt-2"
-          >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-            {loading ? "Creating workspace…" : "Create workspace"}
-          </button>
-
-          <p className="text-center text-xs text-[#9aa0a6]">
-            By signing up you agree to our{" "}
-            <a href="/terms" className="text-[#1a56db] hover:underline">Terms</a>{" "}
-            and{" "}
-            <a href="/privacy" className="text-[#1a56db] hover:underline">Privacy Policy</a>.
-          </p>
-        </form>
-
-        <p className="text-center text-sm text-[#9aa0a6] mt-6">
-          Already have an account?{" "}
-          <Link href="/login" className="text-[#1a56db] hover:underline">Sign in</Link>
-        </p>
-      </div>
-    </div>
-  );
-}
-
+// Public self-registration is disabled.
+// User accounts are created by administrators only (via CLI or Admin → Users panel).
 export default function RegisterPage() {
   return (
-    <Suspense>
-      <RegisterForm />
-    </Suspense>
+    <div className="min-h-screen bg-white flex items-center justify-center px-4">
+      <div className="w-full max-w-md text-center">
+        <div className="flex justify-center mb-6">
+          <div className="w-14 h-14 rounded-full bg-[#e8f0fe] flex items-center justify-center">
+            <ShieldCheck className="w-7 h-7 text-[#1a56db]" />
+          </div>
+        </div>
+
+        <h1 className="text-2xl font-semibold text-[#202124] mb-2">
+          Nexus is invite-only
+        </h1>
+        <p className="text-[#5f6368] text-sm mb-8 leading-relaxed">
+          Accounts are created by your organisation&apos;s administrator.<br />
+          Contact your admin to get access.
+        </p>
+
+        <Link
+          href="/login"
+          className="inline-flex items-center justify-center px-6 py-2.5 rounded-lg bg-[#1a56db] text-white text-sm font-semibold hover:bg-[#1648c7] transition-colors"
+        >
+          Back to sign in
+        </Link>
+      </div>
+    </div>
   );
 }

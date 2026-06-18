@@ -7,7 +7,7 @@ import {
 Reply, Forward, Trash2, Star, Archive, X, Send, Tag,
   AlertCircle, AlertTriangle, Info, ShieldAlert, FileText,
   Sparkles, Loader2, ChevronDown, CalendarClock, FolderPlus,
-  Folder, BellOff, Zap, Plus,
+  Folder, BellOff, Zap, Plus, MailOpen,
   Shield, ShieldCheck, ShieldX, Globe, Lock, } from "lucide-react";
 import { formatDistanceToNow, isPast, addHours, addDays, nextMonday, format, isToday, isThisYear } from "date-fns";
 import { toast } from "sonner";
@@ -912,6 +912,18 @@ export function InboxView({ userRole, initialThreads }: {
     toast.success("Restored to inbox");
   };
 
+  const handleMarkUnread = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Optimistic UI — bump unreadCount so the blue bar reappears immediately
+    setThreads(prev => prev.map(t => t.id === id ? { ...t, unreadCount: 1 } : t));
+    fetch(`/api/inbox/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ markRead: false }),
+    }).catch(() => {});
+    toast.success("Marked as unread");
+  };
+
   const handleFolderDrop = async (thread: ThreadSummary, folder: CustomFolder) => {
     setDragOverFolderId(null);
     setDraggedThread(null);
@@ -1419,6 +1431,13 @@ export function InboxView({ userRole, initialThreads }: {
                     </button>
                   ) : (
                     <>
+                      <button
+                        onClick={(e) => handleMarkUnread(thread.id, e)}
+                        className="p-1.5 text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124] rounded-full transition-colors"
+                        title="Mark as unread"
+                      >
+                        <MailOpen className="w-3.5 h-3.5" />
+                      </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); setSnoozeTargetId(thread.id); }}
                         className="p-1.5 text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124] rounded-full transition-colors"

@@ -53,7 +53,7 @@ export async function GET(_request: Request, { params }: Params) {
   // If the attachment has a valid R2 key, generate a signed URL
   if (attachment.key && isS3Configured()) {
     try {
-      const signedUrl = await getAttachmentUrl(attachment.key);
+      const signedUrl = await getAttachmentUrl(attachment.key, attachment.filename);
       return NextResponse.redirect(signedUrl, 302);
     } catch (err) {
       console.error("[attachments] Failed to generate signed URL:", err);

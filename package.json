@@ -48,6 +48,7 @@
     "@sentry/nextjs": "^10.52.0",
     "@socket.io/redis-adapter": "^8.3.0",
     "@tiptap/extension-collaboration": "3.23.6",
+    "@tiptap/extension-collaboration-cursor": "^3.0.0",
     "@tiptap/extension-highlight": "3.23.6",
     "@tiptap/extension-image": "3.23.6",
     "@tiptap/extension-list": "3.23.6",

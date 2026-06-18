@@ -58,7 +58,6 @@ enum UserRole {
   OPERATIONS
   SUPPORT
 
-  // Legacy — kept for DB backward-compat, not exposed in UI
   INTERNSHIP
 }
 
@@ -132,6 +131,16 @@ model User {
   legalHolds        LegalHold[]        @relation("LegalHoldUser")
   legalHoldsPlaced  LegalHold[]        @relation("LegalHoldPlacedBy")
   mobilePushTokens  MobilePushToken[]
+
+  // Internship Hub relations
+  internAnnouncements  InternAnnouncement[] @relation("AnnouncementAuthor")
+  internTasksCreated   InternTask[]         @relation("InternTaskCreator")
+  internSubmissions    InternSubmission[]   @relation("InternSubmitter")
+  internDiscussions    InternDiscussion[]   @relation("DiscussionAuthor")
+  internFindings       InternFinding[]      @relation("FindingSubmitter")
+  internReviews        InternReview[]       @relation("InternReviewer")
+  internReactions      InternReaction[]     @relation("InternReactionUser")
+  internComments       InternComment[]      @relation("InternCommentAuthor")
 }
 
 // Admin-defined custom roles (supplements UserRole enum)
@@ -1759,4 +1768,158 @@ model AgentOrchestration {
 
   @@index([status])
   @@index([userId])
+}
+
+// ─── Internship Hub ──────────────────────────────────────────────────────────
+
+model InternAnnouncement {
+  id          String   @id @default(cuid())
+  title       String
+  body        String
+  isPinned    Boolean  @default(false)
+  authorId    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  author      User     @relation("AnnouncementAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  reactions   InternReaction[]
+  comments    InternComment[]
+
+  @@index([authorId])
+  @@index([createdAt])
+}
+
+model InternTask {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  priority    String   @default("medium") // low | medium | high | urgent
+  deadline    DateTime?
+  assigneeIds String[] @default([])       // intern user IDs assigned
+  attachments Json?                        // [{name, url, type}]
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy   User             @relation("InternTaskCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  submissions InternSubmission[]
+  discussions InternDiscussion[]
+
+  @@index([createdById])
+  @@index([deadline])
+}
+
+model InternSubmission {
+  id          String   @id @default(cuid())
+  taskId      String
+  submitterId String
+  status      String   @default("submitted") // submitted | under_review | approved | rejected | revision_requested
+  notes       String?
+  files       Json?    // [{name, url, type, size}]
+  links       String[] @default([])           // GitHub URLs etc.
+  version     Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  task        InternTask    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  submitter   User          @relation("InternSubmitter", fields: [submitterId], references: [id], onDelete: Cascade)
+  reviews     InternReview[]
+
+  @@index([taskId])
+  @@index([submitterId])
+  @@index([status])
+}
+
+model InternDiscussion {
+  id         String   @id @default(cuid())
+  taskId     String?  // null = general channel
+  authorId   String
+  body       String
+  isPinned   Boolean  @default(false)
+  parentId   String?  // for threaded replies
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  task       InternTask?       @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  author     User              @relation("DiscussionAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  parent     InternDiscussion? @relation("DiscussionReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies    InternDiscussion[] @relation("DiscussionReplies")
+  reactions  InternReaction[]
+
+  @@index([taskId])
+  @@index([authorId])
+  @@index([parentId])
+}
+
+model InternFinding {
+  id          String   @id @default(cuid())
+  type        String   // bug_report | feature_request | finding
+  title       String
+  description String
+  severity    String?  @default("medium") // low | medium | high | critical
+  status      String   @default("open")   // open | in_review | resolved | closed
+  steps       String?  // steps to reproduce (bug)
+  useCase     String?  // expected benefit (feature)
+  attachments Json?    // [{name, url}]
+  submitterId String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  submitter   User     @relation("FindingSubmitter", fields: [submitterId], references: [id], onDelete: Cascade)
+  comments    InternComment[]
+
+  @@index([submitterId])
+  @@index([type])
+  @@index([status])
+}
+
+model InternReview {
+  id           String   @id @default(cuid())
+  submissionId String
+  reviewerId   String
+  verdict      String   // approved | rejected | revision_requested
+  comment      String?
+  score        Int?     // 0–100 optional
+  createdAt    DateTime @default(now())
+
+  submission   InternSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  reviewer     User             @relation("InternReviewer", fields: [reviewerId], references: [id], onDelete: Cascade)
+
+  @@index([submissionId])
+  @@index([reviewerId])
+}
+
+model InternReaction {
+  id             String              @id @default(cuid())
+  emoji          String
+  userId         String
+  announcementId String?
+  discussionId   String?
+  createdAt      DateTime            @default(now())
+
+  user           User                @relation("InternReactionUser", fields: [userId], references: [id], onDelete: Cascade)
+  announcement   InternAnnouncement? @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  discussion     InternDiscussion?   @relation(fields: [discussionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, announcementId, emoji])
+  @@unique([userId, discussionId, emoji])
+  @@index([userId])
+}
+
+model InternComment {
+  id             String              @id @default(cuid())
+  body           String
+  authorId       String
+  announcementId String?
+  findingId      String?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  author         User                @relation("InternCommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  announcement   InternAnnouncement? @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  finding        InternFinding?      @relation(fields: [findingId], references: [id], onDelete: Cascade)
+
+  @@index([authorId])
+  @@index([announcementId])
+  @@index([findingId])
 }

@@ -33,12 +33,18 @@ export async function uploadToR2(file: Buffer, key: string, contentType: string)
   return { key, url: `${process.env.R2_PUBLIC_URL ?? ""}/${key}` };
 }
 
-export async function getAttachmentUrl(key: string): Promise<string> {
-  if (process.env.R2_PUBLIC_URL) {
-    return `${process.env.R2_PUBLIC_URL}/${key}`;
-  }
+export async function getAttachmentUrl(key: string, filename?: string): Promise<string> {
   const client = getClient();
-  return getSignedUrl(client, new GetObjectCommand({ Bucket: bucketName, Key: key }), {
-    expiresIn: 3600,
-  });
+  const disposition = filename
+    ? `attachment; filename="${filename.replace(/"/g, '\\"')}"`
+    : "attachment";
+  return getSignedUrl(
+    client,
+    new GetObjectCommand({
+      Bucket: bucketName,
+      Key: key,
+      ResponseContentDisposition: disposition,
+    }),
+    { expiresIn: 3600 },
+  );
 }

@@ -30,9 +30,15 @@ const ALLOWED_MIME_TYPES = new Set([
   "application/json", "application/xml", "text/xml",
   // Archives
   "application/zip", "application/x-zip-compressed", "application/gzip",
-  // Media
-  "video/mp4", "video/webm", "video/quicktime",
-  "audio/mpeg", "audio/wav", "audio/ogg", "audio/webm",
+  // Media — cover all common MIME variants browsers/OSes may send
+  "video/mp4", "video/webm", "video/quicktime", "video/avi", "video/x-msvideo",
+  "video/x-matroska", "video/x-flv", "video/3gpp",
+  "audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav", "audio/ogg", "audio/webm",
+  "audio/mp4", "audio/aac", "audio/x-m4a", "audio/flac", "audio/x-flac",
+  "audio/3gpp", "audio/amr",
+  // Archives
+  "application/x-rar-compressed", "application/vnd.rar", "application/x-7z-compressed",
+  "application/x-tar", "application/x-bzip2",
   // Code/misc
   "application/octet-stream",
 ]);

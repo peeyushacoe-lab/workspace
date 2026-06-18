@@ -39,6 +39,12 @@ export async function POST(_request: Request, { params }: Params) {
     });
   }
 
+  // Always update lastReadAt so the server-side unread count resets on next channel load
+  await prisma.chatMember.update({
+    where: { channelId_userId: { channelId, userId: user.id } },
+    data: { lastReadAt: new Date() },
+  }).catch(() => {});
+
   return NextResponse.json({ ok: true, marked: unread.length });
 }
 

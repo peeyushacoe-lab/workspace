@@ -2,7 +2,7 @@
 ﻿"use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Send, User, Loader2, CheckCircle2, AlertCircle, Sparkles, X, Paperclip } from "lucide-react";
+import { Send, User, Loader2, CheckCircle2, AlertCircle, Sparkles, X, Paperclip, Flag } from "lucide-react";
 import { toast } from "sonner";
 import { getAllowedSendersForRole, type EmailAddressConfig } from "@/lib/email-config";
 import type { UserRole } from "@/generated/prisma/enums";
@@ -258,6 +258,7 @@ export function SimpleComposer({
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [draftSaveStatus, setDraftSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [attachments, setAttachments] = useState<File[]>([]);
+  const [priority, setPriority] = useState<"NORMAL" | "HIGH" | "URGENT">("NORMAL");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -346,7 +347,7 @@ export function SimpleComposer({
     loadSignatures();
   }, []);
 
-  const doActualSend = async (payload: { to: string; subject: string; body: string; signatureId?: string; cc?: string[]; bcc?: string[]; replyToThreadId?: string }) => {
+  const doActualSend = async (payload: { to: string; subject: string; body: string; signatureId?: string; cc?: string[]; bcc?: string[]; replyToThreadId?: string; priority?: string }) => {
     let requestInit: RequestInit;
     if (attachments.length > 0) {
       const fd = new FormData();
@@ -357,6 +358,7 @@ export function SimpleComposer({
       if (payload.replyToThreadId) fd.append("replyToThreadId", payload.replyToThreadId);
       if (payload.cc?.length) fd.append("cc", JSON.stringify(payload.cc));
       if (payload.bcc?.length) fd.append("bcc", JSON.stringify(payload.bcc));
+      if (payload.priority && payload.priority !== "NORMAL") fd.append("priority", payload.priority);
       for (const file of attachments) fd.append("attachments", file);
       requestInit = { method: "POST", body: fd };
     } else {
@@ -380,6 +382,7 @@ export function SimpleComposer({
       ...(replyToThreadId ? { replyToThreadId } : {}),
       ...(cc.trim()  ? { cc:  parseEmails(cc) }  : {}),
       ...(bcc.trim() ? { bcc: parseEmails(bcc) } : {}),
+      ...(priority !== "NORMAL" ? { priority } : {}),
     };
 
     const DELAY = 8;
@@ -408,7 +411,7 @@ export function SimpleComposer({
             toast.success("Email sent", { id: toastId });
             setRecipient(""); setCc(""); setBcc(""); setShowCc(false); setShowBcc(false);
             setSubject(""); setBody(""); setHasDraft(false); setDraftSaveStatus("idle");
-            setAttachments([]);
+            setAttachments([]); setPriority("NORMAL");
             if (draftKey) { try { localStorage.removeItem(draftKey); } catch {} }
             if (draftId) { fetch(`/api/drafts/${draftId}`, { method: "DELETE" }).catch(() => {}); setDraftId(undefined); }
             if (onSuccess) onSuccess();
@@ -590,6 +593,28 @@ export function SimpleComposer({
           onChange={(e) => setSubject(e.target.value)}
           className="block w-full py-2.5 border border-[#d0d5dd] rounded-md bg-[#f1f3f4] text-[#202124] placeholder:text-[#80868b] focus:ring-2 focus:ring-[#1a56db]/20 focus:border-[#1a56db]/60 text-sm px-4 outline-none transition-all"
         />
+      </div>
+
+      {/* Priority picker */}
+      <div className="flex items-center gap-2">
+        <Flag className="w-3.5 h-3.5 text-[#5f6368]" />
+        <span className="text-xs font-medium text-[#5f6368]">Priority</span>
+        {(["NORMAL", "HIGH", "URGENT"] as const).map(p => (
+          <button
+            key={p}
+            type="button"
+            onClick={() => setPriority(p)}
+            className={`px-2.5 py-1 text-[11px] font-medium rounded-md border transition-colors ${
+              priority === p
+                ? p === "URGENT" ? "bg-[#ea4335] border-[#ea4335] text-white"
+                  : p === "HIGH" ? "bg-[#f4b400] border-[#f4b400] text-white"
+                  : "bg-[#e8f0fe] border-[#1a56db] text-[#1a56db]"
+                : "border-[#e8eaed] text-[#5f6368] hover:border-[#d0d5dd] hover:text-[#202124]"
+            }`}
+          >
+            {p === "NORMAL" ? "Normal" : p === "HIGH" ? "High" : "Urgent"}
+          </button>
+        ))}
       </div>
 
       <div>

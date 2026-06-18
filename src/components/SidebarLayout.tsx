@@ -1,9 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { LogOut, ChevronLeft, ChevronRight, Menu, X, Settings } from "lucide-react";
+import { LogOut, ChevronLeft, ChevronRight, Menu, X, Settings, BellOff, Bell } from "lucide-react";
 import { SidebarNav } from "./SidebarNav";
 import { SearchTrigger } from "./GlobalSearch";
 import { NotificationCenter } from "./NotificationCenter";
@@ -38,7 +38,9 @@ export function SidebarLayout({
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isDnd, setIsDnd] = useState(false);
   const pathname = usePathname();
+  const currentUserId = currentUser?.id;
 
   // Editor routes open full-screen (no portal chrome), like opening a doc in Google.
   const fullScreen =
@@ -50,7 +52,26 @@ export function SidebarLayout({
     try {
       if (localStorage.getItem("sidebar_collapsed") === "true") setCollapsed(true);
     } catch {}
-  }, []);
+    // Load current presence status (requires userId param)
+    if (currentUserId) {
+      fetch(`/api/presence?userIds=${currentUserId}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(d => { if (d?.[currentUserId]?.status === "dnd") setIsDnd(true); })
+        .catch(() => {});
+    }
+  }, [currentUserId]);
+
+  const toggleDnd = useCallback(async () => {
+    const next = !isDnd;
+    setIsDnd(next);
+    try {
+      await fetch("/api/presence", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: next ? "dnd" : "online" }),
+      });
+    } catch {}
+  }, [isDnd]);
 
   const toggleCollapsed = () => {
     setCollapsed((prev) => {
@@ -122,6 +143,25 @@ export function SidebarLayout({
               <Settings className="h-[15px] w-[15px] flex-shrink-0" />
               {(!collapsed || isMobile) && "Settings"}
             </a>
+
+            {/* Do Not Disturb toggle */}
+            <button
+              onClick={toggleDnd}
+              title={isDnd ? "Do Not Disturb: On" : "Do Not Disturb: Off"}
+              className={`flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13px] transition-colors w-full ${
+                collapsed && !isMobile ? "justify-center w-9 px-0" : ""
+              } ${
+                isDnd
+                  ? "text-[#1a56db] bg-[#e8f0fe] hover:bg-[#dce6fc]"
+                  : "text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124]"
+              }`}
+            >
+              {isDnd
+                ? <BellOff className="h-[15px] w-[15px] flex-shrink-0" />
+                : <Bell className="h-[15px] w-[15px] flex-shrink-0" />
+              }
+              {(!collapsed || isMobile) && (isDnd ? "Do Not Disturb" : "Notifications on")}
+            </button>
 
             {/* Sign out */}
             <form

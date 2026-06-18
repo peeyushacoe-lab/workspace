@@ -567,7 +567,11 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
     const r2 = selEnd ? Math.max(sel.r, selEnd.r) : sel.r;
     const c1 = selEnd ? Math.min(sel.c, selEnd.c) : sel.c;
     const c2 = selEnd ? Math.max(sel.c, selEnd.c) : sel.c;
-    setFillDrag({ r1, c1, r2, c2 });
+    const drag = { r1, c1, r2, c2 };
+    // Sync the ref immediately so the global mousemove listener sees it before
+    // the React re-render propagates the state update via useEffect.
+    fillDragRef.current = drag;
+    setFillDrag(drag);
     setFillTo({ r: r2, c: c2 });
   }, [sel, selEnd]);
 

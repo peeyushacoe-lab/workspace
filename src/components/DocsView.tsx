@@ -36,8 +36,9 @@ import Highlight from "@tiptap/extension-highlight";
 import Subscript from "@tiptap/extension-subscript";
 import Superscript from "@tiptap/extension-superscript";
 import * as Y from "yjs";
-import * as YAwareness from "y-protocols/awareness";
+
 import Collaboration from "@tiptap/extension-collaboration";
+import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
 
 import { DocShareModal } from "./DocShareModal";
 
@@ -345,19 +346,15 @@ function userColor(userId: string): string {
 }
 
 function useDocCollab(docId: string | null) {
-  const ydocRef     = useRef<Y.Doc | null>(null);
-  const awarenessRef = useRef<YAwareness.Awareness | null>(null);
+  const ydocRef = useRef<Y.Doc | null>(null);
   const [collaborators, setCollaborators] = useState<{ userId: string; name: string; color: string }[]>([]);
 
   if (!ydocRef.current) ydocRef.current = new Y.Doc();
-  if (!awarenessRef.current) awarenessRef.current = new YAwareness.Awareness(ydocRef.current);
 
   useEffect(() => {
     if (!docId) return;
     const ydoc = new Y.Doc();
-    const awareness = new YAwareness.Awareness(ydoc);
     ydocRef.current = ydoc;
-    awarenessRef.current = awareness;
     setCollaborators([]);
 
     const onUpdate = (update: Uint8Array, origin: unknown) => {
@@ -400,13 +397,12 @@ function useDocCollab(docId: string | null) {
 
     return () => {
       ydoc.off("update", onUpdate);
-      awareness.destroy();
       es.close();
       clearInterval(pingInterval);
     };
   }, [docId]);
 
-  return { ydoc: ydocRef.current, awareness: awarenessRef.current, collaborators };
+  return { ydoc: ydocRef.current, collaborators };
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

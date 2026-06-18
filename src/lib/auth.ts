@@ -40,12 +40,11 @@ export const roleLabels: Record<UserRole, string> = {
 // Leadership roles that can access management features
 const MGMT_ROLES: UserRole[] = ["ADMIN", "CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER"];
 
-// All active roles shown in middleware validation (excludes legacy INTERNSHIP)
 const ALL_ROLES: UserRole[] = [
   "ADMIN", "CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER",
   "DEVELOPER", "CYBER_SECURITY", "QA", "MARKETING",
   "RESEARCH", "FINANCE", "OPERATIONS", "SUPPORT",
-  "INTERNSHIP", // legacy, kept for DB compat
+  "INTERNSHIP",
 ];
 
 export const portalHome = "/inbox";
@@ -59,7 +58,8 @@ export const KEY_ROLES = new Set<UserRole>(["CEO", "CISO", "R_AND_D", "COO", "OP
 export const CREATOR_PERMISSIONS: Partial<Record<UserRole, UserRole[]>> = {
   ADMIN: ["CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER",
           "DEVELOPER", "CYBER_SECURITY", "QA", "MARKETING",
-          "RESEARCH", "FINANCE", "OPERATIONS", "SUPPORT"],
+          "RESEARCH", "FINANCE", "OPERATIONS", "SUPPORT",
+          "INTERNSHIP"],
   CEO:        ["MARKETING", "FINANCE"],
   CISO:       ["CYBER_SECURITY"],
   R_AND_D:    ["DEVELOPER", "QA", "RESEARCH"],
@@ -87,6 +87,7 @@ export const portalNavItems: PortalNavItem[] = [
   { href: "/compliance",  label: "Compliance",  hint: "Audit logs & GDPR",         roles: ["ADMIN", "CISO"] },
   { href: "/soc",         label: "SOC",         hint: "Security operations centre", roles: ALL_ROLES },
   { href: "/developer",   label: "Developer",   hint: "API keys & webhooks",        roles: MGMT_ROLES },
+  { href: "/internship",  label: "Intern Hub",  hint: "Internship workspace",       roles: ["INTERNSHIP", ...MGMT_ROLES] },
   { href: "/settings",    label: "Settings",    hint: "Signature & security",       roles: ALL_ROLES },
   { href: "/download",    label: "Desktop App", hint: "Download for Windows/Mac/Linux", roles: ALL_ROLES },
 ];
@@ -129,6 +130,7 @@ const pathAccess: Array<{ prefix: string; roles: UserRole[] }> = [
   { prefix: "/developer",      roles: MGMT_ROLES },
   { prefix: "/access",         roles: ["ADMIN", "CISO"] },
   { prefix: "/brain",          roles: ALL_ROLES },
+  { prefix: "/internship",     roles: ["INTERNSHIP", "ADMIN", "CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER"] },
 ];
 
 const validRoles = new Set<UserRole>(ALL_ROLES);
