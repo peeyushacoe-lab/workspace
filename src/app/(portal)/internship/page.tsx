@@ -272,6 +272,13 @@ function AnnouncementsTab({ isMentor, userId }: { isMentor: boolean; userId: str
     finally { setPosting(false); }
   };
 
+  const deleteAnn = async (id: string) => {
+    if (!confirm("Delete this announcement?")) return;
+    await fetch(`/api/internship/announcements?id=${id}`, { method: "DELETE" });
+    setItems(p => p.filter(a => a.id !== id));
+    toast.success("Announcement deleted");
+  };
+
   const addComment = async (annId: string) => {
     const text = commentText[annId]?.trim();
     if (!text) return;
@@ -337,7 +344,14 @@ function AnnouncementsTab({ isMentor, userId }: { isMentor: boolean; userId: str
           <div className="p-5">
             <div className="flex items-start justify-between gap-3 mb-2">
               <h3 className="font-semibold text-[#202124]">{ann.title}</h3>
-              <span className="text-xs text-[#80868b] shrink-0">{fmt(ann.createdAt)}</span>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="text-xs text-[#80868b]">{fmt(ann.createdAt)}</span>
+                {isMentor && (
+                  <button onClick={() => void deleteAnn(ann.id)} className="p-1 rounded text-[#80868b] hover:text-[#ea4335] hover:bg-[#fce8e6] transition-colors" title="Delete announcement">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
             </div>
             <div className="flex items-center gap-2 mb-3">
               <Avatar user={ann.author} size={6} />

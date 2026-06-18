@@ -72,3 +72,20 @@ export async function POST(request: Request) {
 
   return NextResponse.json(ann, { status: 201 });
 }
+
+export async function DELETE(request: Request) {
+  const user = await getCurrentUser();
+  if (!user || !MENTOR_ROLES.includes(user.role as typeof MENTOR_ROLES[number])) {
+    return NextResponse.json({ error: "Only mentors can delete announcements" }, { status: 403 });
+  }
+
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get("id");
+  if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
+
+  const ann = await prisma.internAnnouncement.findUnique({ where: { id }, select: { authorId: true } });
+  if (!ann) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  await prisma.internAnnouncement.delete({ where: { id } });
+  return NextResponse.json({ success: true });
+}

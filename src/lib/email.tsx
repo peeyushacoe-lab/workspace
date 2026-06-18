@@ -641,57 +641,47 @@ function buildWelcomeHtml(opts: {
     return { subject, html };
   }
 
-  // Team member email
-  const subject = `Congratulations on joining the CyberSage ${teamName} team, ${firstName}! 🎉`;
+  // Team member email — light theme
+  const subject = `Welcome to CyberSage Nexus, ${firstName}`;
   const html = `<!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /></head>
-<body style="margin:0;padding:0;background:#0f172a;font-family:system-ui,sans-serif;">
+<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/></head>
+<body style="margin:0;padding:0;background:#f1f3f4;font-family:system-ui,-apple-system,sans-serif;">
   <div style="max-width:600px;margin:0 auto;padding:32px 16px;">
-    <div style="background:#111827;border-radius:20px;overflow:hidden;border:1px solid rgba(0,210,255,0.15);">
-      <div style="background:linear-gradient(135deg,#0a2218,#0c2a1a);padding:40px 40px 32px;">
-        <div style="font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#00d2ff;margin-bottom:20px;">Nexus by CyberSage</div>
-        <div style="font-size:40px;margin-bottom:14px;">🎉</div>
-        <h1 style="font-size:28px;font-weight:800;color:#ffffff;margin:0 0 10px;line-height:1.2;">Congratulations, ${firstName}!</h1>
-        <p style="color:#94a3b8;font-size:16px;margin:0;line-height:1.6;">You've made it to the CyberSage <strong style="color:#4ade80;">${teamName}</strong> team.</p>
-      </div>
-      <div style="padding:36px 40px;">
-        <p style="color:#cbd5e1;font-size:15px;line-height:1.8;margin:0 0 24px;">
-          Hi <strong style="color:#f1f5f9;">${firstName}</strong> — welcome aboard!
-          ${invitedByName} has set up your Nexus workspace. This is your home for email,
-          team chat, shared files, calendar, and AI-powered tools.
-        </p>
-
-        <div style="background:#0f172a;border-radius:14px;padding:22px 24px;margin:0 0 28px;border:1px solid rgba(0,210,255,0.1);">
-          <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;">Your work email</div>
-          <div style="font-size:18px;font-weight:700;color:#00d2ff;">${workEmail}</div>
-        </div>
-
-        <div style="margin:0 0 28px;">
-          <div style="font-size:13px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px;">Getting started</div>
-          ${[
-            ["1", "Sign in to Nexus", `Go to ${appUrl}/login and use your work email + the temporary password from your invite email`],
-            ["2", "Set your password", "You'll be prompted to create a new secure password on first login"],
-            ["3", "Complete your profile", "Add your photo, bio, and status so your teammates can find you easily"],
-            ["4", "Check your inbox", "Say hello in your team's chat channel and explore the tools"],
-          ].map(([num, title, desc]) => `
-            <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:16px;">
-              <div style="width:26px;height:26px;border-radius:50%;background:rgba(0,210,255,0.15);border:1px solid rgba(0,210,255,0.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;font-weight:700;color:#00d2ff;text-align:center;line-height:26px;">${num}</div>
-              <div>
-                <div style="font-weight:600;color:#f1f5f9;font-size:14px;">${title}</div>
-                <div style="color:#64748b;font-size:13px;margin-top:3px;">${desc}</div>
-              </div>
-            </div>`).join("")}
-        </div>
-
-        <a href="${appUrl}/login" style="display:inline-block;background:#4ade80;color:#052e16;font-weight:800;font-size:15px;padding:14px 32px;border-radius:10px;text-decoration:none;margin-bottom:28px;">Get started →</a>
-
-        <p style="color:#475569;font-size:13px;line-height:1.7;margin:0;border-top:1px solid rgba(255,255,255,0.06);padding-top:20px;">
-          Need help? Reach out to ${invitedByName} or your team admin directly in Nexus Chat.
-          We're excited to have you on the team! 🚀
-        </p>
-      </div>
+    <div style="background:#1a56db;border-radius:12px 12px 0 0;padding:28px 36px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.7);margin-bottom:6px;">Nexus · CyberSage</div>
+      <div style="font-size:22px;font-weight:700;color:#fff;">Welcome to the team, ${firstName}.</div>
     </div>
+    <div style="background:#fff;padding:36px;border-radius:0 0 12px 12px;border:1px solid #e8eaed;border-top:none;">
+      <p style="font-size:15px;color:#202124;line-height:1.7;margin:0 0 24px;">
+        Hi <strong>${firstName}</strong> — ${invitedByName} has set up your Nexus workspace.
+        You are now part of the <strong>${teamName}</strong> team at CyberSage.
+      </p>
+      <div style="background:#f8f9fa;border-radius:8px;padding:20px 24px;margin:0 0 28px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#5f6368;margin-bottom:6px;">Your work email</div>
+        <div style="font-size:17px;font-weight:700;color:#1a56db;">${workEmail}</div>
+      </div>
+      <div style="margin:0 0 28px;">
+        <div style="font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#5f6368;margin-bottom:16px;">Your workspace includes</div>
+        ${[
+          ["Inbox",     "Team email with AI summaries and smart replies"],
+          ["Chat",      "Real-time messaging across all channels"],
+          ["Drive",     "Shared files with role-based access"],
+          ["Calendar",  "Meetings, events, and scheduling"],
+          ["AI",        "Draft replies, summarise threads, automate tasks"],
+        ].map(([name, desc]) => `
+          <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:12px;">
+            <div style="width:6px;height:6px;border-radius:50%;background:#1a56db;margin-top:6px;flex-shrink:0;"></div>
+            <div style="font-size:14px;color:#3c4043;line-height:1.5;"><strong style="color:#202124;">${name}</strong> — ${desc}</div>
+          </div>`).join("")}
+      </div>
+      <hr style="border:none;border-top:1px solid #e8eaed;margin:0 0 24px;"/>
+      <p style="font-size:13px;color:#5f6368;line-height:1.7;margin:0;">
+        Need help getting started? Reach out to ${invitedByName} or your team admin directly in Nexus Chat.
+        Welcome aboard.
+      </p>
+    </div>
+    <p style="text-align:center;font-size:11px;color:#80868b;margin:16px 0 0;">Nexus · CyberSage Internal Platform</p>
   </div>
 </body>
 </html>`;

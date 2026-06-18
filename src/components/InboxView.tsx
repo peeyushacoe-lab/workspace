@@ -142,8 +142,7 @@ const ALLOWED_TAGS = new Set([
   "table","tbody","td","tfoot","th","thead","time","tr","u","ul","var","wbr",
 ]);
 const ALLOWED_ATTRS: Record<string, string[]> = {
-  // "style" intentionally omitted — CSS expressions/url() can execute JS in some clients
-  "*": ["class","dir","id","lang","title"],
+  "*": ["class","dir","id","lang","title","style"],
   a: ["href","name","target","rel"],
   blockquote: ["cite"], col: ["span","width"], colgroup: ["span","width"],
   del: ["datetime"], img: ["alt","height","src","width"], ins: ["datetime"],
@@ -154,6 +153,8 @@ const ALLOWED_ATTRS: Record<string, string[]> = {
   time: ["datetime"], ul: ["type"],
 };
 const DANGEROUS_PROTO = /^(javascript|vbscript|data):/i;
+// Strip CSS constructs that can execute code: expression(), javascript:, -moz-binding, behavior
+const DANGEROUS_CSS = /expression\s*\(|javascript\s*:|vbscript\s*:|-moz-binding\s*:|behavior\s*:/gi;
 
 function sanitizeHtml(html: string): string {
   if (typeof window === "undefined") return "";
@@ -169,6 +170,11 @@ function sanitizeHtml(html: string): string {
         if (!allowed.has(attr.name.toLowerCase())) { el.removeAttribute(attr.name); continue; }
         if ((attr.name === "href" || attr.name === "src") && DANGEROUS_PROTO.test(attr.value.trim())) {
           el.removeAttribute(attr.name); continue;
+        }
+        if (attr.name === "style") {
+          const safe = attr.value.replace(DANGEROUS_CSS, "");
+          el.setAttribute("style", safe);
+          continue;
         }
         if (tag === "a" && attr.name === "href") {
           el.setAttribute("target", "_blank");
