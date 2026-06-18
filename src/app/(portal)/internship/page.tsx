@@ -2111,12 +2111,40 @@ function ModuleQuiz({ topic, completed, onCompleted }: { topic: InternWeekTopic;
 // ─── MENTOR QUIZ RESPONSES ────────────────────────────────────────────────────
 
 function MentorQuizResponses({ topic, responses }: { topic: InternWeekTopic; responses: ModuleCompletion[] }) {
-  const textQs = (topic.quiz?.questions ?? []).filter(q => q.type === "text");
-  if (responses.length === 0) {
-    return <p className="mt-4 border-t border-[#f1f3f4] pt-4 text-xs text-[#9aa0a6]">No intern responses yet.</p>;
-  }
+  const questions = topic.quiz?.questions ?? [];
+  const textQs = questions.filter(q => q.type === "text");
   return (
-    <div className="mt-4 border-t border-[#f1f3f4] pt-4">
+    <div className="mt-4 border-t border-[#f1f3f4] pt-4 space-y-4">
+      {/* Quiz preview — what interns must answer (correct option marked) */}
+      <div>
+        <h5 className="text-xs font-semibold text-[#5f6368] uppercase tracking-wide mb-2">Quiz ({questions.length} {questions.length === 1 ? "question" : "questions"})</h5>
+        <div className="space-y-2">
+          {questions.map((q, i) => (
+            <div key={q.id} className="bg-[#f8faff] border border-[#e8f0fe] rounded-lg p-2.5">
+              <p className="text-xs font-medium text-[#202124] mb-1">{i + 1}. {q.prompt}
+                <span className="ml-1 text-[10px] font-semibold text-[#80868b]">{q.type === "mcq" ? "(MCQ)" : "(short answer)"}</span>
+              </p>
+              {q.type === "mcq" && (
+                <ul className="space-y-0.5">
+                  {(q.options ?? []).map((opt, oi) => (
+                    <li key={oi} className={`text-xs flex items-center gap-1.5 ${oi === q.answerIndex ? "text-[#0f9d58] font-semibold" : "text-[#5f6368]"}`}>
+                      {oi === q.answerIndex ? <CheckCircle2 className="w-3 h-3 shrink-0" /> : <Circle className="w-3 h-3 shrink-0 text-[#dadce0]" />}
+                      {opt}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ))}
+          {questions.length === 0 && <p className="text-xs text-[#9aa0a6]">No quiz on this module yet.</p>}
+        </div>
+      </div>
+
+      {/* Intern responses */}
+      {responses.length === 0 ? (
+        <p className="text-xs text-[#9aa0a6]">No intern responses yet.</p>
+      ) : (
+      <div>
       <h5 className="text-xs font-semibold text-[#5f6368] uppercase tracking-wide mb-3">Quiz Responses ({responses.length})</h5>
       <div className="space-y-3">
         {responses.map(r => (
@@ -2144,6 +2172,8 @@ function MentorQuizResponses({ topic, responses }: { topic: InternWeekTopic; res
           </div>
         ))}
       </div>
+      </div>
+      )}
     </div>
   );
 }
