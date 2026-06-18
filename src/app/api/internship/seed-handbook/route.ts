@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
+import { MODULE_QUIZZES } from "@/lib/internship-quizzes";
 
 // Handbook data extracted from CyberSage Intern Handbook.docx
 const HANDBOOK_WEEKS = [
@@ -828,7 +829,7 @@ export async function POST() {
         overview: w.overview,
         isUnlocked: w.isUnlocked,
         createdById: session.id,
-        topics: { create: w.topics },
+        topics: { create: w.topics.map(t => ({ ...t, quiz: MODULE_QUIZZES[w.weekNumber]?.[t.order] ?? undefined })) },
         resources: { create: w.resources },
         checkpoints: { create: w.checkpoints },
       },

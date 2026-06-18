@@ -2341,6 +2341,19 @@ function MentorPanelTab() {
     finally { setSeedLoading(false); }
   };
 
+  const [quizSeedLoading, setQuizSeedLoading] = useState(false);
+  const seedQuizzes = async () => {
+    setQuizSeedLoading(true);
+    try {
+      const res = await fetch("/api/internship/seed-quizzes", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) { toast.error(data.error ?? "Failed to add quizzes"); return; }
+      toast.success(data.message ?? `Quizzes applied to ${data.updated} modules`);
+      load();
+    } catch { toast.error("Failed to add quizzes"); }
+    finally { setQuizSeedLoading(false); }
+  };
+
   return (
     <div className="max-w-3xl mx-auto space-y-4">
       {/* Sub-tab bar */}
@@ -2424,6 +2437,17 @@ function MentorPanelTab() {
             className="flex items-center gap-2 px-4 py-2 bg-[#1a56db] text-white text-sm font-semibold rounded-lg hover:bg-[#1648c7] disabled:opacity-50 transition-colors">
             {seedLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Seeding…</> : <><GraduationCap className="w-4 h-4" /> Seed Handbook</>}
           </button>
+
+          <div className="border-t border-[#e8eaed] pt-4 mt-2">
+            <h3 className="font-semibold text-[#202124] mb-1">Add module quizzes</h3>
+            <p className="text-sm text-[#5f6368] mb-3">
+              Adds a ready-made MCQ/short-answer quiz to every handbook module. Interns must pass each module&apos;s quiz to tick it off, and the week auto-completes once all are passed. Safe to run on already-seeded weeks — re-running just refreshes the quizzes.
+            </p>
+            <button onClick={seedQuizzes} disabled={quizSeedLoading}
+              className="flex items-center gap-2 px-4 py-2 bg-[#0f9d58] text-white text-sm font-semibold rounded-lg hover:bg-[#0c7c46] disabled:opacity-50 transition-colors">
+              {quizSeedLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Adding quizzes…</> : <><CheckCircle2 className="w-4 h-4" /> Add quizzes to all modules</>}
+            </button>
+          </div>
         </div>
       )}
 
