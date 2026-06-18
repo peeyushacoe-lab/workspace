@@ -84,7 +84,7 @@ interface InternTask {
 
 interface Submission {
   id: string; taskId: string; status: string; notes?: string | null;
-  files?: { name: string; url: string; type: string; size?: number }[];
+  files?: { name: string; url?: string | null; key?: string; type?: string; ext?: string; size?: number }[];
   links: string[]; version: number; submitter?: User;
   task?: { id: string; title: string; priority?: string; deadline?: string | null };
   reviews: Review[]; createdAt: string;
@@ -113,7 +113,10 @@ interface InternStats {
 }
 
 // Week types
-interface InternWeekTopic { id: string; title: string; body: string; order: number; }
+interface QuizQuestion { id: string; type: "mcq" | "text"; prompt: string; options?: string[]; answerIndex?: number; }
+interface Quiz { questions: QuizQuestion[]; }
+interface ModuleCompletion { id: string; topicId: string; score?: number | null; intern?: User; answers?: Record<string, number | string> | null; }
+interface InternWeekTopic { id: string; title: string; body: string; order: number; quiz?: Quiz | null; completions?: ModuleCompletion[]; }
 interface InternWeekResource { id: string; title: string; url: string; type: string; order: number; }
 interface InternWeekCheckpoint { id: string; title: string; order: number; }
 interface InternWeekMentorNote { id: string; body: string; createdAt: string; author: User; }
@@ -508,10 +511,11 @@ function TasksTab({ isMentor, userId }: { isMentor: boolean; userId: string }) {
     setCreating(true);
     try {
       const assigneeIds = form.assignAll ? interns.map(i => i.id) : form.assigneeIds;
+      const deadlineIso = form.deadline ? new Date(form.deadline).toISOString() : null;
       const res = await fetch("/api/internship/tasks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: form.title, description: form.description, priority: form.priority, deadline: form.deadline || null, assigneeIds }),
+        body: JSON.stringify({ title: form.title, description: form.description, priority: form.priority, deadline: deadlineIso, assigneeIds }),
       });
       if (!res.ok) throw new Error();
       toast.success("Task created");
@@ -690,7 +694,7 @@ function TasksTab({ isMentor, userId }: { isMentor: boolean; userId: string }) {
 function TaskDetail({ task: initialTask, isMentor, userId, onBack }: { task: InternTask; isMentor: boolean; userId: string; onBack: () => void }) {
   const [task, setTask] = useState<InternTask & { discussions?: Discussion[] }>(initialTask);
   const [subForm, setSubForm] = useState({ notes: "", links: "" });
-  const [subFiles, setSubFiles] = useState<{ name: string; url: string | null; type: string; size: number }[]>([]);
+  const [subFiles, setSubFiles] = useState<{ name: string; url: string | null; key?: string; type: string; ext?: string; size: number }[]>([]);
   const [uploadingFile, setUploadingFile] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [msgForm, setMsgForm] = useState("");
@@ -710,17 +714,21 @@ function TaskDetail({ task: initialTask, isMentor, userId, onBack }: { task: Int
     setSubmitting(true);
     try {
       const links = subForm.links.split("\n").map(l => l.trim()).filter(Boolean);
-      await fetch("/api/internship/submissions", {
+      const res = await fetch("/api/internship/submissions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ taskId: task.id, notes: subForm.notes, links, files: subFiles }),
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => null);
+        throw new Error(err?.error || `Submission failed (HTTP ${res.status})`);
+      }
       toast.success("Submitted!");
       setSubForm({ notes: "", links: "" });
       setSubFiles([]);
       const updated = await fetch(`/api/internship/tasks/${task.id}`).then(r => r.json());
       setTask(updated);
-    } catch { toast.error("Submission failed"); }
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Submission failed"); }
     finally { setSubmitting(false); }
   };
 
@@ -801,7 +809,7 @@ function TaskDetail({ task: initialTask, isMentor, userId, onBack }: { task: Int
                       const fd = new FormData(); fd.append("file", file);
                       const res = await fetch("/api/internship/findings/upload", { method: "POST", body: fd }).catch(() => null);
                       if (res?.ok) {
-                        const data = await res.json() as { name: string; url: string | null; type: string; size: number };
+                        const data = await res.json() as { name: string; url: string | null; key?: string; type: string; ext?: string; size: number };
                         setSubFiles(p => [...p, data]);
                         toast.success(`${file.name} attached`);
                       } else { toast.error("Upload failed"); }
@@ -894,6 +902,32 @@ function TaskDetail({ task: initialTask, isMentor, userId, onBack }: { task: Int
   );
 }
 
+function SubmissionFiles({ files }: { files?: Submission["files"] }) {
+  if (!files || files.length === 0) return null;
+  return (
+    <div className="flex flex-col gap-1 mb-2">
+      {files.map((f, i) => {
+        const url = f.url || (f.key ? `/api/internship/findings/file?key=${encodeURIComponent(f.key)}` : null);
+        const content = (
+          <span className="flex items-center gap-1.5 text-xs text-[#1a56db] truncate">
+            <FileText className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">{f.name}</span>
+            {f.size ? <span className="text-[#80868b]">· {(f.size / 1024).toFixed(0)} KB</span> : null}
+          </span>
+        );
+        return url ? (
+          <a key={i} href={url} target="_blank" rel="noreferrer"
+            className="flex items-center bg-[#f8f9fa] hover:bg-[#eef2ff] rounded px-2 py-1.5 transition-colors">
+            {content}
+          </a>
+        ) : (
+          <div key={i} className="flex items-center bg-[#f8f9fa] rounded px-2 py-1.5">{content}</div>
+        );
+      })}
+    </div>
+  );
+}
+
 function SubmissionCard({ sub, isMentor, onReview }: { sub: Submission; isMentor: boolean; onReview: (id: string, verdict: string, comment: string) => void }) {
   const [reviewOpen, setReviewOpen] = useState(false);
   const [verdict, setVerdict] = useState("approved");
@@ -911,6 +945,7 @@ function SubmissionCard({ sub, isMentor, onReview }: { sub: Submission; isMentor
         <span className="text-[10px] text-[#80868b]">{fmt(sub.createdAt)}</span>
       </div>
       {sub.notes && <p className="text-xs text-[#5f6368] mb-2">{sub.notes}</p>}
+      <SubmissionFiles files={sub.files} />
       {sub.links.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-2">
           {sub.links.map((l, i) => (
@@ -1017,6 +1052,17 @@ function SubmissionRow({ sub }: { sub: Submission }) {
         <StatusBadge s={sub.status} />
       </div>
       {sub.notes && <p className="text-xs text-[#5f6368] mt-1 mb-2">{sub.notes}</p>}
+      <SubmissionFiles files={sub.files} />
+      {sub.links?.length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-2">
+          {sub.links.map((l, i) => (
+            <a key={i} href={l} target="_blank" rel="noreferrer"
+              className="flex items-center gap-1 text-xs text-[#1a56db] hover:underline">
+              <ExternalLink className="w-3 h-3" /> {l.replace(/^https?:\/\//, "").slice(0, 30)}…
+            </a>
+          ))}
+        </div>
+      )}
       {latestReview && (
         <div className="text-xs text-[#5f6368] mt-2 bg-[#f8f9fa] rounded p-2">
           {latestReview.reviewer.fullName}: {latestReview.comment ?? latestReview.verdict}
@@ -1701,6 +1747,7 @@ function LearningTab({ isMentor, userId }: { isMentor: boolean; userId: string }
     const completed = week.completions.some(c => c.internId === userId);
     return <WeekDetail week={week} userId={userId} isMentor={isMentor} completed={completed}
       onMarkComplete={() => markComplete(week.id, completed)}
+      onRefresh={load}
       onBack={() => { setSelected(null); load(); }} />;
   }
 
@@ -1720,9 +1767,12 @@ function LearningTab({ isMentor, userId }: { isMentor: boolean; userId: string }
           const isPrereq = week.weekNumber === 0;
           const locked = !week.isUnlocked;
           const completed = week.completions.some(c => c.internId === userId);
-          const progress = week.checkpoints.length > 0
-            ? Math.round((week.completions.length / Math.max(week.checkpoints.length, 1)) * 100)
+          const quizTopics = week.topics.filter(t => (t.quiz?.questions?.length ?? 0) > 0);
+          const doneModules = quizTopics.filter(t => (t.completions?.length ?? 0) > 0).length;
+          const progress = quizTopics.length > 0
+            ? Math.round((doneModules / quizTopics.length) * 100)
             : completed ? 100 : 0;
+          const hasProgress = quizTopics.length > 0;
 
           return (
             <div key={week.id}
@@ -1750,12 +1800,14 @@ function LearningTab({ isMentor, userId }: { isMentor: boolean; userId: string }
                       {completed && <span className="text-[10px] bg-green-50 text-[#0f9d58] px-1.5 py-0.5 rounded font-semibold flex items-center gap-0.5"><CheckCircle2 className="w-2.5 h-2.5" /> Complete</span>}
                     </div>
                     <p className="text-xs text-[#5f6368] line-clamp-2">{week.overview}</p>
-                    {!locked && week.checkpoints.length > 0 && (
+                    {!locked && (hasProgress || week.checkpoints.length > 0) && (
                       <div className="flex items-center gap-2 mt-2">
                         <div className="flex-1 h-1.5 bg-[#e8eaed] rounded-full overflow-hidden max-w-32">
                           <div className="h-full bg-[#1a56db] rounded-full transition-all" style={{ width: `${progress}%` }} />
                         </div>
-                        <span className="text-[10px] text-[#80868b]">{week.topics.length} modules · {week.checkpoints.length} checkpoints</span>
+                        <span className="text-[10px] text-[#80868b]">
+                          {hasProgress ? `${doneModules}/${quizTopics.length} quizzes done` : `${week.topics.length} modules · ${week.checkpoints.length} checkpoints`}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -1772,11 +1824,21 @@ function LearningTab({ isMentor, userId }: { isMentor: boolean; userId: string }
   );
 }
 
-function WeekDetail({ week, userId, isMentor, completed, onMarkComplete, onBack }: {
+function WeekDetail({ week, userId, isMentor, completed, onMarkComplete, onRefresh, onBack }: {
   week: InternWeek; userId: string; isMentor: boolean;
-  completed: boolean; onMarkComplete: () => void; onBack: () => void;
+  completed: boolean; onMarkComplete: () => void; onRefresh: () => void; onBack: () => void;
 }) {
   const [expandedTopic, setExpandedTopic] = useState<string | null>(week.topics[0]?.id ?? null);
+  const [responses, setResponses] = useState<ModuleCompletion[]>([]);
+
+  useEffect(() => {
+    if (!isMentor) return;
+    fetch(`/api/internship/modules?weekId=${week.id}`)
+      .then(r => r.json()).then(d => setResponses(Array.isArray(d) ? d : [])).catch(() => setResponses([]));
+  }, [isMentor, week.id]);
+
+  const isTopicDone = (t: InternWeekTopic) => (t.completions?.length ?? 0) > 0;
+  const doneCount = week.topics.filter(isTopicDone).length;
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -1814,16 +1876,20 @@ function WeekDetail({ week, userId, isMentor, completed, onMarkComplete, onBack 
         {/* Topics (2/3 width) */}
         <div className="lg:col-span-2 space-y-3">
           <h3 className="text-xs font-semibold text-[#5f6368] uppercase tracking-wide">Modules</h3>
-          {week.topics.map(topic => (
+          {week.topics.map(topic => {
+            const hasQuiz = (topic.quiz?.questions?.length ?? 0) > 0;
+            const done = isTopicDone(topic);
+            return (
             <div key={topic.id} className="bg-white border border-[#e8eaed] rounded-xl overflow-hidden">
               <button
                 onClick={() => setExpandedTopic(expandedTopic === topic.id ? null : topic.id)}
                 className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-[#f8f9fa] transition-colors">
                 <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-[#e8f0fe] text-[#1a56db] text-[10px] font-bold flex items-center justify-center shrink-0">
-                    {topic.order + 1}
-                  </span>
+                  {!isMentor && done
+                    ? <span className="w-5 h-5 rounded-full bg-green-50 text-[#0f9d58] flex items-center justify-center shrink-0"><CheckCircle2 className="w-3.5 h-3.5" /></span>
+                    : <span className="w-5 h-5 rounded-full bg-[#e8f0fe] text-[#1a56db] text-[10px] font-bold flex items-center justify-center shrink-0">{topic.order + 1}</span>}
                   <span className="text-sm font-semibold text-[#202124]">{topic.title}</span>
+                  {hasQuiz && <span className="text-[10px] text-[#80868b] bg-[#f1f3f4] px-1.5 py-0.5 rounded">Quiz</span>}
                 </div>
                 {expandedTopic === topic.id
                   ? <ChevronDown className="w-4 h-4 text-[#9aa0a6] shrink-0" />
@@ -1832,14 +1898,39 @@ function WeekDetail({ week, userId, isMentor, completed, onMarkComplete, onBack 
               {expandedTopic === topic.id && (
                 <div className="px-5 pb-5 pt-3 border-t border-[#f1f3f4]">
                   <MarkdownBody content={topic.body} />
+                  {!isMentor && hasQuiz && (
+                    <ModuleQuiz topic={topic} completed={done} onCompleted={onRefresh} />
+                  )}
+                  {isMentor && hasQuiz && (
+                    <MentorQuizResponses topic={topic} responses={responses.filter(r => r.topicId === topic.id)} />
+                  )}
                 </div>
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Sidebar (1/3 width) */}
         <div className="space-y-4">
+          {/* Your progress */}
+          {!isMentor && week.topics.length > 0 && (
+            <div className="bg-white border border-[#e8eaed] rounded-xl p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-xs font-semibold text-[#5f6368] uppercase tracking-wide">Your progress</h4>
+                <span className="text-xs font-semibold text-[#1a56db]">{doneCount}/{week.topics.length}</span>
+              </div>
+              <div className="space-y-2">
+                {week.topics.map(t => (
+                  <div key={t.id} className="flex items-start gap-2 text-sm">
+                    <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${isTopicDone(t) ? "text-[#0f9d58]" : "text-[#dadce0]"}`} />
+                    <span className={isTopicDone(t) ? "text-[#3c4043]" : "text-[#9aa0a6]"}>{t.title}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Resources */}
           {week.resources.length > 0 && (
             <div className="bg-white border border-[#e8eaed] rounded-xl p-4">
@@ -1861,12 +1952,15 @@ function WeekDetail({ week, userId, isMentor, completed, onMarkComplete, onBack 
             <div className="bg-white border border-[#e8eaed] rounded-xl p-4">
               <h4 className="text-xs font-semibold text-[#5f6368] uppercase tracking-wide mb-3">Checkpoints</h4>
               <div className="space-y-2">
-                {week.checkpoints.map(cp => (
+                {week.checkpoints.map((cp, idx) => {
+                  const cpDone = !isMentor && idx < doneCount;
+                  return (
                   <div key={cp.id} className="flex items-start gap-2 text-sm text-[#3c4043]">
-                    <CheckCircle2 className="w-4 h-4 text-[#dadce0] shrink-0 mt-0.5" />
+                    <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${cpDone ? "text-[#0f9d58]" : "text-[#dadce0]"}`} />
                     {cp.title}
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -1891,6 +1985,206 @@ function WeekDetail({ week, userId, isMentor, completed, onMarkComplete, onBack 
   );
 }
 
+// ─── MODULE QUIZ (intern) ─────────────────────────────────────────────────────
+
+function ModuleQuiz({ topic, completed, onCompleted }: { topic: InternWeekTopic; completed: boolean; onCompleted: () => void }) {
+  const questions = topic.quiz?.questions ?? [];
+  const [answers, setAnswers] = useState<Record<string, number | string>>({});
+  const [submitting, setSubmitting] = useState(false);
+  const [wrong, setWrong] = useState<string[]>([]);
+  const [retaking, setRetaking] = useState(false);
+
+  if (questions.length === 0) return null;
+
+  if (completed && !retaking) {
+    return (
+      <div className="mt-4 border-t border-[#f1f3f4] pt-4">
+        <div className="flex items-center justify-between bg-green-50 rounded-lg px-3 py-2">
+          <span className="text-xs font-semibold text-[#0f9d58] flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4" /> Quiz passed — module complete</span>
+          <button onClick={() => { setRetaking(true); setAnswers({}); setWrong([]); }} className="text-xs text-[#1a56db] hover:underline font-medium">Retake</button>
+        </div>
+      </div>
+    );
+  }
+
+  const setAns = (qid: string, val: number | string) => setAnswers(p => ({ ...p, [qid]: val }));
+
+  const allAnswered = questions.every(q => {
+    const a = answers[q.id];
+    return q.type === "mcq" ? typeof a === "number" : (typeof a === "string" && a.trim().length > 0);
+  });
+
+  const submit = async () => {
+    setSubmitting(true); setWrong([]);
+    try {
+      const res = await fetch("/api/internship/modules", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topicId: topic.id, answers }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) { toast.error(data?.error || "Could not submit quiz"); return; }
+      if (data.passed) {
+        toast.success(data.weekCompleted ? "Module complete — week finished! 🎉" : "Module complete ✓");
+        setRetaking(false);
+        onCompleted();
+      } else {
+        setWrong(data.wrongIds ?? []);
+        toast.error("Not quite — review the highlighted questions and try again.");
+      }
+    } catch { toast.error("Could not submit quiz"); }
+    finally { setSubmitting(false); }
+  };
+
+  return (
+    <div className="mt-4 border-t border-[#f1f3f4] pt-4">
+      <h5 className="text-xs font-semibold text-[#1a56db] uppercase tracking-wide mb-3">Module Quiz</h5>
+      <div className="space-y-4">
+        {questions.map((q, i) => {
+          const isWrong = wrong.includes(q.id);
+          return (
+            <div key={q.id} className={`rounded-lg p-3 border ${isWrong ? "border-[#ea4335]/40 bg-red-50/40" : "border-[#e8eaed] bg-[#f8f9fa]"}`}>
+              <p className="text-sm font-medium text-[#202124] mb-2">{i + 1}. {q.prompt}</p>
+              {q.type === "mcq" ? (
+                <div className="space-y-1.5">
+                  {(q.options ?? []).map((opt, oi) => (
+                    <label key={oi} className="flex items-center gap-2 text-sm text-[#3c4043] cursor-pointer">
+                      <input type="radio" name={`ans-${q.id}`} checked={answers[q.id] === oi}
+                        onChange={() => setAns(q.id, oi)} className="accent-[#1a56db]" />
+                      {opt}
+                    </label>
+                  ))}
+                </div>
+              ) : (
+                <textarea rows={3}
+                  className="w-full px-3 py-2 bg-white border border-[#d0d5dd] rounded-lg text-sm text-[#202124] resize-y focus:outline-none focus:border-[#1a56db]/60"
+                  placeholder="Your answer…"
+                  value={typeof answers[q.id] === "string" ? (answers[q.id] as string) : ""}
+                  onChange={e => setAns(q.id, e.target.value)} />
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <div className="flex items-center gap-3 mt-3">
+        <button onClick={submit} disabled={submitting || !allAnswered}
+          className="flex items-center gap-1.5 px-4 py-2 bg-[#1a56db] text-white text-sm font-semibold rounded-lg hover:bg-[#1648c7] disabled:opacity-50">
+          {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+          Submit quiz
+        </button>
+        {!allAnswered && <span className="text-xs text-[#80868b]">Answer all questions to submit.</span>}
+      </div>
+    </div>
+  );
+}
+
+// ─── MENTOR QUIZ RESPONSES ────────────────────────────────────────────────────
+
+function MentorQuizResponses({ topic, responses }: { topic: InternWeekTopic; responses: ModuleCompletion[] }) {
+  const textQs = (topic.quiz?.questions ?? []).filter(q => q.type === "text");
+  if (responses.length === 0) {
+    return <p className="mt-4 border-t border-[#f1f3f4] pt-4 text-xs text-[#9aa0a6]">No intern responses yet.</p>;
+  }
+  return (
+    <div className="mt-4 border-t border-[#f1f3f4] pt-4">
+      <h5 className="text-xs font-semibold text-[#5f6368] uppercase tracking-wide mb-3">Quiz Responses ({responses.length})</h5>
+      <div className="space-y-3">
+        {responses.map(r => (
+          <div key={r.id} className="bg-[#f8f9fa] border border-[#e8eaed] rounded-lg p-3">
+            <div className="flex items-center gap-2 mb-1.5">
+              {r.intern && <Avatar user={r.intern} size={5} />}
+              <span className="text-xs font-medium text-[#202124]">{r.intern?.fullName ?? "Intern"}</span>
+              {r.score != null && <span className="text-[10px] font-semibold text-[#1a56db] bg-[#e8f0fe] px-1.5 py-0.5 rounded">MCQ {r.score}%</span>}
+            </div>
+            {textQs.length > 0 ? (
+              <div className="space-y-1.5">
+                {textQs.map(q => {
+                  const a = r.answers?.[q.id];
+                  return (
+                    <div key={q.id} className="text-xs">
+                      <p className="text-[#5f6368]">{q.prompt}</p>
+                      <p className="text-[#202124] whitespace-pre-wrap">{typeof a === "string" && a.trim() ? a : <span className="text-[#9aa0a6] italic">— no answer —</span>}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-[11px] text-[#80868b]">All MCQ — no free-text answers to review.</p>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── QUIZ EDITOR (mentor) ─────────────────────────────────────────────────────
+
+const qid = () => `q_${Math.random().toString(36).slice(2, 10)}`;
+
+function QuizEditor({ quiz, onChange }: { quiz: Quiz; onChange: (q: Quiz) => void }) {
+  const questions = quiz.questions ?? [];
+  const update = (qs: QuizQuestion[]) => onChange({ questions: qs });
+
+  const addMcq = () => update([...questions, { id: qid(), type: "mcq", prompt: "", options: ["", ""], answerIndex: 0 }]);
+  const addText = () => update([...questions, { id: qid(), type: "text", prompt: "" }]);
+  const patch = (i: number, p: Partial<QuizQuestion>) => update(questions.map((q, j) => j === i ? { ...q, ...p } : q));
+  const remove = (i: number) => update(questions.filter((_, j) => j !== i));
+
+  return (
+    <div className="mt-3 border border-[#e8f0fe] bg-[#f8faff] rounded-lg p-3">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[11px] font-semibold text-[#1a56db] uppercase tracking-wide">Module Quiz ({questions.length})</span>
+        <div className="flex gap-1.5">
+          <button onClick={addMcq} className="flex items-center gap-1 px-2 py-1 bg-white border border-[#d0d5dd] text-[#1a56db] text-[11px] font-semibold rounded hover:bg-[#eef2ff]"><Plus className="w-3 h-3" /> MCQ</button>
+          <button onClick={addText} className="flex items-center gap-1 px-2 py-1 bg-white border border-[#d0d5dd] text-[#1a56db] text-[11px] font-semibold rounded hover:bg-[#eef2ff]"><Plus className="w-3 h-3" /> Text</button>
+        </div>
+      </div>
+      {questions.length === 0 && <p className="text-[11px] text-[#9aa0a6]">No quiz yet — add MCQ or text questions. Interns must answer all MCQs correctly to complete this module.</p>}
+      <div className="space-y-3">
+        {questions.map((q, i) => (
+          <div key={q.id} className="bg-white border border-[#e8eaed] rounded-lg p-2.5">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${q.type === "mcq" ? "bg-[#e8f0fe] text-[#1a56db]" : "bg-[#fef3e0] text-[#b45309]"}`}>{q.type === "mcq" ? "MCQ" : "TEXT"}</span>
+              <input
+                className="flex-1 px-2 py-1 bg-[#f1f3f4] border border-[#d0d5dd] rounded text-xs text-[#202124] focus:outline-none focus:border-[#1a56db]/60"
+                placeholder="Question prompt…" value={q.prompt}
+                onChange={e => patch(i, { prompt: e.target.value })} />
+              <button onClick={() => remove(i)} className="p-1 text-[#9aa0a6] hover:text-[#ea4335] hover:bg-red-50 rounded"><Trash2 className="w-3.5 h-3.5" /></button>
+            </div>
+            {q.type === "mcq" && (
+              <div className="pl-1 space-y-1.5">
+                {(q.options ?? []).map((opt, oi) => (
+                  <div key={oi} className="flex items-center gap-2">
+                    <input type="radio" name={`correct-${q.id}`} checked={q.answerIndex === oi}
+                      onChange={() => patch(i, { answerIndex: oi })} title="Mark as correct answer"
+                      className="accent-[#0f9d58]" />
+                    <input
+                      className="flex-1 px-2 py-1 bg-[#f8f9fa] border border-[#e8eaed] rounded text-xs text-[#3c4043] focus:outline-none focus:border-[#1a56db]/60"
+                      placeholder={`Option ${oi + 1}`} value={opt}
+                      onChange={e => patch(i, { options: (q.options ?? []).map((o, j) => j === oi ? e.target.value : o) })} />
+                    {(q.options?.length ?? 0) > 2 && (
+                      <button onClick={() => {
+                        const opts = (q.options ?? []).filter((_, j) => j !== oi);
+                        const ai = q.answerIndex ?? 0;
+                        patch(i, { options: opts, answerIndex: ai >= opts.length ? 0 : ai > oi ? ai - 1 : ai });
+                      }} className="p-0.5 text-[#9aa0a6] hover:text-[#ea4335]"><X className="w-3 h-3" /></button>
+                    )}
+                  </div>
+                ))}
+                <button onClick={() => patch(i, { options: [...(q.options ?? []), ""] })}
+                  className="text-[11px] text-[#1a56db] hover:underline font-medium">+ Add option</button>
+                <p className="text-[10px] text-[#80868b]">Select the radio next to the correct option.</p>
+              </div>
+            )}
+            {q.type === "text" && <p className="pl-1 text-[10px] text-[#80868b]">Free-text answer — counts as done once the intern writes a non-empty response. You can review answers in the Quiz Responses panel.</p>}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── MENTOR PANEL TAB ─────────────────────────────────────────────────────────
 
 type MentorSubTab = "weeks" | "edit_week" | "new_week" | "seed" | "submissions";
@@ -1907,7 +2201,7 @@ function MentorPanelTab() {
   const [toggling, setToggling] = useState<string | null>(null);
   // Full week editor state
   const [editingWeek, setEditingWeek] = useState<InternWeek | null>(null);
-  const [editTopics, setEditTopics] = useState<{ id?: string; title: string; body: string; order: number }[]>([]);
+  const [editTopics, setEditTopics] = useState<{ id?: string; title: string; body: string; order: number; quiz?: Quiz }[]>([]);
   const [editResources, setEditResources] = useState<{ id?: string; title: string; url: string; type: string; order: number }[]>([]);
   const [editCheckpoints, setEditCheckpoints] = useState<{ id?: string; title: string; order: number }[]>([]);
   const [editMeta, setEditMeta] = useState<{ title: string; overview: string }>({ title: "", overview: "" });
@@ -1936,7 +2230,7 @@ function MentorPanelTab() {
   const openEditor = (week: InternWeek) => {
     setEditingWeek(week);
     setEditMeta({ title: week.title, overview: week.overview });
-    setEditTopics(week.topics.map(t => ({ id: t.id, title: t.title, body: t.body, order: t.order })));
+    setEditTopics(week.topics.map(t => ({ id: t.id, title: t.title, body: t.body, order: t.order, quiz: t.quiz ?? { questions: [] } })));
     setEditResources(week.resources.map(r => ({ id: r.id, title: r.title, url: r.url, type: r.type, order: r.order })));
     setEditCheckpoints(week.checkpoints.map(c => ({ id: c.id, title: c.title, order: c.order })));
     setSubTab("edit_week");
@@ -2133,8 +2427,8 @@ function MentorPanelTab() {
             <input
               className="w-full px-3 py-2 bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg text-sm text-[#202124] focus:outline-none focus:border-[#1a56db]/60 focus:ring-2 focus:ring-[#1a56db]/20"
               value={editMeta.title} onChange={e => setEditMeta(p => ({ ...p, title: e.target.value }))} placeholder="Week title…" />
-            <textarea rows={2}
-              className="w-full px-3 py-2 bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg text-sm text-[#202124] resize-none focus:outline-none focus:border-[#1a56db]/60 focus:ring-2 focus:ring-[#1a56db]/20"
+            <textarea rows={4}
+              className="w-full px-3 py-2 bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg text-sm text-[#202124] resize-y focus:outline-none focus:border-[#1a56db]/60 focus:ring-2 focus:ring-[#1a56db]/20"
               value={editMeta.overview} onChange={e => setEditMeta(p => ({ ...p, overview: e.target.value }))} placeholder="Overview…" />
           </div>
 
@@ -2165,11 +2459,14 @@ function MentorPanelTab() {
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
-                  <textarea rows={6}
-                    className="w-full px-3 py-2 bg-[#f8f9fa] border border-[#e8eaed] rounded-lg text-sm text-[#3c4043] font-mono resize-y focus:outline-none focus:border-[#1a56db]/60 focus:ring-1 focus:ring-[#1a56db]/20"
+                  <textarea rows={18}
+                    className="w-full min-h-[340px] px-4 py-3 bg-[#f8f9fa] border border-[#e8eaed] rounded-lg text-sm leading-relaxed text-[#3c4043] font-mono resize-y focus:outline-none focus:border-[#1a56db]/60 focus:ring-1 focus:ring-[#1a56db]/20"
                     value={topic.body}
                     onChange={e => setEditTopics(p => p.map((t, j) => j === i ? { ...t, body: e.target.value } : t))}
                     placeholder="Module content (Markdown supported)…" />
+                  <QuizEditor
+                    quiz={topic.quiz ?? { questions: [] }}
+                    onChange={quiz => setEditTopics(p => p.map((t, j) => j === i ? { ...t, quiz } : t))} />
                 </div>
               ))}
             </div>

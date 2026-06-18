@@ -49,7 +49,11 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const data = createSchema.parse(body);
+  const parsed = createSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid task data", details: parsed.error.flatten() }, { status: 400 });
+  }
+  const data = parsed.data;
 
   const task = await prisma.internTask.create({
     data: {

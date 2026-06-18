@@ -146,6 +146,7 @@ model User {
   internWeeksUnlocked  InternWeek[]           @relation("WeekUnlocker")
   internWeekCompletions InternWeekCompletion[] @relation("WeekCompletions")
   internWeekNotes      InternWeekMentorNote[] @relation("WeekMentorNotes")
+  internModuleCompletions InternModuleCompletion[] @relation("ModuleCompletions")
 }
 
 // Admin-defined custom roles (supplements UserRole enum)
@@ -1963,8 +1964,28 @@ model InternWeekTopic {
   title   String
   body    String     // markdown
   order   Int        @default(0)
+  quiz    Json?      // { questions: [{ id, type: "mcq"|"text", prompt, options?: string[], answerIndex?: number }] }
   week    InternWeek @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  completions InternModuleCompletion[]
 
+  @@index([weekId])
+}
+
+model InternModuleCompletion {
+  id        String   @id @default(cuid())
+  topicId   String
+  weekId    String
+  internId  String
+  answers   Json?    // intern's submitted answers, e.g. { [questionId]: number | string }
+  score     Int?     // % correct on the MCQ portion (0–100)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  topic     InternWeekTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  intern    User            @relation("ModuleCompletions", fields: [internId], references: [id], onDelete: Cascade)
+
+  @@unique([topicId, internId])
+  @@index([internId])
   @@index([weekId])
 }
 

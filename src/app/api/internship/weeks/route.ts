@@ -23,7 +23,10 @@ export async function GET() {
   const weeks = await prisma.internWeek.findMany({
     orderBy: { weekNumber: "asc" },
     include: {
-      topics: { orderBy: { order: "asc" } },
+      topics: {
+        orderBy: { order: "asc" },
+        include: { completions: { where: { internId: session.id }, select: { id: true, topicId: true, score: true } } },
+      },
       resources: { orderBy: { order: "asc" } },
       checkpoints: { orderBy: { order: "asc" } },
       completions: { select: { internId: true } },

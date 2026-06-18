@@ -41,8 +41,15 @@ export async function GET(request: Request) {
 const createSchema = z.object({
   taskId: z.string().min(1),
   notes: z.string().optional(),
-  files: z.array(z.object({ name: z.string(), url: z.string(), type: z.string(), size: z.number().optional() })).optional(),
-  links: z.array(z.string().url()).default([]),
+  files: z.array(z.object({
+    name: z.string(),
+    url: z.string().nullable().optional(),
+    key: z.string().optional(),
+    type: z.string().optional(),
+    ext: z.string().optional(),
+    size: z.number().optional(),
+  })).optional(),
+  links: z.array(z.string().min(1)).default([]),
 });
 
 export async function POST(request: Request) {
@@ -52,7 +59,11 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const data = createSchema.parse(body);
+  const parsed = createSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid submission data", details: parsed.error.flatten() }, { status: 400 });
+  }
+  const data = parsed.data;
 
   // Determine version number — how many previous submissions for this task by this user
   const prevCount = await prisma.internSubmission.count({

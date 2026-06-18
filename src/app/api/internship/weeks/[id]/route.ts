@@ -15,30 +15,55 @@ async function isMentorUser(userId: string, role: string): Promise<boolean> {
   return granted.includes("Mentor");
 }
 
+// Mentors see every intern's module completion (to review text answers);
+// interns only see their own.
+function weekInclude(isMentor: boolean, userId: string) {
+  return {
+    topics: {
+      orderBy: { order: "asc" as const },
+      include: {
+        completions: {
+          ...(isMentor ? {} : { where: { internId: userId } }),
+          include: { intern: { select: { id: true, fullName: true, avatarUrl: true } } },
+        },
+      },
+    },
+    resources: { orderBy: { order: "asc" as const } },
+    checkpoints: { orderBy: { order: "asc" as const } },
+    completions: { select: { internId: true } },
+    mentorNotes: {
+      include: { author: { select: { id: true, fullName: true, avatarUrl: true } } },
+      orderBy: { createdAt: "desc" as const },
+    },
+  };
+}
+
 export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await getCurrentUser();
   if (!session || !HUB_ROLES.includes(session.role as typeof HUB_ROLES[number])) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
   const { id } = await params;
+  const isMentor = await isMentorUser(session.id, session.role);
 
   const week = await prisma.internWeek.findUnique({
     where: { id },
-    include: {
-      topics: { orderBy: { order: "asc" } },
-      resources: { orderBy: { order: "asc" } },
-      checkpoints: { orderBy: { order: "asc" } },
-      completions: { select: { internId: true } },
-      mentorNotes: {
-        include: { author: { select: { id: true, fullName: true, avatarUrl: true } } },
-        orderBy: { createdAt: "desc" },
-      },
-    },
+    include: weekInclude(isMentor, session.id),
   });
 
   if (!week) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(week);
 }
+
+const quizSchema = z.object({
+  questions: z.array(z.object({
+    id: z.string(),
+    type: z.enum(["mcq", "text"]),
+    prompt: z.string(),
+    options: z.array(z.string()).optional(),
+    answerIndex: z.number().int().optional(),
+  })).default([]),
+}).optional();
 
 const patchSchema = z.object({
   // Unlock / lock
@@ -46,15 +71,21 @@ const patchSchema = z.object({
   // Edit content
   title: z.string().optional(),
   overview: z.string().optional(),
-  // Replace topics (full replace for simplicity)
+  // Upsert topics (IDs preserved so per-intern quiz progress survives edits)
   topics: z.array(z.object({
     id: z.string().optional(),
     title: z.string(), body: z.string(), order: z.number().optional(),
+    quiz: quizSchema,
   })).optional(),
   // Replace resources
   resources: z.array(z.object({
     id: z.string().optional(),
     title: z.string(), url: z.string(), type: z.string().optional(), order: z.number().optional(),
+  })).optional(),
+  // Upsert checkpoints
+  checkpoints: z.array(z.object({
+    id: z.string().optional(),
+    title: z.string(), order: z.number().optional(),
   })).optional(),
   // Add a mentor note
   mentorNote: z.string().optional(),
@@ -68,7 +99,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
   const { id } = await params;
   const body = await request.json();
-  const data = patchSchema.parse(body);
+  const parsed = patchSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid week data", details: parsed.error.flatten() }, { status: 400 });
+  }
+  const data = parsed.data;
 
   const existing = await prisma.internWeek.findUnique({ where: { id }, select: { id: true, isUnlocked: true, weekNumber: true, title: true } });
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -76,7 +111,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const wasLocked = !existing.isUnlocked;
   const nowUnlocking = data.isUnlocked === true && wasLocked;
 
-  // Update the week
+  // Update the week meta
   await prisma.internWeek.update({
     where: { id },
     data: {
@@ -90,19 +125,30 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     },
   });
 
-  // Replace topics if provided
+  // Upsert topics if provided — preserve IDs so module-completion records aren't orphaned
   if (data.topics !== undefined) {
-    await prisma.internWeekTopic.deleteMany({ where: { weekId: id } });
-    if (data.topics.length > 0) {
-      await prisma.internWeekTopic.createMany({
-        data: data.topics.map((t, i) => ({
-          weekId: id, title: t.title, body: t.body, order: t.order ?? i,
-        })),
-      });
+    const incoming = data.topics;
+    const keepIds = incoming.filter(t => t.id).map(t => t.id as string);
+    await prisma.internWeekTopic.deleteMany({
+      where: { weekId: id, id: { notIn: keepIds.length ? keepIds : ["__none__"] } },
+    });
+    for (let i = 0; i < incoming.length; i++) {
+      const t = incoming[i];
+      const quiz = t.quiz !== undefined ? t.quiz : undefined;
+      if (t.id) {
+        await prisma.internWeekTopic.update({
+          where: { id: t.id },
+          data: { title: t.title, body: t.body, order: t.order ?? i, ...(quiz !== undefined ? { quiz } : {}) },
+        });
+      } else {
+        await prisma.internWeekTopic.create({
+          data: { weekId: id, title: t.title, body: t.body, order: t.order ?? i, ...(quiz !== undefined ? { quiz } : {}) },
+        });
+      }
     }
   }
 
-  // Replace resources if provided
+  // Replace resources if provided (no per-intern state, safe to recreate)
   if (data.resources !== undefined) {
     await prisma.internWeekResource.deleteMany({ where: { weekId: id } });
     if (data.resources.length > 0) {
@@ -111,6 +157,23 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
           weekId: id, title: r.title, url: r.url, type: r.type ?? "link", order: r.order ?? i,
         })),
       });
+    }
+  }
+
+  // Upsert checkpoints if provided (previously dropped silently)
+  if (data.checkpoints !== undefined) {
+    const incoming = data.checkpoints;
+    const keepIds = incoming.filter(c => c.id).map(c => c.id as string);
+    await prisma.internWeekCheckpoint.deleteMany({
+      where: { weekId: id, id: { notIn: keepIds.length ? keepIds : ["__none__"] } },
+    });
+    for (let i = 0; i < incoming.length; i++) {
+      const c = incoming[i];
+      if (c.id) {
+        await prisma.internWeekCheckpoint.update({ where: { id: c.id }, data: { title: c.title, order: c.order ?? i } });
+      } else {
+        await prisma.internWeekCheckpoint.create({ data: { weekId: id, title: c.title, order: c.order ?? i } });
+      }
     }
   }
 
@@ -142,16 +205,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   const updated = await prisma.internWeek.findUnique({
     where: { id },
-    include: {
-      topics: { orderBy: { order: "asc" } },
-      resources: { orderBy: { order: "asc" } },
-      checkpoints: { orderBy: { order: "asc" } },
-      completions: { select: { internId: true } },
-      mentorNotes: {
-        include: { author: { select: { id: true, fullName: true, avatarUrl: true } } },
-        orderBy: { createdAt: "desc" },
-      },
-    },
+    include: weekInclude(true, session.id),
   });
   return NextResponse.json(updated);
 }
