@@ -23,7 +23,7 @@ export async function GET(request: Request) {
     include: {
       createdBy: { select: { id: true, fullName: true, avatarUrl: true } },
       submissions: {
-        select: { id: true, submitterId: true, status: true, createdAt: true },
+        select: { id: true, submitterId: true, status: true, createdAt: true, notes: true, links: true, files: true, version: true },
         orderBy: { createdAt: "desc" },
       },
       _count: { select: { discussions: true } },

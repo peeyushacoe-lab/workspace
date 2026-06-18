@@ -931,9 +931,9 @@ function SubmissionCard({ sub, isMentor, onReview }: { sub: Submission; isMentor
       </div>
       {sub.notes && <p className="text-xs text-[#5f6368] mb-2">{sub.notes}</p>}
       <SubmissionFiles files={sub.files} />
-      {sub.links.length > 0 && (
+      {(sub.links?.length ?? 0) > 0 && (
         <div className="flex flex-wrap gap-1 mb-2">
-          {sub.links.map((l, i) => (
+          {(sub.links ?? []).map((l, i) => (
             <a key={i} href={l} target="_blank" rel="noreferrer"
               className="flex items-center gap-1 text-xs text-[#1a56db] hover:underline">
               <ExternalLink className="w-3 h-3" /> {l.replace(/^https?:\/\//, "").slice(0, 30)}…
