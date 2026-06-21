@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { sanitizeHtml } from "@/lib/sanitize-html";
 import { Save, Plus, Edit2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -384,7 +385,7 @@ export function ProfileSettings({
                 {signature.html && (
                   <div className="mt-4 border border-[#e8eaed] rounded-xl p-4 inline-block bg-white text-sm w-full">
                     <p className="text-sm text-[#5f6368] mb-2">Custom HTML preview</p>
-                    <div dangerouslySetInnerHTML={{ __html: signature.html }} />
+                    <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(signature.html) }} />
                   </div>
                 )}
               </div>

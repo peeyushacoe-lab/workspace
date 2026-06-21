@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { toast, Toaster } from "sonner";
 import { mergeContacts, parseContactsText } from "@/lib/recipients";
+import { sanitizeHtml } from "@/lib/sanitize-html";
 import { analyzeMessage } from "@/lib/security";
 import { defaultTemplates } from "@/lib/templates";
 import type { ContactInput, TemplateDefinition } from "@/lib/types";
@@ -126,7 +127,7 @@ const stitchMailTheme: MailComposerTheme = {
   previewTitleClass: "text-lg font-semibold tracking-tight text-[#202124]",
   previewDescriptionClass: "mt-1 text-sm text-[#5f6368]",
   recipientBadgeClass:
-    "rounded-full bg-[#1a56db]/10 px-3 py-1 text-[11px] font-semibold text-[#7dd8f5]",
+    "rounded-full bg-[#1a56db]/10 px-3 py-1 text-[11px] font-semibold text-[#1a56db]",
   previewCardClass: "rounded-xl border border-[#e8eaed] bg-white p-4",
   emptyPreviewClass:
     "rounded-xl border-2 border-dashed border-[#e8eaed] bg-white p-8 text-center text-sm text-[#5f6368]",
@@ -309,7 +310,7 @@ export function MailComposer({
         {signatureHtml && (
           <div 
             className="mt-6 pt-4 border-t border-[#e8eaed]"
-            dangerouslySetInnerHTML={{ __html: signatureHtml }} 
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(signatureHtml) }}
           />
         )}
       </div>

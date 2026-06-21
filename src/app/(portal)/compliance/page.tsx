@@ -90,7 +90,7 @@ export default function CompliancePage() {
           <button onClick={handleRetentionDryRun} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#f1f3f4] text-[#5f6368] text-sm hover:bg-[#2e3347] transition-colors">
             <RefreshCw className="w-4 h-4" /> Retention Dry Run
           </button>
-          <button onClick={handleRetentionRun} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#ff4d6d]/10 text-[#ff4d6d] border border-[#ff4d6d]/20 text-sm hover:bg-[#ff4d6d]/20 transition-colors">
+          <button onClick={handleRetentionRun} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#ea4335]/10 text-[#ea4335] border border-[#ea4335]/20 text-sm hover:bg-[#ea4335]/20 transition-colors">
             <Trash2 className="w-4 h-4" /> Run Retention
           </button>
         </div>

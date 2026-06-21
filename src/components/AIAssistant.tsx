@@ -713,7 +713,7 @@ function AIStatusTab({ onStatus }: { onStatus: (s: AIStatus) => void }) {
                 key={m}
                 className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm border ${
                   m === status.model
-                    ? "bg-[#1a56db]/10 text-[#7dd8f5] border-[#1a56db]/30 font-semibold"
+                    ? "bg-[#1a56db]/10 text-[#1a56db] border-[#1a56db]/30 font-semibold"
                     : "bg-[#f1f3f4] border-[#e8eaed] text-[#5f6368]"
                 }`}
               >
@@ -1047,7 +1047,7 @@ export function AIAssistant(_props: { currentUserId: string }) {
                 onClick={() => setActiveTab(tab.id)}
                 className={`w-full flex items-center gap-3 text-left transition-colors ${
                   activeTab === tab.id
-                    ? "bg-[#1a56db]/10 text-[#7dd8f5] rounded-lg px-3 py-2 text-sm font-medium"
+                    ? "bg-[#1a56db]/10 text-[#1a56db] rounded-lg px-3 py-2 text-sm font-medium"
                     : "text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124] rounded-lg px-3 py-2 text-sm transition-colors"
                 }`}
               >

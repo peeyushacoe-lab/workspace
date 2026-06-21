@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from "react";
 import {
   View, Text, FlatList, TouchableOpacity, TextInput,
   StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform,
-  Image, Animated, Alert,
+  Image, Animated, Alert, Linking,
 } from "react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as Haptics from "expo-haptics";
@@ -14,6 +14,37 @@ import { EmojiPicker } from "../../src/components/EmojiPicker";
 import { FilePreview } from "../../src/components/FilePreview";
 import { profileApi } from "../../src/api/inbox";
 import { useVoiceRecorder } from "../../src/hooks/useVoiceRecorder";
+
+const JITSI_DOMAIN = process.env.EXPO_PUBLIC_JITSI_DOMAIN ?? "meet.jit.si";
+
+// Start a DM/group call from mobile: rings the other members and opens the
+// Jitsi room for the caller.
+async function startMobileCall(channelId: string, media: "audio" | "video") {
+  try {
+    const res = await apiRequest<{ call: { roomName: string } }>(
+      "/api/mobile/chat/call/start",
+      { method: "POST", body: JSON.stringify({ channelId, media }) },
+    );
+    if (res.call?.roomName) void Linking.openURL(`https://${JITSI_DOMAIN}/${res.call.roomName}`);
+  } catch (e) {
+    Alert.alert("Call failed", e instanceof Error ? e.message : "Could not start the call");
+  }
+}
+
+// Friendly one-line preview for system/marker messages in the channel list.
+function previewText(content: string): string {
+  if (content.startsWith("[CALL_LOG] ")) {
+    try {
+      const d = JSON.parse(content.slice(11)) as { media?: string; status?: string };
+      return (d.media === "video" ? "Video call" : "Voice call") + (d.status === "ended" ? " ended" : " · Missed");
+    } catch {
+      return "Call";
+    }
+  }
+  if (content.startsWith("[FILE_ATTACHMENT] ")) return "📎 Attachment";
+  if (content.startsWith("[BOT_RESPONSE] ")) return content.slice("[BOT_RESPONSE] ".length);
+  return content;
+}
 
 interface Channel {
   id: string; name: string; type: string; description?: string | null;
@@ -188,6 +219,24 @@ export default function ChatScreen() {
             </Text>
             <Text style={s.memberCount}>{activeChannel.memberCount} members</Text>
           </View>
+          {(activeChannel.type === "DIRECT" || activeChannel.type === "GROUP") && (
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <TouchableOpacity
+                onPress={() => { void Haptics.selectionAsync(); void startMobileCall(activeChannel.id, "audio"); }}
+                style={{ paddingHorizontal: 8 }}
+                accessibilityLabel="Voice call"
+              >
+                <Text style={{ fontSize: 20 }}>📞</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => { void Haptics.selectionAsync(); void startMobileCall(activeChannel.id, "video"); }}
+                style={{ paddingHorizontal: 8 }}
+                accessibilityLabel="Video call"
+              >
+                <Text style={{ fontSize: 20 }}>🎥</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
         {loadingMessages ? (
@@ -541,7 +590,7 @@ export default function ChatScreen() {
                 </View>
                 {item.lastMessage ? (
                   <Text style={s.channelPreview} numberOfLines={1}>
-                    {item.lastMessage.sender}: {item.lastMessage.content}
+                    {item.lastMessage.sender}: {previewText(item.lastMessage.content)}
                   </Text>
                 ) : item.description ? (
                   <Text style={s.channelPreview} numberOfLines={1}>{item.description}</Text>

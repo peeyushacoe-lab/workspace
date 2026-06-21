@@ -554,7 +554,7 @@ export function GlobalSearch({
                     onMouseEnter={() => setSelectedIndex(idx)}
                     className={`w-full text-left px-4 py-2.5 flex items-center gap-3 transition-colors ${
                       isSelected
-                        ? "bg-[#f8fafd]/10"
+                        ? "bg-[#0f9d58]/10"
                         : "hover:bg-[#262939]"
                     }`}
                   >
@@ -605,7 +605,7 @@ export function GlobalSearch({
                           onMouseEnter={() => setSelectedIndex(flatIndex)}
                           className={`w-full text-left px-4 py-2.5 flex items-center gap-3 cursor-pointer transition-colors ${
                             isSelected
-                              ? "bg-[#f8fafd]/10"
+                              ? "bg-[#0f9d58]/10"
                               : "hover:bg-[#262939]"
                           }`}
                         >
@@ -652,7 +652,7 @@ export function GlobalSearch({
             const isSelected = selectedIndex === aiIdx;
             return (
               <div>
-                <div className="px-4 py-1.5 text-xs font-semibold text-[#7dd8f5] bg-[#f8fafd]/5 border-t border-[#00d2ff]/20 flex items-center gap-1.5">
+                <div className="px-4 py-1.5 text-xs font-semibold text-[#1a56db] bg-[#f8fafd]/5 border-t border-[#00d2ff]/20 flex items-center gap-1.5">
                   <Sparkles className="h-3 w-3" />
                   AI Command
                 </div>
@@ -661,18 +661,18 @@ export function GlobalSearch({
                   onMouseEnter={() => setSelectedIndex(aiIdx)}
                   className={`w-full text-left px-4 py-2.5 flex items-center gap-3 transition-colors ${
                     isSelected
-                      ? "bg-[#f8fafd]/10"
+                      ? "bg-[#0f9d58]/10"
                       : "hover:bg-[#262939]"
                   }`}
                 >
-                  <div className="w-7 h-7 rounded-md bg-[#f8fafd]/10 flex items-center justify-center text-[#00d2ff] flex-shrink-0">
+                  <div className="w-7 h-7 rounded-md bg-[#0f9d58]/10 flex items-center justify-center text-[#00d2ff] flex-shrink-0">
                     {aiLoading
                       ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       : <Sparkles className="h-3.5 w-3.5" />
                     }
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-[#7dd8f5] truncate">
+                    <p className="text-sm font-medium text-[#1a56db] truncate">
                       Ask AI: &ldquo;{query}&rdquo;
                     </p>
                     <p className="text-xs text-[#9aa3b8] truncate">

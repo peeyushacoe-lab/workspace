@@ -241,7 +241,7 @@ export function PresenceStatusPicker({
               <button
                 onClick={saveCustomMessage}
                 disabled={isSaving}
-                className="w-full rounded-md bg-[#1a56db]/10 border border-[rgba(0,210,255,0.2)] px-3 py-1.5 text-xs font-medium text-[#1a56db] hover:bg-[#1a56db]/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full rounded-md bg-[#1a56db]/10 border border-[rgba(26,86,219,0.2)] px-3 py-1.5 text-xs font-medium text-[#1a56db] hover:bg-[#1a56db]/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSaving ? "Saving…" : "Save message"}
               </button>
@@ -249,7 +249,7 @@ export function PresenceStatusPicker({
           )}
 
           {error && (
-            <p className="px-3 pb-2 text-xs text-[#ff4d6d]">{error}</p>
+            <p className="px-3 pb-2 text-xs text-[#ea4335]">{error}</p>
           )}
         </div>
       )}

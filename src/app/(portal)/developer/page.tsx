@@ -160,13 +160,13 @@ export default function DeveloperPage() {
             </div>
 
             {revealedKey && (
-              <div className="flex items-center gap-3 bg-[#f8fafd]/10 border border-[#06d6a0]/30 rounded-xl px-4 py-3">
-                <Zap className="w-4 h-4 text-[#06d6a0] flex-shrink-0" />
-                <code className="flex-1 text-xs font-mono text-[#06d6a0] break-all">{revealedKey}</code>
+              <div className="flex items-center gap-3 bg-[#0f9d58]/10 border border-[#0f9d58]/30 rounded-xl px-4 py-3">
+                <Zap className="w-4 h-4 text-[#0f9d58] flex-shrink-0" />
+                <code className="flex-1 text-xs font-mono text-[#0f9d58] break-all">{revealedKey}</code>
                 <button onClick={() => copyToClipboard(revealedKey, "new")} className="flex-shrink-0">
-                  {copied === "new" ? <Check className="w-4 h-4 text-[#06d6a0]" /> : <Copy className="w-4 h-4 text-[#9aa0a6] hover:text-[#5f6368]" />}
+                  {copied === "new" ? <Check className="w-4 h-4 text-[#0f9d58]" /> : <Copy className="w-4 h-4 text-[#9aa0a6] hover:text-[#5f6368]" />}
                 </button>
-                <button onClick={() => setRevealedKey(null)} className="text-[#9aa0a6] hover:text-[#ff4d6d] text-xs">Dismiss</button>
+                <button onClick={() => setRevealedKey(null)} className="text-[#9aa0a6] hover:text-[#ea4335] text-xs">Dismiss</button>
               </div>
             )}
 
@@ -198,7 +198,7 @@ export default function DeveloperPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-semibold text-[#202124]">{key.name}</span>
-                      {!key.isActive && <span className="text-[10px] text-[#ff4d6d] bg-[#ff4d6d]/10 border border-[#ff4d6d]/20 px-1.5 py-0.5 rounded-full">Revoked</span>}
+                      {!key.isActive && <span className="text-[10px] text-[#ea4335] bg-[#ea4335]/10 border border-[#ea4335]/20 px-1.5 py-0.5 rounded-full">Revoked</span>}
                     </div>
                     <div className="flex items-center gap-3 mt-0.5">
                       <code className="text-xs text-[#9aa0a6] font-mono">{key.keyPrefix}••••••••</code>
@@ -207,9 +207,9 @@ export default function DeveloperPage() {
                   </div>
                   {key.lastUsedAt && <span className="text-[10px] text-[#9aa0a6] hidden sm:block">Used {new Date(key.lastUsedAt).toLocaleDateString()}</span>}
                   <button onClick={() => copyToClipboard(key.keyPrefix, key.id)} className="text-[#9aa0a6] hover:text-[#5f6368]">
-                    {copied === key.id ? <Check className="w-4 h-4 text-[#06d6a0]" /> : <Copy className="w-4 h-4" />}
+                    {copied === key.id ? <Check className="w-4 h-4 text-[#0f9d58]" /> : <Copy className="w-4 h-4" />}
                   </button>
-                  <button onClick={() => void revokeKey(key.id)} className="text-[#9aa0a6] hover:text-[#ff4d6d]"><Trash2 className="w-4 h-4" /></button>
+                  <button onClick={() => void revokeKey(key.id)} className="text-[#9aa0a6] hover:text-[#ea4335]"><Trash2 className="w-4 h-4" /></button>
                 </div>
               ))}
               {apiKeys.length === 0 && <p className="text-sm text-[#9aa0a6] text-center py-8">No API keys yet</p>}
@@ -256,8 +256,8 @@ export default function DeveloperPage() {
                     <p className="text-sm font-mono text-[#202124] truncate">{wh.url}</p>
                     <p className="text-[10px] text-[#9aa0a6] mt-0.5">{wh.events.join(", ")}</p>
                   </div>
-                  {wh.failCount > 0 && <span className="text-[10px] text-[#ff4d6d] bg-[#ff4d6d]/10 px-1.5 py-0.5 rounded-full">{wh.failCount} failures</span>}
-                  <button onClick={() => void deleteWebhook(wh.id)} className="text-[#9aa0a6] hover:text-[#ff4d6d]"><Trash2 className="w-4 h-4" /></button>
+                  {wh.failCount > 0 && <span className="text-[10px] text-[#ea4335] bg-[#ea4335]/10 px-1.5 py-0.5 rounded-full">{wh.failCount} failures</span>}
+                  <button onClick={() => void deleteWebhook(wh.id)} className="text-[#9aa0a6] hover:text-[#ea4335]"><Trash2 className="w-4 h-4" /></button>
                 </div>
               ))}
               {webhooks.length === 0 && <p className="text-sm text-[#9aa0a6] text-center py-8">No webhooks yet</p>}

@@ -34,7 +34,7 @@ function Avatar({ name, size = "md" }: { name: string; size?: "sm" | "md" }) {
   const initials = name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
   const sz = size === "sm" ? "w-7 h-7 text-xs" : "w-9 h-9 text-sm";
   return (
-    <div className={`${sz} rounded-full bg-gradient-to-br from-[#1a56db]/15 to-[#7dd8f5]/10 border border-[rgba(0,210,255,0.2)] flex items-center justify-center font-semibold text-[#1a56db] flex-shrink-0`}>
+    <div className={`${sz} rounded-full bg-gradient-to-br from-[#1a56db]/15 to-[#1a56db]/10 border border-[rgba(26,86,219,0.2)] flex items-center justify-center font-semibold text-[#1a56db] flex-shrink-0`}>
       {initials}
     </div>
   );
@@ -46,7 +46,7 @@ function RoleBadge({ role, onRevoke, disabled }: { role: string; onRevoke: () =>
       onClick={onRevoke}
       disabled={disabled}
       title={`Click to revoke ${role} access`}
-      className="group flex items-center gap-1 bg-[#1a56db]/10 text-[#7dd8f5] border border-[#1a56db]/20 px-2.5 py-1 rounded-full text-xs font-semibold hover:bg-[#ff4d6d]/10 hover:text-[#ff9db0] hover:border-[#ff4d6d]/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+      className="group flex items-center gap-1 bg-[#1a56db]/10 text-[#1a56db] border border-[#1a56db]/20 px-2.5 py-1 rounded-full text-xs font-semibold hover:bg-[#ea4335]/10 hover:text-[#ea4335] hover:border-[#ea4335]/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
     >
       {role}
       <X className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />

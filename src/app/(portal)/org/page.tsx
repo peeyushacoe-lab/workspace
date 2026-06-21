@@ -39,7 +39,7 @@ const ORG_ROLE_ICONS: Record<string, typeof Crown> = {
 function Avatar({ name }: { name: string }) {
   const initials = name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
   return (
-    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#1a56db]/15 to-[#7dd8f5]/10 border border-[rgba(0,210,255,0.2)] flex items-center justify-center font-semibold text-[#1a56db] text-sm flex-shrink-0">
+    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#1a56db]/15 to-[#1a56db]/10 border border-[rgba(26,86,219,0.2)] flex items-center justify-center font-semibold text-[#1a56db] text-sm flex-shrink-0">
       {initials}
     </div>
   );
@@ -152,7 +152,7 @@ export default function OrgPage() {
             {" plan · "}
             {org._count.users} / {org.maxUsers} users
             {" · slug: "}
-            <code className="text-[#7dd8f5]">{org.slug}</code>
+            <code className="text-[#1a56db]">{org.slug}</code>
           </div>
         </div>
 

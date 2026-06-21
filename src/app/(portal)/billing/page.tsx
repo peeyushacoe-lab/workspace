@@ -29,9 +29,9 @@ const PLAN_ICONS: Record<Plan, typeof CreditCard> = {
 
 const PLAN_COLORS: Record<Plan, string> = {
   FREE:       "text-[#9aa0a6]",
-  STARTER:    "text-[#06d6a0]",
+  STARTER:    "text-[#0f9d58]",
   PRO:        "text-[#1a56db]",
-  ENTERPRISE: "text-[#ffd166]",
+  ENTERPRISE: "text-[#b06000]",
 };
 
 export default function BillingPage() {
@@ -77,7 +77,7 @@ export default function BillingPage() {
               <CreditCard className="w-4 h-4 text-[#1a56db]" />
               <span className="font-medium text-sm">Current Plan: <span className={PLAN_COLORS[data.plan]}>{data.plan}</span></span>
               {data.trialEndsAt && (
-                <span className="ml-auto text-xs text-[#ffd166]">Trial ends {new Date(data.trialEndsAt).toLocaleDateString()}</span>
+                <span className="ml-auto text-xs text-[#b06000]">Trial ends {new Date(data.trialEndsAt).toLocaleDateString()}</span>
               )}
             </div>
             <div className="grid grid-cols-3 gap-4 text-sm">
@@ -145,7 +145,7 @@ export default function BillingPage() {
                     `${limits.retentionDays}d retention`,
                   ].filter(Boolean).map((feat, i) => (
                     <li key={i} className="flex items-center gap-1.5">
-                      <Check className="w-3 h-3 text-[#06d6a0] flex-shrink-0" />
+                      <Check className="w-3 h-3 text-[#0f9d58] flex-shrink-0" />
                       {feat as string}
                     </li>
                   ))}

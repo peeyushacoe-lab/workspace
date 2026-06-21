@@ -153,7 +153,7 @@ export function MFASetup({
   return (
     <div className="space-y-4">
       {error && (
-        <div className="text-sm text-[#ff4d6d] bg-[#ff4d6d]/10 border border-[#ff4d6d]/30 rounded-lg p-3 flex items-center justify-between">
+        <div className="text-sm text-[#ea4335] bg-[#ea4335]/10 border border-[#ea4335]/30 rounded-lg p-3 flex items-center justify-between">
           <span>{error}</span>
           <button onClick={clearError} className="ml-2 text-red-400 hover:text-red-600">
             <X className="h-4 w-4" />
@@ -326,7 +326,7 @@ export function MFASetup({
             </button>
             <button
               onClick={() => { setModal({ action: "disable", token: "" }); clearError(); }}
-              className="bg-[#ff4d6d]/10 text-[#ff4d6d] hover:bg-[#ff4d6d]/20 border border-[#ff4d6d]/30 rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2 transition-colors"
+              className="bg-[#ea4335]/10 text-[#ea4335] hover:bg-[#ea4335]/20 border border-[#ea4335]/30 rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2 transition-colors"
             >
               <ShieldOff className="h-4 w-4" />
               Disable MFA
@@ -351,7 +351,7 @@ export function MFASetup({
             </div>
 
             {modal.action === "disable" && (
-              <p className="text-sm text-[#ff4d6d] bg-[#ff4d6d]/10 border border-[#ff4d6d]/30 rounded-lg p-3">
+              <p className="text-sm text-[#ea4335] bg-[#ea4335]/10 border border-[#ea4335]/30 rounded-lg p-3">
                 This will remove MFA protection from your account. You will need your authenticator app code to confirm.
               </p>
             )}

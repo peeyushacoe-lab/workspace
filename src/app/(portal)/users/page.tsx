@@ -48,18 +48,18 @@ const ROLE_GROUPS = [
 ];
 
 const ROLE_COLORS: Record<string, string> = {
-  ADMIN: "bg-[#ff4d6d]/10 text-[#ff4d6d]",
+  ADMIN: "bg-[#ea4335]/10 text-[#ea4335]",
   CEO: "bg-purple-500/10 text-purple-300",
   CISO: "bg-[#1a56db]/10 text-[#1a56db]",
   R_AND_D: "bg-indigo-500/10 text-indigo-300",
   COO: "bg-violet-500/10 text-violet-300",
   OPS_MANAGER: "bg-orange-500/10 text-orange-300",
-  DEVELOPER: "bg-[#1a56db]/10 text-[#7dd8f5]",
-  CYBER_SECURITY: "bg-[#ff4d6d]/10 text-[#ff4d6d]",
+  DEVELOPER: "bg-[#1a56db]/10 text-[#1a56db]",
+  CYBER_SECURITY: "bg-[#ea4335]/10 text-[#ea4335]",
   QA: "bg-yellow-500/10 text-yellow-300",
-  MARKETING: "bg-[#f8fafd]/10 text-[#06d6a0]",
+  MARKETING: "bg-[#0f9d58]/10 text-[#0f9d58]",
   RESEARCH: "bg-teal-500/10 text-teal-300",
-  FINANCE: "bg-[#f8fafd]/10 text-[#06d6a0]",
+  FINANCE: "bg-[#0f9d58]/10 text-[#0f9d58]",
   OPERATIONS: "bg-amber-500/10 text-amber-300",
   SUPPORT: "bg-sky-500/10 text-sky-300",
   INTERNSHIP: "bg-[#1a56db]/10 text-[#1a56db]",
@@ -469,7 +469,7 @@ export default function UsersPage() {
                               onClick={() => void applyAccess(user.id, role, "revoke")}
                               disabled={savingAccess === user.id}
                               title={`Click to revoke ${role}`}
-                              className="group flex items-center gap-0.5 bg-[#1a56db]/10 text-[#7dd8f5] border border-[#1a56db]/20 px-1.5 py-0.5 rounded-full text-[10px] font-semibold hover:bg-[#ff4d6d]/10 hover:text-[#ff9db0] hover:border-[#ff4d6d]/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                              className="group flex items-center gap-0.5 bg-[#1a56db]/10 text-[#1a56db] border border-[#1a56db]/20 px-1.5 py-0.5 rounded-full text-[10px] font-semibold hover:bg-[#ea4335]/10 hover:text-[#ea4335] hover:border-[#ea4335]/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                             >
                               {role}
                               <X className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />

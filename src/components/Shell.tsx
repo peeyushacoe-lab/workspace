@@ -2,6 +2,7 @@
 import { SidebarLayout } from "./SidebarLayout";
 import { getPortalNavForRole, type SessionUser } from "@/lib/auth";
 import { DesktopBridge } from "./DesktopBridge";
+import { CallProvider } from "./call/CallProvider";
 
 export function Shell({
   children,
@@ -15,7 +16,9 @@ export function Shell({
   return (
     <SidebarLayout nav={nav} currentUser={currentUser}>
       <DesktopBridge />
-      {children}
+      <CallProvider currentUserName={currentUser?.fullName ?? "Me"}>
+        {children}
+      </CallProvider>
     </SidebarLayout>
   );
 }

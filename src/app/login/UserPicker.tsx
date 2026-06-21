@@ -6,18 +6,18 @@ import type { UserRole } from "@/generated/prisma/enums";
 import { roleLabels } from "@/lib/auth";
 
 const roleTileColors: Record<UserRole, string> = {
-  ADMIN:         "bg-[#ff4d6d]/10 text-[#ff4d6d]",
+  ADMIN:         "bg-[#ea4335]/10 text-[#ea4335]",
   CEO:           "bg-purple-500/10 text-purple-300",
   CISO:          "bg-[#1a56db]/10 text-[#1a56db]",
   R_AND_D:       "bg-indigo-500/10 text-indigo-300",
   COO:           "bg-violet-500/10 text-violet-300",
   OPS_MANAGER:   "bg-orange-500/10 text-orange-300",
-  DEVELOPER:     "bg-[#1a56db]/10 text-[#7dd8f5]",
-  CYBER_SECURITY:"bg-[#ff4d6d]/10 text-[#ff4d6d]",
+  DEVELOPER:     "bg-[#1a56db]/10 text-[#1a56db]",
+  CYBER_SECURITY:"bg-[#ea4335]/10 text-[#ea4335]",
   QA:            "bg-yellow-500/10 text-yellow-300",
-  MARKETING:     "bg-[#f8fafd]/10 text-[#06d6a0]",
+  MARKETING:     "bg-[#0f9d58]/10 text-[#0f9d58]",
   RESEARCH:      "bg-teal-500/10 text-teal-300",
-  FINANCE:       "bg-[#f8fafd]/10 text-[#06d6a0]",
+  FINANCE:       "bg-[#0f9d58]/10 text-[#0f9d58]",
   OPERATIONS:    "bg-amber-500/10 text-amber-300",
   SUPPORT:       "bg-sky-500/10 text-sky-300",
   INTERNSHIP:    "bg-[#f1f3f4] text-[#5f6368]",
@@ -57,8 +57,8 @@ export function UserPicker({
     return (
       <div>
         {error && (
-          <div className="mb-6 px-3 py-2 bg-[#ff4d6d]/10 border border-[#ff4d6d]/30 rounded-lg">
-            <p className="text-sm text-[#ff4d6d]">Invalid email or password. Please try again.</p>
+          <div className="mb-6 px-3 py-2 bg-[#ea4335]/10 border border-[#ea4335]/30 rounded-lg">
+            <p className="text-sm text-[#ea4335]">Invalid email or password. Please try again.</p>
           </div>
         )}
 
@@ -151,8 +151,8 @@ export function UserPicker({
       </div>
 
       {error && (
-        <div className="mb-5 px-3 py-2 bg-[#ff4d6d]/10 border border-[#ff4d6d]/30 rounded-lg">
-          <p className="text-sm text-[#ff4d6d]">Invalid password. Please try again.</p>
+        <div className="mb-5 px-3 py-2 bg-[#ea4335]/10 border border-[#ea4335]/30 rounded-lg">
+          <p className="text-sm text-[#ea4335]">Invalid password. Please try again.</p>
         </div>
       )}
 

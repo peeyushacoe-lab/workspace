@@ -264,7 +264,7 @@ function AttendeeChip({ email, name, status }: { email: string; name?: string; s
     TENTATIVE: "bg-yellow-100 text-yellow-700",
     PENDING: "bg-white text-[#5f6368]",
   };
-  const label = status ? statusColors[status] ?? "bg-white text-[#5f6368]" : "bg-[#1a56db]/10 text-[#7dd8f5]";
+  const label = status ? statusColors[status] ?? "bg-white text-[#5f6368]" : "bg-[#1a56db]/10 text-[#1a56db]";
   return (
     <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${label}`}>
       {name ?? email}
@@ -279,7 +279,7 @@ function EventPill({ event, onClick }: { event: CalendarEvent; onClick: () => vo
   return (
     <button
       onClick={(e) => { e.stopPropagation(); onClick(); }}
-      className="w-full bg-[#1a56db]/10 text-[#7dd8f5] rounded px-1 py-0.5 text-xs font-medium truncate cursor-pointer hover:bg-[#1a56db]/20 text-left flex items-center gap-1 transition-colors"
+      className="w-full bg-[#1a56db]/10 text-[#1a56db] rounded px-1 py-0.5 text-xs font-medium truncate cursor-pointer hover:bg-[#1a56db]/20 text-left flex items-center gap-1 transition-colors"
       style={event.color && event.color !== "#3B82F6" ? { backgroundColor: event.color, color: "white" } : undefined}
       title={event.title}
     >
@@ -1122,7 +1122,7 @@ function MiniMonth({
                 selected
                   ? "bg-[#1a56db] text-white"
                   : today
-                  ? "bg-[#1a56db]/10 text-[#7dd8f5]"
+                  ? "bg-[#1a56db]/10 text-[#1a56db]"
                   : inMonth
                   ? "text-[#202124] hover:bg-white"
                   : "text-[#5f6368]"

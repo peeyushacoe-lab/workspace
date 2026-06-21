@@ -126,7 +126,7 @@ export default function MeetingIntelligencePage() {
               )}
               <div className="flex gap-1.5 flex-wrap">
                 {result.tags.map((t) => (
-                  <span key={t} className="bg-[#1a56db]/10 text-[#7dd8f5] px-2 py-0.5 rounded-full">{t}</span>
+                  <span key={t} className="bg-[#1a56db]/10 text-[#1a56db] px-2 py-0.5 rounded-full">{t}</span>
                 ))}
               </div>
               <div className="flex-1" />

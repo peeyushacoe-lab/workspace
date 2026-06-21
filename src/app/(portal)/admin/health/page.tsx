@@ -25,10 +25,10 @@ type MetricsData = {
 };
 
 function StatusIcon({ ok }: { ok: boolean | null }) {
-  if (ok === null) return <AlertTriangle className="w-4 h-4 text-[#ffd166]" />;
+  if (ok === null) return <AlertTriangle className="w-4 h-4 text-[#b06000]" />;
   return ok
-    ? <CheckCircle className="w-4 h-4 text-[#06d6a0]" />
-    : <XCircle className="w-4 h-4 text-[#ff4d6d]" />;
+    ? <CheckCircle className="w-4 h-4 text-[#0f9d58]" />
+    : <XCircle className="w-4 h-4 text-[#ea4335]" />;
 }
 
 function Stat({ label, value }: { label: string; value: number | string }) {
@@ -88,7 +88,7 @@ export default function SystemHealthPage() {
               <span className="font-medium">{label}</span>
               <div className="flex-1" />
               <StatusIcon ok={ok} />
-              <span className={`text-sm ${ok === null ? "text-[#ffd166]" : ok ? "text-[#06d6a0]" : "text-[#ff4d6d]"}`}>
+              <span className={`text-sm ${ok === null ? "text-[#b06000]" : ok ? "text-[#0f9d58]" : "text-[#ea4335]"}`}>
                 {ok === null ? "checking" : ok ? "healthy" : "down"}
               </span>
             </div>
@@ -135,14 +135,14 @@ export default function SystemHealthPage() {
                     <td className="px-4 py-2 font-mono text-[#5f6368]">{name}</td>
                     <td className="px-4 py-2 text-right text-[#5f6368]">{q?.waiting ?? "—"}</td>
                     <td className="px-4 py-2 text-right text-[#1a56db]">{q?.active ?? "—"}</td>
-                    <td className={`px-4 py-2 text-right ${q && q.failed > 0 ? "text-[#ff4d6d]" : "text-[#5f6368]"}`}>{q?.failed ?? "—"}</td>
+                    <td className={`px-4 py-2 text-right ${q && q.failed > 0 ? "text-[#ea4335]" : "text-[#5f6368]"}`}>{q?.failed ?? "—"}</td>
                     <td className="px-4 py-2 text-right text-[#5f6368]">{q?.delayed ?? "—"}</td>
                     <td className="px-4 py-2 text-right">
                       {q === null
-                        ? <span className="text-[#ff4d6d]">offline</span>
+                        ? <span className="text-[#ea4335]">offline</span>
                         : q.failed > 0
-                          ? <span className="text-[#ffd166]">warn</span>
-                          : <span className="text-[#06d6a0]">ok</span>}
+                          ? <span className="text-[#b06000]">warn</span>
+                          : <span className="text-[#0f9d58]">ok</span>}
                     </td>
                   </tr>
                 ))}
@@ -154,7 +154,7 @@ export default function SystemHealthPage() {
         {health && (
           <p className="text-xs text-[#9aa0a6]">
             <Activity className="w-3 h-3 inline mr-1" />
-            Overall: <span className={health.status === "ok" ? "text-[#06d6a0]" : "text-[#ff4d6d]"}>{health.status}</span>
+            Overall: <span className={health.status === "ok" ? "text-[#0f9d58]" : "text-[#ea4335]"}>{health.status}</span>
             {" · "} Last checked: {new Date(health.timestamp).toLocaleString()}
           </p>
         )}

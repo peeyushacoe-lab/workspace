@@ -40,7 +40,7 @@ function AvatarStack({ members, color }: { members: { id: string; fullName: stri
             marginLeft: i === 0 ? 0 : -8,
             zIndex: visible.length - i,
             background: color + "22",
-            border: `2px solid #0f1321`,
+            border: `2px solid #ffffff`,
             color,
           }}
           className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-semibold uppercase"
@@ -50,8 +50,8 @@ function AvatarStack({ members, color }: { members: { id: string; fullName: stri
       ))}
       {rest > 0 && (
         <div
-          style={{ marginLeft: -8, zIndex: 0, background: "rgba(255,255,255,0.06)", border: "2px solid #0f1321" }}
-          className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] text-[#9aa0a6] font-semibold"
+          style={{ marginLeft: -8, zIndex: 0, background: "#f1f3f4", border: "2px solid #ffffff" }}
+          className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] text-[#5f6368] font-semibold"
         >
           +{rest}
         </div>

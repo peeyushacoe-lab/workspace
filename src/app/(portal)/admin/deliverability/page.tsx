@@ -113,7 +113,7 @@ export default function DeliverabilityPage() {
                 <StatusIcon status={record.status} />
                 <div className="flex-1 min-w-0 space-y-1.5">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs font-mono bg-[#f1f3f4] text-[#7dd8f5] px-2 py-0.5 rounded">{record.type}</span>
+                    <span className="text-xs font-mono bg-[#f1f3f4] text-[#1a56db] px-2 py-0.5 rounded">{record.type}</span>
                     <span className="text-sm font-medium text-[#202124] truncate">{record.host}</span>
                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
                       record.status === "ok" ? "bg-emerald-500/10 text-emerald-400" :
@@ -125,7 +125,7 @@ export default function DeliverabilityPage() {
                   </div>
                   <p className="text-xs text-[#9aa0a6]">{record.description}</p>
                   <div className="flex items-center gap-2 bg-[#f8fafd] rounded-lg px-3 py-2 mt-1">
-                    <code className="text-xs text-[#7dd8f5] font-mono flex-1 truncate">{record.value}</code>
+                    <code className="text-xs text-[#1a56db] font-mono flex-1 truncate">{record.value}</code>
                     <CopyButton value={record.value} />
                   </div>
                 </div>

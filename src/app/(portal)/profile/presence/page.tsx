@@ -157,7 +157,7 @@ export default function PresenceSettingsPage() {
               onClick={() => setActiveSection(tab)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 activeSection === tab
-                  ? "bg-[rgba(0,210,255,0.1)] text-[#1a56db] border border-[rgba(0,210,255,0.2)]"
+                  ? "bg-[rgba(0,210,255,0.1)] text-[#1a56db] border border-[rgba(26,86,219,0.2)]"
                   : "text-[#9aa0a6] hover:text-[#5f6368] hover:bg-white"
               }`}
             >

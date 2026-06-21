@@ -188,7 +188,7 @@ function SubjectOptimizer({
           </div>
           {loading ? (
             <div className="flex items-center justify-center py-4">
-              <Loader2 className="w-5 h-5 animate-spin text-[#7dd8f5]" />
+              <Loader2 className="w-5 h-5 animate-spin text-[#1a56db]" />
             </div>
           ) : alternatives.length === 0 ? (
             <p className="text-xs text-[#5f6368] py-2 text-center">No suggestions available</p>
@@ -666,7 +666,7 @@ export function SimpleComposer({
                 <button
                   type="button"
                   onClick={() => setAttachments(prev => prev.filter(a => a.name !== f.name))}
-                  className="text-[#80868b] hover:text-[#ff4d6d] transition-colors"
+                  className="text-[#80868b] hover:text-[#ea4335] transition-colors"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -798,9 +798,9 @@ export function WorkspaceDashboard({
                     </td>
                     <td className="px-4 py-3 text-sm text-[#202124]">
                       <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${
-                        log.status === 'DELIVERED' || log.status === 'SENT' ? 'bg-[#f8fafd]/10 text-[#06d6a0]' :
+                        log.status === 'DELIVERED' || log.status === 'SENT' ? 'bg-[#0f9d58]/10 text-[#0f9d58]' :
                         log.status === 'OPENED' || log.status === 'CLICKED' ? 'bg-[#1a56db]/10 text-[#1a56db]' :
-                        log.status === 'FAILED' || log.status === 'BOUNCED' ? 'bg-[#ff4d6d]/10 text-[#ff4d6d]' :
+                        log.status === 'FAILED' || log.status === 'BOUNCED' ? 'bg-[#ea4335]/10 text-[#ea4335]' :
                         'bg-white/[0.06] text-[#5f6368]'
                       }`}>
                         {log.status === 'DELIVERED' ? <CheckCircle2 className="w-3 h-3" /> : null}

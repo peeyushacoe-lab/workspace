@@ -10,6 +10,7 @@ import {
   Copy, Eye, EyeOff, Building2, Phone, MapPin,
   Link2, Tag, Briefcase, Users,
 } from "lucide-react";
+import { sanitizeHtml } from "@/lib/sanitize-html";
 import { MFASetup } from "@/components/MFASetup";
 import { SessionManager } from "@/components/SessionManager";
 import { toast } from "sonner";
@@ -406,7 +407,7 @@ function ProfileTab({ userId }: { userId: string }) {
               <button
                 type="button"
                 onClick={() => { update("statusEmoji", null); update("statusMessage", null); }}
-                className="text-xs text-[#7a8fa6] hover:text-[#ff4d6d] transition"
+                className="text-xs text-[#7a8fa6] hover:text-[#ea4335] transition"
               >
                 Clear
               </button>
@@ -571,7 +572,7 @@ function SignatureTab({ userName }: { userName: string }) {
         <SectionCard title="Your Signature" description="Appended automatically to outgoing emails">
           <div
             className="p-4 rounded-lg bg-white border border-[#e8eaed] mb-4 text-sm"
-            dangerouslySetInnerHTML={{ __html: signature.html ?? generatedHtml }}
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(signature.html ?? generatedHtml) }}
           />
           <div className="flex gap-2">
             <button onClick={() => setIsEditing(true)} className={btnSecondary}>Edit</button>
@@ -620,7 +621,7 @@ function SignatureTab({ userName }: { userName: string }) {
             <p className="text-xs text-[#5f6368] mb-2">Preview</p>
             <div
               className="p-4 rounded-lg bg-white border border-[#e8eaed]"
-              dangerouslySetInnerHTML={{ __html: form.html || generatedHtml }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(form.html || generatedHtml) }}
             />
           </div>
 
@@ -682,7 +683,7 @@ function AppearanceTab() {
               <button key={val} onClick={() => applyTheme(val)}
                 className={`flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all ${active ? "border-[#1a56db] bg-[#1a56db]/10" : "border-[#e8eaed] hover:border-[#9aa3b8]"}`}>
                 <Icon className={`h-6 w-6 ${active ? "text-[#1a56db]" : "text-[#5f6368]"}`} />
-                <span className={`text-sm font-medium ${active ? "text-[#7dd8f5]" : "text-[#5f6368]"}`}>{label}</span>
+                <span className={`text-sm font-medium ${active ? "text-[#1a56db]" : "text-[#5f6368]"}`}>{label}</span>
                 {active && <Check className="h-4 w-4 text-[#1a56db]" />}
               </button>
             );
@@ -1146,7 +1147,7 @@ function APITokensTab() {
     <>
       {newToken && (
         <div className="mb-6 bg-[#1a56db]/10 border border-[#1a56db]/30 rounded-xl p-4">
-          <p className="text-sm font-semibold text-[#7dd8f5] mb-2">Token created — copy it now, it won&apos;t be shown again</p>
+          <p className="text-sm font-semibold text-[#1a56db] mb-2">Token created — copy it now, it won&apos;t be shown again</p>
           <div className="flex items-center gap-2">
             <code className="flex-1 bg-white px-3 py-2 rounded-lg text-xs text-[#202124] font-mono truncate">
               {revealed ? newToken : newToken.slice(0, 12) + "•".repeat(24)}
@@ -1201,7 +1202,7 @@ function APITokensTab() {
               </div>
               <div className="flex items-center gap-3 flex-shrink-0">
                 {t.lastUsedAt && <span className="text-xs text-[#5f6368]">Last used {new Date(t.lastUsedAt).toLocaleDateString()}</span>}
-                <button onClick={() => void revoke(t.id)} className="p-1.5 text-[#5f6368] hover:text-[#ff4d6d] hover:bg-[#ff4d6d]/10 rounded-lg transition-colors" title="Revoke">
+                <button onClick={() => void revoke(t.id)} className="p-1.5 text-[#5f6368] hover:text-[#ea4335] hover:bg-[#ea4335]/10 rounded-lg transition-colors" title="Revoke">
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
@@ -1315,7 +1316,7 @@ function CustomRolesTab() {
                 {r.isSingleton && <span className="text-[10px] bg-purple-500/20 text-purple-300 px-1.5 py-0.5 rounded-full font-medium">SINGLETON</span>}
                 {r.description && <p className="text-xs text-[#5f6368] truncate max-w-xs">{r.description}</p>}
               </div>
-              <button onClick={() => void del(r.id)} className="p-1.5 text-[#5f6368] hover:text-[#ff4d6d] hover:bg-[#ff4d6d]/10 rounded-lg transition-colors">
+              <button onClick={() => void del(r.id)} className="p-1.5 text-[#5f6368] hover:text-[#ea4335] hover:bg-[#ea4335]/10 rounded-lg transition-colors">
                 <Trash2 className="h-4 w-4" />
               </button>
             </div>
@@ -1410,7 +1411,7 @@ function MailRulesTab() {
                   <select value={cond.field} onChange={e => setConditions(p => p.map((c,idx) => idx===i ? {...c,field:e.target.value}:c))} className={`${selectClass} text-xs`}>{CONDITION_FIELDS.map(f => <option key={f} value={f}>{f}</option>)}</select>
                   <select value={cond.op} onChange={e => setConditions(p => p.map((c,idx) => idx===i ? {...c,op:e.target.value}:c))} className={`${selectClass} text-xs`}>{CONDITION_OPS.map(o => <option key={o} value={o}>{o}</option>)}</select>
                   <input value={cond.value} onChange={e => setConditions(p => p.map((c,idx) => idx===i ? {...c,value:e.target.value}:c))} placeholder="value" className={`flex-1 ${inputClass} text-xs py-1.5`} />
-                  {conditions.length > 1 && <button onClick={() => setConditions(p => p.filter((_,idx) => idx!==i))} className="p-1 text-[#5f6368] hover:text-[#ff4d6d]"><X className="w-3.5 h-3.5" /></button>}
+                  {conditions.length > 1 && <button onClick={() => setConditions(p => p.filter((_,idx) => idx!==i))} className="p-1 text-[#5f6368] hover:text-[#ea4335]"><X className="w-3.5 h-3.5" /></button>}
                 </div>
               ))}
             </div>
@@ -1447,7 +1448,7 @@ function MailRulesTab() {
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <button onClick={async () => { setRules(p => p.map(r => r.id===rule.id ? {...r,isActive:!r.isActive}:r)); await fetch(`/api/inbox/rules/${rule.id}`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({isActive:!rule.isActive})}).catch(()=>{}); }} className={`p-1.5 rounded-lg ${rule.isActive?"text-[#1a56db]":"text-[#262b3a]"} hover:bg-[#f1f3f4]`}><ToggleRight className="w-4 h-4" /></button>
-                  <button onClick={async () => { setRules(p => p.filter(r => r.id!==rule.id)); await fetch(`/api/inbox/rules/${rule.id}`,{method:"DELETE"}).catch(()=>{}); toast.success("Rule deleted"); }} className="p-1.5 rounded-lg text-[#5f6368] hover:text-[#ff4d6d] hover:bg-[#ff4d6d]/10"><Trash2 className="w-4 h-4" /></button>
+                  <button onClick={async () => { setRules(p => p.filter(r => r.id!==rule.id)); await fetch(`/api/inbox/rules/${rule.id}`,{method:"DELETE"}).catch(()=>{}); toast.success("Rule deleted"); }} className="p-1.5 rounded-lg text-[#5f6368] hover:text-[#ea4335] hover:bg-[#ea4335]/10"><Trash2 className="w-4 h-4" /></button>
                 </div>
               </div>
             </div>

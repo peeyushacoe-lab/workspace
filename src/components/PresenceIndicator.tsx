@@ -9,11 +9,11 @@ const STATUS_CONFIG: Record<
   PresenceStatus,
   { color: string; label: string; strikethrough?: boolean }
 > = {
-  online:     { color: "#06d6a0", label: "Online" },
-  away:       { color: "#ffd166", label: "Away" },
-  busy:       { color: "#ff4d6d", label: "Busy" },
+  online:     { color: "#0f9d58", label: "Online" },
+  away:       { color: "#b06000", label: "Away" },
+  busy:       { color: "#ea4335", label: "Busy" },
   in_meeting: { color: "#a855f7", label: "In Meeting" },
-  dnd:        { color: "#ff4d6d", label: "Do Not Disturb", strikethrough: true },
+  dnd:        { color: "#ea4335", label: "Do Not Disturb", strikethrough: true },
   offline:    { color: "#5d6579", label: "Offline" },
 };
 

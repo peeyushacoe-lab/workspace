@@ -57,9 +57,9 @@ export default async function ContactsPage() {
                       </div>
                     </div>
                     <span className={`inline-flex px-3 py-1 text-xs font-medium rounded-full ${
-                      contact.status === 'ACTIVE' ? 'bg-[#f8fafd]/10 text-[#06d6a0]' :
+                      contact.status === 'ACTIVE' ? 'bg-[#0f9d58]/10 text-[#0f9d58]' :
                       contact.status === 'INACTIVE' ? 'bg-[#f1f3f4] text-[#5f6368]' :
-                      'bg-[#1a56db]/10 text-[#7dd8f5]'
+                      'bg-[#1a56db]/10 text-[#1a56db]'
                     }`}>
                       {contact.status}
                     </span>

@@ -79,7 +79,7 @@ export default async function DownloadPage() {
       <div className="max-w-4xl mx-auto px-6 py-16">
         {/* Hero */}
         <div className="text-center mb-14">
-          <div className="inline-flex items-center gap-2 bg-[#1a56db]/10 border border-[#1a56db]/20 rounded-full px-4 py-1.5 text-xs text-[#7dd8f5] mb-6">
+          <div className="inline-flex items-center gap-2 bg-[#1a56db]/10 border border-[#1a56db]/20 rounded-full px-4 py-1.5 text-xs text-[#1a56db] mb-6">
             Desktop app · Free for all plans
           </div>
           <h1 className="text-4xl font-semibold text-white mb-4 tracking-tight">

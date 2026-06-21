@@ -44,12 +44,12 @@ function TypeIcon({ type }: { type: NotificationType }) {
 
 const TYPE_COLOR: Record<NotificationType, string> = {
   MENTION: "bg-[#1a56db]/10 text-[#1a56db]",
-  CALENDAR_INVITE: "bg-purple-500/10 text-purple-300",
-  CALENDAR_REMINDER: "bg-purple-500/10 text-purple-300",
-  SOC_ALERT: "bg-[#ff4d6d]/10 text-[#ff4d6d]",
-  DLP_VIOLATION: "bg-orange-500/10 text-orange-300",
-  NEW_MESSAGE: "bg-[#f8fafd]/10 text-[#06d6a0]",
-  FILE_SHARED: "bg-yellow-500/10 text-yellow-300",
+  CALENDAR_INVITE: "bg-purple-500/10 text-purple-700",
+  CALENDAR_REMINDER: "bg-purple-500/10 text-purple-700",
+  SOC_ALERT: "bg-[#ea4335]/10 text-[#ea4335]",
+  DLP_VIOLATION: "bg-[#ff6d00]/10 text-[#ff6d00]",
+  NEW_MESSAGE: "bg-[#0f9d58]/10 text-[#0f9d58]",
+  FILE_SHARED: "bg-[#f4b400]/15 text-[#b06000]",
   SYSTEM: "bg-[#f1f3f4] text-[#5f6368]",
 };
 
@@ -205,7 +205,7 @@ export function NotificationCenter({ userId, dark: _dark = false }: { userId: st
             />
           </svg>
           {unreadCount > 0 && (
-            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[#ff4d6d] ring-2 ring-[#1b1f2e]" />
+            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[#ea4335] ring-2 ring-white" />
           )}
         </button>
 

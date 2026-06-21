@@ -328,7 +328,7 @@ export default function DelegationPage() {
                             onClick={() => void handleRevoke(entry.id, entry.user.fullName)}
                             disabled={revoking === entry.id}
                             title="Revoke access"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg text-[#5f6368] border border-[#e8eaed] hover:text-[#ff4d6d] hover:border-[#ff4d6d]/30 hover:bg-[#ff4d6d]/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg text-[#5f6368] border border-[#e8eaed] hover:text-[#ea4335] hover:border-[#ea4335]/30 hover:bg-[#ea4335]/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             {revoking === entry.id ? (
                               <Loader2 className="h-3.5 w-3.5 animate-spin" />

@@ -190,7 +190,7 @@ function sanitizeHtml(html: string): string {
 
 // ── Priority helpers ─────────────────────────────────────────────────────────
 const PRIORITY_CONFIG: Record<ThreadPriority, { label: string; color: string; dot: string }> = {
-  URGENT: { label: "Urgent", color: "text-[#ff4d6d]",   dot: "bg-[#ff4d6d]" },
+  URGENT: { label: "Urgent", color: "text-[#ea4335]",   dot: "bg-[#ea4335]" },
   HIGH:   { label: "High",   color: "text-amber-400",    dot: "bg-amber-400" },
   NORMAL: { label: "Normal", color: "text-[#5f6368]",    dot: "bg-[#9aa3b8]" },
   LOW:    { label: "Low",    color: "text-[#262b3a]",    dot: "bg-[#e2e8f0]" },
@@ -208,7 +208,7 @@ function SlaIndicator({ deadline }: { deadline: string }) {
   const soonMs = 2 * 60 * 60 * 1000;
   const soon = !overdue && (d.getTime() - Date.now()) < soonMs;
   if (overdue) return (
-    <span className="text-[10px] font-semibold text-[#ff4d6d] flex items-center gap-0.5">
+    <span className="text-[10px] font-semibold text-[#ea4335] flex items-center gap-0.5">
       <Zap className="w-2.5 h-2.5" />SLA
     </span>
   );
@@ -239,10 +239,10 @@ function getThreatLevel(externalCount: number, urgentCount: number): ThreatLevel
 }
 
 const THREAT_CONFIG: Record<ThreatLevel, { label: string; color: string; bg: string; border: string; Icon: React.ElementType }> = {
-  secure:   { label: "Secure",   color: "text-[#06d6a0]", bg: "bg-transparent",   border: "border-[#e8eaed]", Icon: ShieldCheck },
-  caution:  { label: "Caution",  color: "text-[#ffd166]", bg: "bg-[#ffd166]/[0.04]", border: "border-[#ffd166]/15", Icon: Shield      },
+  secure:   { label: "Secure",   color: "text-[#0f9d58]", bg: "bg-transparent",   border: "border-[#e8eaed]", Icon: ShieldCheck },
+  caution:  { label: "Caution",  color: "text-[#b06000]", bg: "bg-[#b06000]/[0.04]", border: "border-[#b06000]/15", Icon: Shield      },
   elevated: { label: "Elevated", color: "text-[#ff9f43]", bg: "bg-[#ff9f43]/[0.05]", border: "border-[#ff9f43]/15", Icon: AlertTriangle },
-  critical: { label: "Critical", color: "text-[#ff4d6d]", bg: "bg-[#ff4d6d]/[0.06]", border: "border-[#ff4d6d]/20", Icon: ShieldX     },
+  critical: { label: "Critical", color: "text-[#ea4335]", bg: "bg-[#ea4335]/[0.06]", border: "border-[#ea4335]/20", Icon: ShieldX     },
 };
 
 function SecurityPostureBar({ threads, totalScanned }: {
@@ -263,7 +263,7 @@ function SecurityPostureBar({ threads, totalScanned }: {
       {externalCount > 0 && (
         <>
           <span className="w-px h-3 bg-current opacity-20" />
-          <span className="flex items-center gap-1 text-[#ffd166]">
+          <span className="flex items-center gap-1 text-[#b06000]">
             <Globe className="w-2.5 h-2.5" />
             {externalCount} external
           </span>
@@ -272,7 +272,7 @@ function SecurityPostureBar({ threads, totalScanned }: {
       {urgentCount > 0 && (
         <>
           <span className="w-px h-3 bg-current opacity-20" />
-          <span className="flex items-center gap-1 text-[#ff4d6d]">
+          <span className="flex items-center gap-1 text-[#ea4335]">
             <AlertTriangle className="w-2.5 h-2.5" />
             {urgentCount} urgent
           </span>
@@ -382,7 +382,7 @@ function NewFolderModal({ onClose, onCreate }: {
     }
   };
 
-  const COLORS = ["#00d2ff","#06d6a0","#ff4d6d","#a78bfa","#f59e0b","#3b82f6","#10b981","#ec4899"];
+  const COLORS = ["#00d2ff","#0f9d58","#ea4335","#a78bfa","#f59e0b","#3b82f6","#10b981","#ec4899"];
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
@@ -655,7 +655,7 @@ function RulesModal({ customFolders, onClose }: {
                       </button>
                       <button
                         onClick={() => void handleDelete(rule.id)}
-                        className="p-1.5 rounded-lg text-[#5f6368] hover:bg-[#ff4d6d]/10 hover:text-[#ff4d6d] transition-colors"
+                        className="p-1.5 rounded-lg text-[#5f6368] hover:bg-[#ea4335]/10 hover:text-[#ea4335] transition-colors"
                         title="Delete rule"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -1282,7 +1282,7 @@ export function InboxView({ userRole, initialThreads }: {
                     <span className="text-xs font-semibold text-[#202124] truncate flex-1">{s.subject}</span>
                     <button
                       onClick={() => void handleCancelScheduled(s.id)}
-                      className="hidden group-hover:flex p-1 rounded hover:bg-[#ff4d6d]/10 text-[#5f6368] hover:text-[#ff4d6d] transition-colors"
+                      className="hidden group-hover:flex p-1 rounded hover:bg-[#ea4335]/10 text-[#5f6368] hover:text-[#ea4335] transition-colors"
                       title="Cancel scheduled send"
                     >
                       <X className="w-3 h-3" />
@@ -1328,7 +1328,7 @@ export function InboxView({ userRole, initialThreads }: {
                         toast.success("Draft deleted");
                       }).catch(() => toast.error("Failed to delete draft"));
                     }}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 hidden group-hover:flex p-1.5 rounded hover:bg-[#ff4d6d]/10 text-[#5f6368] hover:text-[#ff4d6d] transition-colors"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 hidden group-hover:flex p-1.5 rounded hover:bg-[#ea4335]/10 text-[#5f6368] hover:text-[#ea4335] transition-colors"
                     title="Delete draft"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -1346,7 +1346,7 @@ export function InboxView({ userRole, initialThreads }: {
             ) : (
               sentLogs.map(log => {
                 const statusColor = log.status === "DELIVERED" || log.status === "SENT"
-                  ? "text-[#06d6a0]" : log.status === "FAILED" ? "text-[#ff4d6d]" : "text-amber-400";
+                  ? "text-[#0f9d58]" : log.status === "FAILED" ? "text-[#ea4335]" : "text-amber-400";
                 const displayName = log.contact?.name || log.recipient;
                 const member = memberMap[log.recipient.toLowerCase()];
                 return (
@@ -1375,7 +1375,7 @@ export function InboxView({ userRole, initialThreads }: {
                         )}
                         <div className="flex items-center gap-2 mt-1">
                           {log.isInternalThread
-                            ? <span className="text-[10px] font-semibold text-[#06d6a0]">✓ Delivered</span>
+                            ? <span className="text-[10px] font-semibold text-[#0f9d58]">✓ Delivered</span>
                             : <span className={`text-[10px] font-semibold ${statusColor}`}>{log.status}</span>
                           }
                         </div>
@@ -1467,7 +1467,7 @@ export function InboxView({ userRole, initialThreads }: {
                       </button>
                       <button
                         onClick={(e) => handleDelete(thread.id, e)}
-                        className="p-1.5 text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#ff4d6d] rounded-full transition-colors"
+                        className="p-1.5 text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#ea4335] rounded-full transition-colors"
                         title="Trash"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -1619,13 +1619,13 @@ export function InboxView({ userRole, initialThreads }: {
               const ext = isExternalSender(firstMsg.from);
               const fromDomain = firstMsg.from.split("@")[1] ?? "";
               return (
-                <div className={`flex items-center gap-3 px-5 py-1.5 text-[11px] border-b ${ext ? "bg-[#ffd166]/[0.04] border-[#ffd166]/15" : "bg-transparent border-[#e8eaed]"}`}>
+                <div className={`flex items-center gap-3 px-5 py-1.5 text-[11px] border-b ${ext ? "bg-[#b06000]/[0.04] border-[#b06000]/15" : "bg-transparent border-[#e8eaed]"}`}>
                   {ext ? (
-                    <span className="flex items-center gap-1 font-medium text-[#ffd166]">
+                    <span className="flex items-center gap-1 font-medium text-[#b06000]">
                       <Globe className="w-2.5 h-2.5" /> External sender
                     </span>
                   ) : (
-                    <span className="flex items-center gap-1 font-medium text-[#06d6a0]">
+                    <span className="flex items-center gap-1 font-medium text-[#0f9d58]">
                       <ShieldCheck className="w-2.5 h-2.5" /> Internal
                     </span>
                   )}
@@ -1738,12 +1738,12 @@ export function InboxView({ userRole, initialThreads }: {
 
                   <div className="px-5 py-4">
                     {msg.threatScan && msg.threatScan.riskScore > 60 && (
-                      <div className="mb-4 p-3 bg-[#ff4d6d]/10 border border-[#ff4d6d]/30 rounded-xl flex items-start gap-3">
-                        <ShieldAlert className="w-4 h-4 text-[#ff4d6d] flex-shrink-0 mt-0.5" />
+                      <div className="mb-4 p-3 bg-[#ea4335]/10 border border-[#ea4335]/30 rounded-xl flex items-start gap-3">
+                        <ShieldAlert className="w-4 h-4 text-[#ea4335] flex-shrink-0 mt-0.5" />
                         <div>
-                          <p className="text-sm font-semibold text-[#ff4d6d]">Phishing Warning</p>
-                          <p className="text-xs text-[#ff4d6d]/80 mt-0.5">This email shows strong indicators of a phishing attempt. Do not click links or open attachments.</p>
-                          <ul className="mt-1.5 list-disc list-inside text-[11px] text-[#ff4d6d]/70 space-y-0.5">
+                          <p className="text-sm font-semibold text-[#ea4335]">Phishing Warning</p>
+                          <p className="text-xs text-[#ea4335]/80 mt-0.5">This email shows strong indicators of a phishing attempt. Do not click links or open attachments.</p>
+                          <ul className="mt-1.5 list-disc list-inside text-[11px] text-[#ea4335]/70 space-y-0.5">
                             {msg.threatScan.findings.map((f, i) => <li key={i}>{f}</li>)}
                           </ul>
                         </div>
@@ -1765,14 +1765,14 @@ export function InboxView({ userRole, initialThreads }: {
                       <div className="mb-4 p-3 bg-[#1a56db]/10 border border-[#1a56db]/30 rounded-xl flex items-start gap-3">
                         <Info className="w-4 h-4 text-[#1a56db] flex-shrink-0 mt-0.5" />
                         <div>
-                          <p className="text-sm font-semibold text-[#7dd8f5]">Security Notice</p>
+                          <p className="text-sm font-semibold text-[#1a56db]">Security Notice</p>
                           <p className="text-xs text-[#1a56db]/80 mt-0.5">Minor anomalies detected. Review the sender and content before responding.</p>
                         </div>
                       </div>
                     )}
 
                     {msg.htmlBody ? (
-                      <div className="prose prose-sm prose-invert max-w-none prose-a:text-[#1a56db]" dangerouslySetInnerHTML={{ __html: sanitizeHtml(msg.htmlBody) }} />
+                      <div className="prose prose-sm max-w-none text-[#202124] prose-a:text-[#1a56db]" dangerouslySetInnerHTML={{ __html: sanitizeHtml(msg.htmlBody) }} />
                     ) : (
                       <p className="text-sm text-[#202124] whitespace-pre-wrap leading-relaxed">{msg.textBody}</p>
                     )}
@@ -1796,17 +1796,17 @@ export function InboxView({ userRole, initialThreads }: {
                             const inner = (
                               <>
                                 {isRisky ? (
-                                  <AlertCircle className="w-4 h-4 text-[#ff4d6d] flex-shrink-0" />
+                                  <AlertCircle className="w-4 h-4 text-[#ea4335] flex-shrink-0" />
                                 ) : hasFile ? (
                                   <ChevronRight className="w-4 h-4 text-[#1a56db] group-hover:translate-x-0.5 transition-transform" />
                                 ) : (
                                   <ChevronRight className="w-4 h-4 text-[#80868b] flex-shrink-0" />
                                 )}
                                 <div className="min-w-0">
-                                  <p className={`text-xs font-medium truncate max-w-[160px] ${isRisky ? "text-[#ff4d6d]" : hasFile ? "text-[#202124]" : "text-[#80868b]"}`}>
+                                  <p className={`text-xs font-medium truncate max-w-[160px] ${isRisky ? "text-[#ea4335]" : hasFile ? "text-[#202124]" : "text-[#80868b]"}`}>
                                     {att.filename}
                                   </p>
-                                  <p className={`text-[10px] ${isRisky ? "text-[#ff4d6d] font-medium" : "text-[#80868b]"}`}>
+                                  <p className={`text-[10px] ${isRisky ? "text-[#ea4335] font-medium" : "text-[#80868b]"}`}>
                                     {isRisky ? "Potentially dangerous" : !hasFile ? "Not stored" : att.mimeType.split("/")[1]?.toUpperCase()}
                                   </p>
                                 </div>
@@ -1815,7 +1815,7 @@ export function InboxView({ userRole, initialThreads }: {
 
                             const baseClass = `border rounded-lg px-3 py-2 flex items-center gap-2 text-sm transition-colors group`;
                             const colorClass = isRisky
-                              ? "bg-[#ff4d6d]/10 border-[#ff4d6d]/30 hover:bg-[#ff4d6d]/20"
+                              ? "bg-[#ea4335]/10 border-[#ea4335]/30 hover:bg-[#ea4335]/20"
                               : hasFile
                               ? "bg-white border-[#e8eaed] hover:bg-[#f1f3f4] cursor-pointer"
                               : "bg-[#f8f9fa] border-[#e8eaed] cursor-not-allowed opacity-60";

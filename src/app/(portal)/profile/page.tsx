@@ -49,7 +49,7 @@ export default async function ProfilePage() {
                 <h1 className="text-2xl font-semibold text-[#202124]">Welcome, {currentUser!.fullName}</h1>
                 <p className="mt-2 text-sm text-[#5f6368]">{currentUser!.email}</p>
               </div>
-              <div className="rounded-md bg-[#1a56db]/10 px-4 py-3 text-sm text-[#7dd8f5]">
+              <div className="rounded-md bg-[#1a56db]/10 px-4 py-3 text-sm text-[#1a56db]">
                 {roleLabels[currentUser!.role]} access
               </div>
             </div>
@@ -80,7 +80,7 @@ export default async function ProfilePage() {
               <p className="text-sm text-[#5f6368] mt-2">A central place to manage your profile protections and session security.</p>
               <div className="mt-6 grid gap-4">
                 <div className="rounded-lg bg-[#1a56db]/10 p-4">
-                  <p className="text-sm text-[#7dd8f5]">Account verified</p>
+                  <p className="text-sm text-[#1a56db]">Account verified</p>
                 </div>
                 <div className="rounded-lg bg-white p-4">
                   <p className="text-sm text-[#5f6368]">Enterprise monitoring is enabled for your session.</p>

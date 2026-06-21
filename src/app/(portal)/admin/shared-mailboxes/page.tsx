@@ -78,13 +78,13 @@ function AvatarStack({ members, max = 3 }: { members: { id: string; fullName: st
         <div
           key={m.id}
           title={m.fullName}
-          className={`w-7 h-7 rounded-full border-2 border-[#1b1f2e] flex items-center justify-center text-[10px] font-semibold text-white ${avatarColor(m.id)}`}
+          className={`w-7 h-7 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-semibold text-white ${avatarColor(m.id)}`}
         >
           {initials(m.fullName)}
         </div>
       ))}
       {overflow > 0 && (
-        <div className="w-7 h-7 rounded-full border-2 border-[#1b1f2e] bg-[#2a3044] flex items-center justify-center text-[10px] font-medium text-[#5f6368]">
+        <div className="w-7 h-7 rounded-full border-2 border-white bg-[#f1f3f4] flex items-center justify-center text-[10px] font-medium text-[#5f6368]">
           +{overflow}
         </div>
       )}

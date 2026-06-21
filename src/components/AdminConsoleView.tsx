@@ -112,7 +112,7 @@ type SuppressionEntry = {
 };
 
 const ROLE_COLORS: Record<string, string> = {
-  ADMIN: "bg-[#1a56db]/10 text-[#7dd8f5] border-[#1a56db]/20",
+  ADMIN: "bg-[#1a56db]/10 text-[#1a56db] border-[#1a56db]/20",
   CEO: "bg-purple-500/10 text-purple-300 border-purple-500/20",
   CISO: "bg-orange-500/10 text-orange-300 border-orange-500/20",
   MARKETING: "bg-[#f1f3f4] text-[#5f6368] border-[#e8eaed]",
@@ -122,21 +122,21 @@ const ROLE_COLORS: Record<string, string> = {
 
 const REASON_COLORS: Record<string, string> = {
   BOUNCE: "bg-orange-500/10 text-orange-300 border-orange-500/20",
-  SPAM: "bg-[#ff4d6d]/10 text-[#ff4d6d] border-[#ff4d6d]/20",
+  SPAM: "bg-[#ea4335]/10 text-[#ea4335] border-[#ea4335]/20",
   MANUAL: "bg-[#f1f3f4] text-[#5f6368] border-[#e8eaed]",
 };
 
 const ACTION_COLORS: Record<string, string> = {
-  LOGIN: "bg-[#f8fafd]/10 text-[#06d6a0] border-[#06d6a0]/20",
+  LOGIN: "bg-[#0f9d58]/10 text-[#0f9d58] border-[#0f9d58]/20",
   LOGOUT: "bg-[#f1f3f4] text-[#5f6368] border-[#e8eaed]",
   EMAIL_QUEUED: "bg-[#1a56db]/10 text-[#1a56db] border-[#1a56db]/20",
 };
 
 const SEVERITY_COLORS: Record<string, string> = {
-  CRITICAL: "text-[#ff4d6d] bg-[#ff4d6d]/10",
+  CRITICAL: "text-[#ea4335] bg-[#ea4335]/10",
   HIGH: "text-orange-300 bg-orange-500/10",
   MEDIUM: "text-yellow-300 bg-yellow-500/10",
-  LOW: "text-[#06d6a0] bg-[#f8fafd]/10",
+  LOW: "text-[#0f9d58] bg-[#0f9d58]/10",
 };
 
 function SkeletonRow({ cols }: { cols: number }) {
@@ -162,7 +162,7 @@ function EmptyState({ icon: Icon, message }: { icon: React.ElementType; message:
 
 function ErrorState({ message }: { message: string }) {
   return (
-    <div className="flex items-center gap-3 p-4 bg-[#ff4d6d]/10 border border-[#ff4d6d]/30 rounded-xl text-sm text-[#ff4d6d] m-4">
+    <div className="flex items-center gap-3 p-4 bg-[#ea4335]/10 border border-[#ea4335]/30 rounded-xl text-sm text-[#ea4335] m-4">
       <AlertCircle className="w-4 h-4 flex-shrink-0" />
       {message}
     </div>
@@ -260,7 +260,7 @@ function OverviewTab() {
           label="Active Users"
           value={stats.users.active}
           icon={TrendingUp}
-          iconColor="bg-[#f8fafd]/10 text-[#06d6a0]"
+          iconColor="bg-[#0f9d58]/10 text-[#0f9d58]"
         />
         <StatCard
           label="Total Mailboxes"
@@ -272,7 +272,7 @@ function OverviewTab() {
           label="Emails Today"
           value={stats.emails.today}
           icon={BarChart3}
-          iconColor="bg-[#1a56db]/10 text-[#7dd8f5]"
+          iconColor="bg-[#1a56db]/10 text-[#1a56db]"
           sub={`${stats.emails.total} total`}
         />
         <StatCard
@@ -285,7 +285,7 @@ function OverviewTab() {
           label="Open Incidents"
           value={stats.security.openIncidents}
           icon={ShieldAlert}
-          iconColor="bg-[#ff4d6d]/10 text-[#ff4d6d]"
+          iconColor="bg-[#ea4335]/10 text-[#ea4335]"
         />
         <StatCard
           label="DLP Violations"
@@ -303,7 +303,7 @@ function OverviewTab() {
           label="Drive Files"
           value={stats.drive.files}
           icon={HardDrive}
-          iconColor="bg-[#f8fafd]/10 text-[#06d6a0]"
+          iconColor="bg-[#0f9d58]/10 text-[#0f9d58]"
         />
       </div>
 
@@ -321,11 +321,11 @@ function OverviewTab() {
                 <p className="text-xs font-medium text-[#5f6368] mt-1">Sent</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-semibold text-[#06d6a0]">{es.delivered.toLocaleString()}</p>
+                <p className="text-2xl font-semibold text-[#0f9d58]">{es.delivered.toLocaleString()}</p>
                 <p className="text-xs font-medium text-[#5f6368] mt-1">Delivered</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-semibold text-[#ff4d6d]">{es.bounced.toLocaleString()}</p>
+                <p className="text-2xl font-semibold text-[#ea4335]">{es.bounced.toLocaleString()}</p>
                 <p className="text-xs font-medium text-[#5f6368] mt-1">Bounced</p>
               </div>
               <div className="text-center">
@@ -334,8 +334,8 @@ function OverviewTab() {
               </div>
             </div>
             <div className="flex gap-4">
-              <RateBar label="Delivery Rate" rate={es.deliveryRate} color="text-[#06d6a0]" />
-              <RateBar label="Bounce Rate" rate={es.bounceRate} color="text-[#ff4d6d]" />
+              <RateBar label="Delivery Rate" rate={es.deliveryRate} color="text-[#0f9d58]" />
+              <RateBar label="Bounce Rate" rate={es.bounceRate} color="text-[#ea4335]" />
               <RateBar label="Open Rate" rate={es.openRate} color="text-[#1a56db]" />
             </div>
           </div>
@@ -454,7 +454,7 @@ function CsvImportModal({ onClose, onImported }: { onClose: () => void; onImport
                 className="w-full text-xs font-mono border border-[#e8eaed] bg-white text-[#202124] rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-[#1a56db] outline-none resize-none placeholder:text-[#80868b]"
               />
 
-              {parseError && <p className="text-sm text-[#ff4d6d]">{parseError}</p>}
+              {parseError && <p className="text-sm text-[#ea4335]">{parseError}</p>}
 
               {parsed.length > 0 && (
                 <div>
@@ -499,7 +499,7 @@ function CsvImportModal({ onClose, onImported }: { onClose: () => void; onImport
                   </thead>
                   <tbody>
                     {results.map((r, i) => (
-                      <tr key={i} className={r.status === "error" ? "bg-[#ff4d6d]/10 text-[#ff4d6d]" : r.status === "skipped" ? "bg-amber-500/10 text-amber-300" : "bg-[#f8fafd]/10 text-[#06d6a0]"}>
+                      <tr key={i} className={r.status === "error" ? "bg-[#ea4335]/10 text-[#ea4335]" : r.status === "skipped" ? "bg-amber-500/10 text-amber-300" : "bg-[#0f9d58]/10 text-[#0f9d58]"}>
                         <td className="px-3 py-1.5 font-mono">{r.email}</td>
                         <td className="px-3 py-1.5">
                           <span className={`inline-flex items-center gap-1 font-semibold`}>
@@ -615,7 +615,7 @@ function UsersTab() {
       u.email?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const avatarColors = ["bg-[#1a56db]/20", "bg-purple-500/20", "bg-[#f8fafd]/20", "bg-[#ff4d6d]/20"];
+  const avatarColors = ["bg-[#1a56db]/20", "bg-purple-500/20", "bg-[#f8fafd]/20", "bg-[#ea4335]/20"];
 
   return (
     <div className="flex h-full">
@@ -729,13 +729,13 @@ function UsersTab() {
                       </td>
                       <td className="px-4 py-3">
                         {u.isActive ? (
-                          <span className="flex items-center gap-1.5 text-[#06d6a0] text-xs font-medium">
+                          <span className="flex items-center gap-1.5 text-[#0f9d58] text-xs font-medium">
                             <span className="w-2 h-2 rounded-full bg-[#f8fafd]" />
                             Active
                           </span>
                         ) : (
-                          <span className="flex items-center gap-1.5 text-[#ff4d6d] text-xs font-medium">
-                            <span className="w-2 h-2 rounded-full bg-[#ff4d6d]" />
+                          <span className="flex items-center gap-1.5 text-[#ea4335] text-xs font-medium">
+                            <span className="w-2 h-2 rounded-full bg-[#ea4335]" />
                             Suspended
                           </span>
                         )}
@@ -792,7 +792,7 @@ function UsersTab() {
             <div className="space-y-1">
               {([
                 ["Role", <span key="role" className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border ${ROLE_COLORS[selectedUser.role] ?? "bg-[#f1f3f4] text-[#5f6368] border-[#e8eaed]"}`}>{selectedUser.role}</span>],
-                ["Status", <span key="status" className={selectedUser.isActive ? "text-[#06d6a0] font-semibold" : "text-[#ff4d6d] font-semibold"}>{selectedUser.isActive ? "Active" : "Suspended"}</span>],
+                ["Status", <span key="status" className={selectedUser.isActive ? "text-[#0f9d58] font-semibold" : "text-[#ea4335] font-semibold"}>{selectedUser.isActive ? "Active" : "Suspended"}</span>],
                 ["Joined", format(parseISO(selectedUser.createdAt), "MMM d, yyyy")],
                 ["Last Login", selectedUser.lastLogin ? format(parseISO(selectedUser.lastLogin), "MMM d, yyyy HH:mm") : "Never"],
               ] as [string, React.ReactNode][]).map(([label, val]) => (
@@ -957,8 +957,8 @@ function MailboxesTab() {
 
   const typeColor = (type: string) => {
     if (type === "No-Reply") return "bg-[#f1f3f4] text-[#5f6368] border-[#e8eaed]";
-    if (type === "Shared") return "bg-[#1a56db]/10 text-[#7dd8f5] border-[#1a56db]/20";
-    return "bg-[#f8fafd]/10 text-[#06d6a0] border-[#06d6a0]/20";
+    if (type === "Shared") return "bg-[#1a56db]/10 text-[#1a56db] border-[#1a56db]/20";
+    return "bg-[#0f9d58]/10 text-[#0f9d58] border-[#0f9d58]/20";
   };
 
   return (
@@ -1020,7 +1020,7 @@ function MailboxesTab() {
                           <button
                             onClick={() => void handleDelete(m.id)}
                             disabled={deletingId === m.id}
-                            className="px-2.5 py-1 bg-[#ff4d6d] text-white rounded-md text-xs font-semibold hover:bg-[#ff6b84] disabled:opacity-50"
+                            className="px-2.5 py-1 bg-[#ea4335] text-white rounded-md text-xs font-semibold hover:bg-[#ff6b84] disabled:opacity-50"
                           >
                             {deletingId === m.id ? <Loader2 className="w-3 h-3 animate-spin" /> : "Yes"}
                           </button>
@@ -1398,7 +1398,7 @@ function SuppressionTab() {
                     <button
                       onClick={() => void handleRemove(entry.id)}
                       disabled={deletingId === entry.id}
-                      className="flex items-center gap-1.5 px-2.5 py-1 text-[#ff4d6d] hover:bg-[#ff4d6d]/10 rounded-md text-xs font-semibold transition-colors disabled:opacity-50 ml-auto"
+                      className="flex items-center gap-1.5 px-2.5 py-1 text-[#ea4335] hover:bg-[#ea4335]/10 rounded-md text-xs font-semibold transition-colors disabled:opacity-50 ml-auto"
                     >
                       {deletingId === entry.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
                       Remove
@@ -1454,17 +1454,17 @@ function SecurityTab() {
   return (
     <div className="p-6 space-y-6">
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-[#ff4d6d]/10 border border-[#ff4d6d]/20 rounded-xl p-4">
+        <div className="bg-[#ea4335]/10 border border-[#ea4335]/20 rounded-xl p-4">
           <p className="text-sm font-medium text-[#5f6368]">Open Incidents</p>
           <p className="text-2xl font-semibold text-[#202124] mt-1">{openIncidents}</p>
           <p className="text-xs text-[#5f6368] mt-1">Needs attention</p>
         </div>
-        <div className="bg-[#ff4d6d]/5 border border-[#ff4d6d]/10 rounded-xl p-4">
+        <div className="bg-[#ea4335]/5 border border-[#ea4335]/10 rounded-xl p-4">
           <p className="text-sm font-medium text-[#5f6368]">DLP Violations</p>
           <p className="text-2xl font-semibold text-[#202124] mt-1">{stats.dlpViolations}</p>
           <p className="text-xs text-[#5f6368] mt-1">Policy breaches</p>
         </div>
-        <div className="bg-[#ff4d6d]/5 border border-[#ff4d6d]/10 rounded-xl p-4">
+        <div className="bg-[#ea4335]/5 border border-[#ea4335]/10 rounded-xl p-4">
           <p className="text-sm font-medium text-[#5f6368]">High-Risk Threats</p>
           <p className="text-2xl font-semibold text-[#202124] mt-1">{stats.highRiskThreats}</p>
           <p className="text-xs text-[#5f6368] mt-1">Score &ge; 50</p>
@@ -1482,7 +1482,7 @@ function SecurityTab() {
             {(() => {
               const maxVal = Math.max(...stats.incidents.bySeverity.map((s) => s._count), 1);
               const colors: Record<string, string> = {
-                CRITICAL: "bg-[#ff4d6d]", HIGH: "bg-orange-500",
+                CRITICAL: "bg-[#ea4335]", HIGH: "bg-orange-500",
                 MEDIUM: "bg-yellow-500", LOW: "bg-[#1a56db]",
               };
               return stats.incidents.bySeverity.map((s) => (
@@ -1675,7 +1675,7 @@ function LegalHoldTab() {
                     <td className="px-4 py-3">
                       <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border ${
                         h.status === "Active"
-                          ? "bg-[#ff4d6d]/10 text-[#ff4d6d] border-[#ff4d6d]/20"
+                          ? "bg-[#ea4335]/10 text-[#ea4335] border-[#ea4335]/20"
                           : "bg-[#f1f3f4] text-[#5f6368] border-[#e8eaed]"
                       }`}>
                         {h.status}
@@ -1729,7 +1729,7 @@ function LegalHoldTab() {
               </div>
               <div>
                 <label className="block text-xs font-semibold text-[#5f6368] mb-1.5">
-                  Reason <span className="text-[#ff4d6d]">*</span>
+                  Reason <span className="text-[#ea4335]">*</span>
                 </label>
                 <textarea
                   value={reason}
@@ -1750,7 +1750,7 @@ function LegalHoldTab() {
               <button
                 onClick={() => void placeHold()}
                 disabled={placing}
-                className="flex-1 flex items-center justify-center gap-2 bg-[#ff4d6d] text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-[#ff6b84] disabled:opacity-50"
+                className="flex-1 flex items-center justify-center gap-2 bg-[#ea4335] text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-[#ff6b84] disabled:opacity-50"
               >
                 {placing && <Loader2 className="w-4 h-4 animate-spin" />}
                 Place Hold
@@ -1812,8 +1812,8 @@ function GdprExportTab() {
 
   return (
     <div className="p-6 max-w-lg">
-      <div className="bg-[#ff4d6d]/5 border border-[#ff4d6d]/20 rounded-xl p-4 mb-6 flex items-start gap-3">
-        <AlertTriangle className="w-4 h-4 text-[#ff4d6d] flex-shrink-0 mt-0.5" />
+      <div className="bg-[#ea4335]/5 border border-[#ea4335]/20 rounded-xl p-4 mb-6 flex items-start gap-3">
+        <AlertTriangle className="w-4 h-4 text-[#ea4335] flex-shrink-0 mt-0.5" />
         <p className="text-sm text-[#5f6368]">
           GDPR data exports contain sensitive personal data. Only perform exports for legitimate legal requests and log all access appropriately.
         </p>
@@ -1939,9 +1939,9 @@ function SecurityStatsTab() {
     <div className="p-6 space-y-6">
       {/* Stat cards */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="bg-[#ff4d6d]/10 border border-[#ff4d6d]/30 rounded-xl p-4">
+        <div className="bg-[#ea4335]/10 border border-[#ea4335]/30 rounded-xl p-4">
           <p className="text-sm font-medium text-[#5f6368]">Failed Logins (24h)</p>
-          <p className="text-2xl font-semibold text-[#ff4d6d] mt-1">{stats.failedLogins24h.toLocaleString()}</p>
+          <p className="text-2xl font-semibold text-[#ea4335] mt-1">{stats.failedLogins24h.toLocaleString()}</p>
           <p className="text-xs text-[#5f6368] mt-1">Unsuccessful attempts</p>
         </div>
         <div className="bg-amber-400/10 border border-amber-400/30 rounded-xl p-4">
@@ -1991,15 +1991,15 @@ function SecurityStatsTab() {
       </div>
 
       {/* Login Anomalies — brute force candidates */}
-      <div className="bg-[#ff4d6d]/10 border border-[#ff4d6d]/30 rounded-xl overflow-hidden">
-        <div className="px-5 py-4 border-b border-[#ff4d6d]/20 flex items-center gap-2">
-          <ShieldAlert className="h-4 w-4 text-[#ff4d6d] flex-shrink-0" />
+      <div className="bg-[#ea4335]/10 border border-[#ea4335]/30 rounded-xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-[#ea4335]/20 flex items-center gap-2">
+          <ShieldAlert className="h-4 w-4 text-[#ea4335] flex-shrink-0" />
           <div>
             <h3 className="font-semibold text-[#202124] text-sm">Login Anomalies — Brute Force Candidates</h3>
             <p className="text-xs text-[#5f6368] mt-0.5">Accounts with 5+ failed attempts in the last 24 hours and no successful login</p>
           </div>
           {stats.loginAnomalies.length > 0 && (
-            <span className="ml-auto bg-[#ff4d6d]/20 text-[#ff4d6d] text-xs font-semibold px-2 py-0.5 rounded-full">
+            <span className="ml-auto bg-[#ea4335]/20 text-[#ea4335] text-xs font-semibold px-2 py-0.5 rounded-full">
               {stats.loginAnomalies.length} flagged
             </span>
           )}
@@ -2007,7 +2007,7 @@ function SecurityStatsTab() {
         {stats.loginAnomalies.length === 0 ? (
           <EmptyState icon={ShieldAlert} message="No brute-force patterns detected in last 24h." />
         ) : (
-          <div className="divide-y divide-[#ff4d6d]/10">
+          <div className="divide-y divide-[#ea4335]/10">
             {stats.loginAnomalies.map((row) => {
               const first = parseISO(row.firstAttempt);
               const last = parseISO(row.lastAttempt);
@@ -2015,7 +2015,7 @@ function SecurityStatsTab() {
               const rate = (row.count / windowMins).toFixed(1);
               return (
                 <div key={row.email} className="flex items-start gap-4 px-5 py-3">
-                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#ff4d6d]/15 text-[#ff4d6d]">
+                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#ea4335]/15 text-[#ea4335]">
                     <AlertTriangle className="h-4 w-4" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -2028,7 +2028,7 @@ function SecurityStatsTab() {
                       </span>
                     </div>
                   </div>
-                  <span className="flex-shrink-0 mt-1 inline-block bg-[#ff4d6d] text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">
+                  <span className="flex-shrink-0 mt-1 inline-block bg-[#ea4335] text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">
                     Alert
                   </span>
                 </div>
@@ -2129,7 +2129,7 @@ type RetentionPolicy = {
 const MODULES = ["Mail", "Chat", "Drive", "Calendar"] as const;
 const MODULE_COLORS: Record<string, string> = {
   Mail: "bg-[#1a56db]/15 text-[#1a56db]",
-  Chat: "bg-[#f8fafd]/15 text-[#06d6a0]",
+  Chat: "bg-[#f8fafd]/15 text-[#0f9d58]",
   Drive: "bg-amber-400/15 text-amber-400",
   Calendar: "bg-violet-400/15 text-violet-400",
 };
@@ -2314,7 +2314,7 @@ function RetentionTab() {
               <div className="flex items-center gap-2 flex-shrink-0">
                 <button
                   onClick={() => handleToggle(p)}
-                  className={`flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${p.active ? "border-[#06d6a0]/40 text-[#06d6a0] bg-[#f8fafd]/10" : "border-[#e8eaed] text-[#5f6368] bg-[#f1f3f4]"}`}
+                  className={`flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${p.active ? "border-[#0f9d58]/40 text-[#0f9d58] bg-[#0f9d58]/10" : "border-[#e8eaed] text-[#5f6368] bg-[#f1f3f4]"}`}
                   title={p.active ? "Disable" : "Enable"}
                 >
                   {p.active ? <ToggleRight className="w-3.5 h-3.5" /> : <ToggleLeft className="w-3.5 h-3.5" />}

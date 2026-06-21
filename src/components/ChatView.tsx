@@ -29,11 +29,13 @@ import {
   Mic,
   Square,
   Video,
+  Phone,
   Megaphone,
   Paperclip,
 } from "lucide-react";
 import { formatDistanceToNow, isToday, isYesterday, format } from "date-fns";
 import { toast } from "sonner";
+import { useCall } from "./call/CallProvider";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -199,7 +201,7 @@ function EmojiPicker({
               onClick={() => setActiveCategory(i)}
               className={`flex-shrink-0 px-3 py-1.5 text-[10px] font-semibold transition-colors ${
                 activeCategory === i
-                  ? "text-[#7dd8f5] border-b-2 border-[#7dd8f5]"
+                  ? "text-[#1a56db] border-b-2 border-[#1a56db]"
                   : "text-[#5f6368] hover:text-[#202124]"
               }`}
             >
@@ -253,8 +255,8 @@ function Avatar({ name, size = "sm" }: { name: string; size?: "sm" | "md" }) {
   const colors = [
     "bg-[#1a56db]/20",
     "bg-[#f8fafd]/20",
-    "bg-[#7dd8f5]/20",
-    "bg-[#ff4d6d]/20",
+    "bg-[#1a56db]/20",
+    "bg-[#ea4335]/20",
     "bg-[#1a56db]/30",
   ];
   const color = colors[name.charCodeAt(0) % colors.length];
@@ -262,7 +264,7 @@ function Avatar({ name, size = "sm" }: { name: string; size?: "sm" | "md" }) {
 
   return (
     <div
-      className={`${sz} rounded-full ${color} flex items-center justify-center text-[#7dd8f5] font-semibold flex-shrink-0`}
+      className={`${sz} rounded-full ${color} flex items-center justify-center text-[#1a56db] font-semibold flex-shrink-0`}
     >
       {name.charAt(0).toUpperCase()}
     </div>
@@ -278,7 +280,7 @@ function renderWithMentions(content: string, currentUserId: string, memberNames:
       const name = part.slice(1).trim().toLowerCase();
       if (name === "here" || name === "channel") {
         return (
-          <span key={i} className="bg-[#ff4d6d]/15 text-[#ff9db0] font-semibold rounded px-0.5">
+          <span key={i} className="bg-[#ea4335]/15 text-[#ea4335] font-semibold rounded px-0.5">
             {part}
           </span>
         );
@@ -286,7 +288,7 @@ function renderWithMentions(content: string, currentUserId: string, memberNames:
       const isMention = memberNames.some(m => m.toLowerCase().startsWith(name));
       if (isMention) {
         return (
-          <span key={i} className="bg-[#1a56db]/10 text-[#7dd8f5] font-semibold rounded px-0.5">
+          <span key={i} className="bg-[#1a56db]/10 text-[#1a56db] font-semibold rounded px-0.5">
             {part}
           </span>
         );
@@ -321,7 +323,7 @@ function ReactionPill({
         onMouseLeave={() => setHovered(false)}
         className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-colors ${
           mine
-            ? "bg-[#1a56db]/10 border-[#1a56db] text-[#7dd8f5]"
+            ? "bg-[#1a56db]/10 border-[#1a56db] text-[#1a56db]"
             : "bg-white border-[#e8eaed] text-[#5f6368] hover:bg-[#1a56db]/10"
         }`}
       >
@@ -333,7 +335,7 @@ function ReactionPill({
           <div className="bg-white text-[#202124] text-[10px] rounded-lg px-2.5 py-1.5 whitespace-nowrap shadow-lg max-w-[200px] border border-[#e8eaed]">
             <div className="font-semibold mb-0.5 text-[#80868b]">Reacted by:</div>
             <div className="text-[#202124] truncate">{reactors.join(", ")}</div>
-            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#0f1321]" />
+            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#e8eaed]" />
           </div>
         </div>
       )}
@@ -399,7 +401,7 @@ function FileAttachmentCard({ content }: { content: string }) {
     // All other files → download card
     return (
       <div className="mt-1.5 inline-flex items-center gap-3 bg-white border border-[#e8eaed] rounded-xl px-3 py-2.5 max-w-xs">
-        <FileText className="w-7 h-7 text-[#7dd8f5] flex-shrink-0" />
+        <FileText className="w-7 h-7 text-[#1a56db] flex-shrink-0" />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-[#202124] truncate">{data.name}</p>
           <p className="text-[10px] text-[#5f6368]">{formatFileSize(data.size)} · {data.mimeType.split("/")[1]?.toUpperCase()}</p>
@@ -409,7 +411,7 @@ function FileAttachmentCard({ content }: { content: string }) {
             href={data.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[#7dd8f5] hover:text-[#1a56db] flex-shrink-0"
+            className="text-[#1a56db] hover:text-[#1a56db] flex-shrink-0"
             title="Download"
           >
             <Download className="w-4 h-4" />
@@ -430,11 +432,11 @@ function BotResponseCard({ content }: { content: string }) {
     const data = JSON.parse(jsonStr) as { from: string; text: string };
     return (
       <div className="mt-1 flex items-start gap-3">
-        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#7dd8f5]/10 border border-[#7dd8f5]/20">
-          <Sparkles className="h-4 w-4 text-[#7dd8f5]" />
+        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#1a56db]/10 border border-[#1a56db]/20">
+          <Sparkles className="h-4 w-4 text-[#1a56db]" />
         </div>
         <div className="flex-1 min-w-0 bg-[#f1f3f4] border border-[#e8eaed] rounded-xl p-4 max-w-xl">
-          <p className="text-[#7dd8f5] font-semibold text-sm mb-1">{data.from}</p>
+          <p className="text-[#1a56db] font-semibold text-sm mb-1">{data.from}</p>
           <p className="text-sm text-[#202124] whitespace-pre-wrap break-words leading-relaxed">{data.text}</p>
         </div>
       </div>
@@ -506,22 +508,51 @@ const MessageItem = memo(function MessageItem({
     setEditing(false);
   };
 
+  // System call-log entry (missed / ended) — rendered as a centered pill.
+  if (!isDeleted && msg.content.startsWith("[CALL_LOG] ")) {
+    let log: { status?: string; media?: string } = {};
+    try {
+      log = JSON.parse(msg.content.slice("[CALL_LOG] ".length));
+    } catch {
+      log = {};
+    }
+    const isVideo = log.media === "video";
+    const label =
+      (isVideo ? "Video call" : "Voice call") +
+      (log.status === "ended" ? " ended" : " · Missed");
+    return (
+      <div className="flex items-center justify-center px-6 py-2">
+        <div className="inline-flex items-center gap-2 text-xs text-[#5f6368] bg-[#f1f3f4] border border-[#e8eaed] rounded-full px-3 py-1">
+          {isVideo ? (
+            <Video className="w-3.5 h-3.5 text-[#5f6368]" />
+          ) : (
+            <Phone className="w-3.5 h-3.5 text-[#5f6368]" />
+          )}
+          <span>{label}</span>
+          <span className="text-[#80868b]">
+            {formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true })}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
-      className={`group relative flex gap-3 px-6 py-3 transition-colors ${msg.isUrgent ? "bg-[#ff4d6d]/5 border-l-2 border-[#ff4d6d] hover:bg-[#ff4d6d]/10" : "hover:bg-[#f1f3f4]"}`}
+      className={`group relative flex gap-3 px-6 py-3 transition-colors ${msg.isUrgent ? "bg-[#ea4335]/5 border-l-2 border-[#ea4335] hover:bg-[#ea4335]/10" : "hover:bg-[#f1f3f4]"}`}
       onMouseEnter={() => !isDeleted && setShowActions(true)}
       onMouseLeave={() => {
         if (!showEmojiPicker) setShowActions(false);
       }}
     >
-      <div className="w-8 h-8 rounded-full bg-[#1a56db]/10 text-[#7dd8f5] flex items-center justify-center font-semibold text-sm flex-shrink-0 border border-[#7dd8f5]/20">
+      <div className="w-8 h-8 rounded-full bg-[#1a56db]/10 text-[#1a56db] flex items-center justify-center font-semibold text-sm flex-shrink-0 border border-[#1a56db]/20">
         {msg.user.fullName.charAt(0).toUpperCase()}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline gap-2">
           <span className="font-semibold text-[#202124] text-sm">{msg.user.fullName}</span>
           {msg.isUrgent && (
-            <span className="text-[10px] font-semibold text-[#ff4d6d] bg-[#ff4d6d]/15 px-1.5 py-0.5 rounded-full leading-none">🚨 Urgent</span>
+            <span className="text-[10px] font-semibold text-[#ea4335] bg-[#ea4335]/15 px-1.5 py-0.5 rounded-full leading-none">🚨 Urgent</span>
           )}
           <span className="text-xs text-[#5f6368]">
             {formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true })}
@@ -548,7 +579,7 @@ const MessageItem = memo(function MessageItem({
               className="flex-1 text-sm border border-[#1a56db] rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-[#1a56db] resize-none bg-white text-[#202124]"
               autoFocus
             />
-            <button onClick={saveEdit} className="text-[#06d6a0] hover:text-[#46ffb8] flex-shrink-0">
+            <button onClick={saveEdit} className="text-[#0f9d58] hover:text-[#0c7a43] flex-shrink-0">
               <Check className="w-4 h-4" />
             </button>
             <button onClick={() => setEditing(false)} className="text-[#5f6368] hover:text-[#202124] flex-shrink-0">
@@ -671,7 +702,7 @@ const MessageItem = memo(function MessageItem({
               </button>
               <button
                 onClick={() => onDelete(msg.id)}
-                className="p-1.5 hover:bg-[#ff4d6d]/10 rounded-md text-xs transition-colors text-[#5f6368] hover:text-[#ff4d6d]"
+                className="p-1.5 hover:bg-[#ea4335]/10 rounded-md text-xs transition-colors text-[#5f6368] hover:text-[#ea4335]"
                 title="Delete"
               >
                 <Trash2 className="w-4 h-4" />
@@ -1065,7 +1096,7 @@ function NewGroupDMModal({
               return u ? (
                 <span
                   key={id}
-                  className="flex items-center gap-1 bg-[#1a56db]/10 text-[#7dd8f5] text-xs px-2.5 py-1 rounded-full"
+                  className="flex items-center gap-1 bg-[#1a56db]/10 text-[#1a56db] text-xs px-2.5 py-1 rounded-full"
                 >
                   {u.fullName}
                   <button onClick={() => toggle(id)} className="ml-0.5 opacity-60 hover:opacity-100">
@@ -1165,7 +1196,7 @@ function SummaryModal({
       <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-lg mx-4 border border-[#e8eaed]">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-[#7dd8f5]" />
+            <Sparkles className="w-5 h-5 text-[#1a56db]" />
             <h2 className="text-lg font-semibold text-[#202124]">
               #{channelName} Summary
             </h2>
@@ -1209,7 +1240,7 @@ function SummaryModal({
             <ul className="space-y-1.5">
               {summary.actionItems.map((item, i) => (
                 <li key={i} className="flex items-start gap-2 text-sm text-[#202124]">
-                  <Check className="w-3.5 h-3.5 text-[#06d6a0] mt-0.5 flex-shrink-0" />
+                  <Check className="w-3.5 h-3.5 text-[#0f9d58] mt-0.5 flex-shrink-0" />
                   {item}
                 </li>
               ))}
@@ -1425,7 +1456,7 @@ function AddMembersModal({
                 key={u.id}
                 onClick={() => toggle(u.id)}
                 className={`w-full flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-left transition-colors ${
-                  selected.has(u.id) ? "bg-[#1a56db]/10 text-[#7dd8f5] border border-[#1a56db]/30" : "text-[#202124] hover:bg-[#f1f3f4]"
+                  selected.has(u.id) ? "bg-[#1a56db]/10 text-[#1a56db] border border-[#1a56db]/30" : "text-[#202124] hover:bg-[#f1f3f4]"
                 }`}
               >
                 <div className="w-8 h-8 rounded-full bg-[#f1f3f4] border border-[#e8eaed] flex items-center justify-center text-xs font-semibold text-[#1a56db] flex-shrink-0">
@@ -1531,7 +1562,7 @@ function GifPicker({
             <button
               key={t.id}
               onClick={() => { setTab(t.id); setQuery(""); }}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold transition-colors ${tab === t.id ? "text-[#7dd8f5] border-b-2 border-[#1a56db]" : "text-[#9aa0a6] hover:text-[#5f6368]"}`}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold transition-colors ${tab === t.id ? "text-[#1a56db] border-b-2 border-[#1a56db]" : "text-[#9aa0a6] hover:text-[#5f6368]"}`}
             >
               <span>{t.icon}</span>{t.label}
             </button>
@@ -1559,7 +1590,7 @@ function GifPicker({
               <button
                 key={cat.label}
                 onClick={() => setEmojiCategory(i)}
-                className={`flex-shrink-0 text-[10px] px-2 py-0.5 rounded-full transition-colors ${emojiCategory === i ? "bg-[#1a56db]/20 text-[#7dd8f5]" : "text-[#9aa0a6] hover:text-[#5f6368]"}`}
+                className={`flex-shrink-0 text-[10px] px-2 py-0.5 rounded-full transition-colors ${emojiCategory === i ? "bg-[#1a56db]/20 text-[#1a56db]" : "text-[#9aa0a6] hover:text-[#5f6368]"}`}
               >{cat.label}</button>
             ))}
           </div>
@@ -1727,7 +1758,7 @@ function CommandPalette({
                     >
                       <span className={`text-sm w-5 text-center flex-shrink-0 ${isActive ? "text-[#1a56db]" : "text-[#9aa0a6]"}`}>{item.icon}</span>
                       <span className="flex-1 min-w-0">
-                        <span className={`text-sm font-medium ${isActive ? "text-[#7dd8f5]" : "text-[#202124]"}`}>{item.label}</span>
+                        <span className={`text-sm font-medium ${isActive ? "text-[#1a56db]" : "text-[#202124]"}`}>{item.label}</span>
                         {item.description && (
                           <span className="block text-xs text-[#9aa0a6] truncate">{item.description}</span>
                         )}
@@ -1755,6 +1786,7 @@ function CommandPalette({
 // ─── Main ChatView ────────────────────────────────────────────────────────────
 
 export function ChatView({ currentUserId }: { currentUserId: string }) {
+  const { startCall, busy: callBusy } = useCall();
   const [channels, setChannels] = useState<Channel[]>([]);
   const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -2584,7 +2616,7 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
       <div className="w-64 bg-white border-r border-[#e8eaed] flex flex-col flex-shrink-0">
         <div className="p-4 border-b border-[#e8eaed]">
           <div className="flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-[#7dd8f5]" />
+            <MessageSquare className="w-5 h-5 text-[#1a56db]" />
             <span className="text-[#202124] font-semibold text-sm flex-1">Workspace Chat</span>
             <button
               onClick={() => setShowCommandPalette(true)}
@@ -2679,7 +2711,7 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
                 <div className="absolute inset-4 border-2 border-dashed border-[#1a56db] rounded-2xl bg-[#1a56db]/10" />
                 <div className="relative z-10 text-center">
                   <div className="text-4xl mb-2">📎</div>
-                  <p className="text-lg font-semibold text-[#7dd8f5]">Drop to attach</p>
+                  <p className="text-lg font-semibold text-[#1a56db]">Drop to attach</p>
                   <p className="text-sm text-[#5f6368]">File will be uploaded and shared in this channel</p>
                 </div>
               </div>
@@ -2689,7 +2721,7 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
             {uploadingFile && (
               <div className="absolute inset-0 z-40 flex items-center justify-center bg-white/80">
                 <div className="flex flex-col items-center gap-3">
-                  <Loader2 className="w-8 h-8 animate-spin text-[#7dd8f5]" />
+                  <Loader2 className="w-8 h-8 animate-spin text-[#1a56db]" />
                   <p className="text-sm font-medium text-[#202124]">Uploading file…</p>
                 </div>
               </div>
@@ -2732,7 +2764,7 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
                     className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-[#e8eaed] text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124] disabled:opacity-40 transition-colors"
                     title="AI tools"
                   >
-                    {summarizing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-[#7dd8f5]" />}
+                    {summarizing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-[#1a56db]" />}
                     <span className="hidden sm:inline">{summarizing ? "Thinking…" : "AI"}</span>
                     <ChevronDown className="w-3 h-3" />
                   </button>
@@ -2765,21 +2797,44 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
 
                 {onlineUsers.size > 0 && (
                   <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-[#f8fafd] animate-pulse" />
-                    <span className="text-xs text-[#06d6a0] font-medium">
+                    <span className="w-2 h-2 rounded-full bg-[#0f9d58] animate-pulse" />
+                    <span className="text-xs text-[#0f9d58] font-medium">
                       {onlineUsers.size} online
                     </span>
                   </div>
                 )}
                 {/* Start a call */}
-                <button
-                  onClick={() => { if (selectedChannelId) window.open(`/meet/cybersage-${selectedChannelId}`, "_blank"); }}
-                  title="Start a voice/video call"
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-[#e8eaed] text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124] transition-colors"
-                >
-                  <Video className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Call</span>
-                </button>
+                {selectedChannel?.type === "DIRECT" || selectedChannel?.type === "GROUP" ? (
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => { if (selectedChannelId && selectedChannel) void startCall(selectedChannelId, selectedChannel.name, "audio"); }}
+                      disabled={callBusy}
+                      title={`Voice call ${selectedChannel.name}`}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-[#e8eaed] text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124] disabled:opacity-40 transition-colors"
+                    >
+                      <Phone className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Voice</span>
+                    </button>
+                    <button
+                      onClick={() => { if (selectedChannelId && selectedChannel) void startCall(selectedChannelId, selectedChannel.name, "video"); }}
+                      disabled={callBusy}
+                      title={`Video call ${selectedChannel.name}`}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-[#e8eaed] text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124] disabled:opacity-40 transition-colors"
+                    >
+                      <Video className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Video</span>
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => { if (selectedChannelId) window.open(`/meet/cybersage-${selectedChannelId}`, "_blank"); }}
+                    title="Start a group call"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-[#e8eaed] text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124] transition-colors"
+                  >
+                    <Video className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Call</span>
+                  </button>
+                )}
 
                 {/* Web Push toggle */}
                 <button
@@ -2853,7 +2908,7 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
             <div className="px-6 py-2 h-7 flex items-center flex-shrink-0 bg-white">
               {botResponding ? (
                 <p className="text-xs text-[#5f6368] italic animate-pulse flex items-center gap-1">
-                  <Sparkles className="h-3 w-3 text-[#7dd8f5]" /> CyberSage AI is thinking…
+                  <Sparkles className="h-3 w-3 text-[#1a56db]" /> CyberSage AI is thinking…
                 </p>
               ) : typingNames.size > 0 && (
                 <p className="text-xs text-[#5f6368] italic animate-pulse">
@@ -2880,7 +2935,7 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
                 <div className="flex items-center gap-3 mb-2 bg-white border border-[#e8eaed] rounded-lg px-3 py-2">
                   <audio src={URL.createObjectURL(audioBlob)} controls className="flex-1 h-8" />
                   <button onClick={() => void sendVoiceNote()} disabled={uploadingFile} className="bg-[#1a56db] text-white px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-40">Send</button>
-                  <button onClick={() => setAudioBlob(null)} className="text-[#5f6368] hover:text-[#ff4d6d]"><X className="w-4 h-4" /></button>
+                  <button onClick={() => setAudioBlob(null)} className="text-[#5f6368] hover:text-[#ea4335]"><X className="w-4 h-4" /></button>
                 </div>
               )}
 
@@ -2894,7 +2949,7 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
                         onClick={() => insertMention(u.fullName)}
                         className="w-full text-left px-3 py-2 text-sm text-[#202124] hover:bg-[#f1f3f4] flex items-center gap-2"
                       >
-                        <span className="w-6 h-6 rounded-full bg-[#1a56db]/20 text-[#7dd8f5] flex items-center justify-center text-xs font-semibold flex-shrink-0">
+                        <span className="w-6 h-6 rounded-full bg-[#1a56db]/20 text-[#1a56db] flex items-center justify-center text-xs font-semibold flex-shrink-0">
                           {u.fullName.charAt(0)}
                         </span>
                         {u.fullName}
@@ -2906,15 +2961,15 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
                 {/* GIF attachment preview */}
                 {composerAttachment && (
                   <div className="mb-2 relative inline-block">
-                    <img src={composerAttachment.url} alt={composerAttachment.name} className="max-h-28 rounded-lg border border-[rgba(0,210,255,0.2)]" />
+                    <img src={composerAttachment.url} alt={composerAttachment.name} className="max-h-28 rounded-lg border border-[rgba(26,86,219,0.2)]" />
                     <button
                       onClick={() => setComposerAttachment(null)}
-                      className="absolute -top-1.5 -right-1.5 bg-[#ff4d6d] text-white rounded-full w-4 h-4 flex items-center justify-center text-xs leading-none"
+                      className="absolute -top-1.5 -right-1.5 bg-[#ea4335] text-white rounded-full w-4 h-4 flex items-center justify-center text-xs leading-none"
                     >×</button>
                   </div>
                 )}
 
-                <div className={`flex items-end gap-3 bg-white border rounded-lg px-4 py-2.5 transition-colors ${composerUrgent ? "border-[#ff4d6d]/50 bg-[#ff4d6d]/5" : "border-[#e8eaed]"}`}>
+                <div className={`flex items-end gap-3 bg-white border rounded-lg px-4 py-2.5 transition-colors ${composerUrgent ? "border-[#ea4335]/50 bg-[#ea4335]/5" : "border-[#e8eaed]"}`}>
                   <textarea
                     ref={composerRef}
                     value={composerText}
@@ -2952,14 +3007,14 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
                   <button
                     onClick={() => setComposerUrgent(v => !v)}
                     title={composerUrgent ? "Remove urgent flag" : "Mark as urgent"}
-                    className={`p-2 rounded-lg transition-colors flex-shrink-0 text-sm ${composerUrgent ? "bg-[#ff4d6d]/20 text-[#ff4d6d]" : "text-[#9aa0a6] hover:text-[#5f6368] hover:bg-[#f1f3f4]"}`}
+                    className={`p-2 rounded-lg transition-colors flex-shrink-0 text-sm ${composerUrgent ? "bg-[#ea4335]/20 text-[#ea4335]" : "text-[#9aa0a6] hover:text-[#5f6368] hover:bg-[#f1f3f4]"}`}
                   >
                     🚨
                   </button>
                   {/* Voice note button */}
                   <button
                     onClick={recording ? stopRecording : () => void startRecording()}
-                    className={`p-2 rounded-lg transition-colors flex-shrink-0 ${recording ? "bg-[#ff4d6d] text-white animate-pulse" : "text-[#5f6368] hover:text-[#202124] hover:bg-[#f1f3f4]"}`}
+                    className={`p-2 rounded-lg transition-colors flex-shrink-0 ${recording ? "bg-[#ea4335] text-white animate-pulse" : "text-[#5f6368] hover:text-[#202124] hover:bg-[#f1f3f4]"}`}
                     title={recording ? "Stop recording" : "Record voice note"}
                   >
                     {recording ? <Square className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
@@ -3028,7 +3083,7 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
                       <p className="text-xs text-[#5f6368] line-clamp-3">{msg.content}</p>
                       <button
                         onClick={() => void handlePin(msg.id, false)}
-                        className="mt-1.5 text-[10px] text-[#5f6368] hover:text-[#ff4d6d] flex items-center gap-1 transition-colors"
+                        className="mt-1.5 text-[10px] text-[#5f6368] hover:text-[#ea4335] flex items-center gap-1 transition-colors"
                       >
                         <PinOff className="w-3 h-3" /> Unpin
                       </button>

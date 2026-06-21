@@ -100,8 +100,19 @@ function AuthGate({ children }: { children: React.ReactNode }) {
         type?: string;
         threadId?: string;
         channelId?: string;
+        callId?: string;
+        roomName?: string;
+        media?: string;
+        callerName?: string;
       };
-      if (data?.type === "email" && data?.threadId) {
+      if (data?.type === "call" && data?.callId) {
+        const q = new URLSearchParams({
+          roomName: data.roomName ?? "",
+          media: data.media ?? "audio",
+          callerName: data.callerName ?? "Someone",
+        }).toString();
+        router.push(`/call/${data.callId}?${q}` as never);
+      } else if (data?.type === "email" && data?.threadId) {
         router.push(`/thread/${data.threadId}` as never);
       } else if (data?.type === "chat") {
         router.push("/(tabs)/chat" as never);
