@@ -2791,7 +2791,37 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
                 </p>
               </div>
               <div className="flex-1" />
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {/* Start a call — prominent cyan buttons, first so they're always visible */}
+                {selectedChannel?.type === "DIRECT" || selectedChannel?.type === "GROUP" ? (
+                  <>
+                    <button
+                      onClick={() => { if (selectedChannelId && selectedChannel) void startCall(selectedChannelId, selectedChannel.name, "audio"); }}
+                      disabled={callBusy}
+                      title={`Voice call ${selectedChannel.name}`}
+                      className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#00C2FF]/30 bg-[#00C2FF]/10 text-[#00C2FF] hover:bg-[#00C2FF]/20 disabled:opacity-40 transition-colors flex-shrink-0"
+                    >
+                      <Phone className="w-[17px] h-[17px]" />
+                    </button>
+                    <button
+                      onClick={() => { if (selectedChannelId && selectedChannel) void startCall(selectedChannelId, selectedChannel.name, "video"); }}
+                      disabled={callBusy}
+                      title={`Video call ${selectedChannel.name}`}
+                      className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#00C2FF]/30 bg-[#00C2FF]/10 text-[#00C2FF] hover:bg-[#00C2FF]/20 disabled:opacity-40 transition-colors flex-shrink-0"
+                    >
+                      <Video className="w-[17px] h-[17px]" />
+                    </button>
+                  </>
+                ) : selectedChannel ? (
+                  <button
+                    onClick={() => { if (selectedChannelId) window.open(`/meet/cybersage-${selectedChannelId}`, "_blank"); }}
+                    title="Start a group call"
+                    className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#00C2FF]/30 bg-[#00C2FF]/10 text-[#00C2FF] hover:bg-[#00C2FF]/20 transition-colors flex-shrink-0"
+                  >
+                    <Video className="w-[17px] h-[17px]" />
+                  </button>
+                ) : null}
+
                 {/* AI Summarize dropdown */}
                 <div className="relative group">
                   <button
@@ -2830,35 +2860,6 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
                   <Pin className="w-[17px] h-[17px]" />
                 </button>
 
-                {/* Start a call — prominent cyan buttons */}
-                {selectedChannel?.type === "DIRECT" || selectedChannel?.type === "GROUP" ? (
-                  <>
-                    <button
-                      onClick={() => { if (selectedChannelId && selectedChannel) void startCall(selectedChannelId, selectedChannel.name, "audio"); }}
-                      disabled={callBusy}
-                      title={`Voice call ${selectedChannel.name}`}
-                      className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#00C2FF]/30 bg-[#00C2FF]/10 text-[#00C2FF] hover:bg-[#00C2FF]/20 disabled:opacity-40 transition-colors flex-shrink-0"
-                    >
-                      <Phone className="w-[17px] h-[17px]" />
-                    </button>
-                    <button
-                      onClick={() => { if (selectedChannelId && selectedChannel) void startCall(selectedChannelId, selectedChannel.name, "video"); }}
-                      disabled={callBusy}
-                      title={`Video call ${selectedChannel.name}`}
-                      className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#00C2FF]/30 bg-[#00C2FF]/10 text-[#00C2FF] hover:bg-[#00C2FF]/20 disabled:opacity-40 transition-colors flex-shrink-0"
-                    >
-                      <Video className="w-[17px] h-[17px]" />
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    onClick={() => { if (selectedChannelId) window.open(`/meet/cybersage-${selectedChannelId}`, "_blank"); }}
-                    title="Start a group call"
-                    className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#00C2FF]/30 bg-[#00C2FF]/10 text-[#00C2FF] hover:bg-[#00C2FF]/20 transition-colors flex-shrink-0"
-                  >
-                    <Video className="w-[17px] h-[17px]" />
-                  </button>
-                )}
 
                 {/* AI Summarize dropdown moved up; remaining utilities */}
                 {/* Pinned messages toggle */}
