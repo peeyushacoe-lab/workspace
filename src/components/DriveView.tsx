@@ -1490,7 +1490,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
         )}
 
         {/* Toolbar: breadcrumb + controls */}
-        <div className="h-14 shrink-0 px-6 bg-[#12151D] flex items-center gap-3 border-b border-[#262A35]/60">
+        <div className="h-14 shrink-0 px-[22px] bg-[#12151D] flex items-center gap-3.5 border-b border-white/[0.06]">
           <nav className="flex items-center gap-1 flex-1 min-w-0 overflow-hidden">
             <button
               onClick={() => navigateToBreadcrumb(-1)}
@@ -1506,7 +1506,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
             </button>
             {breadcrumb.map((crumb, idx) => (
               <span key={crumb.id} className="flex items-center gap-1 min-w-0">
-                <ChevronRight className="h-4 w-4 text-[#5A6275] shrink-0" />
+                <ChevronRight className="h-4 w-4 text-[#444C5E] shrink-0" />
                 <button
                   onClick={() => navigateToBreadcrumb(idx)}
                   className={`rounded-lg px-2 py-1 text-lg text-[#E6E9F0] hover:bg-[#1B1F2A] transition-colors truncate ${
@@ -1561,24 +1561,24 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
           </div>
 
           {/* View toggle */}
-          <div className="flex items-center rounded-full border border-[#262A35] p-0.5">
-            <button
-              onClick={() => setView("list")}
-              title="List view"
-              className={`rounded-full p-1.5 transition-colors ${
-                view === "list" ? "bg-[#0E2532] text-[#00C2FF]" : "text-[#8A92A6] hover:bg-[#1B1F2A]"
-              }`}
-            >
-              <List className="h-[18px] w-[18px]" />
-            </button>
+          <div className="flex items-center gap-0.5 rounded-[9px] border border-white/[0.07] bg-[#12151D] p-[3px]">
             <button
               onClick={() => setView("grid")}
               title="Grid view"
-              className={`rounded-full p-1.5 transition-colors ${
+              className={`flex h-7 w-8 items-center justify-center rounded-md transition-colors ${
                 view === "grid" ? "bg-[#0E2532] text-[#00C2FF]" : "text-[#8A92A6] hover:bg-[#1B1F2A]"
               }`}
             >
-              <Grid3x3 className="h-[18px] w-[18px]" />
+              <Grid3x3 className="h-[15px] w-[15px]" />
+            </button>
+            <button
+              onClick={() => setView("list")}
+              title="List view"
+              className={`flex h-7 w-8 items-center justify-center rounded-md transition-colors ${
+                view === "list" ? "bg-[#0E2532] text-[#00C2FF]" : "text-[#8A92A6] hover:bg-[#1B1F2A]"
+              }`}
+            >
+              <List className="h-[15px] w-[15px]" />
             </button>
           </div>
 
@@ -1599,7 +1599,8 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
           {/* Upload primary */}
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="flex h-[34px] items-center gap-2 rounded-lg bg-[#00C2FF] px-4 text-[12.5px] font-semibold text-[#06121A] hover:bg-[#0098E6] transition-colors"
+            className="flex h-[34px] items-center gap-[7px] rounded-lg px-4 text-[12.5px] font-bold text-[#06121A] hover:opacity-90 transition-opacity"
+            style={{ background: "linear-gradient(135deg,#00C2FF,#0098E6)" }}
           >
             <Upload className="h-[15px] w-[15px]" strokeWidth={2.6} />
             Upload
@@ -1636,7 +1637,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
 
         <div className="flex flex-1 overflow-hidden">
           {/* File browser area */}
-          <div className="flex-1 overflow-y-auto p-6">
+          <div className="flex-1 overflow-y-auto p-[22px]">
             {creatingFolder && (
               <div className="mb-4 flex items-center gap-2">
                 <input
@@ -1691,7 +1692,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
               <>
                 {filteredFolders.length > 0 && (
                   <>
-                    <p className="mb-3.5 text-xs font-medium text-[#5A6275]">Folders</p>
+                    <p className="mb-3.5 text-[11px] font-bold uppercase tracking-[0.5px] text-[#5A6275]">Folders</p>
                     <div
                       className="mb-7 grid gap-3.5"
                       style={{ gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))" }}
@@ -1729,7 +1730,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                 )}
                 {filteredFiles.length > 0 && (
                   <>
-                    <p className="mb-3.5 text-xs font-medium text-[#5A6275]">Files</p>
+                    <p className="mb-3.5 text-[11px] font-bold uppercase tracking-[0.5px] text-[#5A6275]">Files</p>
                     <div
                       className="grid gap-4"
                       style={{ gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))" }}
@@ -2096,7 +2097,7 @@ function GridFolderCard({
           ? "border-[#00C2FF] bg-[#0E2532] ring-2 ring-[#00C2FF]/30"
           : selected || checked
           ? "border-[#00C2FF] bg-[#00C2FF]/10"
-          : "bg-[#12151D] border-[#262A35] hover:border-[#00C2FF]/40"
+          : "bg-[#12151D] border-white/[0.06] hover:border-[#00C2FF]/40"
       }`}
       onClick={onSelect}
       onDoubleClick={onOpen}
@@ -2199,7 +2200,7 @@ function GridFileCard({
       className={`group relative cursor-pointer overflow-hidden rounded-xl border transition-all ${
         selected || checked
           ? "border-[#00C2FF] bg-[#00C2FF]/[0.06]"
-          : "bg-[#12151D] border-[#262A35] hover:border-[#00C2FF]/40"
+          : "bg-[#12151D] border-white/[0.06] hover:border-[#00C2FF]/40"
       }`}
       onClick={onSelect}
       onDoubleClick={onPreview}
@@ -2250,7 +2251,7 @@ function GridFileCard({
         </div>
       </div>
       {/* Meta */}
-      <div className="px-3 py-3">
+      <div className="px-[13px] py-3">
         {renamingId === file.id ? (
           <input
             autoFocus
@@ -2266,7 +2267,7 @@ function GridFileCard({
         ) : (
           <p className="mb-1 truncate text-[13px] font-semibold text-[#E6E9F0]">{file.name}</p>
         )}
-        <div className="flex items-center gap-1.5 font-mono text-[11px] text-[#5A6275]">
+        <div className="flex items-center gap-[7px] font-mono text-[11px] text-[#5A6275]">
           <span>{formatFileSize(file.size)}</span>
           <span className="h-[3px] w-[3px] rounded-full bg-[#444C5E]" />
           <span className="truncate">{formatDistanceToNow(new Date(file.updatedAt), { addSuffix: true })}</span>

@@ -9,7 +9,9 @@ export async function GET() {
 
   const folders = await prisma.mailFolder.findMany({
     where: { userId: user.id },
-    include: { _count: { select: { threads: true } } },
+    // Only count mails actually still in the folder — exclude trashed threads
+    // (deleting a mail flags isTrashed but keeps it linked to the folder).
+    include: { _count: { select: { threads: { where: { isTrashed: false } } } } },
     orderBy: { name: "asc" },
   });
 

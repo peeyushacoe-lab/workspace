@@ -885,6 +885,13 @@ export function InboxView({ userRole, initialThreads }: {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(patch),
       });
+      // Folder counts depend on trash / folder membership — refresh them when those change.
+      if ("isTrashed" in patch || "folderId" in patch || "isArchived" in patch) {
+        fetch("/api/inbox/folders")
+          .then(r => r.json())
+          .then((data: CustomFolder[]) => setCustomFolders(data))
+          .catch(() => {});
+      }
     } catch {
       loadThreads(true);
     }
