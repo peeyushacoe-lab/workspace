@@ -4,9 +4,12 @@ import {
   type ActiveCall,
   type CallMedia,
   clearActiveCall,
+  clearPending,
   getActiveCall,
   postCallLog,
   publishCall,
+  setCallResult,
+  setPending,
   storeActiveCall,
 } from "@/lib/call-signaling";
 import { getTokensForUser, sendExpoPush } from "@/lib/expo-push";
@@ -66,6 +69,9 @@ export async function startCallForUser(params: {
   };
 
   await storeActiveCall(call);
+  // Mark each invitee as having a pending call so clients can discover it by
+  // polling even if the pub/sub push doesn't reach their SSE stream.
+  await Promise.all(others.map((m) => setPending(m.userId, callId)));
   await Promise.all(others.map((m) => publishCall(m.userId, { type: "call.incoming", data: call })));
   // Ring mobile devices too (fire-and-forget) so backgrounded users still get
   // an incoming-call notification.
@@ -117,6 +123,8 @@ export async function applyCallSignal(params: {
   switch (action) {
     case "accept":
       if (isCaller) return { ok: false, error: "The caller cannot accept", status: 403 };
+      await setCallResult(callId, "accepted");
+      await clearPending(userId);
       await publishCall(call.caller.id, {
         type: "call.accepted",
         data: { callId, roomName: call.roomName },
@@ -125,8 +133,10 @@ export async function applyCallSignal(params: {
 
     case "decline":
       if (isCaller) return { ok: false, error: "The caller cannot decline", status: 403 };
+      await clearPending(userId);
       await publishCall(call.caller.id, { type: "call.declined", data: { callId } });
       if (!call.isGroup) {
+        await setCallResult(callId, "declined");
         await postCallLog(call, "missed");
         await clearActiveCall(callId);
       }
@@ -134,6 +144,8 @@ export async function applyCallSignal(params: {
 
     case "cancel":
       if (!isCaller) return { ok: false, error: "Only the caller can cancel", status: 403 };
+      await setCallResult(callId, "ended");
+      await Promise.all(call.participantIds.map((id) => clearPending(id)));
       await Promise.all(
         call.participantIds
           .filter((id) => id !== call.caller.id)
@@ -144,6 +156,8 @@ export async function applyCallSignal(params: {
       break;
 
     case "end": {
+      await setCallResult(callId, "ended");
+      await Promise.all(call.participantIds.map((id) => clearPending(id)));
       const others = call.participantIds.filter((id) => id !== userId);
       await Promise.all(others.map((id) => publishCall(id, { type: "call.ended", data: { callId } })));
       if (!call.isGroup) await postCallLog(call, "ended");

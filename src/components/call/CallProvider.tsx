@@ -204,6 +204,62 @@ export function CallProvider({
     return () => es.close();
   }, []);
 
+  // ─── Polling fallback ─────────────────────────────────────────────────────
+  // On serverless (Vercel + Upstash), Redis pub/sub → SSE delivery isn't
+  // guaranteed, so we also poll. This is what makes ringing reliable; the SSE
+  // path above just makes it instant when it works. Deduped via state refs.
+  useEffect(() => {
+    const tick = async () => {
+      if (activeRef.current) return; // already in a call
+      const out = outgoingRef.current;
+      const inc = incomingRef.current;
+      try {
+        const res = await fetch(
+          "/api/chat/call/poll" + (out ? "?callId=" + encodeURIComponent(out.callId) : ""),
+          { cache: "no-store" },
+        );
+        if (!res.ok) return;
+        const data = (await res.json()) as {
+          incoming: ActiveCall | null;
+          outgoing: { status: string } | null;
+        };
+
+        // Caller waiting on an outgoing 1:1 call
+        if (out && data.outgoing) {
+          if (data.outgoing.status === "accepted") {
+            ringerRef.current?.stop();
+            setActive({ callId: out.callId, roomName: out.roomName, media: out.media, peerName: out.callee.name });
+            setOutgoing(null);
+            return;
+          }
+          if (data.outgoing.status === "declined" || data.outgoing.status === "ended") {
+            ringerRef.current?.stop();
+            toast.info(out.callee.name + " is unavailable");
+            setOutgoing(null);
+            return;
+          }
+        }
+
+        // New incoming call discovered by polling
+        if (!out && !inc && data.incoming) {
+          setIncoming(data.incoming);
+          ringerRef.current?.start("incoming");
+          return;
+        }
+
+        // Incoming call cancelled by the caller
+        if (inc && !data.incoming) {
+          ringerRef.current?.stop();
+          setIncoming(null);
+        }
+      } catch {
+        /* ignore poll errors */
+      }
+    };
+    const interval = setInterval(() => void tick(), 3000);
+    return () => clearInterval(interval);
+  }, []);
+
   const startCall = useCallback(
     async (channelId: string, peerName: string, media: CallMedia) => {
       if (active || outgoing || incoming) {

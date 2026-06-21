@@ -45,6 +45,35 @@ function activeKey(callId: string): string {
   return "call:active:" + callId;
 }
 
+// Polling-fallback keys. Redis pub/sub → long-lived SSE delivery is unreliable
+// on serverless (Vercel + Upstash), so we also let clients poll: each ringing
+// callee has a `pending` pointer to the callId, and each call has a `result`
+// once it resolves, so the caller can learn the outcome by polling too.
+function pendingKey(userId: string): string {
+  return "call:pending:" + userId;
+}
+function resultKey(callId: string): string {
+  return "call:result:" + callId;
+}
+
+export type CallResult = "accepted" | "declined" | "ended";
+
+export async function setPending(userId: string, callId: string): Promise<void> {
+  await redis.set(pendingKey(userId), callId, "EX", INVITE_TTL_SECONDS).catch(() => {});
+}
+export async function getPending(userId: string): Promise<string | null> {
+  return redis.get(pendingKey(userId)).catch(() => null);
+}
+export async function clearPending(userId: string): Promise<void> {
+  await redis.del(pendingKey(userId)).catch(() => {});
+}
+export async function setCallResult(callId: string, result: CallResult): Promise<void> {
+  await redis.set(resultKey(callId), result, "EX", 120).catch(() => {});
+}
+export async function getCallResult(callId: string): Promise<string | null> {
+  return redis.get(resultKey(callId)).catch(() => null);
+}
+
 export async function publishCall(userId: string, signal: CallSignal): Promise<void> {
   await redis
     .publish(userCallChannel(userId), JSON.stringify(signal))

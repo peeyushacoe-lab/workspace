@@ -36,7 +36,7 @@ export function DesktopBridge() {
     desktop.onNetworkStatus(({ online }) => {
       if (online) {
         toast.success("Back online", { duration: 2000 });
-        connectSocket().connect();
+        connectSocket();
       } else {
         toast.warning("You are offline", { duration: Infinity, id: "offline" });
       }
@@ -44,7 +44,7 @@ export function DesktopBridge() {
 
     // Reconnect socket after laptop wake
     desktop.onSystemResume(() => {
-      connectSocket().connect();
+      connectSocket();
     });
   }, []);
 
