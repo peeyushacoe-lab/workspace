@@ -72,16 +72,14 @@ export function SidebarLayout({
     return (
       <div className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
 
-        {/* Search + Compose */}
+        {/* Compose / New */}
         {(!collapsed || isMobile) && (
           <div className="px-3 pt-3 pb-1 space-y-1">
-            <SearchTrigger variant="light" />
             {currentUser && <ComposeButton userRole={currentUser.role} collapsed={false} />}
           </div>
         )}
         {collapsed && !isMobile && (
           <div className="flex flex-col items-center gap-1.5 py-3 px-1.5">
-            <SearchTrigger variant="collapsed" />
             {currentUser && <ComposeButton userRole={currentUser.role} collapsed={true} />}
           </div>
         )}
@@ -266,13 +264,30 @@ export function SidebarLayout({
           )}
         </div>
 
-        {/* ── Desktop top-right notification bar ───────────── */}
-        <div className={`hidden lg:flex fixed top-0 right-0 z-20 h-[56px] items-center px-5 gap-2 transition-all duration-200 ${contentPad}`}>
+        {/* ── Desktop top bar (search + actions) ───────────── */}
+        <div className={`hidden lg:flex fixed top-0 inset-x-0 z-20 h-[56px] items-center gap-4 px-5 bg-[#0B0D12] border-b border-[#1C1F28] transition-all duration-200 ${contentPad}`}>
+          <div className="flex-1 flex justify-center">
+            <SearchTrigger variant="topbar" />
+          </div>
           {currentUser && (
-            <div className="ml-auto flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 flex-shrink-0">
               <Suspense fallback={null}>
                 <NotificationCenter userId={currentUser.id} />
               </Suspense>
+              <a
+                href="/settings"
+                title="Settings"
+                className="flex h-9 w-9 items-center justify-center rounded-full text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0] transition-colors"
+              >
+                <Settings className="h-[18px] w-[18px]" />
+              </a>
+              <div
+                className="flex h-8 w-8 items-center justify-center rounded-full text-white text-xs font-semibold"
+                style={{ background: avatarGradient(currentUser.fullName) }}
+                title={currentUser.fullName}
+              >
+                {currentUser.fullName.charAt(0).toUpperCase()}
+              </div>
             </div>
           )}
         </div>

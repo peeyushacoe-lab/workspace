@@ -714,7 +714,7 @@ export function GlobalSearch({
 
 // ─── Search Trigger Button ────────────────────────────────────────────────────
 
-export function SearchTrigger({ variant = "light" }: { variant?: "light" | "dark" | "collapsed" }) {
+export function SearchTrigger({ variant = "light" }: { variant?: "light" | "dark" | "collapsed" | "topbar" }) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -737,6 +737,22 @@ export function SearchTrigger({ variant = "light" }: { variant?: "light" | "dark
           className="flex h-9 w-9 items-center justify-center rounded-xl text-[#5A6275] hover:bg-[#1B1F2A] hover:text-[#8A92A6] transition-colors"
         >
           <Search className="h-[17px] w-[17px]" />
+        </button>
+        {open && <GlobalSearch onClose={() => setOpen(false)} />}
+      </>
+    );
+  }
+
+  if (variant === "topbar") {
+    return (
+      <>
+        <button
+          onClick={() => setOpen(true)}
+          className="flex items-center gap-2.5 w-full max-w-[440px] h-9 px-3.5 rounded-lg bg-[#12151D] border border-[#262A35] hover:border-[#2E333F] text-[13px] text-[#5A6275] hover:text-[#8A92A6] transition-colors"
+        >
+          <Search className="h-4 w-4 flex-shrink-0" />
+          <span className="flex-1 text-left">Search or jump to…</span>
+          <kbd className="hidden sm:inline-block text-[10px] font-mono bg-[#1B1F2A] border border-[#262A35] text-[#5A6275] px-1.5 py-0.5 rounded">⌘K</kbd>
         </button>
         {open && <GlobalSearch onClose={() => setOpen(false)} />}
       </>
