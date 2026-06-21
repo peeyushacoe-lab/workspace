@@ -93,7 +93,8 @@ function smartTime(date: Date | string): string {
 function SenderAvatar({ member, email, size = 8, onClick }: { member?: WorkspaceMember; email: string; size?: number; onClick?: (e?: React.MouseEvent) => void }) {
   const [imgFailed, setImgFailed] = useState(false);
   const label = (member?.displayName ?? member?.fullName ?? email).charAt(0).toUpperCase();
-  const cls = `w-${size} h-${size} rounded-full object-cover flex-shrink-0`;
+  const dim = size * 4; // tailwind size unit = 0.25rem = 4px
+  const cls = `rounded-full object-cover flex-shrink-0`;
   const wrap = `cursor-pointer hover:opacity-80 transition-opacity`;
   if (member?.avatarUrl && !imgFailed) {
     return (
@@ -101,13 +102,18 @@ function SenderAvatar({ member, email, size = 8, onClick }: { member?: Workspace
         src={member.avatarUrl}
         alt={label}
         className={`${cls} ${onClick ? wrap : ""}`}
+        style={{ width: dim, height: dim }}
         onClick={onClick}
         onError={() => setImgFailed(true)}
       />
     );
   }
   return (
-    <div className={`${cls} flex items-center justify-center font-semibold text-sm text-white ${onClick ? wrap : ""}`} style={{ background: avatarGradient(email.toLowerCase()) }} onClick={onClick}>
+    <div
+      className={`${cls} flex items-center justify-center font-semibold text-white ${onClick ? wrap : ""}`}
+      style={{ width: dim, height: dim, fontSize: Math.max(11, dim * 0.4), background: avatarGradient(email.toLowerCase()) }}
+      onClick={onClick}
+    >
       {label}
     </div>
   );
@@ -158,8 +164,15 @@ function sanitizeHtml(html: string): string {
           el.removeAttribute(attr.name); continue;
         }
         if (attr.name === "style") {
-          const safe = attr.value.replace(DANGEROUS_CSS, "");
-          el.setAttribute("style", safe);
+          // Strip code-exec CSS, plus inline text/background colors authored for a
+          // light background (they render unreadable on the dark theme) so content
+          // inherits the readable dark-theme color.
+          const safe = attr.value
+            .replace(DANGEROUS_CSS, "")
+            .replace(/(?:^|;)\s*(?:color|background-color|background)\s*:[^;]*/gi, "")
+            .replace(/^;+/, "");
+          if (safe.trim()) el.setAttribute("style", safe);
+          else el.removeAttribute("style");
           continue;
         }
         if (tag === "a" && attr.name === "href") {

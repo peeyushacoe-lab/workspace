@@ -811,6 +811,7 @@ function EditEventModal({
     setDeleting(true);
     try {
       const res = await fetch(`/api/calendar/events/${getRealId(event.id)}`, { method: "DELETE" });
+      if (res.status === 403) { toast.error("You can only delete events you organize"); return; }
       if (!res.ok) throw new Error("Failed");
       toast.success("Event deleted");
       onDelete();
@@ -888,6 +889,7 @@ function EventDetailModal({
     setDeleting(true);
     try {
       const res = await fetch(`/api/calendar/events/${getRealId(event.id)}`, { method: "DELETE" });
+      if (res.status === 403) { toast.error("You can only delete events you organize"); return; }
       if (!res.ok) throw new Error("Failed");
       toast.success("Event deleted");
       onDelete();

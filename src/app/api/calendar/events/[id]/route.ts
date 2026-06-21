@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { getSessionUserFromCookieStore } from "@/lib/auth";
+import { getSessionUserFromCookieStore, MGMT_ROLES } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 type Params = { params: Promise<{ id: string }> };
@@ -65,7 +65,7 @@ export async function PUT(request: Request, { params }: Params) {
   const { id } = await params;
   const event = await prisma.calendarEvent.findUnique({ where: { id } });
   if (!event) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (event.organizerId !== user.id) {
+  if (event.organizerId !== user.id && !MGMT_ROLES.includes(user.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -134,7 +134,7 @@ export async function DELETE(_request: Request, { params }: Params) {
   const { id } = await params;
   const event = await prisma.calendarEvent.findUnique({ where: { id } });
   if (!event) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (event.organizerId !== user.id) {
+  if (event.organizerId !== user.id && !MGMT_ROLES.includes(user.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

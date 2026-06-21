@@ -44,8 +44,14 @@ export function sanitizeHtml(html: string): string {
           el.removeAttribute(attr.name); continue;
         }
         if (attr.name === "style") {
-          const safe = attr.value.replace(DANGEROUS_CSS, "");
-          el.setAttribute("style", safe);
+          // Also drop inline text/background colors (authored for light backgrounds)
+          // so signature content stays readable on the dark theme.
+          const safe = attr.value
+            .replace(DANGEROUS_CSS, "")
+            .replace(/(?:^|;)\s*(?:color|background-color|background)\s*:[^;]*/gi, "")
+            .replace(/^;+/, "");
+          if (safe.trim()) el.setAttribute("style", safe);
+          else el.removeAttribute("style");
           continue;
         }
         if (tag === "a" && attr.name === "href") {

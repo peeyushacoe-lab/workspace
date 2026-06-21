@@ -38,7 +38,7 @@ export const roleLabels: Record<UserRole, string> = {
 };
 
 // Leadership roles that can access management features
-const MGMT_ROLES: UserRole[] = ["ADMIN", "CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER"];
+export const MGMT_ROLES: UserRole[] = ["ADMIN", "CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER"];
 
 const ALL_ROLES: UserRole[] = [
   "ADMIN", "CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER",
