@@ -112,9 +112,22 @@ export async function DELETE(
 
     const { id } = await params;
 
-    // Prevent deleting the current admin user
+    // Prevent deleting your own account
     if (id === currentUser.id) {
       return NextResponse.json({ error: "Cannot delete your own account" }, { status: 400 });
+    }
+
+    const target = await prisma.user.findUnique({ where: { id }, select: { role: true } });
+    if (!target) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Don't allow removing the last admin (would lock everyone out of admin).
+    if (target.role === "ADMIN") {
+      const adminCount = await prisma.user.count({ where: { role: "ADMIN" } });
+      if (adminCount <= 1) {
+        return NextResponse.json({ error: "Cannot delete the last admin account" }, { status: 400 });
+      }
     }
 
     await prisma.user.delete({
@@ -124,6 +137,6 @@ export async function DELETE(
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Delete user error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Could not delete this user — they may own records that block deletion." }, { status: 500 });
   }
 }

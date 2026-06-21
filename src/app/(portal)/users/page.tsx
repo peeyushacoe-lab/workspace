@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Fragment } from "react";
 import { avatarGradient } from "@/lib/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,6 +47,22 @@ const ROLE_GROUPS = [
   { label: "Teams", roles: ["DEVELOPER", "CYBER_SECURITY", "QA", "MARKETING", "RESEARCH", "FINANCE", "OPERATIONS", "SUPPORT"] },
   { label: "Interns", roles: ["INTERNSHIP"] },
 ];
+
+// Categories used to bifurcate the user list into sections.
+const USER_SECTIONS: { label: string; roles: string[] }[] = [
+  { label: "Leadership", roles: ["ADMIN", "CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER"] },
+  { label: "Core Team", roles: ["DEVELOPER", "CYBER_SECURITY", "QA", "MARKETING", "RESEARCH", "FINANCE", "OPERATIONS"] },
+  { label: "Support", roles: ["SUPPORT"] },
+  { label: "Interns", roles: ["INTERNSHIP"] },
+];
+
+function buildUserSections<T extends { role: string }>(list: T[]): { label: string; users: T[] }[] {
+  const known = new Set(USER_SECTIONS.flatMap((s) => s.roles));
+  const sections = USER_SECTIONS.map((s) => ({ label: s.label, users: list.filter((u) => s.roles.includes(u.role)) }));
+  const other = list.filter((u) => !known.has(u.role));
+  if (other.length) sections.push({ label: "Other", users: other });
+  return sections.filter((s) => s.users.length > 0);
+}
 
 const ROLE_COLORS: Record<string, string> = {
   ADMIN: "bg-[#ea4335]/10 text-[#ea4335]",
@@ -436,7 +452,14 @@ export default function UsersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users.map(user => (
+                {buildUserSections(users).map(section => (
+                  <Fragment key={section.label}>
+                    <TableRow className="hover:bg-transparent">
+                      <TableCell colSpan={isCisoOrAdmin ? 7 : 6} className="bg-[#0D1017] py-2 text-[11px] font-semibold uppercase tracking-wide text-[#5A6275]">
+                        {section.label} · {section.users.length}
+                      </TableCell>
+                    </TableRow>
+                    {section.users.map(user => (
                   <TableRow key={user.id}>
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2.5">
@@ -517,7 +540,7 @@ export default function UsersPage() {
                               : <Mail className="w-3.5 h-3.5" />}
                           </Button>
                         )}
-                        {user.id !== currentUser?.id && user.role !== "ADMIN" && (
+                        {user.id !== currentUser?.id && (
                           <Button
                             variant="outline"
                             size="sm"
@@ -531,6 +554,8 @@ export default function UsersPage() {
                       </div>
                     </TableCell>
                   </TableRow>
+                    ))}
+                  </Fragment>
                 ))}
                 {users.length === 0 && (
                   <TableRow>

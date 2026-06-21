@@ -12,6 +12,20 @@ const reviewSchema = z.object({
   score: z.number().int().min(0).max(100).optional(),
 });
 
+// DELETE: ADMIN only — submissions (incl. mistakes) stay on record for everyone else.
+export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (user.role !== "ADMIN") {
+    return NextResponse.json({ error: "Only an admin can delete submissions" }, { status: 403 });
+  }
+  const { id } = await params;
+  const submission = await prisma.internSubmission.findUnique({ where: { id }, select: { id: true } });
+  if (!submission) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  await prisma.internSubmission.delete({ where: { id } });
+  return NextResponse.json({ ok: true });
+}
+
 // PATCH: mentor reviews a submission
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();

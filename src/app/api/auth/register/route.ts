@@ -29,6 +29,15 @@ function getClientIp(req: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  // Self-registration is disabled — accounts are created by an admin via the
+  // Users panel only. Set ALLOW_SELF_REGISTRATION="true" to re-enable.
+  if (process.env.ALLOW_SELF_REGISTRATION !== "true") {
+    return NextResponse.json(
+      { error: "Self-registration is disabled. Contact your administrator." },
+      { status: 403 },
+    );
+  }
+
   const ip = getClientIp(request);
   const { allowed } = await checkRateLimit(`register:${ip}`, 5, 60 * 60);
   if (!allowed) {

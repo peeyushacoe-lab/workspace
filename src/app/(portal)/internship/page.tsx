@@ -1131,6 +1131,14 @@ function DiscussionTab({ userId, currentUser }: { userId: string; currentUser: U
 
   const isMentorRole = (role?: string) => role && ["ADMIN","CEO","CISO","R_AND_D","COO","OPS_MANAGER"].includes(role);
 
+  const canDelete = (_msg: Discussion) => currentUser.role === "ADMIN";
+  const remove = async (id: string) => {
+    if (!window.confirm("Delete this message?")) return;
+    setMessages(prev => prev.filter(m => m.id !== id));
+    await fetch(`/api/internship/discussions/${id}`, { method: "DELETE" }).catch(() => {});
+    await load();
+  };
+
   if (loading) return <LoadingSpinner />;
 
   return (
@@ -1154,6 +1162,11 @@ function DiscussionTab({ userId, currentUser }: { userId: string; currentUser: U
                   {isMentorRole(msg.author.role) && <span className="text-[10px] bg-[#0E2532] text-[#00C2FF] px-1.5 rounded font-medium">Mentor</span>}
                   {msg.isPinned && <Pin className="w-3 h-3 text-[#00C2FF]" />}
                   <span className="text-[10px] text-[#5A6275] font-mono">{fmtTime(msg.createdAt)}</span>
+                  {canDelete(msg) && (
+                    <button onClick={() => void remove(msg.id)} title="Delete message" className="text-[#5A6275] hover:text-[#ea4335] transition-colors">
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  )}
                 </div>
                 <div className={`px-3 py-2 rounded-2xl text-sm ${isMe ? "bg-[#00C2FF] text-[#06121A] rounded-tr-sm" : "bg-[#1B1F2A] text-[#E6E9F0] rounded-tl-sm"}`}>
                   {msg.body}
