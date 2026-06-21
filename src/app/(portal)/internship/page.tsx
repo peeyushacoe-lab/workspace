@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/Shell";
+import { avatarGradient } from "@/lib/avatar";
 
 // ─── Markdown renderer ───────────────────────────────────────────────────────
 
@@ -181,7 +182,7 @@ function Avatar({ user, size = 8 }: { user: User; size?: number }) {
   const s = `w-${size} h-${size}`;
   return user.avatarUrl
     ? <img src={user.avatarUrl} alt={user.fullName} className={`${s} rounded-full object-cover shrink-0`} />
-    : <div className={`${s} rounded-full bg-[#00C2FF] flex items-center justify-center text-[#06121A] text-[11px] font-bold shrink-0`}>{initials(user.fullName)}</div>;
+    : <div className={`${s} rounded-full flex items-center justify-center text-white text-[11px] font-semibold shrink-0`} style={{ background: avatarGradient(user.fullName) }}>{initials(user.fullName)}</div>;
 }
 
 function PriorityBadge({ p }: { p: string }) {
@@ -248,16 +249,16 @@ export default function InternshipHubPage() {
       />
 
       {/* Tab bar */}
-      <div className="border-b border-[#262A35] bg-[#12151D] sticky top-0 z-10">
-        <div className="flex gap-1 px-6 overflow-x-auto">
+      <div className="border-b border-[#262A35] bg-[#0B0D12] sticky top-0 z-10">
+        <div className="flex gap-1 px-6 py-2 overflow-x-auto">
           {TABS.filter(t => !t.mentorOnly || isMentor).map(t => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`flex items-center gap-1.5 px-3 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+              className={`flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium whitespace-nowrap rounded-lg transition-colors ${
                 tab === t.id
-                  ? "border-[#00C2FF] text-[#00C2FF]"
-                  : "border-transparent text-[#8A92A6] hover:text-[#E6E9F0] hover:border-[#262A35]"
+                  ? "bg-[#00C2FF]/10 text-[#00C2FF]"
+                  : "text-[#8A92A6] hover:text-[#E6E9F0] hover:bg-[#1B1F2A]"
               }`}
             >
               <t.icon className="w-4 h-4" />
@@ -267,7 +268,7 @@ export default function InternshipHubPage() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto bg-[#12151D] p-6">
+      <div className="flex-1 overflow-auto bg-[#0B0D12] p-6">
         {currentUser && (
           <>
             {tab === "announcements" && <AnnouncementsTab isMentor={isMentor} userId={currentUser.id} />}
@@ -406,7 +407,7 @@ function AnnouncementsTab({ isMentor, userId }: { isMentor: boolean; userId: str
             <div className="flex items-start justify-between gap-3 mb-2">
               <h3 className="font-semibold text-[#E6E9F0]">{ann.title}</h3>
               <div className="flex items-center gap-2 shrink-0">
-                <span className="text-xs text-[#5A6275]">{fmt(ann.createdAt)}</span>
+                <span className="text-xs text-[#5A6275] font-mono">{fmt(ann.createdAt)}</span>
                 {isMentor && (
                   <button onClick={() => void deleteAnn(ann.id)} className="p-1 rounded text-[#5A6275] hover:text-[#ea4335] hover:bg-[#ea4335]/12 transition-colors" title="Delete announcement">
                     <Trash2 className="w-3.5 h-3.5" />
@@ -445,10 +446,10 @@ function AnnouncementsTab({ isMentor, userId }: { isMentor: boolean; userId: str
                 {ann.comments.map(c => (
                   <div key={c.id} className="flex gap-2">
                     <Avatar user={c.author} size={6} />
-                    <div className="flex-1 bg-[#12151D] rounded-lg px-3 py-2">
+                    <div className="flex-1 bg-[#1B1F2A] rounded-lg px-3 py-2">
                       <div className="flex items-baseline gap-2 mb-1">
                         <span className="text-xs font-semibold text-[#E6E9F0]">{c.author.fullName}</span>
-                        <span className="text-[10px] text-[#5A6275]">{fmtTime(c.createdAt)}</span>
+                        <span className="text-[10px] text-[#5A6275] font-mono">{fmtTime(c.createdAt)}</span>
                       </div>
                       <p className="text-sm text-[#C8CEDB]">{c.body}</p>
                     </div>
@@ -664,19 +665,19 @@ function TasksTab({ isMentor, userId }: { isMentor: boolean; userId: string }) {
                   </div>
                   <div className="flex items-center gap-3 mt-3 flex-wrap">
                     {task.deadline && (
-                      <span className={`flex items-center gap-1 text-xs ${isPast(task.deadline) ? "text-[#ea4335]" : "text-[#5A6275]"}`}>
+                      <span className={`flex items-center gap-1 text-xs font-mono ${isPast(task.deadline) ? "text-[#ea4335]" : "text-[#5A6275]"}`}>
                         <Clock className="w-3 h-3" />
                         {isPast(task.deadline) ? "Overdue — " : ""}{fmt(task.deadline)}
                       </span>
                     )}
                     <span className="flex items-center gap-1 text-xs text-[#5A6275]">
-                      <Upload className="w-3 h-3" /> {task.submissions.length} submission{task.submissions.length !== 1 ? "s" : ""}
+                      <Upload className="w-3 h-3" /> <span className="font-mono">{task.submissions.length}</span> submission{task.submissions.length !== 1 ? "s" : ""}
                     </span>
                     <span className="flex items-center gap-1 text-xs text-[#5A6275]">
-                      <MessageSquare className="w-3 h-3" /> {task._count.discussions}
+                      <MessageSquare className="w-3 h-3" /> <span className="font-mono">{task._count.discussions}</span>
                     </span>
                     {task.assigneeIds.length > 0 && (
-                      <span className="text-xs text-[#5A6275]">{task.assigneeIds.length} assignee{task.assigneeIds.length !== 1 ? "s" : ""}</span>
+                      <span className="text-xs text-[#5A6275]"><span className="font-mono">{task.assigneeIds.length}</span> assignee{task.assigneeIds.length !== 1 ? "s" : ""}</span>
                     )}
                   </div>
                 </div>
@@ -770,7 +771,7 @@ function TaskDetail({ task: initialTask, isMentor, userId, onBack }: { task: Int
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
               <PriorityBadge p={task.priority} />
-              {task.deadline && <span className={`text-xs ${isPast(task.deadline) ? "text-[#ea4335]" : "text-[#5A6275]"}`}><Clock className="w-3 h-3 inline mr-0.5" />{fmt(task.deadline)}</span>}
+              {task.deadline && <span className={`text-xs font-mono ${isPast(task.deadline) ? "text-[#ea4335]" : "text-[#5A6275]"}`}><Clock className="w-3 h-3 inline mr-0.5" />{fmt(task.deadline)}</span>}
             </div>
             <h2 className="text-lg font-semibold text-[#E6E9F0]">{task.title}</h2>
             <div className="mt-2"><MarkdownBody content={task.description} /></div>
@@ -778,7 +779,7 @@ function TaskDetail({ task: initialTask, isMentor, userId, onBack }: { task: Int
         </div>
         <div className="flex items-center gap-2 text-xs text-[#5A6275]">
           <Avatar user={task.createdBy} size={5} />
-          Posted by {task.createdBy.fullName} · {fmt(task.createdAt)}
+          Posted by {task.createdBy.fullName} · <span className="font-mono">{fmt(task.createdAt)}</span>
         </div>
       </div>
 
@@ -798,7 +799,7 @@ function TaskDetail({ task: initialTask, isMentor, userId, onBack }: { task: Int
                 value={subForm.links} onChange={e => setSubForm(p => ({ ...p, links: e.target.value }))} />
               {/* File upload */}
               <div className="mb-3">
-                <label className={`flex items-center gap-2 px-3 py-2 border border-dashed border-[#2E333F] rounded-lg text-sm text-[#8A92A6] cursor-pointer hover:border-[#00C2FF]/60 hover:bg-[#12151D] transition-colors ${uploadingFile ? "opacity-50 pointer-events-none" : ""}`}>
+                <label className={`flex items-center gap-2 px-3 py-2 border border-dashed border-[#2E333F] rounded-lg text-sm text-[#8A92A6] cursor-pointer hover:border-[#00C2FF]/60 hover:bg-[#1B1F2A] transition-colors ${uploadingFile ? "opacity-50 pointer-events-none" : ""}`}>
                   {uploadingFile ? <Loader2 className="w-4 h-4 animate-spin text-[#00C2FF]" /> : <FileText className="w-4 h-4 text-[#8A92A6]" />}
                   {uploadingFile ? "Uploading…" : "Attach PDF or Word document"}
                   <input type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
@@ -820,7 +821,7 @@ function TaskDetail({ task: initialTask, isMentor, userId, onBack }: { task: Int
                 {subFiles.length > 0 && (
                   <div className="mt-2 space-y-1">
                     {subFiles.map((f, i) => (
-                      <div key={i} className="flex items-center justify-between bg-[#12151D] rounded px-3 py-1.5 text-xs text-[#C8CEDB]">
+                      <div key={i} className="flex items-center justify-between bg-[#1B1F2A] rounded px-3 py-1.5 text-xs text-[#C8CEDB]">
                         <span className="flex items-center gap-1.5"><FileText className="w-3.5 h-3.5 text-[#00C2FF]" />{f.name}</span>
                         <button onClick={() => setSubFiles(p => p.filter((_, j) => j !== i))} className="text-[#5A6275] hover:text-[#ea4335]"><X className="w-3.5 h-3.5" /></button>
                       </div>
@@ -864,16 +865,16 @@ function TaskDetail({ task: initialTask, isMentor, userId, onBack }: { task: Int
                         {d.author.role && ["ADMIN","CEO","CISO","R_AND_D","COO","OPS_MANAGER"].includes(d.author.role) && (
                           <span className="text-[10px] bg-[#0E2532] text-[#00C2FF] px-1.5 rounded font-medium">Mentor</span>
                         )}
-                        <span className="text-[10px] text-[#5A6275]">{fmtTime(d.createdAt)}</span>
+                        <span className="text-[10px] text-[#5A6275] font-mono">{fmtTime(d.createdAt)}</span>
                         {d.isPinned && <Pin className="w-3 h-3 text-[#00C2FF]" />}
                       </div>
-                      <div className="bg-[#12151D] rounded-lg px-3 py-2 text-sm text-[#C8CEDB]">{d.body}</div>
+                      <div className="bg-[#1B1F2A] rounded-lg px-3 py-2 text-sm text-[#C8CEDB]">{d.body}</div>
                       {d.replies.length > 0 && (
                         <div className="mt-2 ml-4 space-y-2 border-l-2 border-[#262A35] pl-3">
                           {d.replies.map(r => (
                             <div key={r.id} className="flex gap-1.5">
                               <Avatar user={r.author} size={5} />
-                              <div className="flex-1 bg-[#12151D] rounded-lg px-2 py-1.5 text-xs text-[#C8CEDB]">{r.body}</div>
+                              <div className="flex-1 bg-[#1B1F2A] rounded-lg px-2 py-1.5 text-xs text-[#C8CEDB]">{r.body}</div>
                             </div>
                           ))}
                         </div>
@@ -924,10 +925,10 @@ function SubmissionCard({ sub, isMentor, onReview }: { sub: Submission; isMentor
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           {sub.submitter && <Avatar user={sub.submitter} size={5} />}
-          <span className="text-xs font-medium text-[#E6E9F0]">v{sub.version}</span>
+          <span className="text-xs font-medium text-[#E6E9F0] font-mono">v{sub.version}</span>
           <StatusBadge s={sub.status} />
         </div>
-        <span className="text-[10px] text-[#5A6275]">{fmt(sub.createdAt)}</span>
+        <span className="text-[10px] text-[#5A6275] font-mono">{fmt(sub.createdAt)}</span>
       </div>
       {sub.notes && <p className="text-xs text-[#8A92A6] mb-2">{sub.notes}</p>}
       <SubmissionFiles files={sub.files} />
@@ -1047,7 +1048,7 @@ function SubmissionRow({ sub, isMentor, onReview }: { sub: Submission; isMentor:
           <p className="font-medium text-[#E6E9F0] text-sm">{sub.task?.title ?? "—"}</p>
           <div className="flex items-center gap-2 mt-1">
             {sub.submitter && <><Avatar user={sub.submitter} size={5} /><span className="text-xs text-[#8A92A6]">{sub.submitter.fullName}</span></>}
-            <span className="text-xs text-[#5A6275]">v{sub.version}</span>
+            <span className="text-xs text-[#5A6275] font-mono">v{sub.version}</span>
           </div>
         </div>
         <StatusBadge s={sub.status} />
@@ -1065,14 +1066,14 @@ function SubmissionRow({ sub, isMentor, onReview }: { sub: Submission; isMentor:
         </div>
       )}
       {latestReview && (
-        <div className="text-xs text-[#8A92A6] mt-2 bg-[#12151D] rounded p-2">
+        <div className="text-xs text-[#8A92A6] mt-2 bg-[#1B1F2A] rounded p-2">
           {latestReview.reviewer.fullName}: {latestReview.comment ?? latestReview.verdict}
-          {latestReview.score != null && <span className="ml-1 font-semibold text-[#00C2FF]">[{latestReview.score}/100]</span>}
+          {latestReview.score != null && <span className="ml-1 font-semibold text-[#00C2FF] font-mono">[{latestReview.score}/100]</span>}
         </div>
       )}
       {isMentor && sub.status === "submitted" && (
         reviewOpen ? (
-          <div className="space-y-2 mt-3 border-t border-[#1B1F2A] pt-3">
+          <div className="space-y-2 mt-3 border-t border-[#262A35] pt-3">
             <select className="w-full px-2 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded text-xs"
               value={verdict} onChange={e => setVerdict(e.target.value)}>
               <option value="approved">Approve</option>
@@ -1092,7 +1093,7 @@ function SubmissionRow({ sub, isMentor, onReview }: { sub: Submission; isMentor:
             className="text-xs text-[#00C2FF] hover:underline font-medium mt-2">Review / mark this submission →</button>
         )
       )}
-      <div className="text-[10px] text-[#5A6275] mt-2">{fmt(sub.createdAt)}</div>
+      <div className="text-[10px] text-[#5A6275] mt-2 font-mono">{fmt(sub.createdAt)}</div>
     </div>
   );
 }
@@ -1137,7 +1138,7 @@ function DiscussionTab({ userId, currentUser }: { userId: string; currentUser: U
       <div className="flex-1 bg-[#12151D] border border-[#262A35] rounded-xl overflow-y-auto p-4 space-y-3 mb-3">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center py-8">
-            <MessageSquare className="w-10 h-10 text-[#dadce0] mb-3" />
+            <MessageSquare className="w-10 h-10 text-[#3A4150] mb-3" />
             <p className="text-sm font-medium text-[#E6E9F0]">General Discussion</p>
             <p className="text-xs text-[#5A6275] mt-1">Start the conversation — ask questions, share updates, tag mentors.</p>
           </div>
@@ -1152,7 +1153,7 @@ function DiscussionTab({ userId, currentUser }: { userId: string; currentUser: U
                   {!isMe && <span className="text-xs font-semibold text-[#E6E9F0]">{msg.author.fullName}</span>}
                   {isMentorRole(msg.author.role) && <span className="text-[10px] bg-[#0E2532] text-[#00C2FF] px-1.5 rounded font-medium">Mentor</span>}
                   {msg.isPinned && <Pin className="w-3 h-3 text-[#00C2FF]" />}
-                  <span className="text-[10px] text-[#5A6275]">{fmtTime(msg.createdAt)}</span>
+                  <span className="text-[10px] text-[#5A6275] font-mono">{fmtTime(msg.createdAt)}</span>
                 </div>
                 <div className={`px-3 py-2 rounded-2xl text-sm ${isMe ? "bg-[#00C2FF] text-[#06121A] rounded-tr-sm" : "bg-[#1B1F2A] text-[#E6E9F0] rounded-tl-sm"}`}>
                   {msg.body}
@@ -1438,7 +1439,7 @@ function FindingsTab({ isMentor, userId, currentUser }: { isMentor: boolean; use
                           <div className="flex-1 bg-[#12151D] border border-[#262A35] rounded-lg px-3 py-2">
                             <div className="flex items-baseline gap-2 mb-0.5">
                               <span className="text-xs font-semibold text-[#E6E9F0]">{c.author.fullName}</span>
-                              <span className="text-[10px] text-[#5A6275]">{fmt(c.createdAt)}</span>
+                              <span className="text-[10px] text-[#5A6275] font-mono">{fmt(c.createdAt)}</span>
                             </div>
                             <p className="text-sm text-[#C8CEDB]">{c.body}</p>
                           </div>
@@ -1528,7 +1529,7 @@ function ProgressTab({ isMentor, userId }: { isMentor: boolean; userId: string }
           ].map(m => (
             <div key={m.label} className="bg-[#12151D] border border-[#262A35] rounded-xl p-4">
               <div className={`inline-flex p-2 rounded-lg ${m.bg} mb-3`}><m.icon className={`w-4 h-4 ${m.color}`} /></div>
-              <div className={`text-2xl font-bold ${m.color}`}>{m.value}</div>
+              <div className={`text-2xl font-bold font-mono ${m.color}`}>{m.value}</div>
               <div className="text-xs text-[#8A92A6] mt-0.5">{m.label}</div>
             </div>
           ))}
@@ -1542,7 +1543,7 @@ function ProgressTab({ isMentor, userId }: { isMentor: boolean; userId: string }
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-[#262A35] bg-[#12151D]">
+                <tr className="border-b border-[#262A35] bg-[#1B1F2A]">
                   <th className="text-left px-5 py-3 text-xs font-semibold text-[#8A92A6]">Intern</th>
                   <th className="text-center px-4 py-3 text-xs font-semibold text-[#8A92A6]">Assigned</th>
                   <th className="text-center px-4 py-3 text-xs font-semibold text-[#8A92A6]">Submitted</th>
@@ -1558,7 +1559,7 @@ function ProgressTab({ isMentor, userId }: { isMentor: boolean; userId: string }
                 {s.internStats.map(({ intern, assigned, submitted, approved, discussions }) => {
                   const score = assigned > 0 ? Math.round((approved / assigned) * 100) : null;
                   return (
-                    <tr key={intern.id} className="hover:bg-[#12151D]">
+                    <tr key={intern.id} className="hover:bg-[#1B1F2A]">
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-2">
                           <Avatar user={intern} size={7} />
@@ -1568,19 +1569,19 @@ function ProgressTab({ isMentor, userId }: { isMentor: boolean; userId: string }
                           </div>
                         </div>
                       </td>
-                      <td className="text-center px-4 py-3 font-semibold text-[#E6E9F0]">{assigned}</td>
-                      <td className="text-center px-4 py-3 font-semibold text-[#E6E9F0]">{submitted}</td>
+                      <td className="text-center px-4 py-3 font-semibold font-mono text-[#E6E9F0]">{assigned}</td>
+                      <td className="text-center px-4 py-3 font-semibold font-mono text-[#E6E9F0]">{submitted}</td>
                       <td className="text-center px-4 py-3">
-                        <span className={`font-semibold ${approved > 0 ? "text-[#0f9d58]" : "text-[#5A6275]"}`}>{approved}</span>
+                        <span className={`font-semibold font-mono ${approved > 0 ? "text-[#0f9d58]" : "text-[#5A6275]"}`}>{approved}</span>
                       </td>
-                      <td className="text-center px-4 py-3 text-[#E6E9F0]">{discussions}</td>
+                      <td className="text-center px-4 py-3 text-[#E6E9F0] font-mono">{discussions}</td>
                       <td className="text-center px-4 py-3">
                         {score !== null ? (
                           <div className="flex items-center justify-center gap-1.5">
                             <div className="w-12 h-1.5 bg-[#262A35] rounded-full overflow-hidden">
                               <div className="h-full bg-[#00C2FF] rounded-full" style={{ width: `${score}%` }} />
                             </div>
-                            <span className="text-xs font-semibold text-[#00C2FF]">{score}%</span>
+                            <span className="text-xs font-semibold text-[#00C2FF] font-mono">{score}%</span>
                           </div>
                         ) : <span className="text-xs text-[#5A6275]">—</span>}
                       </td>
@@ -1612,7 +1613,7 @@ function ProgressTab({ isMentor, userId }: { isMentor: boolean; userId: string }
         ].map(m => (
           <div key={m.label} className="bg-[#12151D] border border-[#262A35] rounded-xl p-4">
             <div className={`inline-flex p-2 rounded-lg ${m.bg} mb-3`}><m.icon className={`w-4 h-4 ${m.color}`} /></div>
-            <div className={`text-2xl font-bold ${m.color}`}>{m.value}</div>
+            <div className={`text-2xl font-bold font-mono ${m.color}`}>{m.value}</div>
             <div className="text-xs text-[#8A92A6] mt-0.5">{m.label}</div>
           </div>
         ))}
@@ -1622,7 +1623,7 @@ function ProgressTab({ isMentor, userId }: { isMentor: boolean; userId: string }
       <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-5">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-semibold text-[#E6E9F0]">Overall Progress</span>
-          <span className="text-sm font-bold text-[#00C2FF]">{completionRate}%</span>
+          <span className="text-sm font-bold text-[#00C2FF] font-mono">{completionRate}%</span>
         </div>
         <div className="w-full h-2.5 bg-[#262A35] rounded-full overflow-hidden">
           <div className="h-full bg-[#00C2FF] rounded-full transition-all" style={{ width: `${completionRate}%` }} />
@@ -1647,12 +1648,12 @@ function ProgressTab({ isMentor, userId }: { isMentor: boolean; userId: string }
                       r.verdict === "approved" ? "bg-[#0f9d58]/12 text-[#0f9d58]" :
                       r.verdict === "rejected" ? "bg-[#ea4335]/12 text-[#ea4335]" : "bg-[#ff6d00]/12 text-[#ff6d00]"
                     }`}>{r.verdict.replace("_", " ")}</span>
-                    {r.score != null && <span className="text-xs font-bold text-[#00C2FF]">{r.score}/100</span>}
+                    {r.score != null && <span className="text-xs font-bold text-[#00C2FF] font-mono">{r.score}/100</span>}
                   </div>
                   <p className="text-xs text-[#5A6275]">on &ldquo;{r.submission.task.title}&rdquo;</p>
                   {r.comment && <p className="text-sm text-[#C8CEDB] mt-1">{r.comment}</p>}
                 </div>
-                <span className="text-[10px] text-[#5A6275] shrink-0">{fmt(r.createdAt)}</span>
+                <span className="text-[10px] text-[#5A6275] shrink-0 font-mono">{fmt(r.createdAt)}</span>
               </div>
             ))}
           </div>
@@ -1705,7 +1706,7 @@ function FindingAttachment({ att }: { att: AttachmentMeta }) {
 
   return (
     <div className="border border-[#262A35] rounded-lg overflow-hidden">
-      <div className="flex items-center gap-2 px-3 py-2 bg-[#12151D]">
+      <div className="flex items-center gap-2 px-3 py-2 bg-[#1B1F2A]">
         <FileText className="w-4 h-4 text-[#00C2FF] shrink-0" />
         <span className="text-sm text-[#E6E9F0] flex-1 truncate font-medium">{att.name}</span>
         {fileUrl && (
@@ -1835,7 +1836,7 @@ function LearningTab({ isMentor, userId }: { isMentor: boolean; userId: string }
                         <div className="flex-1 h-1.5 bg-[#262A35] rounded-full overflow-hidden max-w-32">
                           <div className="h-full bg-[#00C2FF] rounded-full transition-all" style={{ width: `${progress}%` }} />
                         </div>
-                        <span className="text-[10px] text-[#5A6275]">
+                        <span className="text-[10px] text-[#5A6275] font-mono">
                           {hasProgress ? `${doneModules}/${quizTopics.length} quizzes done` : `${week.topics.length} modules · ${week.checkpoints.length} checkpoints`}
                         </span>
                       </div>
@@ -1905,7 +1906,7 @@ function WeekDetail({ week, userId, isMentor, completed, onMarkComplete, onRefre
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Topics (2/3 width) */}
         <div className="lg:col-span-2 space-y-3">
-          <h3 className="text-xs font-semibold text-[#8A92A6] uppercase tracking-wide">Modules</h3>
+          <h3 className="text-xs font-semibold text-[#8A92A6]">Modules</h3>
           {week.topics.map(topic => {
             const hasQuiz = (topic.quiz?.questions?.length ?? 0) > 0;
             const done = isTopicDone(topic);
@@ -1913,7 +1914,7 @@ function WeekDetail({ week, userId, isMentor, completed, onMarkComplete, onRefre
             <div key={topic.id} className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
               <button
                 onClick={() => setExpandedTopic(expandedTopic === topic.id ? null : topic.id)}
-                className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-[#12151D] transition-colors">
+                className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-[#1B1F2A] transition-colors">
                 <div className="flex items-center gap-2">
                   {!isMentor && done
                     ? <span className="w-5 h-5 rounded-full bg-green-500/10 text-[#0f9d58] flex items-center justify-center shrink-0"><CheckCircle2 className="w-3.5 h-3.5" /></span>
@@ -1947,13 +1948,13 @@ function WeekDetail({ week, userId, isMentor, completed, onMarkComplete, onRefre
           {!isMentor && week.topics.length > 0 && (
             <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-4">
               <div className="flex items-center justify-between mb-3">
-                <h4 className="text-xs font-semibold text-[#8A92A6] uppercase tracking-wide">Your progress</h4>
-                <span className="text-xs font-semibold text-[#00C2FF]">{doneCount}/{week.topics.length}</span>
+                <h4 className="text-xs font-semibold text-[#8A92A6]">Your progress</h4>
+                <span className="text-xs font-semibold text-[#00C2FF] font-mono">{doneCount}/{week.topics.length}</span>
               </div>
               <div className="space-y-2">
                 {week.topics.map(t => (
                   <div key={t.id} className="flex items-start gap-2 text-sm">
-                    <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${isTopicDone(t) ? "text-[#0f9d58]" : "text-[#dadce0]"}`} />
+                    <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${isTopicDone(t) ? "text-[#0f9d58]" : "text-[#3A4150]"}`} />
                     <span className={isTopicDone(t) ? "text-[#C8CEDB]" : "text-[#5A6275]"}>{t.title}</span>
                   </div>
                 ))}
@@ -1964,7 +1965,7 @@ function WeekDetail({ week, userId, isMentor, completed, onMarkComplete, onRefre
           {/* Resources */}
           {week.resources.length > 0 && (
             <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-4">
-              <h4 className="text-xs font-semibold text-[#8A92A6] uppercase tracking-wide mb-3">Resources</h4>
+              <h4 className="text-xs font-semibold text-[#8A92A6] mb-3">Resources</h4>
               <div className="space-y-2">
                 {week.resources.map(r => (
                   <a key={r.id} href={r.url} target="_blank" rel="noreferrer"
@@ -1980,13 +1981,13 @@ function WeekDetail({ week, userId, isMentor, completed, onMarkComplete, onRefre
           {/* Checkpoints */}
           {week.checkpoints.length > 0 && (
             <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-4">
-              <h4 className="text-xs font-semibold text-[#8A92A6] uppercase tracking-wide mb-3">Checkpoints</h4>
+              <h4 className="text-xs font-semibold text-[#8A92A6] mb-3">Checkpoints</h4>
               <div className="space-y-2">
                 {week.checkpoints.map((cp, idx) => {
                   const cpDone = !isMentor && idx < doneCount;
                   return (
                   <div key={cp.id} className="flex items-start gap-2 text-sm text-[#C8CEDB]">
-                    <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${cpDone ? "text-[#0f9d58]" : "text-[#dadce0]"}`} />
+                    <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${cpDone ? "text-[#0f9d58]" : "text-[#3A4150]"}`} />
                     {cp.title}
                   </div>
                   );
@@ -1997,13 +1998,13 @@ function WeekDetail({ week, userId, isMentor, completed, onMarkComplete, onRefre
 
           {/* Mentor notes */}
           {week.mentorNotes.length > 0 && (
-            <div className="bg-[#fffbea] border border-[#f4b400]/30 rounded-xl p-4">
-              <h4 className="text-xs font-semibold text-[#b45309] uppercase tracking-wide mb-3">Mentor Notes</h4>
+            <div className="bg-[#1B1F2A] border border-[#F59E0B]/30 rounded-xl p-4">
+              <h4 className="text-xs font-semibold text-[#F59E0B] mb-3 flex items-center gap-1.5"><Lightbulb className="w-3.5 h-3.5" /> Mentor Notes</h4>
               <div className="space-y-3">
                 {week.mentorNotes.map(note => (
-                  <div key={note.id}>
-                    <p className="text-xs text-[#92400e] leading-relaxed">{note.body}</p>
-                    <p className="text-[10px] text-[#b45309] mt-1">— {note.author.fullName}</p>
+                  <div key={note.id} className="border-l-2 border-[#F59E0B]/40 pl-3">
+                    <p className="text-xs text-[#C2C8D6] leading-relaxed">{note.body}</p>
+                    <p className="text-[10px] text-[#8A92A6] mt-1">— {note.author.fullName}</p>
                   </div>
                 ))}
               </div>
@@ -2068,12 +2069,12 @@ function ModuleQuiz({ topic, completed, onCompleted }: { topic: InternWeekTopic;
 
   return (
     <div className="mt-4 border-t border-[#1B1F2A] pt-4">
-      <h5 className="text-xs font-semibold text-[#00C2FF] uppercase tracking-wide mb-3">Module Quiz</h5>
+      <h5 className="text-xs font-semibold text-[#00C2FF] mb-3">Module Quiz</h5>
       <div className="space-y-4">
         {questions.map((q, i) => {
           const isWrong = wrong.includes(q.id);
           return (
-            <div key={q.id} className={`rounded-lg p-3 border ${isWrong ? "border-[#ea4335]/40 bg-[#ea4335]/10" : "border-[#262A35] bg-[#12151D]"}`}>
+            <div key={q.id} className={`rounded-lg p-3 border ${isWrong ? "border-[#ea4335]/40 bg-[#ea4335]/10" : "border-[#262A35] bg-[#1B1F2A]"}`}>
               <p className="text-sm font-medium text-[#E6E9F0] mb-2">{i + 1}. {q.prompt}</p>
               {q.type === "mcq" ? (
                 <div className="space-y-1.5">
@@ -2117,10 +2118,10 @@ function MentorQuizResponses({ topic, responses }: { topic: InternWeekTopic; res
     <div className="mt-4 border-t border-[#1B1F2A] pt-4 space-y-4">
       {/* Quiz preview — what interns must answer (correct option marked) */}
       <div>
-        <h5 className="text-xs font-semibold text-[#8A92A6] uppercase tracking-wide mb-2">Quiz ({questions.length} {questions.length === 1 ? "question" : "questions"})</h5>
+        <h5 className="text-xs font-semibold text-[#8A92A6] mb-2">Quiz ({questions.length} {questions.length === 1 ? "question" : "questions"})</h5>
         <div className="space-y-2">
           {questions.map((q, i) => (
-            <div key={q.id} className="bg-[#f8faff] border border-[#0E2532] rounded-lg p-2.5">
+            <div key={q.id} className="bg-[#1B1F2A] border border-[#262A35] rounded-lg p-2.5">
               <p className="text-xs font-medium text-[#E6E9F0] mb-1">{i + 1}. {q.prompt}
                 <span className="ml-1 text-[10px] font-semibold text-[#5A6275]">{q.type === "mcq" ? "(MCQ)" : "(short answer)"}</span>
               </p>
@@ -2128,7 +2129,7 @@ function MentorQuizResponses({ topic, responses }: { topic: InternWeekTopic; res
                 <ul className="space-y-0.5">
                   {(q.options ?? []).map((opt, oi) => (
                     <li key={oi} className={`text-xs flex items-center gap-1.5 ${oi === q.answerIndex ? "text-[#0f9d58] font-semibold" : "text-[#8A92A6]"}`}>
-                      {oi === q.answerIndex ? <CheckCircle2 className="w-3 h-3 shrink-0" /> : <Circle className="w-3 h-3 shrink-0 text-[#dadce0]" />}
+                      {oi === q.answerIndex ? <CheckCircle2 className="w-3 h-3 shrink-0" /> : <Circle className="w-3 h-3 shrink-0 text-[#3A4150]" />}
                       {opt}
                     </li>
                   ))}
@@ -2145,14 +2146,14 @@ function MentorQuizResponses({ topic, responses }: { topic: InternWeekTopic; res
         <p className="text-xs text-[#5A6275]">No intern responses yet.</p>
       ) : (
       <div>
-      <h5 className="text-xs font-semibold text-[#8A92A6] uppercase tracking-wide mb-3">Quiz Responses ({responses.length})</h5>
+      <h5 className="text-xs font-semibold text-[#8A92A6] mb-3">Quiz Responses ({responses.length})</h5>
       <div className="space-y-3">
         {responses.map(r => (
           <div key={r.id} className="bg-[#12151D] border border-[#262A35] rounded-lg p-3">
             <div className="flex items-center gap-2 mb-1.5">
               {r.intern && <Avatar user={r.intern} size={5} />}
               <span className="text-xs font-medium text-[#E6E9F0]">{r.intern?.fullName ?? "Intern"}</span>
-              {r.score != null && <span className="text-[10px] font-semibold text-[#00C2FF] bg-[#0E2532] px-1.5 py-0.5 rounded">MCQ {r.score}%</span>}
+              {r.score != null && <span className="text-[10px] font-semibold text-[#00C2FF] bg-[#0E2532] px-1.5 py-0.5 rounded font-mono">MCQ {r.score}%</span>}
             </div>
             {textQs.length > 0 ? (
               <div className="space-y-1.5">
@@ -2192,12 +2193,12 @@ function QuizEditor({ quiz, onChange }: { quiz: Quiz; onChange: (q: Quiz) => voi
   const remove = (i: number) => update(questions.filter((_, j) => j !== i));
 
   return (
-    <div className="mt-3 border border-[#0E2532] bg-[#f8faff] rounded-lg p-3">
+    <div className="mt-3 border border-[#262A35] bg-[#1B1F2A] rounded-lg p-3">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-[11px] font-semibold text-[#00C2FF] uppercase tracking-wide">Module Quiz ({questions.length})</span>
+        <span className="text-[11px] font-semibold text-[#00C2FF]">Module Quiz ({questions.length})</span>
         <div className="flex gap-1.5">
-          <button onClick={addMcq} className="flex items-center gap-1 px-2 py-1 bg-[#12151D] border border-[#2E333F] text-[#00C2FF] text-[11px] font-semibold rounded hover:bg-[#eef2ff]"><Plus className="w-3 h-3" /> MCQ</button>
-          <button onClick={addText} className="flex items-center gap-1 px-2 py-1 bg-[#12151D] border border-[#2E333F] text-[#00C2FF] text-[11px] font-semibold rounded hover:bg-[#eef2ff]"><Plus className="w-3 h-3" /> Text</button>
+          <button onClick={addMcq} className="flex items-center gap-1 px-2 py-1 bg-[#12151D] border border-[#2E333F] text-[#00C2FF] text-[11px] font-semibold rounded hover:bg-[#0E2532]"><Plus className="w-3 h-3" /> MCQ</button>
+          <button onClick={addText} className="flex items-center gap-1 px-2 py-1 bg-[#12151D] border border-[#2E333F] text-[#00C2FF] text-[11px] font-semibold rounded hover:bg-[#0E2532]"><Plus className="w-3 h-3" /> Text</button>
         </div>
       </div>
       {questions.length === 0 && <p className="text-[11px] text-[#5A6275]">No quiz yet — add MCQ or text questions. Interns must answer all MCQs correctly to complete this module.</p>}
@@ -2205,7 +2206,7 @@ function QuizEditor({ quiz, onChange }: { quiz: Quiz; onChange: (q: Quiz) => voi
         {questions.map((q, i) => (
           <div key={q.id} className="bg-[#12151D] border border-[#262A35] rounded-lg p-2.5">
             <div className="flex items-center gap-2 mb-1.5">
-              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${q.type === "mcq" ? "bg-[#0E2532] text-[#00C2FF]" : "bg-[#fef3e0] text-[#b45309]"}`}>{q.type === "mcq" ? "MCQ" : "TEXT"}</span>
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${q.type === "mcq" ? "bg-[#0E2532] text-[#00C2FF]" : "bg-[#F59E0B]/12 text-[#F59E0B]"}`}>{q.type === "mcq" ? "MCQ" : "TEXT"}</span>
               <input
                 className="flex-1 px-2 py-1 bg-[#1B1F2A] border border-[#2E333F] rounded text-xs text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
                 placeholder="Question prompt…" value={q.prompt}
@@ -2460,8 +2461,9 @@ function MentorPanelTab() {
               </p>
             </div>
           </div>
-          <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg px-4 py-3 text-sm text-amber-300">
-            ⚠️ This will populate the database with all handbook content. Run only on a fresh install or after clearing existing weeks.
+          <div className="flex items-start gap-2 bg-[#F59E0B]/12 border border-[#F59E0B]/25 rounded-lg px-4 py-3 text-sm text-[#F59E0B]">
+            <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+            <span>This will populate the database with all handbook content. Run only on a fresh install or after clearing existing weeks.</span>
           </div>
           <button onClick={seedHandbook} disabled={seedLoading}
             className="flex items-center gap-2 px-4 py-2 bg-[#00C2FF] text-[#06121A] text-sm font-semibold rounded-lg hover:bg-[#0098E6] disabled:opacity-50 transition-colors">
@@ -2496,7 +2498,7 @@ function MentorPanelTab() {
 
           {/* Meta */}
           <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-5 space-y-3">
-            <h3 className="text-xs font-semibold text-[#8A92A6] uppercase tracking-wide">Week info</h3>
+            <h3 className="text-xs font-semibold text-[#8A92A6]">Week info</h3>
             <input
               className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60 focus:ring-2 focus:ring-[#00C2FF]/20"
               value={editMeta.title} onChange={e => setEditMeta(p => ({ ...p, title: e.target.value }))} placeholder="Week title…" />
@@ -2507,8 +2509,8 @@ function MentorPanelTab() {
 
           {/* Topics / Modules */}
           <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-3 border-b border-[#1B1F2A] bg-[#12151D]">
-              <h3 className="text-xs font-semibold text-[#8A92A6] uppercase tracking-wide">Modules ({editTopics.length})</h3>
+            <div className="flex items-center justify-between px-5 py-3 border-b border-[#262A35] bg-[#1B1F2A]">
+              <h3 className="text-xs font-semibold text-[#8A92A6]">Modules ({editTopics.length})</h3>
               <button onClick={() => setEditTopics(p => [...p, { title: "New Module", body: "", order: p.length }])}
                 className="flex items-center gap-1 px-2.5 py-1 bg-[#00C2FF] text-[#06121A] text-xs font-semibold rounded-lg hover:bg-[#0098E6]">
                 <Plus className="w-3 h-3" /> Add Module
@@ -2547,8 +2549,8 @@ function MentorPanelTab() {
 
           {/* Resources */}
           <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-3 border-b border-[#1B1F2A] bg-[#12151D]">
-              <h3 className="text-xs font-semibold text-[#8A92A6] uppercase tracking-wide">Resources ({editResources.length})</h3>
+            <div className="flex items-center justify-between px-5 py-3 border-b border-[#262A35] bg-[#1B1F2A]">
+              <h3 className="text-xs font-semibold text-[#8A92A6]">Resources ({editResources.length})</h3>
               <button onClick={() => setEditResources(p => [...p, { title: "", url: "", type: "link", order: p.length }])}
                 className="flex items-center gap-1 px-2.5 py-1 bg-[#00C2FF] text-[#06121A] text-xs font-semibold rounded-lg hover:bg-[#0098E6]">
                 <Plus className="w-3 h-3" /> Add Link
@@ -2579,8 +2581,8 @@ function MentorPanelTab() {
 
           {/* Checkpoints */}
           <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-3 border-b border-[#1B1F2A] bg-[#12151D]">
-              <h3 className="text-xs font-semibold text-[#8A92A6] uppercase tracking-wide">Checkpoints ({editCheckpoints.length})</h3>
+            <div className="flex items-center justify-between px-5 py-3 border-b border-[#262A35] bg-[#1B1F2A]">
+              <h3 className="text-xs font-semibold text-[#8A92A6]">Checkpoints ({editCheckpoints.length})</h3>
               <button onClick={() => setEditCheckpoints(p => [...p, { title: "", order: p.length }])}
                 className="flex items-center gap-1 px-2.5 py-1 bg-[#00C2FF] text-[#06121A] text-xs font-semibold rounded-lg hover:bg-[#0098E6]">
                 <Plus className="w-3 h-3" /> Add
@@ -2590,7 +2592,7 @@ function MentorPanelTab() {
               {editCheckpoints.length === 0 && <p className="text-sm text-[#5A6275]">No checkpoints yet.</p>}
               {editCheckpoints.map((c, i) => (
                 <div key={i} className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-[#dadce0] shrink-0" />
+                  <CheckCircle2 className="w-4 h-4 text-[#3A4150] shrink-0" />
                   <input
                     className="flex-1 px-3 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
                     value={c.title} onChange={e => setEditCheckpoints(p => p.map((x, j) => j === i ? { ...x, title: e.target.value } : x))}
@@ -2635,7 +2637,7 @@ function MentorPanelTab() {
                       </div>
                       <div>
                         <p className="font-semibold text-sm text-[#E6E9F0]">{week.title}</p>
-                        <p className="text-xs text-[#5A6275]">
+                        <p className="text-xs text-[#5A6275] font-mono">
                           {week.topics.length} modules · {week.checkpoints.length} checkpoints · {week.completions.length} completed
                         </p>
                       </div>
@@ -2687,7 +2689,7 @@ function MentorPanelTab() {
                     {week.mentorNotes.length > 0 && (
                       <div className="mt-3 space-y-1.5">
                         {week.mentorNotes.slice(0, 2).map(note => (
-                          <div key={note.id} className="text-xs text-[#8A92A6] bg-[#fffbea] border border-[#f4b400]/20 rounded px-3 py-2">
+                          <div key={note.id} className="text-xs text-[#C2C8D6] bg-[#1B1F2A] border-l-2 border-[#F59E0B]/40 rounded px-3 py-2">
                             {note.body} <span className="text-[#5A6275]">— {note.author.fullName}</span>
                           </div>
                         ))}

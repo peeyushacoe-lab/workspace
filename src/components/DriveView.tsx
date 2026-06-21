@@ -70,6 +70,10 @@ type DriveFile = {
   storageUrl: string;
   createdAt: string;
   updatedAt: string;
+  classification?: string;
+  // Native Nexus docs/sheets/slides surfaced from Notes — open their editor instead of a preview.
+  kind?: "file" | "doc" | "sheet" | "slide";
+  href?: string | null;
 };
 
 type StorageInfo = {
@@ -1034,6 +1038,8 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
   };
 
   const handlePreview = (file: DriveFile) => {
+    // Native docs/sheets/slides open in their editor, not the file preview.
+    if (file.href) { router.push(file.href); return; }
     setPreviewFile(file);
   };
 
