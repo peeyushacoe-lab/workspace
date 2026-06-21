@@ -8,6 +8,7 @@ import {
   ChevronDown, ChevronUp, Loader2,
 } from "lucide-react";
 import { PageHeader } from "@/components/Shell";
+import { avatarGradient } from "@/lib/avatar";
 import type { TeamWithMembers } from "@/app/api/teams/route";
 
 // ── Icon map ───────────────────────────────────────────────────────────────────
@@ -39,19 +40,18 @@ function AvatarStack({ members, color }: { members: { id: string; fullName: stri
           style={{
             marginLeft: i === 0 ? 0 : -8,
             zIndex: visible.length - i,
-            background: color + "22",
-            border: `2px solid #ffffff`,
-            color,
+            background: avatarGradient(m.fullName),
+            border: "2px solid #12151D",
           }}
-          className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-semibold uppercase"
+          className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-semibold text-white uppercase"
         >
           {m.fullName.charAt(0)}
         </div>
       ))}
       {rest > 0 && (
         <div
-          style={{ marginLeft: -8, zIndex: 0, background: "#f1f3f4", border: "2px solid #ffffff" }}
-          className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] text-[#5f6368] font-semibold"
+          style={{ marginLeft: -8, zIndex: 0, background: "#1B1F2A", border: "2px solid #12151D" }}
+          className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-mono text-[#8A92A6] font-semibold"
         >
           +{rest}
         </div>
@@ -67,7 +67,7 @@ function QuickLink({
   return (
     <Link
       href={href}
-      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:bg-white/5"
+      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:bg-[#1B1F2A]"
       style={{ color }}
     >
       <Icon className="w-3.5 h-3.5" />
@@ -81,44 +81,44 @@ function ExpandedPanel({ team }: { team: TeamWithMembers }) {
   return (
     <div
       className="mt-4 pt-4 border-t"
-      style={{ borderColor: "rgba(255,255,255,0.06)" }}
+      style={{ borderColor: "#262A35" }}
     >
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
         {/* Stats */}
-        <div className="bg-white rounded-lg p-3 flex flex-col gap-1">
-          <span className="text-[10px] text-[#9aa0a6]">Members</span>
-          <span className="text-lg font-semibold" style={{ color: team.color }}>{team.memberCount}</span>
+        <div className="bg-[#1B1F2A] border border-[#262A35] rounded-lg p-3 flex flex-col gap-1">
+          <span className="text-[10px] text-[#5A6275]">Members</span>
+          <span className="text-lg font-mono font-semibold" style={{ color: team.color }}>{team.memberCount}</span>
         </div>
-        <div className="bg-white rounded-lg p-3 flex flex-col gap-1">
-          <span className="text-[10px] text-[#9aa0a6]">Unread messages</span>
-          <span className="text-lg font-semibold text-[#202124]">0</span>
+        <div className="bg-[#1B1F2A] border border-[#262A35] rounded-lg p-3 flex flex-col gap-1">
+          <span className="text-[10px] text-[#5A6275]">Unread messages</span>
+          <span className="text-lg font-mono font-semibold text-[#E6E9F0]">0</span>
         </div>
-        <div className="bg-white rounded-lg p-3 flex flex-col gap-1">
-          <span className="text-[10px] text-[#9aa0a6]">Activity</span>
-          <span className="text-xs text-[#9aa0a6]">Activity feed coming soon</span>
+        <div className="bg-[#1B1F2A] border border-[#262A35] rounded-lg p-3 flex flex-col gap-1">
+          <span className="text-[10px] text-[#5A6275]">Activity</span>
+          <span className="text-xs text-[#5A6275]">Activity feed coming soon</span>
         </div>
       </div>
 
       {/* Members list */}
       {team.members.length > 0 ? (
         <div className="space-y-1">
-          <p className="text-[10px] text-[#9aa0a6] mb-2">Members</p>
+          <p className="text-[10px] text-[#5A6275] mb-2">Members</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
             {team.members.map((m) => (
               <div
                 key={m.id}
-                className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-white"
+                className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-[#1B1F2A] border border-[#262A35]"
               >
                 {/* Avatar */}
                 <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold uppercase flex-shrink-0"
-                  style={{ background: team.color + "22", color: team.color }}
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold text-white uppercase flex-shrink-0"
+                  style={{ background: avatarGradient(m.fullName) }}
                 >
                   {m.fullName.charAt(0)}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm text-[#202124] truncate leading-tight">{m.fullName}</p>
-                  <p className="text-[10px] text-[#9aa0a6] leading-tight truncate">
+                  <p className="text-sm text-[#E6E9F0] truncate leading-tight">{m.fullName}</p>
+                  <p className="text-[10px] font-mono text-[#5A6275] leading-tight truncate uppercase">
                     {m.role.replace(/_/g, " ")}
                   </p>
                 </div>
@@ -127,7 +127,7 @@ function ExpandedPanel({ team }: { team: TeamWithMembers }) {
           </div>
         </div>
       ) : (
-        <p className="text-sm text-[#9aa0a6] text-center py-4">No members yet</p>
+        <p className="text-sm text-[#5A6275] text-center py-4">No members yet</p>
       )}
     </div>
   );
@@ -145,10 +145,13 @@ function TeamCard({
 }) {
   return (
     <div
-      className="bg-white border rounded-xl overflow-hidden transition-all"
+      className="bg-[#12151D] border rounded-xl overflow-hidden transition-all"
       style={{
-        borderColor: isExpanded ? team.color + "44" : "rgba(255,255,255,0.06)",
-        borderLeft: `4px solid ${team.color}`,
+        borderTopColor: isExpanded ? team.color + "44" : "#262A35",
+        borderRightColor: isExpanded ? team.color + "44" : "#262A35",
+        borderBottomColor: isExpanded ? team.color + "44" : "#262A35",
+        borderLeftColor: team.color,
+        borderLeftWidth: "4px",
       }}
     >
       <div className="p-4">
@@ -161,8 +164,8 @@ function TeamCard({
             <TeamIcon icon={team.icon} color={team.color} size={18} />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-semibold text-[#202124] leading-tight">{team.name}</h3>
-            <p className="text-xs text-[#9aa0a6] mt-0.5">
+            <h3 className="text-sm font-semibold text-[#E6E9F0] leading-tight">{team.name}</h3>
+            <p className="text-xs font-mono text-[#5A6275] mt-0.5">
               {team.memberCount} {team.memberCount === 1 ? "member" : "members"}
             </p>
           </div>
@@ -173,7 +176,7 @@ function TeamCard({
         {/* Quick links */}
         <div
           className="flex flex-wrap gap-0.5 mb-3 -mx-1 pb-3 border-b"
-          style={{ borderColor: "rgba(255,255,255,0.05)" }}
+          style={{ borderColor: "#1C1F28" }}
         >
           <QuickLink href={`/chat?team=${team.id}`}     icon={MessageSquare} label="Chat"     color="#00d2ff" />
           <QuickLink href={`/drive?team=${team.id}`}    icon={FolderOpen}    label="Files"    color="#8b5cf6" />
@@ -217,7 +220,7 @@ function TeamsGrid({
 }) {
   if (teams.length === 0) {
     return (
-      <p className="text-sm text-[#9aa0a6] text-center py-6">No teams available.</p>
+      <p className="text-sm text-[#5A6275] text-center py-6">No teams available.</p>
     );
   }
 
@@ -239,8 +242,8 @@ function TeamsGrid({
 function SectionLabel({ label }: { label: string }) {
   return (
     <div className="flex items-center gap-3 mb-3">
-      <span className="text-xs font-semibold text-[#9aa0a6]">{label}</span>
-      <div className="flex-1 h-px bg-[rgba(255,255,255,0.05)]" />
+      <span className="text-xs font-semibold text-[#5A6275]">{label}</span>
+      <div className="flex-1 h-px bg-[#1C1F28]" />
     </div>
   );
 }
@@ -277,7 +280,7 @@ export default function TeamsPage() {
   const otherTeams = data?.teams.filter((t) => !data.myTeamIds.includes(t.id)) ?? [];
 
   return (
-    <div className="min-h-screen bg-white text-[#202124]">
+    <div className="min-h-screen bg-[#0B0D12] text-[#E6E9F0]">
       <PageHeader
         eyebrow="Workspace"
         title="Team Spaces"
@@ -286,7 +289,7 @@ export default function TeamsPage() {
 
       <div className="px-6 pb-10 max-w-5xl space-y-8">
         {loading ? (
-          <div className="flex items-center justify-center py-20 gap-2 text-[#9aa0a6]">
+          <div className="flex items-center justify-center py-20 gap-2 text-[#5A6275]">
             <Loader2 className="w-5 h-5 animate-spin" />
             <span className="text-sm">Loading team spaces…</span>
           </div>
@@ -311,8 +314,8 @@ export default function TeamsPage() {
             {/* No data at all */}
             {myTeams.length === 0 && otherTeams.length === 0 && (
               <div className="flex flex-col items-center justify-center py-20 gap-3">
-                <Users className="w-10 h-10 text-[#9aa0a6]" />
-                <p className="text-sm text-[#9aa0a6]">No team spaces found.</p>
+                <Users className="w-10 h-10 text-[#5A6275]" />
+                <p className="text-sm text-[#5A6275]">No team spaces found.</p>
               </div>
             )}
           </>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Activity, Database, Server, Zap, RefreshCw, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import { PageHeader } from "@/components/Shell";
 
 type HealthData = {
   status: "ok" | "degraded";
@@ -25,7 +26,7 @@ type MetricsData = {
 };
 
 function StatusIcon({ ok }: { ok: boolean | null }) {
-  if (ok === null) return <AlertTriangle className="w-4 h-4 text-[#b06000]" />;
+  if (ok === null) return <AlertTriangle className="w-4 h-4 text-[#F59E0B]" />;
   return ok
     ? <CheckCircle className="w-4 h-4 text-[#0f9d58]" />
     : <XCircle className="w-4 h-4 text-[#ea4335]" />;
@@ -33,9 +34,9 @@ function StatusIcon({ ok }: { ok: boolean | null }) {
 
 function Stat({ label, value }: { label: string; value: number | string }) {
   return (
-    <div className="bg-white border border-[#e8eaed] rounded-xl p-4">
-      <p className="text-[10px] text-[#9aa0a6] mb-1">{label}</p>
-      <p className="text-2xl font-semibold text-[#202124]">{typeof value === "number" ? value.toLocaleString() : value}</p>
+    <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-4">
+      <p className="text-[10px] text-[#5A6275] mb-1">{label}</p>
+      <p className="text-2xl font-semibold font-mono text-[#E6E9F0]">{typeof value === "number" ? value.toLocaleString() : value}</p>
     </div>
   );
 }
@@ -64,14 +65,17 @@ export default function SystemHealthPage() {
   const isOk = (s: string) => s === "ok";
 
   return (
-    <div className="min-h-screen bg-white text-[#202124] p-6">
-      <div className="max-w-6xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-[10px] text-[#1a56db] mb-1">Observability · Phase 28</p>
-            <h1 className="text-2xl font-semibold">System Health</h1>
-          </div>
-          <button onClick={refresh} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#f1f3f4] text-[#5f6368] text-sm hover:bg-[#2e3347]">
+    <div className="min-h-screen bg-[#0B0D12] text-[#E6E9F0]">
+      <PageHeader
+        eyebrow="Admin · Observability"
+        title="System Health"
+        description="Live service status, platform metrics, and BullMQ queue health."
+      />
+
+      <div className="px-6 pb-10 max-w-6xl space-y-6">
+        <div className="flex items-center">
+          <div className="flex-1" />
+          <button onClick={refresh} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1B1F2A] text-[#8A92A6] text-sm border border-[#262A35] hover:bg-[#2e3347] hover:text-[#E6E9F0] transition-colors">
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
             Refresh
           </button>
@@ -83,12 +87,12 @@ export default function SystemHealthPage() {
             { label: "Database", icon: Database, ok: health ? isOk(health.services.database) : null },
             { label: "Redis", icon: Server, ok: health ? isOk(health.services.redis) : null },
           ].map(({ label, icon: Icon, ok }) => (
-            <div key={label} className="bg-white border border-[#e8eaed] rounded-xl p-4 flex items-center gap-3">
-              <Icon className="w-5 h-5 text-[#9aa0a6]" />
+            <div key={label} className="bg-[#12151D] border border-[#262A35] rounded-xl p-4 flex items-center gap-3">
+              <Icon className="w-5 h-5 text-[#5A6275]" />
               <span className="font-medium">{label}</span>
               <div className="flex-1" />
               <StatusIcon ok={ok} />
-              <span className={`text-sm ${ok === null ? "text-[#b06000]" : ok ? "text-[#0f9d58]" : "text-[#ea4335]"}`}>
+              <span className={`text-sm font-medium ${ok === null ? "text-[#F59E0B]" : ok ? "text-[#0f9d58]" : "text-[#ea4335]"}`}>
                 {ok === null ? "checking" : ok ? "healthy" : "down"}
               </span>
             </div>
@@ -113,14 +117,14 @@ export default function SystemHealthPage() {
 
         {/* Queue health */}
         {health?.queues && (
-          <div className="bg-white border border-[#e8eaed] rounded-xl overflow-hidden">
-            <div className="flex items-center gap-2 px-4 py-3 border-b border-[#e8eaed]">
-              <Zap className="w-4 h-4 text-[#1a56db]" />
+          <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-[#262A35]">
+              <Zap className="w-4 h-4 text-[#00C2FF]" />
               <span className="text-sm font-medium">BullMQ Queues</span>
             </div>
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-[#f0f0f0] text-[#9aa0a6]">
+                <tr className="border-b border-[#1C1F28] text-[#5A6275]">
                   <th className="text-left px-4 py-2 font-medium">Queue</th>
                   <th className="text-right px-4 py-2 font-medium">Waiting</th>
                   <th className="text-right px-4 py-2 font-medium">Active</th>
@@ -131,18 +135,18 @@ export default function SystemHealthPage() {
               </thead>
               <tbody>
                 {Object.entries(health.queues).map(([name, q]) => (
-                  <tr key={name} className="border-b border-[#f0f0f0] hover:bg-[#f1f3f4]/30">
-                    <td className="px-4 py-2 font-mono text-[#5f6368]">{name}</td>
-                    <td className="px-4 py-2 text-right text-[#5f6368]">{q?.waiting ?? "—"}</td>
-                    <td className="px-4 py-2 text-right text-[#1a56db]">{q?.active ?? "—"}</td>
-                    <td className={`px-4 py-2 text-right ${q && q.failed > 0 ? "text-[#ea4335]" : "text-[#5f6368]"}`}>{q?.failed ?? "—"}</td>
-                    <td className="px-4 py-2 text-right text-[#5f6368]">{q?.delayed ?? "—"}</td>
+                  <tr key={name} className="border-b border-[#1C1F28] hover:bg-[#1B1F2A]">
+                    <td className="px-4 py-2 font-mono text-[#E6E9F0]">{name}</td>
+                    <td className="px-4 py-2 text-right font-mono text-[#8A92A6]">{q?.waiting ?? "—"}</td>
+                    <td className="px-4 py-2 text-right font-mono text-[#00C2FF]">{q?.active ?? "—"}</td>
+                    <td className={`px-4 py-2 text-right font-mono ${q && q.failed > 0 ? "text-[#ea4335]" : "text-[#8A92A6]"}`}>{q?.failed ?? "—"}</td>
+                    <td className="px-4 py-2 text-right font-mono text-[#8A92A6]">{q?.delayed ?? "—"}</td>
                     <td className="px-4 py-2 text-right">
                       {q === null
-                        ? <span className="text-[#ea4335]">offline</span>
+                        ? <span className="font-medium text-[#ea4335]">offline</span>
                         : q.failed > 0
-                          ? <span className="text-[#b06000]">warn</span>
-                          : <span className="text-[#0f9d58]">ok</span>}
+                          ? <span className="font-medium text-[#F59E0B]">warn</span>
+                          : <span className="font-medium text-[#0f9d58]">ok</span>}
                     </td>
                   </tr>
                 ))}
@@ -152,7 +156,7 @@ export default function SystemHealthPage() {
         )}
 
         {health && (
-          <p className="text-xs text-[#9aa0a6]">
+          <p className="text-xs text-[#5A6275]">
             <Activity className="w-3 h-3 inline mr-1" />
             Overall: <span className={health.status === "ok" ? "text-[#0f9d58]" : "text-[#ea4335]"}>{health.status}</span>
             {" · "} Last checked: {new Date(health.timestamp).toLocaleString()}

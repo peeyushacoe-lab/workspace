@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
+import { avatarGradient } from "@/lib/avatar";
 
 type Incident = {
   id: string;
@@ -60,40 +61,40 @@ type StatusFilter = "ALL" | "OPEN" | "INVESTIGATING" | "RESOLVED";
 const SEVERITY_CONFIG = {
   CRITICAL: {
     label: "Critical",
-    bg: "bg-[#ea4335]/20",
+    bg: "bg-[#ea4335]/15",
     text: "text-[#ea4335]",
     border: "border-[#ea4335]",
     dot: "bg-[#ea4335]",
   },
   HIGH: {
     label: "High",
-    bg: "bg-[#ea4335]/10",
-    text: "text-[#ea4335]/80",
-    border: "border-[#ea4335]/50",
-    dot: "bg-[#ea4335]/80",
+    bg: "bg-[#ff6d00]/15",
+    text: "text-[#ff6d00]",
+    border: "border-[#ff6d00]/50",
+    dot: "bg-[#ff6d00]",
   },
   MEDIUM: {
     label: "Medium",
-    bg: "bg-[#ffb4ab]/10",
-    text: "text-[#ffb4ab]",
-    border: "border-[#ffb4ab]/20",
-    dot: "bg-[#ffb4ab]",
+    bg: "bg-[#F59E0B]/15",
+    text: "text-[#F59E0B]",
+    border: "border-[#F59E0B]/40",
+    dot: "bg-[#F59E0B]",
   },
   LOW: {
     label: "Low",
-    bg: "bg-[#1a56db]/10",
-    text: "text-[#1a56db]",
-    border: "border-[#1a56db]/20",
-    dot: "bg-[#1a56db]",
+    bg: "bg-[#0f9d58]/15",
+    text: "text-[#0f9d58]",
+    border: "border-[#0f9d58]/30",
+    dot: "bg-[#0f9d58]",
   },
 };
 
 const STATUS_CONFIG = {
-  OPEN: { label: "Open", bg: "bg-[#303444]", text: "text-[#5f6368]" },
-  INVESTIGATING: { label: "Investigating", bg: "bg-[#353849]", text: "text-[#1a56db]" },
-  CONTAINED: { label: "Contained", bg: "bg-[#1a56db]/10", text: "text-[#1a56db]" },
+  OPEN: { label: "Open", bg: "bg-[#1B1F2A]", text: "text-[#8A92A6]" },
+  INVESTIGATING: { label: "Investigating", bg: "bg-[#00C2FF]/10", text: "text-[#00C2FF]" },
+  CONTAINED: { label: "Contained", bg: "bg-[#00C2FF]/10", text: "text-[#00C2FF]" },
   RESOLVED: { label: "Resolved", bg: "bg-[#0f9d58]/10", text: "text-[#0f9d58]" },
-  CLOSED: { label: "Closed", bg: "bg-white", text: "text-[#80868b]" },
+  CLOSED: { label: "Closed", bg: "bg-[#1B1F2A]", text: "text-[#5A6275]" },
 };
 
 function SeverityBadge({ severity }: { severity: Incident["severity"] }) {
@@ -121,22 +122,24 @@ function StatCard({
   icon: Icon,
   label,
   value,
-  color,
+  tint,
+  iconColor,
 }: {
   icon: React.ElementType;
   label: string;
   value: number;
-  color: string;
+  tint: string;
+  iconColor: string;
 }) {
   return (
-    <div className="bg-white border border-[#e8eaed] rounded-xl p-4">
+    <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-5 hover:border-[#2E333F] transition-colors">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs text-[#5f6368] font-medium">{label}</p>
-          <p className="mt-1 text-2xl font-semibold text-[#202124]">{value}</p>
+          <p className="text-xs text-[#8A92A6] font-medium">{label}</p>
+          <p className="mt-2 text-3xl font-semibold text-[#E6E9F0] font-mono tracking-tight">{value}</p>
         </div>
-        <div className={`rounded-2xl p-3 ${color}`}>
-          <Icon className="h-6 w-6 text-white" />
+        <div className={`rounded-xl p-2.5 border ${tint}`}>
+          <Icon className="h-5 w-5" style={{ color: iconColor }} />
         </div>
       </div>
     </div>
@@ -289,29 +292,29 @@ export function SOCView(_props: { currentUserId: string }) {
   });
 
   return (
-    <div className="flex h-full flex-col bg-white overflow-hidden">
-      <div className="border-b border-[#e8eaed] bg-white px-6 py-4">
+    <div className="flex h-full flex-col bg-[#12151D] overflow-hidden">
+      <div className="border-b border-[#262A35] bg-[#12151D] px-6 py-4">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="rounded-2xl bg-[#ea4335]/20 p-2 border border-[#ea4335]/30">
+            <div className="rounded-xl bg-[#ea4335]/15 p-2.5 border border-[#ea4335]/30">
               <Shield className="h-5 w-5 text-[#ea4335]" />
             </div>
             <div>
-              <h1 className="text-lg font-semibold text-[#202124]">Security Operations Center</h1>
-              <p className="text-xs text-[#5f6368]">Real-time threat monitoring and incident management</p>
+              <h1 className="text-lg font-semibold text-[#E6E9F0] tracking-[-0.01em]">Security Operations Center</h1>
+              <p className="text-xs text-[#8A92A6]">Real-time threat monitoring and incident management</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => { fetchStats(); fetchIncidents(); }}
-              className="rounded-xl border border-[#e8eaed] p-2 hover:bg-[#f1f3f4] transition-colors"
+              className="rounded-lg border border-[#262A35] p-2 hover:bg-[#1B1F2A] transition-colors"
               title="Refresh"
             >
-              <RefreshCw className="h-4 w-4 text-[#5f6368]" />
+              <RefreshCw className="h-4 w-4 text-[#8A92A6]" />
             </button>
             <button
               onClick={() => setShowNewIncident(true)}
-              className="flex items-center gap-2 rounded-2xl bg-[#ea4335] px-4 py-2 text-sm font-medium text-white hover:bg-[#ea4335]/80 transition-colors"
+              className="flex items-center gap-2 rounded-lg bg-[#ea4335] px-4 py-2 text-sm font-medium text-white hover:bg-[#d33828] transition-colors"
             >
               <Plus className="h-4 w-4" />
               New Incident
@@ -325,41 +328,45 @@ export function SOCView(_props: { currentUserId: string }) {
               icon={AlertTriangle}
               label="Open Incidents"
               value={stats.openIncidents}
-              color="bg-red-500"
+              tint="bg-[#ea4335]/10 border-[#ea4335]/20"
+              iconColor="#ea4335"
             />
             <StatCard
               icon={FileWarning}
               label="DLP Violations"
               value={stats.dlpViolations}
-              color="bg-orange-500"
+              tint="bg-[#ff6d00]/10 border-[#ff6d00]/20"
+              iconColor="#ff6d00"
             />
             <StatCard
               icon={ShieldAlert}
               label="High-Risk Threats"
               value={stats.highRiskThreats}
-              color="bg-yellow-500"
+              tint="bg-[#F59E0B]/10 border-[#F59E0B]/20"
+              iconColor="#F59E0B"
             />
             <StatCard
               icon={Activity}
               label="Critical Alerts"
               value={stats.criticalAlerts}
-              color="bg-purple-500"
+              tint="bg-[#00C2FF]/10 border-[#00C2FF]/20"
+              iconColor="#00C2FF"
             />
           </div>
         )}
       </div>
 
       <div className="flex flex-1 overflow-hidden">
-        <div className="w-96 shrink-0 flex flex-col border-r border-[#e8eaed] bg-white overflow-hidden">
-          <div className="flex items-center gap-1 border-b border-[#e8eaed] p-3">
+        <div className="w-96 shrink-0 flex flex-col border-r border-[#262A35] bg-[#12151D] overflow-hidden">
+          <div className="flex items-center gap-1 border-b border-[#262A35] p-3">
             {(["ALL", "OPEN", "INVESTIGATING", "RESOLVED"] as const).map((s) => (
               <button
                 key={s}
                 onClick={() => setStatusFilter(s)}
                 className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
                   statusFilter === s
-                    ? "bg-[#1a56db] text-white"
-                    : "text-[#5f6368] hover:bg-[#f1f3f4]"
+                    ? "bg-[#00C2FF] text-[#06121A]"
+                    : "text-[#8A92A6] hover:bg-[#1B1F2A]"
                 }`}
               >
                 {s === "ALL" ? "All" : s.charAt(0) + s.slice(1).toLowerCase()}
@@ -370,11 +377,11 @@ export function SOCView(_props: { currentUserId: string }) {
           <div className="flex-1 overflow-y-auto">
             {loading ? (
               <div className="flex h-32 items-center justify-center">
-                <Loader2 className="h-6 w-6 animate-spin text-[#1a56db]" />
+                <Loader2 className="h-6 w-6 animate-spin text-[#00C2FF]" />
               </div>
             ) : filteredIncidents.length === 0 ? (
-              <div className="flex h-32 flex-col items-center justify-center gap-2 text-[#80868b]">
-                <Shield className="h-8 w-8 text-[#262b3a]" />
+              <div className="flex h-32 flex-col items-center justify-center gap-2 text-[#5A6275]">
+                <Shield className="h-8 w-8 text-[#2E333F]" />
                 <p className="text-sm">No incidents found</p>
               </div>
             ) : (
@@ -382,21 +389,21 @@ export function SOCView(_props: { currentUserId: string }) {
                 <button
                   key={incident.id}
                   onClick={() => handleSelectIncident(incident)}
-                  className={`w-full border-b border-[#e8eaed] px-4 py-3.5 text-left transition-colors hover:bg-[#f1f3f4] ${
-                    selectedIncident?.id === incident.id ? "bg-[#1a56db]/5 border-l-2 border-l-[#00d2ff]" : ""
+                  className={`w-full border-b border-[#262A35] px-4 py-3.5 text-left transition-colors hover:bg-[#1B1F2A] ${
+                    selectedIncident?.id === incident.id ? "bg-[#00C2FF]/5 border-l-2 border-l-[#00C2FF]" : ""
                   } ${
                     incident.severity === "CRITICAL" ? "border-l-4 border-[#ea4335]" :
                     incident.severity === "HIGH" ? "border-l-4 border-[#ea4335]/50" : ""
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2 mb-2">
-                    <p className="font-medium text-sm text-[#202124] line-clamp-1">{incident.title}</p>
+                    <p className="font-medium text-sm text-[#E6E9F0] line-clamp-1">{incident.title}</p>
                     <SeverityBadge severity={incident.severity} />
                   </div>
-                  <p className="text-xs text-[#5f6368] line-clamp-2 mb-2">{incident.description}</p>
+                  <p className="text-xs text-[#8A92A6] line-clamp-2 mb-2">{incident.description}</p>
                   <div className="flex items-center justify-between">
                     <StatusBadge status={incident.status} />
-                    <span className="text-xs text-[#80868b]">
+                    <span className="text-[11px] text-[#5A6275] font-mono">
                       {formatDistanceToNow(new Date(incident.createdAt), { addSuffix: true })}
                     </span>
                   </div>
@@ -406,16 +413,16 @@ export function SOCView(_props: { currentUserId: string }) {
           </div>
 
           {stats && stats.recentSecurityEvents.length > 0 && (
-            <div className="border-t border-[#e8eaed]">
-              <div className="px-4 py-3 border-b border-[#e8eaed] flex items-center justify-between">
-                <h3 className="text-xs font-semibold text-[#5f6368]">
+            <div className="border-t border-[#262A35]">
+              <div className="px-4 py-3 border-b border-[#262A35] flex items-center justify-between">
+                <h3 className="text-xs font-semibold text-[#8A92A6]">
                   Recent Security Events
                 </h3>
                 <a
                   href="/api/admin/audit-logs?action=DLP"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-xs text-[#1a56db] hover:underline"
+                  className="flex items-center gap-1 text-xs text-[#00C2FF] hover:underline"
                 >
                   DLP Violations
                   <ExternalLink className="h-3 w-3" />
@@ -427,14 +434,14 @@ export function SOCView(_props: { currentUserId: string }) {
                   return (
                     <div
                       key={event.id}
-                      className="border-b border-[#e8eaed] px-4 py-2.5"
+                      className="border-b border-[#262A35] px-4 py-2.5"
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
                           <span className={`w-2 h-2 rounded-full shrink-0 ${sevCfg.dot}`} />
-                          <span className="text-xs font-medium text-[#202124]">{event.type}</span>
+                          <span className="text-xs font-medium text-[#E6E9F0]">{event.type}</span>
                         </div>
-                        <span className="text-xs text-[#80868b]">
+                        <span className="text-xs text-[#5A6275]">
                           {formatDistanceToNow(new Date(event.createdAt), { addSuffix: true })}
                         </span>
                       </div>
@@ -446,58 +453,63 @@ export function SOCView(_props: { currentUserId: string }) {
           )}
         </div>
 
-        <div className="flex-1 flex flex-col bg-white overflow-y-auto">
+        <div className="flex-1 flex flex-col bg-[#12151D] overflow-y-auto">
           {loadingDetail ? (
             <div className="flex h-48 items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-[#1a56db]" />
+              <Loader2 className="h-8 w-8 animate-spin text-[#00C2FF]" />
             </div>
           ) : !selectedIncident ? (
-            <div className="flex h-full flex-col items-center justify-center gap-3 text-[#80868b] p-8">
-              <ShieldAlert className="h-16 w-16 text-[#262b3a]" />
-              <p className="text-base font-medium text-[#80868b]">Select an incident to view details</p>
-              <p className="text-sm text-[#262b3a] text-center">
+            <div className="flex h-full flex-col items-center justify-center gap-3 text-[#5A6275] p-8">
+              <ShieldAlert className="h-16 w-16 text-[#2E333F]" />
+              <p className="text-base font-medium text-[#5A6275]">Select an incident to view details</p>
+              <p className="text-sm text-[#5A6275] text-center">
                 Choose an incident from the list to investigate, add notes, and update its status.
               </p>
             </div>
           ) : (
             <div className="p-6 space-y-6">
-              <div className="bg-white border border-[#e8eaed] rounded-xl overflow-hidden mx-0 p-6">
+              <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden mx-0 p-6">
                 <div className="flex items-start justify-between gap-4 mb-4">
                   <div>
-                    <h2 className="text-xl font-semibold text-[#202124] mb-2">
+                    <h2 className="text-xl font-semibold text-[#E6E9F0] mb-2">
                       {selectedIncident.title}
                     </h2>
                     <div className="flex items-center gap-2 flex-wrap">
                       <SeverityBadge severity={selectedIncident.severity} />
                       <StatusBadge status={selectedIncident.status} />
                       {selectedIncident.assignee && (
-                        <span className="flex items-center gap-1.5 rounded-full bg-[#f1f3f4] px-2.5 py-0.5 text-xs text-[#5f6368]">
-                          <User className="h-3 w-3" />
+                        <span className="flex items-center gap-1.5 rounded-full bg-[#1B1F2A] border border-[#262A35] pl-1 pr-2.5 py-0.5 text-xs text-[#8A92A6]">
+                          <span
+                            style={{ background: avatarGradient(selectedIncident.assignee.fullName) }}
+                            className="flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-semibold text-white"
+                          >
+                            {selectedIncident.assignee.fullName.charAt(0).toUpperCase()}
+                          </span>
                           {selectedIncident.assignee.fullName}
                         </span>
                       )}
                     </div>
                   </div>
-                  <div className="text-right text-xs text-[#80868b] shrink-0">
+                  <div className="text-right text-xs text-[#5A6275] shrink-0 font-mono">
                     <p>Created {format(new Date(selectedIncident.createdAt), "PPP")}</p>
                     <p className="mt-0.5">Updated {formatDistanceToNow(new Date(selectedIncident.updatedAt), { addSuffix: true })}</p>
                   </div>
                 </div>
 
-                <div className="rounded-xl bg-white border border-[#e8eaed] p-4">
-                  <p className="text-sm text-[#202124] whitespace-pre-wrap">
+                <div className="rounded-xl bg-[#1B1F2A] border border-[#262A35] p-4">
+                  <p className="text-sm text-[#E6E9F0] whitespace-pre-wrap leading-relaxed">
                     {selectedIncident.description}
                   </p>
                 </div>
               </div>
 
-              <div className="bg-white border border-[#e8eaed] rounded-xl overflow-hidden mx-0 p-6">
-                <h3 className="mb-4 text-sm font-semibold text-[#202124]">Update Status</h3>
+              <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden mx-0 p-6">
+                <h3 className="mb-4 text-sm font-semibold text-[#E6E9F0]">Update Status</h3>
                 <div className="flex items-center gap-3">
                   <select
                     value={pendingStatus}
                     onChange={(e) => setPendingStatus(e.target.value as Incident["status"])}
-                    className="flex-1 rounded-xl border border-[#e8eaed] px-3 py-2 text-sm outline-none focus:border-[#1a56db] focus:ring-2 focus:ring-[#1a56db]/15 bg-white text-[#202124]"
+                    className="flex-1 rounded-lg border border-[#2E333F] px-3 py-2 text-sm outline-none focus:border-[#00C2FF] focus:ring-2 focus:ring-[#00C2FF]/15 bg-[#0D1017] text-[#E6E9F0]"
                   >
                     {(["OPEN", "INVESTIGATING", "CONTAINED", "RESOLVED", "CLOSED"] as const).map(
                       (s) => (
@@ -510,7 +522,7 @@ export function SOCView(_props: { currentUserId: string }) {
                   <button
                     onClick={handleUpdateStatus}
                     disabled={updatingStatus || pendingStatus === selectedIncident.status}
-                    className="flex items-center gap-2 rounded-md bg-[#1a56db] px-4 py-2 text-sm font-medium text-white hover:bg-[#1447c0] transition-colors disabled:opacity-60"
+                    className="flex items-center gap-2 rounded-md bg-[#00C2FF] px-4 py-2 text-sm font-medium text-[#06121A] hover:bg-[#0098E6] transition-colors disabled:opacity-60"
                   >
                     {updatingStatus && <Loader2 className="h-4 w-4 animate-spin" />}
                     Update
@@ -519,30 +531,30 @@ export function SOCView(_props: { currentUserId: string }) {
               </div>
 
               {selectedIncident.timeline && selectedIncident.timeline.length > 0 && (
-                <div className="bg-white border border-[#e8eaed] rounded-xl overflow-hidden mx-0 p-6">
-                  <h3 className="mb-4 text-sm font-semibold text-[#202124]">Timeline</h3>
+                <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden mx-0 p-6">
+                  <h3 className="mb-4 text-sm font-semibold text-[#E6E9F0]">Timeline</h3>
                   <div className="space-y-4">
                     {selectedIncident.timeline.map((entry, idx) => (
                       <div key={entry.id} className="flex gap-3">
                         <div className="flex flex-col items-center">
-                          <div className="h-7 w-7 rounded-full bg-[#1a56db]/10 border border-[#1a56db]/20 flex items-center justify-center shrink-0">
-                            <Clock className="h-3.5 w-3.5 text-[#1a56db]" />
+                          <div className="h-7 w-7 rounded-full bg-[#00C2FF]/10 border border-[#00C2FF]/20 flex items-center justify-center shrink-0">
+                            <Clock className="h-3.5 w-3.5 text-[#00C2FF]" />
                           </div>
                           {idx < selectedIncident.timeline!.length - 1 && (
-                            <div className="mt-1 w-px flex-1 bg-[#f1f3f4]" />
+                            <div className="mt-1 w-px flex-1 bg-[#1B1F2A]" />
                           )}
                         </div>
                         <div className="flex-1 pb-4">
                           <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs font-semibold text-[#202124]">
+                            <span className="text-xs font-semibold text-[#E6E9F0] uppercase tracking-wide">
                               {entry.action}
                             </span>
-                            <span className="text-xs text-[#80868b]">
+                            <span className="text-[11px] text-[#5A6275] font-mono">
                               {formatDistanceToNow(new Date(entry.createdAt), { addSuffix: true })}
                             </span>
                           </div>
                           {entry.note && (
-                            <p className="text-sm text-[#5f6368] rounded-xl bg-white border border-[#e8eaed] px-3 py-2">
+                            <p className="text-sm text-[#8A92A6] rounded-xl bg-[#1B1F2A] border border-[#262A35] px-3 py-2">
                               {entry.note}
                             </p>
                           )}
@@ -553,20 +565,20 @@ export function SOCView(_props: { currentUserId: string }) {
                 </div>
               )}
 
-              <div className="bg-white border border-[#e8eaed] rounded-xl overflow-hidden mx-0 p-6">
-                <h3 className="mb-4 text-sm font-semibold text-[#202124]">Add Note</h3>
+              <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden mx-0 p-6">
+                <h3 className="mb-4 text-sm font-semibold text-[#E6E9F0]">Add Note</h3>
                 <textarea
                   value={noteText}
                   onChange={(e) => setNoteText(e.target.value)}
                   rows={3}
                   placeholder="Add an investigation note, action taken, or observation..."
-                  className="w-full rounded-xl border border-[#e8eaed] bg-white text-[#202124] placeholder-[#9aa3b8] px-3 py-2.5 text-sm outline-none focus:border-[#1a56db] focus:ring-2 focus:ring-[#1a56db]/15 resize-none"
+                  className="w-full rounded-lg border border-[#2E333F] bg-[#0D1017] text-[#E6E9F0] placeholder-[#5A6275] px-3 py-2.5 text-sm outline-none focus:border-[#00C2FF] focus:ring-2 focus:ring-[#00C2FF]/15 resize-none"
                 />
                 <div className="mt-3 flex justify-end">
                   <button
                     onClick={handleAddNote}
                     disabled={!noteText.trim() || submittingNote}
-                    className="flex items-center gap-2 rounded-md bg-[#1a56db] px-4 py-2 text-sm font-medium text-white hover:bg-[#1447c0] transition-colors disabled:opacity-60"
+                    className="flex items-center gap-2 rounded-md bg-[#00C2FF] px-4 py-2 text-sm font-medium text-[#06121A] hover:bg-[#0098E6] transition-colors disabled:opacity-60"
                   >
                     {submittingNote ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -584,19 +596,19 @@ export function SOCView(_props: { currentUserId: string }) {
 
       {showNewIncident && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 ">
-          <div className="w-full max-w-lg rounded-xl bg-white border border-[#e8eaed] p-6 shadow-2xl">
+          <div className="w-full max-w-lg rounded-xl bg-[#12151D] border border-[#262A35] p-6 shadow-2xl">
             <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-[#202124]">New Incident</h2>
+              <h2 className="text-lg font-semibold text-[#E6E9F0]">New Incident</h2>
               <button
                 onClick={() => setShowNewIncident(false)}
-                className="rounded-lg p-1 hover:bg-[#f1f3f4] transition-colors"
+                className="rounded-lg p-1 hover:bg-[#1B1F2A] transition-colors"
               >
-                <X className="h-4 w-4 text-[#5f6368]" />
+                <X className="h-4 w-4 text-[#8A92A6]" />
               </button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="mb-1 block text-xs font-medium text-[#5f6368]">
+                <label className="mb-1 block text-xs font-medium text-[#8A92A6]">
                   Title *
                 </label>
                 <input
@@ -604,11 +616,11 @@ export function SOCView(_props: { currentUserId: string }) {
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
                   placeholder="Incident title"
-                  className="w-full rounded-xl border border-[#e8eaed] bg-white text-[#202124] placeholder-[#9aa3b8] px-3 py-2 text-sm outline-none focus:border-[#1a56db] focus:ring-2 focus:ring-[#1a56db]/15"
+                  className="w-full rounded-lg border border-[#2E333F] bg-[#0D1017] text-[#E6E9F0] placeholder-[#5A6275] px-3 py-2 text-sm outline-none focus:border-[#00C2FF] focus:ring-2 focus:ring-[#00C2FF]/15"
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-[#5f6368]">
+                <label className="mb-1 block text-xs font-medium text-[#8A92A6]">
                   Description *
                 </label>
                 <textarea
@@ -616,18 +628,18 @@ export function SOCView(_props: { currentUserId: string }) {
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
                   rows={3}
                   placeholder="Describe the incident in detail"
-                  className="w-full rounded-xl border border-[#e8eaed] bg-white text-[#202124] placeholder-[#9aa3b8] px-3 py-2 text-sm outline-none focus:border-[#1a56db] focus:ring-2 focus:ring-[#1a56db]/15 resize-none"
+                  className="w-full rounded-lg border border-[#2E333F] bg-[#0D1017] text-[#E6E9F0] placeholder-[#5A6275] px-3 py-2 text-sm outline-none focus:border-[#00C2FF] focus:ring-2 focus:ring-[#00C2FF]/15 resize-none"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-[#5f6368]">Severity</label>
+                  <label className="mb-1 block text-xs font-medium text-[#8A92A6]">Severity</label>
                   <select
                     value={form.severity}
                     onChange={(e) =>
                       setForm({ ...form, severity: e.target.value as Incident["severity"] })
                     }
-                    className="w-full rounded-xl border border-[#e8eaed] bg-white text-[#202124] px-3 py-2 text-sm outline-none focus:border-[#1a56db] focus:ring-2 focus:ring-[#1a56db]/15"
+                    className="w-full rounded-lg border border-[#2E333F] bg-[#0D1017] text-[#E6E9F0] px-3 py-2 text-sm outline-none focus:border-[#00C2FF] focus:ring-2 focus:ring-[#00C2FF]/15"
                   >
                     <option value="CRITICAL">Critical</option>
                     <option value="HIGH">High</option>
@@ -636,12 +648,12 @@ export function SOCView(_props: { currentUserId: string }) {
                   </select>
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-[#5f6368]">Source Type</label>
+                  <label className="mb-1 block text-xs font-medium text-[#8A92A6]">Source Type</label>
                   <input
                     value={form.sourceType}
                     onChange={(e) => setForm({ ...form, sourceType: e.target.value })}
                     placeholder="e.g. SIEM, Email, IDS"
-                    className="w-full rounded-xl border border-[#e8eaed] bg-white text-[#202124] placeholder-[#9aa3b8] px-3 py-2 text-sm outline-none focus:border-[#1a56db] focus:ring-2 focus:ring-[#1a56db]/15"
+                    className="w-full rounded-lg border border-[#2E333F] bg-[#0D1017] text-[#E6E9F0] placeholder-[#5A6275] px-3 py-2 text-sm outline-none focus:border-[#00C2FF] focus:ring-2 focus:ring-[#00C2FF]/15"
                   />
                 </div>
               </div>
@@ -649,14 +661,14 @@ export function SOCView(_props: { currentUserId: string }) {
             <div className="mt-6 flex justify-end gap-2">
               <button
                 onClick={() => setShowNewIncident(false)}
-                className="rounded-md border border-[#e8eaed] px-4 py-2 text-sm font-medium text-[#5f6368] hover:bg-[#f1f3f4] transition-colors"
+                className="rounded-md border border-[#262A35] px-4 py-2 text-sm font-medium text-[#8A92A6] hover:bg-[#1B1F2A] transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleCreateIncident}
                 disabled={submittingNew}
-                className="flex items-center gap-2 rounded-xl bg-[#ea4335] px-4 py-2 text-sm font-medium text-white hover:bg-[#ea4335]/80 transition-colors disabled:opacity-60"
+                className="flex items-center gap-2 rounded-lg bg-[#ea4335] px-4 py-2 text-sm font-medium text-white hover:bg-[#d33828] transition-colors disabled:opacity-60"
               >
                 {submittingNew && <Loader2 className="h-4 w-4 animate-spin" />}
                 Create Incident

@@ -106,30 +106,30 @@ const LAYOUT_PRESETS: { name: string; build: () => Omit<SlideElement, "id">[] }[
   {
     name: "Title",
     build: () => [
-      { type: "text", x: 80, y: 200, w: 800, h: 80, content: "Presentation Title", style: { fontSize: 48, bold: true, align: "center", color: "#202124" } },
-      { type: "text", x: 200, y: 300, w: 560, h: 40, content: "Subtitle or presenter name", style: { fontSize: 22, align: "center", color: "#5f6368" } },
+      { type: "text", x: 80, y: 200, w: 800, h: 80, content: "Presentation Title", style: { fontSize: 48, bold: true, align: "center", color: "#E6E9F0" } },
+      { type: "text", x: 200, y: 300, w: 560, h: 40, content: "Subtitle or presenter name", style: { fontSize: 22, align: "center", color: "#8A92A6" } },
     ],
   },
   {
     name: "Title + Content",
     build: () => [
-      { type: "text", x: 48, y: 40, w: 864, h: 60, content: "Slide Title", style: { fontSize: 34, bold: true, color: "#202124" } },
-      { type: "text", x: 48, y: 120, w: 864, h: 360, content: "• Add your first bullet point\n• Second key idea\n• Supporting detail", style: { fontSize: 20, color: "#5f6368" } },
+      { type: "text", x: 48, y: 40, w: 864, h: 60, content: "Slide Title", style: { fontSize: 34, bold: true, color: "#E6E9F0" } },
+      { type: "text", x: 48, y: 120, w: 864, h: 360, content: "• Add your first bullet point\n• Second key idea\n• Supporting detail", style: { fontSize: 20, color: "#8A92A6" } },
     ],
   },
   {
     name: "Two Content",
     build: () => [
-      { type: "text", x: 48, y: 40, w: 864, h: 60, content: "Slide Title", style: { fontSize: 34, bold: true, color: "#202124" } },
-      { type: "text", x: 48, y: 120, w: 420, h: 360, content: "• Left column point\n• Another idea\n• Detail", style: { fontSize: 20, color: "#5f6368" } },
-      { type: "text", x: 492, y: 120, w: 420, h: 360, content: "• Right column point\n• Another idea\n• Detail", style: { fontSize: 20, color: "#5f6368" } },
+      { type: "text", x: 48, y: 40, w: 864, h: 60, content: "Slide Title", style: { fontSize: 34, bold: true, color: "#E6E9F0" } },
+      { type: "text", x: 48, y: 120, w: 420, h: 360, content: "• Left column point\n• Another idea\n• Detail", style: { fontSize: 20, color: "#8A92A6" } },
+      { type: "text", x: 492, y: 120, w: 420, h: 360, content: "• Right column point\n• Another idea\n• Detail", style: { fontSize: 20, color: "#8A92A6" } },
     ],
   },
   {
     name: "Section Header",
     build: () => [
-      { type: "text", x: 64, y: 220, w: 832, h: 80, content: "Section Title", style: { fontSize: 44, bold: true, align: "left", color: "#202124" } },
-      { type: "text", x: 64, y: 312, w: 832, h: 40, content: "Brief description of this section", style: { fontSize: 22, align: "left", color: "#5f6368" } },
+      { type: "text", x: 64, y: 220, w: 832, h: 80, content: "Section Title", style: { fontSize: 44, bold: true, align: "left", color: "#E6E9F0" } },
+      { type: "text", x: 64, y: 312, w: 832, h: 40, content: "Brief description of this section", style: { fontSize: 22, align: "left", color: "#8A92A6" } },
     ],
   },
   {
@@ -165,7 +165,7 @@ type Theme = {
 };
 
 const THEMES: Theme[] = [
-  { id: "light",    name: "Clean Light", bg: "#ffffff", accent: "#1a56db", text: "#202124", secondary: "#5f6368" },
+  { id: "light",    name: "Clean Light", bg: "#ffffff", accent: "#00C2FF", text: "#E6E9F0", secondary: "#8A92A6" },
   { id: "dark",     name: "Dark Pro",    bg: "#1a1a2e", accent: "#6c63ff", text: "#e0e0e0", secondary: "#9a9ab0" },
   { id: "blue",     name: "Ocean Blue",  bg: "#0f3460", accent: "#e94560", text: "#ffffff", secondary: "#a8dadc" },
   { id: "minimal",  name: "Minimal",     bg: "#fafafa", accent: "#000000", text: "#111111", secondary: "#666666" },
@@ -177,33 +177,33 @@ const SLIDE_TEMPLATES: { name: string; elements: Omit<SlideElement, "id">[] }[] 
   {
     name: "Title slide",
     elements: [
-      { type: "text", x: 80, y: 180, w: 800, h: 80, content: "Presentation Title", style: { fontSize: 48, bold: true, align: "center", color: "#202124" } },
-      { type: "text", x: 200, y: 290, w: 560, h: 40, content: "Subtitle or presenter name", style: { fontSize: 22, align: "center", color: "#5f6368" } },
+      { type: "text", x: 80, y: 180, w: 800, h: 80, content: "Presentation Title", style: { fontSize: 48, bold: true, align: "center", color: "#E6E9F0" } },
+      { type: "text", x: 200, y: 290, w: 560, h: 40, content: "Subtitle or presenter name", style: { fontSize: 22, align: "center", color: "#8A92A6" } },
     ],
   },
   {
     name: "Title + content",
     elements: [
-      { type: "text", x: 48, y: 40, w: 864, h: 60, content: "Slide Title", style: { fontSize: 34, bold: true, color: "#202124" } },
-      { type: "text", x: 48, y: 120, w: 864, h: 360, content: "• Add your first bullet point\n• Second key idea\n• Supporting detail", style: { fontSize: 20, color: "#5f6368" } },
+      { type: "text", x: 48, y: 40, w: 864, h: 60, content: "Slide Title", style: { fontSize: 34, bold: true, color: "#E6E9F0" } },
+      { type: "text", x: 48, y: 120, w: 864, h: 360, content: "• Add your first bullet point\n• Second key idea\n• Supporting detail", style: { fontSize: 20, color: "#8A92A6" } },
     ],
   },
   {
     name: "Two columns",
     elements: [
-      { type: "text", x: 48, y: 40, w: 864, h: 60, content: "Comparison Slide", style: { fontSize: 34, bold: true, color: "#202124" } },
-      { type: "shape", x: 48, y: 120, w: 416, h: 360, shapeType: "rect", style: { bg: "#f8f9fa", borderColor: "#e8eaed", borderWidth: 1 } },
-      { type: "shape", x: 496, y: 120, w: 416, h: 360, shapeType: "rect", style: { bg: "#f8f9fa", borderColor: "#e8eaed", borderWidth: 1 } },
-      { type: "text", x: 68, y: 140, w: 376, h: 320, content: "Column A\n\n• Point 1\n• Point 2\n• Point 3", style: { fontSize: 16, color: "#202124" } },
-      { type: "text", x: 516, y: 140, w: 376, h: 320, content: "Column B\n\n• Point 1\n• Point 2\n• Point 3", style: { fontSize: 16, color: "#202124" } },
+      { type: "text", x: 48, y: 40, w: 864, h: 60, content: "Comparison Slide", style: { fontSize: 34, bold: true, color: "#E6E9F0" } },
+      { type: "shape", x: 48, y: 120, w: 416, h: 360, shapeType: "rect", style: { bg: "#12151D", borderColor: "#262A35", borderWidth: 1 } },
+      { type: "shape", x: 496, y: 120, w: 416, h: 360, shapeType: "rect", style: { bg: "#12151D", borderColor: "#262A35", borderWidth: 1 } },
+      { type: "text", x: 68, y: 140, w: 376, h: 320, content: "Column A\n\n• Point 1\n• Point 2\n• Point 3", style: { fontSize: 16, color: "#E6E9F0" } },
+      { type: "text", x: 516, y: 140, w: 376, h: 320, content: "Column B\n\n• Point 1\n• Point 2\n• Point 3", style: { fontSize: 16, color: "#E6E9F0" } },
     ],
   },
   {
     name: "Image + text",
     elements: [
-      { type: "text", x: 48, y: 40, w: 864, h: 60, content: "Slide Title", style: { fontSize: 34, bold: true, color: "#202124" } },
-      { type: "shape", x: 48, y: 120, w: 440, h: 360, shapeType: "rect", style: { bg: "#e8f0fe", borderColor: "#1a56db", borderWidth: 1 } },
-      { type: "text", x: 520, y: 140, w: 392, h: 320, content: "Key Points\n\n• Add supporting text here\n• Another key message\n• Important insight", style: { fontSize: 18, color: "#202124" } },
+      { type: "text", x: 48, y: 40, w: 864, h: 60, content: "Slide Title", style: { fontSize: 34, bold: true, color: "#E6E9F0" } },
+      { type: "shape", x: 48, y: 120, w: 440, h: 360, shapeType: "rect", style: { bg: "#0E2532", borderColor: "#00C2FF", borderWidth: 1 } },
+      { type: "text", x: 520, y: 140, w: 392, h: 320, content: "Key Points\n\n• Add supporting text here\n• Another key message\n• Important insight", style: { fontSize: 18, color: "#E6E9F0" } },
     ],
   },
 ];
@@ -246,9 +246,9 @@ async function exportPPTX(slides: Slide[], title: string) {
       const pctW = el.w / CANVAS_W, pctH = el.h / CANVAS_H;
       const pW = pctW * 10, pH = pctH * 5.625, pX = pctX * 10, pY = pctY * 5.625;
       if (el.type === "text") {
-        s.addText(el.content ?? "", { x: pX, y: pY, w: pW, h: pH, fontSize: el.style?.fontSize ?? 18, bold: el.style?.bold, italic: el.style?.italic, color: (el.style?.color ?? "#202124").replace("#", ""), align: el.style?.align ?? "left" });
+        s.addText(el.content ?? "", { x: pX, y: pY, w: pW, h: pH, fontSize: el.style?.fontSize ?? 18, bold: el.style?.bold, italic: el.style?.italic, color: (el.style?.color ?? "#E6E9F0").replace("#", ""), align: el.style?.align ?? "left" });
       } else if (el.type === "shape") {
-        s.addShape(pptx.ShapeType.rect, { x: pX, y: pY, w: pW, h: pH, fill: { color: (el.style?.bg ?? "#e8eaed").replace("#", "") } });
+        s.addShape(pptx.ShapeType.rect, { x: pX, y: pY, w: pW, h: pH, fill: { color: (el.style?.bg ?? "#262A35").replace("#", "") } });
       } else if (el.type === "image" && el.src) {
         s.addImage({ path: el.src, x: pX, y: pY, w: pW, h: pH });
       }
@@ -266,7 +266,7 @@ function _SlideCanvas({ slide, selected, onSelect, theme, zoom = 1, masterElemen
   const isGradient = slide.background.includes("gradient");
   return (
     <div
-      className={`relative flex-shrink-0 cursor-pointer border-2 rounded overflow-hidden transition-all ${selected ? "border-[#1a56db] shadow-md" : "border-transparent hover:border-[#d0d5dd]"}`}
+      className={`relative flex-shrink-0 cursor-pointer border-2 rounded overflow-hidden transition-all ${selected ? "border-[#00C2FF] shadow-md" : "border-transparent hover:border-[#2E333F]"}`}
       style={{ width: CANVAS_W * zoom, height: CANVAS_H * zoom, background: isGradient ? slide.background : slide.background }}
       onClick={onSelect}
     >
@@ -361,7 +361,7 @@ function SlideElementView({ el, zoom, theme, anim, animDelay = 0, editMode = fal
           {el.chartType === "pie" ? (
             <PieChart>
               <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={el.h * zoom * 0.4}>
-                {data.map((_, i) => <PieCell key={i} fill={["#1a56db","#0f9d58","#f4b400","#ea4335"][i % 4]} />)}
+                {data.map((_, i) => <PieCell key={i} fill={["#00C2FF","#0f9d58","#f4b400","#ea4335"][i % 4]} />)}
               </Pie>
               <Tooltip />
             </PieChart>
@@ -381,7 +381,7 @@ function SlideElementView({ el, zoom, theme, anim, animDelay = 0, editMode = fal
           {el.tableRows.map((row, ri) => (
             <tr key={ri} style={{ background: ri === 0 ? (s.bg ?? theme.accent) : "transparent" }}>
               {row.map((cell, ci) => (
-                <td key={ci} style={{ border: `1px solid ${s.borderColor ?? "#e8eaed"}`, padding: 4 * zoom, color: ri === 0 ? "#fff" : (s.color ?? theme.text), fontWeight: ri === 0 ? "bold" : "normal" }}>
+                <td key={ci} style={{ border: `1px solid ${s.borderColor ?? "#262A35"}`, padding: 4 * zoom, color: ri === 0 ? "#fff" : (s.color ?? theme.text), fontWeight: ri === 0 ? "bold" : "normal" }}>
                   {cell}
                 </td>
               ))}
@@ -432,7 +432,7 @@ function SlideElementView({ el, zoom, theme, anim, animDelay = 0, editMode = fal
       );
     }
     return (
-      <div style={{ ...base, background: "#0f1115", borderRadius: 6 * zoom, display: "flex", alignItems: "center", justifyContent: "center", color: "#80868b", fontSize: 12 * zoom }}>
+      <div style={{ ...base, background: "#0f1115", borderRadius: 6 * zoom, display: "flex", alignItems: "center", justifyContent: "center", color: "#5A6275", fontSize: 12 * zoom }}>
         No video URL
       </div>
     );
@@ -441,7 +441,7 @@ function SlideElementView({ el, zoom, theme, anim, animDelay = 0, editMode = fal
     // Edit mode: a non-interactive speaker poster so the element can be selected / dragged.
     if (editMode) {
       return (
-        <div style={{ ...base, background: "#e8f0fe", border: "1px solid #1a56db", borderRadius: 8 * zoom, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#1a56db", pointerEvents: "none" }}>
+        <div style={{ ...base, background: "#0E2532", border: "1px solid #00C2FF", borderRadius: 8 * zoom, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#00C2FF", pointerEvents: "none" }}>
           <Volume2 style={{ width: 24 * zoom, height: 24 * zoom }} />
           <span style={{ fontSize: 10 * zoom, marginTop: 4 * zoom, opacity: 0.8, maxWidth: "90%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {el.src ? "Audio clip" : "No audio URL"}
@@ -457,7 +457,7 @@ function SlideElementView({ el, zoom, theme, anim, animDelay = 0, editMode = fal
       );
     }
     return (
-      <div style={{ ...base, background: "#f1f3f4", borderRadius: 8 * zoom, display: "flex", alignItems: "center", justifyContent: "center", color: "#80868b", fontSize: 12 * zoom }}>
+      <div style={{ ...base, background: "#1B1F2A", borderRadius: 8 * zoom, display: "flex", alignItems: "center", justifyContent: "center", color: "#5A6275", fontSize: 12 * zoom }}>
         No audio URL
       </div>
     );
@@ -1136,7 +1136,7 @@ export default function SlidesEditor({ presId }: { presId: string }) {
               <button disabled={nextVisibleIndex(presenterSlide) === presenterSlide} onClick={() => setPresenterSlide(p => nextVisibleIndex(p))} className="text-white/70 hover:text-white disabled:opacity-30">
                 <ChevronRight className="h-8 w-8" />
               </button>
-              <div className="flex items-center gap-1.5 ml-2 px-3 py-1.5 rounded-lg bg-white/10 text-white/90 text-sm font-medium tabular-nums">
+              <div className="flex items-center gap-1.5 ml-2 px-3 py-1.5 rounded-lg bg-[#12151D]/10 text-white/90 text-sm font-medium tabular-nums">
                 <Timer className="h-4 w-4 text-white/70" />
                 {fmtTime(elapsed)}
                 <button onClick={() => setElapsed(0)} title="Reset timer" className="ml-1 text-white/50 hover:text-white">
@@ -1187,54 +1187,54 @@ export default function SlidesEditor({ presId }: { presId: string }) {
     );
   }
 
-  if (!loaded) return <div className="flex items-center justify-center h-screen bg-white"><Loader2 className="h-6 w-6 animate-spin text-[#1a56db]" /></div>;
+  if (!loaded) return <div className="flex items-center justify-center h-screen bg-[#12151D]"><Loader2 className="h-6 w-6 animate-spin text-[#00C2FF]" /></div>;
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col h-screen bg-white overflow-hidden text-[#202124]">
+    <div className="flex flex-col h-screen bg-[#12151D] overflow-hidden text-[#E6E9F0]">
 
       {/* ── Title bar ── */}
-      <div className="flex items-center gap-2 px-4 py-2 border-b border-[#e8eaed] bg-white z-20">
+      <div className="flex items-center gap-2 px-4 py-2 border-b border-[#262A35] bg-[#12151D] z-20">
         <button
           onClick={() => router.push("/apps/slides")}
           title="Back to presentations"
-          className="flex items-center justify-center h-8 w-8 rounded-lg text-[#5f6368] hover:bg-[#f1f3f4] transition-colors flex-shrink-0"
+          className="flex items-center justify-center h-8 w-8 rounded-lg text-[#8A92A6] hover:bg-[#1B1F2A] transition-colors flex-shrink-0"
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
         <input
-          className="text-sm font-semibold text-[#202124] bg-transparent border-none outline-none focus:bg-[#f1f3f4] rounded px-1 min-w-0 w-52"
+          className="text-sm font-semibold text-[#E6E9F0] bg-transparent border-none outline-none focus:bg-[#1B1F2A] rounded px-1 min-w-0 w-52"
           value={title}
           onChange={e => { setTitle(e.target.value); scheduleSave(slides, e.target.value); }}
         />
 
         {/* Collab */}
         {collaborators.slice(0, 3).map(c => (
-          <div key={c.userId} title={c.name} className="h-6 w-6 rounded-full bg-[#1a56db] text-white text-[9px] font-bold flex items-center justify-center">{c.name[0]?.toUpperCase()}</div>
+          <div key={c.userId} title={c.name} className="h-6 w-6 rounded-full bg-[#00C2FF] text-[#06121A] text-[9px] font-bold flex items-center justify-center">{c.name[0]?.toUpperCase()}</div>
         ))}
 
-        <div className="text-[11px] text-[#80868b]">{saving ? "Saving…" : <span className="text-[#0f9d58]">Saved</span>}</div>
+        <div className="text-[11px] text-[#5A6275]">{saving ? "Saving…" : <span className="text-[#0f9d58]">Saved</span>}</div>
 
         <div className="flex items-center gap-1 ml-auto">
-          <button onClick={() => setShowAI(v => !v)} className={`flex items-center gap-1 px-2 py-1.5 text-xs font-medium rounded-lg transition-colors ${showAI ? "bg-purple-100 text-purple-700" : "text-[#5f6368] hover:bg-[#f1f3f4]"}`}>
+          <button onClick={() => setShowAI(v => !v)} className={`flex items-center gap-1 px-2 py-1.5 text-xs font-medium rounded-lg transition-colors ${showAI ? "bg-purple-500/15 text-purple-400" : "text-[#8A92A6] hover:bg-[#1B1F2A]"}`}>
             <Sparkles className="h-3.5 w-3.5" /> AI
           </button>
-          <button onClick={() => setShowFindReplace(true)} title="Find & replace (Ctrl/Cmd+F)" className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-[#5f6368] hover:bg-[#f1f3f4] rounded-lg">
+          <button onClick={() => setShowFindReplace(true)} title="Find & replace (Ctrl/Cmd+F)" className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-[#8A92A6] hover:bg-[#1B1F2A] rounded-lg">
             <Search className="h-3.5 w-3.5" /> Find
           </button>
-          <button onClick={() => setShowDeckSettings(true)} title="Slide numbers & footer" className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-[#5f6368] hover:bg-[#f1f3f4] rounded-lg">
+          <button onClick={() => setShowDeckSettings(true)} title="Slide numbers & footer" className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-[#8A92A6] hover:bg-[#1B1F2A] rounded-lg">
             <Hash className="h-3.5 w-3.5" /> Footer
           </button>
-          <button onClick={() => setShowThemes(v => !v)} className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-[#5f6368] hover:bg-[#f1f3f4] rounded-lg">
+          <button onClick={() => setShowThemes(v => !v)} className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-[#8A92A6] hover:bg-[#1B1F2A] rounded-lg">
             <Layers className="h-3.5 w-3.5" /> Theme
           </button>
-          <button onClick={() => setShowLayout(v => !v)} className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-[#5f6368] hover:bg-[#f1f3f4] rounded-lg">
+          <button onClick={() => setShowLayout(v => !v)} className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-[#8A92A6] hover:bg-[#1B1F2A] rounded-lg">
             <LayoutTemplate className="h-3.5 w-3.5" /> Layout
           </button>
-          <button onClick={() => setShowTemplates(v => !v)} className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-[#5f6368] hover:bg-[#f1f3f4] rounded-lg">
+          <button onClick={() => setShowTemplates(v => !v)} className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-[#8A92A6] hover:bg-[#1B1F2A] rounded-lg">
             <Grid3x3 className="h-3.5 w-3.5" /> Templates
           </button>
-          <button onClick={() => { setSorterView(v => !v); setSelectedElId(null); }} title="Slide sorter — grid overview of all slides" className={"flex items-center gap-1 px-2 py-1.5 text-xs font-medium rounded-lg transition-colors " + (sorterView ? "bg-[#e8f0fe] text-[#1a56db]" : "text-[#5f6368] hover:bg-[#f1f3f4]")}>
+          <button onClick={() => { setSorterView(v => !v); setSelectedElId(null); }} title="Slide sorter — grid overview of all slides" className={"flex items-center gap-1 px-2 py-1.5 text-xs font-medium rounded-lg transition-colors " + (sorterView ? "bg-[#0E2532] text-[#00C2FF]" : "text-[#8A92A6] hover:bg-[#1B1F2A]")}>
             <LayoutGrid className="h-3.5 w-3.5" /> Sorter
           </button>
           <button onClick={() => {
@@ -1244,20 +1244,20 @@ export default function SlidesEditor({ presId }: { presId: string }) {
               start = fwd !== start ? fwd : prevVisibleIndex(start);
             }
             setPresenterSlide(start); setPresenterMode(true);
-          }} className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-[#5f6368] hover:bg-[#f1f3f4] rounded-lg">
+          }} className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-[#8A92A6] hover:bg-[#1B1F2A] rounded-lg">
             <Play className="h-3.5 w-3.5" /> Present
           </button>
-          <button onClick={() => void exportPPTX(slides, title)} className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-[#5f6368] hover:bg-[#f1f3f4] rounded-lg">
+          <button onClick={() => void exportPPTX(slides, title)} className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-[#8A92A6] hover:bg-[#1B1F2A] rounded-lg">
             <Download className="h-3.5 w-3.5" /> Export
           </button>
-          <button onClick={() => setShowShare(true)} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-[#1a56db] text-white rounded-lg hover:bg-[#1648c7]">
+          <button onClick={() => setShowShare(true)} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-[#00C2FF] text-[#06121A] rounded-lg hover:bg-[#0098E6]">
             <Share2 className="h-3.5 w-3.5" /> Share
           </button>
         </div>
       </div>
 
       {/* ── Toolbar ── */}
-      <div className="flex flex-wrap items-center gap-0.5 px-2 py-1 border-b border-[#e8eaed] bg-white z-10">
+      <div className="flex flex-wrap items-center gap-0.5 px-2 py-1 border-b border-[#262A35] bg-[#12151D] z-10">
         <ToolBtn icon={<Undo2 className="h-3.5 w-3.5" />} title="Undo" onClick={undo} />
         <ToolBtn icon={<Redo2 className="h-3.5 w-3.5" />} title="Redo" onClick={redo} />
         <Sep />
@@ -1271,7 +1271,7 @@ export default function SlidesEditor({ presId }: { presId: string }) {
         <ToolBtn icon={<Minus className="h-3.5 w-3.5" />} title="Line" onClick={() => addElement({ type: "shape", x: 100, y: 160, w: 240, h: 12, shapeType: "line", style: { borderColor: theme.accent, borderWidth: 3 } })} />
         <ToolBtn icon={<MoveRight className="h-3.5 w-3.5 -rotate-45" />} title="Connector (diagonal line)" onClick={() => addElement({ type: "shape", x: 140, y: 140, w: 240, h: 12, shapeType: "line", style: { borderColor: theme.accent, borderWidth: 3, rotation: -30 } })} />
         <ToolBtn icon={<Star className="h-3.5 w-3.5" />} title="Star" onClick={() => addElement({ type: "shape", x: 100, y: 100, w: 140, h: 140, shapeType: "star", style: { bg: theme.accent + "40" } })} />
-        <label title="Insert image (upload)" className="flex items-center justify-center h-7 w-7 rounded text-sm text-[#5f6368] hover:bg-[#f1f3f4] cursor-pointer transition-colors">
+        <label title="Insert image (upload)" className="flex items-center justify-center h-7 w-7 rounded text-sm text-[#8A92A6] hover:bg-[#1B1F2A] cursor-pointer transition-colors">
           <ImageIcon className="h-3.5 w-3.5" />
           <input type="file" accept="image/*" className="hidden" onChange={e => {
             const f = e.target.files?.[0];
@@ -1286,7 +1286,7 @@ export default function SlidesEditor({ presId }: { presId: string }) {
         <ToolBtn icon={<BarChart3 className="h-3.5 w-3.5" />} title="Bar chart" onClick={() => addElement({ type: "chart", x: 200, y: 120, w: 400, h: 300, chartType: "bar", chartData: [{ name: "Q1", value: 40 }, { name: "Q2", value: 65 }, { name: "Q3", value: 50 }, { name: "Q4", value: 80 }] })} />
         <ToolBtn icon={<Table className="h-3.5 w-3.5" />} title="Table" onClick={() => addElement({ type: "table", x: 100, y: 120, w: 500, h: 200, tableRows: [["Header 1", "Header 2", "Header 3"], ["Row 1 A", "Row 1 B", "Row 1 C"], ["Row 2 A", "Row 2 B", "Row 2 C"]] })} />
         <ToolBtn icon={<Code2 className="h-3.5 w-3.5" />} title="Code block" onClick={() => addElement({ type: "code", x: 100, y: 120, w: 600, h: 200, content: "// Your code here\nconst hello = 'world';\nconsole.log(hello);" })} />
-        <select title="Insert SmartArt diagram" className="text-xs border border-[#e8eaed] rounded px-1 py-0.5 h-7 bg-white text-[#5f6368] cursor-pointer"
+        <select title="Insert SmartArt diagram" className="text-xs border border-[#262A35] rounded px-1 py-0.5 h-7 bg-[#12151D] text-[#8A92A6] cursor-pointer"
           value=""
           onChange={e => { const k = e.target.value as SmartArtKind; if (k) addElements(buildSmartArt(k, theme.accent, theme.text)); }}>
           <option value="">SmartArt ▾</option>
@@ -1308,7 +1308,7 @@ export default function SlidesEditor({ presId }: { presId: string }) {
             <ToolBtn icon={<AlignLeft className="h-3.5 w-3.5" />} title="Left" active={selectedEl.style?.align === "left"} onClick={() => updateElement(selectedEl.id, { style: { ...selectedEl.style, align: "left" } })} />
             <ToolBtn icon={<AlignCenter className="h-3.5 w-3.5" />} title="Center" active={selectedEl.style?.align === "center"} onClick={() => updateElement(selectedEl.id, { style: { ...selectedEl.style, align: "center" } })} />
             <ToolBtn icon={<AlignRight className="h-3.5 w-3.5" />} title="Right" active={selectedEl.style?.align === "right"} onClick={() => updateElement(selectedEl.id, { style: { ...selectedEl.style, align: "right" } })} />
-            <select title="Vertical align" className="text-xs border border-[#e8eaed] rounded px-1 py-0.5 h-7 bg-white text-[#5f6368]"
+            <select title="Vertical align" className="text-xs border border-[#262A35] rounded px-1 py-0.5 h-7 bg-[#12151D] text-[#8A92A6]"
               value={selectedEl.style?.valign ?? "top"}
               onChange={e => updateElement(selectedEl.id, { style: { ...selectedEl.style, valign: e.target.value as ElementStyle["valign"] } })}>
               <option value="top">⊤ Top</option>
@@ -1316,10 +1316,10 @@ export default function SlidesEditor({ presId }: { presId: string }) {
               <option value="bottom">⊥ Bottom</option>
             </select>
             <Sep />
-            <select className="text-xs border border-[#e8eaed] rounded px-1 py-0.5 h-7 bg-white" value={selectedEl.style?.fontSize ?? 18} onChange={e => updateElement(selectedEl.id, { style: { ...selectedEl.style, fontSize: Number(e.target.value) } })}>
+            <select className="text-xs border border-[#262A35] rounded px-1 py-0.5 h-7 bg-[#12151D]" value={selectedEl.style?.fontSize ?? 18} onChange={e => updateElement(selectedEl.id, { style: { ...selectedEl.style, fontSize: Number(e.target.value) } })}>
               {[12,14,16,18,20,24,28,32,36,40,48,56,64,72].map(s => <option key={s}>{s}</option>)}
             </select>
-            <input type="color" title="Text color" className="h-7 w-7 cursor-pointer border border-[#e8eaed] rounded" value={selectedEl.style?.color ?? "#202124"} onChange={e => updateElement(selectedEl.id, { style: { ...selectedEl.style, color: e.target.value } })} />
+            <input type="color" title="Text color" className="h-7 w-7 cursor-pointer border border-[#262A35] rounded" value={selectedEl.style?.color ?? "#E6E9F0"} onChange={e => updateElement(selectedEl.id, { style: { ...selectedEl.style, color: e.target.value } })} />
             <Sep />
           </>
         )}
@@ -1327,8 +1327,8 @@ export default function SlidesEditor({ presId }: { presId: string }) {
         {/* Shape fill controls — solid + gradient (Feature 2) */}
         {selectedEl && selectedEl.type === "shape" && (
           <>
-            <span className="text-[11px] text-[#80868b] flex items-center gap-1">Fill</span>
-            <input type="color" title="Fill color" className="h-7 w-7 cursor-pointer border border-[#e8eaed] rounded" value={selectedEl.style?.bg ?? "#1a56db"} onChange={e => updateElement(selectedEl.id, { style: { ...selectedEl.style, bg: e.target.value } })} />
+            <span className="text-[11px] text-[#5A6275] flex items-center gap-1">Fill</span>
+            <input type="color" title="Fill color" className="h-7 w-7 cursor-pointer border border-[#262A35] rounded" value={selectedEl.style?.bg ?? "#00C2FF"} onChange={e => updateElement(selectedEl.id, { style: { ...selectedEl.style, bg: e.target.value } })} />
             <ToolBtn
               icon={<Layers className="h-3.5 w-3.5" />}
               title={selectedEl.style?.gradient ? "Gradient fill: on" : "Gradient fill: off"}
@@ -1336,7 +1336,7 @@ export default function SlidesEditor({ presId }: { presId: string }) {
               onClick={() => updateElement(selectedEl.id, { style: { ...selectedEl.style, gradient: !selectedEl.style?.gradient, bg2: selectedEl.style?.bg2 ?? "#7c3aed" } })}
             />
             {selectedEl.style?.gradient && (
-              <input type="color" title="Gradient second color" className="h-7 w-7 cursor-pointer border border-[#e8eaed] rounded" value={selectedEl.style?.bg2 ?? "#7c3aed"} onChange={e => updateElement(selectedEl.id, { style: { ...selectedEl.style, bg2: e.target.value } })} />
+              <input type="color" title="Gradient second color" className="h-7 w-7 cursor-pointer border border-[#262A35] rounded" value={selectedEl.style?.bg2 ?? "#7c3aed"} onChange={e => updateElement(selectedEl.id, { style: { ...selectedEl.style, bg2: e.target.value } })} />
             )}
             <Sep />
           </>
@@ -1353,7 +1353,7 @@ export default function SlidesEditor({ presId }: { presId: string }) {
             <Sep />
             <select
               title="Align element on the slide"
-              className="text-xs border border-[#e8eaed] rounded px-1 py-0.5 h-7 bg-white text-[#5f6368]"
+              className="text-xs border border-[#262A35] rounded px-1 py-0.5 h-7 bg-[#12151D] text-[#8A92A6]"
               value=""
               onChange={e => {
                 const v = e.target.value; const el = selectedEl;
@@ -1379,19 +1379,19 @@ export default function SlidesEditor({ presId }: { presId: string }) {
               onClick={() => updateElement(selectedEl.id, { x: Math.round((CANVAS_W - selectedEl.w) / 2), y: Math.round((CANVAS_H - selectedEl.h) / 2) })}
             />
             <Sep />
-            <span className="text-[11px] text-[#80868b] flex items-center gap-1"><RotateCcw className="h-3 w-3" /></span>
+            <span className="text-[11px] text-[#5A6275] flex items-center gap-1"><RotateCcw className="h-3 w-3" /></span>
             <input
               type="number" title="Rotation (degrees)" step={15}
-              className="w-14 text-xs border border-[#e8eaed] rounded px-1 py-0.5 h-7 bg-white"
+              className="w-14 text-xs border border-[#262A35] rounded px-1 py-0.5 h-7 bg-[#12151D]"
               value={selectedEl.style?.rotation ?? 0}
               onChange={e => updateElement(selectedEl.id, { style: { ...selectedEl.style, rotation: Number(e.target.value) || 0 } })}
             />
-            <span className="text-[11px] text-[#80868b]">°</span>
+            <span className="text-[11px] text-[#5A6275]">°</span>
             <Sep />
-            <span className="text-[11px] text-[#80868b] flex items-center gap-1"><Sparkles className="h-3 w-3" />Animate</span>
+            <span className="text-[11px] text-[#5A6275] flex items-center gap-1"><Sparkles className="h-3 w-3" />Animate</span>
             <select
               title="Entrance animation (plays in Present mode)"
-              className="text-xs border border-[#e8eaed] rounded px-1 py-0.5 h-7 bg-white"
+              className="text-xs border border-[#262A35] rounded px-1 py-0.5 h-7 bg-[#12151D]"
               value={selectedEl.animIn ?? "none"}
               onChange={e => updateElement(selectedEl.id, { animIn: e.target.value as SlideElement["animIn"] })}
             >
@@ -1404,7 +1404,7 @@ export default function SlidesEditor({ presId }: { presId: string }) {
           <ToolBtn icon={<Grid className="h-3.5 w-3.5" />} title={snapToGrid ? "Snap to grid: on" : "Snap to grid: off"} active={snapToGrid} onClick={() => setSnapToGrid(v => !v)} />
           <Sep />
           <ToolBtn icon={<ZoomOut className="h-3.5 w-3.5" />} title="Zoom out" onClick={() => setZoom(z => Math.max(0.3, z - 0.1))} />
-          <span className="text-xs text-[#5f6368] w-10 text-center">{Math.round(zoom * 100)}%</span>
+          <span className="text-xs text-[#8A92A6] w-10 text-center">{Math.round(zoom * 100)}%</span>
           <ToolBtn icon={<ZoomIn className="h-3.5 w-3.5" />} title="Zoom in" onClick={() => setZoom(z => Math.min(1.5, z + 0.1))} />
         </div>
       </div>
@@ -1416,13 +1416,13 @@ export default function SlidesEditor({ presId }: { presId: string }) {
           /* ── Slide sorter / grid overview ── */
           <div className="flex-1 overflow-auto bg-[#f4f6f8] p-6">
             <div className="flex items-center gap-2 mb-4">
-              <LayoutGrid className="h-4 w-4 text-[#1a56db]" />
-              <span className="text-sm font-semibold text-[#202124] tracking-tight">Slide sorter</span>
-              <span className="text-xs text-[#80868b]">{slides.length + " slide" + (slides.length !== 1 ? "s" : "") + " · drag to reorder · double-click to edit"}</span>
-              <button onClick={() => addSlide()} className="ml-auto flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg text-[#5f6368] hover:bg-[#f1f3f4] transition-colors">
+              <LayoutGrid className="h-4 w-4 text-[#00C2FF]" />
+              <span className="text-sm font-semibold text-[#E6E9F0] tracking-tight">Slide sorter</span>
+              <span className="text-xs text-[#5A6275]">{slides.length + " slide" + (slides.length !== 1 ? "s" : "") + " · drag to reorder · double-click to edit"}</span>
+              <button onClick={() => addSlide()} className="ml-auto flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg text-[#8A92A6] hover:bg-[#1B1F2A] transition-colors">
                 <Plus className="h-3.5 w-3.5" /> New slide
               </button>
-              <button onClick={() => setSorterView(false)} className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#1a56db] text-white hover:bg-[#1648c7] transition-colors">
+              <button onClick={() => setSorterView(false)} className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#00C2FF] text-[#06121A] hover:bg-[#0098E6] transition-colors">
                 Done
               </button>
             </div>
@@ -1440,7 +1440,7 @@ export default function SlidesEditor({ presId }: { presId: string }) {
                 return (
                   <div key={"sort_" + slide.id} className="relative flex items-stretch gap-1">
                     {/* Drop indicator before this card */}
-                    <div className={"w-1 self-stretch rounded-full transition-colors " + (showDropBefore ? "bg-[#1a56db]" : "bg-transparent")} />
+                    <div className={"w-1 self-stretch rounded-full transition-colors " + (showDropBefore ? "bg-[#00C2FF]" : "bg-transparent")} />
                     <div
                       draggable
                       onDragStart={() => { setDragIdx(idx); setSelectedElId(null); }}
@@ -1448,16 +1448,16 @@ export default function SlidesEditor({ presId }: { presId: string }) {
                       onDragOver={e => { e.preventDefault(); const r = e.currentTarget.getBoundingClientRect(); const after = e.clientX > r.left + r.width / 2; setDropIdx(after ? idx + 1 : idx); }}
                       onClick={() => { setActiveIdx(idx); setSelectedElId(null); }}
                       onDoubleClick={() => { setActiveIdx(idx); setSelectedElId(null); setSorterView(false); }}
-                      className={"group relative flex-1 min-w-0 rounded-xl bg-white border transition-all cursor-grab active:cursor-grabbing " + (isActive ? "border-[#1a56db] ring-2 ring-[#1a56db]/30 shadow-md" : "border-[#e8eaed] hover:border-[#d0d5dd] hover:shadow") + (slide.hidden ? " opacity-60" : "") + (dragIdx === idx ? " opacity-40" : "")}
+                      className={"group relative flex-1 min-w-0 rounded-xl bg-[#12151D] border transition-all cursor-grab active:cursor-grabbing " + (isActive ? "border-[#00C2FF] ring-2 ring-[#00C2FF]/30 shadow-md" : "border-[#262A35] hover:border-[#2E333F] hover:shadow") + (slide.hidden ? " opacity-60" : "") + (dragIdx === idx ? " opacity-40" : "")}
                     >
                       {/* Number + section label */}
                       <div className="flex items-center gap-2 px-2.5 pt-2 pb-1">
-                        <span className={"inline-flex items-center justify-center h-5 min-w-5 px-1 rounded text-[10px] font-bold " + (isActive ? "bg-[#1a56db] text-white" : "bg-[#f1f3f4] text-[#5f6368]")}>{idx + 1}</span>
-                        {sect && <span className="text-[10px] font-medium text-[#5f6368] truncate">{sect}</span>}
-                        {slide.hidden && <span className="ml-auto px-1.5 py-0.5 rounded bg-[#5f6368] text-white text-[8px] font-semibold leading-none">Hidden</span>}
+                        <span className={"inline-flex items-center justify-center h-5 min-w-5 px-1 rounded text-[10px] font-bold " + (isActive ? "bg-[#00C2FF] text-[#06121A]" : "bg-[#1B1F2A] text-[#8A92A6]")}>{idx + 1}</span>
+                        {sect && <span className="text-[10px] font-medium text-[#8A92A6] truncate">{sect}</span>}
+                        {slide.hidden && <span className="ml-auto px-1.5 py-0.5 rounded bg-[#8A92A6] text-white text-[8px] font-semibold leading-none">Hidden</span>}
                       </div>
                       {/* 16:9 framed thumbnail */}
-                      <div className="mx-2.5 mb-2.5 rounded-lg overflow-hidden border border-[#e8eaed]" style={{ aspectRatio: "16/9", position: "relative", background: slide.background }}>
+                      <div className="mx-2.5 mb-2.5 rounded-lg overflow-hidden border border-[#262A35]" style={{ aspectRatio: "16/9", position: "relative", background: slide.background }}>
                         {masterElements.map(el => (
                           <SlideElementView key={`m-${el.id}`} el={el} zoom={210 / CANVAS_W} theme={theme} />
                         ))}
@@ -1467,19 +1467,19 @@ export default function SlidesEditor({ presId }: { presId: string }) {
                       </div>
                       {/* Hover actions */}
                       <div className="absolute top-1.5 right-1.5 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={e => { e.stopPropagation(); toggleHidden(idx); }} title={slide.hidden ? "Show slide" : "Hide slide"} className="p-1 rounded bg-white border border-[#e8eaed] text-[#5f6368] hover:text-[#202124] hover:bg-[#f1f3f4] shadow-sm">
+                        <button onClick={e => { e.stopPropagation(); toggleHidden(idx); }} title={slide.hidden ? "Show slide" : "Hide slide"} className="p-1 rounded bg-[#12151D] border border-[#262A35] text-[#8A92A6] hover:text-[#E6E9F0] hover:bg-[#1B1F2A] shadow-sm">
                           {slide.hidden ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
                         </button>
-                        <button onClick={e => { e.stopPropagation(); duplicateSlide(idx); }} title="Duplicate" className="p-1 rounded bg-white border border-[#e8eaed] text-[#5f6368] hover:text-[#202124] hover:bg-[#f1f3f4] shadow-sm">
+                        <button onClick={e => { e.stopPropagation(); duplicateSlide(idx); }} title="Duplicate" className="p-1 rounded bg-[#12151D] border border-[#262A35] text-[#8A92A6] hover:text-[#E6E9F0] hover:bg-[#1B1F2A] shadow-sm">
                           <Copy className="h-3 w-3" />
                         </button>
-                        <button onClick={e => { e.stopPropagation(); deleteSlide(idx); }} title="Delete" className="p-1 rounded bg-white border border-[#e8eaed] text-[#ea4335] hover:bg-[#fce8e6] shadow-sm">
+                        <button onClick={e => { e.stopPropagation(); deleteSlide(idx); }} title="Delete" className="p-1 rounded bg-[#12151D] border border-[#262A35] text-[#ea4335] hover:bg-[#fce8e6] shadow-sm">
                           <Trash2 className="h-3 w-3" />
                         </button>
                       </div>
                     </div>
                     {/* Drop indicator at the very end */}
-                    {showDropAfter && <div className="w-1 self-stretch rounded-full bg-[#1a56db]" />}
+                    {showDropAfter && <div className="w-1 self-stretch rounded-full bg-[#00C2FF]" />}
                   </div>
                 );
               })}
@@ -1488,16 +1488,16 @@ export default function SlidesEditor({ presId }: { presId: string }) {
         ) : (
         <>
         {/* Slide panel */}
-        <div className="w-44 border-r border-[#e8eaed] bg-[#f8f9fa] overflow-y-auto flex-shrink-0 py-2">
+        <div className="w-44 border-r border-[#262A35] bg-[#12151D] overflow-y-auto flex-shrink-0 py-2">
           {slides.map((slide, idx) => {
             // Section header rendered above the slide that starts a section
             const sectionHeader = slide.section ? (
               <div key={"sec_" + slide.id} className="flex items-center gap-1 mx-2 mt-2 mb-1 group/sec">
                 <button onClick={() => toggleSection(slide.section!)} className="flex items-center gap-1 flex-1 min-w-0 text-left">
-                  <ChevronRightIcon className={"h-3 w-3 text-[#80868b] transition-transform " + (collapsedSections.has(slide.section!) ? "" : "rotate-90")} />
-                  <span className="text-[10px] font-semibold text-[#5f6368] truncate uppercase tracking-tight">{slide.section}</span>
+                  <ChevronRightIcon className={"h-3 w-3 text-[#5A6275] transition-transform " + (collapsedSections.has(slide.section!) ? "" : "rotate-90")} />
+                  <span className="text-[10px] font-semibold text-[#8A92A6] truncate uppercase tracking-tight">{slide.section}</span>
                 </button>
-                <button onClick={() => promptSection(idx)} title="Rename section" className="opacity-0 group-hover/sec:opacity-100 text-[#80868b] hover:text-[#202124]">
+                <button onClick={() => promptSection(idx)} title="Rename section" className="opacity-0 group-hover/sec:opacity-100 text-[#5A6275] hover:text-[#E6E9F0]">
                   <FolderPlus className="h-3 w-3" />
                 </button>
               </div>
@@ -1508,31 +1508,31 @@ export default function SlidesEditor({ presId }: { presId: string }) {
             const collapsed = owningSection ? collapsedSections.has(owningSection) : false;
 
             const thumb = collapsed ? null : (
-              <div key={slide.id} className={"group relative mx-2 mb-2 rounded cursor-pointer border-2 " + (idx === activeIdx ? "border-[#1a56db]" : "border-transparent hover:border-[#d0d5dd]") + (slide.hidden ? " opacity-50" : "")}
+              <div key={slide.id} className={"group relative mx-2 mb-2 rounded cursor-pointer border-2 " + (idx === activeIdx ? "border-[#00C2FF]" : "border-transparent hover:border-[#2E333F]") + (slide.hidden ? " opacity-50" : "")}
                 onClick={() => { setActiveIdx(idx); setSelectedElId(null); }}>
                 <div className="overflow-hidden rounded" style={{ width: "100%", aspectRatio: "16/9", position: "relative", background: slide.background, minHeight: 72 }}>
                   {slide.elements.map(el => (
                     <SlideElementView key={el.id} el={el} zoom={140 / CANVAS_W} theme={theme} editMode />
                   ))}
                   {slide.hidden && (
-                    <span className="absolute bottom-1 left-1 px-1 py-0.5 rounded bg-[#5f6368] text-white text-[8px] font-semibold leading-none">Hidden</span>
+                    <span className="absolute bottom-1 left-1 px-1 py-0.5 rounded bg-[#8A92A6] text-white text-[8px] font-semibold leading-none">Hidden</span>
                   )}
                 </div>
                 <div className="absolute inset-x-0 top-0 flex items-center justify-between p-1 opacity-0 group-hover:opacity-100 bg-black/20 rounded-t">
                   <span className="text-[9px] text-white font-bold">{idx + 1}</span>
                   <div className="flex gap-0.5">
-                    <button onClick={e => { e.stopPropagation(); toggleHidden(idx); }} title={slide.hidden ? "Show slide" : "Hide slide"} className="p-0.5 rounded bg-white/80 text-[#202124]">
+                    <button onClick={e => { e.stopPropagation(); toggleHidden(idx); }} title={slide.hidden ? "Show slide" : "Hide slide"} className="p-0.5 rounded bg-[#12151D]/80 text-[#E6E9F0]">
                       {slide.hidden ? <EyeOff className="h-2.5 w-2.5" /> : <Eye className="h-2.5 w-2.5" />}
                     </button>
-                    <button onClick={e => { e.stopPropagation(); promptSection(idx); }} title="Add / rename section" className="p-0.5 rounded bg-white/80 text-[#202124]"><FolderPlus className="h-2.5 w-2.5" /></button>
-                    <button onClick={e => { e.stopPropagation(); duplicateSlide(idx); }} title="Duplicate" className="p-0.5 rounded bg-white/80 text-[#202124]"><Copy className="h-2.5 w-2.5" /></button>
-                    <button onClick={e => { e.stopPropagation(); deleteSlide(idx); }} title="Delete" className="p-0.5 rounded bg-white/80 text-[#ea4335]"><Trash2 className="h-2.5 w-2.5" /></button>
+                    <button onClick={e => { e.stopPropagation(); promptSection(idx); }} title="Add / rename section" className="p-0.5 rounded bg-[#12151D]/80 text-[#E6E9F0]"><FolderPlus className="h-2.5 w-2.5" /></button>
+                    <button onClick={e => { e.stopPropagation(); duplicateSlide(idx); }} title="Duplicate" className="p-0.5 rounded bg-[#12151D]/80 text-[#E6E9F0]"><Copy className="h-2.5 w-2.5" /></button>
+                    <button onClick={e => { e.stopPropagation(); deleteSlide(idx); }} title="Delete" className="p-0.5 rounded bg-[#12151D]/80 text-[#ea4335]"><Trash2 className="h-2.5 w-2.5" /></button>
                   </div>
                 </div>
                 {idx === activeIdx && (
                   <div className="flex justify-between px-1 mt-0.5">
-                    <button onClick={e => { e.stopPropagation(); moveSlide(idx, "up"); }} disabled={idx === 0} className="text-[#80868b] disabled:opacity-30"><ChevronUp className="h-3 w-3" /></button>
-                    <button onClick={e => { e.stopPropagation(); moveSlide(idx, "down"); }} disabled={idx === slides.length - 1} className="text-[#80868b] disabled:opacity-30"><ChevronDown className="h-3 w-3" /></button>
+                    <button onClick={e => { e.stopPropagation(); moveSlide(idx, "up"); }} disabled={idx === 0} className="text-[#5A6275] disabled:opacity-30"><ChevronUp className="h-3 w-3" /></button>
+                    <button onClick={e => { e.stopPropagation(); moveSlide(idx, "down"); }} disabled={idx === slides.length - 1} className="text-[#5A6275] disabled:opacity-30"><ChevronDown className="h-3 w-3" /></button>
                   </div>
                 )}
               </div>
@@ -1545,7 +1545,7 @@ export default function SlidesEditor({ presId }: { presId: string }) {
               </div>
             );
           })}
-          <button onClick={() => addSlide()} className="w-full mx-auto flex items-center justify-center gap-1 py-2 text-xs text-[#5f6368] hover:text-[#1a56db] hover:bg-[#e8f0fe] rounded-lg transition-colors">
+          <button onClick={() => addSlide()} className="w-full mx-auto flex items-center justify-center gap-1 py-2 text-xs text-[#8A92A6] hover:text-[#00C2FF] hover:bg-[#0E2532] rounded-lg transition-colors">
             <Plus className="h-3.5 w-3.5" /> New slide
           </button>
         </div>
@@ -1577,7 +1577,7 @@ export default function SlidesEditor({ presId }: { presId: string }) {
                 opacity: s.opacity ?? 1,
                 zIndex: el.zIndex ?? 1,
                 ...(s.rotation ? { transform: "rotate(" + s.rotation + "deg)" } : {}),
-                outline: isSelected ? "2px solid #1a56db" : "none",
+                outline: isSelected ? "2px solid #00C2FF" : "none",
                 cursor: el.locked ? "default" : "move",
               };
 
@@ -1605,7 +1605,7 @@ export default function SlidesEditor({ presId }: { presId: string }) {
                         {el.content}
                       </div>
                     )}
-                    {isSelected && <div className="absolute bottom-0 right-0 w-3 h-3 bg-[#1a56db] cursor-se-resize" onMouseDown={e => onResizeMouseDown(e, el.id)} />}
+                    {isSelected && <div className="absolute bottom-0 right-0 w-3 h-3 bg-[#00C2FF] cursor-se-resize" onMouseDown={e => onResizeMouseDown(e, el.id)} />}
                   </div>
                 );
               }
@@ -1613,7 +1613,7 @@ export default function SlidesEditor({ presId }: { presId: string }) {
               return (
                 <div key={el.id} style={base} onMouseDown={e => onElMouseDown(e, el.id)} onClick={e => e.stopPropagation()}>
                   <SlideElementView el={el} zoom={zoom} theme={theme} editMode />
-                  {isSelected && <div className="absolute bottom-0 right-0 w-3 h-3 bg-[#1a56db] cursor-se-resize z-10" onMouseDown={e => onResizeMouseDown(e, el.id)} />}
+                  {isSelected && <div className="absolute bottom-0 right-0 w-3 h-3 bg-[#00C2FF] cursor-se-resize z-10" onMouseDown={e => onResizeMouseDown(e, el.id)} />}
                 </div>
               );
             })}
@@ -1624,13 +1624,13 @@ export default function SlidesEditor({ presId }: { presId: string }) {
             )}
             {/* Deck footer overlay (Feature 2) */}
             {showFooter && footerText.trim() && (
-              <div className="absolute bottom-2 left-3 right-16 text-[10px] font-medium select-none pointer-events-none truncate" style={{ color: "#80868b", fontSize: 10 * zoom }}>
+              <div className="absolute bottom-2 left-3 right-16 text-[10px] font-medium select-none pointer-events-none truncate" style={{ color: "#5A6275", fontSize: 10 * zoom }}>
                 {footerText}
               </div>
             )}
             {/* Slide number overlay (Feature 2) */}
             {showNumbers && (
-              <div className="absolute bottom-2 right-3 font-medium select-none pointer-events-none" style={{ color: "#80868b", fontSize: 10 * zoom }}>
+              <div className="absolute bottom-2 right-3 font-medium select-none pointer-events-none" style={{ color: "#5A6275", fontSize: 10 * zoom }}>
                 {(activeIdx + 1) + " / " + slides.length}
               </div>
             )}
@@ -1638,9 +1638,9 @@ export default function SlidesEditor({ presId }: { presId: string }) {
 
           {/* Speaker notes — always visible below canvas */}
           <div className="mt-4 flex-shrink-0" style={{ width: CANVAS_W * zoom }}>
-            <p className="text-[11px] font-medium text-[#5f6368] mb-1">Speaker notes</p>
+            <p className="text-[11px] font-medium text-[#8A92A6] mb-1">Speaker notes</p>
             <textarea
-              className="w-full px-3 py-2 text-sm text-[#202124] placeholder:text-[#80868b] bg-[#f8f9fa] border border-[#e8eaed] rounded-lg resize-none h-24 focus:outline-none focus:border-[#1a56db]/60 focus:ring-2 focus:ring-[#1a56db]/20 transition-colors"
+              className="w-full px-3 py-2 text-sm text-[#E6E9F0] placeholder:text-[#5A6275] bg-[#12151D] border border-[#262A35] rounded-lg resize-none h-24 focus:outline-none focus:border-[#00C2FF]/60 focus:ring-2 focus:ring-[#00C2FF]/20 transition-colors"
               placeholder="Click to add speaker notes…"
               value={activeSlide.notes}
               onChange={e => updateSlide({ notes: e.target.value })}
@@ -1652,22 +1652,22 @@ export default function SlidesEditor({ presId }: { presId: string }) {
 
         {/* AI panel */}
         {showAI && (
-          <div className="w-72 border-l border-[#e8eaed] bg-white flex flex-col flex-shrink-0">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-[#e8eaed]">
-              <span className="text-sm font-semibold text-[#202124] flex items-center gap-2"><Sparkles className="h-4 w-4 text-purple-600" /> AI Slides</span>
-              <button onClick={() => setShowAI(false)} className="text-[#80868b] hover:text-[#202124]"><X className="h-4 w-4" /></button>
+          <div className="w-72 border-l border-[#262A35] bg-[#12151D] flex flex-col flex-shrink-0">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[#262A35]">
+              <span className="text-sm font-semibold text-[#E6E9F0] flex items-center gap-2"><Sparkles className="h-4 w-4 text-purple-400" /> AI Slides</span>
+              <button onClick={() => setShowAI(false)} className="text-[#5A6275] hover:text-[#E6E9F0]"><X className="h-4 w-4" /></button>
             </div>
-            <div className="flex border-b border-[#e8eaed]">
+            <div className="flex border-b border-[#262A35]">
               {(["generate","rewrite","notes","design"] as const).map(m => (
                 <button key={m} onClick={() => setAIMode(m)}
-                  className={`flex-1 py-1.5 text-[10px] font-medium capitalize ${aiMode === m ? "text-purple-600 border-b-2 border-purple-600" : "text-[#5f6368] hover:text-[#202124]"}`}>
+                  className={`flex-1 py-1.5 text-[10px] font-medium capitalize ${aiMode === m ? "text-purple-400 border-b-2 border-purple-600" : "text-[#8A92A6] hover:text-[#E6E9F0]"}`}>
                   {m}
                 </button>
               ))}
             </div>
             <div className="flex-1 p-4 space-y-3">
               {(aiMode === "generate" || aiMode === "design") && (
-                <textarea className="w-full px-3 py-2 text-xs bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg resize-none focus:outline-none focus:border-[#1a56db]/60"
+                <textarea className="w-full px-3 py-2 text-xs bg-[#1B1F2A] border border-[#2E333F] rounded-lg resize-none focus:outline-none focus:border-[#00C2FF]/60"
                   rows={3}
                   placeholder={aiMode === "generate" ? "What is this presentation about?" : "Describe the design look you want…"}
                   value={aiPrompt} onChange={e => setAIPrompt(e.target.value)} />
@@ -1677,17 +1677,17 @@ export default function SlidesEditor({ presId }: { presId: string }) {
                 {aiLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
                 {aiLoading ? "Generating…" : aiMode === "generate" ? "Generate slides" : aiMode === "notes" ? "Generate notes" : aiMode === "rewrite" ? "Rewrite slide" : "Suggest design"}
               </button>
-              <p className="text-[11px] text-[#80868b]">
+              <p className="text-[11px] text-[#5A6275]">
                 {aiMode === "generate" && "Creates a full slide deck from your description."}
                 {aiMode === "rewrite" && "Rewrites the current slide text to be more impactful."}
                 {aiMode === "notes" && "Generates speaker notes for the active slide."}
                 {aiMode === "design" && "Suggests design improvements for your slide."}
               </p>
-              <div className="border-t border-[#e8eaed] pt-3">
-                <p className="text-[10px] font-semibold text-[#5f6368] mb-2">QUICK INSERT</p>
+              <div className="border-t border-[#262A35] pt-3">
+                <p className="text-[10px] font-semibold text-[#8A92A6] mb-2">QUICK INSERT</p>
                 {SLIDE_TEMPLATES.map(t => (
                   <button key={t.name} onClick={() => { addSlide(t); setShowTemplates(false); }}
-                    className="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-[#f1f3f4] text-[#5f6368] hover:text-[#202124]">
+                    className="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-[#1B1F2A] text-[#8A92A6] hover:text-[#E6E9F0]">
                     + {t.name}
                   </button>
                 ))}
@@ -1698,14 +1698,14 @@ export default function SlidesEditor({ presId }: { presId: string }) {
       </div>
 
       {/* ── Bottom toolbar ── */}
-      <div className="flex items-center gap-2 px-4 py-1.5 border-t border-[#e8eaed] bg-white text-[11px] text-[#5f6368]">
-        <button onClick={() => setShowNotes(v => !v)} className={`flex items-center gap-1 px-2 py-1 rounded transition-colors ${showNotes ? "text-[#1a56db] bg-[#e8f0fe]" : "hover:bg-[#f1f3f4]"}`}>
+      <div className="flex items-center gap-2 px-4 py-1.5 border-t border-[#262A35] bg-[#12151D] text-[11px] text-[#8A92A6]">
+        <button onClick={() => setShowNotes(v => !v)} className={`flex items-center gap-1 px-2 py-1 rounded transition-colors ${showNotes ? "text-[#00C2FF] bg-[#0E2532]" : "hover:bg-[#1B1F2A]"}`}>
           <FileText className="h-3.5 w-3.5" /> Speaker notes
         </button>
-        <button onClick={() => addSlide()} className="flex items-center gap-1 px-2 py-1 rounded hover:bg-[#f1f3f4]">
+        <button onClick={() => addSlide()} className="flex items-center gap-1 px-2 py-1 rounded hover:bg-[#1B1F2A]">
           <Plus className="h-3.5 w-3.5" /> Add slide
         </button>
-        <label className="flex items-center gap-1 px-2 py-1 rounded hover:bg-[#f1f3f4] cursor-pointer">
+        <label className="flex items-center gap-1 px-2 py-1 rounded hover:bg-[#1B1F2A] cursor-pointer">
           <Upload className="h-3.5 w-3.5" /> Import
           <input type="file" accept=".pptx" className="hidden" onChange={e => void importFile(e)} />
         </label>
@@ -1714,12 +1714,12 @@ export default function SlidesEditor({ presId }: { presId: string }) {
         {/* Background colour */}
         <div className="flex items-center gap-1">
           <span>Background:</span>
-          <input type="color" className="h-5 w-5 cursor-pointer border border-[#e8eaed] rounded" value={activeSlide.background.includes("gradient") ? "#1a1a2e" : activeSlide.background} onChange={e => updateSlide({ background: e.target.value })} />
+          <input type="color" className="h-5 w-5 cursor-pointer border border-[#262A35] rounded" value={activeSlide.background.includes("gradient") ? "#1a1a2e" : activeSlide.background} onChange={e => updateSlide({ background: e.target.value })} />
         </div>
 
         {/* Transition */}
         <span className="flex items-center gap-1"><Play className="h-3 w-3" />Transition:</span>
-        <select className="text-xs border border-[#e8eaed] rounded px-1 py-0.5 bg-white" value={activeSlide.transition ?? "none"} onChange={e => updateSlide({ transition: e.target.value as Slide["transition"] })}>
+        <select className="text-xs border border-[#262A35] rounded px-1 py-0.5 bg-[#12151D]" value={activeSlide.transition ?? "none"} onChange={e => updateSlide({ transition: e.target.value as Slide["transition"] })}>
           <option value="none">None</option>
           <option value="fade">Fade</option>
           <option value="slide">Push</option>
@@ -1735,10 +1735,10 @@ export default function SlidesEditor({ presId }: { presId: string }) {
           <div className="grid grid-cols-2 gap-3 p-4">
             {THEMES.map(t => (
               <button key={t.id} onClick={() => applyTheme(t)}
-                className={`flex items-center gap-3 px-3 py-3 rounded-xl border-2 text-left transition-all hover:shadow ${theme.id === t.id ? "border-[#1a56db]" : "border-[#e8eaed]"}`}>
+                className={`flex items-center gap-3 px-3 py-3 rounded-xl border-2 text-left transition-all hover:shadow ${theme.id === t.id ? "border-[#00C2FF]" : "border-[#262A35]"}`}>
                 <div className="h-10 w-10 rounded-lg flex-shrink-0" style={{ background: t.bg }} />
                 <div>
-                  <p className="text-xs font-semibold text-[#202124]">{t.name}</p>
+                  <p className="text-xs font-semibold text-[#E6E9F0]">{t.name}</p>
                   <div className="flex gap-1 mt-1">
                     {[t.accent, t.text, t.secondary].map((c, i) => <div key={i} className="h-3 w-3 rounded-full" style={{ background: c }} />)}
                   </div>
@@ -1755,13 +1755,13 @@ export default function SlidesEditor({ presId }: { presId: string }) {
           <div className="grid grid-cols-2 gap-3 p-4">
             {SLIDE_TEMPLATES.map(t => (
               <button key={t.name} onClick={() => { addSlide(t); setShowTemplates(false); }}
-                className="flex flex-col gap-2 p-3 rounded-xl border border-[#e8eaed] hover:border-[#1a56db]/40 hover:shadow text-left transition-all">
+                className="flex flex-col gap-2 p-3 rounded-xl border border-[#262A35] hover:border-[#00C2FF]/40 hover:shadow text-left transition-all">
                 <div className="w-full rounded" style={{ aspectRatio: "16/9", background: theme.bg, position: "relative", overflow: "hidden" }}>
                   {t.elements.map((el, i) => (
                     <SlideElementView key={i} el={{ ...el, id: `preview_${i}` }} zoom={200 / CANVAS_W} theme={theme} />
                   ))}
                 </div>
-                <p className="text-xs font-medium text-[#202124]">{t.name}</p>
+                <p className="text-xs font-medium text-[#E6E9F0]">{t.name}</p>
               </button>
             ))}
           </div>
@@ -1773,28 +1773,28 @@ export default function SlidesEditor({ presId }: { presId: string }) {
         <Modal title="Layout" onClose={() => setShowLayout(false)}>
           <div className="p-4 space-y-4">
             <div>
-              <p className="text-[11px] font-medium text-[#5f6368] mb-2">Apply a layout to the current slide</p>
+              <p className="text-[11px] font-medium text-[#8A92A6] mb-2">Apply a layout to the current slide</p>
               <div className="grid grid-cols-2 gap-3">
                 {LAYOUT_PRESETS.map(preset => (
                   <button key={preset.name} onClick={() => applyLayout(preset)}
-                    className="flex flex-col gap-2 p-3 rounded-xl border border-[#e8eaed] hover:border-[#1a56db]/40 hover:shadow text-left transition-all">
+                    className="flex flex-col gap-2 p-3 rounded-xl border border-[#262A35] hover:border-[#00C2FF]/40 hover:shadow text-left transition-all">
                     <div className="w-full rounded" style={{ aspectRatio: "16/9", background: activeSlide.background, position: "relative", overflow: "hidden" }}>
                       {preset.build().map((el, i) => (
                         <SlideElementView key={i} el={{ ...el, id: "preview_" + i }} zoom={200 / CANVAS_W} theme={theme} />
                       ))}
                     </div>
-                    <p className="text-xs font-medium text-[#202124]">{preset.name}</p>
+                    <p className="text-xs font-medium text-[#E6E9F0]">{preset.name}</p>
                   </button>
                 ))}
               </div>
             </div>
-            <div className="border-t border-[#e8eaed] pt-4">
-              <p className="text-[11px] font-medium text-[#5f6368] mb-2">Master background</p>
+            <div className="border-t border-[#262A35] pt-4">
+              <p className="text-[11px] font-medium text-[#8A92A6] mb-2">Master background</p>
               <button onClick={applyBackgroundToAll}
-                className="w-full flex items-center justify-center gap-2 py-2 text-xs font-semibold bg-[#1a56db] text-white rounded-lg hover:bg-[#1648c7] transition-colors">
+                className="w-full flex items-center justify-center gap-2 py-2 text-xs font-semibold bg-[#00C2FF] text-[#06121A] rounded-lg hover:bg-[#0098E6] transition-colors">
                 <Images className="h-3.5 w-3.5" /> Apply this slide&apos;s background to all
               </button>
-              <p className="text-[11px] text-[#80868b] mt-2">Sets every slide&apos;s background to match the current slide.</p>
+              <p className="text-[11px] text-[#5A6275] mt-2">Sets every slide&apos;s background to match the current slide.</p>
             </div>
           </div>
         </Modal>
@@ -1805,10 +1805,10 @@ export default function SlidesEditor({ presId }: { presId: string }) {
         <Modal title="Find & Replace" onClose={() => setShowFindReplace(false)}>
           <div className="p-4 space-y-3">
             <div>
-              <label className="block text-[11px] font-medium text-[#5f6368] mb-1">Find</label>
+              <label className="block text-[11px] font-medium text-[#8A92A6] mb-1">Find</label>
               <input
                 autoFocus
-                className="w-full px-3 py-2 bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg text-sm text-[#202124] placeholder:text-[#80868b] focus:outline-none focus:border-[#1a56db]/60 focus:ring-2 focus:ring-[#1a56db]/20 transition-colors"
+                className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] placeholder:text-[#5A6275] focus:outline-none focus:border-[#00C2FF]/60 focus:ring-2 focus:ring-[#00C2FF]/20 transition-colors"
                 placeholder="Text to find…"
                 value={findText}
                 onChange={e => { setFindText(e.target.value); findCursor.current = { slide: activeIdx, el: -1, occ: -1 }; }}
@@ -1816,33 +1816,33 @@ export default function SlidesEditor({ presId }: { presId: string }) {
               />
             </div>
             <div>
-              <label className="block text-[11px] font-medium text-[#5f6368] mb-1">Replace with</label>
+              <label className="block text-[11px] font-medium text-[#8A92A6] mb-1">Replace with</label>
               <input
-                className="w-full px-3 py-2 bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg text-sm text-[#202124] placeholder:text-[#80868b] focus:outline-none focus:border-[#1a56db]/60 focus:ring-2 focus:ring-[#1a56db]/20 transition-colors"
+                className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] placeholder:text-[#5A6275] focus:outline-none focus:border-[#00C2FF]/60 focus:ring-2 focus:ring-[#00C2FF]/20 transition-colors"
                 placeholder="Replacement text…"
                 value={replaceText}
                 onChange={e => setReplaceText(e.target.value)}
               />
             </div>
-            <label className="flex items-center gap-2 text-xs text-[#5f6368] select-none cursor-pointer">
-              <input type="checkbox" className="accent-[#1a56db]" checked={matchCase} onChange={e => { setMatchCase(e.target.checked); findCursor.current = { slide: activeIdx, el: -1, occ: -1 }; }} />
+            <label className="flex items-center gap-2 text-xs text-[#8A92A6] select-none cursor-pointer">
+              <input type="checkbox" className="accent-[#00C2FF]" checked={matchCase} onChange={e => { setMatchCase(e.target.checked); findCursor.current = { slide: activeIdx, el: -1, occ: -1 }; }} />
               Match case
             </label>
             <div className="flex items-center gap-2 pt-1">
               <button onClick={findNext}
-                className="px-3 py-1.5 text-[13px] font-medium rounded-md text-[#5f6368] hover:text-[#202124] hover:bg-[#f1f3f4] transition-colors border border-[#e8eaed]">
+                className="px-3 py-1.5 text-[13px] font-medium rounded-md text-[#8A92A6] hover:text-[#E6E9F0] hover:bg-[#1B1F2A] transition-colors border border-[#262A35]">
                 Find next
               </button>
               <button onClick={replaceCurrent}
-                className="px-3 py-1.5 text-[13px] font-medium rounded-md text-[#5f6368] hover:text-[#202124] hover:bg-[#f1f3f4] transition-colors border border-[#e8eaed]">
+                className="px-3 py-1.5 text-[13px] font-medium rounded-md text-[#8A92A6] hover:text-[#E6E9F0] hover:bg-[#1B1F2A] transition-colors border border-[#262A35]">
                 Replace
               </button>
               <button onClick={replaceAll}
-                className="ml-auto px-4 py-2 text-sm font-semibold rounded-lg bg-[#1a56db] text-white hover:bg-[#1648c7] transition-colors">
+                className="ml-auto px-4 py-2 text-sm font-semibold rounded-lg bg-[#00C2FF] text-[#06121A] hover:bg-[#0098E6] transition-colors">
                 Replace all
               </button>
             </div>
-            <p className="text-[11px] text-[#80868b]">Searches text boxes, code blocks and table cells across every slide.</p>
+            <p className="text-[11px] text-[#5A6275]">Searches text boxes, code blocks and table cells across every slide.</p>
           </div>
         </Modal>
       )}
@@ -1852,17 +1852,17 @@ export default function SlidesEditor({ presId }: { presId: string }) {
         <Modal title="Slide numbers & footer" onClose={() => { setShowDeckSettings(false); scheduleSave(slides, title); }}>
           <div className="p-4 space-y-4">
             <label className="flex items-center justify-between gap-3 cursor-pointer">
-              <span className="text-sm text-[#202124]">Show slide numbers</span>
-              <input type="checkbox" className="accent-[#1a56db] h-4 w-4" checked={showNumbers} onChange={e => setShowNumbers(e.target.checked)} />
+              <span className="text-sm text-[#E6E9F0]">Show slide numbers</span>
+              <input type="checkbox" className="accent-[#00C2FF] h-4 w-4" checked={showNumbers} onChange={e => setShowNumbers(e.target.checked)} />
             </label>
             <label className="flex items-center justify-between gap-3 cursor-pointer">
-              <span className="text-sm text-[#202124]">Show footer text</span>
-              <input type="checkbox" className="accent-[#1a56db] h-4 w-4" checked={showFooter} onChange={e => setShowFooter(e.target.checked)} />
+              <span className="text-sm text-[#E6E9F0]">Show footer text</span>
+              <input type="checkbox" className="accent-[#00C2FF] h-4 w-4" checked={showFooter} onChange={e => setShowFooter(e.target.checked)} />
             </label>
             <div>
-              <label className="block text-[11px] font-medium text-[#5f6368] mb-1">Footer text</label>
+              <label className="block text-[11px] font-medium text-[#8A92A6] mb-1">Footer text</label>
               <input
-                className="w-full px-3 py-2 bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg text-sm text-[#202124] placeholder:text-[#80868b] focus:outline-none focus:border-[#1a56db]/60 focus:ring-2 focus:ring-[#1a56db]/20 transition-colors disabled:opacity-50"
+                className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] placeholder:text-[#5A6275] focus:outline-none focus:border-[#00C2FF]/60 focus:ring-2 focus:ring-[#00C2FF]/20 transition-colors disabled:opacity-50"
                 placeholder="e.g. Cybersage — Confidential"
                 value={footerText}
                 disabled={!showFooter}
@@ -1870,10 +1870,10 @@ export default function SlidesEditor({ presId }: { presId: string }) {
               />
             </div>
             <div>
-              <label className="block text-[11px] font-medium text-[#5f6368] mb-1">Master logo (shown on every slide)</label>
+              <label className="block text-[11px] font-medium text-[#8A92A6] mb-1">Master logo (shown on every slide)</label>
               <div className="flex items-center gap-2">
-                {masterLogo && <img src={masterLogo} alt="" className="h-8 w-12 object-contain border border-[#e8eaed] rounded bg-white" />}
-                <label className="px-3 py-1.5 text-xs font-medium rounded-lg bg-[#e8f0fe] text-[#1a56db] hover:bg-[#d2e3fc] cursor-pointer">
+                {masterLogo && <img src={masterLogo} alt="" className="h-8 w-12 object-contain border border-[#262A35] rounded bg-[#12151D]" />}
+                <label className="px-3 py-1.5 text-xs font-medium rounded-lg bg-[#0E2532] text-[#00C2FF] hover:bg-[#0E2532] cursor-pointer">
                   {masterLogo ? "Replace" : "Upload logo"}
                   <input type="file" accept="image/*" className="hidden" onChange={e => {
                     const f = e.target.files?.[0];
@@ -1885,54 +1885,54 @@ export default function SlidesEditor({ presId }: { presId: string }) {
                     e.currentTarget.value = "";
                   }} />
                 </label>
-                {masterLogo && <button onClick={() => setMasterLogo("")} className="px-2 py-1.5 text-xs text-[#5f6368] hover:text-[#ea4335]">Remove</button>}
+                {masterLogo && <button onClick={() => setMasterLogo("")} className="px-2 py-1.5 text-xs text-[#8A92A6] hover:text-[#ea4335]">Remove</button>}
               </div>
             </div>
-            <p className="text-[11px] text-[#80868b]">Applied to every slide in the editor and in presenter mode.</p>
+            <p className="text-[11px] text-[#5A6275]">Applied to every slide in the editor and in presenter mode.</p>
 
             {/* Master layout elements */}
-            <div className="border-t border-[#e8eaed] pt-4 mt-4 space-y-3">
+            <div className="border-t border-[#262A35] pt-4 mt-4 space-y-3">
               <div className="flex items-center justify-between">
-                <p className="text-[11px] font-medium text-[#5f6368]">Master layout elements</p>
+                <p className="text-[11px] font-medium text-[#8A92A6]">Master layout elements</p>
                 <div className="flex gap-1 flex-wrap">
                   <button onClick={() => {
                     const el: SlideElement = { id: `mel_${Date.now()}`, type: "shape", x: 0, y: 0, w: CANVAS_W, h: 8, shapeType: "rect", style: { bg: theme.accent } };
                     setMasterElements(p => [...p, el]);
-                  }} className="px-2 py-1 text-[11px] rounded bg-[#e8f0fe] text-[#1a56db] hover:bg-[#d2e3fc]">+ Header bar</button>
+                  }} className="px-2 py-1 text-[11px] rounded bg-[#0E2532] text-[#00C2FF] hover:bg-[#0E2532]">+ Header bar</button>
                   <button onClick={() => {
                     const el: SlideElement = { id: `mel_${Date.now()}`, type: "text", x: 20, y: 20, w: 300, h: 50, content: "CONFIDENTIAL", style: { fontSize: 36, color: "#ea4335", opacity: 0.1 } };
                     setMasterElements(p => [...p, el]);
-                  }} className="px-2 py-1 text-[11px] rounded bg-[#e8f0fe] text-[#1a56db] hover:bg-[#d2e3fc]">+ Watermark</button>
+                  }} className="px-2 py-1 text-[11px] rounded bg-[#0E2532] text-[#00C2FF] hover:bg-[#0E2532]">+ Watermark</button>
                   <button onClick={() => {
                     const el: SlideElement = { id: `mel_${Date.now()}`, type: "shape", x: 0, y: CANVAS_H - 5, w: CANVAS_W, h: 5, shapeType: "rect", style: { bg: theme.accent } };
                     setMasterElements(p => [...p, el]);
-                  }} className="px-2 py-1 text-[11px] rounded bg-[#e8f0fe] text-[#1a56db] hover:bg-[#d2e3fc]">+ Footer bar</button>
+                  }} className="px-2 py-1 text-[11px] rounded bg-[#0E2532] text-[#00C2FF] hover:bg-[#0E2532]">+ Footer bar</button>
                 </div>
               </div>
               {masterElements.length === 0 ? (
-                <p className="text-[11px] text-[#80868b] italic">No master elements. Add a header bar, footer bar, or watermark that will appear on every slide.</p>
+                <p className="text-[11px] text-[#5A6275] italic">No master elements. Add a header bar, footer bar, or watermark that will appear on every slide.</p>
               ) : (
                 <div className="space-y-1.5">
                   {masterElements.map(el => (
-                    <div key={el.id} className="flex items-center gap-2 px-3 py-2 bg-[#f8f9fa] rounded-lg border border-[#e8eaed]">
-                      <div className="flex-1 min-w-0 text-xs text-[#202124] truncate">
+                    <div key={el.id} className="flex items-center gap-2 px-3 py-2 bg-[#12151D] rounded-lg border border-[#262A35]">
+                      <div className="flex-1 min-w-0 text-xs text-[#E6E9F0] truncate">
                         {el.type === "text" ? `Text: "${(el.content ?? "").slice(0, 24)}"` : `Shape (${el.shapeType ?? "rect"})`}
-                        <span className="ml-1.5 text-[#80868b]">{el.w}×{el.h}</span>
+                        <span className="ml-1.5 text-[#5A6275]">{el.w}×{el.h}</span>
                       </div>
                       {el.type === "text" && (
                         <input value={el.content ?? ""}
                           onChange={e2 => setMasterElements(p => p.map(m => m.id === el.id ? { ...m, content: e2.target.value } : m))}
-                          className="w-28 px-2 py-1 text-xs border border-[#d0d5dd] rounded bg-white" placeholder="Text…" />
+                          className="w-28 px-2 py-1 text-xs border border-[#2E333F] rounded bg-[#12151D]" placeholder="Text…" />
                       )}
-                      <label className="flex items-center gap-1 text-[10px] text-[#5f6368] shrink-0">
+                      <label className="flex items-center gap-1 text-[10px] text-[#8A92A6] shrink-0">
                         <input type="range" min={0.05} max={1} step={0.05}
                           value={el.style?.opacity ?? 1}
                           onChange={e2 => setMasterElements(p => p.map(m => m.id === el.id ? { ...m, style: { ...m.style, opacity: Number(e2.target.value) } } : m))}
-                          className="w-14 accent-[#1a56db]" />
+                          className="w-14 accent-[#00C2FF]" />
                         {Math.round((el.style?.opacity ?? 1) * 100)}%
                       </label>
                       <button onClick={() => setMasterElements(p => p.filter(m => m.id !== el.id))}
-                        className="p-1 text-[#5f6368] hover:text-[#ea4335] rounded hover:bg-[#fce8e6] transition-colors shrink-0">
+                        className="p-1 text-[#8A92A6] hover:text-[#ea4335] rounded hover:bg-[#fce8e6] transition-colors shrink-0">
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </div>
@@ -1954,21 +1954,21 @@ export default function SlidesEditor({ presId }: { presId: string }) {
 function ToolBtn({ icon, title, active, onClick }: { icon: React.ReactNode; title: string; active?: boolean; onClick?: () => void }) {
   return (
     <button title={title} onClick={onClick}
-      className={`flex items-center justify-center h-7 w-7 rounded text-sm transition-colors ${active ? "bg-[#e8f0fe] text-[#1a56db]" : "text-[#5f6368] hover:bg-[#f1f3f4]"}`}>
+      className={`flex items-center justify-center h-7 w-7 rounded text-sm transition-colors ${active ? "bg-[#0E2532] text-[#00C2FF]" : "text-[#8A92A6] hover:bg-[#1B1F2A]"}`}>
       {icon}
     </button>
   );
 }
 
-function Sep() { return <div className="w-px h-5 bg-[#e8eaed] mx-0.5" />; }
+function Sep() { return <div className="w-px h-5 bg-[#262A35] mx-0.5" />; }
 
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
     <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-xl border border-[#e8eaed] shadow-xl w-full max-w-md max-h-[80vh] overflow-auto" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[#e8eaed] sticky top-0 bg-white">
-          <span className="text-sm font-semibold text-[#202124]">{title}</span>
-          <button onClick={onClose} className="text-[#80868b] hover:text-[#202124]"><X className="h-4 w-4" /></button>
+      <div className="bg-[#12151D] rounded-xl border border-[#262A35] shadow-xl w-full max-w-md max-h-[80vh] overflow-auto" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[#262A35] sticky top-0 bg-[#12151D]">
+          <span className="text-sm font-semibold text-[#E6E9F0]">{title}</span>
+          <button onClick={onClose} className="text-[#5A6275] hover:text-[#E6E9F0]"><X className="h-4 w-4" /></button>
         </div>
         {children}
       </div>

@@ -152,9 +152,46 @@ function getMimeColor(mimeType: string): string {
     mimeType.includes("document") ||
     mimeType === "text/plain"
   )
-    return "#1a56db"; // blue
-  return "#5f6368"; // grey
+    return "#00C2FF"; // blue
+  return "#8A92A6"; // grey
 }
+
+// Nexus file-type badge: short label + gradient (matches the dark design)
+function getFileBadge(name: string, mimeType: string): { ext: string; badgeBg: string; thumbBg: string } {
+  const dot = name.lastIndexOf(".");
+  const raw = dot > -1 ? name.slice(dot + 1).toLowerCase() : "";
+  const norm = (label: string, badgeBg: string, thumbBg: string) => ({ ext: label, badgeBg, thumbBg });
+
+  if (raw === "fig" || raw === "figma")
+    return norm("FIG", "linear-gradient(135deg,#F24E1E,#FF7262)", "linear-gradient(135deg,#1A1320,#22141C)");
+  if (raw === "pdf" || mimeType === "application/pdf")
+    return norm("PDF", "linear-gradient(135deg,#EF4444,#B91C1C)", "linear-gradient(135deg,#1C1518,#221518)");
+  if (raw === "svg")
+    return norm("SVG", "linear-gradient(135deg,#F59E0B,#D97706)", "linear-gradient(135deg,#1E1A13,#241F14)");
+  if (raw === "md" || raw === "markdown")
+    return norm("MD", "linear-gradient(135deg,#5A6275,#3A4150)", "linear-gradient(135deg,#15181F,#181C24)");
+  if (mimeType.startsWith("video/") || ["mp4", "mov", "webm", "avi", "mkv"].includes(raw))
+    return norm("MP4", "linear-gradient(135deg,#7C5CFF,#5B21B6)", "linear-gradient(135deg,#181423,#1C1530)");
+  if (mimeType.includes("sheet") || mimeType.includes("excel") || mimeType === "text/csv" || ["xls", "xlsx", "csv"].includes(raw))
+    return norm("XLS", "linear-gradient(135deg,#10B981,#059669)", "linear-gradient(135deg,#131E1A,#142420)");
+  if (mimeType.includes("presentation") || mimeType.includes("powerpoint") || ["ppt", "pptx"].includes(raw))
+    return norm("PPT", "linear-gradient(135deg,#F4B400,#D97706)", "linear-gradient(135deg,#1E1A13,#241F14)");
+  if (mimeType.startsWith("image/") || ["png", "jpg", "jpeg", "gif", "webp"].includes(raw))
+    return norm("IMG", "linear-gradient(135deg,#A142F4,#6D28D9)", "linear-gradient(135deg,#1A1423,#1F1730)");
+  if (mimeType.startsWith("audio/") || ["mp3", "wav", "flac"].includes(raw))
+    return norm("AUD", "linear-gradient(135deg,#1a73e8,#1D4ED8)", "linear-gradient(135deg,#131820,#141C26)");
+  if (mimeType.includes("word") || mimeType.includes("document") || mimeType === "text/plain" || ["doc", "docx", "txt"].includes(raw))
+    return norm("DOC", "linear-gradient(135deg,#3B82F6,#1D4ED8)", "linear-gradient(135deg,#131820,#141C26)");
+  return norm((raw || "FILE").slice(0, 3).toUpperCase(), "linear-gradient(135deg,#5A6275,#3A4150)", "linear-gradient(135deg,#15181F,#181C24)");
+}
+
+// Tinted folder icon palette (cycles by index, mirrors the design's per-folder tints)
+const FOLDER_TINTS = [
+  { iconBg: "rgba(0,194,255,0.14)", iconColor: "#00C2FF" },
+  { iconBg: "rgba(124,92,255,0.14)", iconColor: "#9B7DFF" },
+  { iconBg: "rgba(16,185,129,0.14)", iconColor: "#10B981" },
+  { iconBg: "rgba(245,158,11,0.14)", iconColor: "#F59E0B" },
+];
 
 function FolderTreeItem({
   folder,
@@ -179,16 +216,16 @@ function FolderTreeItem({
         }}
         className={`flex w-full items-center gap-1 rounded-r-full px-2 py-1.5 text-sm transition-colors ${
           currentFolderId === folder.id
-            ? "bg-[#e8f0fe] text-[#1a56db] font-medium"
-            : "text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124]"
+            ? "bg-[#0E2532] text-[#00C2FF] font-medium"
+            : "text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0]"
         }`}
         style={{ paddingLeft: `${8 + depth * 16}px` }}
       >
         {hasChildren ? (
           expanded ? (
-            <ChevronDown className="h-3.5 w-3.5 shrink-0 text-[#5f6368]" />
+            <ChevronDown className="h-3.5 w-3.5 shrink-0 text-[#8A92A6]" />
           ) : (
-            <ChevronRight className="h-3.5 w-3.5 shrink-0 text-[#5f6368]" />
+            <ChevronRight className="h-3.5 w-3.5 shrink-0 text-[#8A92A6]" />
           )
         ) : (
           <span className="w-3.5 shrink-0" />
@@ -320,22 +357,22 @@ function ShareModalDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 ">
-      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-[#e8eaed]">
+      <div className="w-full max-w-md rounded-2xl bg-[#12151D] p-6 shadow-2xl border border-[#262A35]">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-base font-semibold text-[#202124]">Share &ldquo;{fileName}&rdquo;</h2>
-          <button onClick={onClose} className="rounded-lg p-1 hover:bg-[#f1f3f4] transition-colors">
-            <X className="h-4 w-4 text-[#5f6368]" />
+          <h2 className="text-base font-semibold text-[#E6E9F0]">Share &ldquo;{fileName}&rdquo;</h2>
+          <button onClick={onClose} className="rounded-lg p-1 hover:bg-[#1B1F2A] transition-colors">
+            <X className="h-4 w-4 text-[#8A92A6]" />
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 rounded-xl bg-white p-1 mb-5 border border-[#e8eaed]">
+        <div className="flex gap-1 rounded-xl bg-[#12151D] p-1 mb-5 border border-[#262A35]">
           {(["link", "email"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
               className={`flex-1 rounded-lg py-1.5 text-sm font-medium transition-colors ${
-                tab === t ? "bg-[#f1f3f4] text-[#202124] shadow-sm" : "text-[#5f6368] hover:text-[#202124]"
+                tab === t ? "bg-[#1B1F2A] text-[#E6E9F0] shadow-sm" : "text-[#8A92A6] hover:text-[#E6E9F0]"
               }`}
             >
               {t === "link" ? "Create link" : "Share by email"}
@@ -345,7 +382,7 @@ function ShareModalDialog({
 
         {/* Role */}
         <div className="mb-4">
-          <p className="text-xs font-medium text-[#5f6368] mb-2">Permission</p>
+          <p className="text-xs font-medium text-[#8A92A6] mb-2">Permission</p>
           <div className="flex gap-2">
             {(["VIEWER", "EDITOR"] as const).map((r) => (
               <button
@@ -353,8 +390,8 @@ function ShareModalDialog({
                 onClick={() => setRole(r)}
                 className={`flex-1 rounded-xl border py-2 text-sm font-medium transition-colors ${
                   role === r
-                    ? "border-[#1a56db] bg-[#e8f0fe] text-[#1a56db]"
-                    : "border-[#e8eaed] text-[#5f6368] hover:border-[#1a56db]/40"
+                    ? "border-[#00C2FF] bg-[#0E2532] text-[#00C2FF]"
+                    : "border-[#262A35] text-[#8A92A6] hover:border-[#00C2FF]/40"
                 }`}
               >
                 {r === "VIEWER" ? "View only" : "Can edit"}
@@ -365,7 +402,7 @@ function ShareModalDialog({
 
         {/* Expiry */}
         <div className="mb-5">
-          <p className="text-xs font-medium text-[#5f6368] mb-2">Expiry</p>
+          <p className="text-xs font-medium text-[#8A92A6] mb-2">Expiry</p>
           <div className="flex gap-2 flex-wrap">
             {(["never", "7", "30", "custom"] as const).map((e) => (
               <button
@@ -373,8 +410,8 @@ function ShareModalDialog({
                 onClick={() => setExpiry(e)}
                 className={`rounded-xl border px-3 py-1.5 text-xs font-medium transition-colors ${
                   expiry === e
-                    ? "border-[#1a56db] bg-[#e8f0fe] text-[#1a56db]"
-                    : "border-[#e8eaed] text-[#5f6368] hover:border-[#1a56db]/40"
+                    ? "border-[#00C2FF] bg-[#0E2532] text-[#00C2FF]"
+                    : "border-[#262A35] text-[#8A92A6] hover:border-[#00C2FF]/40"
                 }`}
               >
                 {e === "never" ? "Never" : e === "7" ? "7 days" : e === "30" ? "30 days" : "Custom"}
@@ -387,7 +424,7 @@ function ShareModalDialog({
               value={customDate}
               onChange={(e) => setCustomDate(e.target.value)}
               min={new Date().toISOString().split("T")[0]}
-              className="mt-2 w-full rounded-xl border border-[#e8eaed] px-3 py-2 text-sm outline-none focus:border-[#1a56db] focus:ring-2 focus:ring-[#1a56db]/15 bg-white text-[#202124]"
+              className="mt-2 w-full rounded-xl border border-[#262A35] px-3 py-2 text-sm outline-none focus:border-[#00C2FF] focus:ring-2 focus:ring-[#00C2FF]/15 bg-[#12151D] text-[#E6E9F0]"
             />
           )}
         </div>
@@ -397,33 +434,33 @@ function ShareModalDialog({
           <div>
             {linkUrl ? (
               <div className="space-y-3">
-                <div className="flex items-center gap-2 rounded-xl border border-[#e8eaed] bg-white p-3">
-                  <span className="flex-1 truncate text-sm text-[#202124]">{linkUrl}</span>
+                <div className="flex items-center gap-2 rounded-xl border border-[#262A35] bg-[#12151D] p-3">
+                  <span className="flex-1 truncate text-sm text-[#E6E9F0]">{linkUrl}</span>
                   <button
                     onClick={handleCopy}
-                    className="shrink-0 rounded-lg p-1.5 hover:bg-[#f1f3f4] transition-colors"
+                    className="shrink-0 rounded-lg p-1.5 hover:bg-[#1B1F2A] transition-colors"
                   >
                     {copied ? (
                       <Check className="h-4 w-4 text-green-400" />
                     ) : (
-                      <Copy className="h-4 w-4 text-[#5f6368]" />
+                      <Copy className="h-4 w-4 text-[#8A92A6]" />
                     )}
                   </button>
                 </div>
                 {linkExpiry && (
-                  <p className="text-xs text-[#5f6368]">
+                  <p className="text-xs text-[#8A92A6]">
                     Expires {formatDistanceToNow(new Date(linkExpiry), { addSuffix: true })}
                   </p>
                 )}
                 {!linkExpiry && expiry === "never" && (
-                  <p className="text-xs text-[#5f6368]">This link never expires.</p>
+                  <p className="text-xs text-[#8A92A6]">This link never expires.</p>
                 )}
               </div>
             ) : (
               <button
                 onClick={handleCreateLink}
                 disabled={loading}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1a56db] py-2.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-60 transition-colors"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#00C2FF] py-2.5 text-sm font-medium text-[#06121A] hover:opacity-90 disabled:opacity-60 transition-colors"
               >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
                 Create link
@@ -438,12 +475,12 @@ function ShareModalDialog({
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Email address"
               onKeyDown={(e) => { if (e.key === "Enter") handleShareWithEmail(); }}
-              className="flex-1 rounded-xl border border-[#e8eaed] px-3 py-2 text-sm outline-none focus:border-[#1a56db] focus:ring-2 focus:ring-[#1a56db]/15 bg-white text-[#202124]"
+              className="flex-1 rounded-xl border border-[#262A35] px-3 py-2 text-sm outline-none focus:border-[#00C2FF] focus:ring-2 focus:ring-[#00C2FF]/15 bg-[#12151D] text-[#E6E9F0]"
             />
             <button
               onClick={handleShareWithEmail}
               disabled={loading || !email.trim()}
-              className="flex items-center gap-1.5 rounded-xl bg-[#1a56db] px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-60 transition-colors"
+              className="flex items-center gap-1.5 rounded-xl bg-[#00C2FF] px-4 py-2 text-sm font-medium text-[#06121A] hover:opacity-90 disabled:opacity-60 transition-colors"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send"}
             </button>
@@ -478,8 +515,8 @@ function MoveModalDialog({
           onClick={() => setTarget(f.id)}
           className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors ${
             target === f.id
-              ? "bg-[#e8f0fe] text-[#1a56db] font-medium"
-              : "text-[#5f6368] hover:bg-[#f1f3f4]"
+              ? "bg-[#0E2532] text-[#00C2FF] font-medium"
+              : "text-[#8A92A6] hover:bg-[#1B1F2A]"
           }`}
           style={{ paddingLeft: 8 + depth * 16 + "px" }}
         >
@@ -492,20 +529,20 @@ function MoveModalDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-[#e8eaed]">
+      <div className="w-full max-w-md rounded-2xl bg-[#12151D] p-6 shadow-2xl border border-[#262A35]">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-base font-semibold text-[#202124]">Move &ldquo;{name}&rdquo;</h2>
-          <button onClick={onClose} className="rounded-lg p-1 hover:bg-[#f1f3f4] transition-colors">
-            <X className="h-4 w-4 text-[#5f6368]" />
+          <h2 className="text-base font-semibold text-[#E6E9F0]">Move &ldquo;{name}&rdquo;</h2>
+          <button onClick={onClose} className="rounded-lg p-1 hover:bg-[#1B1F2A] transition-colors">
+            <X className="h-4 w-4 text-[#8A92A6]" />
           </button>
         </div>
-        <div className="max-h-72 overflow-y-auto rounded-xl border border-[#e8eaed] p-1.5 mb-4">
+        <div className="max-h-72 overflow-y-auto rounded-xl border border-[#262A35] p-1.5 mb-4">
           <button
             onClick={() => setTarget(null)}
             className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors ${
               target === null
-                ? "bg-[#e8f0fe] text-[#1a56db] font-medium"
-                : "text-[#5f6368] hover:bg-[#f1f3f4]"
+                ? "bg-[#0E2532] text-[#00C2FF] font-medium"
+                : "text-[#8A92A6] hover:bg-[#1B1F2A]"
             }`}
           >
             <HardDrive className="h-4 w-4 shrink-0" />
@@ -516,14 +553,14 @@ function MoveModalDialog({
         <div className="flex justify-end gap-2">
           <button
             onClick={onClose}
-            className="rounded-lg border border-[#e8eaed] px-4 py-2 text-sm font-medium text-[#5f6368] hover:bg-[#f1f3f4] transition-colors"
+            className="rounded-lg border border-[#262A35] px-4 py-2 text-sm font-medium text-[#8A92A6] hover:bg-[#1B1F2A] transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={() => onMove(target)}
             disabled={target === currentFolderId}
-            className="rounded-lg bg-[#1a56db] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1648c7] disabled:opacity-50 transition-colors"
+            className="rounded-lg bg-[#00C2FF] px-4 py-2 text-sm font-semibold text-[#06121A] hover:bg-[#0098E6] disabled:opacity-50 transition-colors"
           >
             Move here
           </button>
@@ -565,20 +602,20 @@ function FileDetailPanel({
   };
 
   return (
-    <div className="bg-white border-l border-[#e8eaed] w-80 flex flex-col shrink-0">
-      <div className="px-4 py-3 border-b border-[#e8eaed] flex items-center justify-between font-semibold text-[#202124] text-sm">
+    <div className="bg-[#12151D] border-l border-[#262A35] w-80 flex flex-col shrink-0">
+      <div className="px-4 py-3 border-b border-[#262A35] flex items-center justify-between font-semibold text-[#E6E9F0] text-sm">
         <span className="truncate">{file.name}</span>
-        <button onClick={onClose} className="rounded-lg p-1 hover:bg-[#f1f3f4] transition-colors ml-2">
-          <X className="h-4 w-4 text-[#5f6368]" />
+        <button onClick={onClose} className="rounded-lg p-1 hover:bg-[#1B1F2A] transition-colors ml-2">
+          <X className="h-4 w-4 text-[#8A92A6]" />
         </button>
       </div>
-      <div className="flex border-b border-[#e8eaed]">
+      <div className="flex border-b border-[#262A35]">
         <button
           onClick={() => setActiveTab("activity")}
           className={`flex flex-1 items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors ${
             activeTab === "activity"
-              ? "border-b-2 border-[#1a56db] text-[#1a56db]"
-              : "text-[#5f6368] hover:text-[#202124]"
+              ? "border-b-2 border-[#00C2FF] text-[#00C2FF]"
+              : "text-[#8A92A6] hover:text-[#E6E9F0]"
           }`}
         >
           <Activity className="h-3.5 w-3.5" />
@@ -588,8 +625,8 @@ function FileDetailPanel({
           onClick={() => { setActiveTab("intelligence"); void loadIntelligence(); }}
           className={`flex flex-1 items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors ${
             activeTab === "intelligence"
-              ? "border-b-2 border-[#1a56db] text-[#1a56db]"
-              : "text-[#5f6368] hover:text-[#202124]"
+              ? "border-b-2 border-[#00C2FF] text-[#00C2FF]"
+              : "text-[#8A92A6] hover:text-[#E6E9F0]"
           }`}
         >
           <Sparkles className="h-3.5 w-3.5" />
@@ -602,20 +639,20 @@ function FileDetailPanel({
           <div className="p-3 space-y-3">
             {loadingIntel ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-5 h-5 animate-spin text-[#1a56db]" />
+                <Loader2 className="w-5 h-5 animate-spin text-[#00C2FF]" />
               </div>
             ) : intelligence ? (
               <>
                 {intelligence.classification && (
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-[#7a8899]">Type</span>
-                    <span className="text-xs px-2 py-0.5 rounded bg-[#f1f3f4] text-[#5f6368]">{intelligence.classification}</span>
+                    <span className="text-xs px-2 py-0.5 rounded bg-[#1B1F2A] text-[#8A92A6]">{intelligence.classification}</span>
                   </div>
                 )}
                 {intelligence.sensitivityLevel && (
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-[#7a8899]">Sensitivity</span>
-                    <span className={`text-xs px-2 py-0.5 rounded font-medium ${sensitivityColors[intelligence.sensitivityLevel] ?? "text-[#5f6368] bg-[#f1f3f4]"}`}>
+                    <span className={`text-xs px-2 py-0.5 rounded font-medium ${sensitivityColors[intelligence.sensitivityLevel] ?? "text-[#8A92A6] bg-[#1B1F2A]"}`}>
                       {intelligence.sensitivityLevel}
                     </span>
                   </div>
@@ -623,7 +660,7 @@ function FileDetailPanel({
                 {intelligence.summary && (
                   <div>
                     <p className="text-xs text-[#7a8899] mb-1 font-medium">AI Summary</p>
-                    <p className="text-xs text-[#5f6368] leading-relaxed">{intelligence.summary}</p>
+                    <p className="text-xs text-[#8A92A6] leading-relaxed">{intelligence.summary}</p>
                   </div>
                 )}
                 {intelligence.cached && (
@@ -1159,18 +1196,18 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
 
   return (
     <div
-      className="flex h-full bg-white relative"
+      className="flex h-full bg-[#12151D] relative"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
       {/* Drag overlay */}
       {isDragOver && (
-        <div className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center bg-[#1a56db]/5 backdrop-blur-[1px]">
-          <div className="flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-[#1a56db] bg-white px-12 py-10 shadow-sm">
-            <Upload className="h-10 w-10 text-[#1a56db]" />
-            <p className="text-base font-semibold text-[#202124]">Drop files here to upload</p>
-            <p className="text-xs text-[#80868b]">to {section === "my-drive" && breadcrumb.length > 0 ? breadcrumb[breadcrumb.length - 1].name : "My Drive"}</p>
+        <div className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center bg-[#00C2FF]/5 backdrop-blur-[1px]">
+          <div className="flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-[#00C2FF] bg-[#12151D] px-12 py-10 shadow-sm">
+            <Upload className="h-10 w-10 text-[#00C2FF]" />
+            <p className="text-base font-semibold text-[#E6E9F0]">Drop files here to upload</p>
+            <p className="text-xs text-[#5A6275]">to {section === "my-drive" && breadcrumb.length > 0 ? breadcrumb[breadcrumb.length - 1].name : "My Drive"}</p>
           </div>
         </div>
       )}
@@ -1187,17 +1224,17 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
       />
 
       {/* Left sidebar */}
-      <aside className="bg-white border-r border-[#e8eaed] w-60 flex-shrink-0 flex flex-col py-3">
+      <aside className="bg-[#12151D] border-r border-[#262A35] w-60 flex-shrink-0 flex flex-col py-3">
         <div className="px-3 pb-2 relative" ref={newMenuRef}>
           <button
             onClick={() => setShowNewMenu((v) => !v)}
-            className="flex items-center gap-3 rounded-2xl bg-white border border-[#e8eaed] pl-4 pr-6 py-3 text-sm font-medium text-[#202124] shadow-sm hover:shadow transition-shadow"
+            className="flex items-center gap-3 rounded-2xl bg-[#12151D] border border-[#262A35] pl-4 pr-6 py-3 text-sm font-medium text-[#E6E9F0] shadow-sm hover:shadow transition-shadow"
           >
-            <Plus className="h-5 w-5 text-[#1a56db]" />
+            <Plus className="h-5 w-5 text-[#00C2FF]" />
             New
           </button>
           {showNewMenu && (
-            <div className="absolute left-3 top-full z-30 mt-1 w-56 rounded-lg border border-[#e8eaed] bg-white py-1.5 shadow-lg">
+            <div className="absolute left-3 top-full z-30 mt-1 w-56 rounded-lg border border-[#262A35] bg-[#12151D] py-1.5 shadow-lg">
               <NewMenuItem
                 icon={FolderPlus}
                 label="New folder"
@@ -1207,11 +1244,11 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                   setShowNewMenu(false);
                 }}
               />
-              <div className="my-1 border-t border-[#e8eaed]" />
+              <div className="my-1 border-t border-[#262A35]" />
               <NewMenuItem icon={FileText} label="New document" onClick={() => createNativeFile("doc")} />
               <NewMenuItem icon={FileSpreadsheet} label="New spreadsheet" onClick={() => createNativeFile("sheet")} />
               <NewMenuItem icon={Presentation} label="New presentation" onClick={() => createNativeFile("slide")} />
-              <div className="my-1 border-t border-[#e8eaed]" />
+              <div className="my-1 border-t border-[#262A35]" />
               <NewMenuItem
                 icon={Upload}
                 label="File upload"
@@ -1253,8 +1290,8 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
               }}
               className={`flex w-full items-center gap-3 rounded-r-full pl-6 pr-3 py-2 text-sm transition-colors ${
                 section === key
-                  ? "bg-[#e8f0fe] text-[#1a56db] font-medium"
-                  : "text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124]"
+                  ? "bg-[#0E2532] text-[#00C2FF] font-medium"
+                  : "text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0]"
               }`}
             >
               <Icon className="h-[18px] w-[18px]" />
@@ -1265,7 +1302,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
 
         {section === "my-drive" && sidebarFolders.length > 0 && (
           <div className="mt-4 pr-2">
-            <p className="text-xs font-medium text-[#80868b] px-6 py-1.5">
+            <p className="text-xs font-medium text-[#5A6275] px-6 py-1.5">
               Folders
             </p>
             <div className="space-y-0.5">
@@ -1286,20 +1323,20 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
           </div>
         )}
 
-        <div className="px-5 py-3 border-t border-[#e8eaed] mt-auto">
+        <div className="px-5 py-3 border-t border-[#262A35] mt-auto">
           {storage && (
             <div>
-              <div className="flex items-center gap-2 mb-2 text-[#5f6368]">
+              <div className="flex items-center gap-2 mb-2 text-[#8A92A6]">
                 <HardDrive className="h-4 w-4" />
                 <span className="text-xs font-medium">Storage</span>
               </div>
-              <div className="bg-[#e8eaed] rounded-full h-1.5">
+              <div className="bg-[#262A35] rounded-full h-1.5">
                 <div
-                  className="bg-[#1a56db] h-1.5 rounded-full transition-all"
+                  className="bg-[#00C2FF] h-1.5 rounded-full transition-all"
                   style={{ width: storagePercent + "%" }}
                 />
               </div>
-              <p className="mt-2 text-xs text-[#80868b]">
+              <p className="mt-2 text-xs text-[#5A6275]">
                 {formatFileSize(storage.usedMB * 1024 * 1024)} of {(storage.totalMB / 1024).toFixed(0)} GB used
               </p>
             </div>
@@ -1308,7 +1345,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 flex flex-col bg-white min-w-0 overflow-hidden">
+      <main className="flex-1 flex flex-col bg-[#12151D] min-w-0 overflow-hidden">
         {storage && !storage.configured && (
           <div className="flex items-center gap-2 bg-yellow-950/30 border-b border-yellow-700/30 px-6 py-2.5 text-sm text-yellow-400">
             <AlertTriangle className="h-4 w-4 text-yellow-500 shrink-0" />
@@ -1317,14 +1354,14 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
         )}
 
         {/* Top search bar */}
-        <div className="px-6 pt-4 pb-2 bg-white flex items-center gap-3">
+        <div className="px-6 pt-4 pb-2 bg-[#12151D] flex items-center gap-3">
           <div className="relative flex-1 max-w-2xl">
-            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#5f6368]" />
+            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8A92A6]" />
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search in Drive"
-              className="w-full bg-[#f1f3f4] rounded-full pl-11 py-2.5 text-sm focus:bg-white focus:ring-1 focus:ring-[#1a56db]/40 focus:shadow-sm outline-none pr-4 text-[#202124] placeholder:text-[#5f6368] transition-colors"
+              className="w-full bg-[#1B1F2A] rounded-full pl-11 py-2.5 text-sm focus:bg-[#12151D] focus:ring-1 focus:ring-[#00C2FF]/40 focus:shadow-sm outline-none pr-4 text-[#E6E9F0] placeholder:text-[#8A92A6] transition-colors"
             />
           </div>
 
@@ -1334,17 +1371,17 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
               onClick={() => setShowFilterMenu((v) => !v)}
               className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[13px] font-medium transition-colors ${
                 filtersActive
-                  ? "border-[#1a56db] bg-[#e8f0fe] text-[#1a56db]"
-                  : "border-[#e8eaed] text-[#5f6368] hover:bg-[#f1f3f4]"
+                  ? "border-[#00C2FF] bg-[#0E2532] text-[#00C2FF]"
+                  : "border-[#262A35] text-[#8A92A6] hover:bg-[#1B1F2A]"
               }`}
             >
               <SortAsc className="h-4 w-4" />
               Filters
-              {filtersActive && <span className="ml-0.5 h-1.5 w-1.5 rounded-full bg-[#1a56db]" />}
+              {filtersActive && <span className="ml-0.5 h-1.5 w-1.5 rounded-full bg-[#00C2FF]" />}
             </button>
             {showFilterMenu && (
-              <div className="absolute right-0 top-full mt-1 z-30 w-56 rounded-lg border border-[#e8eaed] bg-white py-2 shadow-lg">
-                <p className="px-4 pb-1 text-xs font-medium text-[#80868b]">File type</p>
+              <div className="absolute right-0 top-full mt-1 z-30 w-56 rounded-lg border border-[#262A35] bg-[#12151D] py-2 shadow-lg">
+                <p className="px-4 pb-1 text-xs font-medium text-[#5A6275]">File type</p>
                 {(
                   [
                     { key: "all", label: "All items" },
@@ -1357,33 +1394,33 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                   <button
                     key={key}
                     onClick={() => setTypeFilter(key)}
-                    className={`flex w-full items-center justify-between px-4 py-1.5 text-sm transition-colors hover:bg-[#f1f3f4] ${
-                      typeFilter === key ? "text-[#1a56db] font-medium" : "text-[#5f6368]"
+                    className={`flex w-full items-center justify-between px-4 py-1.5 text-sm transition-colors hover:bg-[#1B1F2A] ${
+                      typeFilter === key ? "text-[#00C2FF] font-medium" : "text-[#8A92A6]"
                     }`}
                   >
                     {label}
-                    {typeFilter === key && <Check className="h-4 w-4 text-[#1a56db]" />}
+                    {typeFilter === key && <Check className="h-4 w-4 text-[#00C2FF]" />}
                   </button>
                 ))}
-                <div className="my-1.5 border-t border-[#e8eaed]" />
+                <div className="my-1.5 border-t border-[#262A35]" />
                 <button
                   onClick={() => setStarredOnly((v) => !v)}
-                  className={`flex w-full items-center justify-between px-4 py-1.5 text-sm transition-colors hover:bg-[#f1f3f4] ${
-                    starredOnly ? "text-[#1a56db] font-medium" : "text-[#5f6368]"
+                  className={`flex w-full items-center justify-between px-4 py-1.5 text-sm transition-colors hover:bg-[#1B1F2A] ${
+                    starredOnly ? "text-[#00C2FF] font-medium" : "text-[#8A92A6]"
                   }`}
                 >
                   <span className="flex items-center gap-2">
                     <Star className={`h-4 w-4 ${starredOnly ? "fill-yellow-400 text-yellow-400" : ""}`} />
                     Starred only
                   </span>
-                  {starredOnly && <Check className="h-4 w-4 text-[#1a56db]" />}
+                  {starredOnly && <Check className="h-4 w-4 text-[#00C2FF]" />}
                 </button>
                 {filtersActive && (
                   <>
-                    <div className="my-1.5 border-t border-[#e8eaed]" />
+                    <div className="my-1.5 border-t border-[#262A35]" />
                     <button
                       onClick={() => { setTypeFilter("all"); setStarredOnly(false); }}
-                      className="flex w-full items-center gap-2 px-4 py-1.5 text-sm text-[#5f6368] hover:bg-[#f1f3f4] transition-colors"
+                      className="flex w-full items-center gap-2 px-4 py-1.5 text-sm text-[#8A92A6] hover:bg-[#1B1F2A] transition-colors"
                     >
                       <X className="h-4 w-4" />
                       Clear filters
@@ -1399,20 +1436,20 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
         {filtersActive && (
           <div className="px-6 pb-1 flex items-center gap-2 flex-wrap">
             {typeFilter !== "all" && (
-              <span className="flex items-center gap-1.5 rounded-full bg-[#e8f0fe] px-3 py-1 text-xs font-medium text-[#1a56db]">
+              <span className="flex items-center gap-1.5 rounded-full bg-[#0E2532] px-3 py-1 text-xs font-medium text-[#00C2FF]">
                 {typeFilter === "folders" ? "Folders"
                   : typeFilter === "images" ? "Images"
                   : typeFilter === "docs" ? "Documents"
                   : "PDFs"}
-                <button onClick={() => setTypeFilter("all")} className="hover:text-[#1648c7]">
+                <button onClick={() => setTypeFilter("all")} className="hover:text-[#0098E6]">
                   <X className="h-3 w-3" />
                 </button>
               </span>
             )}
             {starredOnly && (
-              <span className="flex items-center gap-1.5 rounded-full bg-[#e8f0fe] px-3 py-1 text-xs font-medium text-[#1a56db]">
+              <span className="flex items-center gap-1.5 rounded-full bg-[#0E2532] px-3 py-1 text-xs font-medium text-[#00C2FF]">
                 Starred
-                <button onClick={() => setStarredOnly(false)} className="hover:text-[#1648c7]">
+                <button onClick={() => setStarredOnly(false)} className="hover:text-[#0098E6]">
                   <X className="h-3 w-3" />
                 </button>
               </span>
@@ -1422,30 +1459,30 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
 
         {/* Bulk action bar */}
         {selectedIds.size > 0 && (
-          <div className="mx-6 mt-1 mb-1 flex items-center gap-2 rounded-xl border border-[#1a56db]/30 bg-[#e8f0fe] px-4 py-2">
-            <span className="text-sm font-medium text-[#1a56db]">{selectedIds.size} selected</span>
+          <div className="mx-6 mt-1 mb-1 flex items-center gap-2 rounded-xl border border-[#00C2FF]/30 bg-[#0E2532] px-4 py-2">
+            <span className="text-sm font-medium text-[#00C2FF]">{selectedIds.size} selected</span>
             <div className="flex-1" />
             <button
               onClick={bulkStar}
-              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[13px] font-medium text-[#1a56db] hover:bg-white/60 transition-colors"
+              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[13px] font-medium text-[#00C2FF] hover:bg-[#12151D]/60 transition-colors"
             >
               <Star className="h-4 w-4" /> Star all
             </button>
             <button
               onClick={() => { setMoveModal({ id: "__bulk__", name: selectedIds.size + " items", isFolder: false }); }}
-              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[13px] font-medium text-[#1a56db] hover:bg-white/60 transition-colors"
+              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[13px] font-medium text-[#00C2FF] hover:bg-[#12151D]/60 transition-colors"
             >
               <Move className="h-4 w-4" /> Move all
             </button>
             <button
               onClick={bulkTrash}
-              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[13px] font-medium text-[#ea4335] hover:bg-white/60 transition-colors"
+              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[13px] font-medium text-[#ea4335] hover:bg-[#12151D]/60 transition-colors"
             >
               <Trash2 className="h-4 w-4" /> Trash all
             </button>
             <button
               onClick={clearSelection}
-              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[13px] font-medium text-[#5f6368] hover:bg-white/60 transition-colors"
+              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[13px] font-medium text-[#8A92A6] hover:bg-[#12151D]/60 transition-colors"
             >
               <X className="h-4 w-4" /> Clear
             </button>
@@ -1453,11 +1490,11 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
         )}
 
         {/* Toolbar: breadcrumb + controls */}
-        <div className="px-6 py-2 bg-white flex items-center gap-3">
+        <div className="h-14 shrink-0 px-6 bg-[#12151D] flex items-center gap-3 border-b border-[#262A35]/60">
           <nav className="flex items-center gap-1 flex-1 min-w-0 overflow-hidden">
             <button
               onClick={() => navigateToBreadcrumb(-1)}
-              className={`rounded-lg px-2 py-1 text-lg text-[#202124] hover:bg-[#f1f3f4] transition-colors font-normal whitespace-nowrap ${
+              className={`rounded-lg px-2 py-1 text-lg text-[#E6E9F0] hover:bg-[#1B1F2A] transition-colors font-normal whitespace-nowrap ${
                 breadcrumb.length === 0 ? "font-medium" : ""
               }`}
             >
@@ -1469,10 +1506,10 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
             </button>
             {breadcrumb.map((crumb, idx) => (
               <span key={crumb.id} className="flex items-center gap-1 min-w-0">
-                <ChevronRight className="h-4 w-4 text-[#80868b] shrink-0" />
+                <ChevronRight className="h-4 w-4 text-[#5A6275] shrink-0" />
                 <button
                   onClick={() => navigateToBreadcrumb(idx)}
-                  className={`rounded-lg px-2 py-1 text-lg text-[#202124] hover:bg-[#f1f3f4] transition-colors truncate ${
+                  className={`rounded-lg px-2 py-1 text-lg text-[#E6E9F0] hover:bg-[#1B1F2A] transition-colors truncate ${
                     idx === breadcrumb.length - 1 ? "font-medium" : "font-normal"
                   }`}
                 >
@@ -1487,12 +1524,12 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
             <button
               onClick={() => setShowSortMenu((v) => !v)}
               title="Sort"
-              className="text-[#5f6368] hover:bg-[#f1f3f4] rounded-full p-2 flex items-center gap-2 transition-colors"
+              className="text-[#8A92A6] hover:bg-[#1B1F2A] rounded-full p-2 flex items-center gap-2 transition-colors"
             >
               <SortAsc className="h-[18px] w-[18px]" />
             </button>
             {showSortMenu && (
-              <div className="absolute right-0 top-full mt-1 z-30 bg-white border border-[#e8eaed] rounded-lg shadow-lg py-1 min-w-[180px]">
+              <div className="absolute right-0 top-full mt-1 z-30 bg-[#12151D] border border-[#262A35] rounded-lg shadow-lg py-1 min-w-[180px]">
                 {(
                   [
                     { key: "name", label: "Name" },
@@ -1507,15 +1544,15 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                       else { setSortKey(key); setSortDir("asc"); }
                       setShowSortMenu(false);
                     }}
-                    className={`px-4 py-2 text-sm text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124] flex items-center gap-2 cursor-pointer w-full justify-between ${
-                      sortKey === key ? "text-[#1a56db] font-medium" : ""
+                    className={`px-4 py-2 text-sm text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0] flex items-center gap-2 cursor-pointer w-full justify-between ${
+                      sortKey === key ? "text-[#00C2FF] font-medium" : ""
                     }`}
                   >
                     {label}
                     {sortKey === key && (
                       sortDir === "asc"
-                        ? <ChevronUp className="h-4 w-4 text-[#1a56db]" />
-                        : <ChevronDown className="h-4 w-4 text-[#1a56db]" />
+                        ? <ChevronUp className="h-4 w-4 text-[#00C2FF]" />
+                        : <ChevronDown className="h-4 w-4 text-[#00C2FF]" />
                     )}
                   </button>
                 ))}
@@ -1524,12 +1561,12 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
           </div>
 
           {/* View toggle */}
-          <div className="flex items-center rounded-full border border-[#e8eaed] p-0.5">
+          <div className="flex items-center rounded-full border border-[#262A35] p-0.5">
             <button
               onClick={() => setView("list")}
               title="List view"
               className={`rounded-full p-1.5 transition-colors ${
-                view === "list" ? "bg-[#e8f0fe] text-[#1a56db]" : "text-[#5f6368] hover:bg-[#f1f3f4]"
+                view === "list" ? "bg-[#0E2532] text-[#00C2FF]" : "text-[#8A92A6] hover:bg-[#1B1F2A]"
               }`}
             >
               <List className="h-[18px] w-[18px]" />
@@ -1538,7 +1575,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
               onClick={() => setView("grid")}
               title="Grid view"
               className={`rounded-full p-1.5 transition-colors ${
-                view === "grid" ? "bg-[#e8f0fe] text-[#1a56db]" : "text-[#5f6368] hover:bg-[#f1f3f4]"
+                view === "grid" ? "bg-[#0E2532] text-[#00C2FF]" : "text-[#8A92A6] hover:bg-[#1B1F2A]"
               }`}
             >
               <Grid3x3 className="h-[18px] w-[18px]" />
@@ -1553,19 +1590,28 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
             }}
             title="View details"
             className={`rounded-full p-2 transition-colors ${
-              detailFile ? "bg-[#e8f0fe] text-[#1a56db]" : "text-[#5f6368] hover:bg-[#f1f3f4]"
+              detailFile ? "bg-[#0E2532] text-[#00C2FF]" : "text-[#8A92A6] hover:bg-[#1B1F2A]"
             }`}
           >
             <Info className="h-[18px] w-[18px]" />
+          </button>
+
+          {/* Upload primary */}
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="flex h-[34px] items-center gap-2 rounded-lg bg-[#00C2FF] px-4 text-[12.5px] font-semibold text-[#06121A] hover:bg-[#0098E6] transition-colors"
+          >
+            <Upload className="h-[15px] w-[15px]" strokeWidth={2.6} />
+            Upload
           </button>
         </div>
 
         {/* Upload progress bar area */}
         {uploadTasks.length > 0 && (
-          <div className="border-b border-[#e8eaed] bg-white px-6 py-2 space-y-1.5">
+          <div className="border-b border-[#262A35] bg-[#12151D] px-6 py-2 space-y-1.5">
             {uploadTasks.map((task) => (
               <div key={task.id} className="flex items-center gap-3">
-                <span className="text-xs text-[#5f6368] truncate flex-1 max-w-xs">{task.name}</span>
+                <span className="text-xs text-[#8A92A6] truncate flex-1 max-w-xs">{task.name}</span>
                 {task.error ? (
                   <span className="text-xs text-red-400">{task.error}</span>
                 ) : task.done ? (
@@ -1574,13 +1620,13 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                   </span>
                 ) : (
                   <div className="flex items-center gap-2 flex-1 max-w-xs">
-                    <div className="bg-[#f1f3f4] rounded-full h-1.5 flex-1">
+                    <div className="bg-[#1B1F2A] rounded-full h-1.5 flex-1">
                       <div
-                        className="bg-[#1a56db] text-white h-1.5 rounded-full transition-all"
+                        className="bg-[#00C2FF] text-[#06121A] h-1.5 rounded-full transition-all"
                         style={{ width: `${task.progress}%` }}
                       />
                     </div>
-                    <span className="text-xs text-[#5f6368] w-8 text-right">{task.progress}%</span>
+                    <span className="text-xs text-[#8A92A6] w-8 text-right">{task.progress}%</span>
                   </div>
                 )}
               </div>
@@ -1605,11 +1651,11 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                     }
                   }}
                   placeholder="Folder name"
-                  className="rounded-lg border border-[#1a56db] px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#1a56db]/15 w-48 bg-white text-[#202124]"
+                  className="rounded-lg border border-[#00C2FF] px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#00C2FF]/15 w-48 bg-[#12151D] text-[#E6E9F0]"
                 />
                 <button
                   onClick={handleCreateFolder}
-                  className="bg-[#1a56db] text-white hover:opacity-90 rounded-md px-3 py-2 text-sm font-medium flex items-center gap-2 transition-colors"
+                  className="bg-[#00C2FF] text-[#06121A] hover:opacity-90 rounded-md px-3 py-2 text-sm font-medium flex items-center gap-2 transition-colors"
                 >
                   Create
                 </button>
@@ -1618,7 +1664,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                     setCreatingFolder(false);
                     setNewFolderName("");
                   }}
-                  className="bg-white text-[#5f6368] hover:bg-white border border-[#e8eaed] rounded-md px-3 py-2 text-sm font-medium flex items-center gap-2 transition-colors"
+                  className="bg-[#12151D] text-[#8A92A6] hover:bg-[#12151D] border border-[#262A35] rounded-md px-3 py-2 text-sm font-medium flex items-center gap-2 transition-colors"
                 >
                   Cancel
                 </button>
@@ -1627,10 +1673,10 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
 
             {loadingContent ? (
               <div className="flex h-48 items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-[#1a56db]" />
+                <Loader2 className="h-8 w-8 animate-spin text-[#00C2FF]" />
               </div>
             ) : filteredFolders.length === 0 && filteredFiles.length === 0 ? (
-              <div className="flex h-48 flex-col items-center justify-center gap-2 text-[#5f6368]">
+              <div className="flex h-48 flex-col items-center justify-center gap-2 text-[#8A92A6]">
                 <HardDrive className="h-12 w-12 text-[#262b3a]" />
                 <p className="text-sm">
                   {searchQuery ? "No results found" : "This folder is empty"}
@@ -1642,71 +1688,92 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                 )}
               </div>
             ) : view === "grid" ? (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                {filteredFolders.map((folder) => (
-                  <GridFolderCard
-                    key={folder.id}
-                    folder={folder}
-                    selected={selectedItem === folder.id}
-                    checked={selectedIds.has(folder.id)}
-                    onToggleCheck={() => toggleSelect(folder.id)}
-                    dragOver={dragOverFolderId === folder.id}
-                    onDragEnterFolder={() => setDragOverFolderId(folder.id)}
-                    onDragLeaveFolder={() => setDragOverFolderId((cur) => (cur === folder.id ? null : cur))}
-                    onDropItem={(itemId) => handleDropOnFolder(itemId, folder.id)}
-                    onMoveStart={() => setMoveModal({ id: folder.id, name: folder.name, isFolder: true })}
-                    renamingId={renamingId}
-                    renameValue={renameValue}
-                    onSetRenameValue={setRenameValue}
-                    onSelect={() => setSelectedItem(folder.id)}
-                    onOpen={() => navigateToFolder(folder)}
-                    _onRenameStart={() => {
-                      setRenamingId(folder.id);
-                      setRenameValue(folder.name);
-                    }}
-                    onRenameSubmit={() => handleRename(folder.id, true)}
-                    onRenameCancel={() => setRenamingId(null)}
-                    onTrash={() => handleTrash(folder.id, true)}
-                    onContextMenu={(e) => handleContextMenu(e, { folderId: folder.id, isFolder: true })}
-                  />
-                ))}
-                {filteredFiles.map((file) => (
-                  <GridFileCard
-                    key={file.id}
-                    file={file}
-                    selected={selectedItem === file.id}
-                    checked={selectedIds.has(file.id)}
-                    onToggleCheck={() => toggleSelect(file.id)}
-                    onMoveStart={() => setMoveModal({ id: file.id, name: file.name, isFolder: false })}
-                    renamingId={renamingId}
-                    renameValue={renameValue}
-                    onSetRenameValue={setRenameValue}
-                    onSelect={() => {
-                      setSelectedItem(file.id);
-                      setDetailFile(file);
-                    }}
-                    onPreview={() => handlePreview(file)}
-                    _onRenameStart={() => {
-                      setRenamingId(file.id);
-                      setRenameValue(file.name);
-                    }}
-                    onRenameSubmit={() => handleRename(file.id, false)}
-                    onRenameCancel={() => setRenamingId(null)}
-                    onTrash={() => handleTrash(file.id, false)}
-                    onStar={() => handleStar(file.id, file.isStarred)}
-                    onShare={() => handleShare(file)}
-                    onDownload={() => handleDownload(file)}
-                    onContextMenu={(e) => handleContextMenu(e, { fileId: file.id, isFolder: false })}
-                  />
-                ))}
-              </div>
+              <>
+                {filteredFolders.length > 0 && (
+                  <>
+                    <p className="mb-3.5 text-xs font-medium text-[#5A6275]">Folders</p>
+                    <div
+                      className="mb-7 grid gap-3.5"
+                      style={{ gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))" }}
+                    >
+                      {filteredFolders.map((folder, idx) => (
+                        <GridFolderCard
+                          key={folder.id}
+                          folder={folder}
+                          tintIndex={idx}
+                          selected={selectedItem === folder.id}
+                          checked={selectedIds.has(folder.id)}
+                          onToggleCheck={() => toggleSelect(folder.id)}
+                          dragOver={dragOverFolderId === folder.id}
+                          onDragEnterFolder={() => setDragOverFolderId(folder.id)}
+                          onDragLeaveFolder={() => setDragOverFolderId((cur) => (cur === folder.id ? null : cur))}
+                          onDropItem={(itemId) => handleDropOnFolder(itemId, folder.id)}
+                          onMoveStart={() => setMoveModal({ id: folder.id, name: folder.name, isFolder: true })}
+                          renamingId={renamingId}
+                          renameValue={renameValue}
+                          onSetRenameValue={setRenameValue}
+                          onSelect={() => setSelectedItem(folder.id)}
+                          onOpen={() => navigateToFolder(folder)}
+                          _onRenameStart={() => {
+                            setRenamingId(folder.id);
+                            setRenameValue(folder.name);
+                          }}
+                          onRenameSubmit={() => handleRename(folder.id, true)}
+                          onRenameCancel={() => setRenamingId(null)}
+                          onTrash={() => handleTrash(folder.id, true)}
+                          onContextMenu={(e) => handleContextMenu(e, { folderId: folder.id, isFolder: true })}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
+                {filteredFiles.length > 0 && (
+                  <>
+                    <p className="mb-3.5 text-xs font-medium text-[#5A6275]">Files</p>
+                    <div
+                      className="grid gap-4"
+                      style={{ gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))" }}
+                    >
+                      {filteredFiles.map((file) => (
+                        <GridFileCard
+                          key={file.id}
+                          file={file}
+                          selected={selectedItem === file.id}
+                          checked={selectedIds.has(file.id)}
+                          onToggleCheck={() => toggleSelect(file.id)}
+                          onMoveStart={() => setMoveModal({ id: file.id, name: file.name, isFolder: false })}
+                          renamingId={renamingId}
+                          renameValue={renameValue}
+                          onSetRenameValue={setRenameValue}
+                          onSelect={() => {
+                            setSelectedItem(file.id);
+                            setDetailFile(file);
+                          }}
+                          onPreview={() => handlePreview(file)}
+                          _onRenameStart={() => {
+                            setRenamingId(file.id);
+                            setRenameValue(file.name);
+                          }}
+                          onRenameSubmit={() => handleRename(file.id, false)}
+                          onRenameCancel={() => setRenamingId(null)}
+                          onTrash={() => handleTrash(file.id, false)}
+                          onStar={() => handleStar(file.id, file.isStarred)}
+                          onShare={() => handleShare(file)}
+                          onDownload={() => handleDownload(file)}
+                          onContextMenu={(e) => handleContextMenu(e, { fileId: file.id, isFolder: false })}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </>
             ) : (
-              <div className="rounded-xl border border-[#e8eaed] bg-white overflow-hidden">
+              <div className="rounded-xl border border-[#262A35] bg-[#12151D] overflow-hidden">
                 <table className="w-full">
                   <thead>
-                    <tr className="bg-white border-b border-[#e8eaed]">
+                    <tr className="bg-[#12151D] border-b border-[#262A35]">
                       <th
-                        className="text-xs font-semibold text-[#5f6368] px-4 py-3 text-left cursor-pointer hover:text-[#202124] select-none"
+                        className="text-xs font-semibold text-[#8A92A6] px-4 py-3 text-left cursor-pointer hover:text-[#E6E9F0] select-none"
                         onClick={() => {
                           if (sortKey === "name") setSortDir((d) => (d === "asc" ? "desc" : "asc"));
                           else { setSortKey("name"); setSortDir("asc"); }
@@ -1717,7 +1784,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                         </span>
                       </th>
                       <th
-                        className="text-xs font-semibold text-[#5f6368] px-4 py-3 text-left cursor-pointer hover:text-[#202124] select-none"
+                        className="text-xs font-semibold text-[#8A92A6] px-4 py-3 text-left cursor-pointer hover:text-[#E6E9F0] select-none"
                         onClick={() => {
                           if (sortKey === "updatedAt") setSortDir((d) => (d === "asc" ? "desc" : "asc"));
                           else { setSortKey("updatedAt"); setSortDir("desc"); }
@@ -1728,7 +1795,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                         </span>
                       </th>
                       <th
-                        className="text-xs font-semibold text-[#5f6368] px-4 py-3 text-left cursor-pointer hover:text-[#202124] select-none"
+                        className="text-xs font-semibold text-[#8A92A6] px-4 py-3 text-left cursor-pointer hover:text-[#E6E9F0] select-none"
                         onClick={() => {
                           if (sortKey === "size") setSortDir((d) => (d === "asc" ? "desc" : "asc"));
                           else { setSortKey("size"); setSortDir("asc"); }
@@ -1738,7 +1805,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                           Size {sortKey === "size" && <span className="text-xs">{sortDir === "asc" ? "↑" : "↓"}</span>}
                         </span>
                       </th>
-                      <th className="text-xs font-semibold text-[#5f6368] px-4 py-3 text-right">Actions</th>
+                      <th className="text-xs font-semibold text-[#8A92A6] px-4 py-3 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1817,7 +1884,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
       {/* Right-click context menu */}
       {contextMenu && (
         <div
-          className="fixed z-50 bg-white border border-[#e8eaed] rounded-lg shadow-lg py-1 min-w-[160px] text-sm"
+          className="fixed z-50 bg-[#12151D] border border-[#262A35] rounded-lg shadow-lg py-1 min-w-[160px] text-sm"
           style={{ top: contextMenu.y, left: contextMenu.x }}
         >
           {!contextMenu.isFolder && (() => {
@@ -1828,7 +1895,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                 <CtxItem icon={Eye} label="Preview" onClick={() => { handlePreview(file); setContextMenu(null); }} />
                 <CtxItem icon={Download} label="Download" onClick={() => { handleDownload(file); setContextMenu(null); }} />
                 <CtxItem icon={Share2} label="Share" onClick={() => { handleShare(file); setContextMenu(null); }} />
-                <div className="my-1 border-t border-[#e8eaed]" />
+                <div className="my-1 border-t border-[#262A35]" />
                 <CtxItem
                   icon={Star}
                   label={file.isStarred ? "Unstar" : "Star"}
@@ -1843,7 +1910,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                     setContextMenu(null);
                   }}
                 />
-                <div className="my-1 border-t border-[#e8eaed]" />
+                <div className="my-1 border-t border-[#262A35]" />
                 <CtxItem
                   icon={Trash2}
                   label="Move to Trash"
@@ -1868,7 +1935,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                     setContextMenu(null);
                   }}
                 />
-                <div className="my-1 border-t border-[#e8eaed]" />
+                <div className="my-1 border-t border-[#262A35]" />
                 <CtxItem
                   icon={Trash2}
                   label="Move to Trash"
@@ -1966,8 +2033,8 @@ function CtxItem({
   return (
     <button
       onClick={onClick}
-      className={`px-4 py-2 text-sm flex items-center gap-2 cursor-pointer w-full hover:bg-[#f1f3f4] hover:text-[#202124] transition-colors ${
-        danger ? "text-red-400" : "text-[#5f6368]"
+      className={`px-4 py-2 text-sm flex items-center gap-2 cursor-pointer w-full hover:bg-[#1B1F2A] hover:text-[#E6E9F0] transition-colors ${
+        danger ? "text-red-400" : "text-[#8A92A6]"
       }`}
     >
       <Icon className="h-4 w-4 shrink-0" />
@@ -1980,6 +2047,7 @@ function CtxItem({
 
 function GridFolderCard({
   folder,
+  tintIndex,
   selected,
   checked,
   onToggleCheck,
@@ -2000,6 +2068,7 @@ function GridFolderCard({
   onContextMenu,
 }: {
   folder: DriveFolder;
+  tintIndex: number;
   selected: boolean;
   checked: boolean;
   onToggleCheck: () => void;
@@ -2019,14 +2088,15 @@ function GridFolderCard({
   onTrash: () => void;
   onContextMenu: (e: React.MouseEvent) => void;
 }) {
+  const tint = FOLDER_TINTS[tintIndex % FOLDER_TINTS.length];
   return (
     <div
-      className={`group relative cursor-pointer rounded-xl border p-4 transition-all ${
+      className={`group relative flex cursor-pointer items-center gap-3 rounded-[11px] border p-3.5 transition-all ${
         dragOver
-          ? "border-[#1a56db] bg-[#e8f0fe] ring-2 ring-[#1a56db]/30"
+          ? "border-[#00C2FF] bg-[#0E2532] ring-2 ring-[#00C2FF]/30"
           : selected || checked
-          ? "border-[#1a56db]/30 bg-[#1a56db]/10"
-          : "bg-white border-[#e8eaed] hover:shadow-md hover:border-[#1a56db]/30"
+          ? "border-[#00C2FF] bg-[#00C2FF]/10"
+          : "bg-[#12151D] border-[#262A35] hover:border-[#00C2FF]/40"
       }`}
       onClick={onSelect}
       onDoubleClick={onOpen}
@@ -2040,26 +2110,34 @@ function GridFolderCard({
       }}
     >
       <CardCheckbox checked={checked} onToggle={onToggleCheck} />
-      <div className="mb-3 flex justify-center">
-        <div className="w-12 h-12 rounded-lg bg-white flex items-center justify-center">
-          <Folder className="h-7 w-7 text-yellow-500" />
-        </div>
+      <div
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[9px]"
+        style={{ background: tint.iconBg }}
+      >
+        <Folder className="h-5 w-5" style={{ color: tint.iconColor }} />
       </div>
-      {renamingId === folder.id ? (
-        <input
-          autoFocus
-          value={renameValue}
-          onChange={(e) => onSetRenameValue(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") onRenameSubmit();
-            if (e.key === "Escape") onRenameCancel();
-          }}
-          onClick={(e) => e.stopPropagation()}
-          className="w-full rounded-lg border border-[#1a56db] px-2 py-1 text-xs outline-none bg-white text-[#202124]"
-        />
-      ) : (
-        <p className="font-medium text-sm text-[#202124] truncate text-center">{folder.name}</p>
-      )}
+      <div className="min-w-0 flex-1">
+        {renamingId === folder.id ? (
+          <input
+            autoFocus
+            value={renameValue}
+            onChange={(e) => onSetRenameValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") onRenameSubmit();
+              if (e.key === "Escape") onRenameCancel();
+            }}
+            onClick={(e) => e.stopPropagation()}
+            className="w-full rounded-lg border border-[#00C2FF] px-2 py-1 text-xs outline-none bg-[#12151D] text-[#E6E9F0]"
+          />
+        ) : (
+          <>
+            <p className="truncate text-[13.5px] font-semibold text-[#E6E9F0]">{folder.name}</p>
+            <p className="text-[11.5px] text-[#5A6275]">
+              {folder.children?.length ? `${folder.children.length} items` : "Folder"}
+            </p>
+          </>
+        )}
+      </div>
       <div className="absolute right-2 top-2 hidden gap-1 group-hover:flex">
         <ActionBtn icon={Move} onClick={(e) => { e.stopPropagation(); onMoveStart(); }} title="Move" />
         <ActionBtn icon={Edit3} onClick={(e) => { e.stopPropagation(); _onRenameStart(); }} title="Rename" />
@@ -2109,7 +2187,8 @@ function GridFileCard({
   onDownload: () => void;
   onContextMenu: (e: React.MouseEvent) => void;
 }) {
-  const Icon = getMimeIcon(file.mimeType);
+  const badge = getFileBadge(file.name, file.mimeType);
+  const isImage = file.mimeType.startsWith("image/") && !!file.storageUrl;
   return (
     <div
       draggable
@@ -2117,10 +2196,10 @@ function GridFileCard({
         e.dataTransfer.setData("application/x-drive-item", file.id);
         e.dataTransfer.effectAllowed = "move";
       }}
-      className={`group relative cursor-pointer rounded-xl border p-4 transition-all ${
+      className={`group relative cursor-pointer overflow-hidden rounded-xl border transition-all ${
         selected || checked
-          ? "border-[#1a56db]/30 bg-[#1a56db]/10"
-          : "bg-white border-[#e8eaed] hover:shadow-md hover:border-[#1a56db]/30"
+          ? "border-[#00C2FF] bg-[#00C2FF]/[0.06]"
+          : "bg-[#12151D] border-[#262A35] hover:border-[#00C2FF]/40"
       }`}
       onClick={onSelect}
       onDoubleClick={onPreview}
@@ -2128,57 +2207,70 @@ function GridFileCard({
     >
       <CardCheckbox checked={checked} onToggle={onToggleCheck} />
       {/* Thumbnail area */}
-      <div className="mb-3 flex justify-center">
-        {file.mimeType.startsWith("image/") && file.storageUrl ? (
+      <div
+        className="relative flex h-[116px] items-center justify-center"
+        style={{ background: badge.thumbBg }}
+      >
+        {isImage ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={`/api/drive/files/${file.id}/download`}
             alt={file.name}
-            className="h-12 w-full rounded-lg object-cover"
+            className="h-full w-full object-cover"
             onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
           />
         ) : (
-          <div className="w-12 h-12 rounded-lg bg-white flex items-center justify-center">
-            <Icon className="h-7 w-7 text-[#1a56db]" />
+          <div
+            className="flex h-14 w-[46px] items-center justify-center rounded-md"
+            style={{ background: badge.badgeBg, boxShadow: "0 6px 16px -4px rgba(0,0,0,0.4)" }}
+          >
+            <span className="font-mono text-[11px] font-extrabold text-white">{badge.ext}</span>
           </div>
         )}
+        {file.isStarred && (
+          <Star className="absolute right-2.5 top-2.5 h-[15px] w-[15px] fill-[#FFB020] text-[#FFB020]" />
+        )}
+        <div className="absolute right-1 top-1 hidden flex-wrap gap-1 group-hover:flex">
+          <ActionBtn
+            icon={Eye}
+            onClick={(e) => { e.stopPropagation(); onPreview(); }}
+            title="Preview"
+          />
+          <ActionBtn
+            icon={Star}
+            onClick={(e) => { e.stopPropagation(); onStar(); }}
+            title={file.isStarred ? "Unstar" : "Star"}
+            active={file.isStarred}
+            activeClass="text-[#FFB020]"
+          />
+          <ActionBtn icon={Share2} onClick={(e) => { e.stopPropagation(); onShare(); }} title="Share" />
+          <ActionBtn icon={Move} onClick={(e) => { e.stopPropagation(); onMoveStart(); }} title="Move" />
+          <ActionBtn icon={Download} onClick={(e) => { e.stopPropagation(); onDownload(); }} title="Download" />
+          <ActionBtn icon={Trash2} onClick={(e) => { e.stopPropagation(); onTrash(); }} title="Trash" />
+        </div>
       </div>
-      {renamingId === file.id ? (
-        <input
-          autoFocus
-          value={renameValue}
-          onChange={(e) => onSetRenameValue(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") onRenameSubmit();
-            if (e.key === "Escape") onRenameCancel();
-          }}
-          onClick={(e) => e.stopPropagation()}
-          className="w-full rounded-lg border border-[#1a56db] px-2 py-1 text-xs outline-none bg-white text-[#202124]"
-        />
-      ) : (
-        <p className="font-medium text-sm text-[#202124] truncate text-center">{file.name}</p>
-      )}
-      <p className="mt-1 text-center text-xs text-[#5f6368]">{formatFileSize(file.size)}</p>
-      {file.isStarred && (
-        <Star className="absolute left-2 top-2 h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-      )}
-      <div className="absolute right-1 top-1 hidden flex-wrap gap-1 group-hover:flex">
-        <ActionBtn
-          icon={Eye}
-          onClick={(e) => { e.stopPropagation(); onPreview(); }}
-          title="Preview"
-        />
-        <ActionBtn
-          icon={Star}
-          onClick={(e) => { e.stopPropagation(); onStar(); }}
-          title={file.isStarred ? "Unstar" : "Star"}
-          active={file.isStarred}
-          activeClass="text-yellow-500"
-        />
-        <ActionBtn icon={Share2} onClick={(e) => { e.stopPropagation(); onShare(); }} title="Share" />
-        <ActionBtn icon={Move} onClick={(e) => { e.stopPropagation(); onMoveStart(); }} title="Move" />
-        <ActionBtn icon={Download} onClick={(e) => { e.stopPropagation(); onDownload(); }} title="Download" />
-        <ActionBtn icon={Trash2} onClick={(e) => { e.stopPropagation(); onTrash(); }} title="Trash" />
+      {/* Meta */}
+      <div className="px-3 py-3">
+        {renamingId === file.id ? (
+          <input
+            autoFocus
+            value={renameValue}
+            onChange={(e) => onSetRenameValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") onRenameSubmit();
+              if (e.key === "Escape") onRenameCancel();
+            }}
+            onClick={(e) => e.stopPropagation()}
+            className="w-full rounded-lg border border-[#00C2FF] px-2 py-1 text-xs outline-none bg-[#12151D] text-[#E6E9F0]"
+          />
+        ) : (
+          <p className="mb-1 truncate text-[13px] font-semibold text-[#E6E9F0]">{file.name}</p>
+        )}
+        <div className="flex items-center gap-1.5 font-mono text-[11px] text-[#5A6275]">
+          <span>{formatFileSize(file.size)}</span>
+          <span className="h-[3px] w-[3px] rounded-full bg-[#444C5E]" />
+          <span className="truncate">{formatDistanceToNow(new Date(file.updatedAt), { addSuffix: true })}</span>
+        </div>
       </div>
     </div>
   );
@@ -2225,8 +2317,8 @@ function ListFolderRow({
 }) {
   return (
     <tr
-      className={`border-b border-[#e8eaed] transition-colors group cursor-pointer ${
-        dragOver ? "bg-[#e8f0fe]" : checked ? "bg-[#1a56db]/10" : "hover:bg-[#f8f9fa]"
+      className={`border-b border-[#262A35] transition-colors group cursor-pointer ${
+        dragOver ? "bg-[#0E2532]" : checked ? "bg-[#00C2FF]/10" : "hover:bg-[#12151D]"
       }`}
       onContextMenu={onContextMenu}
       onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }}
@@ -2237,7 +2329,7 @@ function ListFolderRow({
         if (id) { e.preventDefault(); e.stopPropagation(); onDropItem(id); }
       }}
     >
-      <td className="px-4 py-3 text-sm text-[#202124]">
+      <td className="px-4 py-3 text-sm text-[#E6E9F0]">
         <div className="flex items-center gap-2.5 cursor-pointer" onDoubleClick={onOpen}>
           <RowCheckbox checked={checked} onToggle={onToggleCheck} />
           <Folder className="h-5 w-5 text-yellow-500 shrink-0" />
@@ -2250,20 +2342,20 @@ function ListFolderRow({
                 if (e.key === "Enter") onRenameSubmit();
                 if (e.key === "Escape") onRenameCancel();
               }}
-              className="rounded border border-[#1a56db] px-2 py-0.5 text-sm outline-none bg-white text-[#202124]"
+              className="rounded border border-[#00C2FF] px-2 py-0.5 text-sm outline-none bg-[#12151D] text-[#E6E9F0]"
             />
           ) : (
-            <span className="text-sm font-medium text-[#202124]">{folder.name}</span>
+            <span className="text-sm font-medium text-[#E6E9F0]">{folder.name}</span>
           )}
         </div>
       </td>
-      <td className="px-4 py-3 text-sm text-[#202124]">
-        <span className="flex items-center gap-1.5 text-[#5f6368]">
-          <Calendar className="h-3.5 w-3.5 text-[#5f6368]" />
+      <td className="px-4 py-3 text-sm text-[#E6E9F0]">
+        <span className="flex items-center gap-1.5 text-[#8A92A6]">
+          <Calendar className="h-3.5 w-3.5 text-[#8A92A6]" />
           {formatDistanceToNow(new Date(folder.createdAt), { addSuffix: true })}
         </span>
       </td>
-      <td className="px-4 py-3 text-sm text-[#5f6368]">—</td>
+      <td className="px-4 py-3 text-sm text-[#8A92A6]">—</td>
       <td className="px-4 py-3 text-right">
         <div className="hidden gap-1 justify-end group-hover:flex">
           <ActionBtn icon={Move} onClick={onMoveStart} title="Move" />
@@ -2320,16 +2412,16 @@ function ListFileRow({
         e.dataTransfer.setData("application/x-drive-item", file.id);
         e.dataTransfer.effectAllowed = "move";
       }}
-      className={`border-b border-[#e8eaed] transition-colors group cursor-pointer ${
-        checked ? "bg-[#1a56db]/10" : "hover:bg-[#f8f9fa]"
+      className={`border-b border-[#262A35] transition-colors group cursor-pointer ${
+        checked ? "bg-[#00C2FF]/10" : "hover:bg-[#12151D]"
       }`}
       onContextMenu={onContextMenu}
       onClick={onSelect}
     >
-      <td className="px-4 py-3 text-sm text-[#202124]">
+      <td className="px-4 py-3 text-sm text-[#E6E9F0]">
         <div className="flex items-center gap-2.5 cursor-pointer" onDoubleClick={onPreview}>
           <RowCheckbox checked={checked} onToggle={onToggleCheck} />
-          <Icon className="h-5 w-5 text-[#1a56db] shrink-0" />
+          <Icon className="h-5 w-5 text-[#00C2FF] shrink-0" />
           {renamingId === file.id ? (
             <input
               autoFocus
@@ -2339,21 +2431,21 @@ function ListFileRow({
                 if (e.key === "Enter") onRenameSubmit();
                 if (e.key === "Escape") onRenameCancel();
               }}
-              className="rounded border border-[#1a56db] px-2 py-0.5 text-sm outline-none bg-white text-[#202124]"
+              className="rounded border border-[#00C2FF] px-2 py-0.5 text-sm outline-none bg-[#12151D] text-[#E6E9F0]"
             />
           ) : (
-            <span className="text-sm font-medium text-[#202124]">{file.name}</span>
+            <span className="text-sm font-medium text-[#E6E9F0]">{file.name}</span>
           )}
           {file.isStarred && <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400 shrink-0" />}
         </div>
       </td>
-      <td className="px-4 py-3 text-sm text-[#202124]">
-        <span className="flex items-center gap-1.5 text-[#5f6368]">
-          <Calendar className="h-3.5 w-3.5 text-[#5f6368]" />
+      <td className="px-4 py-3 text-sm text-[#E6E9F0]">
+        <span className="flex items-center gap-1.5 text-[#8A92A6]">
+          <Calendar className="h-3.5 w-3.5 text-[#8A92A6]" />
           {formatDistanceToNow(new Date(file.updatedAt), { addSuffix: true })}
         </span>
       </td>
-      <td className="px-4 py-3 text-sm text-[#5f6368]">{formatFileSize(file.size)}</td>
+      <td className="px-4 py-3 text-sm text-[#8A92A6]">{formatFileSize(file.size)}</td>
       <td className="px-4 py-3 text-right">
         <div className="hidden gap-1 justify-end group-hover:flex">
           <ActionBtn icon={Eye} onClick={onPreview} title="Preview" />
@@ -2393,8 +2485,8 @@ function ActionBtn({
     <button
       onClick={onClick}
       title={title}
-      className={`p-1 hover:bg-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity ${
-        active && activeClass ? activeClass : "text-[#5f6368]"
+      className={`p-1 hover:bg-[#12151D] rounded-md opacity-0 group-hover:opacity-100 transition-opacity ${
+        active && activeClass ? activeClass : "text-[#8A92A6]"
       }`}
     >
       <Icon className="h-3.5 w-3.5" />
@@ -2411,8 +2503,8 @@ function CardCheckbox({ checked, onToggle }: { checked: boolean; onToggle: () =>
       title={checked ? "Deselect" : "Select"}
       className={`absolute left-2 top-2 z-10 flex h-5 w-5 items-center justify-center rounded border transition-all ${
         checked
-          ? "border-[#1a56db] bg-[#1a56db] text-white opacity-100"
-          : "border-[#d0d5dd] bg-white text-transparent opacity-0 group-hover:opacity-100"
+          ? "border-[#00C2FF] bg-[#00C2FF] text-[#06121A] opacity-100"
+          : "border-[#2E333F] bg-[#12151D] text-transparent opacity-0 group-hover:opacity-100"
       }`}
     >
       <Check className="h-3.5 w-3.5" />
@@ -2427,8 +2519,8 @@ function RowCheckbox({ checked, onToggle }: { checked: boolean; onToggle: () => 
       title={checked ? "Deselect" : "Select"}
       className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-all ${
         checked
-          ? "border-[#1a56db] bg-[#1a56db] text-white opacity-100"
-          : "border-[#d0d5dd] bg-white text-transparent opacity-0 group-hover:opacity-100"
+          ? "border-[#00C2FF] bg-[#00C2FF] text-[#06121A] opacity-100"
+          : "border-[#2E333F] bg-[#12151D] text-transparent opacity-0 group-hover:opacity-100"
       }`}
     >
       <Check className="h-3 w-3" />
@@ -2440,9 +2532,9 @@ function NewMenuItem({ icon: Icon, label, onClick }: { icon: React.ElementType; 
   return (
     <button
       onClick={onClick}
-      className="flex w-full items-center gap-3 px-4 py-2 text-sm text-[#202124] hover:bg-[#f1f3f4] transition-colors"
+      className="flex w-full items-center gap-3 px-4 py-2 text-sm text-[#E6E9F0] hover:bg-[#1B1F2A] transition-colors"
     >
-      <Icon className="h-4 w-4 text-[#5f6368]" />
+      <Icon className="h-4 w-4 text-[#8A92A6]" />
       {label}
     </button>
   );

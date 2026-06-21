@@ -168,44 +168,44 @@ const TYPE_META: Record<
 > = {
   mail: {
     label: "Mail",
-    color: "text-blue-600 dark:text-blue-400",
-    bg: "bg-blue-100 dark:bg-blue-500/20",
+    color: "text-blue-400 dark:text-blue-400",
+    bg: "bg-blue-500/15 dark:bg-blue-500/20",
     Icon: Mail,
   },
   chat: {
     label: "Chat",
-    color: "text-purple-600 dark:text-purple-400",
-    bg: "bg-purple-100 dark:bg-purple-500/20",
+    color: "text-purple-400 dark:text-purple-400",
+    bg: "bg-purple-500/15 dark:bg-purple-500/20",
     Icon: MessageSquare,
   },
   drive: {
     label: "Files",
-    color: "text-green-600 dark:text-green-400",
-    bg: "bg-green-100 dark:bg-green-500/20",
+    color: "text-green-400 dark:text-green-400",
+    bg: "bg-green-500/15 dark:bg-green-500/20",
     Icon: HardDrive,
   },
   calendar: {
     label: "Calendar",
-    color: "text-amber-600 dark:text-amber-400",
-    bg: "bg-amber-100 dark:bg-amber-500/20",
+    color: "text-amber-400 dark:text-amber-400",
+    bg: "bg-amber-500/15 dark:bg-amber-500/20",
     Icon: CalendarDays,
   },
   meeting: {
     label: "Meetings",
-    color: "text-rose-600 dark:text-rose-400",
-    bg: "bg-rose-100 dark:bg-rose-500/20",
+    color: "text-rose-400 dark:text-rose-400",
+    bg: "bg-rose-500/15 dark:bg-rose-500/20",
     Icon: Video,
   },
   note: {
     label: "Notes",
-    color: "text-teal-600 dark:text-teal-400",
-    bg: "bg-teal-100 dark:bg-teal-500/20",
+    color: "text-teal-400 dark:text-teal-400",
+    bg: "bg-teal-500/15 dark:bg-teal-500/20",
     Icon: StickyNote,
   },
   people: {
     label: "People",
-    color: "text-cyan-600 dark:text-cyan-400",
-    bg: "bg-cyan-100 dark:bg-cyan-500/20",
+    color: "text-cyan-400 dark:text-cyan-400",
+    bg: "bg-cyan-500/15 dark:bg-cyan-500/20",
     Icon: Users,
   },
 };
@@ -475,12 +475,12 @@ export function GlobalSearch({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-start justify-center pt-[10vh]"
+      className="nexfade fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-start justify-center pt-[10vh]"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-white rounded-xl shadow-2xl border border-[rgba(255,255,255,0.08)] w-full max-w-xl overflow-hidden flex flex-col max-h-[70vh]">
+      <div className="nexpop bg-[#12151D] rounded-xl shadow-2xl border border-[rgba(255,255,255,0.08)] w-full max-w-xl overflow-hidden flex flex-col max-h-[70vh]">
 
         {/* Search input */}
         <div className="px-4 py-3 border-b border-[rgba(255,255,255,0.08)] flex items-center gap-3">
@@ -505,7 +505,7 @@ export function GlobalSearch({
 
         {/* Type filter tabs — shown only when searching */}
         {isSearchMode && (
-          <div className="flex gap-1 px-4 py-2 border-b border-[rgba(255,255,255,0.08)] bg-[#f8fafd]">
+          <div className="flex gap-1 px-4 py-2 border-b border-[rgba(255,255,255,0.08)] bg-[#12151D]">
             {TYPE_FILTERS.map((f) => {
               const label =
                 f === "all"
@@ -517,7 +517,7 @@ export function GlobalSearch({
                   onClick={() => setTypeFilter(f)}
                   className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
                     typeFilter === f
-                      ? "bg-[#f8fafd] text-[#003543]"
+                      ? "bg-[#12151D] text-[#003543]"
                       : "text-[#9aa3b8] hover:bg-[#262939]"
                   }`}
                 >
@@ -535,12 +535,12 @@ export function GlobalSearch({
           {filteredActions.length > 0 && (
             <div>
               {isSearchMode && (
-                <div className="px-4 py-1.5 text-xs font-semibold text-[#9aa3b8] bg-[#f8fafd]">
+                <div className="px-4 py-1.5 text-xs font-semibold text-[#9aa3b8] bg-[#12151D]">
                   Actions
                 </div>
               )}
               {!isSearchMode && (
-                <div className="px-4 py-1.5 text-xs font-semibold text-[#9aa3b8] bg-[#f8fafd]">
+                <div className="px-4 py-1.5 text-xs font-semibold text-[#9aa3b8] bg-[#12151D]">
                   Quick Actions
                 </div>
               )}
@@ -591,7 +591,7 @@ export function GlobalSearch({
                 .filter((t) => grouped[t]?.length)
                 .map((t) => (
                   <div key={t}>
-                    <div className="px-4 py-1.5 text-xs font-semibold text-[#9aa3b8] bg-[#f8fafd]">
+                    <div className="px-4 py-1.5 text-xs font-semibold text-[#9aa3b8] bg-[#12151D]">
                       {TYPE_META[t].label}
                     </div>
                     {grouped[t]!.map((result) => {
@@ -652,7 +652,7 @@ export function GlobalSearch({
             const isSelected = selectedIndex === aiIdx;
             return (
               <div>
-                <div className="px-4 py-1.5 text-xs font-semibold text-[#1a56db] bg-[#f8fafd]/5 border-t border-[#00d2ff]/20 flex items-center gap-1.5">
+                <div className="px-4 py-1.5 text-xs font-semibold text-[#00C2FF] bg-[#12151D]/5 border-t border-[#00d2ff]/20 flex items-center gap-1.5">
                   <Sparkles className="h-3 w-3" />
                   AI Command
                 </div>
@@ -672,7 +672,7 @@ export function GlobalSearch({
                     }
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-[#1a56db] truncate">
+                    <p className="text-sm font-medium text-[#00C2FF] truncate">
                       Ask AI: &ldquo;{query}&rdquo;
                     </p>
                     <p className="text-xs text-[#9aa3b8] truncate">
@@ -689,7 +689,7 @@ export function GlobalSearch({
         </div>
 
         {/* Footer hint */}
-        <div className="px-4 py-2 border-t border-[rgba(255,255,255,0.08)] bg-[#f8fafd] flex items-center gap-4 text-[11px] text-[#9aa3b8]">
+        <div className="px-4 py-2 border-t border-[rgba(255,255,255,0.08)] bg-[#12151D] flex items-center gap-4 text-[11px] text-[#9aa3b8]">
           <span>
             <kbd className="text-xs text-[#9aa3b8] bg-[#262939] px-1.5 py-0.5 rounded border border-[rgba(255,255,255,0.08)]">↑↓</kbd>{" "}
             navigate
@@ -734,7 +734,7 @@ export function SearchTrigger({ variant = "light" }: { variant?: "light" | "dark
         <button
           onClick={() => setOpen(true)}
           title="Search (Ctrl+K)"
-          className="flex h-9 w-9 items-center justify-center rounded-xl text-[#80868b] hover:bg-[#f1f3f4] hover:text-[#5f6368] transition-colors"
+          className="flex h-9 w-9 items-center justify-center rounded-xl text-[#5A6275] hover:bg-[#1B1F2A] hover:text-[#8A92A6] transition-colors"
         >
           <Search className="h-[17px] w-[17px]" />
         </button>
@@ -744,10 +744,10 @@ export function SearchTrigger({ variant = "light" }: { variant?: "light" | "dark
   }
 
   const btnClass =
-    "flex items-center gap-2 w-full px-3 py-2 rounded-xl bg-[#f1f3f4] hover:bg-[#e8eaed] text-[13px] text-[#80868b] hover:text-[#5f6368] transition-colors";
+    "flex items-center gap-2 w-full px-3 py-2 rounded-xl bg-[#1B1F2A] hover:bg-[#262A35] text-[13px] text-[#5A6275] hover:text-[#8A92A6] transition-colors";
 
   const kbdClass =
-    "hidden sm:inline-block text-[10px] font-mono bg-white border border-[#e8eaed] text-[#9aa0a6] px-1.5 py-0.5 rounded";
+    "hidden sm:inline-block text-[10px] font-mono bg-[#12151D] border border-[#262A35] text-[#5A6275] px-1.5 py-0.5 rounded";
 
   return (
     <>

@@ -100,13 +100,13 @@ export function SidebarNav({
               title={item.label}
               className={`relative flex h-9 w-9 mx-auto items-center justify-center rounded-xl transition-colors ${
                 active
-                  ? "bg-[#e8f0fe] text-[#1a56db]"
-                  : "text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124]"
+                  ? "bg-[#0E2532] text-[#00C2FF]"
+                  : "text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0]"
               }`}
             >
               <Icon className="h-[17px] w-[17px]" />
               {showBadge && (
-                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#1a56db] text-[9px] font-semibold text-white px-0.5">
+                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#00C2FF] text-[9px] font-semibold text-[#06121A] px-0.5">
                   {unreadCount > 99 ? "99+" : unreadCount}
                 </span>
               )}
@@ -130,15 +130,15 @@ export function SidebarNav({
             href={item.href}
             className={`group flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-colors duration-150 ${
               active
-                ? "bg-[#e8f0fe] text-[#1a56db] font-medium"
-                : "text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124]"
+                ? "bg-[#0E2532] text-[#00C2FF] font-medium"
+                : "text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0]"
             }`}
           >
             <Icon className="h-[17px] w-[17px] flex-shrink-0" />
             <div className="flex flex-1 min-w-0 items-center justify-between">
               <span className="truncate text-[13.5px]">{item.label}</span>
               {showBadge && (
-                <span className="ml-1.5 rounded-full bg-[#1a56db] px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white tabular-nums">
+                <span className="ml-1.5 rounded-full bg-[#00C2FF] px-1.5 py-0.5 text-[10px] font-semibold leading-none text-[#06121A] tabular-nums">
                   {unreadCount > 99 ? "99+" : unreadCount}
                 </span>
               )}

@@ -69,15 +69,15 @@ export function FileActivityLog({ fileId }: Props) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-10">
-        <Loader2 className="h-6 w-6 animate-spin text-[#1a56db]" />
+        <Loader2 className="h-6 w-6 animate-spin text-[#00C2FF]" />
       </div>
     );
   }
 
   if (entries.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-2 py-10 text-[#5f6368]">
-        <Activity className="h-8 w-8 text-[#e2e8f0]" />
+      <div className="flex flex-col items-center gap-2 py-10 text-[#8A92A6]">
+        <Activity className="h-8 w-8 text-[#5A6275]" />
         <p className="text-sm">No activity recorded yet</p>
       </div>
     );
@@ -88,20 +88,20 @@ export function FileActivityLog({ fileId }: Props) {
       {entries.map((entry) => {
         const Icon = getActionIcon(entry.action);
         return (
-          <div key={entry.id} className="border-b border-[#e8eaed] px-4 py-3 hover:bg-[#f1f3f4] transition-colors flex items-start gap-3">
-            <div className="w-8 h-8 rounded-lg bg-[#f1f3f4] flex items-center justify-center text-[#5f6368] flex-shrink-0 mt-0.5">
+          <div key={entry.id} className="border-b border-[#262A35] px-4 py-3 hover:bg-[#1B1F2A] transition-colors flex items-start gap-3">
+            <div className="w-8 h-8 rounded-lg bg-[#1B1F2A] flex items-center justify-center text-[#8A92A6] flex-shrink-0 mt-0.5">
               <Icon className="h-3.5 w-3.5" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-[#202124]">
+              <p className="text-sm text-[#E6E9F0]">
                 <span className="font-medium">{entry.actorName}</span>
                 {" "}
-                <span className="text-[#5f6368]">{getActionLabel(entry.action)}</span>
+                <span className="text-[#8A92A6]">{getActionLabel(entry.action)}</span>
               </p>
               {entry.actorEmail && (
-                <p className="text-xs text-[#5f6368] truncate">{entry.actorEmail}</p>
+                <p className="text-xs text-[#8A92A6] truncate">{entry.actorEmail}</p>
               )}
-              <p className="text-xs text-[#5f6368] mt-0.5">
+              <p className="text-xs text-[#8A92A6] mt-0.5">
                 {formatDistanceToNow(new Date(entry.createdAt), { addSuffix: true })}
               </p>
             </div>

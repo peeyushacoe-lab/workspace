@@ -410,17 +410,17 @@ function CallModal({
   secondary: { label: string; onClick: () => void };
 }) {
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="w-[320px] bg-white border border-[#e8eaed] rounded-2xl shadow-2xl p-6 flex flex-col items-center text-center">
-        <div className="w-16 h-16 rounded-full bg-[#1a56db]/10 flex items-center justify-center mb-4">
+    <div className="nexfade fixed inset-0 z-[110] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+      <div className="nexpop w-[320px] bg-[#12151D] border border-[#262A35] rounded-2xl shadow-2xl p-6 flex flex-col items-center text-center">
+        <div className="w-16 h-16 rounded-full bg-[#00C2FF]/10 flex items-center justify-center mb-4">
           {media === "audio" ? (
-            <Phone className="w-7 h-7 text-[#1a56db]" />
+            <Phone className="w-7 h-7 text-[#00C2FF]" />
           ) : (
-            <Video className="w-7 h-7 text-[#1a56db]" />
+            <Video className="w-7 h-7 text-[#00C2FF]" />
           )}
         </div>
-        <p className="text-lg font-semibold text-[#202124]">{title}</p>
-        <p className="text-sm text-[#5f6368] mt-1 mb-6">{subtitle}</p>
+        <p className="text-lg font-semibold text-[#E6E9F0]">{title}</p>
+        <p className="text-sm text-[#8A92A6] mt-1 mb-6">{subtitle}</p>
         <div className="flex items-center gap-3">
           <button
             onClick={secondary.onClick}

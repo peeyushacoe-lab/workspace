@@ -10,6 +10,7 @@ import {
   MessageSquare,
   Folder,
   Info,
+  BellOff,
   type LucideIcon,
 } from "lucide-react";
 import type { NotificationType } from "@/generated/prisma/enums";
@@ -43,14 +44,14 @@ function TypeIcon({ type }: { type: NotificationType }) {
 }
 
 const TYPE_COLOR: Record<NotificationType, string> = {
-  MENTION: "bg-[#1a56db]/10 text-[#1a56db]",
-  CALENDAR_INVITE: "bg-purple-500/10 text-purple-700",
-  CALENDAR_REMINDER: "bg-purple-500/10 text-purple-700",
-  SOC_ALERT: "bg-[#ea4335]/10 text-[#ea4335]",
-  DLP_VIOLATION: "bg-[#ff6d00]/10 text-[#ff6d00]",
-  NEW_MESSAGE: "bg-[#0f9d58]/10 text-[#0f9d58]",
-  FILE_SHARED: "bg-[#f4b400]/15 text-[#b06000]",
-  SYSTEM: "bg-[#f1f3f4] text-[#5f6368]",
+  MENTION: "bg-[#00C2FF]/10 text-[#00C2FF] border border-[#00C2FF]/20",
+  CALENDAR_INVITE: "bg-violet-400/10 text-violet-400 border border-violet-400/20",
+  CALENDAR_REMINDER: "bg-violet-400/10 text-violet-400 border border-violet-400/20",
+  SOC_ALERT: "bg-[#ea4335]/10 text-[#ea4335] border border-[#ea4335]/20",
+  DLP_VIOLATION: "bg-[#F59E0B]/10 text-[#F59E0B] border border-[#F59E0B]/20",
+  NEW_MESSAGE: "bg-[#0f9d58]/10 text-[#0f9d58] border border-[#0f9d58]/20",
+  FILE_SHARED: "bg-sky-400/10 text-sky-400 border border-sky-400/20",
+  SYSTEM: "bg-[#1B1F2A] text-[#8A92A6] border border-[#262A35]",
 };
 
 function timeAgo(iso: string): string {
@@ -193,7 +194,7 @@ export function NotificationCenter({ userId, dark: _dark = false }: { userId: st
       <div className="relative" ref={panelRef}>
         <button
           onClick={() => setOpen((o) => !o)}
-          className="relative p-2 text-[#5f6368] hover:text-[#202124] hover:bg-[#f1f3f4] rounded-full transition-colors"
+          className="relative p-2 text-[#8A92A6] hover:text-[#E6E9F0] hover:bg-[#1B1F2A] rounded-full transition-colors"
           aria-label="Notifications"
         >
           <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -205,33 +206,33 @@ export function NotificationCenter({ userId, dark: _dark = false }: { userId: st
             />
           </svg>
           {unreadCount > 0 && (
-            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[#ea4335] ring-2 ring-white" />
+            <span className="nexpulse-dot absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[#ea4335] ring-2 ring-[#0B0D12]" />
           )}
         </button>
 
         {open && (
-          <div className="absolute right-0 top-10 bg-white border border-[#e8eaed] rounded-xl shadow-xl w-80 z-50">
-            <div className="px-4 py-3 border-b border-[#e8eaed] flex items-center justify-between">
-              <h2 className="font-semibold text-[#202124] text-sm">Notifications</h2>
+          <div className="nexpop absolute right-0 top-10 bg-[#12151D] border border-[#262A35] rounded-xl shadow-xl w-80 z-50">
+            <div className="px-4 py-3 border-b border-[#262A35] flex items-center justify-between">
+              <h2 className="font-semibold text-[#E6E9F0] text-sm">Notifications</h2>
               {unreadCount > 0 && (
                 <button
                   onClick={markAllRead}
-                  className="text-xs text-[#1a56db] hover:text-[#47d6ff] font-medium"
+                  className="text-xs text-[#00C2FF] hover:text-[#0098E6] font-medium"
                 >
                   Mark all read
                 </button>
               )}
             </div>
 
-            <div className="flex border-b border-[#e8eaed]">
+            <div className="flex border-b border-[#262A35]">
               {(["all", "unread"] as const).map((t) => (
                 <button
                   key={t}
                   onClick={() => setTab(t)}
                   className={`flex-1 py-2 text-xs font-medium transition-colors capitalize ${
                     tab === t
-                      ? "border-b-2 border-[#1a56db] text-[#1a56db]"
-                      : "text-[#5f6368] hover:text-[#202124]"
+                      ? "border-b-2 border-[#00C2FF] text-[#00C2FF]"
+                      : "text-[#8A92A6] hover:text-[#E6E9F0]"
                   }`}
                 >
                   {t}
@@ -241,23 +242,25 @@ export function NotificationCenter({ userId, dark: _dark = false }: { userId: st
 
             <div className="max-h-96 overflow-y-auto">
               {displayed.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-[#5f6368]">
-                  <span className="text-3xl mb-2">🔔</span>
+                <div className="flex flex-col items-center justify-center py-12 text-[#8A92A6]">
+                  <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#1B1F2A] border border-[#262A35]">
+                    <BellOff className="h-5 w-5 text-[#5A6275]" />
+                  </span>
                   <p className="text-sm">No notifications</p>
                 </div>
               ) : (
                 Object.entries(groups).map(([label, items]) =>
                   items.length === 0 ? null : (
                     <div key={label}>
-                      <div className="sticky top-0 px-4 py-1.5 text-xs font-semibold text-[#5f6368] bg-[#f1f3f4] border-b border-[#e8eaed]">
+                      <div className="sticky top-0 px-4 py-1.5 text-xs font-semibold text-[#8A92A6] bg-[#1B1F2A] border-b border-[#262A35]">
                         {label}
                       </div>
                       {items.map((n) => (
                         <button
                           key={n.id}
                           onClick={() => handleClick(n)}
-                          className={`px-4 py-3 border-b border-[#e8eaed] hover:bg-[#f1f3f4] cursor-pointer transition-colors flex gap-3 w-full text-left ${
-                            !n.read ? "bg-[#1a56db]/5" : ""
+                          className={`px-4 py-3 border-b border-[#262A35] hover:bg-[#1B1F2A] cursor-pointer transition-colors flex gap-3 w-full text-left ${
+                            !n.read ? "bg-[#00C2FF]/5" : ""
                           }`}
                         >
                           <span
@@ -267,17 +270,17 @@ export function NotificationCenter({ userId, dark: _dark = false }: { userId: st
                           </span>
                           <div className="min-w-0 flex-1">
                             <div className="flex items-start justify-between gap-2">
-                              <p className="text-sm font-medium text-[#202124] leading-tight truncate">
+                              <p className="text-sm font-medium text-[#E6E9F0] leading-tight truncate">
                                 {n.title}
                               </p>
-                              <span className="shrink-0 text-xs text-[#5f6368] mt-0.5">
+                              <span className="shrink-0 text-xs font-mono text-[#5A6275] mt-0.5">
                                 {timeAgo(n.createdAt)}
                               </span>
                             </div>
-                            <p className="text-xs text-[#5f6368] line-clamp-2">{n.body}</p>
+                            <p className="text-xs text-[#8A92A6] line-clamp-2">{n.body}</p>
                           </div>
                           {!n.read && (
-                            <span className="w-2 h-2 rounded-full bg-[#1a56db] flex-shrink-0 mt-1" />
+                            <span className="w-2 h-2 rounded-full bg-[#00C2FF] flex-shrink-0 mt-1" />
                           )}
                         </button>
                       ))}
@@ -294,7 +297,7 @@ export function NotificationCenter({ userId, dark: _dark = false }: { userId: st
         {toasts.map((t) => (
           <div
             key={t.id}
-            className="pointer-events-auto flex items-start gap-3 rounded-xl border border-[#e8eaed] bg-white p-4 shadow-lg w-80 animate-in slide-in-from-bottom-2 fade-in duration-200"
+            className="pointer-events-auto flex items-start gap-3 rounded-xl border border-[#262A35] bg-[#12151D] p-4 shadow-lg w-80 animate-in slide-in-from-bottom-2 fade-in duration-200"
           >
             <span
               className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${TYPE_COLOR[t.type]}`}
@@ -302,8 +305,8 @@ export function NotificationCenter({ userId, dark: _dark = false }: { userId: st
               <TypeIcon type={t.type} />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold text-[#202124] truncate">{t.title}</p>
-              <p className="mt-0.5 text-xs text-[#5f6368] line-clamp-2">{t.body}</p>
+              <p className="text-xs font-semibold text-[#E6E9F0] truncate">{t.title}</p>
+              <p className="mt-0.5 text-xs text-[#8A92A6] line-clamp-2">{t.body}</p>
             </div>
           </div>
         ))}

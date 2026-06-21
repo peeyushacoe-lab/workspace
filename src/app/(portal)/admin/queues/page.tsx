@@ -44,8 +44,8 @@ type JobPage = {
 };
 
 function StatPill({ value, color }: { value: number; color: string }) {
-  if (value === 0) return <span className="text-[#bdc1c6]">0</span>;
-  return <span className={`font-semibold ${color}`}>{value.toLocaleString()}</span>;
+  if (value === 0) return <span className="font-mono text-[#5A6275]">0</span>;
+  return <span className={`font-mono font-semibold ${color}`}>{value.toLocaleString()}</span>;
 }
 
 function JobDetailModal({ job, queueName, onClose, onAction }: {
@@ -79,16 +79,16 @@ function JobDetailModal({ job, queueName, onClose, onAction }: {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 " onClick={onClose}>
       <div
-        className="bg-white border border-[#e8eaed] rounded-xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col"
+        className="bg-[#12151D] border border-[#262A35] rounded-xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col"
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-[#e8eaed]">
-          <Code2 className="w-4 h-4 text-[#1a56db] flex-shrink-0" />
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-[#262A35]">
+          <Code2 className="w-4 h-4 text-[#00C2FF] flex-shrink-0" />
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-[#202124] truncate">{job.name}</p>
-            <p className="text-[10px] text-[#9aa0a6] font-mono mt-0.5">{job.id}</p>
+            <p className="text-sm font-semibold text-[#E6E9F0] truncate">{job.name}</p>
+            <p className="text-[10px] text-[#5A6275] font-mono mt-0.5">{job.id}</p>
           </div>
-          <button onClick={onClose} className="p-1 text-[#9aa0a6] hover:text-[#5f6368]"><X className="w-4 h-4" /></button>
+          <button onClick={onClose} className="p-1 text-[#5A6275] hover:text-[#8A92A6]"><X className="w-4 h-4" /></button>
         </div>
 
         <div className="overflow-y-auto flex-1 p-5 space-y-4">
@@ -98,48 +98,48 @@ function JobDetailModal({ job, queueName, onClose, onAction }: {
               ["Queued", job.timestamp ? new Date(job.timestamp).toLocaleString() : "—"],
               ["Failed at", job.finishedOn ? new Date(job.finishedOn).toLocaleString() : "—"],
             ] as [string, string | number][]).map(([label, val]) => (
-              <div key={label} className="bg-white rounded-lg p-3">
-                <p className="text-[#9aa0a6] text-[9px] mb-1">{label}</p>
-                <p className="text-[#202124] font-mono">{String(val)}</p>
+              <div key={label} className="bg-[#1B1F2A] border border-[#262A35] rounded-lg p-3">
+                <p className="text-[#5A6275] text-[9px] mb-1">{label}</p>
+                <p className="text-[#E6E9F0] font-mono">{String(val)}</p>
               </div>
             ))}
           </div>
 
           {job.failedReason && (
             <div>
-              <p className="text-[10px] text-[#9aa0a6] mb-1.5">Error</p>
-              <div className="bg-[#2a0e1a] border border-red-900/40 rounded-lg p-3">
-                <p className="text-red-300 text-xs font-mono break-all whitespace-pre-wrap">{job.failedReason}</p>
+              <p className="text-[10px] text-[#5A6275] mb-1.5">Error</p>
+              <div className="bg-[#ea4335]/10 border border-[#ea4335]/30 rounded-lg p-3">
+                <p className="text-[#ea4335] text-xs font-mono break-all whitespace-pre-wrap">{job.failedReason}</p>
               </div>
             </div>
           )}
 
           {job.stacktrace?.length > 0 && (
             <div>
-              <p className="text-[10px] text-[#9aa0a6] mb-1.5">Stack Trace</p>
-              <div className="bg-white border border-[#e8eaed] rounded-lg p-3 max-h-48 overflow-y-auto">
+              <p className="text-[10px] text-[#5A6275] mb-1.5">Stack Trace</p>
+              <div className="bg-[#1B1F2A] border border-[#262A35] rounded-lg p-3 max-h-48 overflow-y-auto">
                 {job.stacktrace.map((line, i) => (
-                  <p key={i} className="text-[#9aa0a6] text-[10px] font-mono break-all leading-5">{line}</p>
+                  <p key={i} className="text-[#5A6275] text-[10px] font-mono break-all leading-5">{line}</p>
                 ))}
               </div>
             </div>
           )}
 
           <div>
-            <p className="text-[10px] text-[#9aa0a6] mb-1.5">Job Data</p>
-            <div className="bg-white border border-[#e8eaed] rounded-lg p-3 max-h-48 overflow-y-auto">
-              <pre className="text-[#5f6368] text-[10px] font-mono whitespace-pre-wrap break-all">
+            <p className="text-[10px] text-[#5A6275] mb-1.5">Job Data</p>
+            <div className="bg-[#1B1F2A] border border-[#262A35] rounded-lg p-3 max-h-48 overflow-y-auto">
+              <pre className="text-[#8A92A6] text-[10px] font-mono whitespace-pre-wrap break-all">
                 {JSON.stringify(job.data, null, 2)}
               </pre>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 px-5 py-3 border-t border-[#e8eaed]">
+        <div className="flex items-center gap-2 px-5 py-3 border-t border-[#262A35]">
           <button
             onClick={() => void act("retry")}
             disabled={acting}
-            className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-[#1a56db]/10 text-[#1a56db] border border-[#1a56db]/20 hover:bg-[#1a56db]/20 transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-[#00C2FF]/10 text-[#00C2FF] border border-[#00C2FF]/20 hover:bg-[#00C2FF]/20 transition-colors disabled:opacity-50"
           >
             <RotateCcw className="w-3.5 h-3.5" /> Retry
           </button>
@@ -151,7 +151,7 @@ function JobDetailModal({ job, queueName, onClose, onAction }: {
             <Trash2 className="w-3.5 h-3.5" /> Remove
           </button>
           <div className="flex-1" />
-          <button onClick={onClose} className="px-4 py-2 text-xs text-[#9aa0a6] hover:text-[#5f6368] transition-colors">Close</button>
+          <button onClick={onClose} className="px-4 py-2 text-xs text-[#5A6275] hover:text-[#8A92A6] transition-colors">Close</button>
         </div>
       </div>
     </div>
@@ -184,11 +184,11 @@ function JobRowActions({ job, queueName, onDone }: { job: Job; queueName: string
   return (
     <>
       <button onClick={(e) => void act("retry", e)} disabled={acting} title="Retry"
-        className="p-1.5 text-[#9aa0a6] hover:text-[#1a56db] hover:bg-[#f1f3f4] rounded transition-colors disabled:opacity-40">
+        className="p-1.5 text-[#5A6275] hover:text-[#00C2FF] hover:bg-[#1B1F2A] rounded transition-colors disabled:opacity-40">
         <RotateCcw className="w-3.5 h-3.5" />
       </button>
       <button onClick={(e) => void act("remove", e)} disabled={acting} title="Remove"
-        className="p-1.5 text-[#9aa0a6] hover:text-red-400 hover:bg-[#f1f3f4] rounded transition-colors disabled:opacity-40">
+        className="p-1.5 text-[#5A6275] hover:text-red-400 hover:bg-[#1B1F2A] rounded transition-colors disabled:opacity-40">
         <Trash2 className="w-3.5 h-3.5" />
       </button>
     </>
@@ -245,11 +245,11 @@ function DeadLetterPanel({ queueName, onClose }: { queueName: string; onClose: (
           onAction={() => void load(offset)}
         />
       )}
-      <div className="bg-white border border-[#e8eaed] rounded-xl overflow-hidden">
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-[#e8eaed] bg-[#f1f3f4]">
+      <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-[#262A35] bg-[#1B1F2A]">
           <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0" />
-          <span className="text-sm font-semibold text-[#202124]">
-            Dead Letter — <span className="font-mono text-[#1a56db]">{queueName}</span>
+          <span className="text-sm font-semibold text-[#E6E9F0]">
+            Dead Letter — <span className="font-mono text-[#00C2FF]">{queueName}</span>
           </span>
           {total > 0 && (
             <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-red-500/20 text-red-400 border border-red-500/30">
@@ -259,32 +259,32 @@ function DeadLetterPanel({ queueName, onClose }: { queueName: string; onClose: (
           <div className="flex-1" />
           {total > 0 && (
             <button onClick={() => void retryAll()} disabled={acting}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#1a56db]/10 text-[#1a56db] border border-[#1a56db]/20 hover:bg-[#1a56db]/20 transition-colors disabled:opacity-50">
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#00C2FF]/10 text-[#00C2FF] border border-[#00C2FF]/20 hover:bg-[#00C2FF]/20 transition-colors disabled:opacity-50">
               <RotateCcw className="w-3 h-3" /> Retry All
             </button>
           )}
-          <button onClick={() => void load(offset)} className="p-1.5 text-[#9aa0a6] hover:text-[#5f6368]">
+          <button onClick={() => void load(offset)} className="p-1.5 text-[#5A6275] hover:text-[#8A92A6]">
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
           </button>
-          <button onClick={onClose} className="p-1.5 text-[#9aa0a6] hover:text-[#5f6368]">
+          <button onClick={onClose} className="p-1.5 text-[#5A6275] hover:text-[#8A92A6]">
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-10 gap-2 text-[#9aa0a6] text-sm">
+          <div className="flex items-center justify-center py-10 gap-2 text-[#5A6275] text-sm">
             <Loader2 className="w-4 h-4 animate-spin" /> Loading failed jobs…
           </div>
         ) : page?.jobs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 gap-2">
-            <CheckCircle2 className="w-8 h-8 text-emerald-400/50" />
-            <p className="text-[#9aa0a6] text-sm">No failed jobs</p>
+            <CheckCircle2 className="w-8 h-8 text-[#0f9d58]/60" />
+            <p className="text-[#5A6275] text-sm">No failed jobs</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-[#f0f0f0] text-[#9aa0a6] text-xs">
+                <tr className="border-b border-[#1C1F28] text-[#5A6275] text-xs">
                   <th className="text-left px-4 py-2.5 font-medium">Job</th>
                   <th className="text-left px-4 py-2.5 font-medium hidden md:table-cell">Error</th>
                   <th className="text-right px-4 py-2.5 font-medium">Attempts</th>
@@ -295,19 +295,19 @@ function DeadLetterPanel({ queueName, onClose }: { queueName: string; onClose: (
               <tbody>
                 {page?.jobs.map((job) => (
                   <tr key={job.id} onClick={() => setSelectedJob(job)}
-                    className="border-b border-[#f0f0f0] hover:bg-[#f1f3f4]/30 cursor-pointer">
+                    className="border-b border-[#1C1F28] hover:bg-[#1B1F2A]/30 cursor-pointer">
                     <td className="px-4 py-3">
-                      <p className="font-mono text-xs text-[#202124]">{job.name}</p>
-                      <p className="text-[10px] text-[#bdc1c6] font-mono mt-0.5 truncate max-w-[160px]">{job.id}</p>
+                      <p className="font-mono text-xs text-[#E6E9F0]">{job.name}</p>
+                      <p className="text-[10px] text-[#5A6275] font-mono mt-0.5 truncate max-w-[160px]">{job.id}</p>
                     </td>
                     <td className="px-4 py-3 hidden md:table-cell max-w-[280px]">
-                      <p className="text-xs text-red-300/80 truncate">{job.failedReason ?? "—"}</p>
+                      <p className="text-xs text-[#ea4335] truncate">{job.failedReason ?? "—"}</p>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <span className="text-xs text-[#5f6368]">{job.attemptsMade}</span>
+                      <span className="text-xs font-mono text-[#8A92A6]">{job.attemptsMade}</span>
                     </td>
                     <td className="px-4 py-3 text-right hidden sm:table-cell">
-                      <span className="text-xs text-[#9aa0a6]">
+                      <span className="text-xs font-mono text-[#5A6275]">
                         {job.finishedOn ? new Date(job.finishedOn).toLocaleTimeString() : "—"}
                       </span>
                     </td>
@@ -324,15 +324,15 @@ function DeadLetterPanel({ queueName, onClose }: { queueName: string; onClose: (
         )}
 
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-2.5 border-t border-[#f0f0f0] text-xs text-[#9aa0a6]">
+          <div className="flex items-center justify-between px-4 py-2.5 border-t border-[#1C1F28] text-xs text-[#5A6275]">
             <span>Page {currentPage} of {totalPages}</span>
             <div className="flex items-center gap-1">
               <button disabled={offset === 0} onClick={() => void load(offset - LIMIT)}
-                className="p-1 hover:text-[#5f6368] disabled:opacity-30 transition-colors">
+                className="p-1 hover:text-[#8A92A6] disabled:opacity-30 transition-colors">
                 <ChevronLeft className="w-3.5 h-3.5" />
               </button>
               <button disabled={offset + LIMIT >= total} onClick={() => void load(offset + LIMIT)}
-                className="p-1 hover:text-[#5f6368] disabled:opacity-30 transition-colors">
+                className="p-1 hover:text-[#8A92A6] disabled:opacity-30 transition-colors">
                 <ChevronRightIcon className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -381,7 +381,7 @@ export default function QueuesPage() {
   const totalActive = data?.queues.reduce((s, q) => s + q.active, 0) ?? 0;
 
   return (
-    <div className="min-h-screen bg-white text-[#202124]">
+    <div className="min-h-screen bg-[#0B0D12] text-[#E6E9F0]">
       <PageHeader
         eyebrow="Admin"
         title="Queue Monitor"
@@ -392,28 +392,28 @@ export default function QueuesPage() {
         {/* Summary */}
         <div className="grid grid-cols-4 gap-3">
           {([
-            { label: "Queues", value: data?.queues.length ?? 9, Icon: Zap, color: "text-[#1a56db]" },
-            { label: "Active jobs", value: totalActive, Icon: Loader2, color: "text-blue-400" },
-            { label: "Failed jobs", value: totalFailed, Icon: AlertTriangle, color: totalFailed > 0 ? "text-red-400" : "text-emerald-400" },
-            { label: "Last refresh", value: data ? new Date(data.collectedAt).toLocaleTimeString() : "—", Icon: Clock, color: "text-[#9aa0a6]" },
+            { label: "Queues", value: data?.queues.length ?? 9, Icon: Zap, color: "text-[#00C2FF]" },
+            { label: "Active jobs", value: totalActive, Icon: Loader2, color: "text-[#00C2FF]" },
+            { label: "Failed jobs", value: totalFailed, Icon: AlertTriangle, color: totalFailed > 0 ? "text-[#ea4335]" : "text-[#0f9d58]" },
+            { label: "Last refresh", value: data ? new Date(data.collectedAt).toLocaleTimeString() : "—", Icon: Clock, color: "text-[#8A92A6]" },
           ] as { label: string; value: number | string; Icon: React.ElementType; color: string }[]).map(({ label, value, Icon, color }) => (
-            <div key={label} className="bg-white border border-[#e8eaed] rounded-xl p-4 flex items-center gap-3">
+            <div key={label} className="bg-[#12151D] border border-[#262A35] rounded-xl p-4 flex items-center gap-3">
               <Icon className={`w-5 h-5 flex-shrink-0 ${color}`} />
               <div>
-                <p className="text-[10px] text-[#9aa0a6]">{label}</p>
-                <p className={`font-semibold text-sm ${color}`}>{String(value)}</p>
+                <p className="text-[10px] text-[#5A6275]">{label}</p>
+                <p className={`font-semibold text-sm font-mono ${color}`}>{String(value)}</p>
               </div>
             </div>
           ))}
         </div>
 
         {/* Queue table */}
-        <div className="bg-white border border-[#e8eaed] rounded-xl overflow-hidden">
-          <div className="flex items-center gap-3 px-4 py-3 border-b border-[#e8eaed]">
-            <Zap className="w-4 h-4 text-[#1a56db]" />
+        <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
+          <div className="flex items-center gap-3 px-4 py-3 border-b border-[#262A35]">
+            <Zap className="w-4 h-4 text-[#00C2FF]" />
             <span className="text-sm font-medium">BullMQ Queues</span>
             <div className="flex-1" />
-            <button onClick={load} className="p-1.5 text-[#9aa0a6] hover:text-[#5f6368]">
+            <button onClick={load} className="p-1.5 text-[#5A6275] hover:text-[#8A92A6]">
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
             </button>
           </div>
@@ -421,7 +421,7 @@ export default function QueuesPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-[#f0f0f0] text-[#9aa0a6] text-xs">
+                <tr className="border-b border-[#1C1F28] text-[#5A6275] text-xs">
                   <th className="w-8 px-2" />
                   <th className="text-left px-4 py-2.5 font-medium">Queue</th>
                   <th className="text-right px-4 py-2.5 font-medium">Waiting</th>
@@ -434,14 +434,14 @@ export default function QueuesPage() {
               </thead>
               <tbody>
                 {loading && !data ? (
-                  <tr><td colSpan={8} className="text-center text-[#9aa0a6] py-10">Loading queue metrics…</td></tr>
+                  <tr><td colSpan={8} className="text-center text-[#5A6275] py-10">Loading queue metrics…</td></tr>
                 ) : data?.queues.map((q) => (
-                  <tr key={q.name} className="border-b border-[#f0f0f0] hover:bg-[#f1f3f4]/30">
+                  <tr key={q.name} className="border-b border-[#1C1F28] hover:bg-[#1B1F2A]/30">
                     <td className="px-2 py-3 text-center">
                       {q.failed > 0 && (
                         <button
                           onClick={() => setExpandedQueue(expandedQueue === q.name ? null : q.name)}
-                          className="text-[#9aa0a6] hover:text-[#5f6368] transition-colors p-0.5"
+                          className="text-[#5A6275] hover:text-[#8A92A6] transition-colors p-0.5"
                           title="View failed jobs"
                         >
                           {expandedQueue === q.name
@@ -453,45 +453,45 @@ export default function QueuesPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         {q.active > 0
-                          ? <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+                          ? <span className="w-1.5 h-1.5 rounded-full bg-[#00C2FF] animate-pulse" />
                           : q.failed > 0
-                          ? <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
-                          : <span className="w-1.5 h-1.5 rounded-full bg-emerald-400/50" />}
-                        <span className="font-mono text-xs text-[#202124]">{q.name}</span>
+                          ? <span className="w-1.5 h-1.5 rounded-full bg-[#ea4335]" />
+                          : <span className="w-1.5 h-1.5 rounded-full bg-[#0f9d58]/60" />}
+                        <span className="font-mono text-xs text-[#E6E9F0]">{q.name}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-right text-xs"><StatPill value={q.waiting} color="text-yellow-400" /></td>
-                    <td className="px-4 py-3 text-right text-xs"><StatPill value={q.active} color="text-blue-400" /></td>
-                    <td className="px-4 py-3 text-right text-xs"><StatPill value={q.completed} color="text-emerald-400" /></td>
+                    <td className="px-4 py-3 text-right text-xs"><StatPill value={q.waiting} color="text-[#F59E0B]" /></td>
+                    <td className="px-4 py-3 text-right text-xs"><StatPill value={q.active} color="text-[#00C2FF]" /></td>
+                    <td className="px-4 py-3 text-right text-xs"><StatPill value={q.completed} color="text-[#0f9d58]" /></td>
                     <td className="px-4 py-3 text-right text-xs">
                       {q.failed > 0 ? (
                         <button
                           onClick={() => setExpandedQueue(expandedQueue === q.name ? null : q.name)}
-                          className="font-semibold text-red-400 hover:text-red-300 hover:underline transition-colors"
+                          className="font-mono font-semibold text-[#ea4335] hover:underline transition-colors"
                         >
                           {q.failed.toLocaleString()}
                         </button>
-                      ) : <span className="text-[#bdc1c6]">0</span>}
+                      ) : <span className="font-mono text-[#5A6275]">0</span>}
                     </td>
-                    <td className="px-4 py-3 text-right text-xs"><StatPill value={q.delayed} color="text-purple-400" /></td>
+                    <td className="px-4 py-3 text-right text-xs"><StatPill value={q.delayed} color="text-[#a78bfa]" /></td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
                         {q.failed > 0 && (
                           <button onClick={() => void queueAction(q.name, "clean-failed")} disabled={acting === q.name}
                             title="Clear all failed jobs"
-                            className="p-1 text-[#9aa0a6] hover:text-red-400 transition-colors disabled:opacity-40">
+                            className="p-1 text-[#5A6275] hover:text-red-400 transition-colors disabled:opacity-40">
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         )}
                         {q.waiting > 0 && (
                           <button onClick={() => void queueAction(q.name, "drain")} disabled={acting === q.name}
                             title="Drain waiting jobs"
-                            className="p-1 text-[#9aa0a6] hover:text-yellow-400 transition-colors disabled:opacity-40">
+                            className="p-1 text-[#5A6275] hover:text-yellow-400 transition-colors disabled:opacity-40">
                             <Zap className="w-3.5 h-3.5" />
                           </button>
                         )}
                         {q.waiting === 0 && q.failed === 0 && (
-                          <CheckCircle2 className="w-3.5 h-3.5 text-[#bdc1c6]" />
+                          <CheckCircle2 className="w-3.5 h-3.5 text-[#0f9d58]/60" />
                         )}
                       </div>
                     </td>
@@ -511,13 +511,13 @@ export default function QueuesPage() {
         )}
 
         {/* Legend */}
-        <div className="flex flex-wrap gap-4 text-xs text-[#9aa0a6]">
+        <div className="flex flex-wrap gap-4 text-xs text-[#5A6275]">
           {([
-            ["bg-yellow-400", "Waiting — queued but not started"],
-            ["bg-blue-400 animate-pulse", "Active — currently processing"],
-            ["bg-emerald-400", "Completed — finished successfully"],
-            ["bg-red-400", "Failed — click count to inspect & replay"],
-            ["bg-purple-400", "Delayed — scheduled for future"],
+            ["bg-[#F59E0B]", "Waiting — queued but not started"],
+            ["bg-[#00C2FF] animate-pulse", "Active — currently processing"],
+            ["bg-[#0f9d58]", "Completed — finished successfully"],
+            ["bg-[#ea4335]", "Failed — click count to inspect & replay"],
+            ["bg-[#a78bfa]", "Delayed — scheduled for future"],
           ] as [string, string][]).map(([cls, label]) => (
             <div key={label} className="flex items-center gap-1.5">
               <span className={`w-2 h-2 rounded-full ${cls}`} />

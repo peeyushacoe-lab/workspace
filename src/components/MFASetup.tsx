@@ -155,27 +155,27 @@ export function MFASetup({
       {error && (
         <div className="text-sm text-[#ea4335] bg-[#ea4335]/10 border border-[#ea4335]/30 rounded-lg p-3 flex items-center justify-between">
           <span>{error}</span>
-          <button onClick={clearError} className="ml-2 text-red-400 hover:text-red-600">
+          <button onClick={clearError} className="ml-2 text-red-400 hover:text-red-400">
             <X className="h-4 w-4" />
           </button>
         </div>
       )}
 
       {state.kind === "disabled" && (
-        <div className="p-6 bg-white border border-[#e8eaed] rounded-xl">
+        <div className="p-6 bg-[#12151D] border border-[#262A35] rounded-xl">
           <div className="flex items-start gap-4">
-            <div className="p-2 rounded-xl bg-[#f1f3f4]">
-              <Shield className="h-6 w-6 text-[#5f6368]" />
+            <div className="p-2 rounded-xl bg-[#1B1F2A]">
+              <Shield className="h-6 w-6 text-[#8A92A6]" />
             </div>
             <div className="flex-1">
-              <h3 className="text-xl font-semibold text-[#202124]">Two-Factor Authentication</h3>
-              <p className="text-sm text-[#5f6368] mt-1">
+              <h3 className="text-xl font-semibold text-[#E6E9F0]">Two-Factor Authentication</h3>
+              <p className="text-sm text-[#8A92A6] mt-1">
                 Add an extra layer of security by requiring a code from your authenticator app at login.
               </p>
               <button
                 onClick={startSetup}
                 disabled={loading}
-                className="mt-4 bg-[#1a56db] text-white hover:bg-[#f8fafd] rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50 transition-colors"
+                className="mt-4 bg-[#00C2FF] text-[#06121A] hover:bg-[#12151D] rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50 transition-colors"
               >
                 {loading ? "Loading..." : "Enable Two-Factor Authentication"}
               </button>
@@ -185,16 +185,16 @@ export function MFASetup({
       )}
 
       {state.kind === "setting-up" && (
-        <div className="p-6 bg-white border border-[#e8eaed] rounded-xl space-y-6">
+        <div className="p-6 bg-[#12151D] border border-[#262A35] rounded-xl space-y-6">
           <div>
-            <h3 className="text-xl font-semibold text-[#202124]">Scan QR Code</h3>
-            <p className="text-sm text-[#5f6368] mt-1">
+            <h3 className="text-xl font-semibold text-[#E6E9F0]">Scan QR Code</h3>
+            <p className="text-sm text-[#8A92A6] mt-1">
               Open your authenticator app (Google Authenticator, Authy, etc.) and scan the QR code below.
             </p>
           </div>
 
           <div className="flex flex-col items-center gap-4">
-            <div className="p-3 bg-white rounded-xl border border-[#e8eaed] shadow-sm">
+            <div className="p-3 bg-[#12151D] rounded-xl border border-[#262A35] shadow-sm">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={state.data.qrCode}
@@ -204,27 +204,27 @@ export function MFASetup({
             </div>
 
             <div className="w-full">
-              <p className="text-xs font-semibold text-[#5f6368] mb-2">
+              <p className="text-xs font-semibold text-[#8A92A6] mb-2">
                 Or enter manually
               </p>
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-[#f1f3f4] border border-[#e8eaed] font-mono text-sm text-[#202124] break-all">
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-[#1B1F2A] border border-[#262A35] font-mono text-sm text-[#E6E9F0] break-all">
                 <span className="flex-1">{state.data.secret}</span>
                 <button
                   onClick={() => copySecret(state.data.secret)}
-                  className="flex-shrink-0 text-[#5f6368] hover:text-[#202124] transition-colors"
+                  className="flex-shrink-0 text-[#8A92A6] hover:text-[#E6E9F0] transition-colors"
                   title="Copy secret"
                 >
                   <Copy className="h-4 w-4" />
                 </button>
               </div>
               {copied && (
-                <p className="text-xs text-green-600 mt-1">Copied to clipboard</p>
+                <p className="text-xs text-green-400 mt-1">Copied to clipboard</p>
               )}
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#202124] mb-2">
+            <label className="block text-sm font-medium text-[#E6E9F0] mb-2">
               Enter 6-digit verification code
             </label>
             <input
@@ -234,21 +234,21 @@ export function MFASetup({
               value={tokenInput}
               onChange={(e) => setTokenInput(e.target.value.replace(/\D/g, ""))}
               placeholder="000000"
-              className="w-full px-4 py-3 rounded-lg border border-[#e8eaed] text-center text-2xl font-mono tracking-[0.5em] focus:outline-none focus:ring-2 focus:ring-[#1a56db]/20 focus:border-transparent bg-[#f1f3f4] text-[#202124]"
+              className="w-full px-4 py-3 rounded-lg border border-[#262A35] text-center text-2xl font-mono tracking-[0.5em] focus:outline-none focus:ring-2 focus:ring-[#00C2FF]/20 focus:border-transparent bg-[#1B1F2A] text-[#E6E9F0]"
             />
           </div>
 
           <div className="flex gap-3">
             <button
               onClick={() => { setState({ kind: "disabled" }); clearError(); }}
-              className="bg-[#f1f3f4] text-[#5f6368] hover:bg-[#303444] border border-[#e8eaed] rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+              className="bg-[#1B1F2A] text-[#8A92A6] hover:bg-[#303444] border border-[#262A35] rounded-lg px-4 py-2 text-sm font-medium transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={verifyAndEnable}
               disabled={loading || tokenInput.length !== 6}
-              className="flex-1 bg-[#1a56db] text-white hover:bg-[#f8fafd] rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50 transition-colors"
+              className="flex-1 bg-[#00C2FF] text-[#06121A] hover:bg-[#12151D] rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50 transition-colors"
             >
               {loading ? "Verifying..." : "Verify & Enable"}
             </button>
@@ -257,22 +257,22 @@ export function MFASetup({
       )}
 
       {state.kind === "backup-codes" && (
-        <div className="p-6 bg-white border border-[#e8eaed] rounded-xl space-y-6">
+        <div className="p-6 bg-[#12151D] border border-[#262A35] rounded-xl space-y-6">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <ShieldCheck className="h-6 w-6 text-emerald-700" />
-              <h3 className="text-xl font-semibold text-[#202124]">MFA Enabled Successfully</h3>
+              <ShieldCheck className="h-6 w-6 text-emerald-400" />
+              <h3 className="text-xl font-semibold text-[#E6E9F0]">MFA Enabled Successfully</h3>
             </div>
-            <p className="text-sm text-[#5f6368]">
+            <p className="text-sm text-[#8A92A6]">
               Save these backup codes somewhere safe. Each code can only be used once to sign in if you lose access to your authenticator app.
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 p-4 rounded-xl bg-[#f1f3f4] border border-[#e8eaed]">
+          <div className="grid grid-cols-2 gap-2 p-4 rounded-xl bg-[#1B1F2A] border border-[#262A35]">
             {state.codes.map((code, i) => (
               <div
                 key={i}
-                className="font-mono text-sm text-[#202124] px-3 py-2 rounded-lg bg-[#f1f3f4] border border-[#e8eaed] text-center tracking-widest"
+                className="font-mono text-sm text-[#E6E9F0] px-3 py-2 rounded-lg bg-[#1B1F2A] border border-[#262A35] text-center tracking-widest"
               >
                 {code}
               </div>
@@ -282,14 +282,14 @@ export function MFASetup({
           <div className="flex gap-3">
             <button
               onClick={() => downloadCodes(state.codes)}
-              className="bg-[#f1f3f4] text-[#5f6368] hover:bg-[#303444] border border-[#e8eaed] rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2 transition-colors"
+              className="bg-[#1B1F2A] text-[#8A92A6] hover:bg-[#303444] border border-[#262A35] rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2 transition-colors"
             >
               <Download className="h-4 w-4" />
               Download
             </button>
             <button
               onClick={() => setState({ kind: "enabled" })}
-              className="flex-1 bg-[#1a56db] text-white hover:bg-[#f8fafd] rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+              className="flex-1 bg-[#00C2FF] text-[#06121A] hover:bg-[#12151D] rounded-lg px-4 py-2 text-sm font-medium transition-colors"
             >
               I&apos;ve saved these codes
             </button>
@@ -298,20 +298,20 @@ export function MFASetup({
       )}
 
       {state.kind === "enabled" && (
-        <div className="p-6 bg-white border border-[#e8eaed] rounded-xl space-y-4">
+        <div className="p-6 bg-[#12151D] border border-[#262A35] rounded-xl space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-emerald-100">
-                <ShieldCheck className="h-6 w-6 text-emerald-700" />
+              <div className="p-2 rounded-xl bg-emerald-500/15">
+                <ShieldCheck className="h-6 w-6 text-emerald-400" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-xl font-semibold text-[#202124]">Two-Factor Authentication</h3>
-                  <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-700">
+                  <h3 className="text-xl font-semibold text-[#E6E9F0]">Two-Factor Authentication</h3>
+                  <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-emerald-500/15 text-emerald-400">
                     Enabled
                   </span>
                 </div>
-                <p className="text-sm text-[#5f6368] mt-0.5">Your account is protected with TOTP authentication.</p>
+                <p className="text-sm text-[#8A92A6] mt-0.5">Your account is protected with TOTP authentication.</p>
               </div>
             </div>
           </div>
@@ -319,7 +319,7 @@ export function MFASetup({
           <div className="flex gap-3 pt-2">
             <button
               onClick={() => { setModal({ action: "regenerate", token: "" }); clearError(); }}
-              className="bg-[#f1f3f4] text-[#5f6368] hover:bg-[#303444] border border-[#e8eaed] rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2 transition-colors"
+              className="bg-[#1B1F2A] text-[#8A92A6] hover:bg-[#303444] border border-[#262A35] rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2 transition-colors"
             >
               <RefreshCw className="h-4 w-4" />
               Regenerate Backup Codes
@@ -337,14 +337,14 @@ export function MFASetup({
 
       {modal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 ">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 p-6 space-y-4 border border-[#e8eaed]">
+          <div className="bg-[#12151D] rounded-xl shadow-2xl w-full max-w-sm mx-4 p-6 space-y-4 border border-[#262A35]">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-[#202124]">
+              <h3 className="font-semibold text-[#E6E9F0]">
                 {modal.action === "disable" ? "Disable MFA" : "Regenerate Backup Codes"}
               </h3>
               <button
                 onClick={() => { setModal(null); clearError(); }}
-                className="text-[#5f6368] hover:text-[#202124] transition-colors"
+                className="text-[#8A92A6] hover:text-[#E6E9F0] transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -357,7 +357,7 @@ export function MFASetup({
             )}
 
             <div>
-              <label className="block text-sm font-medium text-[#202124] mb-2">
+              <label className="block text-sm font-medium text-[#E6E9F0] mb-2">
                 Enter current authenticator code
               </label>
               <input
@@ -369,19 +369,19 @@ export function MFASetup({
                   setModal({ ...modal, token: e.target.value.replace(/\D/g, "") })
                 }
                 placeholder="000000"
-                className="w-full px-4 py-3 rounded-lg border border-[#e8eaed] text-center text-2xl font-mono tracking-[0.5em] focus:outline-none focus:ring-2 focus:ring-[#1a56db]/20 focus:border-transparent bg-[#f1f3f4] text-[#202124]"
+                className="w-full px-4 py-3 rounded-lg border border-[#262A35] text-center text-2xl font-mono tracking-[0.5em] focus:outline-none focus:ring-2 focus:ring-[#00C2FF]/20 focus:border-transparent bg-[#1B1F2A] text-[#E6E9F0]"
                 autoFocus
               />
             </div>
 
             {error && (
-              <p className="text-sm text-red-600">{error}</p>
+              <p className="text-sm text-red-400">{error}</p>
             )}
 
             <div className="flex gap-3">
               <button
                 onClick={() => { setModal(null); clearError(); }}
-                className="flex-1 bg-[#f1f3f4] text-[#5f6368] hover:bg-[#303444] border border-[#e8eaed] rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+                className="flex-1 bg-[#1B1F2A] text-[#8A92A6] hover:bg-[#303444] border border-[#262A35] rounded-lg px-4 py-2 text-sm font-medium transition-colors"
               >
                 Cancel
               </button>
@@ -391,7 +391,7 @@ export function MFASetup({
                 className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg text-white disabled:opacity-50 transition-colors ${
                   modal.action === "disable"
                     ? "bg-red-600 hover:bg-red-700"
-                    : "bg-[#2563eb] hover:bg-[#1d4ed8]"
+                    : "bg-[#2563eb] hover:bg-[#0098E6]"
                 }`}
               >
                 {loading

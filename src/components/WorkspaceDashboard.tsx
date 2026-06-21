@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Send, User, Loader2, CheckCircle2, AlertCircle, Sparkles, X, Paperclip, Flag } from "lucide-react";
 import { toast } from "sonner";
 import { getAllowedSendersForRole, type EmailAddressConfig } from "@/lib/email-config";
+import { avatarGradient } from "@/lib/avatar";
 import type { UserRole } from "@/generated/prisma/enums";
 
 type SignatureSummary = {
@@ -51,19 +52,19 @@ function AIWriteModal({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4 border border-[#e8eaed]">
+      <div className="bg-[#12151D] rounded-xl shadow-xl p-6 w-full max-w-md mx-4 border border-[#262A35]">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-semibold text-[#202124] flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-[#1a56db]" />
+          <h2 className="text-base font-semibold text-[#E6E9F0] flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-[#00C2FF]" />
             Write with AI
           </h2>
-          <button onClick={onClose} className="text-[#5f6368] hover:text-[#202124]">
+          <button onClick={onClose} className="text-[#8A92A6] hover:text-[#E6E9F0]">
             <X className="w-5 h-5" />
           </button>
         </div>
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-[#5f6368] mb-1.5">
+            <label className="block text-xs font-medium text-[#8A92A6] mb-1.5">
               Describe what you want to say
             </label>
             <textarea
@@ -71,26 +72,26 @@ function AIWriteModal({
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="e.g. Follow up with the client about the Q3 proposal, keep it friendly but professional"
               rows={4}
-              className="w-full px-3 py-2.5 border border-[#d0d5dd] rounded-md text-sm focus:ring-2 focus:ring-[#1a56db]/20 focus:border-[#1a56db]/60 outline-none resize-none bg-[#f1f3f4] text-[#202124] placeholder:text-[#80868b]"
+              className="w-full px-3 py-2.5 border border-[#2E333F] rounded-md text-sm focus:ring-2 focus:ring-[#00C2FF]/20 focus:border-[#00C2FF]/60 outline-none resize-none bg-[#1B1F2A] text-[#E6E9F0] placeholder:text-[#5A6275]"
               autoFocus
               onKeyDown={(e) => {
                 if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) generate();
               }}
             />
-            <p className="text-[10px] text-[#5f6368] mt-1">Ctrl+Enter to generate</p>
+            <p className="text-[10px] text-[#8A92A6] mt-1">Ctrl+Enter to generate</p>
           </div>
         </div>
         <div className="flex gap-3 mt-5">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2 border border-[#d0d5dd] rounded-md text-sm font-medium text-[#5f6368] hover:bg-[#f1f3f4] bg-white"
+            className="flex-1 px-4 py-2 border border-[#2E333F] rounded-md text-sm font-medium text-[#8A92A6] hover:bg-[#1B1F2A] bg-[#12151D]"
           >
             Cancel
           </button>
           <button
             onClick={generate}
             disabled={!prompt.trim() || loading}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#1a56db] text-white rounded-md text-sm font-medium hover:bg-[#1447c0] transition-colors disabled:opacity-50"
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#00C2FF] text-[#06121A] rounded-md text-sm font-medium hover:bg-[#0098E6] transition-colors disabled:opacity-50"
           >
             {loading ? (
               <><Loader2 className="w-4 h-4 animate-spin" /> Generating…</>
@@ -165,7 +166,7 @@ function SubjectOptimizer({
         type="button"
         onClick={optimize}
         disabled={loading}
-        className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium text-[#5f6368] hover:text-[#1a56db] rounded-md hover:bg-[#1a56db]/10 transition-colors disabled:opacity-50"
+        className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium text-[#8A92A6] hover:text-[#00C2FF] rounded-md hover:bg-[#00C2FF]/10 transition-colors disabled:opacity-50"
         title="Optimize subject with AI"
       >
         {loading ? (
@@ -177,21 +178,21 @@ function SubjectOptimizer({
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-1 w-80 bg-white border border-[#e8eaed] rounded-lg shadow-xl z-20 p-3 space-y-2">
+        <div className="absolute right-0 top-full mt-1 w-80 bg-[#12151D] border border-[#262A35] rounded-lg shadow-xl z-20 p-3 space-y-2">
           <div className="flex items-center justify-between mb-1">
-            <p className="text-xs font-medium text-[#5f6368]">
+            <p className="text-xs font-medium text-[#8A92A6]">
               Suggestions
             </p>
-            <button onClick={() => setOpen(false)} className="text-[#5f6368] hover:text-[#202124]">
+            <button onClick={() => setOpen(false)} className="text-[#8A92A6] hover:text-[#E6E9F0]">
               <X className="w-3.5 h-3.5" />
             </button>
           </div>
           {loading ? (
             <div className="flex items-center justify-center py-4">
-              <Loader2 className="w-5 h-5 animate-spin text-[#1a56db]" />
+              <Loader2 className="w-5 h-5 animate-spin text-[#00C2FF]" />
             </div>
           ) : alternatives.length === 0 ? (
-            <p className="text-xs text-[#5f6368] py-2 text-center">No suggestions available</p>
+            <p className="text-xs text-[#8A92A6] py-2 text-center">No suggestions available</p>
           ) : (
             alternatives.map((alt, i) => (
               <button
@@ -202,13 +203,13 @@ function SubjectOptimizer({
                   setOpen(false);
                   toast.success("Subject updated");
                 }}
-                className="w-full text-left px-3 py-2 text-sm text-[#202124] bg-[#f1f3f4] hover:bg-[#1a56db]/10 hover:text-[#1a56db] border border-[#e8eaed] hover:border-[#1a56db]/30 rounded-md transition-colors"
+                className="w-full text-left px-3 py-2 text-sm text-[#E6E9F0] bg-[#1B1F2A] hover:bg-[#00C2FF]/10 hover:text-[#00C2FF] border border-[#262A35] hover:border-[#00C2FF]/30 rounded-md transition-colors"
               >
                 {alt}
               </button>
             ))
           )}
-          <p className="text-[10px] text-[#5f6368] text-center pt-1">
+          <p className="text-[10px] text-[#8A92A6] text-center pt-1">
             Click an option to use it
           </p>
         </div>
@@ -455,14 +456,14 @@ export function SimpleComposer({
 
       {/* Draft status + AI Write */}
       <div className="flex items-center justify-between">
-        <span className="text-[10px] text-[#5f6368]">
+        <span className="text-[10px] text-[#8A92A6]">
           {draftSaveStatus === "saving" && "Saving draft…"}
           {draftSaveStatus === "saved" && "Draft saved"}
         </span>
         <button
           type="button"
           onClick={() => setShowAIWrite(true)}
-          className="text-[#5f6368] hover:text-[#1a56db] hover:bg-[#1a56db]/10 rounded-md px-3 py-1.5 text-[13px] font-medium flex items-center gap-1.5 transition-colors"
+          className="text-[#8A92A6] hover:text-[#00C2FF] hover:bg-[#00C2FF]/10 rounded-md px-3 py-1.5 text-[13px] font-medium flex items-center gap-1.5 transition-colors"
         >
           <Sparkles className="w-3.5 h-3.5" />
           Write with AI
@@ -471,13 +472,13 @@ export function SimpleComposer({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label className="block text-xs font-medium text-[#5f6368] mb-1.5">
+          <label className="block text-xs font-medium text-[#8A92A6] mb-1.5">
             From
           </label>
           <select
             value={selectedSenderEmail}
             onChange={(e) => setSelectedSenderEmail(e.target.value)}
-            className="block w-full py-2.5 border border-[#d0d5dd] rounded-md bg-[#f1f3f4] text-[#202124] focus:ring-2 focus:ring-[#1a56db]/20 focus:border-[#1a56db]/60 text-sm px-3"
+            className="block w-full py-2.5 border border-[#2E333F] rounded-md bg-[#1B1F2A] text-[#E6E9F0] focus:ring-2 focus:ring-[#00C2FF]/20 focus:border-[#00C2FF]/60 text-sm px-3"
           >
             {allowedSenders.map(s => (
               <option key={s.email} value={s.email}>{s.displayName}</option>
@@ -485,18 +486,18 @@ export function SimpleComposer({
           </select>
         </div>
         <div>
-          <label className="block text-xs font-medium text-[#5f6368] mb-1.5">
+          <label className="block text-xs font-medium text-[#8A92A6] mb-1.5">
             Signature
           </label>
           {userRole === "INTERNSHIP" ? (
-            <div className="block w-full py-2.5 border border-[#d0d5dd] rounded-md bg-[#f1f3f4] text-[#5f6368] text-sm px-3">
+            <div className="block w-full py-2.5 border border-[#2E333F] rounded-md bg-[#1B1F2A] text-[#8A92A6] text-sm px-3">
               Intern signature (added automatically)
             </div>
           ) : (
             <select
               value={selectedSignatureId}
               onChange={(e) => setSelectedSignatureId(e.target.value)}
-              className="block w-full py-2.5 border border-[#d0d5dd] rounded-md bg-[#f1f3f4] text-[#202124] focus:ring-2 focus:ring-[#1a56db]/20 focus:border-[#1a56db]/60 text-sm px-3"
+              className="block w-full py-2.5 border border-[#2E333F] rounded-md bg-[#1B1F2A] text-[#E6E9F0] focus:ring-2 focus:ring-[#00C2FF]/20 focus:border-[#00C2FF]/60 text-sm px-3"
             >
               <option value="">No Signature</option>
               {signatures.map(s => (
@@ -509,7 +510,7 @@ export function SimpleComposer({
 
       <div>
         <div className="flex items-center justify-between mb-1.5">
-          <label className="block text-xs font-medium text-[#5f6368]">
+          <label className="block text-xs font-medium text-[#8A92A6]">
             To
           </label>
           <div className="flex items-center gap-2">
@@ -517,7 +518,7 @@ export function SimpleComposer({
               <button
                 type="button"
                 onClick={() => setShowCc(true)}
-                className="text-[11px] font-medium text-[#5f6368] hover:text-[#202124] transition-colors"
+                className="text-[11px] font-medium text-[#8A92A6] hover:text-[#E6E9F0] transition-colors"
               >
                 Cc
               </button>
@@ -526,7 +527,7 @@ export function SimpleComposer({
               <button
                 type="button"
                 onClick={() => setShowBcc(true)}
-                className="text-[11px] font-medium text-[#5f6368] hover:text-[#202124] transition-colors"
+                className="text-[11px] font-medium text-[#8A92A6] hover:text-[#E6E9F0] transition-colors"
               >
                 Bcc
               </button>
@@ -534,31 +535,31 @@ export function SimpleComposer({
           </div>
         </div>
         <div className="relative">
-          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#80868b]" />
+          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5A6275]" />
           <input
             type="email"
             required
             placeholder="recipient@example.com"
             value={recipient}
             onChange={(e) => setRecipient(e.target.value)}
-            className="block w-full pl-10 pr-4 py-2.5 border border-[#d0d5dd] rounded-md bg-[#f1f3f4] text-[#202124] placeholder:text-[#80868b] focus:ring-2 focus:ring-[#1a56db]/20 focus:border-[#1a56db]/60 text-sm outline-none transition-all"
+            className="block w-full pl-10 pr-4 py-2.5 border border-[#2E333F] rounded-md bg-[#1B1F2A] text-[#E6E9F0] placeholder:text-[#5A6275] focus:ring-2 focus:ring-[#00C2FF]/20 focus:border-[#00C2FF]/60 text-sm outline-none transition-all"
           />
         </div>
 
         {showCc && (
           <div className="relative mt-2">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[11px] font-medium text-[#80868b] pointer-events-none">Cc</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[11px] font-medium text-[#5A6275] pointer-events-none">Cc</span>
             <input
               type="text"
               placeholder="cc@example.com, another@example.com"
               value={cc}
               onChange={(e) => setCc(e.target.value)}
-              className="block w-full pl-9 pr-9 py-2.5 border border-[#d0d5dd] rounded-md bg-[#f1f3f4] text-[#202124] placeholder:text-[#80868b] focus:ring-2 focus:ring-[#1a56db]/20 focus:border-[#1a56db]/60 text-sm outline-none transition-all"
+              className="block w-full pl-9 pr-9 py-2.5 border border-[#2E333F] rounded-md bg-[#1B1F2A] text-[#E6E9F0] placeholder:text-[#5A6275] focus:ring-2 focus:ring-[#00C2FF]/20 focus:border-[#00C2FF]/60 text-sm outline-none transition-all"
             />
             <button
               type="button"
               onClick={() => { setShowCc(false); setCc(""); }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#80868b] hover:text-[#202124] transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5A6275] hover:text-[#E6E9F0] transition-colors"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -567,18 +568,18 @@ export function SimpleComposer({
 
         {showBcc && (
           <div className="relative mt-2">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[11px] font-medium text-[#80868b] pointer-events-none">Bcc</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[11px] font-medium text-[#5A6275] pointer-events-none">Bcc</span>
             <input
               type="text"
               placeholder="bcc@example.com, another@example.com"
               value={bcc}
               onChange={(e) => setBcc(e.target.value)}
-              className="block w-full pl-10 pr-9 py-2.5 border border-[#d0d5dd] rounded-md bg-[#f1f3f4] text-[#202124] placeholder:text-[#80868b] focus:ring-2 focus:ring-[#1a56db]/20 focus:border-[#1a56db]/60 text-sm outline-none transition-all"
+              className="block w-full pl-10 pr-9 py-2.5 border border-[#2E333F] rounded-md bg-[#1B1F2A] text-[#E6E9F0] placeholder:text-[#5A6275] focus:ring-2 focus:ring-[#00C2FF]/20 focus:border-[#00C2FF]/60 text-sm outline-none transition-all"
             />
             <button
               type="button"
               onClick={() => { setShowBcc(false); setBcc(""); }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#80868b] hover:text-[#202124] transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5A6275] hover:text-[#E6E9F0] transition-colors"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -588,7 +589,7 @@ export function SimpleComposer({
 
       <div>
         <div className="flex items-center justify-between mb-1.5">
-          <label className="block text-xs font-medium text-[#5f6368]">
+          <label className="block text-xs font-medium text-[#8A92A6]">
             Subject
           </label>
           <SubjectOptimizer subject={subject} onSelect={setSubject} />
@@ -599,14 +600,14 @@ export function SimpleComposer({
           placeholder="Message subject"
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
-          className="block w-full py-2.5 border border-[#d0d5dd] rounded-md bg-[#f1f3f4] text-[#202124] placeholder:text-[#80868b] focus:ring-2 focus:ring-[#1a56db]/20 focus:border-[#1a56db]/60 text-sm px-4 outline-none transition-all"
+          className="block w-full py-2.5 border border-[#2E333F] rounded-md bg-[#1B1F2A] text-[#E6E9F0] placeholder:text-[#5A6275] focus:ring-2 focus:ring-[#00C2FF]/20 focus:border-[#00C2FF]/60 text-sm px-4 outline-none transition-all"
         />
       </div>
 
       {/* Priority picker */}
       <div className="flex items-center gap-2">
-        <Flag className="w-3.5 h-3.5 text-[#5f6368]" />
-        <span className="text-xs font-medium text-[#5f6368]">Priority</span>
+        <Flag className="w-3.5 h-3.5 text-[#8A92A6]" />
+        <span className="text-xs font-medium text-[#8A92A6]">Priority</span>
         {(["NORMAL", "HIGH", "URGENT"] as const).map(p => (
           <button
             key={p}
@@ -616,8 +617,8 @@ export function SimpleComposer({
               priority === p
                 ? p === "URGENT" ? "bg-[#ea4335] border-[#ea4335] text-white"
                   : p === "HIGH" ? "bg-[#f4b400] border-[#f4b400] text-white"
-                  : "bg-[#e8f0fe] border-[#1a56db] text-[#1a56db]"
-                : "border-[#e8eaed] text-[#5f6368] hover:border-[#d0d5dd] hover:text-[#202124]"
+                  : "bg-[#0E2532] border-[#00C2FF] text-[#00C2FF]"
+                : "border-[#262A35] text-[#8A92A6] hover:border-[#2E333F] hover:text-[#E6E9F0]"
             }`}
           >
             {p === "NORMAL" ? "Normal" : p === "HIGH" ? "High" : "Urgent"}
@@ -626,7 +627,7 @@ export function SimpleComposer({
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-[#5f6368] mb-1.5">
+        <label className="block text-xs font-medium text-[#8A92A6] mb-1.5">
           Message
         </label>
         <textarea
@@ -635,7 +636,7 @@ export function SimpleComposer({
           placeholder="Write your message here..."
           value={body}
           onChange={(e) => setBody(e.target.value)}
-          className="block w-full px-4 py-3 border border-[#d0d5dd] rounded-md bg-[#f1f3f4] text-[#202124] placeholder:text-[#80868b] focus:ring-2 focus:ring-[#1a56db]/20 focus:border-[#1a56db]/60 text-sm outline-none transition-all resize-y min-h-[100px]"
+          className="block w-full px-4 py-3 border border-[#2E333F] rounded-md bg-[#1B1F2A] text-[#E6E9F0] placeholder:text-[#5A6275] focus:ring-2 focus:ring-[#00C2FF]/20 focus:border-[#00C2FF]/60 text-sm outline-none transition-all resize-y min-h-[100px]"
         />
       </div>
 
@@ -651,7 +652,7 @@ export function SimpleComposer({
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          className="flex items-center gap-1.5 text-xs font-medium text-[#5f6368] hover:text-[#202124] transition-colors"
+          className="flex items-center gap-1.5 text-xs font-medium text-[#8A92A6] hover:text-[#E6E9F0] transition-colors"
         >
           <Paperclip className="w-3.5 h-3.5" />
           Attach files
@@ -659,14 +660,14 @@ export function SimpleComposer({
         {attachments.length > 0 && (
           <ul className="mt-2 space-y-1">
             {attachments.map((f) => (
-              <li key={f.name} className="flex items-center gap-2 rounded-md bg-[#f8fafd] border border-[#e8eaed] px-3 py-1.5">
-                <Paperclip className="w-3 h-3 text-[#80868b] shrink-0" />
-                <span className="text-xs text-[#202124] flex-1 truncate">{f.name}</span>
-                <span className="text-[10px] text-[#80868b] shrink-0">{(f.size / 1024).toFixed(0)} KB</span>
+              <li key={f.name} className="flex items-center gap-2 rounded-md bg-[#12151D] border border-[#262A35] px-3 py-1.5">
+                <Paperclip className="w-3 h-3 text-[#5A6275] shrink-0" />
+                <span className="text-xs text-[#E6E9F0] flex-1 truncate">{f.name}</span>
+                <span className="text-[10px] text-[#5A6275] shrink-0">{(f.size / 1024).toFixed(0)} KB</span>
                 <button
                   type="button"
                   onClick={() => setAttachments(prev => prev.filter(a => a.name !== f.name))}
-                  className="text-[#80868b] hover:text-[#ea4335] transition-colors"
+                  className="text-[#5A6275] hover:text-[#ea4335] transition-colors"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -678,7 +679,7 @@ export function SimpleComposer({
 
       <button
         disabled={isPending}
-        className="w-full bg-[#1a56db] text-white font-medium py-3 rounded-md hover:bg-[#1447c0] transition-colors active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+        className="w-full bg-[#00C2FF] text-[#06121A] font-medium py-3 rounded-md hover:bg-[#0098E6] transition-colors active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
       >
         {isPending ? (
           <>
@@ -708,9 +709,9 @@ export function SimpleComposer({
   if (bare) return formContent;
 
   return (
-    <div className="bg-white rounded-xl border border-[#e8eaed] overflow-hidden">
-      <div className="px-6 py-4 border-b border-[#e8eaed]">
-        <h3 className="text-base font-semibold text-[#202124]">New message</h3>
+    <div className="bg-[#12151D] rounded-xl border border-[#262A35] overflow-hidden">
+      <div className="px-6 py-4 border-b border-[#262A35]">
+        <h3 className="text-base font-semibold text-[#E6E9F0]">New message</h3>
       </div>
       {formContent}
     </div>
@@ -738,10 +739,13 @@ function MemberAvatar({ email, members }: { email: string; members: MemberInfo[]
   const m = members.find((u) => u.email.toLowerCase() === email.toLowerCase());
   const label = (m?.fullName ?? email).charAt(0).toUpperCase();
   if (m?.avatarUrl) {
-    return <img src={m.avatarUrl} alt={label} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />;
+    return <img src={m.avatarUrl} alt={label} className="w-8 h-8 rounded-full object-cover flex-shrink-0 ring-1 ring-[#262A35]" />;
   }
   return (
-    <div className="w-8 h-8 rounded-full bg-[#1a56db]/10 flex items-center justify-center text-[#1a56db] font-semibold text-xs flex-shrink-0">
+    <div
+      style={{ background: avatarGradient(m?.fullName ?? email) }}
+      className="w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold text-xs flex-shrink-0"
+    >
       {label}
     </div>
   );
@@ -764,51 +768,54 @@ export function WorkspaceDashboard({
   return (
     <div className="grid lg:grid-cols-[1fr_350px] gap-8">
       {/* Sent History */}
-      <div className="space-y-6">
-        <h2 className="text-lg font-semibold text-[#202124] tracking-[-0.01em]">Sent messages</h2>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-[#E6E9F0] tracking-[-0.01em]">Sent messages</h2>
+          <span className="text-xs font-medium text-[#8A92A6] font-mono">{recentLogs.length} total</span>
+        </div>
 
-        <div className="bg-white border border-[#e8eaed] rounded-xl overflow-hidden">
+        <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
           <table className="w-full text-left">
-            <thead className="border-b border-[#e8eaed]">
+            <thead className="border-b border-[#262A35] bg-[#1B1F2A]">
               <tr>
-                <th className="px-4 py-2.5 text-left text-xs font-medium text-[#80868b]">Recipient</th>
-                <th className="px-4 py-2.5 text-left text-xs font-medium text-[#80868b]">Subject</th>
-                <th className="px-4 py-2.5 text-left text-xs font-medium text-[#80868b]">Status</th>
-                <th className="px-4 py-2.5 text-xs font-medium text-[#80868b] text-right">Sent</th>
+                <th className="px-4 py-2.5 text-left text-[11px] font-medium text-[#5A6275]">Recipient</th>
+                <th className="px-4 py-2.5 text-left text-[11px] font-medium text-[#5A6275]">Subject</th>
+                <th className="px-4 py-2.5 text-left text-[11px] font-medium text-[#5A6275]">Status</th>
+                <th className="px-4 py-2.5 text-[11px] font-medium text-[#5A6275] text-right">Sent</th>
               </tr>
             </thead>
             <tbody>
               {recentLogs.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-3 text-sm text-[#5f6368] text-center italic py-12">
+                  <td colSpan={4} className="px-4 py-12 text-sm text-[#8A92A6] text-center italic">
                     No sent messages found in this workspace.
                   </td>
                 </tr>
               ) : (
                 recentLogs.map((log) => (
-                  <tr key={log.id} className="border-b border-[#e8eaed] hover:bg-[#f1f3f4] transition-colors">
-                    <td className="px-4 py-3 text-sm text-[#202124]">
+                  <tr key={log.id} className="border-b border-[#262A35] last:border-b-0 hover:bg-[#1B1F2A] transition-colors">
+                    <td className="px-4 py-3 text-sm text-[#E6E9F0]">
                       <div className="flex items-center gap-3">
                         <MemberAvatar email={log.recipient} members={members} />
-                        <span className="text-sm font-medium text-[#202124]">{log.recipient}</span>
+                        <span className="text-[13px] font-medium text-[#E6E9F0] font-mono truncate max-w-[180px]">{log.recipient}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-sm text-[#202124] max-w-[200px] truncate">
+                    <td className="px-4 py-3 text-sm text-[#8A92A6] max-w-[200px] truncate">
                       {log.subject || "(No Subject)"}
                     </td>
-                    <td className="px-4 py-3 text-sm text-[#202124]">
+                    <td className="px-4 py-3 text-sm text-[#E6E9F0]">
                       <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${
                         log.status === 'DELIVERED' || log.status === 'SENT' ? 'bg-[#0f9d58]/10 text-[#0f9d58]' :
-                        log.status === 'OPENED' || log.status === 'CLICKED' ? 'bg-[#1a56db]/10 text-[#1a56db]' :
+                        log.status === 'OPENED' || log.status === 'CLICKED' ? 'bg-[#00C2FF]/10 text-[#00C2FF]' :
                         log.status === 'FAILED' || log.status === 'BOUNCED' ? 'bg-[#ea4335]/10 text-[#ea4335]' :
-                        'bg-white/[0.06] text-[#5f6368]'
+                        'bg-[#1B1F2A] text-[#8A92A6]'
                       }`}>
                         {log.status === 'DELIVERED' ? <CheckCircle2 className="w-3 h-3" /> : null}
                         {log.status === 'FAILED' ? <AlertCircle className="w-3 h-3" /> : null}
                         {log.status.charAt(0) + log.status.slice(1).toLowerCase()}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-[#5f6368] text-right" suppressHydrationWarning>
+                    <td className="px-4 py-3 text-xs text-[#5A6275] text-right font-mono" suppressHydrationWarning>
                       {new Date(log.createdAt).toLocaleDateString('en-GB', {
                         day: '2-digit',
                         month: '2-digit',
@@ -824,8 +831,8 @@ export function WorkspaceDashboard({
       </div>
 
       {/* Composer Side Pane */}
-      <div className="space-y-6">
-        <h2 className="text-lg font-semibold text-[#202124] tracking-[-0.01em]">Quick compose</h2>
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold text-[#E6E9F0] tracking-[-0.01em]">Quick compose</h2>
         <SimpleComposer userRole={currentUser.role} />
       </div>
     </div>

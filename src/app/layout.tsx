@@ -1,5 +1,5 @@
 ﻿import type { Metadata, Viewport } from "next";
-import { DM_Sans, Inter } from "next/font/google";
+import { DM_Sans, Inter, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
@@ -16,6 +16,19 @@ const dmSans = DM_Sans({
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
+  display: "swap",
+});
+
+// Design system fonts (Nexus dark theme)
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-jakarta",
+  display: "swap",
+});
+
+const jetbrains = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains",
   display: "swap",
 });
 
@@ -68,7 +81,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#1a56db",
+  themeColor: "#0B0D12",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -80,11 +93,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${dmSans.variable} ${inter.variable} h-full antialiased`} suppressHydrationWarning>
-      <head>
-        {/* Light theme by default — no dark class injected */}
-      </head>
-      <body className="min-h-full bg-white text-[#202124] font-sans" suppressHydrationWarning>
+    <html lang="en" className={`dark ${dmSans.variable} ${inter.variable} ${jakarta.variable} ${jetbrains.variable} h-full antialiased`} suppressHydrationWarning>
+      <head />
+      <body className="min-h-full bg-[#0B0D12] text-[#E6E9F0] font-sans" suppressHydrationWarning>
         <div className="min-h-screen flex flex-col">
           {children}
         </div>

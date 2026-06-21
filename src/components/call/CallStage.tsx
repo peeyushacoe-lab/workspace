@@ -99,14 +99,14 @@ export function CallStage({
 
   return (
     <div className="fixed inset-0 z-[100] flex flex-col bg-[#0f1321]">
-      <div className="flex items-center justify-between px-4 py-2 bg-white border-b border-[#e8eaed] flex-shrink-0">
+      <div className="flex items-center justify-between px-4 py-2 bg-[#12151D] border-b border-[#262A35] flex-shrink-0">
         <div className="flex items-center gap-2">
           {media === "audio" ? (
-            <Phone className="w-4 h-4 text-[#1a56db]" />
+            <Phone className="w-4 h-4 text-[#00C2FF]" />
           ) : (
-            <Video className="w-4 h-4 text-[#1a56db]" />
+            <Video className="w-4 h-4 text-[#00C2FF]" />
           )}
-          <span className="text-sm font-semibold text-[#202124]">
+          <span className="text-sm font-semibold text-[#E6E9F0]">
             {media === "audio" ? "Voice call" : "Video call"} with {peerName}
           </span>
         </div>

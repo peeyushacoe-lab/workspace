@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 export function Skeleton({ className }: { className?: string }) {
   return (
     <div
-      className={cn("animate-pulse rounded-md bg-[#f1f3f4]", className)}
+      className={cn("animate-pulse rounded-md bg-[#1B1F2A]", className)}
       aria-hidden
     />
   );
@@ -29,7 +29,7 @@ export function SkeletonCard({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "rounded-xl border border-white/[0.07] bg-white p-4 space-y-3",
+        "rounded-xl border border-white/[0.07] bg-[#12151D] p-4 space-y-3",
         className,
       )}
     >
@@ -59,7 +59,7 @@ export function SkeletonTable({ rows = 5, columns = 4 }: { rows?: number; column
   return (
     <div className="rounded-xl border border-white/[0.07] overflow-hidden">
       {/* Header */}
-      <div className="flex items-center gap-4 py-3 px-4 bg-[#f1f3f4]/60 border-b border-white/[0.07]">
+      <div className="flex items-center gap-4 py-3 px-4 bg-[#1B1F2A]/60 border-b border-white/[0.07]">
         {Array.from({ length: columns }).map((_, i) => (
           <Skeleton key={i} className="h-2.5 flex-1" />
         ))}

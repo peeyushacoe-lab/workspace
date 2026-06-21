@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Building2, Users, Mail, Palette, Save, Loader2, Plus, X, Crown, Shield, User } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/Shell";
+import { avatarGradient } from "@/lib/avatar";
 
 type OrgData = {
   id: string;
@@ -39,7 +40,10 @@ const ORG_ROLE_ICONS: Record<string, typeof Crown> = {
 function Avatar({ name }: { name: string }) {
   const initials = name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
   return (
-    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#1a56db]/15 to-[#1a56db]/10 border border-[rgba(26,86,219,0.2)] flex items-center justify-center font-semibold text-[#1a56db] text-sm flex-shrink-0">
+    <div
+      className="w-9 h-9 rounded-full flex items-center justify-center font-semibold text-white text-sm flex-shrink-0"
+      style={{ background: avatarGradient(name) }}
+    >
       {initials}
     </div>
   );
@@ -119,22 +123,22 @@ export default function OrgPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-[#5f6368]" />
+      <div className="min-h-screen bg-[#12151D] flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-[#8A92A6]" />
       </div>
     );
   }
 
   if (!org) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <p className="text-[#9aa0a6]">No organization found.</p>
+      <div className="min-h-screen bg-[#12151D] flex items-center justify-center">
+        <p className="text-[#5A6275]">No organization found.</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white text-[#202124]">
+    <div className="min-h-screen bg-[#12151D] text-[#E6E9F0]">
       <PageHeader
         eyebrow="Admin · Organization"
         title="Organization Settings"
@@ -143,53 +147,53 @@ export default function OrgPage() {
 
       <div className="max-w-5xl mx-auto px-6 py-6 space-y-6">
         {/* Plan badge */}
-        <div className="flex items-center gap-3 bg-[#1a56db]/5 border border-[#1a56db]/15 rounded-xl px-4 py-3">
-          <Building2 className="w-4 h-4 text-[#1a56db] flex-shrink-0" />
-          <div className="flex-1 text-xs text-[#5f6368]">
-            <span className="font-semibold text-[#202124]">{org.name}</span>
+        <div className="flex items-center gap-3 bg-[#00C2FF]/5 border border-[#00C2FF]/15 rounded-xl px-4 py-3">
+          <Building2 className="w-4 h-4 text-[#00C2FF] flex-shrink-0" />
+          <div className="flex-1 text-xs text-[#8A92A6]">
+            <span className="font-semibold text-[#E6E9F0]">{org.name}</span>
             {" · "}
-            <span className="text-[#1a56db] font-semibold">{org.plan}</span>
+            <span className="text-[#00C2FF] font-semibold">{org.plan}</span>
             {" plan · "}
             {org._count.users} / {org.maxUsers} users
             {" · slug: "}
-            <code className="text-[#1a56db]">{org.slug}</code>
+            <code className="text-[#00C2FF] font-mono">{org.slug}</code>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* General settings */}
-          <div className="bg-white border border-[#e8eaed] rounded-xl p-5 space-y-4">
-            <p className="text-xs font-semibold text-[#9aa0a6]">General</p>
+          <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-5 space-y-4">
+            <p className="text-xs font-semibold text-[#5A6275]">General</p>
 
             <div className="space-y-3">
               <div>
-                <label className="text-xs text-[#9aa0a6] mb-1 block">Organization name</label>
+                <label className="text-xs text-[#5A6275] mb-1 block">Organization name</label>
                 <input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-[#f1f3f4] border border-[#e8eaed] rounded-lg px-3 py-2 text-sm text-[#202124] outline-none focus:border-[#1a56db]/40"
+                  className="w-full bg-[#0D1017] border border-[#2E333F] rounded-lg px-3 py-2 text-sm text-[#E6E9F0] outline-none focus:border-[#00C2FF]/40"
                 />
               </div>
               <div>
-                <label className="text-xs text-[#9aa0a6] mb-1 block">Logo URL</label>
+                <label className="text-xs text-[#5A6275] mb-1 block">Logo URL</label>
                 <input
                   value={logoUrl}
                   onChange={(e) => setLogoUrl(e.target.value)}
                   placeholder="https://..."
-                  className="w-full bg-[#f1f3f4] border border-[#e8eaed] rounded-lg px-3 py-2 text-sm text-[#202124] outline-none focus:border-[#1a56db]/40 placeholder-[#5d6579]"
+                  className="w-full bg-[#0D1017] border border-[#2E333F] rounded-lg px-3 py-2 text-sm text-[#E6E9F0] outline-none focus:border-[#00C2FF]/40 placeholder-[#5A6275] font-mono"
                 />
               </div>
               <div>
-                <label className="text-xs text-[#9aa0a6] mb-1 block">Billing email</label>
+                <label className="text-xs text-[#5A6275] mb-1 block">Billing email</label>
                 <input
                   type="email"
                   value={billingEmail}
                   onChange={(e) => setBillingEmail(e.target.value)}
-                  className="w-full bg-[#f1f3f4] border border-[#e8eaed] rounded-lg px-3 py-2 text-sm text-[#202124] outline-none focus:border-[#1a56db]/40"
+                  className="w-full bg-[#0D1017] border border-[#2E333F] rounded-lg px-3 py-2 text-sm text-[#E6E9F0] outline-none focus:border-[#00C2FF]/40 font-mono"
                 />
               </div>
               <div>
-                <label className="text-xs text-[#9aa0a6] mb-1 block">Brand color</label>
+                <label className="text-xs text-[#5A6275] mb-1 block">Brand color</label>
                 <div className="flex items-center gap-2">
                   <input
                     type="color"
@@ -201,9 +205,9 @@ export default function OrgPage() {
                     value={brandColor}
                     onChange={(e) => setBrandColor(e.target.value)}
                     placeholder="#00d2ff"
-                    className="flex-1 bg-[#f1f3f4] border border-[#e8eaed] rounded-lg px-3 py-2 text-sm text-[#202124] outline-none focus:border-[#1a56db]/40 font-mono placeholder-[#5d6579]"
+                    className="flex-1 bg-[#0D1017] border border-[#2E333F] rounded-lg px-3 py-2 text-sm text-[#E6E9F0] outline-none focus:border-[#00C2FF]/40 font-mono placeholder-[#5A6275]"
                   />
-                  <Palette className="w-4 h-4 text-[#9aa0a6]" />
+                  <Palette className="w-4 h-4 text-[#5A6275]" />
                 </div>
               </div>
             </div>
@@ -211,7 +215,7 @@ export default function OrgPage() {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex items-center gap-2 bg-[#1a56db]/15 hover:bg-[#1a56db]/25 border border-[#1a56db]/30 text-[#1a56db] text-sm font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 bg-[#00C2FF] hover:bg-[#0098E6] text-[#06121A] text-sm font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               Save changes
@@ -219,26 +223,26 @@ export default function OrgPage() {
           </div>
 
           {/* Invite member */}
-          <div className="bg-white border border-[#e8eaed] rounded-xl p-5 space-y-4">
-            <p className="text-xs font-semibold text-[#9aa0a6] flex items-center gap-2">
+          <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-5 space-y-4">
+            <p className="text-xs font-semibold text-[#5A6275] flex items-center gap-2">
               <Users className="w-3.5 h-3.5" /> Invite member
             </p>
-            <p className="text-xs text-[#5f6368]">
+            <p className="text-xs text-[#8A92A6]">
               Send an invitation link to onboard a new team member. They will receive an email with a 7-day invite link.
             </p>
             <div className="flex gap-2">
-              <div className="flex-1 flex items-center gap-2 bg-[#f1f3f4] border border-[#e8eaed] rounded-lg px-3 py-2">
-                <Mail className="w-4 h-4 text-[#9aa0a6] flex-shrink-0" />
+              <div className="flex-1 flex items-center gap-2 bg-[#0D1017] border border-[#2E333F] rounded-lg px-3 py-2">
+                <Mail className="w-4 h-4 text-[#5A6275] flex-shrink-0" />
                 <input
                   type="email"
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") void handleInvite(); }}
                   placeholder="colleague@example.com"
-                  className="flex-1 bg-transparent text-sm text-[#202124] outline-none placeholder-[#5d6579]"
+                  className="flex-1 bg-transparent text-sm text-[#E6E9F0] outline-none placeholder-[#5A6275] font-mono"
                 />
                 {inviteEmail && (
-                  <button onClick={() => setInviteEmail("")} className="text-[#9aa0a6] hover:text-[#5f6368]">
+                  <button onClick={() => setInviteEmail("")} className="text-[#5A6275] hover:text-[#8A92A6]">
                     <X className="w-3.5 h-3.5" />
                   </button>
                 )}
@@ -246,7 +250,7 @@ export default function OrgPage() {
               <button
                 onClick={handleInvite}
                 disabled={inviting || !inviteEmail.trim()}
-                className="flex items-center gap-1.5 bg-[#1a56db]/15 hover:bg-[#1a56db]/25 border border-[#1a56db]/30 text-[#1a56db] text-sm font-semibold px-3 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-1.5 bg-[#00C2FF] hover:bg-[#0098E6] text-[#06121A] text-sm font-semibold px-3 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {inviting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                 Invite
@@ -256,8 +260,8 @@ export default function OrgPage() {
         </div>
 
         {/* Member list */}
-        <div className="bg-white border border-[#e8eaed] rounded-xl p-5">
-          <p className="text-xs font-semibold text-[#9aa0a6] mb-4 flex items-center gap-2">
+        <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-5">
+          <p className="text-xs font-semibold text-[#5A6275] mb-4 flex items-center gap-2">
             <Users className="w-3.5 h-3.5" /> Members ({members.length})
           </p>
           <div className="space-y-2">
@@ -266,19 +270,19 @@ export default function OrgPage() {
               return (
                 <div
                   key={member.id}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#f1f3f4]/60 transition-colors"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#1B1F2A] transition-colors"
                 >
                   <Avatar name={member.fullName} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-semibold text-[#202124] truncate">{member.fullName}</span>
-                      <span className="text-[10px] text-[#9aa0a6] bg-[#f1f3f4] border border-[#e8eaed] px-1.5 py-0.5 rounded-full">
+                      <span className="text-sm font-semibold text-[#E6E9F0] truncate">{member.fullName}</span>
+                      <span className="text-[10px] text-[#8A92A6] bg-[#1B1F2A] border border-[#262A35] px-1.5 py-0.5 rounded-full font-mono">
                         {member.role}
                       </span>
                     </div>
-                    <span className="text-xs text-[#9aa0a6]">{member.email}</span>
+                    <span className="text-xs text-[#5A6275] font-mono">{member.email}</span>
                   </div>
-                  <div className="flex items-center gap-1 text-xs text-[#9aa0a6]">
+                  <div className="flex items-center gap-1 text-xs text-[#5A6275]">
                     <OrgIcon className="w-3.5 h-3.5" />
                     {member.orgRole ?? "MEMBER"}
                   </div>
@@ -286,7 +290,7 @@ export default function OrgPage() {
               );
             })}
             {members.length === 0 && (
-              <p className="text-xs text-[#9aa0a6] italic text-center py-4">No members yet</p>
+              <p className="text-xs text-[#5A6275] italic text-center py-4">No members yet</p>
             )}
           </div>
         </div>

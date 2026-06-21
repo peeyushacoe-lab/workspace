@@ -33,7 +33,7 @@ interface Props {
 
 // Consistent avatar colour palette (matches SidebarLayout)
 const AVATAR_COLORS = [
-  { bg: "bg-[#1a56db]", text: "text-white" },
+  { bg: "bg-[#00C2FF]", text: "text-[#06121A]" },
   { bg: "bg-[#7c3aed]", text: "text-white" },
   { bg: "bg-[#059669]", text: "text-white" },
   { bg: "bg-[#d97706]", text: "text-white" },
@@ -78,18 +78,18 @@ export function UserProfileModal({ userId, onClose, onCompose }: Props) {
     >
       <div className="absolute inset-0 bg-black/30" />
       <div
-        className="relative w-full max-w-sm bg-white border border-[#e8eaed] rounded-2xl shadow-xl overflow-hidden"
+        className="relative w-full max-w-sm bg-[#12151D] border border-[#262A35] rounded-2xl shadow-xl overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         {/* Cover banner */}
-        <div className="relative h-24 bg-gradient-to-r from-[#e8f0fe] to-[#dbeafe]">
+        <div className="relative h-24 bg-gradient-to-r from-[#0E2532] to-[#0E2532]">
           {profile?.coverUrl && (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={profile.coverUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
           )}
           <button
             onClick={onClose}
-            className="absolute top-3 right-3 p-1.5 rounded-full bg-white/80 hover:bg-white text-[#5f6368] hover:text-[#202124] transition-colors shadow-sm"
+            className="absolute top-3 right-3 p-1.5 rounded-full bg-[#12151D]/80 hover:bg-[#12151D] text-[#8A92A6] hover:text-[#E6E9F0] transition-colors shadow-sm"
           >
             <X size={15} />
           </button>
@@ -116,7 +116,7 @@ export function UserProfileModal({ userId, onClose, onCompose }: Props) {
           </div>
 
           {loading && (
-            <div className="py-8 flex items-center justify-center gap-2 text-[#5f6368] text-sm">
+            <div className="py-8 flex items-center justify-center gap-2 text-[#8A92A6] text-sm">
               <Loader2 className="w-4 h-4 animate-spin" />
               Loading profile…
             </div>
@@ -130,31 +130,31 @@ export function UserProfileModal({ userId, onClose, onCompose }: Props) {
             <>
               <div className="mb-4">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-lg font-semibold text-[#202124]">{displayName}</h2>
+                  <h2 className="text-lg font-semibold text-[#E6E9F0]">{displayName}</h2>
                   {profile.pronouns && (
-                    <span className="text-xs text-[#80868b]">({profile.pronouns})</span>
+                    <span className="text-xs text-[#5A6275]">({profile.pronouns})</span>
                   )}
                 </div>
                 {(profile.statusEmoji || profile.statusMessage) && (
-                  <p className="text-sm text-[#5f6368] mt-0.5">
+                  <p className="text-sm text-[#8A92A6] mt-0.5">
                     {profile.statusEmoji} {profile.statusMessage}
                   </p>
                 )}
                 <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#e8f0fe] text-[#1a56db] border border-[#1a56db]/20">
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#0E2532] text-[#00C2FF] border border-[#00C2FF]/20">
                     {roleLabel}
                   </span>
                   {profile.jobTitle && (
-                    <span className="text-sm text-[#5f6368]">{profile.jobTitle}</span>
+                    <span className="text-sm text-[#8A92A6]">{profile.jobTitle}</span>
                   )}
                 </div>
                 {profile.department && (
-                  <p className="text-xs text-[#80868b] mt-1">{profile.department}</p>
+                  <p className="text-xs text-[#5A6275] mt-1">{profile.department}</p>
                 )}
               </div>
 
               {profile.bio && (
-                <p className="text-sm text-[#5f6368] leading-relaxed mb-4 border-t border-[#e8eaed] pt-4">
+                <p className="text-sm text-[#8A92A6] leading-relaxed mb-4 border-t border-[#262A35] pt-4">
                   {profile.bio}
                 </p>
               )}
@@ -170,17 +170,17 @@ export function UserProfileModal({ userId, onClose, onCompose }: Props) {
                 )}
               </div>
 
-              <div className="flex gap-2 border-t border-[#e8eaed] pt-4">
+              <div className="flex gap-2 border-t border-[#262A35] pt-4">
                 <button
                   onClick={() => { onCompose?.(profile.email); onClose(); }}
-                  className="flex-1 flex items-center justify-center gap-2 bg-[#1a56db] hover:bg-[#1648c7] text-white font-semibold text-sm py-2.5 rounded-lg transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 bg-[#00C2FF] hover:bg-[#0098E6] text-[#06121A] font-semibold text-sm py-2.5 rounded-lg transition-colors"
                 >
                   <Mail size={14} />
                   Send email
                 </button>
                 <button
                   onClick={() => { void navigator.clipboard?.writeText(profile.email); }}
-                  className="px-4 py-2.5 rounded-lg border border-[#e8eaed] hover:bg-[#f1f3f4] text-[#5f6368] hover:text-[#202124] text-sm transition-colors"
+                  className="px-4 py-2.5 rounded-lg border border-[#262A35] hover:bg-[#1B1F2A] text-[#8A92A6] hover:text-[#E6E9F0] text-sm transition-colors"
                   title="Copy email address"
                 >
                   Copy
@@ -196,10 +196,10 @@ export function UserProfileModal({ userId, onClose, onCompose }: Props) {
 
 function InfoRow({ icon, value, link }: { icon: React.ReactNode; value: string; link?: string }) {
   return (
-    <div className="flex items-center gap-2 text-sm text-[#5f6368]">
-      <span className="text-[#9aa0a6] flex-shrink-0">{icon}</span>
+    <div className="flex items-center gap-2 text-sm text-[#8A92A6]">
+      <span className="text-[#5A6275] flex-shrink-0">{icon}</span>
       {link ? (
-        <a href={link} target="_blank" rel="noopener noreferrer" className="hover:text-[#1a56db] truncate transition-colors">
+        <a href={link} target="_blank" rel="noopener noreferrer" className="hover:text-[#00C2FF] truncate transition-colors">
           {value}
         </a>
       ) : (

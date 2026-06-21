@@ -112,24 +112,24 @@ type SuppressionEntry = {
 };
 
 const ROLE_COLORS: Record<string, string> = {
-  ADMIN: "bg-[#1a56db]/10 text-[#1a56db] border-[#1a56db]/20",
+  ADMIN: "bg-[#00C2FF]/10 text-[#00C2FF] border-[#00C2FF]/20",
   CEO: "bg-purple-500/10 text-purple-300 border-purple-500/20",
   CISO: "bg-orange-500/10 text-orange-300 border-orange-500/20",
-  MARKETING: "bg-[#f1f3f4] text-[#5f6368] border-[#e8eaed]",
-  INTERNSHIP: "bg-[#f1f3f4] text-[#5f6368] border-[#e8eaed]",
-  R_AND_D: "bg-[#f1f3f4] text-[#5f6368] border-[#e8eaed]",
+  MARKETING: "bg-[#1B1F2A] text-[#8A92A6] border-[#262A35]",
+  INTERNSHIP: "bg-[#1B1F2A] text-[#8A92A6] border-[#262A35]",
+  R_AND_D: "bg-[#1B1F2A] text-[#8A92A6] border-[#262A35]",
 };
 
 const REASON_COLORS: Record<string, string> = {
   BOUNCE: "bg-orange-500/10 text-orange-300 border-orange-500/20",
   SPAM: "bg-[#ea4335]/10 text-[#ea4335] border-[#ea4335]/20",
-  MANUAL: "bg-[#f1f3f4] text-[#5f6368] border-[#e8eaed]",
+  MANUAL: "bg-[#1B1F2A] text-[#8A92A6] border-[#262A35]",
 };
 
 const ACTION_COLORS: Record<string, string> = {
   LOGIN: "bg-[#0f9d58]/10 text-[#0f9d58] border-[#0f9d58]/20",
-  LOGOUT: "bg-[#f1f3f4] text-[#5f6368] border-[#e8eaed]",
-  EMAIL_QUEUED: "bg-[#1a56db]/10 text-[#1a56db] border-[#1a56db]/20",
+  LOGOUT: "bg-[#1B1F2A] text-[#8A92A6] border-[#262A35]",
+  EMAIL_QUEUED: "bg-[#00C2FF]/10 text-[#00C2FF] border-[#00C2FF]/20",
 };
 
 const SEVERITY_COLORS: Record<string, string> = {
@@ -144,7 +144,7 @@ function SkeletonRow({ cols }: { cols: number }) {
     <tr>
       {Array.from({ length: cols }).map((_, i) => (
         <td key={i} className="px-4 py-3">
-          <div className="h-4 bg-[#f1f3f4] rounded animate-pulse" style={{ width: `${60 + (i * 7) % 30}%` }} />
+          <div className="h-4 bg-[#1B1F2A] rounded animate-pulse" style={{ width: `${60 + (i * 7) % 30}%` }} />
         </td>
       ))}
     </tr>
@@ -153,7 +153,7 @@ function SkeletonRow({ cols }: { cols: number }) {
 
 function EmptyState({ icon: Icon, message }: { icon: React.ElementType; message: string }) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 text-[#5f6368]">
+    <div className="flex flex-col items-center justify-center py-16 text-[#8A92A6]">
       <Icon className="w-12 h-12 mb-3 opacity-20" />
       <p className="text-sm">{message}</p>
     </div>
@@ -183,12 +183,12 @@ function StatCard({
   sub?: string;
 }) {
   return (
-    <div className="bg-white border border-[#e8eaed] rounded-xl p-5">
+    <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-5">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm font-medium text-[#5f6368]">{label}</p>
-          <p className="text-2xl font-semibold text-[#202124] mt-1">{typeof value === "number" ? value.toLocaleString() : value}</p>
-          {sub && <p className="text-xs text-[#5f6368] mt-1">{sub}</p>}
+          <p className="text-sm font-medium text-[#8A92A6]">{label}</p>
+          <p className="text-2xl font-semibold text-[#E6E9F0] mt-1">{typeof value === "number" ? value.toLocaleString() : value}</p>
+          {sub && <p className="text-xs text-[#8A92A6] mt-1">{sub}</p>}
         </div>
         <div className={`p-3 rounded-xl ${iconColor}`}>
           <Icon className="w-5 h-5" />
@@ -200,12 +200,12 @@ function StatCard({
 
 function RateBar({ label, rate, color }: { label: string; rate: number; color: string }) {
   return (
-    <div className="flex-1 bg-white border border-[#e8eaed] rounded-xl p-5">
-      <p className="text-sm font-medium text-[#5f6368] mb-1">{label}</p>
-      <p className={`text-2xl font-semibold text-[#202124] mt-1 ${color}`}>{rate}%</p>
-      <div className="mt-3 bg-[#f1f3f4] rounded-full h-2 flex-1 overflow-hidden">
+    <div className="flex-1 bg-[#12151D] border border-[#262A35] rounded-xl p-5">
+      <p className="text-sm font-medium text-[#8A92A6] mb-1">{label}</p>
+      <p className={`text-2xl font-semibold text-[#E6E9F0] mt-1 ${color}`}>{rate}%</p>
+      <div className="mt-3 bg-[#1B1F2A] rounded-full h-2 flex-1 overflow-hidden">
         <div
-          className={`bg-[#1a56db] h-2 rounded-full transition-all`}
+          className={`bg-[#00C2FF] h-2 rounded-full transition-all`}
           style={{ width: `${Math.min(rate, 100)}%` }}
         />
       </div>
@@ -234,10 +234,10 @@ function OverviewTab() {
       <div className="space-y-6">
         <div className="grid grid-cols-3 gap-4">
           {Array.from({ length: 9 }).map((_, i) => (
-            <div key={i} className="h-32 bg-white rounded-xl animate-pulse" />
+            <div key={i} className="h-32 bg-[#12151D] rounded-xl animate-pulse" />
           ))}
         </div>
-        <div className="h-32 bg-white rounded-xl animate-pulse" />
+        <div className="h-32 bg-[#12151D] rounded-xl animate-pulse" />
       </div>
     );
   }
@@ -253,7 +253,7 @@ function OverviewTab() {
           label="Total Users"
           value={stats.users.total}
           icon={Users}
-          iconColor="bg-[#1a56db]/10 text-[#1a56db]"
+          iconColor="bg-[#00C2FF]/10 text-[#00C2FF]"
           sub={`${stats.users.active} active`}
         />
         <StatCard
@@ -272,7 +272,7 @@ function OverviewTab() {
           label="Emails Today"
           value={stats.emails.today}
           icon={BarChart3}
-          iconColor="bg-[#1a56db]/10 text-[#1a56db]"
+          iconColor="bg-[#00C2FF]/10 text-[#00C2FF]"
           sub={`${stats.emails.total} total`}
         />
         <StatCard
@@ -309,34 +309,34 @@ function OverviewTab() {
 
       {/* Email stats last 30 days */}
       {es && (
-        <div className="bg-white border border-[#e8eaed] rounded-xl overflow-hidden">
-          <div className="px-5 py-4 border-b border-[#e8eaed]">
-            <h3 className="font-semibold text-[#202124] text-sm">Email Performance — Last 30 Days</h3>
-            <p className="text-xs text-[#5f6368] mt-0.5">{es.sent.toLocaleString()} emails sent</p>
+        <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
+          <div className="px-5 py-4 border-b border-[#262A35]">
+            <h3 className="font-semibold text-[#E6E9F0] text-sm">Email Performance — Last 30 Days</h3>
+            <p className="text-xs text-[#8A92A6] mt-0.5">{es.sent.toLocaleString()} emails sent</p>
           </div>
           <div className="p-5">
             <div className="grid grid-cols-4 gap-4 mb-4">
               <div className="text-center">
-                <p className="text-2xl font-semibold text-[#202124]">{es.sent.toLocaleString()}</p>
-                <p className="text-xs font-medium text-[#5f6368] mt-1">Sent</p>
+                <p className="text-2xl font-semibold text-[#E6E9F0]">{es.sent.toLocaleString()}</p>
+                <p className="text-xs font-medium text-[#8A92A6] mt-1">Sent</p>
               </div>
               <div className="text-center">
                 <p className="text-2xl font-semibold text-[#0f9d58]">{es.delivered.toLocaleString()}</p>
-                <p className="text-xs font-medium text-[#5f6368] mt-1">Delivered</p>
+                <p className="text-xs font-medium text-[#8A92A6] mt-1">Delivered</p>
               </div>
               <div className="text-center">
                 <p className="text-2xl font-semibold text-[#ea4335]">{es.bounced.toLocaleString()}</p>
-                <p className="text-xs font-medium text-[#5f6368] mt-1">Bounced</p>
+                <p className="text-xs font-medium text-[#8A92A6] mt-1">Bounced</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-semibold text-[#1a56db]">{es.opened.toLocaleString()}</p>
-                <p className="text-xs font-medium text-[#5f6368] mt-1">Opened</p>
+                <p className="text-2xl font-semibold text-[#00C2FF]">{es.opened.toLocaleString()}</p>
+                <p className="text-xs font-medium text-[#8A92A6] mt-1">Opened</p>
               </div>
             </div>
             <div className="flex gap-4">
               <RateBar label="Delivery Rate" rate={es.deliveryRate} color="text-[#0f9d58]" />
               <RateBar label="Bounce Rate" rate={es.bounceRate} color="text-[#ea4335]" />
-              <RateBar label="Open Rate" rate={es.openRate} color="text-[#1a56db]" />
+              <RateBar label="Open Rate" rate={es.openRate} color="text-[#00C2FF]" />
             </div>
           </div>
         </div>
@@ -413,13 +413,13 @@ function CsvImportModal({ onClose, onImported }: { onClose: () => void; onImport
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60" />
-      <div className="relative z-10 bg-white rounded-xl shadow-2xl w-full max-w-xl border border-[#e8eaed] max-h-[85vh] overflow-hidden flex flex-col">
-        <div className="px-6 py-4 border-b border-[#e8eaed] flex items-center justify-between">
+      <div className="relative z-10 bg-[#12151D] rounded-xl shadow-2xl w-full max-w-xl border border-[#262A35] max-h-[85vh] overflow-hidden flex flex-col">
+        <div className="px-6 py-4 border-b border-[#262A35] flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Upload className="h-5 w-5 text-[#1a56db]" />
-            <h2 className="font-semibold text-[#202124]">Import Users from CSV</h2>
+            <Upload className="h-5 w-5 text-[#00C2FF]" />
+            <h2 className="font-semibold text-[#E6E9F0]">Import Users from CSV</h2>
           </div>
-          <button onClick={onClose} className="p-1.5 text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124] rounded-md transition-colors">
+          <button onClick={onClose} className="p-1.5 text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0] rounded-md transition-colors">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -427,23 +427,23 @@ function CsvImportModal({ onClose, onImported }: { onClose: () => void; onImport
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {!results ? (
             <>
-              <p className="text-sm text-[#5f6368]">
-                Upload or paste a CSV with columns: <code className="bg-[#f1f3f4] px-1 rounded text-xs font-mono text-[#1a56db]">email, fullName, role</code>
+              <p className="text-sm text-[#8A92A6]">
+                Upload or paste a CSV with columns: <code className="bg-[#1B1F2A] px-1 rounded text-xs font-mono text-[#00C2FF]">email, fullName, role</code>
               </p>
-              <p className="text-xs text-[#5f6368]">
+              <p className="text-xs text-[#8A92A6]">
                 Valid roles: ADMIN, CEO, CISO, DEVELOPER, MARKETING, FINANCE, SUPPORT, OPERATIONS, QA, RESEARCH, CYBER_SECURITY, R_AND_D, COO, OPS_MANAGER, INTERNSHIP
               </p>
 
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => fileRef.current?.click()}
-                  className="bg-[#f1f3f4] text-[#5f6368] hover:bg-[#303444] border border-[#e8eaed] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2"
+                  className="bg-[#1B1F2A] text-[#8A92A6] hover:bg-[#262A35] hover:text-[#E6E9F0] border border-[#262A35] rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2 transition-colors"
                 >
                   <FileText className="w-4 h-4" />
                   Choose CSV file
                 </button>
                 <input ref={fileRef} type="file" accept=".csv,text/csv" onChange={handleFile} className="hidden" />
-                <span className="text-xs text-[#5f6368]">or paste below</span>
+                <span className="text-xs text-[#8A92A6]">or paste below</span>
               </div>
 
               <textarea
@@ -451,33 +451,33 @@ function CsvImportModal({ onClose, onImported }: { onClose: () => void; onImport
                 onChange={(e) => handleTextChange(e.target.value)}
                 placeholder={"email,fullName,role\nalice@company.com,Alice Smith,DEVELOPER\nbob@company.com,Bob Jones,MARKETING"}
                 rows={6}
-                className="w-full text-xs font-mono border border-[#e8eaed] bg-white text-[#202124] rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-[#1a56db] outline-none resize-none placeholder:text-[#80868b]"
+                className="w-full text-xs font-mono border border-[#2E333F] bg-[#0D1017] text-[#E6E9F0] rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-[#00C2FF] focus:border-[#00C2FF]/60 outline-none resize-none placeholder:text-[#5A6275]"
               />
 
               {parseError && <p className="text-sm text-[#ea4335]">{parseError}</p>}
 
               {parsed.length > 0 && (
                 <div>
-                  <p className="text-xs font-semibold text-[#5f6368] mb-2">{parsed.length} users ready to import</p>
-                  <div className="bg-white border border-[#e8eaed] rounded-xl overflow-hidden max-h-48 overflow-y-auto">
+                  <p className="text-xs font-semibold text-[#8A92A6] mb-2">{parsed.length} users ready to import</p>
+                  <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden max-h-48 overflow-y-auto">
                     <table className="w-full text-xs">
-                      <thead className="bg-[#f1f3f4] border-b border-[#e8eaed] sticky top-0">
+                      <thead className="bg-[#1B1F2A] border-b border-[#262A35] sticky top-0">
                         <tr>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Email</th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Name</th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Role</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-[#8A92A6]">Email</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-[#8A92A6]">Name</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-[#8A92A6]">Role</th>
                         </tr>
                       </thead>
                       <tbody>
                         {parsed.slice(0, 20).map((row, i) => (
-                          <tr key={i} className="border-b border-[#e8eaed] hover:bg-white transition-colors">
-                            <td className="px-4 py-3 text-sm text-[#202124]">{row.email}</td>
-                            <td className="px-4 py-3 text-sm text-[#202124]">{row.fullName}</td>
-                            <td className="px-4 py-3 text-sm text-[#5f6368]">{row.role}</td>
+                          <tr key={i} className="border-b border-[#262A35] hover:bg-[#1B1F2A] transition-colors">
+                            <td className="px-4 py-3 text-sm text-[#E6E9F0]">{row.email}</td>
+                            <td className="px-4 py-3 text-sm text-[#E6E9F0]">{row.fullName}</td>
+                            <td className="px-4 py-3 text-sm text-[#8A92A6]">{row.role}</td>
                           </tr>
                         ))}
                         {parsed.length > 20 && (
-                          <tr><td colSpan={3} className="px-4 py-3 text-[#5f6368] text-center text-xs">…and {parsed.length - 20} more</td></tr>
+                          <tr><td colSpan={3} className="px-4 py-3 text-[#8A92A6] text-center text-xs">…and {parsed.length - 20} more</td></tr>
                         )}
                       </tbody>
                     </table>
@@ -487,14 +487,14 @@ function CsvImportModal({ onClose, onImported }: { onClose: () => void; onImport
             </>
           ) : (
             <div>
-              <p className="text-sm font-semibold text-[#202124] mb-3">Import Results</p>
-              <div className="bg-white border border-[#e8eaed] rounded-xl overflow-hidden max-h-80 overflow-y-auto">
+              <p className="text-sm font-semibold text-[#E6E9F0] mb-3">Import Results</p>
+              <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden max-h-80 overflow-y-auto">
                 <table className="w-full text-xs">
-                  <thead className="bg-[#f1f3f4] border-b border-[#e8eaed] sticky top-0">
+                  <thead className="bg-[#1B1F2A] border-b border-[#262A35] sticky top-0">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Email</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Status</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Temp Password / Note</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-[#8A92A6]">Email</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-[#8A92A6]">Status</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-[#8A92A6]">Temp Password / Note</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -513,25 +513,25 @@ function CsvImportModal({ onClose, onImported }: { onClose: () => void; onImport
                   </tbody>
                 </table>
               </div>
-              <p className="text-xs text-[#5f6368] mt-2">Share temp passwords with users — they must reset on first login.</p>
+              <p className="text-xs text-[#8A92A6] mt-2">Share temp passwords with users — they must reset on first login.</p>
             </div>
           )}
         </div>
 
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#e8eaed]">
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#262A35]">
           {results ? (
-            <button onClick={onImported} className="bg-[#1a56db] text-white hover:bg-[#1447c0] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2">
+            <button onClick={onImported} className="bg-[#00C2FF] text-[#06121A] hover:bg-[#0098E6] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2">
               Done
             </button>
           ) : (
             <>
-              <button onClick={onClose} className="bg-[#f1f3f4] text-[#5f6368] hover:bg-[#303444] border border-[#e8eaed] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2">
+              <button onClick={onClose} className="bg-[#1B1F2A] text-[#8A92A6] hover:bg-[#262A35] hover:text-[#E6E9F0] border border-[#262A35] rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2 transition-colors">
                 Cancel
               </button>
               <button
                 onClick={handleImport}
                 disabled={!parsed.length || importing}
-                className="bg-[#1a56db] text-white hover:bg-[#1447c0] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2 disabled:opacity-40"
+                className="bg-[#00C2FF] text-[#06121A] hover:bg-[#0098E6] rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2 disabled:opacity-40 transition-colors"
               >
                 {importing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
                 {importing ? "Importing…" : `Import ${parsed.length} users`}
@@ -615,24 +615,24 @@ function UsersTab() {
       u.email?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const avatarColors = ["bg-[#1a56db]/20", "bg-purple-500/20", "bg-[#f8fafd]/20", "bg-[#ea4335]/20"];
+  const avatarColors = ["bg-[#00C2FF]/20", "bg-purple-500/20", "bg-[#0f9d58]/20", "bg-[#ea4335]/20"];
 
   return (
     <div className="flex h-full">
       <div className="flex-1 overflow-auto">
-        <div className="flex items-center gap-3 mb-4 p-4 border-b border-[#e8eaed] bg-white sticky top-0 z-10">
+        <div className="flex items-center gap-3 mb-4 p-4 border-b border-[#262A35] bg-[#12151D] sticky top-0 z-10">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5f6368]" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A92A6]" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by name or email..."
-              className="w-full bg-white border border-[#e8eaed] text-[#202124] rounded-lg pl-9 py-2 text-sm focus:ring-2 focus:ring-[#1a56db] outline-none placeholder:text-[#80868b]"
+              className="w-full bg-[#0D1017] border border-[#2E333F] text-[#E6E9F0] rounded-lg pl-9 py-2 text-sm focus:ring-2 focus:ring-[#00C2FF] focus:border-[#00C2FF]/60 outline-none placeholder:text-[#5A6275]"
             />
           </div>
           <button
             onClick={() => setShowCsvImport(true)}
-            className="bg-[#1a56db] text-white hover:bg-[#1447c0] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2"
+            className="bg-[#00C2FF] text-[#06121A] hover:bg-[#0098E6] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2"
           >
             <Upload className="w-4 h-4" />
             Import CSV
@@ -657,16 +657,16 @@ function UsersTab() {
         {error ? (
           <ErrorState message={error} />
         ) : (
-          <div className="overflow-x-auto bg-white border border-[#e8eaed] rounded-xl overflow-hidden">
+          <div className="overflow-x-auto bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
           <table className="w-full text-sm min-w-[640px]">
-            <thead className="bg-[#f1f3f4] border-b border-[#e8eaed]">
+            <thead className="bg-[#1B1F2A] border-b border-[#262A35]">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Name</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Email</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Role</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Joined</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Last Login</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#8A92A6]">Name</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#8A92A6]">Email</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#8A92A6]">Role</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#8A92A6]">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#8A92A6]">Joined</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#8A92A6]">Last Login</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -691,25 +691,25 @@ function UsersTab() {
                     <tr
                       key={u.id}
                       onClick={() => setSelectedUser(u.id === selectedUser?.id ? null : u)}
-                      className={`border-b border-[#e8eaed] hover:bg-[#f1f3f4] transition-colors cursor-pointer ${selectedUser?.id === u.id ? "bg-[#1a56db]/5" : ""}`}
+                      className={`border-b border-[#262A35] hover:bg-[#1B1F2A] transition-colors cursor-pointer ${selectedUser?.id === u.id ? "bg-[#00C2FF]/5" : ""}`}
                     >
-                      <td className="px-4 py-3 text-sm text-[#202124]">
+                      <td className="px-4 py-3 text-sm text-[#E6E9F0]">
                         <div className="flex items-center gap-3">
                           <div
-                            className={`w-8 h-8 rounded-full ${avatarColor} flex items-center justify-center text-[#202124] text-xs font-semibold flex-shrink-0`}
+                            className={`w-8 h-8 rounded-full ${avatarColor} flex items-center justify-center text-[#E6E9F0] text-xs font-semibold flex-shrink-0`}
                           >
                             {(u.fullName ?? u.email ?? "?").charAt(0).toUpperCase()}
                           </div>
-                          <span className="font-semibold text-[#202124]">{u.fullName ?? "—"}</span>
+                          <span className="font-semibold text-[#E6E9F0]">{u.fullName ?? "—"}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-[#5f6368]">{u.email}</td>
+                      <td className="px-4 py-3 text-sm text-[#8A92A6]">{u.email}</td>
                       <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-2">
                           <select
                             value={currentPendingRole}
                             onChange={(e) => handleRoleChange(u.id, e.target.value)}
-                            className="bg-white border border-[#e8eaed] rounded-md px-3 py-2 text-sm text-[#202124] focus:ring-2 focus:ring-[#1a56db] outline-none"
+                            className="bg-[#0D1017] border border-[#2E333F] rounded-lg px-3 py-2 text-sm text-[#E6E9F0] focus:ring-2 focus:ring-[#00C2FF] focus:border-[#00C2FF]/60 outline-none"
                             disabled={isSaving}
                           >
                             {["ADMIN", "CEO", "CISO", "MARKETING", "INTERNSHIP", "R_AND_D"].map((r) => (
@@ -720,7 +720,7 @@ function UsersTab() {
                             <button
                               onClick={() => applyRoleChange(u)}
                               disabled={isSaving}
-                              className="px-2 py-1 bg-[#1a56db] text-white rounded-md text-xs font-semibold hover:bg-[#1447c0] disabled:opacity-50"
+                              className="px-2 py-1 bg-[#00C2FF] text-[#06121A] rounded-md text-xs font-semibold hover:bg-[#0098E6] disabled:opacity-50"
                             >
                               {isSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : "Save"}
                             </button>
@@ -730,7 +730,7 @@ function UsersTab() {
                       <td className="px-4 py-3">
                         {u.isActive ? (
                           <span className="flex items-center gap-1.5 text-[#0f9d58] text-xs font-medium">
-                            <span className="w-2 h-2 rounded-full bg-[#f8fafd]" />
+                            <span className="w-2 h-2 rounded-full bg-[#0f9d58]" />
                             Active
                           </span>
                         ) : (
@@ -740,10 +740,10 @@ function UsersTab() {
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-sm text-[#5f6368]">
+                      <td className="px-4 py-3 text-sm text-[#8A92A6]">
                         {u.createdAt ? format(parseISO(u.createdAt), "MMM d, yyyy") : "—"}
                       </td>
-                      <td className="px-4 py-3 text-sm text-[#5f6368]">
+                      <td className="px-4 py-3 text-sm text-[#8A92A6]">
                         {u.lastLogin ? format(parseISO(u.lastLogin), "MMM d, yyyy HH:mm") : "Never"}
                       </td>
                       <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
@@ -751,7 +751,7 @@ function UsersTab() {
                           onClick={() => toggleSuspend(u)}
                           disabled={isSaving}
                           title={u.isActive ? "Suspend user" : "Unsuspend user"}
-                          className={`p-1.5 text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124] rounded-md transition-colors disabled:opacity-50`}
+                          className={`p-1.5 text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0] rounded-md transition-colors disabled:opacity-50`}
                         >
                           {isSaving
                             ? <Loader2 className="w-4 h-4 animate-spin" />
@@ -770,35 +770,35 @@ function UsersTab() {
       </div>
 
       {selectedUser && (
-        <div className="w-72 border-l border-[#e8eaed] flex flex-col flex-shrink-0 bg-white">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#e8eaed] bg-white">
-            <span className="text-sm font-semibold text-[#202124]">User Details</span>
-            <button onClick={() => setSelectedUser(null)} className="p-1.5 text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124] rounded-md transition-colors">
+        <div className="w-72 border-l border-[#262A35] flex flex-col flex-shrink-0 bg-[#12151D]">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-[#262A35] bg-[#12151D]">
+            <span className="text-sm font-semibold text-[#E6E9F0]">User Details</span>
+            <button onClick={() => setSelectedUser(null)} className="p-1.5 text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0] rounded-md transition-colors">
               <X className="w-4 h-4" />
             </button>
           </div>
           <div className="p-5 space-y-4 flex-1 overflow-y-auto text-sm">
             <div className="flex flex-col items-center gap-3 pt-2">
               <div
-                className={`w-14 h-14 rounded-full ${avatarColors[(selectedUser.fullName?.charCodeAt(0) ?? 0) % avatarColors.length]} flex items-center justify-center text-[#202124] text-xl font-semibold`}
+                className={`w-14 h-14 rounded-full ${avatarColors[(selectedUser.fullName?.charCodeAt(0) ?? 0) % avatarColors.length]} flex items-center justify-center text-[#E6E9F0] text-xl font-semibold`}
               >
                 {selectedUser.fullName.charAt(0).toUpperCase()}
               </div>
               <div className="text-center">
-                <p className="font-semibold text-[#202124]">{selectedUser.fullName}</p>
-                <p className="text-xs text-[#5f6368]">{selectedUser.email}</p>
+                <p className="font-semibold text-[#E6E9F0]">{selectedUser.fullName}</p>
+                <p className="text-xs text-[#8A92A6]">{selectedUser.email}</p>
               </div>
             </div>
             <div className="space-y-1">
               {([
-                ["Role", <span key="role" className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border ${ROLE_COLORS[selectedUser.role] ?? "bg-[#f1f3f4] text-[#5f6368] border-[#e8eaed]"}`}>{selectedUser.role}</span>],
+                ["Role", <span key="role" className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border ${ROLE_COLORS[selectedUser.role] ?? "bg-[#1B1F2A] text-[#8A92A6] border-[#262A35]"}`}>{selectedUser.role}</span>],
                 ["Status", <span key="status" className={selectedUser.isActive ? "text-[#0f9d58] font-semibold" : "text-[#ea4335] font-semibold"}>{selectedUser.isActive ? "Active" : "Suspended"}</span>],
                 ["Joined", format(parseISO(selectedUser.createdAt), "MMM d, yyyy")],
                 ["Last Login", selectedUser.lastLogin ? format(parseISO(selectedUser.lastLogin), "MMM d, yyyy HH:mm") : "Never"],
               ] as [string, React.ReactNode][]).map(([label, val]) => (
-                <div key={label} className="flex justify-between py-2 border-b border-[#e8eaed]">
-                  <span className="text-[#5f6368]">{label}</span>
-                  <span className="text-[#202124]">{val}</span>
+                <div key={label} className="flex justify-between py-2 border-b border-[#262A35]">
+                  <span className="text-[#8A92A6]">{label}</span>
+                  <span className="text-[#E6E9F0]">{val}</span>
                 </div>
               ))}
             </div>
@@ -852,32 +852,32 @@ function NewMailboxModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/40" />
-      <div className="relative z-10 bg-white rounded-xl shadow-2xl border border-[#e8eaed] p-6 w-full max-w-md mx-4">
+      <div className="relative z-10 bg-[#12151D] rounded-xl shadow-2xl border border-[#262A35] p-6 w-full max-w-md mx-4">
         <div className="flex items-center justify-between mb-5">
-          <h2 className="font-semibold text-[#202124]">New Mailbox</h2>
-          <button onClick={onClose} className="p-1.5 text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124] rounded-md transition-colors">
+          <h2 className="font-semibold text-[#E6E9F0]">New Mailbox</h2>
+          <button onClick={onClose} className="p-1.5 text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0] rounded-md transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-[#5f6368] mb-1.5">Email Address</label>
+            <label className="block text-xs font-semibold text-[#8A92A6] mb-1.5">Email Address</label>
             <input
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="e.g. support@cybersage.io"
               type="email"
-              className="w-full px-3 py-2.5 border border-[#e8eaed] rounded-lg text-sm text-[#202124] bg-white focus:ring-2 focus:ring-[#1a56db] outline-none"
+              className="w-full px-3 py-2.5 border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] bg-[#0D1017] focus:ring-2 focus:ring-[#00C2FF] focus:border-[#00C2FF]/60 outline-none placeholder:text-[#5A6275]"
               autoFocus
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-[#5f6368] mb-1.5">Display Name</label>
+            <label className="block text-xs font-semibold text-[#8A92A6] mb-1.5">Display Name</label>
             <input
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="e.g. Support Team"
-              className="w-full px-3 py-2.5 border border-[#e8eaed] rounded-lg text-sm text-[#202124] bg-white focus:ring-2 focus:ring-[#1a56db] outline-none"
+              className="w-full px-3 py-2.5 border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] bg-[#0D1017] focus:ring-2 focus:ring-[#00C2FF] focus:border-[#00C2FF]/60 outline-none placeholder:text-[#5A6275]"
             />
           </div>
           <div className="space-y-3 pt-1">
@@ -888,23 +888,23 @@ function NewMailboxModal({
               <label key={label} className="flex items-center gap-3 cursor-pointer">
                 <div
                   onClick={() => set((v) => !v)}
-                  className={`w-10 h-6 rounded-full transition-colors relative ${val ? "bg-[#1a56db]" : "bg-[#f1f3f4]"}`}
+                  className={`w-10 h-6 rounded-full transition-colors relative ${val ? "bg-[#00C2FF]" : "bg-[#1B1F2A]"}`}
                 >
-                  <span className={`absolute top-1 w-4 h-4 bg-[#dfe1f6] rounded-full shadow transition-transform ${val ? "translate-x-5" : "translate-x-1"}`} />
+                  <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${val ? "translate-x-5" : "translate-x-1"}`} />
                 </div>
-                <span className="text-sm text-[#202124]">{label}</span>
+                <span className="text-sm text-[#E6E9F0]">{label}</span>
               </label>
             ))}
           </div>
         </div>
         <div className="flex gap-3 mt-6">
-          <button onClick={onClose} className="flex-1 bg-white text-[#5f6368] hover:bg-[#f1f3f4] border border-[#e8eaed] rounded-md px-4 py-2 text-sm font-medium">
+          <button onClick={onClose} className="flex-1 bg-[#1B1F2A] text-[#8A92A6] hover:bg-[#262A35] hover:text-[#E6E9F0] border border-[#262A35] rounded-lg px-4 py-2 text-sm font-medium transition-colors">
             Cancel
           </button>
           <button
             onClick={() => void submit()}
             disabled={creating}
-            className="flex-1 flex items-center justify-center gap-2 bg-[#1a56db] text-white hover:bg-[#1447c0] rounded-md px-4 py-2 text-sm font-medium disabled:opacity-50"
+            className="flex-1 flex items-center justify-center gap-2 bg-[#00C2FF] text-[#06121A] hover:bg-[#0098E6] rounded-md px-4 py-2 text-sm font-medium disabled:opacity-50"
           >
             {creating && <Loader2 className="w-4 h-4 animate-spin" />}
             Create Mailbox
@@ -956,18 +956,18 @@ function MailboxesTab() {
   };
 
   const typeColor = (type: string) => {
-    if (type === "No-Reply") return "bg-[#f1f3f4] text-[#5f6368] border-[#e8eaed]";
-    if (type === "Shared") return "bg-[#1a56db]/10 text-[#1a56db] border-[#1a56db]/20";
+    if (type === "No-Reply") return "bg-[#1B1F2A] text-[#8A92A6] border-[#262A35]";
+    if (type === "Shared") return "bg-[#00C2FF]/10 text-[#00C2FF] border-[#00C2FF]/20";
     return "bg-[#0f9d58]/10 text-[#0f9d58] border-[#0f9d58]/20";
   };
 
   return (
     <div>
-      <div className="flex items-center justify-between p-4 border-b border-[#e8eaed] bg-white sticky top-0 z-10">
-        <span className="text-sm text-[#5f6368]">{mailboxes.length} mailbox{mailboxes.length !== 1 ? "es" : ""}</span>
+      <div className="flex items-center justify-between p-4 border-b border-[#262A35] bg-[#12151D] sticky top-0 z-10">
+        <span className="text-sm text-[#8A92A6]">{mailboxes.length} mailbox{mailboxes.length !== 1 ? "es" : ""}</span>
         <button
           onClick={() => setShowModal(true)}
-          className="bg-[#1a56db] text-white hover:bg-[#1447c0] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2"
+          className="bg-[#00C2FF] text-[#06121A] hover:bg-[#0098E6] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
           New Mailbox
@@ -979,13 +979,13 @@ function MailboxesTab() {
       ) : (
         <div className="overflow-x-auto">
         <table className="w-full text-sm min-w-[640px]">
-          <thead className="bg-white border-b border-[#e8eaed]">
+          <thead className="bg-[#1B1F2A] border-b border-[#262A35]">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Email</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Display Name</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Type</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Threads</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Members</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#8A92A6]">Email</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#8A92A6]">Display Name</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#8A92A6]">Type</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#8A92A6]">Threads</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#8A92A6]">Members</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
@@ -1003,30 +1003,30 @@ function MailboxesTab() {
               : mailboxes.map((m) => {
                 const type = mailboxType(m);
                 return (
-                  <tr key={m.id} className="border-b border-[#e8eaed] hover:bg-[#f1f3f4] transition-colors">
-                    <td className="px-4 py-3 text-sm text-[#202124] font-mono">{m.email}</td>
-                    <td className="px-4 py-3 text-sm font-semibold text-[#202124]">{m.displayName}</td>
+                  <tr key={m.id} className="border-b border-[#262A35] hover:bg-[#1B1F2A] transition-colors">
+                    <td className="px-4 py-3 text-sm text-[#E6E9F0] font-mono">{m.email}</td>
+                    <td className="px-4 py-3 text-sm font-semibold text-[#E6E9F0]">{m.displayName}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium border ${typeColor(type)}`}>
                         {type}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-[#5f6368]">{m._count?.threads ?? 0}</td>
-                    <td className="px-4 py-3 text-sm text-[#5f6368]">{m.accessLogs?.length ?? 0}</td>
+                    <td className="px-4 py-3 text-sm text-[#8A92A6]">{m._count?.threads ?? 0}</td>
+                    <td className="px-4 py-3 text-sm text-[#8A92A6]">{m.accessLogs?.length ?? 0}</td>
                     <td className="px-4 py-3 text-right">
                       {confirmDeleteId === m.id ? (
                         <div className="flex items-center gap-2 justify-end">
-                          <span className="text-xs text-[#5f6368]">Delete?</span>
+                          <span className="text-xs text-[#8A92A6]">Delete?</span>
                           <button
                             onClick={() => void handleDelete(m.id)}
                             disabled={deletingId === m.id}
-                            className="px-2.5 py-1 bg-[#ea4335] text-white rounded-md text-xs font-semibold hover:bg-[#ff6b84] disabled:opacity-50"
+                            className="px-2.5 py-1 bg-[#ea4335] text-white rounded-md text-xs font-semibold hover:bg-[#c5362a] disabled:opacity-50 transition-colors"
                           >
                             {deletingId === m.id ? <Loader2 className="w-3 h-3 animate-spin" /> : "Yes"}
                           </button>
                           <button
                             onClick={() => setConfirmDeleteId(null)}
-                            className="px-2.5 py-1 bg-white text-[#5f6368] hover:bg-[#f1f3f4] border border-[#e8eaed] rounded-md text-xs font-semibold"
+                            className="px-2.5 py-1 bg-[#1B1F2A] text-[#8A92A6] hover:bg-[#262A35] hover:text-[#E6E9F0] border border-[#262A35] rounded-md text-xs font-semibold transition-colors"
                           >
                             No
                           </button>
@@ -1034,7 +1034,7 @@ function MailboxesTab() {
                       ) : (
                         <button
                           onClick={() => setConfirmDeleteId(m.id)}
-                          className="p-1.5 text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124] rounded-md transition-colors"
+                          className="p-1.5 text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0] rounded-md transition-colors"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -1138,7 +1138,7 @@ function AuditLogsTab() {
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const actionBadge = (action: string) => {
-    const color = ACTION_COLORS[action] ?? "bg-[#f1f3f4] text-[#5f6368] border-[#e8eaed]";
+    const color = ACTION_COLORS[action] ?? "bg-[#1B1F2A] text-[#8A92A6] border-[#262A35]";
     return (
       <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold border ${color}`}>
         {action}
@@ -1148,35 +1148,35 @@ function AuditLogsTab() {
 
   return (
     <div>
-      <div className="p-4 border-b border-[#e8eaed] bg-white sticky top-0 z-10">
+      <div className="p-4 border-b border-[#262A35] bg-[#12151D] sticky top-0 z-10">
         <div className="flex items-center gap-3 mb-4 flex-wrap">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#80868b]" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5A6275]" />
             <input
               value={actionFilter}
               onChange={(e) => setActionFilter(e.target.value)}
               placeholder="Filter by action..."
-              className="bg-white border border-[#e8eaed] rounded-lg pl-9 py-2 text-sm text-[#202124] focus:ring-2 focus:ring-[#1a56db] outline-none w-44"
+              className="bg-[#0D1017] border border-[#2E333F] rounded-lg pl-9 py-2 text-sm text-[#E6E9F0] focus:ring-2 focus:ring-[#00C2FF] focus:border-[#00C2FF]/60 outline-none w-44"
             />
           </div>
           <input
             type="date"
             value={fromDate}
             onChange={(e) => setFromDate(e.target.value)}
-            className="bg-white border border-[#e8eaed] rounded-md px-3 py-2 text-sm text-[#202124] focus:ring-2 focus:ring-[#1a56db] outline-none"
+            className="bg-[#0D1017] border border-[#2E333F] rounded-lg px-3 py-2 text-sm text-[#E6E9F0] focus:ring-2 focus:ring-[#00C2FF] focus:border-[#00C2FF]/60 outline-none"
           />
-          <span className="text-[#5f6368] text-sm">to</span>
+          <span className="text-[#8A92A6] text-sm">to</span>
           <input
             type="date"
             value={toDate}
             onChange={(e) => setToDate(e.target.value)}
-            className="bg-white border border-[#e8eaed] rounded-md px-3 py-2 text-sm text-[#202124] focus:ring-2 focus:ring-[#1a56db] outline-none"
+            className="bg-[#0D1017] border border-[#2E333F] rounded-lg px-3 py-2 text-sm text-[#E6E9F0] focus:ring-2 focus:ring-[#00C2FF] focus:border-[#00C2FF]/60 outline-none"
           />
-          <span className="text-xs text-[#5f6368] ml-auto">{total} total logs</span>
+          <span className="text-xs text-[#8A92A6] ml-auto">{total} total logs</span>
           <button
             onClick={() => exportAuditCsv(logs)}
             disabled={logs.length === 0}
-            className="bg-white text-[#5f6368] hover:bg-[#f1f3f4] border border-[#e8eaed] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2 disabled:opacity-40"
+            className="bg-[#1B1F2A] text-[#8A92A6] hover:bg-[#262A35] hover:text-[#E6E9F0] border border-[#262A35] rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2 disabled:opacity-40 transition-colors"
           >
             <Download className="w-4 h-4" />
             Export CSV
@@ -1190,14 +1190,14 @@ function AuditLogsTab() {
         <>
           <div className="overflow-x-auto">
           <table className="w-full text-sm min-w-[640px]">
-            <thead className="bg-white border-b border-[#e8eaed]">
+            <thead className="bg-[#1B1F2A] border-b border-[#262A35]">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Timestamp</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Actor</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Action</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Target Type</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Target ID</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">IP Address</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#8A92A6]">Timestamp</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#8A92A6]">Actor</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#8A92A6]">Action</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#8A92A6]">Target Type</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#8A92A6]">Target ID</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#8A92A6]">IP Address</th>
               </tr>
             </thead>
             <tbody>
@@ -1212,15 +1212,15 @@ function AuditLogsTab() {
                   </tr>
                 )
                 : logs.map((log) => (
-                  <tr key={log.id} className="border-b border-[#e8eaed] hover:bg-[#f1f3f4] transition-colors">
-                    <td className="px-4 py-3 text-sm text-[#5f6368] whitespace-nowrap">
+                  <tr key={log.id} className="border-b border-[#262A35] hover:bg-[#1B1F2A] transition-colors">
+                    <td className="px-4 py-3 text-sm text-[#8A92A6] whitespace-nowrap">
                       {format(parseISO(log.createdAt), "MMM d, yyyy HH:mm:ss")}
                     </td>
-                    <td className="px-4 py-3 font-mono text-sm text-[#202124]">{log.actorId ?? "—"}</td>
+                    <td className="px-4 py-3 font-mono text-sm text-[#E6E9F0]">{log.actorId ?? "—"}</td>
                     <td className="px-4 py-3">{actionBadge(log.action)}</td>
-                    <td className="px-4 py-3 text-sm text-[#202124]">{log.targetType ?? "—"}</td>
-                    <td className="px-4 py-3 font-mono text-sm text-[#5f6368]">{log.targetId ?? "—"}</td>
-                    <td className="px-4 py-3 font-mono text-sm text-[#5f6368]">{log.ipAddress ?? "—"}</td>
+                    <td className="px-4 py-3 text-sm text-[#E6E9F0]">{log.targetType ?? "—"}</td>
+                    <td className="px-4 py-3 font-mono text-sm text-[#8A92A6]">{log.targetId ?? "—"}</td>
+                    <td className="px-4 py-3 font-mono text-sm text-[#8A92A6]">{log.ipAddress ?? "—"}</td>
                   </tr>
                 ))}
             </tbody>
@@ -1228,21 +1228,21 @@ function AuditLogsTab() {
           </div>
 
           {!loading && totalPages > 1 && (
-            <div className="flex items-center gap-2 mt-4 text-sm text-[#5f6368] justify-center py-3">
+            <div className="flex items-center gap-2 mt-4 text-sm text-[#8A92A6] justify-center py-3">
               <button
                 onClick={() => void goToPage(page - 1)}
                 disabled={page <= 1}
-                className="px-3 py-1.5 bg-white border border-[#e8eaed] rounded-md text-sm text-[#5f6368] hover:bg-[#f1f3f4] disabled:opacity-40"
+                className="px-3 py-1.5 bg-[#1B1F2A] border border-[#262A35] rounded-lg text-sm text-[#8A92A6] hover:bg-[#262A35] hover:text-[#E6E9F0] disabled:opacity-40 transition-colors"
               >
                 Previous
               </button>
-              <span className="text-sm text-[#5f6368]">
+              <span className="text-sm text-[#8A92A6]">
                 Page {page} of {totalPages}
               </span>
               <button
                 onClick={() => void goToPage(page + 1)}
                 disabled={page >= totalPages}
-                className="px-3 py-1.5 bg-white border border-[#e8eaed] rounded-md text-sm text-[#5f6368] hover:bg-[#f1f3f4] disabled:opacity-40"
+                className="px-3 py-1.5 bg-[#1B1F2A] border border-[#262A35] rounded-lg text-sm text-[#8A92A6] hover:bg-[#262A35] hover:text-[#E6E9F0] disabled:opacity-40 transition-colors"
               >
                 Next
               </button>
@@ -1318,11 +1318,11 @@ function SuppressionTab() {
 
   return (
     <div>
-      <div className="flex items-center justify-between p-4 border-b border-[#e8eaed] bg-white sticky top-0 z-10">
-        <span className="text-sm text-[#5f6368]">{entries.length} suppressed address{entries.length !== 1 ? "es" : ""}</span>
+      <div className="flex items-center justify-between p-4 border-b border-[#262A35] bg-[#12151D] sticky top-0 z-10">
+        <span className="text-sm text-[#8A92A6]">{entries.length} suppressed address{entries.length !== 1 ? "es" : ""}</span>
         <button
           onClick={() => setShowAdd((v) => !v)}
-          className="bg-[#1a56db] text-white hover:bg-[#1447c0] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2"
+          className="bg-[#00C2FF] text-[#06121A] hover:bg-[#0098E6] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
           Add Manually
@@ -1330,7 +1330,7 @@ function SuppressionTab() {
       </div>
 
       {showAdd && (
-        <div className="p-4 border-b border-[#e8eaed] bg-[#1a56db]/5">
+        <div className="p-4 border-b border-[#262A35] bg-[#00C2FF]/5">
           <div className="flex items-center gap-3 max-w-lg">
             <input
               value={newEmail}
@@ -1339,19 +1339,19 @@ function SuppressionTab() {
               placeholder="Enter email to suppress..."
               type="email"
               autoFocus
-              className="flex-1 bg-white border border-[#e8eaed] rounded-lg px-3 py-2 text-sm text-[#202124] focus:ring-2 focus:ring-[#1a56db] outline-none"
+              className="flex-1 bg-[#12151D] border border-[#262A35] rounded-lg px-3 py-2 text-sm text-[#E6E9F0] focus:ring-2 focus:ring-[#00C2FF] outline-none"
             />
             <button
               onClick={() => void handleAdd()}
               disabled={adding}
-              className="bg-[#1a56db] text-white hover:bg-[#1447c0] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2 disabled:opacity-50"
+              className="bg-[#00C2FF] text-[#06121A] hover:bg-[#0098E6] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2 disabled:opacity-50"
             >
               {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
               Add
             </button>
             <button
               onClick={() => { setShowAdd(false); setNewEmail(""); }}
-              className="p-1.5 text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124] rounded-md transition-colors"
+              className="p-1.5 text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0] rounded-md transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -1364,11 +1364,11 @@ function SuppressionTab() {
       ) : (
         <div className="overflow-x-auto">
         <table className="w-full text-sm min-w-[640px]">
-          <thead className="bg-white border-b border-[#e8eaed]">
+          <thead className="bg-[#1B1F2A] border-b border-[#262A35]">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Email</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Reason</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Added</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#8A92A6]">Email</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#8A92A6]">Reason</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#8A92A6]">Added</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
@@ -1384,14 +1384,14 @@ function SuppressionTab() {
                 </tr>
               )
               : entries.map((entry) => (
-                <tr key={entry.id} className="border-b border-[#e8eaed] hover:bg-[#f1f3f4] transition-colors">
-                  <td className="px-4 py-3 text-sm text-[#202124] font-mono">{entry.email}</td>
+                <tr key={entry.id} className="border-b border-[#262A35] hover:bg-[#1B1F2A] transition-colors">
+                  <td className="px-4 py-3 text-sm text-[#E6E9F0] font-mono">{entry.email}</td>
                   <td className="px-4 py-3">
-                    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border ${REASON_COLORS[entry.reason] ?? "bg-[#f1f3f4] text-[#5f6368] border-[#e8eaed]"}`}>
+                    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border ${REASON_COLORS[entry.reason] ?? "bg-[#1B1F2A] text-[#8A92A6] border-[#262A35]"}`}>
                       {entry.reason}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-sm text-[#5f6368]">
+                  <td className="px-4 py-3 text-sm text-[#8A92A6]">
                     {format(parseISO(entry.createdAt), "MMM d, yyyy HH:mm")}
                   </td>
                   <td className="px-4 py-3 text-right">
@@ -1440,10 +1440,10 @@ function SecurityTab() {
       <div className="p-6 space-y-4">
         <div className="grid grid-cols-3 gap-4">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-28 bg-[#f1f3f4] rounded-xl animate-pulse" />
+            <div key={i} className="h-28 bg-[#1B1F2A] rounded-xl animate-pulse" />
           ))}
         </div>
-        <div className="h-64 bg-[#f1f3f4] rounded-xl animate-pulse" />
+        <div className="h-64 bg-[#1B1F2A] rounded-xl animate-pulse" />
       </div>
     );
   }
@@ -1455,46 +1455,46 @@ function SecurityTab() {
     <div className="p-6 space-y-6">
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-[#ea4335]/10 border border-[#ea4335]/20 rounded-xl p-4">
-          <p className="text-sm font-medium text-[#5f6368]">Open Incidents</p>
-          <p className="text-2xl font-semibold text-[#202124] mt-1">{openIncidents}</p>
-          <p className="text-xs text-[#5f6368] mt-1">Needs attention</p>
+          <p className="text-sm font-medium text-[#8A92A6]">Open Incidents</p>
+          <p className="text-2xl font-semibold text-[#E6E9F0] mt-1">{openIncidents}</p>
+          <p className="text-xs text-[#8A92A6] mt-1">Needs attention</p>
         </div>
         <div className="bg-[#ea4335]/5 border border-[#ea4335]/10 rounded-xl p-4">
-          <p className="text-sm font-medium text-[#5f6368]">DLP Violations</p>
-          <p className="text-2xl font-semibold text-[#202124] mt-1">{stats.dlpViolations}</p>
-          <p className="text-xs text-[#5f6368] mt-1">Policy breaches</p>
+          <p className="text-sm font-medium text-[#8A92A6]">DLP Violations</p>
+          <p className="text-2xl font-semibold text-[#E6E9F0] mt-1">{stats.dlpViolations}</p>
+          <p className="text-xs text-[#8A92A6] mt-1">Policy breaches</p>
         </div>
         <div className="bg-[#ea4335]/5 border border-[#ea4335]/10 rounded-xl p-4">
-          <p className="text-sm font-medium text-[#5f6368]">High-Risk Threats</p>
-          <p className="text-2xl font-semibold text-[#202124] mt-1">{stats.highRiskThreats}</p>
-          <p className="text-xs text-[#5f6368] mt-1">Score &ge; 50</p>
+          <p className="text-sm font-medium text-[#8A92A6]">High-Risk Threats</p>
+          <p className="text-2xl font-semibold text-[#E6E9F0] mt-1">{stats.highRiskThreats}</p>
+          <p className="text-xs text-[#8A92A6] mt-1">Score &ge; 50</p>
         </div>
       </div>
 
       {/* DLP incidents by severity — horizontal bar chart */}
       {stats.incidents.bySeverity.length > 0 && (
-        <div className="bg-white border border-[#e8eaed] rounded-xl overflow-hidden">
-          <div className="px-5 py-4 border-b border-[#e8eaed]">
-            <h3 className="font-semibold text-[#202124] text-sm">Incidents by Severity</h3>
-            <p className="text-xs text-[#5f6368] mt-0.5">DLP & threat incident distribution</p>
+        <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
+          <div className="px-5 py-4 border-b border-[#262A35]">
+            <h3 className="font-semibold text-[#E6E9F0] text-sm">Incidents by Severity</h3>
+            <p className="text-xs text-[#8A92A6] mt-0.5">DLP & threat incident distribution</p>
           </div>
           <div className="p-5 space-y-3">
             {(() => {
               const maxVal = Math.max(...stats.incidents.bySeverity.map((s) => s._count), 1);
               const colors: Record<string, string> = {
                 CRITICAL: "bg-[#ea4335]", HIGH: "bg-orange-500",
-                MEDIUM: "bg-yellow-500", LOW: "bg-[#1a56db]",
+                MEDIUM: "bg-yellow-500", LOW: "bg-[#00C2FF]",
               };
               return stats.incidents.bySeverity.map((s) => (
                 <div key={s.severity} className="flex items-center gap-3">
-                  <span className="text-xs font-semibold text-[#5f6368] w-16 flex-shrink-0">{s.severity}</span>
-                  <div className="bg-[#f1f3f4] rounded-full h-2 flex-1">
+                  <span className="text-xs font-semibold text-[#8A92A6] w-16 flex-shrink-0">{s.severity}</span>
+                  <div className="bg-[#1B1F2A] rounded-full h-2 flex-1">
                     <div
                       className={`h-2 rounded-full transition-all ${colors[s.severity] ?? "bg-[#9aa3b8]"}`}
                       style={{ width: `${Math.round((s._count / maxVal) * 100)}%` }}
                     />
                   </div>
-                  <span className="text-xs font-semibold text-[#202124] w-8 text-right flex-shrink-0">{s._count}</span>
+                  <span className="text-xs font-semibold text-[#E6E9F0] w-8 text-right flex-shrink-0">{s._count}</span>
                 </div>
               ));
             })()}
@@ -1502,31 +1502,31 @@ function SecurityTab() {
         </div>
       )}
 
-      <div className="bg-white border border-[#e8eaed] rounded-xl overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[#e8eaed]">
-          <h3 className="font-semibold text-[#202124] text-sm">Recent Security Events</h3>
-          <span className="text-[10px] text-[#80868b] italic">Managed by CyberSage Sentinel</span>
+      <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[#262A35]">
+          <h3 className="font-semibold text-[#E6E9F0] text-sm">Recent Security Events</h3>
+          <span className="text-[10px] text-[#5A6275] italic">Managed by CyberSage Sentinel</span>
         </div>
         {stats.recentSecurityEvents.length === 0 ? (
           <EmptyState icon={ShieldAlert} message="No recent security events." />
         ) : (
           <div className="divide-y divide-[#262b3a]">
             {stats.recentSecurityEvents.map((evt) => {
-              const sc = SEVERITY_COLORS[evt.severity] ?? "text-[#5f6368] bg-[#f1f3f4]";
+              const sc = SEVERITY_COLORS[evt.severity] ?? "text-[#8A92A6] bg-[#1B1F2A]";
               return (
-                <div key={evt.id} className="flex items-center gap-4 px-5 py-3 hover:bg-[#f1f3f4] transition-colors">
+                <div key={evt.id} className="flex items-center gap-4 px-5 py-3 hover:bg-[#1B1F2A] transition-colors">
                   <div className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${sc}`}>
                     {evt.severity}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-[#202124] text-sm">{evt.type}</p>
+                    <p className="font-semibold text-[#E6E9F0] text-sm">{evt.type}</p>
                     {evt.metadata && (
-                      <p className="text-xs text-[#5f6368] truncate">
+                      <p className="text-xs text-[#8A92A6] truncate">
                         {JSON.stringify(evt.metadata).slice(0, 80)}
                       </p>
                     )}
                   </div>
-                  <span className="text-xs text-[#5f6368] whitespace-nowrap">
+                  <span className="text-xs text-[#8A92A6] whitespace-nowrap">
                     {format(parseISO(evt.createdAt), "MMM d, HH:mm")}
                   </span>
                 </div>
@@ -1625,13 +1625,13 @@ function LegalHoldTab() {
 
   return (
     <div>
-      <div className="flex items-center justify-between p-4 border-b border-[#e8eaed] bg-white sticky top-0 z-10">
-        <span className="text-sm text-[#5f6368]">
+      <div className="flex items-center justify-between p-4 border-b border-[#262A35] bg-[#12151D] sticky top-0 z-10">
+        <span className="text-sm text-[#8A92A6]">
           {activeHolds.length} active hold{activeHolds.length !== 1 ? "s" : ""}
         </span>
         <button
           onClick={() => setShowModal(true)}
-          className="bg-[#1a56db] text-white hover:bg-[#1447c0] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2"
+          className="bg-[#00C2FF] text-[#06121A] hover:bg-[#0098E6] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
           Place Hold
@@ -1641,14 +1641,14 @@ function LegalHoldTab() {
       {error ? <ErrorState message={error} /> : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm min-w-[640px]">
-            <thead className="bg-white border-b border-[#e8eaed]">
+            <thead className="bg-[#1B1F2A] border-b border-[#262A35]">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">User</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Email</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Hold Placed</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Placed By</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Reason</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-[#5f6368]">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#8A92A6]">User</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#8A92A6]">Email</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#8A92A6]">Hold Placed</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#8A92A6]">Placed By</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#8A92A6]">Reason</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#8A92A6]">Status</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -1664,19 +1664,19 @@ function LegalHoldTab() {
                   </tr>
                 )
                 : holds.map((h) => (
-                  <tr key={h.id} className="border-b border-[#e8eaed] hover:bg-[#f1f3f4] transition-colors">
-                    <td className="px-4 py-3 text-sm font-semibold text-[#202124]">{h.userName}</td>
-                    <td className="px-4 py-3 font-mono text-sm text-[#5f6368]">{h.userEmail}</td>
-                    <td className="px-4 py-3 text-sm text-[#5f6368] whitespace-nowrap">
+                  <tr key={h.id} className="border-b border-[#262A35] hover:bg-[#1B1F2A] transition-colors">
+                    <td className="px-4 py-3 text-sm font-semibold text-[#E6E9F0]">{h.userName}</td>
+                    <td className="px-4 py-3 font-mono text-sm text-[#8A92A6]">{h.userEmail}</td>
+                    <td className="px-4 py-3 text-sm text-[#8A92A6] whitespace-nowrap">
                       {format(parseISO(h.placedAt), "MMM d, yyyy HH:mm")}
                     </td>
-                    <td className="px-4 py-3 text-sm text-[#5f6368]">{h.placedBy}</td>
-                    <td className="px-4 py-3 text-sm text-[#5f6368] max-w-[200px] truncate">{h.reason}</td>
+                    <td className="px-4 py-3 text-sm text-[#8A92A6]">{h.placedBy}</td>
+                    <td className="px-4 py-3 text-sm text-[#8A92A6] max-w-[200px] truncate">{h.reason}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border ${
                         h.status === "Active"
                           ? "bg-[#ea4335]/10 text-[#ea4335] border-[#ea4335]/20"
-                          : "bg-[#f1f3f4] text-[#5f6368] border-[#e8eaed]"
+                          : "bg-[#1B1F2A] text-[#8A92A6] border-[#262A35]"
                       }`}>
                         {h.status}
                       </span>
@@ -1686,7 +1686,7 @@ function LegalHoldTab() {
                         <button
                           onClick={() => void releaseHold(h.targetUserId)}
                           disabled={releasingId === h.targetUserId}
-                          className="flex items-center gap-1.5 px-2.5 py-1 text-[#1a56db] hover:bg-[#1a56db]/10 rounded-md text-xs font-semibold transition-colors disabled:opacity-50 ml-auto"
+                          className="flex items-center gap-1.5 px-2.5 py-1 text-[#00C2FF] hover:bg-[#00C2FF]/10 rounded-md text-xs font-semibold transition-colors disabled:opacity-50 ml-auto"
                         >
                           {releasingId === h.targetUserId
                             ? <Loader2 className="w-3 h-3 animate-spin" />
@@ -1706,20 +1706,20 @@ function LegalHoldTab() {
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/60" />
-          <div className="relative z-10 bg-white rounded-xl shadow-2xl border border-[#e8eaed] p-6 w-full max-w-md mx-4">
+          <div className="relative z-10 bg-[#12151D] rounded-xl shadow-2xl border border-[#262A35] p-6 w-full max-w-md mx-4">
             <div className="flex items-center justify-between mb-5">
-              <h2 className="font-semibold text-[#202124]">Place Legal Hold</h2>
-              <button onClick={() => setShowModal(false)} className="p-1.5 text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124] rounded-md transition-colors">
+              <h2 className="font-semibold text-[#E6E9F0]">Place Legal Hold</h2>
+              <button onClick={() => setShowModal(false)} className="p-1.5 text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0] rounded-md transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-[#5f6368] mb-1.5">User</label>
+                <label className="block text-xs font-semibold text-[#8A92A6] mb-1.5">User</label>
                 <select
                   value={selectedUserId}
                   onChange={(e) => setSelectedUserId(e.target.value)}
-                  className="w-full bg-white border border-[#e8eaed] rounded-md px-3 py-2.5 text-sm text-[#202124] focus:ring-2 focus:ring-[#1a56db] outline-none"
+                  className="w-full bg-[#12151D] border border-[#262A35] rounded-md px-3 py-2.5 text-sm text-[#E6E9F0] focus:ring-2 focus:ring-[#00C2FF] outline-none"
                 >
                   <option value="">Select a user…</option>
                   {users.map(u => (
@@ -1728,7 +1728,7 @@ function LegalHoldTab() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#5f6368] mb-1.5">
+                <label className="block text-xs font-semibold text-[#8A92A6] mb-1.5">
                   Reason <span className="text-[#ea4335]">*</span>
                 </label>
                 <textarea
@@ -1736,21 +1736,21 @@ function LegalHoldTab() {
                   onChange={(e) => setReason(e.target.value)}
                   placeholder="Legal basis or investigation reason…"
                   rows={3}
-                  className="w-full px-3 py-2.5 border border-[#e8eaed] bg-white text-[#202124] rounded-lg text-sm focus:ring-2 focus:ring-[#1a56db] outline-none resize-none"
+                  className="w-full px-3 py-2.5 border border-[#262A35] bg-[#12151D] text-[#E6E9F0] rounded-lg text-sm focus:ring-2 focus:ring-[#00C2FF] outline-none resize-none"
                 />
               </div>
             </div>
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setShowModal(false)}
-                className="flex-1 bg-white text-[#5f6368] hover:bg-[#f1f3f4] border border-[#e8eaed] rounded-md px-4 py-2 text-sm font-medium"
+                className="flex-1 bg-[#1B1F2A] text-[#8A92A6] hover:bg-[#262A35] hover:text-[#E6E9F0] border border-[#262A35] rounded-lg px-4 py-2 text-sm font-medium transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={() => void placeHold()}
                 disabled={placing}
-                className="flex-1 flex items-center justify-center gap-2 bg-[#ea4335] text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-[#ff6b84] disabled:opacity-50"
+                className="flex-1 flex items-center justify-center gap-2 bg-[#ea4335] text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#c5362a] disabled:opacity-50 transition-colors"
               >
                 {placing && <Loader2 className="w-4 h-4 animate-spin" />}
                 Place Hold
@@ -1814,7 +1814,7 @@ function GdprExportTab() {
     <div className="p-6 max-w-lg">
       <div className="bg-[#ea4335]/5 border border-[#ea4335]/20 rounded-xl p-4 mb-6 flex items-start gap-3">
         <AlertTriangle className="w-4 h-4 text-[#ea4335] flex-shrink-0 mt-0.5" />
-        <p className="text-sm text-[#5f6368]">
+        <p className="text-sm text-[#8A92A6]">
           GDPR data exports contain sensitive personal data. Only perform exports for legitimate legal requests and log all access appropriately.
         </p>
       </div>
@@ -1822,14 +1822,14 @@ function GdprExportTab() {
       {error ? <ErrorState message={error} /> : (
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-[#5f6368] mb-1.5">Select User</label>
+            <label className="block text-xs font-semibold text-[#8A92A6] mb-1.5">Select User</label>
             {loading ? (
-              <div className="h-10 bg-[#f1f3f4] rounded-lg animate-pulse" />
+              <div className="h-10 bg-[#1B1F2A] rounded-lg animate-pulse" />
             ) : (
               <select
                 value={selectedUserId}
                 onChange={(e) => setSelectedUserId(e.target.value)}
-                className="w-full bg-white border border-[#e8eaed] rounded-md px-3 py-2.5 text-sm text-[#202124] focus:ring-2 focus:ring-[#1a56db] outline-none"
+                className="w-full bg-[#12151D] border border-[#262A35] rounded-md px-3 py-2.5 text-sm text-[#E6E9F0] focus:ring-2 focus:ring-[#00C2FF] outline-none"
               >
                 <option value="">Choose a user…</option>
                 {users.map(u => (
@@ -1843,7 +1843,7 @@ function GdprExportTab() {
             <button
               onClick={() => void handleExport()}
               disabled={exporting || !selectedUserId || loading}
-              className="bg-[#1a56db] text-white hover:bg-[#1447c0] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2 disabled:opacity-50"
+              className="bg-[#00C2FF] text-[#06121A] hover:bg-[#0098E6] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2 disabled:opacity-50"
             >
               {exporting
                 ? <Loader2 className="w-4 h-4 animate-spin" />
@@ -1852,9 +1852,9 @@ function GdprExportTab() {
             </button>
           </div>
 
-          <div className="mt-6 bg-white border border-[#e8eaed] rounded-xl p-4">
-            <p className="text-xs font-semibold text-[#5f6368] mb-3">Export includes</p>
-            <ul className="space-y-1.5 text-sm text-[#5f6368]">
+          <div className="mt-6 bg-[#12151D] border border-[#262A35] rounded-xl p-4">
+            <p className="text-xs font-semibold text-[#8A92A6] mb-3">Export includes</p>
+            <ul className="space-y-1.5 text-sm text-[#8A92A6]">
               {[
                 "User profile and account details",
                 "Inbox messages (up to 1,000)",
@@ -1864,7 +1864,7 @@ function GdprExportTab() {
                 "Audit log entries (up to 1,000)",
               ].map((item) => (
                 <li key={item} className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-[#1a56db] flex-shrink-0" />
+                  <span className="w-2 h-2 rounded-full bg-[#00C2FF] flex-shrink-0" />
                   {item}
                 </li>
               ))}
@@ -1922,10 +1922,10 @@ function SecurityStatsTab() {
       <div className="p-6 space-y-4">
         <div className="grid grid-cols-2 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-28 bg-[#f1f3f4] rounded-xl animate-pulse" />
+            <div key={i} className="h-28 bg-[#1B1F2A] rounded-xl animate-pulse" />
           ))}
         </div>
-        <div className="h-48 bg-[#f1f3f4] rounded-xl animate-pulse" />
+        <div className="h-48 bg-[#1B1F2A] rounded-xl animate-pulse" />
       </div>
     );
   }
@@ -1940,32 +1940,32 @@ function SecurityStatsTab() {
       {/* Stat cards */}
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-[#ea4335]/10 border border-[#ea4335]/30 rounded-xl p-4">
-          <p className="text-sm font-medium text-[#5f6368]">Failed Logins (24h)</p>
+          <p className="text-sm font-medium text-[#8A92A6]">Failed Logins (24h)</p>
           <p className="text-2xl font-semibold text-[#ea4335] mt-1">{stats.failedLogins24h.toLocaleString()}</p>
-          <p className="text-xs text-[#5f6368] mt-1">Unsuccessful attempts</p>
+          <p className="text-xs text-[#8A92A6] mt-1">Unsuccessful attempts</p>
         </div>
         <div className="bg-amber-400/10 border border-amber-400/30 rounded-xl p-4">
-          <p className="text-sm font-medium text-[#5f6368]">Failed Logins (7d)</p>
+          <p className="text-sm font-medium text-[#8A92A6]">Failed Logins (7d)</p>
           <p className="text-2xl font-semibold text-amber-400 mt-1">{stats.failedLogins7d.toLocaleString()}</p>
-          <p className="text-xs text-[#5f6368] mt-1">Last 7 days total</p>
+          <p className="text-xs text-[#8A92A6] mt-1">Last 7 days total</p>
         </div>
-        <div className="bg-white border border-[#e8eaed] rounded-xl p-4">
-          <p className="text-sm font-medium text-[#5f6368]">Active Sessions</p>
-          <p className="text-2xl font-semibold text-[#202124] mt-1">{stats.activeSessions.toLocaleString()}</p>
-          <p className="text-xs text-[#5f6368] mt-1">Currently valid</p>
+        <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-4">
+          <p className="text-sm font-medium text-[#8A92A6]">Active Sessions</p>
+          <p className="text-2xl font-semibold text-[#E6E9F0] mt-1">{stats.activeSessions.toLocaleString()}</p>
+          <p className="text-xs text-[#8A92A6] mt-1">Currently valid</p>
         </div>
-        <div className="bg-white border border-[#e8eaed] rounded-xl p-4">
-          <p className="text-sm font-medium text-[#5f6368]">Users on Legal Hold</p>
-          <p className="text-2xl font-semibold text-[#202124] mt-1">{stats.usersOnHold.toLocaleString()}</p>
-          <p className="text-xs text-[#5f6368] mt-1">Active holds only</p>
+        <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-4">
+          <p className="text-sm font-medium text-[#8A92A6]">Users on Legal Hold</p>
+          <p className="text-2xl font-semibold text-[#E6E9F0] mt-1">{stats.usersOnHold.toLocaleString()}</p>
+          <p className="text-xs text-[#8A92A6] mt-1">Active holds only</p>
         </div>
       </div>
 
       {/* Top 5 failed logins table with inline bar chart */}
-      <div className="bg-white border border-[#e8eaed] rounded-xl overflow-hidden">
-        <div className="px-5 py-4 border-b border-[#e8eaed]">
-          <h3 className="font-semibold text-[#202124] text-sm">Top 5 Users — Failed Logins (Last 7 Days)</h3>
-          <p className="text-xs text-[#5f6368] mt-0.5">Accounts with most authentication failures</p>
+      <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-[#262A35]">
+          <h3 className="font-semibold text-[#E6E9F0] text-sm">Top 5 Users — Failed Logins (Last 7 Days)</h3>
+          <p className="text-xs text-[#8A92A6] mt-0.5">Accounts with most authentication failures</p>
         </div>
         {stats.topFailedLogins.length === 0 ? (
           <EmptyState icon={Activity} message="No failed login events in last 7 days." />
@@ -1973,17 +1973,17 @@ function SecurityStatsTab() {
           <div className="divide-y divide-[#262b3a]/40">
             {stats.topFailedLogins.map((row, i) => (
               <div key={row.email} className="flex items-center gap-4 px-5 py-3">
-                <span className="text-xs font-semibold text-[#5f6368] w-5 flex-shrink-0">{i + 1}</span>
+                <span className="text-xs font-semibold text-[#8A92A6] w-5 flex-shrink-0">{i + 1}</span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[#202124] truncate">{row.email}</p>
-                  <div className="mt-1.5 bg-[#e2e8f0] rounded-full h-2 flex-1 overflow-hidden">
+                  <p className="text-sm font-medium text-[#E6E9F0] truncate">{row.email}</p>
+                  <div className="mt-1.5 bg-[#262A35] rounded-full h-2 flex-1 overflow-hidden">
                     <div
-                      className="bg-[#1a56db] h-2 rounded-full transition-all"
+                      className="bg-[#00C2FF] h-2 rounded-full transition-all"
                       style={{ width: `${Math.round((row.count / maxCount) * 100)}%` }}
                     />
                   </div>
                 </div>
-                <span className="text-sm font-semibold text-red-600 flex-shrink-0">{row.count}</span>
+                <span className="text-sm font-semibold text-red-400 flex-shrink-0">{row.count}</span>
               </div>
             ))}
           </div>
@@ -1995,8 +1995,8 @@ function SecurityStatsTab() {
         <div className="px-5 py-4 border-b border-[#ea4335]/20 flex items-center gap-2">
           <ShieldAlert className="h-4 w-4 text-[#ea4335] flex-shrink-0" />
           <div>
-            <h3 className="font-semibold text-[#202124] text-sm">Login Anomalies — Brute Force Candidates</h3>
-            <p className="text-xs text-[#5f6368] mt-0.5">Accounts with 5+ failed attempts in the last 24 hours and no successful login</p>
+            <h3 className="font-semibold text-[#E6E9F0] text-sm">Login Anomalies — Brute Force Candidates</h3>
+            <p className="text-xs text-[#8A92A6] mt-0.5">Accounts with 5+ failed attempts in the last 24 hours and no successful login</p>
           </div>
           {stats.loginAnomalies.length > 0 && (
             <span className="ml-auto bg-[#ea4335]/20 text-[#ea4335] text-xs font-semibold px-2 py-0.5 rounded-full">
@@ -2019,11 +2019,11 @@ function SecurityStatsTab() {
                     <AlertTriangle className="h-4 w-4" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-[#202124] text-sm truncate">{row.email}</p>
+                    <p className="font-semibold text-[#E6E9F0] text-sm truncate">{row.email}</p>
                     <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5">
-                      <span className="text-xs text-red-600 font-medium">{row.count} attempts</span>
-                      <span className="text-xs text-[#5f6368]">{rate}/min avg rate</span>
-                      <span className="text-xs text-[#5f6368]">
+                      <span className="text-xs text-red-400 font-medium">{row.count} attempts</span>
+                      <span className="text-xs text-[#8A92A6]">{rate}/min avg rate</span>
+                      <span className="text-xs text-[#8A92A6]">
                         First: {format(first, "HH:mm")} · Last: {format(last, "HH:mm")}
                       </span>
                     </div>
@@ -2039,15 +2039,15 @@ function SecurityStatsTab() {
       </div>
 
       {/* Failed-only users — no successful login today */}
-      <div className="bg-amber-50 border border-amber-200 rounded-xl overflow-hidden">
-        <div className="px-5 py-4 border-b border-amber-200 flex items-center gap-2">
+      <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-amber-500/20 flex items-center gap-2">
           <AlertTriangle className="h-4 w-4 text-amber-500 flex-shrink-0" />
           <div>
-            <h3 className="font-semibold text-[#202124] text-sm">Locked-Out Accounts (Last 24h)</h3>
-            <p className="text-xs text-[#5f6368] mt-0.5">Failed logins with zero successful logins — may be locked out or compromised</p>
+            <h3 className="font-semibold text-[#E6E9F0] text-sm">Locked-Out Accounts (Last 24h)</h3>
+            <p className="text-xs text-[#8A92A6] mt-0.5">Failed logins with zero successful logins — may be locked out or compromised</p>
           </div>
           {stats.noSuccessUsers.length > 0 && (
-            <span className="ml-auto bg-amber-100 text-amber-700 text-xs font-semibold px-2 py-0.5 rounded-full">
+            <span className="ml-auto bg-amber-500/15 text-amber-400 text-xs font-semibold px-2 py-0.5 rounded-full">
               {stats.noSuccessUsers.length} accounts
             </span>
           )}
@@ -2059,15 +2059,15 @@ function SecurityStatsTab() {
             {stats.noSuccessUsers.map((row) => (
               <div key={row.email} className="flex items-center gap-4 px-5 py-3">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[#202124] truncate">{row.email}</p>
-                  <div className="mt-1.5 bg-[#e2e8f0] rounded-full h-2 flex-1 overflow-hidden">
+                  <p className="text-sm font-medium text-[#E6E9F0] truncate">{row.email}</p>
+                  <div className="mt-1.5 bg-[#262A35] rounded-full h-2 flex-1 overflow-hidden">
                     <div
                       className="bg-[#2563eb] h-2 rounded-full"
                       style={{ width: `${Math.min(100, Math.round((row.count / 20) * 100))}%` }}
                     />
                   </div>
                 </div>
-                <span className="text-sm font-semibold text-amber-600 flex-shrink-0">{row.count}×</span>
+                <span className="text-sm font-semibold text-amber-400 flex-shrink-0">{row.count}×</span>
               </div>
             ))}
           </div>
@@ -2076,12 +2076,12 @@ function SecurityStatsTab() {
 
       {/* DLP Trend Sparkline (last 30 days) */}
       {stats.dlpTrends.length > 0 && (
-        <div className="bg-white border border-[#e8eaed] rounded-xl overflow-hidden">
-          <div className="px-5 py-4 border-b border-[#e8eaed] flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-[#1a56db] flex-shrink-0" />
+        <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
+          <div className="px-5 py-4 border-b border-[#262A35] flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-[#00C2FF] flex-shrink-0" />
             <div>
-              <h3 className="font-semibold text-[#202124] text-sm">DLP Violation Trend (Last 30 Days)</h3>
-              <p className="text-xs text-[#5f6368] mt-0.5">Daily count of DLP policy violations</p>
+              <h3 className="font-semibold text-[#E6E9F0] text-sm">DLP Violation Trend (Last 30 Days)</h3>
+              <p className="text-xs text-[#8A92A6] mt-0.5">Daily count of DLP policy violations</p>
             </div>
           </div>
           <div className="px-5 py-4">
@@ -2091,16 +2091,16 @@ function SecurityStatsTab() {
                 <div className="space-y-1.5">
                   {stats.dlpTrends.slice(-14).map((d) => (
                     <div key={d.date} className="flex items-center gap-3">
-                      <span className="text-[11px] text-[#5f6368] w-20 flex-shrink-0">
+                      <span className="text-[11px] text-[#8A92A6] w-20 flex-shrink-0">
                         {format(parseISO(d.date), "MMM d")}
                       </span>
-                      <div className="bg-[#f1f3f4] rounded-full h-2 flex-1 overflow-hidden">
+                      <div className="bg-[#1B1F2A] rounded-full h-2 flex-1 overflow-hidden">
                         <div
-                          className="bg-[#1a56db] h-2 rounded-full transition-all"
+                          className="bg-[#00C2FF] h-2 rounded-full transition-all"
                           style={{ width: `${Math.round((d.count / maxVal) * 100)}%` }}
                         />
                       </div>
-                      <span className="text-[11px] font-semibold text-[#202124] w-6 text-right flex-shrink-0">
+                      <span className="text-[11px] font-semibold text-[#E6E9F0] w-6 text-right flex-shrink-0">
                         {d.count}
                       </span>
                     </div>
@@ -2128,8 +2128,8 @@ type RetentionPolicy = {
 
 const MODULES = ["Mail", "Chat", "Drive", "Calendar"] as const;
 const MODULE_COLORS: Record<string, string> = {
-  Mail: "bg-[#1a56db]/15 text-[#1a56db]",
-  Chat: "bg-[#f8fafd]/15 text-[#0f9d58]",
+  Mail: "bg-[#00C2FF]/15 text-[#00C2FF]",
+  Chat: "bg-[#12151D]/15 text-[#0f9d58]",
   Drive: "bg-amber-400/15 text-amber-400",
   Calendar: "bg-violet-400/15 text-violet-400",
 };
@@ -2201,7 +2201,7 @@ function RetentionTab() {
     return (
       <div className="p-6 space-y-3">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="h-16 bg-[#f1f3f4] rounded-xl animate-pulse" />
+          <div key={i} className="h-16 bg-[#1B1F2A] rounded-xl animate-pulse" />
         ))}
       </div>
     );
@@ -2211,12 +2211,12 @@ function RetentionTab() {
     <div className="p-6 space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="font-semibold text-[#202124] text-sm">Retention Policies</h3>
-          <p className="text-xs text-[#5f6368] mt-0.5">Automatically delete or archive data after a set period.</p>
+          <h3 className="font-semibold text-[#E6E9F0] text-sm">Retention Policies</h3>
+          <p className="text-xs text-[#8A92A6] mt-0.5">Automatically delete or archive data after a set period.</p>
         </div>
         <button
           onClick={() => setShowForm((v) => !v)}
-          className="bg-[#1a56db] text-white hover:bg-[#f8fafd] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2"
+          className="bg-[#00C2FF] text-[#06121A] hover:bg-[#12151D] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2"
         >
           <Plus className="w-3.5 h-3.5" />
           New Policy
@@ -2225,43 +2225,43 @@ function RetentionTab() {
 
       {/* Create form */}
       {showForm && (
-        <div className="bg-[#f1f3f4] border border-[#e8eaed] rounded-xl p-4 space-y-3">
-          <p className="text-xs font-semibold text-[#5f6368]">New Retention Policy</p>
+        <div className="bg-[#1B1F2A] border border-[#262A35] rounded-xl p-4 space-y-3">
+          <p className="text-xs font-semibold text-[#8A92A6]">New Retention Policy</p>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-[#5f6368] mb-1">Module</label>
+              <label className="block text-xs font-medium text-[#8A92A6] mb-1">Module</label>
               <select
                 value={form.module}
                 onChange={(e) => setForm((f) => ({ ...f, module: e.target.value as RetentionPolicy["module"] }))}
-                className="w-full bg-[#f1f3f4] border border-[#e8eaed] rounded-md px-3 py-2 text-sm text-[#202124] outline-none focus:ring-2 focus:ring-[#1a56db]/20"
+                className="w-full bg-[#1B1F2A] border border-[#262A35] rounded-md px-3 py-2 text-sm text-[#E6E9F0] outline-none focus:ring-2 focus:ring-[#00C2FF]/20"
               >
                 {MODULES.map((m) => <option key={m} value={m}>{m}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-[#5f6368] mb-1">Retain for (days)</label>
+              <label className="block text-xs font-medium text-[#8A92A6] mb-1">Retain for (days)</label>
               <input
                 type="number"
                 min={1}
                 max={36500}
                 value={form.days}
                 onChange={(e) => setForm((f) => ({ ...f, days: Number(e.target.value) }))}
-                className="w-full bg-[#f1f3f4] border border-[#e8eaed] rounded-md px-3 py-2 text-sm text-[#202124] outline-none focus:ring-2 focus:ring-[#1a56db]/20"
+                className="w-full bg-[#1B1F2A] border border-[#262A35] rounded-md px-3 py-2 text-sm text-[#E6E9F0] outline-none focus:ring-2 focus:ring-[#00C2FF]/20"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-[#5f6368] mb-1">Action after period</label>
+              <label className="block text-xs font-medium text-[#8A92A6] mb-1">Action after period</label>
               <select
                 value={form.action}
                 onChange={(e) => setForm((f) => ({ ...f, action: e.target.value as RetentionPolicy["action"] }))}
-                className="w-full bg-[#f1f3f4] border border-[#e8eaed] rounded-md px-3 py-2 text-sm text-[#202124] outline-none focus:ring-2 focus:ring-[#1a56db]/20"
+                className="w-full bg-[#1B1F2A] border border-[#262A35] rounded-md px-3 py-2 text-sm text-[#E6E9F0] outline-none focus:ring-2 focus:ring-[#00C2FF]/20"
               >
                 <option value="Archive">Archive</option>
                 <option value="Delete">Delete</option>
               </select>
             </div>
             <div className="flex items-end">
-              <label className="flex items-center gap-2 text-sm text-[#202124] cursor-pointer">
+              <label className="flex items-center gap-2 text-sm text-[#E6E9F0] cursor-pointer">
                 <input
                   type="checkbox"
                   checked={form.active}
@@ -2276,14 +2276,14 @@ function RetentionTab() {
             <button
               onClick={handleCreate}
               disabled={saving}
-              className="bg-[#1a56db] text-white hover:bg-[#f8fafd] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2 disabled:opacity-60"
+              className="bg-[#00C2FF] text-[#06121A] hover:bg-[#12151D] rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2 disabled:opacity-60"
             >
               {saving && <Loader2 className="w-3 h-3 animate-spin" />}
               Save Policy
             </button>
             <button
               onClick={() => setShowForm(false)}
-              className="bg-[#f1f3f4] text-[#5f6368] hover:bg-[#303444] border border-[#e8eaed] rounded-md px-4 py-2 text-sm font-medium"
+              className="bg-[#1B1F2A] text-[#8A92A6] hover:bg-[#303444] border border-[#262A35] rounded-md px-4 py-2 text-sm font-medium"
             >
               Cancel
             </button>
@@ -2293,7 +2293,7 @@ function RetentionTab() {
 
       {/* Policy list */}
       {policies.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-[#5f6368]">
+        <div className="flex flex-col items-center justify-center py-12 text-[#8A92A6]">
           <Timer className="w-10 h-10 mb-3 opacity-30" />
           <p className="text-sm">No retention policies configured</p>
           <p className="text-xs mt-1">Add a policy to automatically manage old data</p>
@@ -2301,33 +2301,33 @@ function RetentionTab() {
       ) : (
         <div className="space-y-2">
           {policies.map((p) => (
-            <div key={p.id} className="flex items-center gap-4 bg-white border border-[#e8eaed] rounded-xl px-5 py-4">
-              <span className={`px-2.5 py-1 rounded-lg text-xs font-medium flex-shrink-0 ${MODULE_COLORS[p.module] ?? "bg-[#f1f3f4] text-[#5f6368]"}`}>
+            <div key={p.id} className="flex items-center gap-4 bg-[#12151D] border border-[#262A35] rounded-xl px-5 py-4">
+              <span className={`px-2.5 py-1 rounded-lg text-xs font-medium flex-shrink-0 ${MODULE_COLORS[p.module] ?? "bg-[#1B1F2A] text-[#8A92A6]"}`}>
                 {p.module}
               </span>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-[#202124]">
+                <p className="text-sm font-semibold text-[#E6E9F0]">
                   Retain {p.days} days, then {p.action === "Delete" ? "delete" : "archive"}
                 </p>
-                <p className="text-xs text-[#5f6368]">Updated {new Date(p.updatedAt).toLocaleDateString()}</p>
+                <p className="text-xs text-[#8A92A6]">Updated {new Date(p.updatedAt).toLocaleDateString()}</p>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <button
                   onClick={() => handleToggle(p)}
-                  className={`flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${p.active ? "border-[#0f9d58]/40 text-[#0f9d58] bg-[#0f9d58]/10" : "border-[#e8eaed] text-[#5f6368] bg-[#f1f3f4]"}`}
+                  className={`flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${p.active ? "border-[#0f9d58]/40 text-[#0f9d58] bg-[#0f9d58]/10" : "border-[#262A35] text-[#8A92A6] bg-[#1B1F2A]"}`}
                   title={p.active ? "Disable" : "Enable"}
                 >
                   {p.active ? <ToggleRight className="w-3.5 h-3.5" /> : <ToggleLeft className="w-3.5 h-3.5" />}
                   {p.active ? "Active" : "Inactive"}
                 </button>
                 {p.action === "Archive" ? (
-                  <Archive className="w-4 h-4 text-[#5f6368] flex-shrink-0" />
+                  <Archive className="w-4 h-4 text-[#8A92A6] flex-shrink-0" />
                 ) : (
-                  <Trash2 className="w-4 h-4 text-[#5f6368] flex-shrink-0" />
+                  <Trash2 className="w-4 h-4 text-[#8A92A6] flex-shrink-0" />
                 )}
                 <button
                   onClick={() => handleDelete(p.id)}
-                  className="p-1.5 text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124] rounded-md transition-colors"
+                  className="p-1.5 text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0] rounded-md transition-colors"
                   title="Delete policy"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -2416,27 +2416,27 @@ function SSOTab() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-base font-semibold text-[#202124]">SSO Configurations</h3>
+          <h3 className="text-base font-semibold text-[#E6E9F0]">SSO Configurations</h3>
           <p className="text-xs text-[#7a8899] mt-0.5">Configure SAML 2.0, OIDC, or OAuth providers for Single Sign-On.</p>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1a56db] text-white text-xs font-semibold rounded-lg hover:bg-[#1447c0] transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-[#00C2FF] text-[#06121A] text-xs font-semibold rounded-lg hover:bg-[#0098E6] transition-colors"
         >
           <Plus className="w-3.5 h-3.5" /> Add Provider
         </button>
       </div>
 
       {showForm && (
-        <div className="bg-white border border-[#e8eaed] rounded-xl p-5 space-y-4">
-          <h4 className="text-sm font-semibold text-[#202124]">New SSO Provider</h4>
+        <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-5 space-y-4">
+          <h4 className="text-sm font-semibold text-[#E6E9F0]">New SSO Provider</h4>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs text-[#7a8899] mb-1">Provider</label>
               <select
                 value={form.provider}
                 onChange={(e) => setForm({ ...form, provider: e.target.value as SSOConfig["provider"] })}
-                className="w-full bg-[#f1f3f4] border border-[#e8eaed] rounded-lg px-3 py-2 text-sm text-[#202124] outline-none"
+                className="w-full bg-[#1B1F2A] border border-[#262A35] rounded-lg px-3 py-2 text-sm text-[#E6E9F0] outline-none"
               >
                 {PROVIDERS.map((p) => <option key={p}>{p}</option>)}
               </select>
@@ -2446,7 +2446,7 @@ function SSOTab() {
               <input
                 value={form.defaultRole}
                 onChange={(e) => setForm({ ...form, defaultRole: e.target.value })}
-                className="w-full bg-[#f1f3f4] border border-[#e8eaed] rounded-lg px-3 py-2 text-sm text-[#202124] outline-none"
+                className="w-full bg-[#1B1F2A] border border-[#262A35] rounded-lg px-3 py-2 text-sm text-[#E6E9F0] outline-none"
               />
             </div>
           </div>
@@ -2458,7 +2458,7 @@ function SSOTab() {
                   value={form.metadataUrl}
                   onChange={(e) => setForm({ ...form, metadataUrl: e.target.value })}
                   placeholder="https://idp.example.com/metadata.xml"
-                  className="w-full bg-[#f1f3f4] border border-[#e8eaed] rounded-lg px-3 py-2 text-sm text-[#202124] placeholder:text-[#4a5568] outline-none"
+                  className="w-full bg-[#1B1F2A] border border-[#262A35] rounded-lg px-3 py-2 text-sm text-[#E6E9F0] placeholder:text-[#4a5568] outline-none"
                 />
               </div>
               <div>
@@ -2467,7 +2467,7 @@ function SSOTab() {
                   value={form.entityId}
                   onChange={(e) => setForm({ ...form, entityId: e.target.value })}
                   placeholder="https://app.cybersage.io/sso/saml"
-                  className="w-full bg-[#f1f3f4] border border-[#e8eaed] rounded-lg px-3 py-2 text-sm text-[#202124] placeholder:text-[#4a5568] outline-none"
+                  className="w-full bg-[#1B1F2A] border border-[#262A35] rounded-lg px-3 py-2 text-sm text-[#E6E9F0] placeholder:text-[#4a5568] outline-none"
                 />
               </div>
             </>
@@ -2478,7 +2478,7 @@ function SSOTab() {
                 <input
                   value={form.clientId}
                   onChange={(e) => setForm({ ...form, clientId: e.target.value })}
-                  className="w-full bg-[#f1f3f4] border border-[#e8eaed] rounded-lg px-3 py-2 text-sm text-[#202124] outline-none"
+                  className="w-full bg-[#1B1F2A] border border-[#262A35] rounded-lg px-3 py-2 text-sm text-[#E6E9F0] outline-none"
                 />
               </div>
               <div>
@@ -2487,7 +2487,7 @@ function SSOTab() {
                   type="password"
                   value={form.clientSecret}
                   onChange={(e) => setForm({ ...form, clientSecret: e.target.value })}
-                  className="w-full bg-[#f1f3f4] border border-[#e8eaed] rounded-lg px-3 py-2 text-sm text-[#202124] outline-none"
+                  className="w-full bg-[#1B1F2A] border border-[#262A35] rounded-lg px-3 py-2 text-sm text-[#E6E9F0] outline-none"
                 />
               </div>
             </>
@@ -2498,7 +2498,7 @@ function SSOTab() {
               value={form.callbackUrl}
               onChange={(e) => setForm({ ...form, callbackUrl: e.target.value })}
               placeholder="https://app.cybersage.io/api/auth/sso/callback"
-              className="w-full bg-[#f1f3f4] border border-[#e8eaed] rounded-lg px-3 py-2 text-sm text-[#202124] placeholder:text-[#4a5568] outline-none"
+              className="w-full bg-[#1B1F2A] border border-[#262A35] rounded-lg px-3 py-2 text-sm text-[#E6E9F0] placeholder:text-[#4a5568] outline-none"
             />
           </div>
           <div className="flex items-center gap-6">
@@ -2509,7 +2509,7 @@ function SSOTab() {
                 onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
                 className="rounded"
               />
-              <span className="text-sm text-[#5f6368]">Active</span>
+              <span className="text-sm text-[#8A92A6]">Active</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -2518,12 +2518,12 @@ function SSOTab() {
                 onChange={(e) => setForm({ ...form, autoProvision: e.target.checked })}
                 className="rounded"
               />
-              <span className="text-sm text-[#5f6368]">Auto-provision new users</span>
+              <span className="text-sm text-[#8A92A6]">Auto-provision new users</span>
             </label>
           </div>
           <div className="flex gap-3">
-            <button onClick={() => setShowForm(false)} className="px-4 py-2 rounded-lg bg-[#f1f3f4] text-[#5f6368] text-sm hover:bg-[#2e3347]">Cancel</button>
-            <button onClick={handleSave} disabled={saving} className="px-4 py-2 rounded-lg bg-[#1a56db] text-white text-sm font-semibold hover:bg-[#1447c0] disabled:opacity-50 flex items-center gap-2">
+            <button onClick={() => setShowForm(false)} className="px-4 py-2 rounded-lg bg-[#1B1F2A] text-[#8A92A6] text-sm hover:bg-[#2e3347]">Cancel</button>
+            <button onClick={handleSave} disabled={saving} className="px-4 py-2 rounded-lg bg-[#00C2FF] text-[#06121A] text-sm font-semibold hover:bg-[#0098E6] disabled:opacity-50 flex items-center gap-2">
               {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />} Save
             </button>
           </div>
@@ -2531,20 +2531,20 @@ function SSOTab() {
       )}
 
       {loading ? (
-        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-[#1a56db]" /></div>
+        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-[#00C2FF]" /></div>
       ) : configs.length === 0 ? (
         <div className="text-center py-12 text-[#7a8899]">No SSO providers configured.</div>
       ) : (
         <div className="space-y-3">
           {configs.map((c) => (
-            <div key={c.id} className="flex items-center gap-4 p-4 bg-white border border-[#e8eaed] rounded-xl">
-              <div className="w-10 h-10 rounded-xl bg-[#f1f3f4] flex items-center justify-center flex-shrink-0">
-                <ShieldAlert className="w-5 h-5 text-[#1a56db]" />
+            <div key={c.id} className="flex items-center gap-4 p-4 bg-[#12151D] border border-[#262A35] rounded-xl">
+              <div className="w-10 h-10 rounded-xl bg-[#1B1F2A] flex items-center justify-center flex-shrink-0">
+                <ShieldAlert className="w-5 h-5 text-[#00C2FF]" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium text-[#202124] text-sm">{c.provider}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${c.isActive ? "bg-green-500/15 text-green-400 border border-green-500/30" : "bg-[#f1f3f4] text-[#7a8899]"}`}>
+                  <span className="font-medium text-[#E6E9F0] text-sm">{c.provider}</span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${c.isActive ? "bg-green-500/15 text-green-400 border border-green-500/30" : "bg-[#1B1F2A] text-[#7a8899]"}`}>
                     {c.isActive ? "Active" : "Inactive"}
                   </span>
                 </div>
@@ -2624,14 +2624,14 @@ function SentinelTab() {
     CRITICAL: "bg-rose-500/15 text-rose-400 border border-rose-500/30",
     HIGH:     "bg-orange-500/15 text-orange-400 border border-orange-500/30",
     MEDIUM:   "bg-amber-500/15 text-amber-400 border border-amber-500/30",
-    LOW:      "bg-[#f1f3f4] text-[#7a8899] border border-[#e8eaed]",
+    LOW:      "bg-[#1B1F2A] text-[#7a8899] border border-[#262A35]",
   };
 
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-base font-semibold text-[#202124]">Sentinel Alerts</h3>
+          <h3 className="text-base font-semibold text-[#E6E9F0]">Sentinel Alerts</h3>
           <p className="text-xs text-[#7a8899] mt-0.5">Security alerts from CyberSage Sentinel. Acknowledge or resolve incidents.</p>
         </div>
         <div className="flex gap-1">
@@ -2640,7 +2640,7 @@ function SentinelTab() {
               key={f}
               onClick={() => setFilter(f)}
               className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-colors capitalize ${
-                filter === f ? "bg-[#1a56db]/15 text-[#1a56db]" : "text-[#7a8899] hover:bg-[#f1f3f4]"
+                filter === f ? "bg-[#00C2FF]/15 text-[#00C2FF]" : "text-[#7a8899] hover:bg-[#1B1F2A]"
               }`}
             >
               {f}
@@ -2650,7 +2650,7 @@ function SentinelTab() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-[#1a56db]" /></div>
+        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-[#00C2FF]" /></div>
       ) : alerts.length === 0 ? (
         <div className="text-center py-12">
           <CheckCircle className="w-8 h-8 text-green-400 mx-auto mb-2" />
@@ -2659,16 +2659,16 @@ function SentinelTab() {
       ) : (
         <div className="space-y-2">
           {alerts.map((a) => (
-            <div key={a.id} className={`p-4 rounded-xl border ${a.acknowledged ? "bg-white border-[#f0f0f0]" : "bg-white border-[#e8eaed]"}`}>
+            <div key={a.id} className={`p-4 rounded-xl border ${a.acknowledged ? "bg-[#12151D] border-[#1C1F28]" : "bg-[#12151D] border-[#262A35]"}`}>
               <div className="flex items-start gap-3">
                 <AlertTriangle className={`w-4 h-4 mt-0.5 flex-shrink-0 ${a.severity === "CRITICAL" ? "text-rose-400" : a.severity === "HIGH" ? "text-orange-400" : "text-amber-400"}`} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-medium text-[#202124]">{a.alertType}</span>
+                    <span className="text-sm font-medium text-[#E6E9F0]">{a.alertType}</span>
                     <span className={`text-xs px-1.5 py-0.5 rounded-full ${severityConfig[a.severity]}`}>{a.severity}</span>
                     {a.acknowledged && <span className="text-xs text-[#7a8899]">Acknowledged</span>}
                   </div>
-                  <p className="text-xs text-[#5f6368] leading-relaxed mb-1.5">{a.description}</p>
+                  <p className="text-xs text-[#8A92A6] leading-relaxed mb-1.5">{a.description}</p>
                   <p className="text-xs text-[#7a8899]">
                     {a.targetType}/{a.targetId} · {format(parseISO(a.createdAt), "MMM d, h:mm a")}
                   </p>
@@ -2677,7 +2677,7 @@ function SentinelTab() {
                   <div className="flex gap-1.5 flex-shrink-0">
                     <button
                       onClick={() => ack(a.id)}
-                      className="text-xs px-2.5 py-1 rounded-lg bg-[#f1f3f4] text-[#5f6368] hover:bg-[#2e3347] transition-colors"
+                      className="text-xs px-2.5 py-1 rounded-lg bg-[#1B1F2A] text-[#8A92A6] hover:bg-[#2e3347] transition-colors"
                     >
                       Ack
                     </button>
@@ -2719,16 +2719,16 @@ export function AdminConsoleView(_props: { currentUserId: string }) {
   const activeTabMeta = SIDEBAR_TABS.find((t) => t.id === activeTab);
 
   return (
-    <div className="bg-white min-h-screen">
-      <div className="flex h-[calc(100vh-160px)] min-h-[400px] bg-white border border-[#e8eaed] rounded-xl overflow-hidden">
-        <div className="w-52 bg-[#f8fafd] flex flex-col flex-shrink-0">
-          <div className="px-6 py-4 border-b border-[#e8eaed]/10">
+    <div className="bg-[#0B0D12] min-h-screen">
+      <div className="flex h-[calc(100vh-160px)] min-h-[400px] bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
+        <div className="w-52 bg-[#12151D] flex flex-col flex-shrink-0 border-r border-[#262A35]">
+          <div className="px-6 py-4 border-b border-[#262A35]">
             <div className="flex items-center gap-2">
-              <ShieldAlert className="w-5 h-5 text-[#1a56db]" />
-              <span className="text-white font-semibold text-sm">Admin Console</span>
+              <ShieldAlert className="w-5 h-5 text-[#00C2FF]" />
+              <span className="text-[#E6E9F0] font-semibold text-sm">Admin Console</span>
             </div>
           </div>
-          <nav className="flex-1 p-3 space-y-1">
+          <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
             {SIDEBAR_TABS.map((tab) => {
               const Icon = tab.icon;
               return (
@@ -2737,8 +2737,8 @@ export function AdminConsoleView(_props: { currentUserId: string }) {
                   onClick={() => setActiveTab(tab.id)}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-left transition-colors ${
                     activeTab === tab.id
-                      ? "bg-[#e8f0fe] text-[#202124]"
-                      : "text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124]"
+                      ? "bg-[#00C2FF]/10 text-[#00C2FF]"
+                      : "text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0]"
                   }`}
                 >
                   <Icon className="w-4 h-4 flex-shrink-0" />
@@ -2750,14 +2750,14 @@ export function AdminConsoleView(_props: { currentUserId: string }) {
         </div>
 
         <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="px-6 py-4 border-b border-[#e8eaed] bg-white flex items-center justify-between flex-shrink-0">
+          <div className="px-6 py-4 border-b border-[#262A35] bg-[#12151D] flex items-center justify-between flex-shrink-0">
             <div>
-              <h1 className="text-xl font-semibold text-[#202124]">{activeTabMeta?.label}</h1>
-              <p className="text-xs text-[#5f6368] mt-0.5">{activeTabMeta?.description}</p>
+              <h1 className="text-xl font-semibold text-[#E6E9F0]">{activeTabMeta?.label}</h1>
+              <p className="text-xs text-[#8A92A6] mt-0.5">{activeTabMeta?.description}</p>
             </div>
           </div>
 
-          <div className="flex-1 overflow-auto bg-white">
+          <div className="flex-1 overflow-auto bg-[#12151D]">
             {activeTab === "overview" && (
               <div className="p-6">
                 <OverviewTab />

@@ -76,7 +76,7 @@ export default function UserLoginsPage({
         {loading ? (
           <div className="text-muted-foreground">Loading...</div>
         ) : error ? (
-          <div className="text-red-600">{error}</div>
+          <div className="text-red-400">{error}</div>
         ) : (
           <Card>
             <CardContent className="p-0">
@@ -105,9 +105,9 @@ export default function UserLoginsPage({
                         </TableCell>
                         <TableCell>
                           {event.success ? (
-                            <Badge className="bg-green-100 text-green-800">Success</Badge>
+                            <Badge className="bg-green-500/15 text-green-300">Success</Badge>
                           ) : (
-                            <Badge className="bg-red-100 text-red-800">Failed</Badge>
+                            <Badge className="bg-red-500/15 text-red-300">Failed</Badge>
                           )}
                         </TableCell>
                         <TableCell>{event.email}</TableCell>

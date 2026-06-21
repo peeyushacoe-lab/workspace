@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { PageHeader } from "@/components/Shell";
 import { roleLabels } from "@/lib/auth";
+import { avatarGradient } from "@/lib/avatar";
 import type { UserRole } from "@/generated/prisma/enums";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -45,29 +46,11 @@ function roleBadgeClass(role: UserRole): string {
     case "R_AND_D":
       return "bg-blue-500/20 text-blue-300 border-blue-500/20";
     case "CYBER_SECURITY":
-      return "bg-[#1a56db]/20 text-[#1a56db] border-[#1a56db]/20";
+      return "bg-[#00C2FF]/20 text-[#00C2FF] border-[#00C2FF]/20";
     case "FINANCE":
       return "bg-amber-500/20 text-amber-300 border-amber-500/20";
     default:
-      return "bg-white text-[#5f6368] border-[#e8eaed]";
-  }
-}
-
-function avatarBgClass(role: UserRole): string {
-  switch (role) {
-    case "ADMIN":
-    case "CEO":
-    case "CISO":
-      return "bg-red-500/30 text-red-200";
-    case "DEVELOPER":
-    case "R_AND_D":
-      return "bg-blue-500/30 text-blue-200";
-    case "CYBER_SECURITY":
-      return "bg-[#1a56db]/20 text-[#1a56db]";
-    case "FINANCE":
-      return "bg-amber-500/30 text-amber-200";
-    default:
-      return "bg-[#f1f3f4] text-[#5f6368]";
+      return "bg-[#12151D] text-[#8A92A6] border-[#262A35]";
   }
 }
 
@@ -108,7 +91,8 @@ function Avatar({
 
   return (
     <div
-      className={`${sizeClasses[size]} ${avatarBgClass(person.role)} rounded-full flex items-center justify-center font-semibold flex-shrink-0`}
+      className={`${sizeClasses[size]} rounded-full flex items-center justify-center font-semibold text-white flex-shrink-0`}
+      style={{ background: avatarGradient(person.email || person.fullName) }}
     >
       {initials(person.fullName)}
     </div>
@@ -133,9 +117,9 @@ function CopyEmail({ email }: { email: string }) {
     <button
       onClick={handleCopy}
       title="Copy email"
-      className="group flex items-center gap-1 text-[#9aa0a6] hover:text-[#1a56db] transition-colors"
+      className="group flex items-center gap-1 text-[#5A6275] hover:text-[#00C2FF] transition-colors"
     >
-      <span className="text-xs truncate max-w-[160px]">{email}</span>
+      <span className="text-xs font-mono truncate max-w-[160px]">{email}</span>
       {copied ? (
         <CheckCheck className="w-3 h-3 text-emerald-400 flex-shrink-0" />
       ) : (
@@ -149,26 +133,26 @@ function CopyEmail({ email }: { email: string }) {
 
 function PersonCard({ person }: { person: PersonRecord }) {
   return (
-    <div className="bg-white border border-[#e8eaed] rounded-xl p-4 flex flex-col gap-3 hover:border-[rgba(255,255,255,0.13)] transition-colors">
+    <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-4 flex flex-col gap-3 hover:border-[rgba(255,255,255,0.13)] transition-colors">
       <div className="flex items-start gap-3">
         <Avatar person={person} size="lg" />
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-[#202124] truncate">{person.fullName}</p>
+          <p className="text-sm font-semibold text-[#E6E9F0] truncate">{person.fullName}</p>
           {person.jobTitle && (
-            <p className="text-xs text-[#9aa0a6] truncate mt-0.5">{person.jobTitle}</p>
+            <p className="text-xs text-[#5A6275] truncate mt-0.5">{person.jobTitle}</p>
           )}
           <span
-            className={`inline-block mt-1.5 px-2 py-0.5 text-[10px] font-semibold rounded-full border ${roleBadgeClass(person.role)}`}
+            className={`inline-block mt-1.5 px-2 py-0.5 text-[10px] font-mono font-semibold rounded-full border ${roleBadgeClass(person.role)}`}
           >
             {roleLabels[person.role]}
           </span>
         </div>
       </div>
 
-      <div className="flex items-center justify-between pt-2 border-t border-[#e8eaed]">
+      <div className="flex items-center justify-between pt-2 border-t border-[#262A35]">
         <CopyEmail email={person.email} />
         {person.department && (
-          <span className="px-2 py-0.5 text-[10px] rounded-full bg-white text-[#9aa0a6] border border-[#e8eaed] truncate max-w-[80px]">
+          <span className="px-2 py-0.5 text-[10px] font-mono rounded-full bg-[#1B1F2A] text-[#8A92A6] border border-[#262A35] truncate max-w-[80px]">
             {person.department}
           </span>
         )}
@@ -181,21 +165,21 @@ function PersonCard({ person }: { person: PersonRecord }) {
 
 function PersonRow({ person }: { person: PersonRecord }) {
   return (
-    <tr className="border-b border-[#f0f0f0] hover:bg-[#f1f3f4]/30 transition-colors">
+    <tr className="border-b border-[#1C1F28] hover:bg-[#1B1F2A]/30 transition-colors">
       <td className="px-4 py-3">
         <div className="flex items-center gap-3">
           <Avatar person={person} size="sm" />
           <div className="min-w-0">
-            <p className="text-sm text-[#202124] font-medium truncate">{person.fullName}</p>
+            <p className="text-sm text-[#E6E9F0] font-medium truncate">{person.fullName}</p>
             {person.jobTitle && (
-              <p className="text-[10px] text-[#9aa0a6] truncate">{person.jobTitle}</p>
+              <p className="text-[10px] text-[#5A6275] truncate">{person.jobTitle}</p>
             )}
           </div>
         </div>
       </td>
       <td className="px-4 py-3">
         <span
-          className={`inline-block px-2 py-0.5 text-[10px] font-semibold rounded-full border ${roleBadgeClass(person.role)}`}
+          className={`inline-block px-2 py-0.5 text-[10px] font-mono font-semibold rounded-full border ${roleBadgeClass(person.role)}`}
         >
           {roleLabels[person.role]}
         </span>
@@ -205,15 +189,15 @@ function PersonRow({ person }: { person: PersonRecord }) {
       </td>
       <td className="px-4 py-3">
         {person.department ? (
-          <span className="text-xs text-[#9aa0a6]">{person.department}</span>
+          <span className="text-xs font-mono text-[#8A92A6]">{person.department}</span>
         ) : (
-          <span className="text-xs text-[#bdc1c6]">—</span>
+          <span className="text-xs text-[#5A6275]">—</span>
         )}
       </td>
       <td className="px-4 py-3 text-right">
         <Link
           href={`/inbox?compose=${encodeURIComponent(person.email)}`}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-[#1a56db]/10 text-[#1a56db] border border-[#1a56db]/20 hover:bg-[#1a56db]/20 transition-colors"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-[#00C2FF]/10 text-[#00C2FF] border border-[#00C2FF]/20 hover:bg-[#00C2FF]/20 transition-colors"
         >
           <Mail className="w-3 h-3" />
           Send Mail
@@ -276,7 +260,7 @@ export default function PeoplePage() {
   }, [allPeople, activeDept, data, search]);
 
   return (
-    <div className="min-h-screen bg-white text-[#202124]">
+    <div className="min-h-screen bg-[#0B0D12] text-[#E6E9F0]">
       <PageHeader
         eyebrow="Workspace"
         title="People Directory"
@@ -287,24 +271,24 @@ export default function PeoplePage() {
         {/* Top bar: search + view toggle + total badge */}
         <div className="flex items-center gap-3 flex-wrap">
           <div className="relative flex-1 min-w-[220px] max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9aa0a6] pointer-events-none" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5A6275] pointer-events-none" />
             <input
               type="text"
               placeholder="Search by name, email, role…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-white border border-[#e8eaed] rounded-lg pl-9 pr-3 py-2 text-sm text-[#202124] placeholder-[#5d6579] focus:outline-none focus:border-[#1a56db]/40 transition-colors"
+              className="w-full bg-[#0D1017] border border-[#2E333F] rounded-lg pl-9 pr-3 py-2 text-sm text-[#E6E9F0] placeholder-[#5A6275] focus:outline-none focus:border-[#00C2FF]/40 transition-colors"
             />
           </div>
 
           {/* View toggle */}
-          <div className="flex items-center bg-white border border-[#e8eaed] rounded-lg overflow-hidden">
+          <div className="flex items-center bg-[#12151D] border border-[#262A35] rounded-lg overflow-hidden">
             <button
               onClick={() => setView("grid")}
               className={`p-2 transition-colors ${
                 view === "grid"
-                  ? "bg-[#1a56db]/15 text-[#1a56db]"
-                  : "text-[#9aa0a6] hover:text-[#5f6368]"
+                  ? "bg-[#00C2FF]/15 text-[#00C2FF]"
+                  : "text-[#5A6275] hover:text-[#8A92A6]"
               }`}
               title="Grid view"
             >
@@ -314,8 +298,8 @@ export default function PeoplePage() {
               onClick={() => setView("list")}
               className={`p-2 transition-colors ${
                 view === "list"
-                  ? "bg-[#1a56db]/15 text-[#1a56db]"
-                  : "text-[#9aa0a6] hover:text-[#5f6368]"
+                  ? "bg-[#00C2FF]/15 text-[#00C2FF]"
+                  : "text-[#5A6275] hover:text-[#8A92A6]"
               }`}
               title="List view"
             >
@@ -325,7 +309,7 @@ export default function PeoplePage() {
 
           {/* Total badge */}
           {data && (
-            <span className="px-3 py-1 text-xs font-semibold rounded-full bg-white text-[#1a56db] border border-[#1a56db]/20">
+            <span className="px-3 py-1 text-xs font-mono font-semibold rounded-full bg-[#00C2FF]/10 text-[#00C2FF] border border-[#00C2FF]/20">
               {data.total} {data.total === 1 ? "member" : "members"}
             </span>
           )}
@@ -338,12 +322,12 @@ export default function PeoplePage() {
               onClick={() => setActiveDept("All")}
               className={`px-3 py-1 text-xs font-medium rounded-full border transition-colors ${
                 activeDept === "All"
-                  ? "bg-[#1a56db]/15 text-[#1a56db] border-[#1a56db]/30"
-                  : "bg-white text-[#9aa0a6] border-[#e8eaed] hover:text-[#5f6368] hover:border-[rgba(255,255,255,0.13)]"
+                  ? "bg-[#00C2FF]/15 text-[#00C2FF] border-[#00C2FF]/30"
+                  : "bg-[#12151D] text-[#5A6275] border-[#262A35] hover:text-[#8A92A6] hover:border-[rgba(255,255,255,0.13)]"
               }`}
             >
               All
-              <span className="ml-1.5 opacity-60">{data?.total ?? 0}</span>
+              <span className="ml-1.5 font-mono opacity-60">{data?.total ?? 0}</span>
             </button>
             {departmentCounts.map(({ name, count }) => (
               <button
@@ -351,12 +335,12 @@ export default function PeoplePage() {
                 onClick={() => setActiveDept(name)}
                 className={`px-3 py-1 text-xs font-medium rounded-full border transition-colors ${
                   activeDept === name
-                    ? "bg-[#1a56db]/15 text-[#1a56db] border-[#1a56db]/30"
-                    : "bg-white text-[#9aa0a6] border-[#e8eaed] hover:text-[#5f6368] hover:border-[rgba(255,255,255,0.13)]"
+                    ? "bg-[#00C2FF]/15 text-[#00C2FF] border-[#00C2FF]/30"
+                    : "bg-[#12151D] text-[#5A6275] border-[#262A35] hover:text-[#8A92A6] hover:border-[rgba(255,255,255,0.13)]"
                 }`}
               >
                 {name}
-                <span className="ml-1.5 opacity-60">{count}</span>
+                <span className="ml-1.5 font-mono opacity-60">{count}</span>
               </button>
             ))}
           </div>
@@ -364,18 +348,18 @@ export default function PeoplePage() {
 
         {/* Content */}
         {loading ? (
-          <div className="flex items-center justify-center py-20 gap-2 text-[#9aa0a6]">
+          <div className="flex items-center justify-center py-20 gap-2 text-[#5A6275]">
             <Loader2 className="w-5 h-5 animate-spin" />
             <span className="text-sm">Loading directory…</span>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 gap-4">
             <Shield className="w-12 h-12 text-[#bdc1c6]" />
-            <p className="text-[#9aa0a6] text-sm font-medium">No team members found</p>
+            <p className="text-[#5A6275] text-sm font-medium">No team members found</p>
             {search && (
               <button
                 onClick={() => setSearch("")}
-                className="text-xs text-[#1a56db] hover:underline"
+                className="text-xs text-[#00C2FF] hover:underline"
               >
                 Clear search
               </button>
@@ -388,11 +372,11 @@ export default function PeoplePage() {
             ))}
           </div>
         ) : (
-          <div className="bg-white border border-[#e8eaed] rounded-xl overflow-hidden">
+          <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-[#f0f0f0] text-[#9aa0a6] text-xs">
+                  <tr className="border-b border-[#1C1F28] text-[#5A6275] text-xs">
                     <th className="text-left px-4 py-3 font-medium">Name</th>
                     <th className="text-left px-4 py-3 font-medium">Role</th>
                     <th className="text-left px-4 py-3 font-medium">Email</th>

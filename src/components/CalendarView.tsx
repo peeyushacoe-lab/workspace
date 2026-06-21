@@ -142,9 +142,9 @@ const WEEKDAYS = [
 ];
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const HOURS = Array.from({ length: 15 }, (_, i) => i + 7); // 7am–9pm
-const HOUR_HEIGHT = 64;
-const GRID_START = 7;
+const HOURS = Array.from({ length: 11 }, (_, i) => i + 8); // 8am–6pm
+const HOUR_HEIGHT = 60;
+const GRID_START = 8;
 
 // Strip virtual recurring suffix to get the real DB event ID
 const getRealId = (id: string) => id.split("__")[0];
@@ -153,6 +153,16 @@ function formatHour(h: number) {
   if (h === 0) return "12 AM";
   if (h === 12) return "12 PM";
   return h < 12 ? `${h} AM` : `${h - 12} PM`;
+}
+
+// Build an rgba tint from a hex event colour for event backgrounds.
+function hexToTint(hex: string, alpha: number): string {
+  const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!m) return `rgba(0,194,255,${alpha})`;
+  const r = parseInt(m[1], 16);
+  const g = parseInt(m[2], 16);
+  const b = parseInt(m[3], 16);
+  return `rgba(${r},${g},${b},${alpha})`;
 }
 
 function buildRecurrenceRule(type: string, weeklyDays: string[]): string {
@@ -258,13 +268,13 @@ function eventToForm(ev: CalendarEvent): EventFormState {
 
 function AttendeeChip({ email, name, status }: { email: string; name?: string; status?: string }) {
   const statusColors: Record<string, string> = {
-    ACCEPTED: "bg-green-100 text-green-700",
-    DECLINED: "bg-red-100 text-red-700",
-    MAYBE: "bg-yellow-100 text-yellow-700",
-    TENTATIVE: "bg-yellow-100 text-yellow-700",
-    PENDING: "bg-white text-[#5f6368]",
+    ACCEPTED: "bg-green-500/15 text-green-400",
+    DECLINED: "bg-red-500/15 text-red-400",
+    MAYBE: "bg-yellow-500/15 text-yellow-400",
+    TENTATIVE: "bg-yellow-500/15 text-yellow-400",
+    PENDING: "bg-[#12151D] text-[#8A92A6]",
   };
-  const label = status ? statusColors[status] ?? "bg-white text-[#5f6368]" : "bg-[#1a56db]/10 text-[#1a56db]";
+  const label = status ? statusColors[status] ?? "bg-[#12151D] text-[#8A92A6]" : "bg-[#00C2FF]/10 text-[#00C2FF]";
   return (
     <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${label}`}>
       {name ?? email}
@@ -279,7 +289,7 @@ function EventPill({ event, onClick }: { event: CalendarEvent; onClick: () => vo
   return (
     <button
       onClick={(e) => { e.stopPropagation(); onClick(); }}
-      className="w-full bg-[#1a56db]/10 text-[#1a56db] rounded px-1 py-0.5 text-xs font-medium truncate cursor-pointer hover:bg-[#1a56db]/20 text-left flex items-center gap-1 transition-colors"
+      className="w-full bg-[#00C2FF]/10 text-[#00C2FF] rounded px-1 py-0.5 text-xs font-medium truncate cursor-pointer hover:bg-[#00C2FF]/20 text-left flex items-center gap-1 transition-colors"
       style={event.color && event.color !== "#3B82F6" ? { backgroundColor: event.color, color: "white" } : undefined}
       title={event.title}
     >
@@ -316,13 +326,13 @@ function EventFormFields({
     <div className="space-y-4">
       {/* Title */}
       <div>
-        <label className="mb-1 block text-xs font-medium text-[#5f6368]">Title *</label>
+        <label className="mb-1 block text-xs font-medium text-[#8A92A6]">Title *</label>
         <input
           autoFocus
           value={form.title}
           onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
           placeholder="Event title"
-          className="w-full bg-white border-transparent rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#1a56db] focus:bg-[#f1f3f4] text-[#202124]"
+          className="w-full bg-[#12151D] border-transparent rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#00C2FF] focus:bg-[#1B1F2A] text-[#E6E9F0]"
         />
       </div>
 
@@ -331,50 +341,50 @@ function EventFormFields({
         <button
           type="button"
           onClick={() => setForm((f) => ({ ...f, allDay: !f.allDay }))}
-          className={`relative h-5 w-9 flex-shrink-0 rounded-full transition-colors ${form.allDay ? "bg-[#1a56db] text-white" : "bg-[#f1f3f4]"}`}
+          className={`relative h-5 w-9 flex-shrink-0 rounded-full transition-colors ${form.allDay ? "bg-[#00C2FF] text-[#06121A]" : "bg-[#1B1F2A]"}`}
         >
           <span
-            className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${form.allDay ? "translate-x-4" : "translate-x-0"}`}
+            className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-[#12151D] shadow transition-transform ${form.allDay ? "translate-x-4" : "translate-x-0"}`}
           />
         </button>
-        <span className="text-xs font-medium text-[#5f6368]">All day</span>
+        <span className="text-xs font-medium text-[#8A92A6]">All day</span>
       </div>
 
       {/* Date/Time */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="mb-1 block text-xs font-medium text-[#5f6368]">Start</label>
+          <label className="mb-1 block text-xs font-medium text-[#8A92A6]">Start</label>
           {form.allDay ? (
             <input
               type="date"
               value={form.startAt.slice(0, 10)}
               onChange={(e) => setForm((f) => ({ ...f, startAt: e.target.value + "T09:00" }))}
-              className="w-full bg-white border-transparent rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#1a56db] focus:bg-[#f1f3f4] text-[#202124]"
+              className="w-full bg-[#12151D] border-transparent rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#00C2FF] focus:bg-[#1B1F2A] text-[#E6E9F0]"
             />
           ) : (
             <input
               type="datetime-local"
               value={form.startAt}
               onChange={(e) => setForm((f) => ({ ...f, startAt: e.target.value }))}
-              className="w-full bg-white border-transparent rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#1a56db] focus:bg-[#f1f3f4] text-[#202124]"
+              className="w-full bg-[#12151D] border-transparent rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#00C2FF] focus:bg-[#1B1F2A] text-[#E6E9F0]"
             />
           )}
         </div>
         <div>
-          <label className="mb-1 block text-xs font-medium text-[#5f6368]">End</label>
+          <label className="mb-1 block text-xs font-medium text-[#8A92A6]">End</label>
           {form.allDay ? (
             <input
               type="date"
               value={form.endAt.slice(0, 10)}
               onChange={(e) => setForm((f) => ({ ...f, endAt: e.target.value + "T10:00" }))}
-              className="w-full bg-white border-transparent rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#1a56db] focus:bg-[#f1f3f4] text-[#202124]"
+              className="w-full bg-[#12151D] border-transparent rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#00C2FF] focus:bg-[#1B1F2A] text-[#E6E9F0]"
             />
           ) : (
             <input
               type="datetime-local"
               value={form.endAt}
               onChange={(e) => setForm((f) => ({ ...f, endAt: e.target.value }))}
-              className="w-full bg-white border-transparent rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#1a56db] focus:bg-[#f1f3f4] text-[#202124]"
+              className="w-full bg-[#12151D] border-transparent rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#00C2FF] focus:bg-[#1B1F2A] text-[#E6E9F0]"
             />
           )}
         </div>
@@ -383,11 +393,11 @@ function EventFormFields({
       {/* Timezone */}
       {!form.allDay && (
         <div>
-          <label className="mb-1 block text-xs font-medium text-[#5f6368]">Timezone</label>
+          <label className="mb-1 block text-xs font-medium text-[#8A92A6]">Timezone</label>
           <select
             value={form.timezone}
             onChange={(e) => setForm((f) => ({ ...f, timezone: e.target.value }))}
-            className="w-full bg-white border-transparent rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#1a56db] focus:bg-[#f1f3f4] text-[#202124]"
+            className="w-full bg-[#12151D] border-transparent rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#00C2FF] focus:bg-[#1B1F2A] text-[#E6E9F0]"
           >
             {TIMEZONES.map((tz) => (
               <option key={tz.value} value={tz.value}>{tz.label}</option>
@@ -398,11 +408,11 @@ function EventFormFields({
 
       {/* Recurrence */}
       <div>
-        <label className="mb-1 block text-xs font-medium text-[#5f6368]">Repeat</label>
+        <label className="mb-1 block text-xs font-medium text-[#8A92A6]">Repeat</label>
         <select
           value={form.recurrenceType}
           onChange={(e) => setForm((f) => ({ ...f, recurrenceType: e.target.value, weeklyDays: [] }))}
-          className="w-full bg-white border-transparent rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#1a56db] focus:bg-[#f1f3f4] text-[#202124]"
+          className="w-full bg-[#12151D] border-transparent rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#00C2FF] focus:bg-[#1B1F2A] text-[#E6E9F0]"
         >
           <option value="">Does not repeat</option>
           <option value="DAILY">Daily</option>
@@ -419,8 +429,8 @@ function EventFormFields({
                 onClick={() => toggleWeekday(day.rrule)}
                 className={`h-7 w-7 rounded-full text-xs font-medium transition-colors ${
                   form.weeklyDays.includes(day.rrule)
-                    ? "bg-[#1a56db] text-white"
-                    : "bg-white text-[#5f6368] hover:bg-[#f1f3f4]"
+                    ? "bg-[#00C2FF] text-[#06121A]"
+                    : "bg-[#12151D] text-[#8A92A6] hover:bg-[#1B1F2A]"
                 }`}
               >
                 {day.short}
@@ -432,30 +442,30 @@ function EventFormFields({
 
       {/* Description */}
       <div>
-        <label className="mb-1 block text-xs font-medium text-[#5f6368]">Description</label>
+        <label className="mb-1 block text-xs font-medium text-[#8A92A6]">Description</label>
         <textarea
           value={form.description}
           onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
           rows={2}
           placeholder="Optional description"
-          className="w-full bg-white border-transparent rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#1a56db] focus:bg-[#f1f3f4] text-[#202124] resize-none"
+          className="w-full bg-[#12151D] border-transparent rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#00C2FF] focus:bg-[#1B1F2A] text-[#E6E9F0] resize-none"
         />
       </div>
 
       {/* Location */}
       <div>
-        <label className="mb-1 block text-xs font-medium text-[#5f6368]">Location</label>
+        <label className="mb-1 block text-xs font-medium text-[#8A92A6]">Location</label>
         <input
           value={form.location}
           onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))}
           placeholder="Optional location (room, address, etc.)"
-          className="w-full bg-white border-transparent rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#1a56db] focus:bg-[#f1f3f4] text-[#202124]"
+          className="w-full bg-[#12151D] border-transparent rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#00C2FF] focus:bg-[#1B1F2A] text-[#E6E9F0]"
         />
       </div>
 
       {/* Visibility */}
       <div>
-        <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Visibility</label>
+        <label className="mb-1.5 block text-xs font-medium text-[#8A92A6]">Visibility</label>
         <div className="flex gap-2">
           {(["PUBLIC", "TEAM", "PRIVATE"] as const).map((v) => (
             <button
@@ -464,8 +474,8 @@ function EventFormFields({
               onClick={() => setForm((f) => ({ ...f, visibility: v }))}
               className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors border ${
                 form.visibility === v
-                  ? "bg-[#1a56db] text-white border-[#1a56db]"
-                  : "bg-white text-[#5f6368] border-[#e8eaed] hover:bg-white"
+                  ? "bg-[#00C2FF] text-[#06121A] border-[#00C2FF]"
+                  : "bg-[#12151D] text-[#8A92A6] border-[#262A35] hover:bg-[#12151D]"
               }`}
             >
               {v.charAt(0) + v.slice(1).toLowerCase()}
@@ -477,14 +487,14 @@ function EventFormFields({
       {/* Attendees */}
       {showAttendees && (
         <div>
-          <label className="mb-1 block text-xs font-medium text-[#5f6368]">
+          <label className="mb-1 block text-xs font-medium text-[#8A92A6]">
             Invite by email (comma-separated)
           </label>
           <input
             value={form.attendeeEmails}
             onChange={(e) => setForm((f) => ({ ...f, attendeeEmails: e.target.value }))}
             placeholder="alice@example.com, bob@example.com"
-            className="w-full bg-white border-transparent rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#1a56db] focus:bg-[#f1f3f4] text-[#202124]"
+            className="w-full bg-[#12151D] border-transparent rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#00C2FF] focus:bg-[#1B1F2A] text-[#E6E9F0]"
           />
         </div>
       )}
@@ -492,7 +502,7 @@ function EventFormFields({
       {/* Existing attendees (edit mode) */}
       {existingAttendees.length > 0 && (
         <div>
-          <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Attendees</label>
+          <label className="mb-1.5 block text-xs font-medium text-[#8A92A6]">Attendees</label>
           <div className="flex flex-wrap gap-1.5">
             {existingAttendees.map((a) => (
               <AttendeeChip key={a.id} email={a.email} name={a.name} status={a.status} />
@@ -503,7 +513,7 @@ function EventFormFields({
 
       {/* Color picker */}
       <div>
-        <label className="mb-2 block text-xs font-medium text-[#5f6368]">Color</label>
+        <label className="mb-2 block text-xs font-medium text-[#8A92A6]">Color</label>
         <div className="flex gap-2 flex-wrap">
           {PRESET_COLORS.map(({ value: color }) => (
             <button
@@ -522,13 +532,13 @@ function EventFormFields({
 
       {/* Meeting URL */}
       <div>
-        <label className="mb-1 block text-xs font-medium text-[#5f6368]">Meeting URL</label>
+        <label className="mb-1 block text-xs font-medium text-[#8A92A6]">Meeting URL</label>
         <div className="flex gap-2">
           <input
             value={form.meetingUrl}
             onChange={(e) => setForm((f) => ({ ...f, meetingUrl: e.target.value }))}
             placeholder="https://… or auto-generate"
-            className="flex-1 bg-white border-transparent rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#1a56db] focus:bg-[#f1f3f4] text-[#202124]"
+            className="flex-1 bg-[#12151D] border-transparent rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#00C2FF] focus:bg-[#1B1F2A] text-[#E6E9F0]"
           />
           <button
             type="button"
@@ -537,7 +547,7 @@ function EventFormFields({
               const room = Array.from({ length: 10 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
               setForm((f) => ({ ...f, meetingUrl: `${window.location.origin}/meet/${room}` }));
             }}
-            className="flex-shrink-0 flex items-center gap-1.5 bg-white border border-[#e8eaed] rounded-lg px-3 py-2 text-xs font-medium text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124] transition-colors"
+            className="flex-shrink-0 flex items-center gap-1.5 bg-[#12151D] border border-[#262A35] rounded-lg px-3 py-2 text-xs font-medium text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0] transition-colors"
           >
             <Video className="h-3 w-3" />
             Generate
@@ -551,7 +561,7 @@ function EventFormFields({
 // ─── Create Event Modal ───────────────────────────────────────────────────────
 
 function AvailabilityGrid({ result }: { result: AvailabilityResult }) {
-  if (!result.slots.length) return <p className="text-xs text-[#5f6368]">No slots to display.</p>;
+  if (!result.slots.length) return <p className="text-xs text-[#8A92A6]">No slots to display.</p>;
 
   const userIds = Object.keys(result.availability);
   // Group slots by date
@@ -566,7 +576,7 @@ function AvailabilityGrid({ result }: { result: AvailabilityResult }) {
 
   return (
     <div className="mt-3 overflow-x-auto">
-      <div className="text-[10px] font-semibold text-[#5f6368] mb-2">
+      <div className="text-[10px] font-semibold text-[#8A92A6] mb-2">
         Availability (9am–5pm)
       </div>
       <div className="min-w-max">
@@ -576,7 +586,7 @@ function AvailabilityGrid({ result }: { result: AvailabilityResult }) {
           {dateKeys.map((dk) => {
             const d = new Date(byDate[dk][0]);
             return (
-              <div key={dk} className="w-8 text-center text-[9px] text-[#5f6368] font-medium">
+              <div key={dk} className="w-8 text-center text-[9px] text-[#8A92A6] font-medium">
                 {d.toLocaleDateString("en-US", { weekday: "short" })}
                 <br />
                 {d.getDate()}
@@ -590,7 +600,7 @@ function AvailabilityGrid({ result }: { result: AvailabilityResult }) {
           let slotIdx = 0;
           return (
             <div key={uid} className="flex items-center gap-px mb-0.5">
-              <div className="w-20 text-[10px] text-[#5f6368] truncate pr-2 flex-shrink-0">
+              <div className="w-20 text-[10px] text-[#8A92A6] truncate pr-2 flex-shrink-0">
                 {result.names[uid] ?? uid}
               </div>
               {dateKeys.map((dk) => (
@@ -612,8 +622,8 @@ function AvailabilityGrid({ result }: { result: AvailabilityResult }) {
         })}
         {/* Legend */}
         <div className="flex items-center gap-3 mt-2">
-          <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-sm bg-green-400" /><span className="text-[10px] text-[#5f6368]">Free</span></div>
-          <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-sm bg-red-400" /><span className="text-[10px] text-[#5f6368]">Busy</span></div>
+          <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-sm bg-green-400" /><span className="text-[10px] text-[#8A92A6]">Free</span></div>
+          <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-sm bg-red-400" /><span className="text-[10px] text-[#8A92A6]">Busy</span></div>
         </div>
       </div>
     </div>
@@ -694,25 +704,25 @@ function CreateEventModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 ">
-      <div className="bg-white rounded-xl shadow-2xl border border-[#e8eaed] p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+      <div className="bg-[#12151D] rounded-xl shadow-2xl border border-[#262A35] p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
         <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-[#202124]">New Event</h2>
-          <button onClick={onClose} className="rounded-lg p-1 hover:bg-[#f1f3f4] transition-colors">
-            <X className="h-4 w-4 text-[#5f6368]" />
+          <h2 className="text-lg font-semibold text-[#E6E9F0]">New Event</h2>
+          <button onClick={onClose} className="rounded-lg p-1 hover:bg-[#1B1F2A] transition-colors">
+            <X className="h-4 w-4 text-[#8A92A6]" />
           </button>
         </div>
         <EventFormFields form={form} setForm={setForm} showAttendees />
 
         {/* Availability check */}
         {form.attendeeEmails.trim() && (
-          <div className="mt-3 border border-[#e8eaed] rounded-xl p-3 bg-white">
+          <div className="mt-3 border border-[#262A35] rounded-xl p-3 bg-[#12151D]">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-medium text-[#202124]">Teammate Availability</span>
+              <span className="text-xs font-medium text-[#E6E9F0]">Teammate Availability</span>
               <button
                 type="button"
                 onClick={handleCheckAvailability}
                 disabled={checkingAvail}
-                className="flex items-center gap-1.5 bg-white text-[#5f6368] hover:bg-white border border-[#e8eaed] rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50"
+                className="flex items-center gap-1.5 bg-[#12151D] text-[#8A92A6] hover:bg-[#12151D] border border-[#262A35] rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50"
               >
                 {checkingAvail ? <Loader2 className="h-3 w-3 animate-spin" /> : <CalendarSearch className="h-3 w-3" />}
                 Check availability
@@ -720,7 +730,7 @@ function CreateEventModal({
             </div>
             {availResult && <AvailabilityGrid result={availResult} />}
             {!availResult && !checkingAvail && (
-              <p className="text-[11px] text-[#5f6368]">Click &quot;Check availability&quot; to see free/busy slots for attendees.</p>
+              <p className="text-[11px] text-[#8A92A6]">Click &quot;Check availability&quot; to see free/busy slots for attendees.</p>
             )}
           </div>
         )}
@@ -728,14 +738,14 @@ function CreateEventModal({
         <div className="mt-6 flex justify-end gap-2">
           <button
             onClick={onClose}
-            className="bg-white text-[#5f6368] hover:bg-white border border-[#e8eaed] rounded-lg px-4 py-2 text-sm font-medium"
+            className="bg-[#12151D] text-[#8A92A6] hover:bg-[#12151D] border border-[#262A35] rounded-lg px-4 py-2 text-sm font-medium"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
             disabled={submitting}
-            className="bg-[#1a56db] text-white hover:opacity-90 rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2 disabled:opacity-60"
+            className="bg-[#00C2FF] text-[#06121A] hover:opacity-90 rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2 disabled:opacity-60"
           >
             {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
             Create Event
@@ -814,11 +824,11 @@ function EditEventModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 ">
-      <div className="bg-white rounded-xl shadow-2xl border border-[#e8eaed] p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+      <div className="bg-[#12151D] rounded-xl shadow-2xl border border-[#262A35] p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
         <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-[#202124]">Edit Event</h2>
-          <button onClick={onClose} className="rounded-lg p-1 hover:bg-[#f1f3f4] transition-colors">
-            <X className="h-4 w-4 text-[#5f6368]" />
+          <h2 className="text-lg font-semibold text-[#E6E9F0]">Edit Event</h2>
+          <button onClick={onClose} className="rounded-lg p-1 hover:bg-[#1B1F2A] transition-colors">
+            <X className="h-4 w-4 text-[#8A92A6]" />
           </button>
         </div>
         <EventFormFields form={form} setForm={setForm} existingAttendees={event.attendees} />
@@ -834,14 +844,14 @@ function EditEventModal({
           <div className="flex gap-2">
             <button
               onClick={onClose}
-              className="bg-white text-[#5f6368] hover:bg-white border border-[#e8eaed] rounded-lg px-4 py-2 text-sm font-medium"
+              className="bg-[#12151D] text-[#8A92A6] hover:bg-[#12151D] border border-[#262A35] rounded-lg px-4 py-2 text-sm font-medium"
             >
               Cancel
             </button>
             <button
               onClick={handleSave}
               disabled={submitting}
-              className="bg-[#1a56db] text-white hover:opacity-90 rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2 disabled:opacity-60"
+              className="bg-[#00C2FF] text-[#06121A] hover:opacity-90 rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2 disabled:opacity-60"
             >
               {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
               Save Changes
@@ -891,7 +901,7 @@ function EventDetailModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 ">
-      <div className="bg-white rounded-xl shadow-2xl border border-[#e8eaed] w-full max-w-md overflow-hidden">
+      <div className="bg-[#12151D] rounded-xl shadow-2xl border border-[#262A35] w-full max-w-md overflow-hidden">
         {/* Header strip */}
         <div className="px-6 py-4" style={{ backgroundColor: event.color || "#3B82F6" }}>
           <div className="flex items-start justify-between">
@@ -921,7 +931,7 @@ function EventDetailModal({
               {isOrganizer && (
                 <button
                   onClick={onEdit}
-                  className="rounded-lg p-1.5 hover:bg-white/20 transition-colors text-white"
+                  className="rounded-lg p-1.5 hover:bg-[#12151D]/20 transition-colors text-white"
                   title="Edit event"
                 >
                   <Edit3 className="h-4 w-4" />
@@ -931,7 +941,7 @@ function EventDetailModal({
               {!isOrganizer && currentAttendee && (
                 <button
                   onClick={() => onRSVP(event.id, currentAttendee.status === "ACCEPTED" ? "DECLINED" : "ACCEPTED")}
-                  className="rounded-lg p-1.5 hover:bg-white/20 transition-colors text-white"
+                  className="rounded-lg p-1.5 hover:bg-[#12151D]/20 transition-colors text-white"
                   title="Toggle RSVP"
                 >
                   <Check className="h-4 w-4" />
@@ -939,7 +949,7 @@ function EventDetailModal({
               )}
               <button
                 onClick={onClose}
-                className="rounded-lg p-1.5 hover:bg-white/20 transition-colors"
+                className="rounded-lg p-1.5 hover:bg-[#12151D]/20 transition-colors"
               >
                 <X className="h-4 w-4 text-white" />
               </button>
@@ -950,22 +960,22 @@ function EventDetailModal({
         <div className="max-h-[60vh] overflow-y-auto p-6">
           <div className="space-y-4">
             {event.description && (
-              <p className="text-sm text-[#5f6368]">{event.description}</p>
+              <p className="text-sm text-[#8A92A6]">{event.description}</p>
             )}
             {event.location && (
-              <div className="flex items-center gap-2 text-sm text-[#5f6368]">
-                <MapPin className="h-4 w-4 text-[#5f6368] shrink-0" />
+              <div className="flex items-center gap-2 text-sm text-[#8A92A6]">
+                <MapPin className="h-4 w-4 text-[#8A92A6] shrink-0" />
                 {event.location}
               </div>
             )}
             {event.meetingUrl && (
               <div className="flex items-center gap-2 text-sm">
-                <Link2 className="h-4 w-4 text-[#1a56db] shrink-0" />
+                <Link2 className="h-4 w-4 text-[#00C2FF] shrink-0" />
                 <a
                   href={event.meetingUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[#1a56db] hover:underline truncate"
+                  className="text-[#00C2FF] hover:underline truncate"
                 >
                   {event.meetingUrl.startsWith(window.location.origin)
                     ? "Join Meeting"
@@ -973,21 +983,21 @@ function EventDetailModal({
                 </a>
               </div>
             )}
-            <div className="flex items-center gap-2 text-sm text-[#5f6368]">
-              <Clock className="h-4 w-4 text-[#5f6368] shrink-0" />
+            <div className="flex items-center gap-2 text-sm text-[#8A92A6]">
+              <Clock className="h-4 w-4 text-[#8A92A6] shrink-0" />
               Organized by {event.organizer.fullName}
             </div>
             {event.isRecurring && event.recurrenceRule && (
-              <div className="flex items-center gap-2 text-sm text-[#5f6368]">
-                <RefreshCw className="h-4 w-4 text-[#5f6368] shrink-0" />
+              <div className="flex items-center gap-2 text-sm text-[#8A92A6]">
+                <RefreshCw className="h-4 w-4 text-[#8A92A6] shrink-0" />
                 {describeRecurrence(event.recurrenceRule)}
               </div>
             )}
             {event.attendees.length > 0 && (
               <div>
                 <div className="flex items-center gap-2 mb-2">
-                  <Users className="h-4 w-4 text-[#5f6368]" />
-                  <span className="text-sm font-medium text-[#202124]">
+                  <Users className="h-4 w-4 text-[#8A92A6]" />
+                  <span className="text-sm font-medium text-[#E6E9F0]">
                     {event.attendees.length} attendee{event.attendees.length !== 1 ? "s" : ""}
                   </span>
                 </div>
@@ -1001,8 +1011,8 @@ function EventDetailModal({
 
             {/* RSVP section for attendees */}
             {!isOrganizer && currentAttendee && (
-              <div className="rounded-2xl bg-[#1a56db]/10 p-4">
-                <p className="mb-2 text-xs font-semibold text-[#1a56db]">Your RSVP</p>
+              <div className="rounded-2xl bg-[#00C2FF]/10 p-4">
+                <p className="mb-2 text-xs font-semibold text-[#00C2FF]">Your RSVP</p>
                 <div className="flex gap-2">
                   {[
                     {
@@ -1010,21 +1020,21 @@ function EventDetailModal({
                       label: "Accept",
                       icon: Check,
                       activeClass: "bg-emerald-500 text-white hover:bg-emerald-600 rounded-md px-3 py-1.5 text-sm font-medium",
-                      inactiveClass: "bg-white border border-[#e8eaed] text-[#5f6368] rounded-md px-3 py-1.5 text-sm font-medium",
+                      inactiveClass: "bg-[#12151D] border border-[#262A35] text-[#8A92A6] rounded-md px-3 py-1.5 text-sm font-medium",
                     },
                     {
                       status: "MAYBE",
                       label: "Maybe",
                       icon: Minus,
-                      activeClass: "bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 rounded-md px-3 py-1.5 text-sm font-medium",
-                      inactiveClass: "bg-white border border-[#e8eaed] text-[#5f6368] rounded-md px-3 py-1.5 text-sm font-medium",
+                      activeClass: "bg-amber-500/10 text-amber-400 hover:bg-amber-500/15 border border-amber-500/20 rounded-md px-3 py-1.5 text-sm font-medium",
+                      inactiveClass: "bg-[#12151D] border border-[#262A35] text-[#8A92A6] rounded-md px-3 py-1.5 text-sm font-medium",
                     },
                     {
                       status: "DECLINED",
                       label: "Decline",
                       icon: X,
-                      activeClass: "bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 rounded-md px-3 py-1.5 text-sm font-medium",
-                      inactiveClass: "bg-white border border-[#e8eaed] text-[#5f6368] rounded-md px-3 py-1.5 text-sm font-medium",
+                      activeClass: "bg-red-500/10 text-red-400 hover:bg-red-500/15 border border-red-500/20 rounded-md px-3 py-1.5 text-sm font-medium",
+                      inactiveClass: "bg-[#12151D] border border-[#262A35] text-[#8A92A6] rounded-md px-3 py-1.5 text-sm font-medium",
                     },
                   ].map(({ status, label, icon: Icon, activeClass, inactiveClass }) => (
                     <button
@@ -1083,19 +1093,19 @@ function MiniMonth({
   const miniDays = eachDayOfInterval({ start: miniStart, end: miniEnd });
 
   return (
-    <div className="bg-white border border-[#e8eaed] rounded-xl p-3 m-3">
+    <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-3 m-3">
       {/* Mini header */}
       <div className="flex items-center justify-between mb-2">
         <button
           onClick={() => setMiniDate((d) => subMonths(d, 1))}
-          className="p-2 text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124] rounded-lg transition-colors"
+          className="p-2 text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0] rounded-lg transition-colors"
         >
           <ChevronLeft className="h-3.5 w-3.5" />
         </button>
-        <span className="text-xs font-semibold text-[#202124]">{format(miniDate, "MMM yyyy")}</span>
+        <span className="text-xs font-semibold text-[#E6E9F0]">{format(miniDate, "MMM yyyy")}</span>
         <button
           onClick={() => setMiniDate((d) => addMonths(d, 1))}
-          className="p-2 text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124] rounded-lg transition-colors"
+          className="p-2 text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0] rounded-lg transition-colors"
         >
           <ChevronRight className="h-3.5 w-3.5" />
         </button>
@@ -1104,7 +1114,7 @@ function MiniMonth({
       {/* Day-of-week labels */}
       <div className="grid grid-cols-7 mb-1">
         {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
-          <div key={i} className="text-center text-[10px] font-medium text-[#5f6368]">{d}</div>
+          <div key={i} className="text-center text-[10px] font-medium text-[#8A92A6]">{d}</div>
         ))}
       </div>
 
@@ -1120,12 +1130,12 @@ function MiniMonth({
               onClick={() => onSelectDate(day)}
               className={`flex h-6 w-6 mx-auto items-center justify-center rounded-full text-[10px] font-medium transition-colors ${
                 selected
-                  ? "bg-[#1a56db] text-white"
+                  ? "bg-[#00C2FF] text-[#06121A]"
                   : today
-                  ? "bg-[#1a56db]/10 text-[#1a56db]"
+                  ? "bg-[#00C2FF]/10 text-[#00C2FF]"
                   : inMonth
-                  ? "text-[#202124] hover:bg-white"
-                  : "text-[#5f6368]"
+                  ? "text-[#E6E9F0] hover:bg-[#12151D]"
+                  : "text-[#8A92A6]"
               }`}
             >
               {format(day, "d")}
@@ -1157,14 +1167,14 @@ function TimeGrid({
   const isSingleDay = days.length === 1;
 
   return (
-    <div className="flex-1 overflow-y-auto">
-      <div className={`relative grid ${isSingleDay ? "grid-cols-[4rem_1fr]" : "grid-cols-[4rem_repeat(7,1fr)]"}`}>
+    <div className="flex-1 overflow-y-auto relative">
+      <div className={`relative grid ${isSingleDay ? "grid-cols-[56px_1fr]" : "grid-cols-[56px_repeat(7,1fr)]"}`}>
         {/* Hour labels column */}
         <div className="col-span-1">
           {HOURS.map((h) => (
             <div
               key={h}
-              className="border-b border-[#e8eaed] pr-2 text-right text-xs text-[#5f6368] pt-1"
+              className="pr-[9px] text-right font-mono text-[10.5px] text-[#5A6275] -translate-y-1.5"
               style={{ height: HOUR_HEIGHT }}
             >
               {formatHour(h)}
@@ -1186,16 +1196,16 @@ function TimeGrid({
           const isCurrentDay = isToday(day);
 
           return (
-            <div key={day.toISOString()} className="relative border-l border-[#e8eaed]">
+            <div key={day.toISOString()} className="relative border-l border-[#1C1F28]">
               {/* Hour cells — 30-min sub-rows */}
               {HOURS.map((h) => (
-                <div key={h} className="border-b border-[#e8eaed]" style={{ height: HOUR_HEIGHT }}>
+                <div key={h} className="border-b border-[#1C1F28]" style={{ height: HOUR_HEIGHT }}>
                   <div
-                    className="h-1/2 hover:bg-[#1a56db]/10 transition-colors cursor-pointer"
+                    className="h-1/2 hover:bg-[#00C2FF]/10 transition-colors cursor-pointer"
                     onClick={() => onCellClick(day, h)}
                   />
                   <div
-                    className="h-1/2 border-t border-dashed border-[#e8eaed] hover:bg-[#1a56db]/10 transition-colors cursor-pointer"
+                    className="h-1/2 hover:bg-[#00C2FF]/10 transition-colors cursor-pointer"
                     onClick={() => onCellClick(day, h)}
                   />
                 </div>
@@ -1220,21 +1230,29 @@ function TimeGrid({
                   const startH = getHours(start) + getMinutes(start) / 60;
                   const topOffset = Math.max(0, (startH - GRID_START) * HOUR_HEIGHT);
                   const durationMins = Math.max(30, differenceInMinutes(end, start));
-                  const height = (durationMins / 60) * HOUR_HEIGHT;
+                  const height = (durationMins / 60) * HOUR_HEIGHT - 4;
+                  const accent = event.color || "#00C2FF";
 
                   return (
                     <button
                       key={event.id}
                       onClick={(e) => { e.stopPropagation(); onEventClick(event); }}
-                      className="absolute left-0.5 right-0.5 rounded px-1.5 text-left text-xs font-medium text-white overflow-hidden hover:opacity-90 transition-opacity shadow-sm"
-                      style={{ top: topOffset, height, backgroundColor: event.color || "#3B82F6" }}
+                      className="absolute left-1 right-1 rounded-[7px] px-[9px] py-1.5 text-left overflow-hidden hover:brightness-110 transition-all"
+                      style={{
+                        top: topOffset,
+                        height,
+                        background: hexToTint(accent, 0.16),
+                        borderLeft: `3px solid ${accent}`,
+                      }}
                     >
                       <div className="flex items-center gap-1">
-                        {event.isRecurring && <RefreshCw className="w-2.5 h-2.5 opacity-80 flex-shrink-0" />}
-                        <p className="truncate font-semibold">{event.title}</p>
+                        {event.isRecurring && <RefreshCw className="w-2.5 h-2.5 flex-shrink-0" style={{ color: accent }} />}
+                        <p className="truncate text-xs font-bold" style={{ color: accent }}>{event.title}</p>
                       </div>
                       {!event.allDay && (
-                        <p className="truncate opacity-80 text-[10px]">{format(start, "h:mm a")}</p>
+                        <p className="truncate font-mono text-[10.5px] mt-px" style={{ color: accent, opacity: 0.85 }}>
+                          {format(start, "h:mm")} – {format(end, "h:mm a")}
+                        </p>
                       )}
                     </button>
                   );
@@ -1342,14 +1360,14 @@ export function CalendarView({ currentUserId }: { currentUserId: string }) {
   const weekDays = eachDayOfInterval({ start: weekStart, end: addDays(weekStart, 6) });
 
   return (
-    <div className="flex h-full bg-white">
+    <div className="flex h-full bg-[#12151D]">
       {/* ─── Sidebar ──────────────────────────────────────────────────────── */}
-      <aside className="hidden lg:flex w-52 flex-col bg-white border-r border-[#e8eaed] flex-shrink-0">
+      <aside className="hidden lg:flex w-52 flex-col bg-[#12151D] border-r border-[#262A35] flex-shrink-0">
         {/* New Event button */}
-        <div className="p-3 border-b border-[#e8eaed]">
+        <div className="p-3 border-b border-[#262A35]">
           <button
             onClick={() => openNewEventModal(currentDate)}
-            className="w-full bg-[#1a56db] text-white hover:opacity-90 rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2"
+            className="w-full bg-[#00C2FF] text-[#06121A] hover:opacity-90 rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2"
           >
             <Plus className="h-4 w-4" />
             New Event
@@ -1373,7 +1391,7 @@ export function CalendarView({ currentUserId }: { currentUserId: string }) {
 
         {/* Color legend */}
         <div className="px-3 pt-2 pb-4">
-          <p className="text-xs font-semibold text-[#5f6368] px-4 py-2 -mx-3">Legend</p>
+          <p className="text-xs font-semibold text-[#8A92A6] px-4 py-2 -mx-3">Legend</p>
           <div className="space-y-1.5">
             {[
               { color: "#3B82F6", label: "Personal" },
@@ -1381,9 +1399,9 @@ export function CalendarView({ currentUserId }: { currentUserId: string }) {
               { color: "#F97316", label: "Out of Office" },
               { color: "#8B5CF6", label: "Appointment" },
             ].map(({ color, label }) => (
-              <div key={color} className="flex items-center gap-2 text-sm text-[#5f6368] py-1">
+              <div key={color} className="flex items-center gap-2 text-sm text-[#8A92A6] py-1">
                 <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
-                <span className="text-xs text-[#5f6368]">{label}</span>
+                <span className="text-xs text-[#8A92A6]">{label}</span>
               </div>
             ))}
           </div>
@@ -1393,59 +1411,63 @@ export function CalendarView({ currentUserId }: { currentUserId: string }) {
       {/* ─── Main Calendar Area ───────────────────────────────────────────── */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Toolbar */}
-        <div className="px-6 py-3 border-b border-[#e8eaed] bg-white flex items-center justify-between flex-shrink-0">
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-0.5">
-              <button
-                onClick={() => navigate("prev")}
-                className="p-2 text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124] rounded-lg transition-colors"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => setCurrentDate(new Date())}
-                className="p-2 text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124] rounded-lg transition-colors text-xs font-medium"
-              >
-                Today
-              </button>
-              <button
-                onClick={() => navigate("next")}
-                className="p-2 text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124] rounded-lg transition-colors"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </div>
-            <h2 className="font-semibold text-[#202124] text-base">{headerTitle()}</h2>
-            {loading && <Loader2 className="h-4 w-4 animate-spin text-[#1a56db]" />}
-          </div>
+        <div className="h-14 px-[22px] border-b border-[#262A35] bg-[#12151D] flex items-center gap-4 flex-shrink-0">
+          <h2 className="text-[17px] font-bold text-[#E6E9F0] tracking-[-0.3px] whitespace-nowrap">{headerTitle()}</h2>
 
-          <div className="flex items-center gap-2">
-            {/* Mobile new event */}
+          {/* Prev / next joined pair */}
+          <div className="flex">
             <button
-              onClick={() => openNewEventModal(currentDate)}
-              className="lg:hidden bg-[#1a56db] text-white hover:opacity-90 rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2"
+              onClick={() => navigate("prev")}
+              className="w-8 h-8 flex items-center justify-center border border-[#262A35] rounded-l-lg bg-[#12151D] text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0] transition-colors"
             >
-              <Plus className="h-3.5 w-3.5" />
-              New
+              <ChevronLeft className="h-[15px] w-[15px]" />
             </button>
-
-            {/* View switcher */}
-            <div className="flex items-center rounded-lg border border-[#e8eaed] p-0.5">
-              {(["month", "week", "day"] as const).map((v) => (
-                <button
-                  key={v}
-                  onClick={() => setView(v)}
-                  className={`capitalize transition-colors ${
-                    view === v
-                      ? "bg-[#1a56db]/10 text-[#1a56db] rounded-md px-3 py-1.5 text-sm font-medium"
-                      : "text-[#5f6368] hover:bg-white rounded-md px-3 py-1.5 text-sm"
-                  }`}
-                >
-                  {v}
-                </button>
-              ))}
-            </div>
+            <button
+              onClick={() => navigate("next")}
+              className="w-8 h-8 flex items-center justify-center border border-l-0 border-[#262A35] rounded-r-lg bg-[#12151D] text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0] transition-colors"
+            >
+              <ChevronRight className="h-[15px] w-[15px]" />
+            </button>
           </div>
+
+          {/* Today */}
+          <button
+            onClick={() => setCurrentDate(new Date())}
+            className="h-8 px-3.5 border border-[#262A35] rounded-lg bg-[#12151D] text-[12.5px] font-semibold text-[#E6E9F0] hover:bg-[#1B1F2A] transition-colors"
+          >
+            Today
+          </button>
+
+          {loading && <Loader2 className="h-4 w-4 animate-spin text-[#00C2FF]" />}
+
+          <div className="flex-1" />
+
+          {/* View switcher — segmented control */}
+          <div className="flex p-[3px] gap-0.5 bg-[#12151D] border border-[#262A35] rounded-[9px]">
+            {(["day", "week", "month"] as const).map((v) => (
+              <button
+                key={v}
+                onClick={() => setView(v)}
+                className={`h-7 px-4 rounded-md text-[12.5px] font-semibold capitalize transition-colors ${
+                  view === v
+                    ? "bg-[#00C2FF] text-[#06121A]"
+                    : "text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0]"
+                }`}
+              >
+                {v}
+              </button>
+            ))}
+          </div>
+
+          {/* + Event primary */}
+          <button
+            onClick={() => openNewEventModal(currentDate)}
+            className="h-[34px] px-4 rounded-lg text-[12.5px] font-bold text-[#06121A] flex items-center gap-[7px] hover:opacity-90 transition-opacity"
+            style={{ background: "linear-gradient(135deg, #00C2FF, #0098E6)" }}
+          >
+            <Plus className="h-[15px] w-[15px]" strokeWidth={2.6} />
+            Event
+          </button>
         </div>
 
         {/* Calendar body */}
@@ -1453,9 +1475,9 @@ export function CalendarView({ currentUserId }: { currentUserId: string }) {
           {/* ── Month view ── */}
           {view === "month" && (
             <div className="flex h-full flex-col">
-              <div className="grid grid-cols-7 border-b border-[#e8eaed] bg-white">
+              <div className="grid grid-cols-7 border-b border-[#262A35] bg-[#12151D]">
                 {DAY_LABELS.map((d) => (
-                  <div key={d} className="text-xs font-semibold text-[#5f6368] text-center py-2">
+                  <div key={d} className="text-[11.5px] font-semibold uppercase tracking-[0.5px] text-[#6B7385] text-center py-3">
                     {d}
                   </div>
                 ))}
@@ -1478,19 +1500,19 @@ export function CalendarView({ currentUserId }: { currentUserId: string }) {
                     return (
                       <div
                         key={day.toISOString()}
-                        className={`border border-[#e8eaed] p-1 min-h-[80px] cursor-pointer hover:bg-white transition-colors ${
-                          today ? "bg-[#1a56db]/10" : inMonth ? "bg-white" : "bg-white"
+                        className={`border border-[#1C1F28] p-1.5 min-h-[80px] cursor-pointer hover:bg-[#1B1F2A] transition-colors ${
+                          today ? "bg-[#00C2FF]/[0.06]" : "bg-[#12151D]"
                         }`}
                         onClick={() => openNewEventModal(day)}
                       >
                         <div className="mb-1 flex justify-start">
                           {today ? (
-                            <span className="bg-[#1a56db] text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-semibold mx-auto">
+                            <span className="bg-[#00C2FF] text-[#06121A] rounded-full w-6 h-6 flex items-center justify-center text-xs font-semibold mx-auto">
                               {format(day, "d")}
                             </span>
                           ) : (
                             <span
-                              className={inMonth ? "text-xs text-[#202124] text-center" : "text-xs text-[#5f6368]/40"}
+                              className={inMonth ? "text-xs text-[#E6E9F0] text-center" : "text-xs text-[#8A92A6]/40"}
                             >
                               {format(day, "d")}
                             </span>
@@ -1505,7 +1527,7 @@ export function CalendarView({ currentUserId }: { currentUserId: string }) {
                             />
                           ))}
                           {dayEvents.length > 3 && (
-                            <p className="px-1 text-[10px] text-[#5f6368]">
+                            <p className="px-1 text-[10px] text-[#8A92A6]">
                               +{dayEvents.length - 3} more
                             </p>
                           )}
@@ -1521,24 +1543,24 @@ export function CalendarView({ currentUserId }: { currentUserId: string }) {
           {/* ── Week view ── */}
           {view === "week" && (
             <div className="flex h-full flex-col overflow-hidden">
-              <div className="grid grid-cols-[4rem_repeat(7,1fr)] border-b border-[#e8eaed] bg-white flex-shrink-0">
-                <div className="py-2" />
+              <div className="grid grid-cols-[56px_repeat(7,1fr)] border-b border-[#262A35] bg-[#12151D] flex-shrink-0">
+                <div />
                 {weekDays.map((day) => (
                   <div
                     key={day.toISOString()}
-                    className="py-2 text-center cursor-pointer hover:bg-white transition-colors"
+                    className="pt-3 pb-[11px] text-center cursor-pointer border-l border-[#1C1F28] hover:bg-[#1B1F2A] transition-colors"
                     onClick={() => { setCurrentDate(day); setView("day"); }}
                   >
-                    <p className="text-xs font-semibold text-[#5f6368] text-center">
+                    <div className="text-[11.5px] font-semibold uppercase tracking-[0.5px] text-[#6B7385]">
                       {format(day, "EEE")}
-                    </p>
-                    <p
-                      className={`mx-auto mt-1 flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium ${
-                        isToday(day) ? "bg-[#1a56db] text-white font-semibold" : "text-[#202124]"
+                    </div>
+                    <div
+                      className={`mx-auto mt-[5px] inline-flex h-[30px] w-[30px] items-center justify-center rounded-full text-[15px] font-bold ${
+                        isToday(day) ? "bg-[#00C2FF] text-[#06121A]" : "text-[#E6E9F0]"
                       }`}
                     >
                       {format(day, "d")}
-                    </p>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -1555,19 +1577,19 @@ export function CalendarView({ currentUserId }: { currentUserId: string }) {
           {/* ── Day view ── */}
           {view === "day" && (
             <div className="flex h-full flex-col overflow-hidden">
-              <div className="grid grid-cols-[4rem_1fr] border-b border-[#e8eaed] bg-white flex-shrink-0">
-                <div className="py-2" />
-                <div className="py-2 text-center">
-                  <p className="text-xs font-semibold text-[#5f6368] text-center">
+              <div className="grid grid-cols-[56px_1fr] border-b border-[#262A35] bg-[#12151D] flex-shrink-0">
+                <div />
+                <div className="pt-3 pb-[11px] text-center border-l border-[#1C1F28]">
+                  <div className="text-[11.5px] font-semibold uppercase tracking-[0.5px] text-[#6B7385]">
                     {format(currentDate, "EEE")}
-                  </p>
-                  <p
-                    className={`mx-auto mt-1 flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium ${
-                      isToday(currentDate) ? "bg-[#1a56db] text-white font-semibold" : "text-[#202124]"
+                  </div>
+                  <div
+                    className={`mx-auto mt-[5px] inline-flex h-[30px] w-[30px] items-center justify-center rounded-full text-[15px] font-bold ${
+                      isToday(currentDate) ? "bg-[#00C2FF] text-[#06121A]" : "text-[#E6E9F0]"
                     }`}
                   >
                     {format(currentDate, "d")}
-                  </p>
+                  </div>
                 </div>
               </div>
               <TimeGrid

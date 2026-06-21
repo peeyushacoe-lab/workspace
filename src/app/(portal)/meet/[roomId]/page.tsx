@@ -90,17 +90,17 @@ export default function MeetRoomPage() {
   }, [roomId, router]);
 
   return (
-    <div className="flex flex-col h-screen bg-white">
+    <div className="flex flex-col h-screen bg-[#12151D]">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2 bg-white border-b border-[#e8eaed] flex-shrink-0">
+      <div className="flex items-center justify-between px-4 py-2 bg-[#12151D] border-b border-[#262A35] flex-shrink-0">
         <div className="flex items-center gap-2">
-          <Phone className="w-4 h-4 text-[#1a56db]" />
-          <span className="text-sm font-semibold text-[#202124]">CyberSage Meet</span>
-          <span className="text-xs text-[#9aa0a6] font-mono">{roomId}</span>
+          <Phone className="w-4 h-4 text-[#00C2FF]" />
+          <span className="text-sm font-semibold text-[#E6E9F0]">CyberSage Meet</span>
+          <span className="text-xs text-[#5A6275] font-mono">{roomId}</span>
         </div>
         <button
           onClick={() => router.back()}
-          className="text-xs text-[#5f6368] hover:text-[#202124] px-3 py-1.5 rounded-lg border border-[#e8eaed] hover:bg-[#f1f3f4] transition-colors"
+          className="text-xs text-[#8A92A6] hover:text-[#E6E9F0] px-3 py-1.5 rounded-lg border border-[#262A35] hover:bg-[#1B1F2A] transition-colors"
         >
           Leave call
         </button>

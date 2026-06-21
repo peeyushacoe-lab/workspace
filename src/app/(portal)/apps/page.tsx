@@ -33,7 +33,7 @@ const BUILTIN_APPS = [
     description: "Collaborative spreadsheets with formulas, formatting, and real-time editing",
     href: "/apps/sheets",
     icon: FileSpreadsheet,
-    color: "bg-emerald-50 text-emerald-600",
+    color: "bg-[#0f9d58]/10 text-[#0f9d58] border border-[#0f9d58]/20",
     badge: "New",
   },
   {
@@ -42,7 +42,7 @@ const BUILTIN_APPS = [
     description: "Build beautiful presentations with drag-and-drop elements and live collaboration",
     href: "/apps/slides",
     icon: Presentation,
-    color: "bg-amber-50 text-amber-600",
+    color: "bg-[#F59E0B]/10 text-[#F59E0B] border border-[#F59E0B]/20",
     badge: "New",
   },
   {
@@ -51,7 +51,7 @@ const BUILTIN_APPS = [
     description: "Rich collaborative documents powered by Tiptap with version history",
     href: "/docs",
     icon: FileText,
-    color: "bg-blue-50 text-blue-600",
+    color: "bg-[#00C2FF]/10 text-[#00C2FF] border border-[#00C2FF]/20",
     badge: null,
   },
   {
@@ -60,7 +60,7 @@ const BUILTIN_APPS = [
     description: "Personal notes with rich text, pinning, and fast access",
     href: "/notes",
     icon: NotebookPen,
-    color: "bg-purple-50 text-purple-600",
+    color: "bg-violet-400/10 text-violet-400 border border-violet-400/20",
     badge: null,
   },
   {
@@ -69,7 +69,7 @@ const BUILTIN_APPS = [
     description: "Store, organize, and share files and folders with previews and version history",
     href: "/drive",
     icon: HardDrive,
-    color: "bg-cyan-50 text-cyan-600",
+    color: "bg-sky-400/10 text-sky-400 border border-sky-400/20",
     badge: null,
   },
 ];
@@ -100,16 +100,16 @@ function AppIcon({ name, className }: { name: string; className?: string }) {
 // ─── Category colours ─────────────────────────────────────────────────────────
 
 const CATEGORY_COLOURS: Record<string, string> = {
-  Developer:            "bg-[#1a56db]/10 text-[#1a56db] border-[#1a56db]/20",
-  "Project Management": "bg-violet-100 text-violet-600 border-violet-200",
-  Communication:        "bg-sky-100 text-sky-600 border-sky-200",
-  CRM:                  "bg-amber-100 text-amber-600 border-amber-200",
-  Automation:           "bg-emerald-100 text-emerald-600 border-emerald-200",
-  Productivity:         "bg-blue-100 text-blue-600 border-blue-200",
+  Developer:            "bg-[#00C2FF]/10 text-[#00C2FF] border-[#00C2FF]/20",
+  "Project Management": "bg-violet-400/10 text-violet-400 border-violet-400/20",
+  Communication:        "bg-sky-400/10 text-sky-400 border-sky-400/20",
+  CRM:                  "bg-[#F59E0B]/10 text-[#F59E0B] border-[#F59E0B]/20",
+  Automation:           "bg-[#0f9d58]/10 text-[#0f9d58] border-[#0f9d58]/20",
+  Productivity:         "bg-[#00C2FF]/10 text-[#00C2FF] border-[#00C2FF]/20",
 };
 
 function CategoryBadge({ category }: { category: string }) {
-  const cls = CATEGORY_COLOURS[category] ?? "bg-[#f1f3f4] text-[#5f6368] border-[#e8eaed]";
+  const cls = CATEGORY_COLOURS[category] ?? "bg-[#1B1F2A] text-[#8A92A6] border-[#262A35]";
   return (
     <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${cls}`}>
       {category}
@@ -148,23 +148,23 @@ function IntegrationCard({
 
   return (
     <div className={[
-      "group relative flex flex-col gap-4 rounded-xl p-5 bg-white border transition-all duration-200",
-      isComingSoon ? "opacity-60 border-[#e8eaed]"
-        : isEnabled ? "border-emerald-300 hover:border-emerald-400"
-        : "border-[#e8eaed] hover:border-[#d0d5dd]",
+      "group relative flex flex-col gap-4 rounded-xl p-5 bg-[#12151D] border transition-all duration-200",
+      isComingSoon ? "opacity-60 border-[#262A35]"
+        : isEnabled ? "border-[#0f9d58]/40 hover:border-[#0f9d58]/60"
+        : "border-[#262A35] hover:border-[#2E333F]",
     ].join(" ")}>
       {isEnabled && (
-        <span className="absolute inset-x-0 top-0 h-[2px] rounded-t-xl bg-gradient-to-r from-emerald-400/0 via-emerald-400/60 to-emerald-400/0" />
+        <span className="absolute inset-x-0 top-0 h-[2px] rounded-t-xl bg-gradient-to-r from-[#0f9d58]/0 via-[#0f9d58]/60 to-[#0f9d58]/0" />
       )}
       <div className="flex items-start gap-3">
-        <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg ${isEnabled ? "bg-emerald-50 text-emerald-600" : "bg-[#e8f0fe] text-[#1a56db]"}`}>
+        <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg ${isEnabled ? "bg-[#0f9d58]/10 text-[#0f9d58] border border-[#0f9d58]/20" : "bg-[#00C2FF]/10 text-[#00C2FF] border border-[#00C2FF]/20"}`}>
           <AppIcon name={app.icon} className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-semibold text-[#202124]">{app.name}</span>
+            <span className="text-sm font-semibold text-[#E6E9F0]">{app.name}</span>
             {isEnabled && (
-              <span className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200">
+              <span className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#0f9d58]/10 text-[#0f9d58] border border-[#0f9d58]/20">
                 <CheckCircle2 className="h-2.5 w-2.5" /> Active
               </span>
             )}
@@ -172,10 +172,10 @@ function IntegrationCard({
           <div className="mt-1"><CategoryBadge category={app.category} /></div>
         </div>
       </div>
-      <p className="text-xs leading-relaxed text-[#5f6368] flex-1">{app.description}</p>
+      <p className="text-xs leading-relaxed text-[#8A92A6] flex-1">{app.description}</p>
       <div className="flex items-center gap-2">
         {isComingSoon ? (
-          <span className="text-[11px] font-medium px-3 py-1.5 rounded-lg bg-[#f1f3f4] text-[#80868b] border border-[#e8eaed] cursor-default">
+          <span className="text-[11px] font-medium px-3 py-1.5 rounded-lg bg-[#1B1F2A] text-[#5A6275] border border-[#262A35] cursor-default">
             Coming Soon
           </span>
         ) : isAdmin ? (
@@ -184,26 +184,26 @@ function IntegrationCard({
               className={[
                 "flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors disabled:opacity-50",
                 isEnabled
-                  ? "bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100"
-                  : "bg-[#e8f0fe] text-[#1a56db] border-[#1a56db]/20 hover:bg-[#dbeafe]",
+                  ? "bg-[#0f9d58]/10 text-[#0f9d58] border-[#0f9d58]/20 hover:bg-[#0f9d58]/20"
+                  : "bg-[#00C2FF]/10 text-[#00C2FF] border-[#00C2FF]/20 hover:bg-[#00C2FF]/20",
               ].join(" ")}>
               {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : isEnabled ? <CheckCircle2 className="h-3 w-3" /> : null}
               {busy ? "Saving…" : isEnabled ? "Active" : "Enable"}
             </button>
             {detailRoute && (
               <button onClick={() => router.push(detailRoute)}
-                className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg border border-[#e8eaed] text-[#5f6368] hover:bg-[#f1f3f4] transition-colors">
+                className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg border border-[#262A35] text-[#8A92A6] hover:bg-[#1B1F2A] transition-colors">
                 <ExternalLink className="h-3 w-3" /> Open
               </button>
             )}
           </>
         ) : detailRoute ? (
           <button onClick={() => router.push(detailRoute)}
-            className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#e8f0fe] text-[#1a56db] border border-[#1a56db]/20 hover:bg-[#dbeafe] transition-colors">
+            className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#00C2FF]/10 text-[#00C2FF] border border-[#00C2FF]/20 hover:bg-[#00C2FF]/20 transition-colors">
             <ExternalLink className="h-3 w-3" /> Connect
           </button>
         ) : (
-          <button className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#f1f3f4] text-[#5f6368] border border-[#e8eaed] hover:bg-[#e8eaed] transition-colors">
+          <button className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#1B1F2A] text-[#8A92A6] border border-[#262A35] hover:bg-[#262A35] transition-colors">
             Request
           </button>
         )}
@@ -254,7 +254,7 @@ export default function AppsPage() {
   const enabledCount = integrations.filter((a) => a.enabled).length;
 
   return (
-    <div className="min-h-screen bg-white text-[#202124]">
+    <div className="min-h-screen bg-[#12151D] text-[#E6E9F0]">
       <PageHeader
         eyebrow="Workspace"
         title="Apps"
@@ -265,28 +265,28 @@ export default function AppsPage() {
 
         {/* ── Built-in apps ── */}
         <div>
-          <h2 className="text-sm font-semibold text-[#202124] mb-3">Built-in Apps</h2>
+          <h2 className="text-sm font-semibold text-[#E6E9F0] mb-3">Built-in Apps</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {BUILTIN_APPS.map((app) => {
               const Icon = app.icon;
               return (
                 <button key={app.id} onClick={() => router.push(app.href)}
-                  className="group flex flex-col gap-3 rounded-xl p-5 bg-white border border-[#e8eaed] hover:border-[#1a56db]/30 hover:shadow-sm text-left transition-all">
+                  className="group flex flex-col gap-3 rounded-xl p-5 bg-[#12151D] border border-[#262A35] hover:border-[#00C2FF]/30 hover:shadow-sm text-left transition-all">
                   <div className="flex items-center justify-between">
                     <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${app.color}`}>
                       <Icon className="h-5 w-5" />
                     </div>
                     {app.badge && (
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#1a56db] text-white">
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#00C2FF] text-[#06121A]">
                         {app.badge}
                       </span>
                     )}
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-[#202124]">{app.name}</p>
-                    <p className="text-xs text-[#5f6368] mt-0.5 leading-relaxed line-clamp-2">{app.description}</p>
+                    <p className="text-sm font-semibold text-[#E6E9F0]">{app.name}</p>
+                    <p className="text-xs text-[#8A92A6] mt-0.5 leading-relaxed line-clamp-2">{app.description}</p>
                   </div>
-                  <div className="flex items-center gap-1 text-xs font-medium text-[#1a56db] group-hover:gap-2 transition-all">
+                  <div className="flex items-center gap-1 text-xs font-medium text-[#00C2FF] group-hover:gap-2 transition-all">
                     Open <ArrowRight className="w-3.5 h-3.5" />
                   </div>
                 </button>
@@ -297,12 +297,12 @@ export default function AppsPage() {
 
         {/* ── Integrations ── */}
         <div>
-          <h2 className="text-sm font-semibold text-[#202124] mb-3">Integrations</h2>
+          <h2 className="text-sm font-semibold text-[#E6E9F0] mb-3">Integrations</h2>
 
           {!loading && enabledCount > 0 && (
-            <div className="flex items-center gap-2 text-xs text-[#5f6368] mb-3">
-              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-              <span><span className="font-semibold text-emerald-600">{enabledCount}</span> {enabledCount === 1 ? "integration" : "integrations"} active</span>
+            <div className="flex items-center gap-2 text-xs text-[#8A92A6] mb-3">
+              <CheckCircle2 className="h-3.5 w-3.5 text-[#0f9d58]" />
+              <span><span className="font-semibold font-mono text-[#0f9d58]">{enabledCount}</span> {enabledCount === 1 ? "integration" : "integrations"} active</span>
             </div>
           )}
 
@@ -312,8 +312,8 @@ export default function AppsPage() {
                 className={[
                   "px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors",
                   activeTab === cat
-                    ? "bg-[#e8f0fe] text-[#1a56db] border-[#1a56db]/30"
-                    : "bg-white text-[#5f6368] border-[#e8eaed] hover:text-[#202124] hover:border-[#d0d5dd]",
+                    ? "bg-[#00C2FF]/10 text-[#00C2FF] border-[#00C2FF]/30"
+                    : "bg-[#12151D] text-[#8A92A6] border-[#262A35] hover:text-[#E6E9F0] hover:border-[#2E333F]",
                 ].join(" ")}>
                 {cat}
               </button>
@@ -321,23 +321,23 @@ export default function AppsPage() {
           </div>
 
           {loading ? (
-            <div className="flex items-center justify-center py-16 gap-3 text-[#5f6368]">
+            <div className="flex items-center justify-center py-16 gap-3 text-[#8A92A6]">
               <Loader2 className="h-5 w-5 animate-spin" />
               <span className="text-sm">Loading…</span>
             </div>
           ) : sorted.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 gap-4 text-center">
-              <div className="w-14 h-14 rounded-2xl bg-[#f1f3f4] flex items-center justify-center">
-                <Zap className="w-7 h-7 text-[#bdc1c6]" />
+              <div className="w-14 h-14 rounded-2xl bg-[#1B1F2A] border border-[#262A35] flex items-center justify-center">
+                <Zap className="w-7 h-7 text-[#5A6275]" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-[#202124] mb-1">More integrations coming soon</p>
-                <p className="text-xs text-[#5f6368]">
+                <p className="text-sm font-semibold text-[#E6E9F0] mb-1">More integrations coming soon</p>
+                <p className="text-xs text-[#8A92A6]">
                   {activeTab === "All" ? "We're building new connections to Nexus." : `${activeTab} integrations are on the roadmap.`}
                 </p>
               </div>
               {activeTab !== "All" && (
-                <button onClick={() => setActiveTab("All")} className="px-4 py-2 text-sm font-medium rounded-lg bg-[#1a56db] text-white hover:bg-[#1648c7] transition-colors">
+                <button onClick={() => setActiveTab("All")} className="px-4 py-2 text-sm font-medium rounded-lg bg-[#00C2FF] text-[#06121A] hover:bg-[#0098E6] transition-colors">
                   View all integrations
                 </button>
               )}

@@ -110,7 +110,7 @@ export default function WhiteboardPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-white text-[#202124] flex flex-col">
+    <div className="min-h-screen bg-[#12151D] text-[#E6E9F0] flex flex-col">
       <PageHeader
         eyebrow="Collaboration · Phase 25"
         title="Whiteboard"
@@ -118,14 +118,14 @@ export default function WhiteboardPage() {
       />
 
       {/* Toolbar */}
-      <div className="flex items-center gap-3 px-6 py-3 bg-white border-b border-[#e8eaed]">
+      <div className="flex items-center gap-3 px-6 py-3 bg-[#12151D] border-b border-[#262A35]">
         {/* Tools */}
-        <div className="flex items-center gap-1 bg-[#f1f3f4] rounded-lg p-1">
+        <div className="flex items-center gap-1 bg-[#1B1F2A] rounded-lg p-1">
           {TOOLS.map(({ id, Icon }) => (
             <button
               key={id}
               onClick={() => setTool(id)}
-              className={`p-2 rounded-md transition-colors ${tool === id ? "bg-[#1a56db]/20 text-[#1a56db]" : "text-[#9aa0a6] hover:text-[#5f6368]"}`}
+              className={`p-2 rounded-md transition-colors ${tool === id ? "bg-[#00C2FF]/20 text-[#00C2FF]" : "text-[#5A6275] hover:text-[#8A92A6]"}`}
               title={id}
             >
               <Icon className="w-4 h-4" />
@@ -147,22 +147,22 @@ export default function WhiteboardPage() {
 
         {/* Size */}
         <input type="range" min={1} max={20} value={size} onChange={(e) => setSize(Number(e.target.value))} className="w-24 accent-[#00d2ff]" />
-        <span className="text-xs text-[#9aa0a6] w-6">{size}px</span>
+        <span className="text-xs text-[#5A6275] w-6">{size}px</span>
 
         <div className="flex-1" />
 
         {/* Collaborators */}
         {collaborators.length > 0 && (
-          <div className="flex items-center gap-1 text-xs text-[#9aa0a6]">
+          <div className="flex items-center gap-1 text-xs text-[#5A6275]">
             <Users className="w-3.5 h-3.5" />
             {collaborators.length} online
           </div>
         )}
 
-        <button onClick={handleDownload} className="p-2 text-[#9aa0a6] hover:text-[#5f6368]" title="Download">
+        <button onClick={handleDownload} className="p-2 text-[#5A6275] hover:text-[#8A92A6]" title="Download">
           <Download className="w-4 h-4" />
         </button>
-        <button onClick={handleClear} className="p-2 text-[#9aa0a6] hover:text-[#ff4d6d]" title="Clear">
+        <button onClick={handleClear} className="p-2 text-[#5A6275] hover:text-[#ff4d6d]" title="Clear">
           <Trash2 className="w-4 h-4" />
         </button>
       </div>

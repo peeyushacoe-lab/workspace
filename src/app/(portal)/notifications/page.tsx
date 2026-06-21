@@ -41,14 +41,14 @@ const TYPE_CONFIG: Record<NotificationType, {
   bg: string;
   border: string;
 }> = {
-  MENTION:           { label: "Mention",          Icon: AtSign,       color: "text-[#1a56db]",   bg: "bg-[#1a56db]/10",   border: "border-[#1a56db]/20" },
+  MENTION:           { label: "Mention",          Icon: AtSign,       color: "text-[#00C2FF]",   bg: "bg-[#00C2FF]/10",   border: "border-[#00C2FF]/20" },
   CALENDAR_INVITE:   { label: "Calendar Invite",  Icon: Calendar,     color: "text-violet-400",  bg: "bg-violet-400/10",  border: "border-violet-400/20" },
   CALENDAR_REMINDER: { label: "Reminder",         Icon: Calendar,     color: "text-amber-400",   bg: "bg-amber-400/10",   border: "border-amber-400/20" },
   SOC_ALERT:         { label: "SOC Alert",        Icon: Shield,       color: "text-red-400",     bg: "bg-red-400/10",     border: "border-red-400/20" },
   DLP_VIOLATION:     { label: "DLP Violation",    Icon: AlertTriangle,color: "text-orange-400",  bg: "bg-orange-400/10",  border: "border-orange-400/20" },
   NEW_MESSAGE:       { label: "New Message",      Icon: Mail,         color: "text-emerald-400", bg: "bg-emerald-400/10", border: "border-emerald-400/20" },
   FILE_SHARED:       { label: "File Shared",      Icon: FileText,     color: "text-sky-400",     bg: "bg-sky-400/10",     border: "border-sky-400/20" },
-  SYSTEM:            { label: "System",           Icon: Settings,     color: "text-[#9aa0a6]",   bg: "bg-[#5d6579]/10",  border: "border-[#5d6579]/20" },
+  SYSTEM:            { label: "System",           Icon: Settings,     color: "text-[#5A6275]",   bg: "bg-[#5d6579]/10",  border: "border-[#5d6579]/20" },
 };
 
 const _ALL_TYPES = Object.keys(TYPE_CONFIG) as NotificationType[];
@@ -109,13 +109,13 @@ function NotificationRow({
     <div
       className={[
         "group relative flex items-start gap-3 px-4 py-3.5 transition-colors",
-        "hover:bg-[#f1f3f4]/40 cursor-pointer",
-        !notification.read ? "bg-white" : "bg-transparent",
+        "hover:bg-[#1B1F2A]/40 cursor-pointer",
+        !notification.read ? "bg-[#12151D]" : "bg-transparent",
       ].join(" ")}
     >
       {/* Unread dot */}
       {!notification.read && (
-        <span className="absolute left-1.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-[#1a56db]" />
+        <span className="absolute left-1.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-[#00C2FF]" />
       )}
 
       {/* Icon */}
@@ -129,12 +129,12 @@ function NotificationRow({
           <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${cfg.color} ${cfg.bg} border ${cfg.border}`}>
             {cfg.label}
           </span>
-          <span className="text-[10px] text-[#9aa0a6] ml-auto">{timeAgo(notification.createdAt)}</span>
+          <span className="text-[10px] font-mono text-[#5A6275] ml-auto">{timeAgo(notification.createdAt)}</span>
         </div>
-        <p className={`text-sm font-medium mt-1 leading-snug ${notification.read ? "text-[#5f6368]" : "text-[#202124]"}`}>
+        <p className={`text-sm font-medium mt-1 leading-snug ${notification.read ? "text-[#8A92A6]" : "text-[#E6E9F0]"}`}>
           {notification.title}
         </p>
-        <p className="text-xs text-[#9aa0a6] mt-0.5 line-clamp-2">{notification.body}</p>
+        <p className="text-xs text-[#5A6275] mt-0.5 line-clamp-2">{notification.body}</p>
       </div>
 
       {/* Actions — revealed on hover */}
@@ -142,7 +142,7 @@ function NotificationRow({
         {!notification.read && (
           <button
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); onMarkRead(notification.id); }}
-            className="p-1.5 rounded text-[#9aa0a6] hover:text-emerald-400 hover:bg-white transition-colors"
+            className="p-1.5 rounded text-[#5A6275] hover:text-emerald-400 hover:bg-[#12151D] transition-colors"
             title="Mark as read"
           >
             <Check className="w-3.5 h-3.5" />
@@ -150,7 +150,7 @@ function NotificationRow({
         )}
         <button
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(notification.id); }}
-          className="p-1.5 rounded text-[#9aa0a6] hover:text-red-400 hover:bg-white transition-colors"
+          className="p-1.5 rounded text-[#5A6275] hover:text-red-400 hover:bg-[#12151D] transition-colors"
           title="Delete"
         >
           <Trash2 className="w-3.5 h-3.5" />
@@ -259,7 +259,7 @@ export default function NotificationsPage() {
   const groups = groupByDate(filtered);
 
   return (
-    <div className="min-h-screen bg-white text-[#202124]">
+    <div className="min-h-screen bg-[#12151D] text-[#E6E9F0]">
       <PageHeader
         eyebrow="Workspace"
         title="Notifications"
@@ -283,9 +283,9 @@ export default function NotificationsPage() {
         <div className="flex flex-wrap items-center gap-3">
           {/* Unread badge */}
           {unreadCount > 0 && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1a56db]/10 border border-[#1a56db]/20">
-              <Bell className="w-3 h-3 text-[#1a56db]" />
-              <span className="text-xs font-semibold text-[#1a56db]">{unreadCount} unread</span>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#00C2FF]/10 border border-[#00C2FF]/20">
+              <Bell className="w-3 h-3 text-[#00C2FF]" />
+              <span className="text-xs font-semibold text-[#00C2FF]"><span className="font-mono">{unreadCount}</span> unread</span>
             </div>
           )}
 
@@ -295,8 +295,8 @@ export default function NotificationsPage() {
             className={[
               "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors",
               unreadOnly
-                ? "bg-[#1a56db]/10 text-[#1a56db] border-[#1a56db]/20"
-                : "bg-white text-[#9aa0a6] border-[#e8eaed] hover:text-[#5f6368]",
+                ? "bg-[#00C2FF]/10 text-[#00C2FF] border-[#00C2FF]/20"
+                : "bg-[#12151D] text-[#5A6275] border-[#262A35] hover:text-[#8A92A6]",
             ].join(" ")}
           >
             <Filter className="w-3 h-3" />
@@ -307,7 +307,7 @@ export default function NotificationsPage() {
           <button
             onClick={() => void load()}
             disabled={loading}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-[#9aa0a6] border border-[#e8eaed] hover:text-[#5f6368] transition-colors disabled:opacity-50 ml-auto"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#12151D] text-[#5A6275] border border-[#262A35] hover:text-[#8A92A6] transition-colors disabled:opacity-50 ml-auto"
           >
             <RefreshCw className={`w-3 h-3 ${loading ? "animate-spin" : ""}`} />
             Refresh
@@ -330,13 +330,13 @@ export default function NotificationsPage() {
                 className={[
                   "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors",
                   active
-                    ? "bg-[#1a56db]/15 text-[#1a56db] border-[#1a56db]/30"
-                    : "bg-white text-[#9aa0a6] border-[#e8eaed] hover:text-[#5f6368] hover:border-[#d0d5dd]",
+                    ? "bg-[#00C2FF]/15 text-[#00C2FF] border-[#00C2FF]/30"
+                    : "bg-[#12151D] text-[#5A6275] border-[#262A35] hover:text-[#8A92A6] hover:border-[#2E333F]",
                 ].join(" ")}
               >
                 {label}
                 {count > 0 && (
-                  <span className={`px-1 min-w-[16px] text-center rounded-full text-[9px] font-semibold ${active ? "bg-[#1a56db]/20 text-[#1a56db]" : "bg-[#f1f3f4] text-[#9aa0a6]"}`}>
+                  <span className={`px-1 min-w-[16px] text-center rounded-full text-[9px] font-mono font-semibold ${active ? "bg-[#00C2FF]/20 text-[#00C2FF]" : "bg-[#1B1F2A] text-[#5A6275]"}`}>
                     {count}
                   </span>
                 )}
@@ -347,20 +347,20 @@ export default function NotificationsPage() {
 
         {/* Notification list */}
         {loading ? (
-          <div className="flex items-center justify-center py-20 gap-2 text-[#9aa0a6]">
+          <div className="flex items-center justify-center py-20 gap-2 text-[#5A6275]">
             <Loader2 className="w-5 h-5 animate-spin" />
             <span className="text-sm">Loading notifications…</span>
           </div>
         ) : groups.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-white border border-[#e8eaed] flex items-center justify-center">
-              <BellOff className="w-6 h-6 text-[#bdc1c6]" />
+            <div className="w-14 h-14 rounded-2xl bg-[#12151D] border border-[#262A35] flex items-center justify-center">
+              <BellOff className="w-6 h-6 text-[#5A6275]" />
             </div>
             <div className="text-center">
-              <p className="text-sm font-medium text-[#5f6368]">
+              <p className="text-sm font-medium text-[#8A92A6]">
                 {unreadOnly ? "No unread notifications" : "All quiet"}
               </p>
-              <p className="text-xs text-[#9aa0a6] mt-1">
+              <p className="text-xs text-[#5A6275] mt-1">
                 {unreadOnly ? "Switch to 'Show all' to see past notifications." : "You're up to date."}
               </p>
             </div>
@@ -371,12 +371,12 @@ export default function NotificationsPage() {
               <div key={label}>
                 {/* Date group header */}
                 <div className="flex items-center gap-3 mb-1 px-4">
-                  <span className="text-[10px] font-semibold text-[#bdc1c6]">{label}</span>
-                  <div className="flex-1 h-px bg-[rgba(255,255,255,0.04)]" />
+                  <span className="text-[10px] font-semibold text-[#8A92A6]">{label}</span>
+                  <div className="flex-1 h-px bg-[#1C1F28]" />
                 </div>
 
                 {/* Card */}
-                <div className="bg-white border border-[#e8eaed] rounded-xl overflow-hidden divide-y divide-[#f0f0f0]">
+                <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden divide-y divide-[#1C1F28]">
                   {items.map((n) => (
                     <NotificationRow
                       key={n.id}
@@ -393,8 +393,8 @@ export default function NotificationsPage() {
 
         {/* Count summary */}
         {!loading && notifications.length > 0 && (
-          <p className="text-center text-xs text-[#bdc1c6] pt-2">
-            {filtered.length} of {notifications.length} notifications shown
+          <p className="text-center text-xs text-[#5A6275] pt-2">
+            <span className="font-mono">{filtered.length}</span> of <span className="font-mono">{notifications.length}</span> notifications shown
           </p>
         )}
       </div>

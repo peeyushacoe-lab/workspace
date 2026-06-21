@@ -110,10 +110,10 @@ function UptimeCard({
   const dotCls = uptimeDotClass(pct);
 
   return (
-    <div className="bg-white border border-[#e8eaed] rounded-xl p-4">
+    <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-4">
       <div className="flex items-center gap-2 mb-3">
-        <Icon className="w-4 h-4 text-[#9aa0a6] flex-shrink-0" />
-        <p className="text-[10px] text-[#9aa0a6]">{label}</p>
+        <Icon className="w-4 h-4 text-[#5A6275] flex-shrink-0" />
+        <p className="text-[10px] text-[#5A6275]">{label}</p>
       </div>
       <div className="flex items-center gap-2">
         <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dotCls}`} />
@@ -182,7 +182,7 @@ export default function ReliabilityPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-[#202124]">
+    <div className="min-h-screen bg-[#12151D] text-[#E6E9F0]">
       <PageHeader
         eyebrow="Admin"
         title="Reliability"
@@ -193,12 +193,12 @@ export default function ReliabilityPage() {
         {/* ── Toolbar ── */}
         <div className="flex items-center gap-3">
           <div className="flex-1" />
-          <span className="text-[10px] text-[#9aa0a6]">
+          <span className="text-[10px] text-[#5A6275]">
             Next refresh in {countdown}s
           </span>
           <button
             onClick={handleManualRefresh}
-            className="p-2 text-[#9aa0a6] hover:text-[#5f6368] transition-colors"
+            className="p-2 text-[#5A6275] hover:text-[#8A92A6] transition-colors"
             title="Refresh now"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
@@ -214,16 +214,16 @@ export default function ReliabilityPage() {
         </div>
 
         {/* ── Scheduled jobs ── */}
-        <div className="bg-white border border-[#e8eaed] rounded-xl overflow-hidden">
-          <div className="flex items-center gap-3 px-4 py-3 border-b border-[#e8eaed]">
-            <Clock className="w-4 h-4 text-[#1a56db]" />
+        <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
+          <div className="flex items-center gap-3 px-4 py-3 border-b border-[#262A35]">
+            <Clock className="w-4 h-4 text-[#00C2FF]" />
             <span className="text-sm font-medium">Scheduled Jobs</span>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-[#f0f0f0] text-[#9aa0a6] text-xs">
+                <tr className="border-b border-[#1C1F28] text-[#5A6275] text-xs">
                   <th className="text-left px-4 py-2.5 font-medium">Job</th>
                   <th className="text-left px-4 py-2.5 font-medium hidden sm:table-cell">
                     Schedule (cron)
@@ -237,7 +237,7 @@ export default function ReliabilityPage() {
               <tbody>
                 {loading && !data ? (
                   <tr>
-                    <td colSpan={4} className="text-center text-[#9aa0a6] py-10">
+                    <td colSpan={4} className="text-center text-[#5A6275] py-10">
                       <Loader2 className="w-4 h-4 animate-spin inline mr-2" />
                       Loading job status…
                     </td>
@@ -246,17 +246,17 @@ export default function ReliabilityPage() {
                   data?.scheduledJobs.map((job) => (
                     <tr
                       key={job.name}
-                      className="border-b border-[#f0f0f0] hover:bg-[#f1f3f4]/30"
+                      className="border-b border-[#1C1F28] hover:bg-[#1B1F2A]/30"
                     >
                       <td className="px-4 py-3">
-                        <span className="font-mono text-xs text-[#202124]">{job.name}</span>
+                        <span className="font-mono text-xs text-[#E6E9F0]">{job.name}</span>
                       </td>
                       <td className="px-4 py-3 hidden sm:table-cell">
-                        <code className="text-[10px] font-mono text-[#1a56db] bg-[rgba(0,210,255,0.06)] px-1.5 py-0.5 rounded">
+                        <code className="text-[10px] font-mono text-[#00C2FF] bg-[rgba(0,210,255,0.06)] px-1.5 py-0.5 rounded">
                           {job.schedule}
                         </code>
                       </td>
-                      <td className="px-4 py-3 text-xs text-[#9aa0a6] hidden md:table-cell">
+                      <td className="px-4 py-3 text-xs text-[#5A6275] hidden md:table-cell">
                         {job.lastRun ? new Date(job.lastRun).toLocaleString() : "—"}
                       </td>
                       <td className="px-4 py-3">
@@ -272,8 +272,8 @@ export default function ReliabilityPage() {
 
         {/* ── Recent errors ── */}
         {data && (
-          <div className="bg-white border border-[#e8eaed] rounded-xl overflow-hidden">
-            <div className="flex items-center gap-3 px-4 py-3 border-b border-[#e8eaed]">
+          <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-[#262A35]">
               <AlertTriangle className="w-4 h-4 text-yellow-400" />
               <span className="text-sm font-medium">Recent Errors</span>
               {data.recentErrors.length > 0 && (
@@ -285,13 +285,13 @@ export default function ReliabilityPage() {
             {data.recentErrors.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-10 gap-2">
                 <CheckCircle2 className="w-8 h-8 text-emerald-400/50" />
-                <p className="text-[#9aa0a6] text-sm">No recent errors</p>
+                <p className="text-[#5A6275] text-sm">No recent errors</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-[#f0f0f0] text-[#9aa0a6] text-xs">
+                    <tr className="border-b border-[#1C1F28] text-[#5A6275] text-xs">
                       <th className="text-left px-4 py-2.5 font-medium">Service</th>
                       <th className="text-left px-4 py-2.5 font-medium">Message</th>
                       <th className="text-right px-4 py-2.5 font-medium hidden sm:table-cell">
@@ -303,15 +303,15 @@ export default function ReliabilityPage() {
                     {data.recentErrors.map((err, i) => (
                       <tr
                         key={i}
-                        className="border-b border-[#f0f0f0] hover:bg-[#f1f3f4]/30"
+                        className="border-b border-[#1C1F28] hover:bg-[#1B1F2A]/30"
                       >
                         <td className="px-4 py-3">
-                          <span className="font-mono text-xs text-[#1a56db]">{err.service}</span>
+                          <span className="font-mono text-xs text-[#00C2FF]">{err.service}</span>
                         </td>
                         <td className="px-4 py-3 text-xs text-red-300/80 max-w-xs truncate">
                           {err.message}
                         </td>
-                        <td className="px-4 py-3 text-right text-xs text-[#9aa0a6] hidden sm:table-cell">
+                        <td className="px-4 py-3 text-right text-xs text-[#5A6275] hidden sm:table-cell">
                           {new Date(err.timestamp).toLocaleString()}
                         </td>
                       </tr>
@@ -324,33 +324,33 @@ export default function ReliabilityPage() {
         )}
 
         {/* ── Quick links ── */}
-        <div className="bg-white border border-[#e8eaed] rounded-xl p-4">
-          <p className="text-[10px] text-[#9aa0a6] mb-3">
+        <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-4">
+          <p className="text-[10px] text-[#5A6275] mb-3">
             Related admin pages
           </p>
           <div className="flex flex-wrap gap-3">
             <Link
               href="/admin/queues"
-              className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-[#f1f3f4] text-[#5f6368] border border-[#e8eaed] hover:bg-[#2e3347] hover:text-[#202124] transition-colors"
+              className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-[#1B1F2A] text-[#8A92A6] border border-[#262A35] hover:bg-[#2e3347] hover:text-[#E6E9F0] transition-colors"
             >
-              <Zap className="w-3.5 h-3.5 text-[#1a56db]" />
+              <Zap className="w-3.5 h-3.5 text-[#00C2FF]" />
               Queue Monitor
-              <ExternalLink className="w-3 h-3 text-[#9aa0a6]" />
+              <ExternalLink className="w-3 h-3 text-[#5A6275]" />
             </Link>
             <Link
               href="/admin/health"
-              className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-[#f1f3f4] text-[#5f6368] border border-[#e8eaed] hover:bg-[#2e3347] hover:text-[#202124] transition-colors"
+              className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-[#1B1F2A] text-[#8A92A6] border border-[#262A35] hover:bg-[#2e3347] hover:text-[#E6E9F0] transition-colors"
             >
-              <Activity className="w-3.5 h-3.5 text-[#1a56db]" />
+              <Activity className="w-3.5 h-3.5 text-[#00C2FF]" />
               System Health
-              <ExternalLink className="w-3 h-3 text-[#9aa0a6]" />
+              <ExternalLink className="w-3 h-3 text-[#5A6275]" />
             </Link>
           </div>
         </div>
 
         {/* ── Footer ── */}
         {data && (
-          <p className="text-xs text-[#9aa0a6]">
+          <p className="text-xs text-[#5A6275]">
             <Clock className="w-3 h-3 inline mr-1" />
             Last checked: {new Date(data.lastChecked).toLocaleString()}
           </p>

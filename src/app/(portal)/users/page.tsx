@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { avatarGradient } from "@/lib/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -50,11 +51,11 @@ const ROLE_GROUPS = [
 const ROLE_COLORS: Record<string, string> = {
   ADMIN: "bg-[#ea4335]/10 text-[#ea4335]",
   CEO: "bg-purple-500/10 text-purple-300",
-  CISO: "bg-[#1a56db]/10 text-[#1a56db]",
+  CISO: "bg-[#00C2FF]/10 text-[#00C2FF]",
   R_AND_D: "bg-indigo-500/10 text-indigo-300",
   COO: "bg-violet-500/10 text-violet-300",
   OPS_MANAGER: "bg-orange-500/10 text-orange-300",
-  DEVELOPER: "bg-[#1a56db]/10 text-[#1a56db]",
+  DEVELOPER: "bg-[#00C2FF]/10 text-[#00C2FF]",
   CYBER_SECURITY: "bg-[#ea4335]/10 text-[#ea4335]",
   QA: "bg-yellow-500/10 text-yellow-300",
   MARKETING: "bg-[#0f9d58]/10 text-[#0f9d58]",
@@ -62,7 +63,7 @@ const ROLE_COLORS: Record<string, string> = {
   FINANCE: "bg-[#0f9d58]/10 text-[#0f9d58]",
   OPERATIONS: "bg-amber-500/10 text-amber-300",
   SUPPORT: "bg-sky-500/10 text-sky-300",
-  INTERNSHIP: "bg-[#1a56db]/10 text-[#1a56db]",
+  INTERNSHIP: "bg-[#00C2FF]/10 text-[#00C2FF]",
 };
 
 interface UserRow {
@@ -103,7 +104,7 @@ function GrantDropdown({
       <button
         onClick={() => setOpen((v) => !v)}
         disabled={disabled}
-        className="flex items-center gap-1 text-[10px] text-[#9aa0a6] hover:text-[#1a56db] border border-dashed border-[rgba(255,255,255,0.11)] hover:border-[#1a56db]/40 px-1.5 py-0.5 rounded-full transition-colors disabled:opacity-40"
+        className="flex items-center gap-1 text-[10px] text-[#5A6275] hover:text-[#00C2FF] border border-dashed border-[rgba(255,255,255,0.11)] hover:border-[#00C2FF]/40 px-1.5 py-0.5 rounded-full transition-colors disabled:opacity-40"
       >
         <Plus className="w-2.5 h-2.5" /> Grant
         <ChevronDown className="w-2.5 h-2.5" />
@@ -111,12 +112,12 @@ function GrantDropdown({
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 top-full mt-1 z-20 w-44 bg-white border border-[#e8eaed] rounded-xl shadow-xl overflow-hidden">
+          <div className="absolute left-0 top-full mt-1 z-20 w-44 bg-[#12151D] border border-[#262A35] rounded-xl shadow-xl overflow-hidden">
             {available.map((role) => (
               <button
                 key={role}
                 onClick={() => { onGrant(role); setOpen(false); }}
-                className="w-full text-left px-3 py-2 text-xs text-[#5f6368] hover:bg-[#f1f3f4] hover:text-[#202124] transition-colors"
+                className="w-full text-left px-3 py-2 text-xs text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0] transition-colors"
               >
                 {role}
               </button>
@@ -296,7 +297,7 @@ export default function UsersPage() {
                 <form onSubmit={handleCreate}>
                   <div className="space-y-4 py-4">
                     {formError && (
-                      <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                      <div className="p-3 bg-[#ea4335]/10 border border-[#ea4335]/30 rounded-lg text-sm text-[#ea4335]">
                         {formError}
                       </div>
                     )}
@@ -364,7 +365,7 @@ export default function UsersPage() {
                         </SelectContent>
                       </Select>
                       {form.role && KEY_ROLES.has(form.role) && (
-                        <p className="text-xs text-amber-600 mt-1">
+                        <p className="text-xs text-[#F59E0B] mt-1">
                           This is a key role — only one {ROLE_LABELS[form.role]} can exist at a time.
                         </p>
                       )}
@@ -426,7 +427,7 @@ export default function UsersPage() {
                   {isCisoOrAdmin && (
                     <TableHead>
                       <div className="flex items-center gap-1.5">
-                        <Shield className="w-3 h-3 text-[#1a56db]" />
+                        <Shield className="w-3 h-3 text-[#00C2FF]" />
                         Access Roles
                       </div>
                     </TableHead>
@@ -437,25 +438,32 @@ export default function UsersPage() {
               <TableBody>
                 {users.map(user => (
                   <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.fullName}</TableCell>
-                    <TableCell className="text-muted text-sm">{user.email}</TableCell>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-semibold text-white flex-shrink-0" style={{ background: avatarGradient(user.email) }}>
+                          {user.fullName.charAt(0).toUpperCase()}
+                        </div>
+                        <span className="text-[#E6E9F0]">{user.fullName}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-[#8A92A6] text-sm font-mono">{user.email}</TableCell>
                     <TableCell>
-                      <Badge className={ROLE_COLORS[user.role] ?? "bg-[#f1f5f9] text-[#475569]"}>
+                      <Badge className={ROLE_COLORS[user.role] ?? "bg-[#1B1F2A] text-[#8A92A6]"}>
                         {ROLE_LABELS[user.role] ?? user.role}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       {user.mustResetPassword ? (
-                        <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50">
+                        <Badge variant="outline" className="text-[#F59E0B] border-[#F59E0B]/30 bg-[#F59E0B]/10">
                           Invite pending
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="text-green-700 border-green-300 bg-green-50">
+                        <Badge variant="outline" className="text-[#0f9d58] border-[#0f9d58]/30 bg-[#0f9d58]/10">
                           Active
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell className="text-muted text-sm">
+                    <TableCell className="text-[#8A92A6] text-sm font-mono">
                       {new Date(user.createdAt).toLocaleDateString()}
                     </TableCell>
 
@@ -469,14 +477,14 @@ export default function UsersPage() {
                               onClick={() => void applyAccess(user.id, role, "revoke")}
                               disabled={savingAccess === user.id}
                               title={`Click to revoke ${role}`}
-                              className="group flex items-center gap-0.5 bg-[#1a56db]/10 text-[#1a56db] border border-[#1a56db]/20 px-1.5 py-0.5 rounded-full text-[10px] font-semibold hover:bg-[#ea4335]/10 hover:text-[#ea4335] hover:border-[#ea4335]/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                              className="group flex items-center gap-0.5 bg-[#00C2FF]/10 text-[#00C2FF] border border-[#00C2FF]/20 px-1.5 py-0.5 rounded-full text-[10px] font-semibold hover:bg-[#ea4335]/10 hover:text-[#ea4335] hover:border-[#ea4335]/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                             >
                               {role}
                               <X className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
                             </button>
                           ))}
                           {savingAccess === user.id ? (
-                            <Loader2 className="w-3 h-3 animate-spin text-[#5f6368]" />
+                            <Loader2 className="w-3 h-3 animate-spin text-[#8A92A6]" />
                           ) : (
                             <GrantDropdown
                               currentRoles={user.grantedRoles}
@@ -514,7 +522,7 @@ export default function UsersPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => handleDelete(user.id, user.fullName)}
-                            className="text-red-600 hover:text-red-700 hover:border-red-300"
+                            className="text-red-400 hover:text-red-400 hover:border-red-500/30"
                             title="Delete user"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
