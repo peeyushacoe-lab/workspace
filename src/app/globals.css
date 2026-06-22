@@ -8,6 +8,25 @@
 button, a { touch-action: manipulation; }
 input, textarea, select { font-size: 16px; }
 
+/*
+ * Light-mode override for a dark-first app.
+ * Because every component uses hardcoded dark hex values (not CSS variables),
+ * we flip the entire page with CSS filter when .dark is absent.
+ * Images, videos, and canvases get a counter-filter so they stay colour-correct.
+ */
+html:not(.dark) body {
+  filter: invert(0.9) hue-rotate(180deg);
+  background: #fff;
+}
+html:not(.dark) img,
+html:not(.dark) video,
+html:not(.dark) canvas,
+html:not(.dark) iframe,
+html:not(.dark) [class*="avatar"],
+html:not(.dark) [style*="background-image"] {
+  filter: invert(1) hue-rotate(180deg);
+}
+
 :root {
   /* Refined-dark design system — typography & effect tokens */
   --font-geist: var(--font-jakarta, "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif);

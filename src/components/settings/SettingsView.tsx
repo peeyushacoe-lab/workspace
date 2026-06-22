@@ -689,6 +689,7 @@ function AppearanceTab() {
       localStorage.setItem("theme", t);
       const dark = t === "dark" || (t === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
       document.documentElement.classList.toggle("dark", dark);
+      document.documentElement.setAttribute("data-theme", t);
     } catch {}
     toast.success(`Theme set to ${t}`);
   };
