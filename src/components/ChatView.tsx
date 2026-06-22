@@ -2392,7 +2392,7 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
       const uploadRes = await fetch("/api/drive/upload", { method: "POST", body: formData });
       if (!uploadRes.ok) throw new Error("Upload failed");
       const fileRecord = await uploadRes.json() as { id: string; name: string; size: string; mimeType: string; storageUrl?: string };
-      const content = "[FILE_ATTACHMENT] " + JSON.stringify({ name: "Voice Note", size: parseInt(fileRecord.size, 10), mimeType: "audio/webm", url: fileRecord.storageUrl, fileId: fileRecord.id });
+      const content = "[FILE_ATTACHMENT] " + JSON.stringify({ name: "Voice Note", size: parseInt(fileRecord.size, 10), mimeType: fileRecord.mimeType || audioBlob.type || "audio/webm", url: fileRecord.storageUrl, fileId: fileRecord.id });
       await fetch(`/api/chat/channels/${selectedChannelId}/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -2645,7 +2645,7 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
     });
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] lg:h-screen bg-[#12151D] overflow-hidden">
+    <div className="flex h-[calc(100vh-3.25rem)] lg:h-[calc(100vh-3.5rem)] bg-[#12151D] overflow-hidden">
       {/* Channel sidebar */}
       <div className="w-64 bg-[#12151D] border-r border-[#262A35] flex flex-col flex-shrink-0">
         <div className="h-[50px] flex-shrink-0 flex items-center justify-between px-4 border-b border-[#262A35]">

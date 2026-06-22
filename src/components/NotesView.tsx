@@ -776,7 +776,7 @@ export function NotesView() {
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div className="flex h-screen bg-[#12151D] overflow-hidden text-[#E6E9F0]" onClick={() => { setShowColorPicker(false); setShowTemplateMenu(false); setShowReminder(false); }}>
+    <div className="flex h-[calc(100vh-3.25rem)] lg:h-[calc(100vh-3.5rem)] bg-[#12151D] overflow-hidden text-[#E6E9F0]" onClick={() => { setShowColorPicker(false); setShowTemplateMenu(false); setShowReminder(false); }}>
 
       {/* ── Left sidebar (folders + list) ── */}
       <aside className="flex flex-col border-r border-[#1C1F28] bg-[#12151D] overflow-hidden flex-shrink-0" style={{ width: 320 }}>

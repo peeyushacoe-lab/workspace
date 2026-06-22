@@ -1079,7 +1079,7 @@ export function InboxView({ userRole, initialThreads }: {
   };
 
   return (
-    <div className="flex h-[calc(100vh-44px)] bg-[#12151D] overflow-hidden">
+    <div className="flex h-[calc(100vh-3.25rem)] lg:h-[calc(100vh-3.5rem)] bg-[#12151D] overflow-hidden">
 
       {/* ── Left Sidebar ── */}
       <div className="hidden md:flex w-[200px] flex-shrink-0 flex-col bg-[#12151D] border-r border-[#262A35] overflow-y-auto">

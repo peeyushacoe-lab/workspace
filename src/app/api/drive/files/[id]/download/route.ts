@@ -41,12 +41,21 @@ export async function GET(request: Request, { params }: Params) {
       return NextResponse.redirect(url);
     }
 
+    // For audio/video, redirect to the signed R2 URL directly so the browser
+    // can send Range requests (required for <audio>/<video> streaming). Proxying
+    // the whole body causes some browsers to show "Error" because they expect
+    // a 206 response to their initial Range probe.
+    const mime = file.mimeType ?? "";
+    if (mime.startsWith("audio/") || mime.startsWith("video/")) {
+      return NextResponse.redirect(url);
+    }
+
     // Preview: fetch the file from storage and proxy it back with inline disposition
     // so browsers display it in-page instead of triggering a download.
     const upstream = await fetch(url);
     if (!upstream.ok) throw new Error("Storage fetch failed");
 
-    const contentType = upstream.headers.get("content-type") ?? file.mimeType ?? "application/octet-stream";
+    const contentType = upstream.headers.get("content-type") ?? (mime || "application/octet-stream");
     const body = await upstream.arrayBuffer();
 
     const safeName = encodeURIComponent(file.name).replace(/['()]/g, escape);

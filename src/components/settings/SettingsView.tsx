@@ -1485,7 +1485,7 @@ export function SettingsView({
 
   return (
     <div className="bg-[#0B0D12] min-h-screen">
-      <div className="flex flex-col lg:flex-row lg:h-[calc(100vh-0px)]">
+      <div className="flex flex-col lg:flex-row lg:h-[calc(100vh-3.5rem)]">
 
         {/* Tab rail — 220px */}
         <aside className="lg:w-[220px] flex-none border-b lg:border-b-0 lg:border-r border-[#262A35] p-3 lg:py-[18px] lg:px-3">

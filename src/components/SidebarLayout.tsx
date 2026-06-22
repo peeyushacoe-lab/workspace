@@ -25,6 +25,7 @@ export function SidebarLayout({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [isDnd, setIsDnd] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const pathname = usePathname();
   const currentUserId = currentUser?.id;
 
@@ -43,6 +44,11 @@ export function SidebarLayout({
       fetch(`/api/presence?userIds=${currentUserId}`)
         .then(r => r.ok ? r.json() : null)
         .then(d => { if (d?.[currentUserId]?.status === "dnd") setIsDnd(true); })
+        .catch(() => {});
+      // Load avatar
+      fetch("/api/profile")
+        .then(r => r.ok ? r.json() : null)
+        .then(d => { if (d?.avatarUrl) setAvatarUrl(d.avatarUrl); })
         .catch(() => {});
     }
   }, [currentUserId]);
@@ -96,36 +102,21 @@ export function SidebarLayout({
           >
             {/* User row */}
             {collapsed && !isMobile ? (
-              <div
-                className="flex h-8 w-8 items-center justify-center rounded-full text-white text-xs font-semibold"
-                style={{ background: avatarGradient(currentUser.fullName) }}
-                title={currentUser.fullName}
-              >
-                {currentUser.fullName.charAt(0).toUpperCase()}
-              </div>
+              avatarUrl
+                ? <img src={avatarUrl} alt={currentUser.fullName} title={currentUser.fullName} className="h-8 w-8 rounded-full object-cover flex-shrink-0" />
+                : <div className="flex h-8 w-8 items-center justify-center rounded-full text-white text-xs font-semibold" style={{ background: avatarGradient(currentUser.fullName) }} title={currentUser.fullName}>{currentUser.fullName.charAt(0).toUpperCase()}</div>
             ) : (
               <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl hover:bg-[#1B1F2A] transition-colors cursor-default">
-                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-white text-xs font-semibold" style={{ background: avatarGradient(currentUser.fullName) }}>
-                  {currentUser.fullName.charAt(0).toUpperCase()}
-                </div>
+                {avatarUrl
+                  ? <img src={avatarUrl} alt={currentUser.fullName} className="h-8 w-8 rounded-full object-cover flex-shrink-0" />
+                  : <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-white text-xs font-semibold" style={{ background: avatarGradient(currentUser.fullName) }}>{currentUser.fullName.charAt(0).toUpperCase()}</div>
+                }
                 <div className="flex-1 min-w-0">
                   <p className="text-[13px] font-semibold text-[#E6E9F0] truncate leading-tight">{currentUser.fullName}</p>
                   <p className="text-[11.5px] text-[#5A6275] leading-tight truncate">{roleLabels[currentUser.role]}</p>
                 </div>
               </div>
             )}
-
-            {/* Settings */}
-            <a
-              href="/settings"
-              title="Settings"
-              className={`flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13px] text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0] transition-colors ${
-                collapsed && !isMobile ? "justify-center w-9 px-0" : ""
-              }`}
-            >
-              <Settings className="h-[15px] w-[15px] flex-shrink-0" />
-              {(!collapsed || isMobile) && "Settings"}
-            </a>
 
             {/* Do Not Disturb toggle */}
             <button
@@ -257,9 +248,10 @@ export function SidebarLayout({
               <Suspense fallback={null}>
                 <NotificationCenter userId={currentUser.id} />
               </Suspense>
-              <div className="flex h-7 w-7 items-center justify-center rounded-full text-white text-xs font-semibold" style={{ background: avatarGradient(currentUser.fullName) }}>
-                {currentUser.fullName.charAt(0).toUpperCase()}
-              </div>
+              {avatarUrl
+                ? <img src={avatarUrl} alt={currentUser.fullName} className="h-7 w-7 rounded-full object-cover" />
+                : <div className="flex h-7 w-7 items-center justify-center rounded-full text-white text-xs font-semibold" style={{ background: avatarGradient(currentUser.fullName) }}>{currentUser.fullName.charAt(0).toUpperCase()}</div>
+              }
             </div>
           )}
         </div>
@@ -281,13 +273,10 @@ export function SidebarLayout({
               >
                 <Settings className="h-[18px] w-[18px]" />
               </a>
-              <div
-                className="flex h-8 w-8 items-center justify-center rounded-full text-white text-xs font-semibold"
-                style={{ background: avatarGradient(currentUser.fullName) }}
-                title={currentUser.fullName}
-              >
-                {currentUser.fullName.charAt(0).toUpperCase()}
-              </div>
+              {avatarUrl
+                ? <img src={avatarUrl} alt={currentUser.fullName} title={currentUser.fullName} className="h-8 w-8 rounded-full object-cover" />
+                : <div className="flex h-8 w-8 items-center justify-center rounded-full text-white text-xs font-semibold" style={{ background: avatarGradient(currentUser.fullName) }} title={currentUser.fullName}>{currentUser.fullName.charAt(0).toUpperCase()}</div>
+              }
             </div>
           )}
         </div>
