@@ -41,13 +41,38 @@ export async function GET(request: Request, { params }: Params) {
       return NextResponse.redirect(url);
     }
 
-    // For audio/video, redirect to the signed R2 URL directly so the browser
-    // can send Range requests (required for <audio>/<video> streaming). Proxying
-    // the whole body causes some browsers to show "Error" because they expect
-    // a 206 response to their initial Range probe.
     const mime = file.mimeType ?? "";
+    const safeName = encodeURIComponent(file.name).replace(/['()]/g, escape);
+
+    // For audio/video: proxy with Range passthrough so the browser's <audio>/<video>
+    // element can seek. A simple redirect to R2 fails when R2 CORS isn't configured
+    // for the app domain. We pass the Range header through to R2 and forward the
+    // 206 Partial Content response so the browser gets proper streaming.
     if (mime.startsWith("audio/") || mime.startsWith("video/")) {
-      return NextResponse.redirect(url);
+      const rangeHeader = request.headers.get("range");
+      const upstreamHeaders: HeadersInit = {};
+      if (rangeHeader) upstreamHeaders["Range"] = rangeHeader;
+
+      const upstream = await fetch(url, { headers: upstreamHeaders });
+      if (!upstream.ok && upstream.status !== 206) throw new Error("Storage fetch failed");
+
+      const contentType = upstream.headers.get("content-type") ?? mime;
+      const responseHeaders: Record<string, string> = {
+        "Content-Type": contentType,
+        "Content-Disposition": `inline; filename="${safeName}"`,
+        "Cache-Control": "private, max-age=300",
+        "Accept-Ranges": "bytes",
+      };
+      // Forward range-related headers from R2
+      for (const h of ["Content-Range", "Content-Length"] as const) {
+        const v = upstream.headers.get(h);
+        if (v) responseHeaders[h] = v;
+      }
+
+      return new NextResponse(upstream.body, {
+        status: upstream.status, // 200 or 206
+        headers: responseHeaders,
+      });
     }
 
     // Preview: fetch the file from storage and proxy it back with inline disposition
@@ -58,7 +83,6 @@ export async function GET(request: Request, { params }: Params) {
     const contentType = upstream.headers.get("content-type") ?? (mime || "application/octet-stream");
     const body = await upstream.arrayBuffer();
 
-    const safeName = encodeURIComponent(file.name).replace(/['()]/g, escape);
     return new NextResponse(body, {
       status: 200,
       headers: {
