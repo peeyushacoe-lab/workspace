@@ -9,6 +9,26 @@ export function isS3Configured(): boolean {
   );
 }
 
+// ---------------------------------------------------------------------------
+// R2_PUBLIC_URL warning — emitted once at module load time.
+// Without this var every attachment download is a round-trip through a Vercel
+// function (signed URL proxy), which burns execution budget fast on high-traffic
+// instances. Set R2_PUBLIC_URL to your R2 bucket's public hostname or a CDN
+// in front of it (e.g. https://assets.nexus.cybersage.uk).
+// ---------------------------------------------------------------------------
+if (
+  typeof process !== "undefined" &&
+  process.env.NODE_ENV === "production" &&
+  isS3Configured() &&
+  !process.env.R2_PUBLIC_URL
+) {
+  console.warn(
+    "[s3] WARNING: R2_PUBLIC_URL is not set. All file downloads will be proxied through Vercel functions " +
+    "instead of serving directly from R2/CDN. Set R2_PUBLIC_URL in your Vercel environment variables " +
+    "to avoid excessive function invocation costs."
+  );
+}
+
 function getClient(): S3Client {
   if (!isS3Configured()) {
     throw new Error("File storage is not configured. Set R2_ENDPOINT, R2_ACCESS_KEY_ID, and R2_SECRET_ACCESS_KEY.");

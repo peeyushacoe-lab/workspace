@@ -15,6 +15,37 @@ import { logger } from "../src/lib/logger";
 
 logger.info("CyberSage Background Workers Starting...");
 
+// ---------------------------------------------------------------------------
+// Upstash eviction policy guard — BullMQ job loss is silent when Redis evicts
+// keys under memory pressure. noeviction makes Redis return errors instead of
+// silently dropping jobs. Warn loudly; don't exit (Upstash managed Redis may
+// not expose CONFIG GET, so a thrown error here would block all workers).
+// ---------------------------------------------------------------------------
+import { redis } from "../src/lib/redis";
+async function checkEvictionPolicy() {
+  try {
+    // Upstash returns an empty array for CONFIG GET on managed plans
+    const result = await redis.call("CONFIG", "GET", "maxmemory-policy") as string[];
+    if (result.length >= 2) {
+      const policy = result[1];
+      if (policy !== "noeviction") {
+        logger.warn(
+          { policy },
+          "⚠  Redis maxmemory-policy is not 'noeviction' — BullMQ jobs can be silently evicted under memory pressure. " +
+          "Set maxmemory-policy=noeviction in your Upstash Redis config."
+        );
+      } else {
+        logger.info("Redis eviction policy: noeviction ✔");
+      }
+    } else {
+      logger.warn("Could not read Redis maxmemory-policy (managed Redis may not expose CONFIG GET). Verify manually in Upstash console.");
+    }
+  } catch {
+    logger.warn("Redis CONFIG GET unavailable — verify maxmemory-policy=noeviction manually in Upstash console.");
+  }
+}
+checkEvictionPolicy().catch(() => {});
+
 const emailWorker        = createEmailWorker();
 const dlpWorker          = createDLPWorker();
 const mailRulesWorker    = createMailRulesWorker();
@@ -112,6 +143,41 @@ const shutdown = async () => {
 
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
+
+// ---------------------------------------------------------------------------
+// Process-level safety net — catch anything that slips past individual worker
+// error handlers so the process doesn't silently die.
+// ---------------------------------------------------------------------------
+process.on("unhandledRejection", (reason) => {
+  logger.error({ reason: String(reason) }, "Unhandled promise rejection in worker process");
+  // Do NOT exit — BullMQ will recover the job on next poll.
+});
+
+process.on("uncaughtException", (err) => {
+  logger.error({ err: err.message, stack: err.stack }, "Uncaught exception in worker process");
+  // Fatal — exit so the process manager (systemd/PM2/Fly) can restart cleanly.
+  process.exit(1);
+});
+
+// ---------------------------------------------------------------------------
+// Redis heartbeat — ping every 30 s; if 3 consecutive pings fail, exit so the
+// process manager restarts the worker (avoids silent zombie state where workers
+// appear running but can't reach Redis and silently drop jobs).
+// ---------------------------------------------------------------------------
+let redisMisses = 0;
+setInterval(async () => {
+  try {
+    await redis.ping();
+    redisMisses = 0;
+  } catch {
+    redisMisses++;
+    logger.warn({ misses: redisMisses }, "Redis ping failed");
+    if (redisMisses >= 3) {
+      logger.error("Redis unreachable for 90 s — exiting for process manager restart");
+      process.exit(1);
+    }
+  }
+}, 30_000);
 
 logger.info(
   { workers: allWorkers.map(([, name]) => name) },

@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   AlertTriangle,
   Shield,
@@ -15,6 +15,7 @@ import {
   Loader2,
   Send,
   ExternalLink,
+  Sparkles,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
@@ -142,6 +143,94 @@ function StatCard({
           <Icon className="h-5 w-5" style={{ color: iconColor }} />
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─── AI Threat Analysis Card ──────────────────────────────────────────────────
+function AIAnalysisCard({ incident }: { incident: Incident }) {
+  const [analysis, setAnalysis] = useState<string>("");
+  const [loading, setLoading] = useState(false);
+  const [ran, setRan] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
+
+  const QUICK_PROMPTS = [
+    { label: "Threat analysis", prompt: `Analyze this security incident and identify likely attack vectors, threat actors, and immediate containment steps:\n\nTitle: ${incident.title}\nSeverity: ${incident.severity}\nDescription: ${incident.description}` },
+    { label: "Remediation steps", prompt: `Provide a step-by-step remediation playbook for this ${incident.severity} severity incident:\n\nTitle: ${incident.title}\nDescription: ${incident.description}` },
+    { label: "Similar incidents", prompt: `What known threat campaigns or CVEs match this incident pattern? Provide IOCs to look for:\n\nTitle: ${incident.title}\nDescription: ${incident.description}` },
+  ];
+
+  const run = async (prompt: string) => {
+    abortRef.current?.abort();
+    abortRef.current = new AbortController();
+    setAnalysis("");
+    setLoading(true);
+    setRan(true);
+    try {
+      const res = await fetch("/api/ai/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: prompt, history: [] }),
+        signal: abortRef.current.signal,
+      });
+      if (!res.ok || !res.body) throw new Error("AI unavailable");
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        // SSE lines: "data: text\n\n"
+        const lines = buf.split("\n");
+        buf = lines.pop() ?? "";
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            const chunk = line.slice(6);
+            if (chunk === "[DONE]") break;
+            setAnalysis(prev => prev + chunk);
+          }
+        }
+      }
+    } catch (e) {
+      if ((e as Error).name !== "AbortError") {
+        setAnalysis("AI analysis unavailable. Check your AI provider configuration.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-6">
+      <div className="flex items-center gap-2 mb-4">
+        <Sparkles className="h-4 w-4 text-[#00C2FF]" />
+        <h3 className="text-sm font-semibold text-[#E6E9F0]">AI Threat Analysis</h3>
+      </div>
+      <div className="flex flex-wrap gap-2 mb-4">
+        {QUICK_PROMPTS.map(q => (
+          <button
+            key={q.label}
+            onClick={() => run(q.prompt)}
+            disabled={loading}
+            className="px-3 py-1.5 text-xs font-medium rounded-lg bg-[#1B1F2A] border border-[#262A35] text-[#8A92A6] hover:text-[#E6E9F0] hover:border-[#00C2FF]/40 transition-colors disabled:opacity-50"
+          >
+            {q.label}
+          </button>
+        ))}
+      </div>
+      {loading && !analysis && (
+        <div className="flex items-center gap-2 text-xs text-[#5A6275] py-2">
+          <Loader2 className="h-3.5 w-3.5 animate-spin text-[#00C2FF]" />
+          Analyzing incident…
+        </div>
+      )}
+      {ran && analysis && (
+        <div className="rounded-lg bg-[#0D1017] border border-[#262A35] p-4 text-sm text-[#C8CDD8] whitespace-pre-wrap leading-relaxed max-h-64 overflow-y-auto">
+          {analysis}
+          {loading && <span className="inline-block w-1.5 h-3.5 bg-[#00C2FF] animate-pulse ml-0.5 align-text-bottom" />}
+        </div>
+      )}
     </div>
   );
 }
@@ -564,6 +653,8 @@ export function SOCView(_props: { currentUserId: string }) {
                   </div>
                 </div>
               )}
+
+              <AIAnalysisCard incident={selectedIncident} />
 
               <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden mx-0 p-6">
                 <h3 className="mb-4 text-sm font-semibold text-[#E6E9F0]">Add Note</h3>

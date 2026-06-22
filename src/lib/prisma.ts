@@ -11,6 +11,13 @@ const connectionString =
   process.env.DATABASE_URL ??
   "postgresql://user:password@localhost:5432/cybersage_mail?schema=public";
 
+// On Vercel/serverless, each lambda has its own pool. With many concurrent
+// lambdas a max of 5 each can exhaust Postgres's connection limit fast.
+// In production we keep max:2 per lambda (rely on PgBouncer / Neon pooler
+// in front of the DB). In dev/worker processes we allow a larger pool.
+const isServerless = process.env.VERCEL === "1" || process.env.CF_PAGES === "1";
+const POOL_MAX = isServerless ? 2 : (parseInt(process.env.DB_POOL_MAX ?? "5", 10));
+
 // Persistent pool with min:1 — keeps at least one connection open so Neon's
 // compute never auto-suspends between requests. idleTimeoutMillis:0 prevents
 // pg from closing idle connections, which would let Neon suspend.
@@ -19,11 +26,12 @@ const pgPool =
   (() => {
     const pool = new Pool({
       connectionString,
-      max: 5,
-      min: 1,
-      idleTimeoutMillis: 0,
+      max: POOL_MAX,
+      min: isServerless ? 0 : 1, // serverless: don't hold connections between requests
+      idleTimeoutMillis: isServerless ? 10_000 : 0,
+      connectionTimeoutMillis: 5_000, // fail fast on cold start rather than hanging
       allowExitOnIdle: false,
-      keepAlive: true,
+      keepAlive: !isServerless,
       keepAliveInitialDelayMillis: 10_000,
     });
     // Neon closes idle connections server-side. Without this handler the error

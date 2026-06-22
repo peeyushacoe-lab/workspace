@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { logAudit } from "@/lib/audit";
+import { revokeUserMobileTokens } from "@/lib/mobile-auth";
 import type { UserRole } from "@/generated/prisma/enums";
 
 const ALL_VALID_ROLES: UserRole[] = [
@@ -62,6 +63,12 @@ export async function PATCH(
       createdAt: true,
     },
   });
+
+  // If the user was just deactivated, immediately revoke all mobile JWT sessions
+  // so they can't keep using the app until the token naturally expires.
+  if (updateData.isActive === false) {
+    revokeUserMobileTokens(id).catch(() => {});
+  }
 
   await logAudit({
     actorId: actor.id,

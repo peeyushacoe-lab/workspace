@@ -47,34 +47,46 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const checks = await Promise.all([
-    checkService("database", async () => { await prisma.$queryRaw`SELECT 1`; }),
-    checkService("redis", async () => { await redis.ping(); }),
-    checkService("s3", async () => {
-      if (!isS3Configured()) throw new Error("R2 not configured");
-    }),
-  ]);
-
-  // Gather live counts
-  const [userCount, emailCount, fileCount, alertCount] = await Promise.all([
+  // Run service checks + queue depth probe in parallel
+  const [checks, queueDepths, userCount, emailCount, fileCount, alertCount, history] = await Promise.all([
+    Promise.all([
+      checkService("database", async () => { await prisma.$queryRaw`SELECT 1`; }),
+      checkService("redis", async () => { await redis.ping(); }),
+      checkService("s3", async () => {
+        if (!isS3Configured()) throw new Error("R2 not configured");
+      }),
+    ]),
+    // Queue health — high failed counts = workers are crashing silently
+    (async () => {
+      try {
+        const { Queue } = await import("bullmq");
+        const names = ["outbound-email", "notifications", "dlp-scan", "ai-jobs", "mail-rules", "search-indexing"];
+        return await Promise.all(names.map(async (name) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const q = new Queue(name, { connection: redis as any });
+          const [waiting, active, failed] = await Promise.all([q.getWaitingCount(), q.getActiveCount(), q.getFailedCount()]);
+          await q.close();
+          return { name, waiting, active, failed, status: failed > 10 ? "degraded" : "healthy" };
+        }));
+      } catch {
+        return [];
+      }
+    })(),
     prisma.user.count({ where: { isActive: true } }),
     prisma.emailLog.count(),
     prisma.driveFile.count({ where: { isTrashed: false } }),
     prisma.sentinelAlert.count({ where: { acknowledged: false } }),
+    prisma.systemHealthLog.findMany({ orderBy: { checkedAt: "desc" }, take: 50 }),
   ]);
 
-  // Recent health history
-  const history = await prisma.systemHealthLog.findMany({
-    orderBy: { checkedAt: "desc" },
-    take: 50,
-  });
-
-  const overall = checks.every((c) => c.status === "healthy") ? "healthy" : "degraded";
+  const workersHealthy = queueDepths.every(q => q.status === "healthy");
+  const overall = checks.every((c) => c.status === "healthy") && workersHealthy ? "healthy" : "degraded";
 
   return NextResponse.json({
     overall,
     timestamp: new Date().toISOString(),
     services: checks,
+    queues: queueDepths,
     stats: { activeUsers: userCount, totalEmails: emailCount, totalFiles: fileCount, openAlerts: alertCount },
     history,
   });

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { revokeUserMobileTokens } from "@/lib/mobile-auth";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -100,5 +101,6 @@ export async function DELETE(request: Request, { params }: Params) {
 
   // Deprovision = deactivate, not hard-delete (preserve audit trail)
   await prisma.user.update({ where: { id }, data: { isActive: false } });
+  revokeUserMobileTokens(id).catch(() => {});
   return new NextResponse(null, { status: 204 });
 }

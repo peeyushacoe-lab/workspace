@@ -63,9 +63,12 @@ function isAllowedFile(fileName: string, mimeType: string): string | null {
   }
   // Text/code files are always allowed
   if (TEXT_EXTENSIONS.has(ext)) return null;
-  const effectiveMime = mimeType || "application/octet-stream";
-  if (!ALLOWED_MIME_TYPES.has(effectiveMime)) {
-    return `MIME type '${effectiveMime}' is not permitted`;
+  // Strip codec/parameter suffix before checking — browsers (especially Safari)
+  // append "; codecs=..." to MIME types (e.g. "audio/mp4; codecs=mp4a.40.2")
+  // which would cause a false 415 against the exact-match set.
+  const baseMime = (mimeType || "application/octet-stream").split(";")[0].trim();
+  if (!ALLOWED_MIME_TYPES.has(baseMime)) {
+    return `MIME type '${baseMime}' is not permitted`;
   }
   return null;
 }
@@ -103,11 +106,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: mimeError }, { status: 415 });
   }
 
+  // Use the base MIME type (no codec params) for storage — ensures clean
+  // Content-Type is returned to the audio player.
+  const cleanMime = (file.type || "application/octet-stream").split(";")[0].trim();
+
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
   const key = `drive/${user.id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
 
-  const { url } = await uploadToR2(buffer, key, file.type || "application/octet-stream");
+  const { url } = await uploadToR2(buffer, key, cleanMime);
 
   // Check if a file with the same name already exists in this folder for this owner
   const existingFile = await prisma.driveFile.findFirst({
@@ -135,7 +142,7 @@ export async function POST(request: Request) {
         storageKey: key,
         storageUrl: url,
         size: BigInt(file.size),
-        mimeType: file.type || "application/octet-stream",
+        mimeType: cleanMime,
       },
     });
 
@@ -154,7 +161,7 @@ export async function POST(request: Request) {
     record = await prisma.driveFile.create({
       data: {
         name: file.name,
-        mimeType: file.type || "application/octet-stream",
+        mimeType: cleanMime,
         size: BigInt(file.size),
         folderId: folderId ?? null,
         ownerId: user.id,
