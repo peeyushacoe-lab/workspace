@@ -6,6 +6,7 @@ import {
   Code2, Shield, DollarSign, Settings2, Crown, Users,
   MessageSquare, FolderOpen, CalendarDays, CheckSquare,
   ChevronDown, ChevronUp, Loader2,
+  Megaphone, FlaskConical, ClipboardCheck, Headphones, GraduationCap,
 } from "lucide-react";
 import { PageHeader } from "@/components/Shell";
 import { avatarGradient } from "@/lib/avatar";
@@ -19,6 +20,11 @@ const ICON_MAP: Record<string, React.ElementType> = {
   settings:      Settings2,
   crown:         Crown,
   users:         Users,
+  megaphone:     Megaphone,
+  flask:         FlaskConical,
+  clipboard:     ClipboardCheck,
+  headphones:    Headphones,
+  graduation:    GraduationCap,
 };
 
 function TeamIcon({ icon, color, size = 18 }: { icon: string; color: string; size?: number }) {
@@ -79,15 +85,13 @@ function QuickLink({
 // ── Expanded panel ─────────────────────────────────────────────────────────────
 function ExpandedPanel({ team }: { team: TeamWithMembers }) {
   return (
-    <div
-      className="mt-4 pt-4 border-t"
-      style={{ borderColor: "#262A35" }}
-    >
+    <div className="mt-4 pt-4 border-t" style={{ borderColor: "#262A35" }}>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-        {/* Stats */}
         <div className="bg-[#1B1F2A] border border-[#262A35] rounded-lg p-3 flex flex-col gap-1">
           <span className="text-[10px] text-[#5A6275]">Members</span>
-          <span className="text-lg font-mono font-semibold" style={{ color: team.color }}>{team.memberCount}</span>
+          <span className="text-lg font-mono font-semibold" style={{ color: team.color }}>
+            {team.memberCount}
+          </span>
         </div>
         <div className="bg-[#1B1F2A] border border-[#262A35] rounded-lg p-3 flex flex-col gap-1">
           <span className="text-[10px] text-[#5A6275]">Unread messages</span>
@@ -99,7 +103,6 @@ function ExpandedPanel({ team }: { team: TeamWithMembers }) {
         </div>
       </div>
 
-      {/* Members list */}
       {team.members.length > 0 ? (
         <div className="space-y-1">
           <p className="text-[10px] text-[#5A6275] mb-2">Members</p>
@@ -109,7 +112,6 @@ function ExpandedPanel({ team }: { team: TeamWithMembers }) {
                 key={m.id}
                 className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-[#1B1F2A] border border-[#262A35]"
               >
-                {/* Avatar */}
                 <div
                   className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold text-white uppercase flex-shrink-0"
                   style={{ background: avatarGradient(m.fullName) }}
@@ -127,7 +129,10 @@ function ExpandedPanel({ team }: { team: TeamWithMembers }) {
           </div>
         </div>
       ) : (
-        <p className="text-sm text-[#5A6275] text-center py-4">No members yet</p>
+        <div className="flex flex-col items-center justify-center py-6 gap-2">
+          <TeamIcon icon={team.icon} color={team.color + "66"} size={28} />
+          <p className="text-xs text-[#5A6275]">No members yet — this team is ready to grow.</p>
+        </div>
       )}
     </div>
   );
@@ -136,10 +141,12 @@ function ExpandedPanel({ team }: { team: TeamWithMembers }) {
 // ── Team card ──────────────────────────────────────────────────────────────────
 function TeamCard({
   team,
+  isMine,
   isExpanded,
   onToggle,
 }: {
   team: TeamWithMembers;
+  isMine: boolean;
   isExpanded: boolean;
   onToggle: () => void;
 }) {
@@ -152,6 +159,7 @@ function TeamCard({
         borderBottomColor: isExpanded ? team.color + "44" : "#262A35",
         borderLeftColor: team.color,
         borderLeftWidth: "4px",
+        opacity: isMine ? 1 : 0.72,
       }}
     >
       <div className="p-4">
@@ -164,12 +172,21 @@ function TeamCard({
             <TeamIcon icon={team.icon} color={team.color} size={18} />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-semibold text-[#E6E9F0] leading-tight">{team.name}</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-[#E6E9F0] leading-tight">{team.name}</h3>
+              {isMine && (
+                <span
+                  className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full uppercase tracking-wide"
+                  style={{ background: team.color + "22", color: team.color }}
+                >
+                  Yours
+                </span>
+              )}
+            </div>
             <p className="text-xs font-mono text-[#5A6275] mt-0.5">
               {team.memberCount} {team.memberCount === 1 ? "member" : "members"}
             </p>
           </div>
-          {/* Avatar stack */}
           <AvatarStack members={team.members} color={team.color} />
         </div>
 
@@ -198,7 +215,6 @@ function TeamCard({
         </button>
       </div>
 
-      {/* Expanded panel */}
       {isExpanded && (
         <div className="px-4 pb-4">
           <ExpandedPanel team={team} />
@@ -211,25 +227,22 @@ function TeamCard({
 // ── Teams grid ─────────────────────────────────────────────────────────────────
 function TeamsGrid({
   teams,
+  myTeamIds,
   expandedId,
   onToggle,
 }: {
   teams: TeamWithMembers[];
+  myTeamIds: string[];
   expandedId: string | null;
   onToggle: (id: string) => void;
 }) {
-  if (teams.length === 0) {
-    return (
-      <p className="text-sm text-[#5A6275] text-center py-6">No teams available.</p>
-    );
-  }
-
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       {teams.map((team) => (
         <TeamCard
           key={team.id}
           team={team}
+          isMine={myTeamIds.includes(team.id)}
           isExpanded={expandedId === team.id}
           onToggle={() => onToggle(team.id)}
         />
@@ -239,10 +252,15 @@ function TeamsGrid({
 }
 
 // ── Section header ─────────────────────────────────────────────────────────────
-function SectionLabel({ label }: { label: string }) {
+function SectionLabel({ label, count }: { label: string; count?: number }) {
   return (
     <div className="flex items-center gap-3 mb-3">
-      <span className="text-xs font-semibold text-[#5A6275]">{label}</span>
+      <span className="text-xs font-semibold text-[#5A6275] whitespace-nowrap">{label}</span>
+      {count !== undefined && (
+        <span className="text-[10px] font-mono text-[#3A3F4B] bg-[#1B1F2A] px-2 py-0.5 rounded-full">
+          {count}
+        </span>
+      )}
       <div className="flex-1 h-px bg-[#1C1F28]" />
     </div>
   );
@@ -276,7 +294,7 @@ export default function TeamsPage() {
     setExpandedId((prev) => (prev === id ? null : id));
   };
 
-  const myTeams = data?.teams.filter((t) => data.myTeamIds.includes(t.id)) ?? [];
+  const myTeams   = data?.teams.filter((t) =>  data.myTeamIds.includes(t.id)) ?? [];
   const otherTeams = data?.teams.filter((t) => !data.myTeamIds.includes(t.id)) ?? [];
 
   return (
@@ -284,39 +302,44 @@ export default function TeamsPage() {
       <PageHeader
         eyebrow="Workspace"
         title="Team Spaces"
-        description="Your department workspaces"
+        description="All department workspaces across the organisation"
       />
 
-      <div className="px-6 pb-10 max-w-5xl space-y-8">
+      <div className="px-6 pb-10 max-w-5xl space-y-10">
         {loading ? (
           <div className="flex items-center justify-center py-20 gap-2 text-[#5A6275]">
             <Loader2 className="w-5 h-5 animate-spin" />
             <span className="text-sm">Loading team spaces…</span>
           </div>
+        ) : !data ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-3">
+            <Users className="w-10 h-10 text-[#5A6275]" />
+            <p className="text-sm text-[#5A6275]">Unable to load team spaces.</p>
+          </div>
         ) : (
           <>
-            {/* My Teams */}
             {myTeams.length > 0 && (
               <section>
-                <SectionLabel label="My Teams" />
-                <TeamsGrid teams={myTeams} expandedId={expandedId} onToggle={handleToggle} />
+                <SectionLabel label="My Teams" count={myTeams.length} />
+                <TeamsGrid
+                  teams={myTeams}
+                  myTeamIds={data.myTeamIds}
+                  expandedId={expandedId}
+                  onToggle={handleToggle}
+                />
               </section>
             )}
 
-            {/* All other teams (admins see extras they don't "belong to") */}
             {otherTeams.length > 0 && (
               <section>
-                <SectionLabel label="All Teams" />
-                <TeamsGrid teams={otherTeams} expandedId={expandedId} onToggle={handleToggle} />
+                <SectionLabel label="All Teams" count={otherTeams.length} />
+                <TeamsGrid
+                  teams={otherTeams}
+                  myTeamIds={data.myTeamIds}
+                  expandedId={expandedId}
+                  onToggle={handleToggle}
+                />
               </section>
-            )}
-
-            {/* No data at all */}
-            {myTeams.length === 0 && otherTeams.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-20 gap-3">
-                <Users className="w-10 h-10 text-[#5A6275]" />
-                <p className="text-sm text-[#5A6275]">No team spaces found.</p>
-              </div>
             )}
           </>
         )}
