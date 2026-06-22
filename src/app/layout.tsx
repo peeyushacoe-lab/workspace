@@ -93,8 +93,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`dark ${dmSans.variable} ${inter.variable} ${jakarta.variable} ${jetbrains.variable} h-full antialiased`} suppressHydrationWarning>
-      <head />
+    <html lang="en" className={`${dmSans.variable} ${inter.variable} ${jakarta.variable} ${jetbrains.variable} h-full antialiased`} suppressHydrationWarning>
+      <head>
+        {/* Apply saved theme before first paint — prevents flash of wrong theme */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('theme');var dark=t==='dark'||(!t)||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',dark);}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body className="min-h-full bg-[#0B0D12] text-[#E6E9F0] font-sans" suppressHydrationWarning>
         <div className="min-h-screen flex flex-col">
           {children}

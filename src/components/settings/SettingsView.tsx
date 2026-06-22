@@ -667,7 +667,18 @@ function AppearanceTab() {
   const [fontSize, setFontSize] = useState<"normal" | "large">("normal");
 
   useEffect(() => {
-    try { const s = localStorage.getItem("theme") as typeof theme | null; if (s) setTheme(s); } catch {}
+    try {
+      const s = localStorage.getItem("theme") as typeof theme | null;
+      if (s) {
+        setTheme(s);
+        // Re-apply on mount so navigating back to this tab reflects reality
+        const dark = s === "dark" || (s === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.classList.toggle("dark", dark);
+      } else {
+        // Default: dark
+        document.documentElement.classList.add("dark");
+      }
+    } catch {}
     try { const d = localStorage.getItem("ui_density") as typeof density | null; if (d) setDensity(d); } catch {}
     try { const f = localStorage.getItem("font_size") as typeof fontSize | null; if (f) setFontSize(f); } catch {}
   }, []);
@@ -1644,9 +1655,41 @@ export function SettingsView({
     <div className="bg-[#0B0D12] min-h-screen">
       <div className="flex flex-col lg:flex-row lg:h-[calc(100vh-3.5rem)]">
 
-        {/* Tab rail — 220px */}
-        <aside className="lg:w-[220px] flex-none border-b lg:border-b-0 lg:border-r border-[#262A35] p-3 lg:py-[18px] lg:px-3">
-          <nav className="flex flex-row lg:flex-col gap-1 overflow-x-auto lg:overflow-visible">
+        {/* ── Mobile: full-width select dropdown ──────────────────────────── */}
+        <div className="lg:hidden border-b border-[#262A35] px-4 py-3 bg-[#0F1218]">
+          <div className="relative">
+            {/* Icon of active tab */}
+            {(() => {
+              const active = visibleTabs.find(t => t.id === activeTab);
+              const Icon = active?.icon;
+              return Icon ? (
+                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#00C2FF]">
+                  <Icon className="h-4 w-4" />
+                </span>
+              ) : null;
+            })()}
+            <select
+              value={activeTab}
+              onChange={e => setActiveTab(e.target.value as Tab)}
+              className="w-full appearance-none rounded-xl pl-9 pr-9 py-3 text-sm font-semibold text-[#E6E9F0] outline-none"
+              style={{ background: "#1B1F2A", border: "1px solid #2E3347" }}
+            >
+              {visibleTabs.map(tab => (
+                <option key={tab.id} value={tab.id}>{tab.label}</option>
+              ))}
+            </select>
+            {/* Chevron */}
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#5A6275]">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M3 5l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </span>
+          </div>
+        </div>
+
+        {/* ── Desktop: sidebar rail ─────────────────────────────────────────── */}
+        <aside className="hidden lg:flex lg:w-[220px] flex-none border-r border-[#262A35] py-[18px] px-3">
+          <nav className="flex flex-col gap-1 w-full">
             {visibleTabs.map((tab) => {
               const Icon = tab.icon;
               const active = activeTab === tab.id;
@@ -1654,14 +1697,14 @@ export function SettingsView({
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-[11px] text-left rounded-[9px] h-10 px-3 flex-none lg:w-full transition-colors ${
+                  className={`flex items-center gap-[11px] text-left rounded-[9px] h-10 px-3 w-full transition-colors ${
                     active
                       ? "bg-[#00C2FF]/10 text-[#00C2FF]"
                       : "text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0]"
                   }`}
                 >
                   <Icon className="h-[18px] w-[18px] flex-shrink-0" />
-                  <span className="text-[13.5px] font-semibold whitespace-nowrap lg:truncate">{tab.label}</span>
+                  <span className="text-[13.5px] font-semibold truncate">{tab.label}</span>
                 </button>
               );
             })}
@@ -1669,7 +1712,7 @@ export function SettingsView({
         </aside>
 
         {/* Content */}
-        <main className="flex-1 min-w-0 overflow-y-auto px-5 py-8 sm:px-10 lg:px-11 lg:py-9">
+        <main className="flex-1 min-w-0 overflow-y-auto px-4 py-6 sm:px-8 lg:px-11 lg:py-9">
           <div className="max-w-[620px] mx-auto lg:mx-0">
             {(() => {
               const tab = visibleTabs.find(t => t.id === activeTab);
