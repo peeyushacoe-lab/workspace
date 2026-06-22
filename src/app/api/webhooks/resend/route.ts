@@ -7,6 +7,10 @@ import { prisma } from "@/lib/prisma";
 import { invalidate } from "@/lib/cache";
 import { mailRulesQueue } from "@/lib/queues/mail-rules.queue";
 import { isS3Configured, uploadToR2 } from "@/lib/s3";
+import { sendWebPush, type PushSubscriptionJSON } from "@/lib/web-push";
+import { Resend } from "resend";
+
+const resendClient = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 const attachmentSchema = z.object({
   filename: z.string().optional(),
@@ -374,6 +378,74 @@ async function handleInboundEmail(data: InboundEmailPayload) {
     mailboxId: mailbox.id,
     userId: mailboxOwner?.userId ?? null,
   }).catch(() => {});
+
+  // 6. External email forwarding — for eligible roles (CEO / CISO / R_AND_D / OPS_MANAGER)
+  if (mailboxOwner?.userId && resendClient) {
+    void (async () => {
+      const owner = await prisma.user.findUnique({
+        where: { id: mailboxOwner.userId },
+        select: { personalEmail: true, preferences: true, role: true },
+      }).catch(() => null);
+
+      const FORWARDING_ROLES = ["CEO", "CISO", "R_AND_D", "OPS_MANAGER", "ADMIN"];
+      const prefs = (owner?.preferences ?? {}) as Record<string, unknown>;
+      const enabled = prefs.externalForwardEnabled === true;
+      const dest = owner?.personalEmail;
+
+      if (!owner || !enabled || !dest || !FORWARDING_ROLES.includes(owner.role)) return;
+
+      // Fetch the email body from Resend so we can forward the HTML
+      const body = await fetchEmailBody(data.email_id ?? "").catch(() => ({ html: null, text: null }));
+      const html = body.html ?? `<pre>${data.text ?? "(no content)"}</pre>`;
+      const fromLabel = data.from ?? "Unknown sender";
+
+      await resendClient.emails.send({
+        from: process.env.RESEND_FROM_EMAIL ?? "Nexus <noreply@cybersage.uk>",
+        to: dest,
+        subject: `[Fwd] ${data.subject ?? "(no subject)"}`,
+        html: `
+          <div style="background:#f1f3f4;padding:12px 16px;border-left:4px solid #1a56db;margin-bottom:20px;border-radius:4px;font-family:sans-serif;font-size:13px;color:#5f6368;">
+            <strong>Forwarded from your Nexus inbox</strong><br/>
+            From: ${fromLabel}<br/>
+            To: ${data.to ?? mailbox.email}<br/>
+            Date: ${new Date().toUTCString()}
+          </div>
+          ${html}
+        `,
+      }).catch(() => {});
+    })();
+  }
+
+  // 8. Web Push — notify mailbox owner of new email
+  if (mailboxOwner?.userId) {
+    void (async () => {
+      const pushLogs = await prisma.auditLog.findMany({
+        where: { actorId: mailboxOwner.userId, action: "PUSH_SUBSCRIBE" },
+        select: { id: true, metadata: true },
+      }).catch(() => []);
+      const fromLabel = data.from ?? "Someone";
+      const stale: string[] = [];
+      await Promise.all(
+        pushLogs.map(async (log) => {
+          const sub = log.metadata as unknown as PushSubscriptionJSON;
+          if (!sub?.endpoint) return;
+          try {
+            await sendWebPush(sub, {
+              title: `New email from ${fromLabel}`,
+              body: data.subject ?? "(no subject)",
+              url: `/inbox`,
+              tag: `email-${inboxMessage.id}`,
+            });
+          } catch {
+            stale.push(log.id);
+          }
+        })
+      );
+      if (stale.length) {
+        await prisma.auditLog.deleteMany({ where: { id: { in: stale } } }).catch(() => {});
+      }
+    })();
+  }
 
   return NextResponse.json({ ok: true, threadId: thread.id });
 }

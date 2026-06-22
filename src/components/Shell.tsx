@@ -3,6 +3,7 @@ import { SidebarLayout } from "./SidebarLayout";
 import { getPortalNavForRole, type SessionUser } from "@/lib/auth";
 import { DesktopBridge } from "./DesktopBridge";
 import { CallProvider } from "./call/CallProvider";
+import { PushNotificationSetup } from "./PushNotificationSetup";
 
 export function Shell({
   children,
@@ -16,6 +17,7 @@ export function Shell({
   return (
     <SidebarLayout nav={nav} currentUser={currentUser}>
       <DesktopBridge />
+      <PushNotificationSetup />
       <CallProvider currentUserName={currentUser?.fullName ?? "Me"}>
         {children}
       </CallProvider>

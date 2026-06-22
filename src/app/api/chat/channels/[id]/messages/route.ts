@@ -166,7 +166,7 @@ export async function POST(request: Request, { params }: Params) {
         where: { channelId, NOT: { userId: user.id } },
         select: { userId: true },
       }).catch(() => [] as { userId: string }[]),
-      prisma.chatChannel.findUnique({ where: { id: channelId }, select: { name: true } }).catch(() => null),
+      prisma.chatChannel.findUnique({ where: { id: channelId }, select: { name: true, type: true } }).catch(() => null),
     ]);
 
     const memberIds = members.map((m) => m.userId);
@@ -184,22 +184,32 @@ export async function POST(request: Request, { params }: Params) {
       });
     }
 
-    // Web push — urgent messages only (to avoid notification fatigue on web)
-    if (isUrgent && memberIds.length) {
+    // Web push — always for DMs; urgent-only for group channels
+    const isDM = channel?.type === "DIRECT";
+    if ((isDM || isUrgent) && memberIds.length) {
       const pushLogs = await prisma.auditLog.findMany({
         where: { actorId: { in: memberIds }, action: "PUSH_SUBSCRIBE" },
-        select: { metadata: true },
+        select: { id: true, metadata: true },
       }).catch(() => []);
-      for (const log of pushLogs) {
-        const sub = log.metadata as unknown as PushSubscriptionJSON;
-        if (sub?.endpoint) {
-          sendWebPush(sub, {
-            title: pushTitle,
-            body: displayContent,
-            url: "/chat",
-            tag: `urgent-${channelId}`,
-          }).catch(() => {});
-        }
+      const stale: string[] = [];
+      await Promise.all(
+        pushLogs.map(async (log) => {
+          const sub = log.metadata as unknown as PushSubscriptionJSON;
+          if (!sub?.endpoint) return;
+          try {
+            await sendWebPush(sub, {
+              title: isDM ? `💬 ${user.fullName}` : pushTitle,
+              body: displayContent,
+              url: "/chat",
+              tag: `chat-${channelId}`,
+            });
+          } catch {
+            stale.push(log.id);
+          }
+        })
+      );
+      if (stale.length) {
+        await prisma.auditLog.deleteMany({ where: { id: { in: stale } } }).catch(() => {});
       }
     }
   })();

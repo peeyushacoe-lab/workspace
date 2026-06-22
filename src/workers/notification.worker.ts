@@ -3,6 +3,8 @@ import { redisConnection } from "@/lib/redis";
 import { NOTIFICATION_QUEUE_NAME, type NotificationJobData } from "@/lib/queues/notification.queue";
 import { createNotification } from "@/lib/notifications";
 import { logger } from "@/lib/logger";
+import { prisma } from "@/lib/prisma";
+import { sendWebPush, type PushSubscriptionJSON } from "@/lib/web-push";
 
 export function createNotificationWorker() {
   const worker = new Worker<NotificationJobData>(
@@ -32,9 +34,27 @@ export function createNotificationWorker() {
       }
 
       if (type === "PUSH") {
-        const { userId, title, body } = job.data;
-        // Placeholder — wire to Web Push API / FCM when push keys are configured
-        logger.info({ userId, title, body }, "[notification-worker] Push notification queued (not yet sent)");
+        const { userId, title, body, url } = job.data as { userId: string; title: string; body: string; url?: string };
+        const pushLogs = await prisma.auditLog.findMany({
+          where: { actorId: userId, action: "PUSH_SUBSCRIBE" },
+          select: { id: true, metadata: true },
+        }).catch(() => []);
+        const stale: string[] = [];
+        await Promise.all(
+          pushLogs.map(async (log) => {
+            const sub = log.metadata as unknown as PushSubscriptionJSON;
+            if (!sub?.endpoint) return;
+            try {
+              await sendWebPush(sub, { title, body, url: url ?? "/", tag: `nexus-${userId}` });
+            } catch {
+              stale.push(log.id);
+            }
+          })
+        );
+        if (stale.length) {
+          await prisma.auditLog.deleteMany({ where: { id: { in: stale } } }).catch(() => {});
+        }
+        logger.info({ userId, title, sent: pushLogs.length - stale.length }, "[notification-worker] Web push sent");
         return;
       }
 

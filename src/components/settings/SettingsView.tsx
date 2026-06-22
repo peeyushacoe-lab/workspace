@@ -8,7 +8,7 @@ import {
   Sun, Moon, Monitor, Check, ToggleRight,
   Download, AlertTriangle, Camera, Key, Cpu,
   Copy, Eye, EyeOff, Building2, Phone, MapPin,
-  Link2, Tag, Briefcase, Users,
+  Link2, Tag, Briefcase, Users, Forward,
 } from "lucide-react";
 import { sanitizeHtml } from "@/lib/sanitize-html";
 import { avatarGradient } from "@/lib/avatar";
@@ -25,6 +25,7 @@ type Tab =
   | "signature"
   | "mail-rules"
   | "mailboxes"
+  | "forwarding"
   | "security"
   | "language"
   | "privacy"
@@ -174,13 +175,14 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
 
 // ─── TABS config ─────────────────────────────────────────────────────────────
 
-const ALL_TABS: { id: Tab; label: string; icon: React.ElementType; description: string; adminOnly?: boolean }[] = [
+const ALL_TABS: { id: Tab; label: string; icon: React.ElementType; description: string; adminOnly?: boolean; roleOnly?: string[] }[] = [
   { id: "profile",       label: "Profile",          icon: User,          description: "Personal info and avatar" },
   { id: "appearance",    label: "Appearance",        icon: Palette,       description: "Theme, density, and fonts" },
   { id: "notifications", label: "Notifications",     icon: Bell,          description: "Alerts and digests" },
   { id: "signature",     label: "Signature",         icon: FileSignature, description: "Email signature editor" },
   { id: "mail-rules",    label: "Mail Rules",        icon: Filter,        description: "Auto-sort emails" },
   { id: "mailboxes",     label: "Mailboxes",         icon: Mail,          description: "Managed inbox access" },
+  { id: "forwarding",    label: "Email Forwarding",  icon: Forward,       description: "Forward emails to your personal address", roleOnly: ["CEO", "CISO", "R_AND_D", "OPS_MANAGER", "ADMIN"] },
   { id: "security",      label: "Security",          icon: Shield,        description: "MFA, sessions, logins" },
   { id: "language",      label: "Language & Region", icon: Globe,         description: "Locale and timezone" },
   { id: "privacy",       label: "Privacy & Data",    icon: Lock,          description: "Export and account controls" },
@@ -1355,6 +1357,157 @@ const RULE_ACTIONS = [
   { value: "FORWARD",     label: "Forward to…" },
 ];
 
+// ─── Forwarding Tab ───────────────────────────────────────────────────────────
+
+function ForwardingTab() {
+  const [personalEmail, setPersonalEmail]         = useState("");
+  const [forwardingEnabled, setForwardingEnabled] = useState(false);
+  const [keepCopy, setKeepCopy]                   = useState(true);
+  const [loading, setLoading]                     = useState(true);
+  const [saving, setSaving]                       = useState(false);
+
+  useEffect(() => {
+    fetch("/api/settings/forwarding")
+      .then(r => r.json())
+      .then((d: { personalEmail?: string; forwardingEnabled?: boolean; keepCopy?: boolean }) => {
+        setPersonalEmail(d.personalEmail ?? "");
+        setForwardingEnabled(d.forwardingEnabled ?? false);
+        setKeepCopy(d.keepCopy ?? true);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function save() {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/settings/forwarding", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ personalEmail, forwardingEnabled, keepCopy }),
+      });
+      if (res.ok) {
+        toast.success("Forwarding settings saved");
+      } else {
+        const err = await res.json() as { error?: string };
+        toast.error(err.error ?? "Failed to save");
+      }
+    } catch {
+      toast.error("Network error");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12 gap-2 text-[#5A6275]">
+        <Loader2 className="w-4 h-4 animate-spin" />
+        <span className="text-sm">Loading…</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-5">
+      {/* Info banner */}
+      <div className="flex items-start gap-3 p-4 rounded-xl border"
+        style={{ background: "#1a56db10", borderColor: "#1a56db30" }}>
+        <Forward className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: "#1a56db" }} />
+        <p className="text-[13px] text-[#8A92A6] leading-relaxed">
+          When enabled, every email delivered to your Nexus inbox will also be forwarded
+          to your personal address — so you never miss a message, even outside the platform.
+        </p>
+      </div>
+
+      <SectionCard title="Personal email address" description="Where forwarded emails will be sent">
+        <input
+          type="email"
+          value={personalEmail}
+          onChange={e => setPersonalEmail(e.target.value)}
+          placeholder="you@gmail.com"
+          className="w-full px-3 py-2.5 rounded-lg text-sm text-[#E6E9F0] placeholder:text-[#5A6275] outline-none transition-colors"
+          style={{
+            background: "#1B1F2A",
+            border: "1px solid #2E3347",
+          }}
+          onFocus={e => { e.currentTarget.style.borderColor = "#1a56db"; }}
+          onBlur={e => { e.currentTarget.style.borderColor = "#2E3347"; }}
+        />
+      </SectionCard>
+
+      <SectionCard title="Forwarding" description="Control when and how emails are forwarded">
+        {/* Enable toggle */}
+        <div className="flex items-center justify-between py-3 border-b" style={{ borderColor: "#1C1F28" }}>
+          <div>
+            <p className="text-sm font-medium text-[#E6E9F0]">Enable forwarding</p>
+            <p className="text-xs text-[#5A6275] mt-0.5">Forward all incoming emails to your personal address</p>
+          </div>
+          <button
+            onClick={() => setForwardingEnabled(p => !p)}
+            className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0"
+            style={{ background: forwardingEnabled ? "#1a56db" : "#2E3347" }}
+            disabled={!personalEmail}
+            title={!personalEmail ? "Enter a personal email first" : undefined}
+          >
+            <span
+              className="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform"
+              style={{ transform: forwardingEnabled ? "translateX(22px)" : "translateX(2px)" }}
+            />
+          </button>
+        </div>
+
+        {/* Keep copy toggle */}
+        <div className="flex items-center justify-between py-3">
+          <div>
+            <p className="text-sm font-medium text-[#E6E9F0]">Keep a copy in Nexus</p>
+            <p className="text-xs text-[#5A6275] mt-0.5">Forwarded emails remain in your Nexus inbox too</p>
+          </div>
+          <button
+            onClick={() => setKeepCopy(p => !p)}
+            className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0"
+            style={{ background: keepCopy ? "#1a56db" : "#2E3347" }}
+          >
+            <span
+              className="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform"
+              style={{ transform: keepCopy ? "translateX(22px)" : "translateX(2px)" }}
+            />
+          </button>
+        </div>
+      </SectionCard>
+
+      {/* Status pill */}
+      {forwardingEnabled && personalEmail && (
+        <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg"
+          style={{ background: "#0f9d5818", border: "1px solid #0f9d5830" }}>
+          <span className="h-2 w-2 rounded-full bg-[#0f9d58] flex-shrink-0" />
+          <p className="text-xs text-[#0f9d58]">
+            Active — emails will be forwarded to <strong>{personalEmail}</strong>
+          </p>
+        </div>
+      )}
+
+      {forwardingEnabled && !personalEmail && (
+        <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg"
+          style={{ background: "#ea433518", border: "1px solid #ea433530" }}>
+          <AlertTriangle className="h-3.5 w-3.5 text-[#ea4335] flex-shrink-0" />
+          <p className="text-xs text-[#ea4335]">Enter a personal email address to activate forwarding.</p>
+        </div>
+      )}
+
+      <button
+        onClick={save}
+        disabled={saving}
+        className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-colors disabled:opacity-50"
+        style={{ background: "#1a56db" }}
+      >
+        {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+        {saving ? "Saving…" : "Save changes"}
+      </button>
+    </div>
+  );
+}
+
 function MailRulesTab() {
   const [rules, setRules]     = useState<MailRule[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1481,7 +1634,11 @@ export function SettingsView({
   const [currentMfaEnabled, setMfaEnabled]  = useState(mfaEnabled);
 
   const isAdmin = ["ADMIN", "CEO", "CISO"].includes(user.role);
-  const visibleTabs = ALL_TABS.filter(t => !t.adminOnly || isAdmin);
+  const visibleTabs = ALL_TABS.filter(t => {
+    if (t.adminOnly && !isAdmin) return false;
+    if (t.roleOnly && !t.roleOnly.includes(user.role)) return false;
+    return true;
+  });
 
   return (
     <div className="bg-[#0B0D12] min-h-screen">
@@ -1529,6 +1686,7 @@ export function SettingsView({
             {activeTab === "notifications" && <NotificationsTab />}
             {activeTab === "signature"     && <SignatureTab userName={user.fullName} />}
             {activeTab === "mail-rules"    && <MailRulesTab />}
+            {activeTab === "forwarding"    && <ForwardingTab />}
 
             {activeTab === "mailboxes" && (
               <SectionCard title="Your Mailboxes" description="Shared and personal mailboxes you can access">
