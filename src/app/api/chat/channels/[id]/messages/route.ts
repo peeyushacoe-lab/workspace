@@ -7,6 +7,7 @@ import { emitEvent } from "@/lib/events";
 import { getTokensForUser, sendExpoPush } from "@/lib/expo-push";
 import { sendWebPush } from "@/lib/web-push";
 import type { PushSubscriptionJSON } from "@/lib/web-push";
+import { shouldNotify } from "@/lib/notif-prefs";
 import { indexingQueue } from "@/lib/queues/indexing.queue";
 
 type Params = { params: Promise<{ id: string }> };
@@ -185,31 +186,45 @@ export async function POST(request: Request, { params }: Params) {
     }
 
     // Web push — always for DMs; urgent-only for group channels
+    // Respects each recipient's notification preferences
     const isDM = channel?.type === "DIRECT";
     if ((isDM || isUrgent) && memberIds.length) {
-      const pushLogs = await prisma.auditLog.findMany({
-        where: { actorId: { in: memberIds }, action: "PUSH_SUBSCRIBE" },
-        select: { id: true, metadata: true },
-      }).catch(() => []);
-      const stale: string[] = [];
-      await Promise.all(
-        pushLogs.map(async (log) => {
-          const sub = log.metadata as unknown as PushSubscriptionJSON;
-          if (!sub?.endpoint) return;
-          try {
-            await sendWebPush(sub, {
-              title: isDM ? `💬 ${user.fullName}` : pushTitle,
-              body: displayContent,
-              url: "/chat",
-              tag: `chat-${channelId}`,
-            });
-          } catch {
-            stale.push(log.id);
-          }
-        })
-      );
-      if (stale.length) {
-        await prisma.auditLog.deleteMany({ where: { id: { in: stale } } }).catch(() => {});
+      // Fetch preferences for all recipients in one query
+      const memberUsers = await prisma.user.findMany({
+        where: { id: { in: memberIds } },
+        select: { id: true, preferences: true },
+      }).catch(() => [] as { id: string; preferences: unknown }[]);
+      const prefsByUserId = new Map(memberUsers.map((u) => [u.id, (u.preferences ?? {}) as Record<string, unknown>]));
+
+      // notifType: DM → chatMentions, group channel → chatMentions (both use same key)
+      const notifType = "chatMentions" as const;
+      const eligibleIds = memberIds.filter((id) => shouldNotify(prefsByUserId.get(id) ?? {}, notifType, "push"));
+
+      if (eligibleIds.length) {
+        const pushLogs = await prisma.auditLog.findMany({
+          where: { actorId: { in: eligibleIds }, action: "PUSH_SUBSCRIBE" },
+          select: { id: true, actorId: true, metadata: true },
+        }).catch(() => []);
+        const stale: string[] = [];
+        await Promise.all(
+          pushLogs.map(async (log) => {
+            const sub = log.metadata as unknown as PushSubscriptionJSON;
+            if (!sub?.endpoint) return;
+            try {
+              await sendWebPush(sub, {
+                title: isDM ? `💬 ${user.fullName}` : pushTitle,
+                body: displayContent,
+                url: "/chat",
+                tag: `chat-${channelId}`,
+              });
+            } catch {
+              stale.push(log.id);
+            }
+          })
+        );
+        if (stale.length) {
+          await prisma.auditLog.deleteMany({ where: { id: { in: stale } } }).catch(() => {});
+        }
       }
     }
   })();

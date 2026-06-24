@@ -714,7 +714,7 @@ export function GlobalSearch({
 
 // ─── Search Trigger Button ────────────────────────────────────────────────────
 
-export function SearchTrigger({ variant = "light" }: { variant?: "light" | "dark" | "collapsed" | "topbar" }) {
+export function SearchTrigger({ variant = "light" }: { variant?: "light" | "dark" | "collapsed" | "topbar" | "icon" | "searchbar" }) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -728,6 +728,21 @@ export function SearchTrigger({ variant = "light" }: { variant?: "light" | "dark
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
+  if (variant === "icon") {
+    return (
+      <>
+        <button
+          onClick={() => setOpen(true)}
+          aria-label="Search"
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-[#8A92A6] hover:bg-[#1B1F2A] transition-colors"
+        >
+          <Search className="h-[18px] w-[18px]" />
+        </button>
+        {open && <GlobalSearch onClose={() => setOpen(false)} />}
+      </>
+    );
+  }
+
   if (variant === "collapsed") {
     return (
       <>
@@ -737,6 +752,21 @@ export function SearchTrigger({ variant = "light" }: { variant?: "light" | "dark
           className="flex h-9 w-9 items-center justify-center rounded-xl text-[#5A6275] hover:bg-[#1B1F2A] hover:text-[#8A92A6] transition-colors"
         >
           <Search className="h-[17px] w-[17px]" />
+        </button>
+        {open && <GlobalSearch onClose={() => setOpen(false)} />}
+      </>
+    );
+  }
+
+  if (variant === "searchbar") {
+    return (
+      <>
+        <button
+          onClick={() => setOpen(true)}
+          className="flex-1 flex items-center gap-2.5 h-[40px] rounded-full bg-[#1B1F2A] border border-[#262A35] hover:border-[#2E333F] hover:bg-[#1e2230] px-4 transition-colors"
+        >
+          <Search className="h-4 w-4 text-[#5A6275] flex-shrink-0" />
+          <span className="text-[13px] text-[#5A6275] flex-1 text-left">Search in Nexus</span>
         </button>
         {open && <GlobalSearch onClose={() => setOpen(false)} />}
       </>

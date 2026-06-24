@@ -8,6 +8,7 @@ import { invalidate } from "@/lib/cache";
 import { mailRulesQueue } from "@/lib/queues/mail-rules.queue";
 import { isS3Configured, uploadToR2 } from "@/lib/s3";
 import { sendWebPush, type PushSubscriptionJSON } from "@/lib/web-push";
+import { shouldNotify } from "@/lib/notif-prefs";
 import { Resend } from "resend";
 
 const resendClient = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
@@ -416,9 +417,17 @@ async function handleInboundEmail(data: InboundEmailPayload) {
     })();
   }
 
-  // 8. Web Push — notify mailbox owner of new email
+  // 8. Web Push — notify mailbox owner of new email (respects notification preferences)
   if (mailboxOwner?.userId) {
     void (async () => {
+      // Check user's notification preferences before firing push
+      const ownerPrefs = await prisma.user.findUnique({
+        where: { id: mailboxOwner.userId },
+        select: { preferences: true },
+      }).catch(() => null);
+      const prefs = (ownerPrefs?.preferences ?? {}) as Record<string, unknown>;
+      if (!shouldNotify(prefs, "newMail", "push")) return;
+
       const pushLogs = await prisma.auditLog.findMany({
         where: { actorId: mailboxOwner.userId, action: "PUSH_SUBSCRIBE" },
         select: { id: true, metadata: true },

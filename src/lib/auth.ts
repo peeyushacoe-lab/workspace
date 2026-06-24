@@ -79,6 +79,7 @@ export const portalNavItems: PortalNavItem[] = [
   { href: "/teams",     label: "Teams",      hint: "Team spaces",           roles: ALL_ROLES },
   { href: "/tasks",     label: "Tasks",      hint: "Work items",            roles: ALL_ROLES },
   { href: "/apps",      label: "Apps",       hint: "App marketplace",       roles: ALL_ROLES },
+  { href: "/dashboard", label: "Dashboard",  hint: "Executive overview",    roles: MGMT_ROLES },
   { href: "/contacts",  label: "Contacts",   hint: "Recipient book",        roles: MGMT_ROLES },
   { href: "/users",     label: "Users",      hint: "Manage team accounts",  roles: MGMT_ROLES },
   { href: "/billing",    label: "Billing",     hint: "Plans & usage",          roles: ["ADMIN"] },

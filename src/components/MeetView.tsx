@@ -601,7 +601,7 @@ export function MeetView({
         />
       )}
 
-      <div className="flex h-[calc(100vh-56px)] bg-[#12151D]">
+      <div className="flex h-[calc(100vh-116px)] lg:h-[calc(100vh-56px)] bg-[#12151D]">
         {/* Sidebar */}
         <div className="w-72 flex flex-col border-r border-[#262A35] bg-[#12151D]">
           <div className="px-4 py-4 border-b border-[#262A35]">

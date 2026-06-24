@@ -3,7 +3,8 @@
 
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { LogOut, ChevronLeft, ChevronRight, Menu, X, Settings, BellOff, Bell } from "lucide-react";
+import { LogOut, ChevronLeft, ChevronRight, Menu, X, Settings, BellOff, Bell, Inbox, MessageSquare, Video, Sparkles, Search } from "lucide-react";
+// Search is used in the Suspense fallback pill
 import { SidebarNav } from "./SidebarNav";
 import { SearchTrigger } from "./GlobalSearch";
 import { NotificationCenter } from "./NotificationCenter";
@@ -233,28 +234,64 @@ export function SidebarLayout({
           </div>
         )}
 
-        {/* ── Mobile top bar ────────────────────────────────── */}
-        <div className="lg:hidden fixed top-0 inset-x-0 z-40 flex h-[52px] items-center gap-3 bg-[#0F1117] border-b border-[#1C1F28] px-4 shadow-[0_1px_0_#1C1F28]">
+        {/* ── Mobile top bar — Gmail-style search-first ─────── */}
+        <div className="lg:hidden fixed top-0 inset-x-0 z-40 flex h-[60px] items-center gap-2 bg-[#0B0D12] px-3">
+          {/* Hamburger */}
           <button
             onClick={() => setMobileOpen(true)}
-            className="p-1.5 rounded-lg text-[#8A92A6] hover:bg-[#1B1F2A] transition-colors"
+            className="flex-shrink-0 p-1.5 rounded-lg text-[#8A92A6] hover:bg-[#1B1F2A] transition-colors"
             aria-label="Open menu"
           >
             <Menu className="h-5 w-5" />
           </button>
-          <img src="/nexusLogo-dark.png" alt="CyberSage Nexus" className="h-[22px] w-auto object-contain max-w-[110px]" />
-          {currentUser && (
-            <div className="ml-auto flex items-center gap-1.5">
-              <Suspense fallback={null}>
-                <NotificationCenter userId={currentUser.id} />
-              </Suspense>
-              {avatarUrl
-                ? <img src={avatarUrl} alt={currentUser.fullName} className="h-7 w-7 rounded-full object-cover" />
-                : <div className="flex h-7 w-7 items-center justify-center rounded-full text-white text-xs font-semibold" style={{ background: avatarGradient(currentUser.fullName) }}>{currentUser.fullName.charAt(0).toUpperCase()}</div>
-              }
+          {/* Search pill */}
+          <Suspense fallback={
+            <div className="flex-1 flex items-center gap-2.5 h-[40px] rounded-full bg-[#1B1F2A] border border-[#262A35] px-4 cursor-pointer">
+              <Search className="h-4 w-4 text-[#5A6275] flex-shrink-0" />
+              <span className="text-[13px] text-[#5A6275]">Search in Nexus</span>
             </div>
-          )}
+          }>
+            <SearchTrigger variant="searchbar" />
+          </Suspense>
+          {/* Avatar → Profile */}
+          <a href="/profile" aria-label="Profile" className="flex-shrink-0">
+            {avatarUrl
+              ? <img src={avatarUrl} alt={currentUser?.fullName ?? ""} className="h-8 w-8 rounded-full object-cover ring-2 ring-[#262A35]" />
+              : <div className="flex h-8 w-8 items-center justify-center rounded-full text-white text-[11px] font-semibold ring-2 ring-[#262A35]" style={{ background: avatarGradient(currentUser?.fullName ?? "U") }}>{(currentUser?.fullName ?? "U").charAt(0).toUpperCase()}</div>
+            }
+          </a>
         </div>
+
+        {/* ── Mobile bottom tab bar — 4-tab pip style ───────── */}
+        <nav
+          className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-[#0F1117] border-t border-[#1C1F28]"
+          style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+        >
+          <div className="flex h-[56px] items-stretch">
+            {([
+              { href: "/inbox", icon: Inbox,         label: "Inbox" },
+              { href: "/chat",  icon: MessageSquare,  label: "Chat"  },
+              { href: "/meet",  icon: Video,           label: "Meet"  },
+              { href: "/ai",    icon: Sparkles,        label: "AI"    },
+            ] as const).map(({ href, icon: Icon, label }) => {
+              const active = pathname === href || pathname?.startsWith(href + "/");
+              return (
+                <a
+                  key={href}
+                  href={href}
+                  className="flex flex-1 flex-col items-center justify-center gap-0.5 transition-colors"
+                  style={{ color: active ? "#00C2FF" : "#5A6275" }}
+                >
+                  <Icon className="h-[22px] w-[22px]" />
+                  {active
+                    ? <span className="w-[20px] h-[3px] rounded-full mt-0.5" style={{ background: "#00C2FF" }} />
+                    : <span className="text-[10px] font-medium mt-0.5">{label}</span>
+                  }
+                </a>
+              );
+            })}
+          </div>
+        </nav>
 
         {/* ── Desktop top bar (search + actions) ───────────── */}
         <div className={`hidden lg:flex fixed top-0 inset-x-0 z-20 h-[56px] items-center gap-4 px-5 bg-[#0B0D12] border-b border-[#1C1F28] transition-all duration-200 ${contentPad}`}>
@@ -282,7 +319,7 @@ export function SidebarLayout({
         </div>
 
         {/* ── Main content ──────────────────────────────────── */}
-        <div className={`flex-1 transition-[padding] duration-200 pt-[52px] lg:pt-[56px] ${contentPad}`}>
+        <div className={`flex-1 transition-[padding] duration-200 pt-[60px] pb-[56px] lg:pt-[56px] lg:pb-0 ${contentPad}`}>
           <main className="min-h-screen"><div key={pathname} className="nexpage h-full">{children}</div></main>
         </div>
 

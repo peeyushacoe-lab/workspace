@@ -8,7 +8,7 @@ Reply, Forward, Trash2, Star, Archive, X, Send,
   AlertCircle, AlertTriangle, Info, ShieldAlert, FileText,
   Sparkles, Loader2, ChevronDown, CalendarClock, FolderPlus,
   Folder, BellOff, Zap, Plus, MailOpen,
-  Shield, ShieldCheck, ShieldX, Globe, Lock, } from "lucide-react";
+  Shield, ShieldCheck, ShieldX, Globe, Lock, Pencil, } from "lucide-react";
 import { formatDistanceToNow, isPast, addHours, addDays, nextMonday, format, isToday, isThisYear } from "date-fns";
 import { toast } from "sonner";
 import { SimpleComposer } from "./WorkspaceDashboard";
@@ -716,6 +716,7 @@ export function InboxView({ userRole, initialThreads }: {
   const [activeFolder, setActiveFolder]     = useState<SystemFolder>("inbox");
   const [activeCustomFolder, setActiveCustomFolder] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<Category>("All");
+  const [mobileSecTab, setMobileSecTab]     = useState<"All" | "Security" | "Alerts">("All");
   const [sentLogs, setSentLogs]             = useState<SentLog[]>([]);
   const [isSentLoading, setIsSentLoading]   = useState(false);
   const [drafts, setDrafts]                 = useState<Draft[]>([]);
@@ -1064,6 +1065,11 @@ export function InboxView({ userRole, initialThreads }: {
     if (t.isSnoozed && activeFolder !== "starred") return false;
     if (activeFolder === "starred")  return t.isStarred;
     if (showUnreadOnly && t.unreadCount === 0) return false;
+    // Mobile security tabs filter (inbox only)
+    if (activeFolder === "inbox" && !activeCustomFolder) {
+      if (mobileSecTab === "Security" && !isExternalSender(t.lastMessage?.from ?? "")) return false;
+      if (mobileSecTab === "Alerts" && t.priority !== "URGENT" && t.priority !== "HIGH") return false;
+    }
     return true; // inbox and any unrecognised folder shows all non-trashed non-archived
   });
 
@@ -1079,7 +1085,7 @@ export function InboxView({ userRole, initialThreads }: {
   };
 
   return (
-    <div className="flex h-[calc(100vh-3.25rem)] lg:h-[calc(100vh-3.5rem)] bg-[#12151D] overflow-hidden">
+    <div className="flex h-[calc(100vh-7.25rem)] lg:h-[calc(100vh-3.5rem)] bg-[#12151D] overflow-hidden">
 
       {/* ── Left Sidebar ── */}
       <div className="hidden md:flex w-[200px] flex-shrink-0 flex-col bg-[#12151D] border-r border-[#262A35] overflow-y-auto">
@@ -1268,9 +1274,30 @@ export function InboxView({ userRole, initialThreads }: {
           )}
         </div>
 
-        {/* Security posture bar — inbox only */}
+        {/* Security posture bar — inbox only, desktop */}
         {activeFolder === "inbox" && !activeCustomFolder && !searchQuery && visibleThreads.length > 0 && (
-          <SecurityPostureBar threads={visibleThreads} totalScanned={visibleThreads.length} />
+          <div className="hidden md:block">
+            <SecurityPostureBar threads={visibleThreads} totalScanned={visibleThreads.length} />
+          </div>
+        )}
+
+        {/* ── Mobile category tabs (Gmail-style: All / Security / Alerts) ── */}
+        {activeFolder === "inbox" && !activeCustomFolder && (
+          <div className="md:hidden flex border-b border-[#1C1F28]">
+            {(["All", "Security", "Alerts"] as const).map(tab => (
+              <button
+                key={tab}
+                onClick={() => setMobileSecTab(tab)}
+                className={`flex-1 py-2.5 text-[13px] font-medium border-b-2 transition-colors ${
+                  mobileSecTab === tab
+                    ? "border-[#00C2FF] text-[#00C2FF]"
+                    : "border-transparent text-[#5A6275] hover:text-[#8A92A6]"
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
         )}
 
         {/* Thread rows */}
@@ -1488,7 +1515,49 @@ export function InboxView({ userRole, initialThreads }: {
                   )}
                 </div>
 
-                <div className="flex gap-3 px-4 py-[13px]">
+                {/* ── Mobile row (Gmail-style) ── */}
+                <div className="flex md:hidden gap-3 px-3 py-3">
+                  {/* Coloured initial circle */}
+                  <div className="flex-shrink-0 mt-0.5">
+                    <SenderAvatar
+                      member={memberMap[(thread.lastMessage?.from ?? "").toLowerCase()]}
+                      email={thread.lastMessage?.from ?? "?"}
+                      size={10}
+                      onClick={() => { const m = memberMap[(thread.lastMessage?.from ?? "").toLowerCase()]; if (m?.id) setProfileUserId(m.id); }}
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    {/* Row 1 — Sender + time */}
+                    <div className="flex items-center gap-1 mb-[2px]">
+                      <span className={`flex-1 truncate text-[14px] leading-tight ${thread.unreadCount > 0 ? "font-bold text-[#E6E9F0]" : "font-medium text-[#8A92A6]"}`}>
+                        {senderName(memberMap[(thread.lastMessage?.from ?? "").toLowerCase()], thread.lastMessage?.from)}
+                      </span>
+                      {thread.unreadCount > 0 && (
+                        <span className="flex-shrink-0 w-2 h-2 rounded-full bg-[#00C2FF]" />
+                      )}
+                      {isExternalSender(thread.lastMessage?.from ?? "") && (
+                        <span className="flex items-center gap-0.5 px-1 py-0.5 rounded text-[9px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 flex-shrink-0">
+                          <Globe className="w-2 h-2" />EXT
+                        </span>
+                      )}
+                      {thread.isStarred && <Star className="w-[13px] h-[13px] text-[#FFB020] flex-shrink-0" fill="#FFB020" strokeWidth={1.5} />}
+                      <span className="text-[11.5px] text-[#5A6275] flex-shrink-0 ml-1">
+                        {thread.lastMessage ? smartTime(thread.lastMessage.receivedAt) : ""}
+                      </span>
+                    </div>
+                    {/* Row 2 — Subject */}
+                    <p className={`truncate text-[13px] leading-snug mb-[1px] ${thread.unreadCount > 0 ? "font-semibold text-[#E6E9F0]" : "font-normal text-[#8A92A6]"}`}>
+                      {thread.subject || "(No Subject)"}
+                    </p>
+                    {/* Row 3 — Preview */}
+                    <p className="text-[12.5px] text-[#5A6275] truncate leading-snug">
+                      {thread.lastMessage?.snippet || "No preview"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* ── Desktop row (original layout) ── */}
+                <div className="hidden md:flex gap-3 px-4 py-[13px]">
                   {/* Avatar — 38px gradient */}
                   <div className="flex-shrink-0">
                     <SenderAvatar
@@ -1556,6 +1625,16 @@ export function InboxView({ userRole, initialThreads }: {
             ))
           )}
         </div>
+
+        {/* ── Mobile FAB — compose ── */}
+        <a
+          href="/compose"
+          aria-label="Compose"
+          className="md:hidden fixed bottom-[72px] right-4 z-30 flex h-14 w-14 items-center justify-center rounded-2xl shadow-lg transition-transform active:scale-95"
+          style={{ background: "#00C2FF" }}
+        >
+          <Pencil className="h-5 w-5 text-[#06121A]" />
+        </a>
       </div>
 
       {/* ── Message Detail ── */}

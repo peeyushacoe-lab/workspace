@@ -2645,7 +2645,7 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
     });
 
   return (
-    <div className="flex h-[calc(100vh-3.25rem)] lg:h-[calc(100vh-3.5rem)] bg-[#12151D] overflow-hidden">
+    <div className="flex h-[calc(100vh-7.25rem)] lg:h-[calc(100vh-3.5rem)] bg-[#12151D] overflow-hidden">
       {/* Channel sidebar */}
       <div className="w-64 bg-[#12151D] border-r border-[#262A35] flex flex-col flex-shrink-0">
         <div className="h-[50px] flex-shrink-0 flex items-center justify-between px-4 border-b border-[#262A35]">
