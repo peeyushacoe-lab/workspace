@@ -19,6 +19,7 @@ import {
   Trash2,
   ExternalLink,
   RefreshCw,
+  ChevronLeft,
 } from "lucide-react";
 import { formatDistanceToNow, format, parseISO } from "date-fns";
 import { toast } from "sonner";
@@ -602,8 +603,8 @@ export function MeetView({
       )}
 
       <div className="flex h-[calc(100vh-116px)] lg:h-[calc(100vh-56px)] bg-[#12151D]">
-        {/* Sidebar */}
-        <div className="w-72 flex flex-col border-r border-[#262A35] bg-[#12151D]">
+        {/* Sidebar — full width on mobile when no meeting selected */}
+        <div className={`${selectedId ? "hidden lg:flex" : "flex"} w-full lg:w-72 flex-col border-r border-[#262A35] bg-[#12151D]`}>
           <div className="px-4 py-4 border-b border-[#262A35]">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
@@ -673,8 +674,8 @@ export function MeetView({
           </div>
         </div>
 
-        {/* Main panel */}
-        <div className="flex-1 overflow-y-auto">
+        {/* Main panel — hidden on mobile when no meeting selected */}
+        <div className={`${!selectedId ? "hidden lg:block" : "block"} flex-1 overflow-y-auto`}>
           {!selected ? (
             <div className="px-7 pt-7 pb-7 max-w-4xl mx-auto">
               {/* Summary cards */}
@@ -761,7 +762,15 @@ export function MeetView({
               </div>
             </div>
           ) : (
-            <div className="p-6 max-w-3xl mx-auto">
+            <div className="p-4 lg:p-6 max-w-3xl mx-auto">
+              {/* Mobile back button */}
+              <button
+                onClick={() => setSelectedId(null)}
+                className="lg:hidden flex items-center gap-1.5 text-[#00C2FF] text-sm font-medium mb-4"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                All meetings
+              </button>
               {/* Meeting header */}
               <div className="flex items-start justify-between mb-6">
                 <div>

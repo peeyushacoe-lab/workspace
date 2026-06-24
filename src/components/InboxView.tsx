@@ -1088,7 +1088,7 @@ export function InboxView({ userRole, initialThreads }: {
     <div className="flex h-[calc(100vh-7.25rem)] lg:h-[calc(100vh-3.5rem)] bg-[#12151D] overflow-hidden">
 
       {/* ── Left Sidebar ── */}
-      <div className="hidden md:flex w-[200px] flex-shrink-0 flex-col bg-[#12151D] border-r border-[#262A35] overflow-y-auto">
+      <div className="hidden lg:flex w-[200px] flex-shrink-0 flex-col bg-[#12151D] border-r border-[#262A35] overflow-y-auto">
         {/* System folders */}
         <div className="px-2.5 pt-3.5 pb-2">
           <p className="px-2.5 mb-2 text-[11px] font-bold uppercase tracking-[0.5px] text-[#5A6275]">Mailbox</p>
@@ -1208,7 +1208,7 @@ export function InboxView({ userRole, initialThreads }: {
       </div>
 
       {/* ── Thread List ── */}
-      <div className={`${selectedThreadId ? "hidden md:flex" : "flex"} w-full md:w-[372px] flex-shrink-0 bg-[#12151D] border-r border-[#262A35] flex-col`}>
+      <div className={`${selectedThreadId ? "hidden lg:flex" : "flex"} w-full lg:w-[372px] flex-shrink-0 bg-[#12151D] border-r border-[#262A35] flex-col`}>
         <div className="px-4 pt-3 pb-2 border-b border-[#262A35] space-y-2">
           <div className="flex items-center justify-between min-h-[26px]">
             <h2 className="text-[13.5px] font-bold text-[#E6E9F0] flex items-center gap-1.5">
@@ -1276,7 +1276,7 @@ export function InboxView({ userRole, initialThreads }: {
 
         {/* Security posture bar — inbox only, desktop */}
         {activeFolder === "inbox" && !activeCustomFolder && !searchQuery && visibleThreads.length > 0 && (
-          <div className="hidden md:block">
+          <div className="hidden lg:block">
             <SecurityPostureBar threads={visibleThreads} totalScanned={visibleThreads.length} />
           </div>
         )}
@@ -1638,7 +1638,7 @@ export function InboxView({ userRole, initialThreads }: {
       </div>
 
       {/* ── Message Detail ── */}
-      <div className={`${selectedThreadId ? "flex" : "hidden md:flex"} flex-1 bg-[#12151D] flex-col min-w-0`}>
+      <div className={`${selectedThreadId ? "flex" : "hidden lg:flex"} flex-1 bg-[#12151D] flex-col min-w-0`}>
         {!selectedThreadId ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-4 p-8">
             <div className="w-12 h-12 rounded-xl bg-[#1B1F2A] border border-[#262A35] flex items-center justify-center">

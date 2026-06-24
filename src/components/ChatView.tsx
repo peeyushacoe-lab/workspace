@@ -19,6 +19,7 @@ import {
   Search,
   ChevronDown,
   ChevronRight,
+  ChevronLeft,
   Sparkles,
   Loader2,
   FileText,
@@ -2646,8 +2647,8 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
 
   return (
     <div className="flex h-[calc(100vh-7.25rem)] lg:h-[calc(100vh-3.5rem)] bg-[#12151D] overflow-hidden">
-      {/* Channel sidebar */}
-      <div className="w-64 bg-[#12151D] border-r border-[#262A35] flex flex-col flex-shrink-0">
+      {/* Channel sidebar — full width on mobile when no channel, hidden when channel open */}
+      <div className={`${selectedChannelId ? "hidden lg:flex" : "flex"} w-full lg:w-64 bg-[#12151D] border-r border-[#262A35] flex-col flex-shrink-0`}>
         <div className="h-[50px] flex-shrink-0 flex items-center justify-between px-4 border-b border-[#262A35]">
           <span className="text-[#E6E9F0] font-bold text-[13.5px]">Messages</span>
           <button
@@ -2722,9 +2723,9 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
         </div>
       </div>
 
-      {/* Main area */}
+      {/* Main area — hidden on mobile when no channel selected */}
       {!selectedChannelId ? (
-        <div className="flex-1 flex flex-col items-center justify-center text-[#8A92A6] bg-[#12151D] p-8">
+        <div className="hidden lg:flex flex-1 flex-col items-center justify-center text-[#8A92A6] bg-[#12151D] p-8">
           <MessageSquare className="w-16 h-16 mb-4 opacity-20" />
           <p className="text-lg font-medium">Select a channel</p>
           <p className="text-sm">Or create one from the sidebar.</p>
@@ -2762,7 +2763,15 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
             )}
 
             {/* Channel header */}
-            <div className="h-14 px-5 border-b border-[#262A35] bg-[#12151D] flex items-center gap-3 flex-shrink-0">
+            <div className="h-14 px-3 lg:px-5 border-b border-[#262A35] bg-[#12151D] flex items-center gap-2 lg:gap-3 flex-shrink-0">
+              {/* Mobile back button */}
+              <button
+                onClick={() => setSelectedChannelId(null)}
+                className="lg:hidden flex-shrink-0 p-1.5 rounded-lg text-[#8A92A6] hover:bg-[#1B1F2A] transition-colors"
+                aria-label="Back to channels"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
               {selectedChannel?.type === "DIRECT" || selectedChannel?.type === "GROUP" ? (
                 <Users className="w-[18px] h-[18px] text-[#5A6275] flex-shrink-0" />
               ) : selectedChannel?.isBroadcast ? (

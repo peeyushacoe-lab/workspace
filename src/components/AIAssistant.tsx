@@ -1027,11 +1027,30 @@ export function AIAssistant(_props: { currentUserId: string }) {
   }, []);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-160px)] bg-[#12151D] rounded-xl border border-[#262A35] overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-7.25rem)] lg:h-[calc(100vh-3.5rem)] bg-[#12151D] overflow-hidden">
       <StatusBar status={globalStatus} />
 
+      {/* Mobile horizontal tab strip */}
+      <div className="lg:hidden flex overflow-x-auto border-b border-[#262A35] bg-[#0F1117] px-2 py-1.5 gap-1 flex-shrink-0 scrollbar-none">
+        {TABS.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap flex-shrink-0 transition-colors ${
+              activeTab === tab.id
+                ? "bg-[#00C2FF]/10 text-[#00C2FF] border border-[#00C2FF]/30"
+                : "text-[#8A92A6] hover:bg-[#1B1F2A]"
+            }`}
+          >
+            {tab.icon}
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       <div className="flex flex-1 overflow-hidden">
-        <div className="w-52 bg-[#12151D] border-r border-[#262A35] flex flex-col flex-shrink-0">
+        {/* Desktop sidebar */}
+        <div className="hidden lg:flex w-52 bg-[#12151D] border-r border-[#262A35] flex-col flex-shrink-0">
           <div className="p-4 border-b border-[#262A35]">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-[#00C2FF]/10 flex items-center justify-center text-[#00C2FF] flex-shrink-0">
@@ -1058,7 +1077,7 @@ export function AIAssistant(_props: { currentUserId: string }) {
           </nav>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 bg-[#12151D]">
+        <div className="flex-1 overflow-y-auto p-4 lg:p-6 bg-[#12151D]">
           <div className="max-w-3xl mx-auto">
             <div className="mb-6">
               <h2 className="text-xl font-semibold text-[#E6E9F0]">
