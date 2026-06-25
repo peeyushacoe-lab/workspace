@@ -10,9 +10,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Plus, Search, Trash2, Pin, PinOff, StickyNote, Palette, MoreVertical,
-Folder, Check, X, Sparkles, Loader2,   Bold, Italic, Strikethrough, Code, List, ListOrdered, ListChecks,
-  Quote, Minus, Link2, Image as ImageIcon, Type, Hash,   Download, Copy,
-  LayoutTemplate, WifiOff, Mic, Paperclip, Archive, ArchiveRestore, Bell, BellOff, Tag,
+  Folder, Check, X, Sparkles, Loader2, Bold, Italic, Strikethrough, Code, List, ListOrdered, ListChecks,
+  Quote, Minus, Link2, Image as ImageIcon, Type, Hash, Download, Copy,
+  LayoutTemplate, WifiOff, Mic, Paperclip, Archive, ArchiveRestore, Bell, BellOff, Tag, ChevronLeft,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow, format } from "date-fns";
@@ -182,7 +182,11 @@ function TB({ icon, title, active, onClick }: {
   icon: React.ReactNode; title: string; active?: boolean; onClick?: () => void;
 }) {
   return (
-    <button title={title} onClick={onClick}
+    <button
+      title={title}
+      // onMouseDown + preventDefault keeps contentEditable focused on mobile
+      // (tap fires blur then click — preventDefault stops the blur)
+      onMouseDown={(e) => { e.preventDefault(); onClick?.(); }}
       className={`flex items-center justify-center h-6 w-6 rounded text-xs transition-colors ${active ? "bg-[#0E2532] text-[#00C2FF]" : "text-[#8A92A6] hover:bg-[#1B1F2A]"}`}>
       {icon}
     </button>
@@ -364,24 +368,24 @@ function RichEditor({ value, onChange, placeholder }: {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Mini toolbar */}
-      <div className="flex items-center gap-0.5 px-3 py-1.5 w-full max-w-[680px] mx-auto flex-wrap">
+      {/* Mini toolbar — scrollable on mobile so all buttons are reachable */}
+      <div className="flex items-center gap-0.5 px-3 py-1.5 w-full max-w-[680px] mx-auto overflow-x-auto scrollbar-hide flex-nowrap lg:flex-wrap">
         <TB icon={<Bold className="h-3 w-3" />} title="Bold" onClick={() => exec("bold")} />
         <TB icon={<Italic className="h-3 w-3" />} title="Italic" onClick={() => exec("italic")} />
         <TB icon={<Strikethrough className="h-3 w-3" />} title="Strikethrough" onClick={() => exec("strikeThrough")} />
         <TB icon={<Code className="h-3 w-3" />} title="Code" onClick={() => insertBlock("<code>code</code>")} />
-        <div className="w-px h-4 bg-[#262A35] mx-0.5" />
+        <div className="w-px h-4 bg-[#262A35] mx-0.5 flex-shrink-0" />
         <TB icon={<List className="h-3 w-3" />} title="Bullet list" onClick={() => exec("insertUnorderedList")} />
         <TB icon={<ListOrdered className="h-3 w-3" />} title="Numbered list" onClick={() => exec("insertOrderedList")} />
         <TB icon={<ListChecks className="h-3 w-3" />} title="Checklist" onClick={() => insertBlock('<p><input type="checkbox"> </p>')} />
-        <div className="w-px h-4 bg-[#262A35] mx-0.5" />
+        <div className="w-px h-4 bg-[#262A35] mx-0.5 flex-shrink-0" />
         <TB icon={<Quote className="h-3 w-3" />} title="Quote" onClick={() => insertBlock("<blockquote></blockquote>")} />
         <TB icon={<Type className="h-3 w-3" />} title="Code block" onClick={() => insertBlock("<pre><code></code></pre>")} />
         <TB icon={<Minus className="h-3 w-3" />} title="Divider" onClick={() => insertBlock("<hr>")} />
         <TB icon={<Link2 className="h-3 w-3" />} title="Link" onClick={() => { const u = prompt("URL:"); if (u) exec("createLink", u); }} />
         <TB icon={<ImageIcon className="h-3 w-3" />} title="Image" onClick={() => { const u = prompt("Image URL:"); if (u) insertBlock(`<img src="${u}" style="max-width:100%;border-radius:8px;margin:8px 0">`); }} />
         <TB icon={<Hash className="h-3 w-3" />} title="H2 Heading" onClick={() => exec("formatBlock", "h2")} />
-        <div className="w-px h-4 bg-[#262A35] mx-0.5" />
+        <div className="w-px h-4 bg-[#262A35] mx-0.5 flex-shrink-0" />
         <TB icon={<Paperclip className="h-3 w-3" />} title="Attach file" onClick={() => fileInputRef.current?.click()} />
         <button
           title={recording ? "Stop recording" : "Record voice note"}
@@ -779,7 +783,7 @@ export function NotesView() {
     <div className="flex h-[calc(100vh-7.25rem)] lg:h-[calc(100vh-3.5rem)] bg-[#12151D] overflow-hidden text-[#E6E9F0]" onClick={() => { setShowColorPicker(false); setShowTemplateMenu(false); setShowReminder(false); }}>
 
       {/* ── Left sidebar (folders + list) ── */}
-      <aside className="flex flex-col border-r border-[#1C1F28] bg-[#12151D] overflow-hidden flex-shrink-0" style={{ width: 320 }}>
+      <aside className={`${selectedId ? "hidden lg:flex" : "flex"} flex-col border-r border-[#1C1F28] bg-[#12151D] overflow-hidden flex-shrink-0 w-full lg:w-80`}>
 
         {/* "All Notes" header + new note */}
         <div className="flex items-center justify-between px-4 h-[52px] flex-shrink-0 border-b border-[#1C1F28]">
@@ -875,7 +879,14 @@ export function NotesView() {
         <div className={`flex flex-col flex-1 min-w-0 overflow-hidden ${_colorInfo.bg}`}>
 
           {/* Note toolbar — ~52px top bar */}
-          <div className="flex items-center gap-2 px-4 h-[52px] flex-shrink-0 border-b border-[#1C1F28] bg-[#12151D] z-10">
+          <div className="flex items-center gap-2 px-2 lg:px-4 h-[52px] flex-shrink-0 border-b border-[#1C1F28] bg-[#12151D] z-10 overflow-x-auto">
+            {/* Mobile back button */}
+            <button
+              onClick={() => setSelectedId(null)}
+              className="lg:hidden flex items-center gap-1 text-[#00C2FF] text-sm font-medium flex-shrink-0 pr-1"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
             <div className="flex items-center gap-2 text-[12px] font-mono text-[#5A6275] min-w-0">
               {saving
                 ? <span className="flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Saving…</span>
@@ -891,7 +902,7 @@ export function NotesView() {
             <span className="text-[11px] font-mono text-[#5A6275] ml-auto">{words} words</span>
 
             {/* Templates */}
-            <div className="relative" onClick={e => e.stopPropagation()}>
+            <div className="relative flex-shrink-0" onClick={e => e.stopPropagation()}>
               <button onClick={() => setShowTemplateMenu(v => !v)} title="Templates"
                 className={`p-1.5 rounded transition-colors ${showTemplateMenu ? "bg-[#0E2532] text-[#00C2FF]" : "text-[#8A92A6] hover:bg-[#1B1F2A]"}`}>
                 <LayoutTemplate className="h-4 w-4" />
@@ -923,20 +934,35 @@ export function NotesView() {
             </select>
 
             {/* Color picker */}
-            <div className="relative" onClick={e => e.stopPropagation()}>
+            <div className="relative flex-shrink-0" onClick={e => e.stopPropagation()}>
               <button onClick={() => setShowColorPicker(v => !v)} title="Note color" className="p-1.5 rounded text-[#8A92A6] hover:bg-[#1B1F2A]">
                 <Palette className="h-4 w-4" />
               </button>
               {showColorPicker && (
-                <div className="absolute right-0 top-full mt-1 bg-[#12151D] border border-[#262A35] rounded-lg shadow-lg z-50 p-2">
-                  <div className="grid grid-cols-4 gap-1.5">
-                    {NOTE_COLORS.map(c => (
-                      <button key={c.value} title={c.label} onClick={() => void colorNote(selectedId, c.value)}
-                        className={`h-7 w-7 rounded-lg border-2 transition-transform hover:scale-110 ${selectedNote.color === c.value ? "border-[#00C2FF]" : "border-transparent"}`}
-                        style={{ background: c.value || "#ffffff", border: c.value ? undefined : "2px dashed #262A35" }} />
-                    ))}
+                <>
+                  {/* Mobile: fixed bottom sheet overlay */}
+                  <div className="lg:hidden fixed inset-0 z-40" onClick={() => setShowColorPicker(false)} />
+                  <div className="lg:hidden fixed bottom-24 left-1/2 -translate-x-1/2 bg-[#12151D] border border-[#262A35] rounded-xl shadow-2xl z-50 p-3">
+                    <p className="text-[11px] font-medium text-[#5A6275] mb-2 text-center">Note colour</p>
+                    <div className="grid grid-cols-4 gap-2">
+                      {NOTE_COLORS.map(c => (
+                        <button key={c.value} title={c.label} onClick={() => void colorNote(selectedId, c.value)}
+                          className={`h-9 w-9 rounded-lg border-2 transition-transform active:scale-95 ${selectedNote.color === c.value ? "border-[#00C2FF]" : "border-transparent"}`}
+                          style={{ background: c.value || "#ffffff", border: c.value ? undefined : "2px dashed #262A35" }} />
+                      ))}
+                    </div>
                   </div>
-                </div>
+                  {/* Desktop: original absolute dropdown */}
+                  <div className="hidden lg:block absolute right-0 top-full mt-1 bg-[#12151D] border border-[#262A35] rounded-lg shadow-lg z-50 p-2">
+                    <div className="grid grid-cols-4 gap-1.5">
+                      {NOTE_COLORS.map(c => (
+                        <button key={c.value} title={c.label} onClick={() => void colorNote(selectedId, c.value)}
+                          className={`h-7 w-7 rounded-lg border-2 transition-transform hover:scale-110 ${selectedNote.color === c.value ? "border-[#00C2FF]" : "border-transparent"}`}
+                          style={{ background: c.value || "#ffffff", border: c.value ? undefined : "2px dashed #262A35" }} />
+                      ))}
+                    </div>
+                  </div>
+                </>
               )}
             </div>
 
@@ -951,7 +977,7 @@ export function NotesView() {
             </button>
 
             {/* Reminder */}
-            <div className="relative" onClick={e => e.stopPropagation()}>
+            <div className="relative flex-shrink-0" onClick={e => e.stopPropagation()}>
               <button onClick={() => setShowReminder(v => !v)} title="Remind me"
                 className={`p-1.5 rounded transition-colors ${reminders[selectedId] ? "text-[#00C2FF] bg-[#0E2532]" : showReminder ? "bg-[#0E2532] text-[#00C2FF]" : "text-[#8A92A6] hover:bg-[#1B1F2A]"}`}>
                 <Bell className="h-4 w-4" />

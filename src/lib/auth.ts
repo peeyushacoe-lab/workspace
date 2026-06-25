@@ -92,7 +92,8 @@ export const portalNavItems: PortalNavItem[] = [
   { href: "/soc",         label: "SOC",         hint: "Security operations centre", roles: ["ADMIN", "CISO", "CEO"] },
   // Developer page hidden — broken, not ready
   // { href: "/developer",   label: "Developer",   hint: "API keys & webhooks",        roles: MGMT_ROLES },
-  { href: "/internship",  label: "Intern Hub",  hint: "Internship workspace",       roles: ["INTERNSHIP", ...MGMT_ROLES] },
+  { href: "/internship",             label: "Intern Hub",  hint: "Internship workspace",   roles: ["INTERNSHIP", ...MGMT_ROLES] },
+  { href: "/internship/attendance",  label: "Attendance",  hint: "Punch-in / timesheet",   roles: ["INTERNSHIP", ...MGMT_ROLES] },
   // Settings is shown via the hardcoded icon in SidebarLayout (top bar + bottom of sidebar) — no need for a nav item
   // { href: "/settings",    label: "Settings",    hint: "Signature & security",       roles: ALL_ROLES },
   // Desktop App download hidden for now

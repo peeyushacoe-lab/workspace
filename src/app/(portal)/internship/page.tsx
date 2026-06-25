@@ -65,7 +65,7 @@ function MarkdownBody({ content }: { content: string }) {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Tab = "announcements" | "tasks" | "submissions" | "discussion" | "findings" | "progress" | "learning" | "mentor_panel" | "attendance";
+type Tab = "announcements" | "tasks" | "discussion" | "findings" | "progress" | "learning" | "mentor_panel";
 
 interface User { id: string; fullName: string; avatarUrl?: string | null; role?: string; }
 
@@ -221,12 +221,10 @@ function SeverityBadge({ s }: { s?: string | null }) {
 const TABS: { id: Tab; label: string; icon: React.ElementType; mentorOnly?: boolean }[] = [
   { id: "announcements", label: "Announcements", icon: Megaphone },
   { id: "tasks",         label: "Tasks",         icon: ClipboardList },
-  { id: "submissions",   label: "Submissions",   icon: Upload },
   { id: "discussion",    label: "Discussion",    icon: MessageSquare },
   { id: "findings",      label: "Findings",      icon: Bug },
   { id: "learning",      label: "Learning",      icon: BookOpen },
   { id: "progress",      label: "Progress",      icon: BarChart2 },
-  { id: "attendance",    label: "Attendance",    icon: CalendarClock },
   { id: "mentor_panel",  label: "Mentor Panel",  icon: Settings, mentorOnly: true },
 ];
 
@@ -275,12 +273,20 @@ export default function InternshipHubPage() {
           <>
             {tab === "announcements" && <AnnouncementsTab isMentor={isMentor} userId={currentUser.id} />}
             {tab === "tasks"         && <TasksTab isMentor={isMentor} userId={currentUser.id} />}
-            {tab === "submissions"   && <SubmissionsTab isMentor={isMentor} userId={currentUser.id} />}
             {tab === "discussion"    && <DiscussionTab userId={currentUser.id} currentUser={currentUser} />}
             {tab === "findings"      && <FindingsTab isMentor={isMentor} userId={currentUser.id} currentUser={currentUser} />}
             {tab === "learning"      && <LearningTab isMentor={isMentor} userId={currentUser.id} />}
-            {tab === "progress"      && <ProgressTab isMentor={isMentor} userId={currentUser.id} />}
-            {tab === "attendance"    && <AttendanceTab isMentor={isMentor} userId={currentUser.id} />}
+            {tab === "progress"      && (
+              <div className="space-y-8">
+                <ProgressTab isMentor={isMentor} userId={currentUser.id} />
+                <div>
+                  <h2 className="text-sm font-semibold text-[#E6E9F0] mb-4 flex items-center gap-2">
+                    <Upload className="w-4 h-4 text-[#00C2FF]" /> Submissions
+                  </h2>
+                  <SubmissionsTab isMentor={isMentor} userId={currentUser.id} />
+                </div>
+              </div>
+            )}
             {tab === "mentor_panel"  && isMentor && <MentorPanelTab />}
           </>
         )}
@@ -3285,7 +3291,11 @@ function MentorAttendanceSubTab() {
         <div className="flex items-center gap-4 text-xs">
           <span className="text-[#0f9d58]"><UserCheck className="w-3.5 h-3.5 inline mr-1" />{presentCount} present</span>
           {lateCount > 0 && <span className="text-[#F59E0B]"><Clock className="w-3.5 h-3.5 inline mr-1" />{lateCount} late</span>}
-          {idleCount > 0 && <span className="text-[#ff6d00]"><AlertCircle className="w-3.5 h-3.5 inline mr-1" />{idleCount} idle flag</span>}
+          {idleCount > 0 && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#ff6d00]/20 text-[#ff6d00] font-semibold text-xs">
+              <Timer className="w-3 h-3" />{idleCount} idle {idleCount === 1 ? "flag" : "flags"}
+            </span>
+          )}
         </div>
       </div>
 
@@ -3306,7 +3316,7 @@ function MentorAttendanceSubTab() {
           <div className="divide-y divide-[#262A35]">
             {records.map(r => (
               <div key={r.intern.id}
-                className="grid grid-cols-[1fr_60px_60px_54px_1fr_auto_auto] items-center px-4 py-3 gap-3 hover:bg-[#1B1F2A]/40 transition-colors">
+                className={`grid grid-cols-[1fr_60px_60px_54px_1fr_auto_auto] items-center px-4 py-3 gap-3 transition-colors ${r.idleFlag ? "bg-[#ff6d00]/5 hover:bg-[#ff6d00]/8" : "hover:bg-[#1B1F2A]/40"}`}>
                 {/* Intern */}
                 <div className="flex items-center gap-2 min-w-0">
                   <Avatar user={r.intern} size={7} />
@@ -3364,18 +3374,24 @@ function MentorAttendanceSubTab() {
                 </div>
 
                 {/* Flags */}
-                <div className="flex items-center gap-1.5">
+                <div className="flex flex-col gap-1">
                   {!r.firstPunchIn && (
-                    <span className="text-[11px] text-[#3A4150]">Absent</span>
+                    <span className="text-xs text-[#3A4150]">Absent</span>
                   )}
                   {r.firstPunchIn && !r.isLate && !r.idleFlag && (
-                    <span className="flex items-center gap-0.5 text-[11px] text-[#0f9d58]"><CheckCircle className="w-3 h-3" /> On time</span>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#0f9d58]/15 text-[#0f9d58] text-xs font-medium">
+                      <CheckCircle className="w-3 h-3" /> On time
+                    </span>
                   )}
                   {r.isLate && (
-                    <span className="flex items-center gap-0.5 text-[11px] text-[#F59E0B]"><AlertCircle className="w-3 h-3" /> Late</span>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#F59E0B]/15 text-[#F59E0B] text-xs font-medium">
+                      <AlertCircle className="w-3 h-3" /> Late
+                    </span>
                   )}
                   {r.idleFlag && (
-                    <span className="flex items-center gap-0.5 text-[11px] text-[#ff6d00]"><Timer className="w-3 h-3" /> Idle?</span>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#ff6d00]/20 text-[#ff6d00] text-xs font-semibold">
+                      <Timer className="w-3 h-3" /> Idle flag
+                    </span>
                   )}
                 </div>
 
