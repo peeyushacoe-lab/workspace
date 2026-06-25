@@ -90,7 +90,8 @@ export const portalNavItems: PortalNavItem[] = [
   { href: "/admin",     label: "Admin",      hint: "System administration", roles: ["ADMIN"] },
   { href: "/compliance",  label: "Compliance",  hint: "Audit logs & GDPR",         roles: ["ADMIN", "CISO"] },
   { href: "/soc",         label: "SOC",         hint: "Security operations centre", roles: ["ADMIN", "CISO", "CEO"] },
-  { href: "/developer",   label: "Developer",   hint: "API keys & webhooks",        roles: MGMT_ROLES },
+  // Developer page hidden — broken, not ready
+  // { href: "/developer",   label: "Developer",   hint: "API keys & webhooks",        roles: MGMT_ROLES },
   { href: "/internship",  label: "Intern Hub",  hint: "Internship workspace",       roles: ["INTERNSHIP", ...MGMT_ROLES] },
   // Settings is shown via the hardcoded icon in SidebarLayout (top bar + bottom of sidebar) — no need for a nav item
   // { href: "/settings",    label: "Settings",    hint: "Signature & security",       roles: ALL_ROLES },
@@ -133,7 +134,7 @@ const pathAccess: Array<{ prefix: string; roles: UserRole[] }> = [
   { prefix: "/status",         roles: ALL_ROLES },
   { prefix: "/download",       roles: ALL_ROLES },
   { prefix: "/soc",            roles: ["ADMIN", "CISO", "CEO"] },
-  { prefix: "/developer",      roles: MGMT_ROLES },
+  { prefix: "/developer",      roles: ["ADMIN"] },
   { prefix: "/access",         roles: ["ADMIN", "CISO"] },
   { prefix: "/brain",          roles: ALL_ROLES },
   { prefix: "/internship",     roles: ["INTERNSHIP", "ADMIN", "CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER"] },
