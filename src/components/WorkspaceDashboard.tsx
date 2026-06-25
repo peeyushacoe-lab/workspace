@@ -227,6 +227,7 @@ export function SimpleComposer({
   defaultRecipient = "",
   defaultSubject = "",
   defaultBody = "",
+  defaultHtmlBody,
   draftKey,
   draftId: initialDraftId,
   replyToThreadId,
@@ -237,6 +238,8 @@ export function SimpleComposer({
   defaultRecipient?: string;
   defaultSubject?: string;
   defaultBody?: string;
+  /** Pre-built HTML for this message (e.g. forwarded email HTML). Sent as htmlBody so formatting is preserved. */
+  defaultHtmlBody?: string;
   draftKey?: string;
   draftId?: string;
   replyToThreadId?: string;
@@ -357,6 +360,7 @@ export function SimpleComposer({
       fd.append("to", payload.to);
       fd.append("subject", payload.subject);
       fd.append("body", payload.body);
+      if ("htmlBody" in payload && payload.htmlBody) fd.append("htmlBody", payload.htmlBody as string);
       if (payload.signatureId) fd.append("signatureId", payload.signatureId);
       if (payload.replyToThreadId) fd.append("replyToThreadId", payload.replyToThreadId);
       if (payload.cc?.length) fd.append("cc", JSON.stringify(payload.cc));
@@ -381,6 +385,7 @@ export function SimpleComposer({
       to: recipient,
       subject,
       body,
+      ...(defaultHtmlBody ? { htmlBody: defaultHtmlBody } : {}),
       signatureId: selectedSignatureId || undefined,
       ...(replyToThreadId ? { replyToThreadId } : {}),
       ...(cc.trim()  ? { cc:  parseEmails(cc) }  : {}),

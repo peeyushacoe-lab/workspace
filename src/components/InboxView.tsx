@@ -2108,20 +2108,29 @@ export function InboxView({ userRole, initialThreads }: {
                     </button>
                   </div>
                   <div className="max-h-[80vh] overflow-y-auto">
-                    <SimpleComposer
-                      bare
-                      userRole={userRole}
-                      defaultSubject={`Fwd: ${threadDetail.subject}`}
-                      defaultBody={(() => {
-                        const orig = threadDetail.messages[0];
-                        if (!orig) return "";
-                        return `\n\n-------- Forwarded message --------\nFrom: ${orig.from}\nDate: ${new Date(orig.receivedAt).toLocaleString()}\nSubject: ${threadDetail.subject}\n\n${(orig.textBody ?? "").slice(0, 2000)}`;
-                      })()}
-                      onSuccess={() => {
-                        setShowForward(false);
-                        toast.success("Message forwarded");
-                      }}
-                    />
+                    {(() => {
+                      const orig = threadDetail.messages[0];
+                      const header = `-------- Forwarded message --------\nFrom: ${orig?.from ?? ""}\nDate: ${orig ? new Date(orig.receivedAt).toLocaleString() : ""}\nSubject: ${threadDetail.subject}`;
+                      // Plain text shown in the textarea
+                      const plainBody = `\n\n${header}\n\n${(orig?.textBody ?? "").slice(0, 2000)}`;
+                      // Full HTML forwarded block sent to the API — preserves rich email formatting
+                      const htmlBody = orig?.htmlBody
+                        ? `<p></p><hr style="border:none;border-top:1px solid #e8eaed;margin:16px 0"/><div style="font-size:12px;color:#5f6368;margin-bottom:12px;white-space:pre">${header}</div>${orig.htmlBody}`
+                        : undefined;
+                      return (
+                        <SimpleComposer
+                          bare
+                          userRole={userRole}
+                          defaultSubject={`Fwd: ${threadDetail.subject}`}
+                          defaultBody={plainBody}
+                          defaultHtmlBody={htmlBody}
+                          onSuccess={() => {
+                            setShowForward(false);
+                            toast.success("Message forwarded");
+                          }}
+                        />
+                      );
+                    })()}
                   </div>
                 </div>
               </div>
