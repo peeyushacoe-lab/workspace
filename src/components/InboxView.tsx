@@ -1088,7 +1088,7 @@ export function InboxView({ userRole, initialThreads }: {
     <div className="flex h-[calc(100vh-7.25rem)] lg:h-[calc(100vh-3.5rem)] bg-[#12151D] overflow-hidden">
 
       {/* ── Left Sidebar ── */}
-      <div className="hidden lg:flex w-[200px] flex-shrink-0 flex-col bg-[#12151D] border-r border-[#262A35] overflow-y-auto">
+      <div className="hidden lg:flex w-[160px] flex-shrink-0 flex-col bg-[#12151D] border-r border-[#262A35] overflow-y-auto overflow-x-hidden">
         {/* System folders */}
         <div className="px-2.5 pt-3.5 pb-2">
           <p className="px-2.5 mb-2 text-[11px] font-bold uppercase tracking-[0.5px] text-[#5A6275]">Mailbox</p>
@@ -1208,7 +1208,7 @@ export function InboxView({ userRole, initialThreads }: {
       </div>
 
       {/* ── Thread List ── */}
-      <div className={`${selectedThreadId ? "hidden lg:flex" : "flex"} w-full lg:w-[372px] flex-shrink-0 bg-[#12151D] border-r border-[#262A35] flex-col`}>
+      <div className={`${selectedThreadId ? "hidden lg:flex" : "flex"} w-full lg:w-[300px] flex-shrink-0 bg-[#12151D] border-r border-[#262A35] flex-col overflow-x-hidden`}>
         <div className="px-4 pt-3 pb-2 border-b border-[#262A35] space-y-2">
           <div className="flex items-center justify-between min-h-[26px]">
             <h2 className="text-[13.5px] font-bold text-[#E6E9F0] flex items-center gap-1.5">
@@ -1638,7 +1638,7 @@ export function InboxView({ userRole, initialThreads }: {
       </div>
 
       {/* ── Message Detail ── */}
-      <div className={`${selectedThreadId ? "flex" : "hidden lg:flex"} flex-1 bg-[#12151D] flex-col min-w-0`}>
+      <div className={`${selectedThreadId ? "flex" : "hidden lg:flex"} flex-1 bg-[#12151D] flex-col min-w-0 overflow-x-hidden`}>
         {!selectedThreadId ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-4 p-8">
             <div className="w-12 h-12 rounded-xl bg-[#1B1F2A] border border-[#262A35] flex items-center justify-center">
@@ -1764,7 +1764,7 @@ export function InboxView({ userRole, initialThreads }: {
             )}
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto px-9 py-6 space-y-2">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden px-9 py-6 space-y-2">
               {/* Subject H2 + mailbox meta */}
               <div className="mb-4">
                 <h2 className="text-[22px] font-bold text-[#E6E9F0] leading-tight tracking-[-0.4px]">{threadDetail.subject || "(No Subject)"}</h2>
@@ -1879,9 +1879,11 @@ export function InboxView({ userRole, initialThreads }: {
                     )}
 
                     {msg.htmlBody ? (
-                      <div className="prose prose-sm max-w-none text-[#C2C8D6] prose-a:text-[#00C2FF] leading-[1.75]" dangerouslySetInnerHTML={{ __html: sanitizeHtml(msg.htmlBody) }} />
+                      <div className="overflow-x-auto max-w-full">
+                        <div className="prose prose-sm max-w-none text-[#C2C8D6] prose-a:text-[#00C2FF] leading-[1.75] [&_table]:max-w-full [&_img]:max-w-full [&_pre]:overflow-x-auto [&_*]:max-w-full" dangerouslySetInnerHTML={{ __html: sanitizeHtml(msg.htmlBody) }} />
+                      </div>
                     ) : (
-                      <p className="text-[14.5px] text-[#C2C8D6] whitespace-pre-wrap leading-[1.75]">{msg.textBody}</p>
+                      <p className="text-[14.5px] text-[#C2C8D6] whitespace-pre-wrap break-words leading-[1.75]">{msg.textBody}</p>
                     )}
 
                     {msg.attachments && msg.attachments.length > 0 && (
