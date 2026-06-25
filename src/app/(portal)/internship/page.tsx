@@ -3427,7 +3427,7 @@ function MentorAttendanceSubTab() {
                   </button>
                 </div>
                 {overrideBreaks.length === 0 && (
-                  <p className="text-[11px] text-[#3A4150]">No breaks set — click "Add break" to record one.</p>
+                  <p className="text-[11px] text-[#3A4150]">No breaks set — click &ldquo;Add break&rdquo; to record one.</p>
                 )}
                 <div className="space-y-2">
                   {overrideBreaks.map((b, i) => (
