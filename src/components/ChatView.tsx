@@ -1820,7 +1820,8 @@ function CommandPalette({
 
 // ─── Main ChatView ────────────────────────────────────────────────────────────
 
-export function ChatView({ currentUserId }: { currentUserId: string }) {
+export function ChatView({ currentUserId, userRole }: { currentUserId: string; userRole?: string }) {
+  const canCall = userRole !== "INTERNSHIP";
   const { startCall, busy: callBusy } = useCall();
   const [channels, setChannels] = useState<Channel[]>([]);
   const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null);
@@ -2801,8 +2802,8 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
               </div>
               <div className="flex-1" />
               <div className="flex items-center gap-2 flex-shrink-0">
-                {/* Start a call — prominent cyan buttons, first so they're always visible */}
-                {selectedChannel?.type === "DIRECT" || selectedChannel?.type === "GROUP" ? (
+                {/* Start a call — hidden for interns */}
+                {canCall && (selectedChannel?.type === "DIRECT" || selectedChannel?.type === "GROUP") ? (
                   <>
                     <button
                       onClick={() => { if (selectedChannelId && selectedChannel) void startCall(selectedChannelId, selectedChannel.name, "audio"); }}
@@ -2821,7 +2822,7 @@ export function ChatView({ currentUserId }: { currentUserId: string }) {
                       <Video className="w-[17px] h-[17px]" />
                     </button>
                   </>
-                ) : selectedChannel ? (
+                ) : canCall && selectedChannel ? (
                   <button
                     onClick={() => { if (selectedChannelId) window.open(`/meet/cybersage-${selectedChannelId}`, "_blank"); }}
                     title="Start a group call"

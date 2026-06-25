@@ -47,6 +47,9 @@ const ALL_ROLES: UserRole[] = [
   "INTERNSHIP",
 ];
 
+// Roles excluding interns — for features not yet ready for intern access
+const ALL_ROLES_EXCEPT_INTERN: UserRole[] = ALL_ROLES.filter((r) => r !== "INTERNSHIP");
+
 export const portalHome = "/inbox";
 
 // Key roles — only one account of each can exist in the system
@@ -70,10 +73,10 @@ export const CREATOR_PERMISSIONS: Partial<Record<UserRole, UserRole[]>> = {
 export const portalNavItems: PortalNavItem[] = [
   { href: "/inbox",     label: "Inbox",      hint: "Workspace mail",        roles: ALL_ROLES },
   { href: "/chat",      label: "Chat",       hint: "Team messaging",        roles: ALL_ROLES },
-  { href: "/meet",      label: "Meet",       hint: "Video meetings",        roles: ALL_ROLES },
+  { href: "/meet",      label: "Meet",       hint: "Video meetings",        roles: ALL_ROLES_EXCEPT_INTERN },
   { href: "/calendar",  label: "Calendar",   hint: "Events & scheduling",   roles: ALL_ROLES },
   { href: "/whiteboard", label: "Whiteboard", hint: "Visual canvas",         roles: ALL_ROLES },
-  { href: "/ai",         label: "AI",         hint: "AI assistant",          roles: ALL_ROLES },
+  { href: "/ai",         label: "AI",         hint: "AI assistant",          roles: ALL_ROLES_EXCEPT_INTERN },
   { href: "/notifications", label: "Notifications", hint: "Activity & alerts",   roles: ALL_ROLES },
   { href: "/people",    label: "People",     hint: "Team directory",        roles: ALL_ROLES },
   { href: "/teams",     label: "Teams",      hint: "Team spaces",           roles: ALL_ROLES },
@@ -99,13 +102,13 @@ export const portalNavItems: PortalNavItem[] = [
 const pathAccess: Array<{ prefix: string; roles: UserRole[] }> = [
   { prefix: "/inbox",          roles: ALL_ROLES },
   { prefix: "/chat",           roles: ALL_ROLES },
-  { prefix: "/meet",           roles: ALL_ROLES },
+  { prefix: "/meet",           roles: ALL_ROLES_EXCEPT_INTERN },
   { prefix: "/drive",          roles: ALL_ROLES },
   { prefix: "/calendar",       roles: ALL_ROLES },
   { prefix: "/notes",          roles: ALL_ROLES },
   { prefix: "/docs",           roles: ALL_ROLES },
   { prefix: "/whiteboard",     roles: ALL_ROLES },
-  { prefix: "/ai",             roles: ALL_ROLES },
+  { prefix: "/ai",             roles: ALL_ROLES_EXCEPT_INTERN },
   { prefix: "/settings",        roles: ALL_ROLES },
   { prefix: "/profile",        roles: ALL_ROLES },
   { prefix: "/mfa-challenge",   roles: ALL_ROLES },
@@ -118,7 +121,7 @@ const pathAccess: Array<{ prefix: string; roles: UserRole[] }> = [
   { prefix: "/org",            roles: ["ADMIN"] },
   { prefix: "/admin",          roles: ["ADMIN"] },
   { prefix: "/compliance",     roles: ["ADMIN", "CISO"] },
-  { prefix: "/meet/intelligence", roles: ALL_ROLES },
+  { prefix: "/meet/intelligence", roles: ALL_ROLES_EXCEPT_INTERN },
   { prefix: "/admin/queues",   roles: ["ADMIN"] },
   { prefix: "/admin/deliverability", roles: ["ADMIN"] },
   { prefix: "/notifications",    roles: ALL_ROLES },

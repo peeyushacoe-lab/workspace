@@ -7,7 +7,8 @@ import {
   CheckCircle2, Clock, AlertTriangle, ExternalLink, RefreshCw,
   Star, Flag, Lightbulb, Shield, Circle, ArrowUpRight, Sparkles,
   BookOpen, Lock, Unlock, Settings, GraduationCap, Link2,
-  FileText, Pencil, Save, Trash2,
+  FileText, Pencil, Save, Trash2, CalendarClock, LogIn, LogOut,
+  AlertCircle, CheckCircle, UserCheck, Timer, Edit2, ChevronLeft, MapPin, Monitor,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/Shell";
@@ -64,7 +65,7 @@ function MarkdownBody({ content }: { content: string }) {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Tab = "announcements" | "tasks" | "submissions" | "discussion" | "findings" | "progress" | "learning" | "mentor_panel";
+type Tab = "announcements" | "tasks" | "submissions" | "discussion" | "findings" | "progress" | "learning" | "mentor_panel" | "attendance";
 
 interface User { id: string; fullName: string; avatarUrl?: string | null; role?: string; }
 
@@ -225,6 +226,7 @@ const TABS: { id: Tab; label: string; icon: React.ElementType; mentorOnly?: bool
   { id: "findings",      label: "Findings",      icon: Bug },
   { id: "learning",      label: "Learning",      icon: BookOpen },
   { id: "progress",      label: "Progress",      icon: BarChart2 },
+  { id: "attendance",    label: "Attendance",    icon: CalendarClock },
   { id: "mentor_panel",  label: "Mentor Panel",  icon: Settings, mentorOnly: true },
 ];
 
@@ -278,6 +280,7 @@ export default function InternshipHubPage() {
             {tab === "findings"      && <FindingsTab isMentor={isMentor} userId={currentUser.id} currentUser={currentUser} />}
             {tab === "learning"      && <LearningTab isMentor={isMentor} userId={currentUser.id} />}
             {tab === "progress"      && <ProgressTab isMentor={isMentor} userId={currentUser.id} />}
+            {tab === "attendance"    && <AttendanceTab isMentor={isMentor} userId={currentUser.id} />}
             {tab === "mentor_panel"  && isMentor && <MentorPanelTab />}
           </>
         )}
@@ -2261,7 +2264,7 @@ function QuizEditor({ quiz, onChange }: { quiz: Quiz; onChange: (q: Quiz) => voi
 
 // ─── MENTOR PANEL TAB ─────────────────────────────────────────────────────────
 
-type MentorSubTab = "weeks" | "edit_week" | "new_week" | "seed";
+type MentorSubTab = "weeks" | "edit_week" | "new_week" | "seed" | "attendance";
 
 function MentorPanelTab() {
   const [subTab, setSubTab] = useState<MentorSubTab>("weeks");
@@ -2404,6 +2407,7 @@ function MentorPanelTab() {
       <div className="flex gap-1 border-b border-[#262A35] pb-0 flex-wrap">
         {([
           { id: "weeks" as MentorSubTab, label: "Weeks", icon: BookOpen },
+          { id: "attendance" as MentorSubTab, label: "Attendance", icon: CalendarClock },
           { id: "new_week" as MentorSubTab, label: "Add Week", icon: Plus },
           { id: "seed" as MentorSubTab, label: "Seed Handbook", icon: GraduationCap },
         ]).map(t => (
@@ -2420,6 +2424,9 @@ function MentorPanelTab() {
           </button>
         )}
       </div>
+
+      {/* Attendance sub-tab */}
+      {subTab === "attendance" && <MentorAttendanceSubTab />}
 
       {/* New week form */}
       {subTab === "new_week" && (
@@ -2717,6 +2724,623 @@ function MentorPanelTab() {
             })}
           </div>
         )
+      )}
+    </div>
+  );
+}
+
+// ─── ATTENDANCE TAB (intern-facing) ───────────────────────────────────────────
+
+interface AttendanceSchedule {
+  startTime: string;
+  endTime: string;
+  timezone: string;
+  lateGraceMinutes: number;
+  updatedBy: string | null;
+  updatedAt: string | null;
+}
+
+interface AttendanceSession {
+  punchIn: string;
+  punchOut: string | null;
+  sessionId: string;
+  location: { lat: number; lng: number; accuracy: number } | null;
+  device: string | null;
+}
+
+interface AttendanceRecord {
+  intern: { id: string; fullName: string; avatarUrl?: string | null };
+  date: string;
+  sessions: AttendanceSession[];
+  firstPunchIn: string | null;
+  lastPunchOut: string | null;
+  totalMinutes: number;
+  isCurrentlyIn: boolean;
+  isLate: boolean;
+  idleFlag: boolean;
+  activityCount: number;
+  hasOverride: boolean;
+  overrideReason: string | null;
+  // Mentor-only — never shown in intern UI
+  punchLocation: { lat: number; lng: number; accuracy: number } | null;
+  punchDevice: string | null;
+}
+
+function fmtDuration(minutes: number) {
+  if (minutes <= 0) return "0m";
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}
+
+function fmtHHMM(iso: string) {
+  return new Date(iso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+}
+
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+/** Convert a UTC ISO string to the "YYYY-MM-DDTHH:MM" format that datetime-local inputs expect (local time). */
+function toLocalDatetimeInput(iso: string): string {
+  const d = new Date(iso);
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+// ─── Attendance helpers ────────────────────────────────────────────────────────
+
+/** Parse UA string into a short human-readable "Browser on OS" label */
+function parseUserAgent(ua: string): string {
+  let browser = "Unknown browser";
+  if (/Edg\//.test(ua)) browser = "Edge";
+  else if (/OPR\/|Opera/.test(ua)) browser = "Opera";
+  else if (/Chrome\//.test(ua)) browser = "Chrome";
+  else if (/Safari\//.test(ua) && !/Chrome/.test(ua)) browser = "Safari";
+  else if (/Firefox\//.test(ua)) browser = "Firefox";
+
+  let os = "Unknown OS";
+  if (/Windows NT 10/.test(ua)) os = "Windows 10/11";
+  else if (/Windows NT/.test(ua)) os = "Windows";
+  else if (/Mac OS X/.test(ua)) os = "macOS";
+  else if (/Android/.test(ua)) os = "Android";
+  else if (/iPhone|iPad/.test(ua)) os = "iOS";
+  else if (/Linux/.test(ua)) os = "Linux";
+
+  return `${browser} on ${os}`;
+}
+
+/** Request geolocation with a 5-second timeout. Returns null on denial or timeout. */
+function getGeoLocation(): Promise<{ lat: number; lng: number; accuracy: number } | null> {
+  return new Promise(resolve => {
+    if (!navigator.geolocation) { resolve(null); return; }
+    const timer = setTimeout(() => resolve(null), 5000);
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        clearTimeout(timer);
+        resolve({
+          lat: Math.round(pos.coords.latitude * 1e6) / 1e6,
+          lng: Math.round(pos.coords.longitude * 1e6) / 1e6,
+          accuracy: Math.round(pos.coords.accuracy),
+        });
+      },
+      () => { clearTimeout(timer); resolve(null); },
+      { timeout: 5000, maximumAge: 300000 },
+    );
+  });
+}
+
+function AttendanceTab({ isMentor, userId }: { isMentor: boolean; userId: string }) {
+  const [schedule, setSchedule] = useState<AttendanceSchedule | null>(null);
+  const [record, setRecord] = useState<AttendanceRecord | null>(null);
+  const [history, setHistory] = useState<AttendanceRecord[]>([]);
+  const [punching, setPunching] = useState(false);
+  const [loadingRecord, setLoadingRecord] = useState(true);
+
+  const today = todayStr();
+
+  const loadSchedule = useCallback(async () => {
+    const res = await fetch("/api/internship/attendance/schedule");
+    if (res.ok) setSchedule(await res.json());
+  }, []);
+
+  const loadToday = useCallback(async () => {
+    setLoadingRecord(true);
+    try {
+      const res = await fetch(`/api/internship/attendance?date=${today}`);
+      if (res.ok) {
+        const data = await res.json() as AttendanceRecord[];
+        const mine = data.find(r => r.intern.id === userId);
+        setRecord(mine ?? null);
+      }
+    } finally { setLoadingRecord(false); }
+  }, [today, userId]);
+
+  const loadHistory = useCallback(async () => {
+    const dateStrings = Array.from({ length: 6 }, (_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - (i + 1));
+      return d.toISOString().slice(0, 10);
+    });
+    const results = await Promise.all(
+      dateStrings.map(dateStr =>
+        fetch(`/api/internship/attendance?date=${dateStr}`)
+          .then(r => r.ok ? r.json() as Promise<AttendanceRecord[]> : Promise.resolve([]))
+          .catch(() => [] as AttendanceRecord[])
+      )
+    );
+    const days = results.map((data, i) => {
+      const mine = data.find(r => r.intern.id === userId);
+      return mine ? { ...mine, date: dateStrings[i] } : null;
+    }).filter((r): r is AttendanceRecord => r !== null);
+    setHistory(days);
+  }, [userId]);
+
+  useEffect(() => {
+    loadSchedule();
+    loadToday();
+    loadHistory();
+  }, [loadSchedule, loadToday, loadHistory]);
+
+  const punch = async () => {
+    setPunching(true);
+    try {
+      // Collect device + location silently — punch fires regardless of outcome
+      const device = parseUserAgent(navigator.userAgent);
+      const location = await getGeoLocation();
+
+      const res = await fetch("/api/internship/attendance/punch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ device, location }),
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json() as { action: string };
+      toast.success(data.action === "INTERN_PUNCH_IN" ? "Punched in — have a productive session! 🚀" : "Punched out — good work today!");
+      await loadToday();
+      await loadHistory();
+    } catch { toast.error("Failed to record punch"); }
+    finally { setPunching(false); }
+  };
+
+  const isPunchedIn = record?.isCurrentlyIn ?? false;
+
+  // Live elapsed timer
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    if (!isPunchedIn || !record?.sessions.length) return;
+    const lastIn = [...record.sessions].reverse().find(s => !s.punchOut)?.punchIn;
+    if (!lastIn) return;
+    const update = () => setElapsed(Math.floor((Date.now() - new Date(lastIn).getTime()) / 60000));
+    update();
+    const timer = setInterval(update, 30000);
+    return () => clearInterval(timer);
+  }, [isPunchedIn, record]);
+
+  return (
+    <div className="max-w-xl mx-auto space-y-5">
+      {/* Working hours banner */}
+      {schedule && (
+        <div className="flex items-center gap-3 px-4 py-3 bg-[#0E2532] border border-[#00C2FF]/20 rounded-xl">
+          <Clock className="w-4 h-4 text-[#00C2FF] shrink-0" />
+          <div className="text-sm text-[#C8CEDB]">
+            Official working hours: <span className="text-[#00C2FF] font-semibold">{schedule.startTime} – {schedule.endTime}</span>
+            <span className="ml-2 text-[#5A6275] text-xs">({schedule.lateGraceMinutes}min grace period)</span>
+          </div>
+        </div>
+      )}
+
+      {/* Punch card */}
+      <div className="bg-[#12151D] border border-[#262A35] rounded-2xl p-6 text-center space-y-4">
+        <div className="flex items-center justify-center gap-2 mb-1">
+          <div className={`w-2.5 h-2.5 rounded-full ${isPunchedIn ? "bg-[#0f9d58] animate-pulse" : "bg-[#5A6275]"}`} />
+          <span className={`text-sm font-semibold ${isPunchedIn ? "text-[#0f9d58]" : "text-[#5A6275]"}`}>
+            {isPunchedIn ? "Currently clocked in" : "Not clocked in"}
+          </span>
+        </div>
+
+        {isPunchedIn && record && (
+          <div className="text-4xl font-mono font-bold text-[#E6E9F0] tabular-nums">
+            {fmtDuration(record.totalMinutes + elapsed)}
+          </div>
+        )}
+
+        {!isPunchedIn && record?.totalMinutes != null && record.totalMinutes > 0 && (
+          <div className="text-sm text-[#8A92A6]">
+            Total today: <span className="text-[#E6E9F0] font-semibold font-mono">{fmtDuration(record.totalMinutes)}</span>
+          </div>
+        )}
+
+        {record?.firstPunchIn && (
+          <div className="flex justify-center gap-6 text-xs text-[#5A6275]">
+            <span><LogIn className="w-3 h-3 inline mr-1 text-[#0f9d58]" />In: <span className="text-[#C8CEDB] font-mono">{fmtHHMM(record.firstPunchIn)}</span></span>
+            {record.lastPunchOut && (
+              <span><LogOut className="w-3 h-3 inline mr-1 text-[#ea4335]" />Out: <span className="text-[#C8CEDB] font-mono">{fmtHHMM(record.lastPunchOut)}</span></span>
+            )}
+          </div>
+        )}
+
+        {record?.isLate && (
+          <div className="flex items-center justify-center gap-1.5 text-xs text-[#F59E0B]">
+            <AlertCircle className="w-3.5 h-3.5" /> Punched in late
+          </div>
+        )}
+
+        {/* Punch button — desktop only */}
+        <div className="hidden sm:block">
+          <button
+            onClick={punch}
+            disabled={punching || loadingRecord}
+            className={`w-full py-3 rounded-xl text-base font-bold flex items-center justify-center gap-2 transition-all ${
+              isPunchedIn
+                ? "bg-[#ea4335]/15 border border-[#ea4335]/40 text-[#ea4335] hover:bg-[#ea4335]/25"
+                : "bg-[#00C2FF] text-[#06121A] hover:bg-[#0098E6]"
+            } disabled:opacity-50`}
+          >
+            {punching ? <Loader2 className="w-5 h-5 animate-spin" /> : isPunchedIn ? <><LogOut className="w-5 h-5" /> Punch Out</> : <><LogIn className="w-5 h-5" /> Punch In</>}
+          </button>
+        </div>
+
+        {/* Mobile — no punch allowed */}
+        <div className="sm:hidden flex items-center justify-center gap-2 py-2.5 rounded-xl border border-[#2E333F] bg-[#1B1F2A] text-[#5A6275] text-sm">
+          <Monitor className="w-4 h-4" />
+          Attendance can only be recorded on desktop
+        </div>
+
+        {isMentor && (
+          <p className="text-[11px] text-[#5A6275]">As a mentor, your attendance is optional. Full timesheet view is in Mentor Panel → Attendance.</p>
+        )}
+      </div>
+
+      {/* History — last 6 days */}
+      {history.length > 0 && (
+        <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
+          <div className="px-4 py-3 border-b border-[#262A35]">
+            <h3 className="text-sm font-semibold text-[#E6E9F0]">Last 6 days</h3>
+          </div>
+          <div className="divide-y divide-[#262A35]">
+            {history.map(h => (
+              <div key={h.date} className="flex items-center justify-between px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <div className={`w-2 h-2 rounded-full ${h.firstPunchIn ? (h.isLate ? "bg-[#F59E0B]" : "bg-[#0f9d58]") : "bg-[#3A4150]"}`} />
+                  <div>
+                    <p className="text-xs font-medium text-[#C8CEDB]">
+                      {new Date(h.date + "T12:00:00").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}
+                    </p>
+                    {h.firstPunchIn && (
+                      <p className="text-[11px] text-[#5A6275] font-mono">
+                        {fmtHHMM(h.firstPunchIn)} {h.lastPunchOut ? `→ ${fmtHHMM(h.lastPunchOut)}` : "(no punch out)"}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {h.idleFlag && <span title="No activity detected"><AlertCircle className="w-3.5 h-3.5 text-[#F59E0B]" /></span>}
+                  {h.hasOverride && <span title="Manually adjusted"><Edit2 className="w-3 h-3 text-[#5A6275]" /></span>}
+                  {h.firstPunchIn
+                    ? <span className={`text-xs font-mono font-semibold ${h.isLate ? "text-[#F59E0B]" : "text-[#E6E9F0]"}`}>{fmtDuration(h.totalMinutes)}</span>
+                    : <span className="text-xs text-[#3A4150]">—</span>
+                  }
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── MENTOR ATTENDANCE SUB-TAB ────────────────────────────────────────────────
+
+function MentorAttendanceSubTab() {
+  const [schedule, setSchedule] = useState<AttendanceSchedule | null>(null);
+  const [savingSchedule, setSavingSchedule] = useState(false);
+  const [scheduleForm, setScheduleForm] = useState({ startTime: "09:00", endTime: "17:00", lateGraceMinutes: 15 });
+  const [editingSchedule, setEditingSchedule] = useState(false);
+
+  const [date, setDate] = useState(todayStr());
+  const [records, setRecords] = useState<AttendanceRecord[]>([]);
+  const [loadingRecords, setLoadingRecords] = useState(true);
+
+  // Override modal
+  const [overrideFor, setOverrideFor] = useState<AttendanceRecord | null>(null);
+  const [overrideForm, setOverrideForm] = useState({ punchIn: "", punchOut: "", reason: "" });
+  const [savingOverride, setSavingOverride] = useState(false);
+
+  const loadSchedule = useCallback(async () => {
+    const res = await fetch("/api/internship/attendance/schedule");
+    if (res.ok) {
+      const s = await res.json() as AttendanceSchedule;
+      setSchedule(s);
+      setScheduleForm({ startTime: s.startTime, endTime: s.endTime, lateGraceMinutes: s.lateGraceMinutes });
+    }
+  }, []);
+
+  const loadRecords = useCallback(async () => {
+    setLoadingRecords(true);
+    try {
+      const res = await fetch(`/api/internship/attendance?date=${date}`);
+      if (res.ok) setRecords(await res.json());
+    } finally { setLoadingRecords(false); }
+  }, [date]);
+
+  useEffect(() => { loadSchedule(); }, [loadSchedule]);
+  useEffect(() => { loadRecords(); }, [loadRecords]);
+
+  const saveSchedule = async () => {
+    setSavingSchedule(true);
+    try {
+      const res = await fetch("/api/internship/attendance/schedule", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(scheduleForm),
+      });
+      if (!res.ok) throw new Error();
+      toast.success("Working hours updated — all interns notified!");
+      setEditingSchedule(false);
+      await loadSchedule();
+    } catch { toast.error("Failed to save"); }
+    finally { setSavingSchedule(false); }
+  };
+
+  const openOverride = (r: AttendanceRecord) => {
+    setOverrideFor(r);
+    setOverrideForm({
+      punchIn: r.firstPunchIn ? toLocalDatetimeInput(r.firstPunchIn) : `${date}T09:00`,
+      punchOut: r.lastPunchOut ? toLocalDatetimeInput(r.lastPunchOut) : `${date}T17:00`,
+      reason: r.overrideReason ?? "",
+    });
+  };
+
+  const saveOverride = async () => {
+    if (!overrideFor) return;
+    setSavingOverride(true);
+    try {
+      const res = await fetch("/api/internship/attendance/override", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          internId: overrideFor.intern.id,
+          date,
+          punchIn: overrideForm.punchIn ? new Date(overrideForm.punchIn).toISOString() : null,
+          punchOut: overrideForm.punchOut ? new Date(overrideForm.punchOut).toISOString() : null,
+          reason: overrideForm.reason || null,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success("Attendance manually adjusted");
+      setOverrideFor(null);
+      await loadRecords();
+    } catch { toast.error("Failed to save override"); }
+    finally { setSavingOverride(false); }
+  };
+
+  const shiftDate = (days: number) => {
+    const d = new Date(date + "T12:00:00");
+    d.setDate(d.getDate() + days);
+    setDate(d.toISOString().slice(0, 10));
+  };
+
+  const presentCount = records.filter(r => r.firstPunchIn).length;
+  const lateCount = records.filter(r => r.isLate).length;
+  const idleCount = records.filter(r => r.idleFlag).length;
+
+  return (
+    <div className="space-y-5">
+      {/* Working hours config */}
+      <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-4">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-[#E6E9F0] flex items-center gap-2">
+            <Clock className="w-4 h-4 text-[#00C2FF]" /> Official Working Hours
+          </h3>
+          <button onClick={() => setEditingSchedule(v => !v)}
+            className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-[#00C2FF] bg-[#0E2532] rounded-lg hover:bg-[#133347] transition-colors">
+            <Pencil className="w-3 h-3" /> {editingSchedule ? "Cancel" : "Edit"}
+          </button>
+        </div>
+
+        {editingSchedule ? (
+          <div className="space-y-3">
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="block text-[11px] font-medium text-[#8A92A6] mb-1">Start time</label>
+                <input type="time"
+                  className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+                  value={scheduleForm.startTime} onChange={e => setScheduleForm(p => ({ ...p, startTime: e.target.value }))} />
+              </div>
+              <div>
+                <label className="block text-[11px] font-medium text-[#8A92A6] mb-1">End time</label>
+                <input type="time"
+                  className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+                  value={scheduleForm.endTime} onChange={e => setScheduleForm(p => ({ ...p, endTime: e.target.value }))} />
+              </div>
+              <div>
+                <label className="block text-[11px] font-medium text-[#8A92A6] mb-1">Grace (mins)</label>
+                <input type="number" min={0} max={60}
+                  className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+                  value={scheduleForm.lateGraceMinutes} onChange={e => setScheduleForm(p => ({ ...p, lateGraceMinutes: Number(e.target.value) }))} />
+              </div>
+            </div>
+            <p className="text-[11px] text-[#5A6275]">Saving will notify all interns immediately and update their Attendance tab banner.</p>
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => setEditingSchedule(false)} className="px-3 py-1.5 text-xs text-[#8A92A6] hover:bg-[#1B1F2A] rounded-lg">Cancel</button>
+              <button onClick={saveSchedule} disabled={savingSchedule}
+                className="flex items-center gap-1.5 px-4 py-1.5 bg-[#00C2FF] text-[#06121A] text-xs font-semibold rounded-lg hover:bg-[#0098E6] disabled:opacity-50">
+                {savingSchedule ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <><Save className="w-3.5 h-3.5" /> Save & Notify All</>}
+              </button>
+            </div>
+          </div>
+        ) : schedule ? (
+          <div className="flex items-center gap-6 text-sm">
+            <span className="text-[#C8CEDB]"><span className="text-[#00C2FF] font-semibold font-mono">{schedule.startTime}</span> – <span className="text-[#00C2FF] font-semibold font-mono">{schedule.endTime}</span></span>
+            <span className="text-[#5A6275]">{schedule.lateGraceMinutes} min grace</span>
+            {schedule.updatedAt && <span className="text-[#3A4150] text-xs">Updated {fmt(schedule.updatedAt)}</span>}
+          </div>
+        ) : <LoadingSpinner />}
+      </div>
+
+      {/* Date picker + stats bar */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <button onClick={() => shiftDate(-1)} className="p-1.5 rounded-lg text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0] transition-colors">
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <input type="date"
+            className="px-3 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+            value={date} onChange={e => setDate(e.target.value)} max={todayStr()} />
+          <button onClick={() => shiftDate(1)} disabled={date >= todayStr()}
+            className="p-1.5 rounded-lg text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0] transition-colors disabled:opacity-30">
+            <ChevronRight className="w-4 h-4" />
+          </button>
+          {date !== todayStr() && (
+            <button onClick={() => setDate(todayStr())} className="text-xs text-[#00C2FF] hover:underline ml-1">Today</button>
+          )}
+        </div>
+        <div className="flex items-center gap-4 text-xs">
+          <span className="text-[#0f9d58]"><UserCheck className="w-3.5 h-3.5 inline mr-1" />{presentCount} present</span>
+          {lateCount > 0 && <span className="text-[#F59E0B]"><Clock className="w-3.5 h-3.5 inline mr-1" />{lateCount} late</span>}
+          {idleCount > 0 && <span className="text-[#ff6d00]"><AlertCircle className="w-3.5 h-3.5 inline mr-1" />{idleCount} idle flag</span>}
+        </div>
+      </div>
+
+      {/* Timesheet table */}
+      {loadingRecords ? <LoadingSpinner /> : records.length === 0 ? (
+        <EmptyState icon={CalendarClock} title="No interns found" desc="No intern accounts exist yet." />
+      ) : (
+        <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
+          <div className="grid grid-cols-[1fr_60px_60px_54px_1fr_auto_auto] text-[11px] font-semibold text-[#5A6275] px-4 py-2 border-b border-[#262A35] gap-3">
+            <span>Intern</span>
+            <span>In</span>
+            <span>Out</span>
+            <span>Total</span>
+            <span>Location / Device</span>
+            <span>Status</span>
+            <span></span>
+          </div>
+          <div className="divide-y divide-[#262A35]">
+            {records.map(r => (
+              <div key={r.intern.id}
+                className="grid grid-cols-[1fr_60px_60px_54px_1fr_auto_auto] items-center px-4 py-3 gap-3 hover:bg-[#1B1F2A]/40 transition-colors">
+                {/* Intern */}
+                <div className="flex items-center gap-2 min-w-0">
+                  <Avatar user={r.intern} size={7} />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-[#E6E9F0] truncate">{r.intern.fullName}</p>
+                    {r.hasOverride && (
+                      <p className="text-[10px] text-[#5A6275] flex items-center gap-1"><Edit2 className="w-2.5 h-2.5" /> Adjusted</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Punch In */}
+                <span className="text-xs font-mono text-[#C8CEDB] whitespace-nowrap">
+                  {r.firstPunchIn ? fmtHHMM(r.firstPunchIn) : <span className="text-[#3A4150]">—</span>}
+                </span>
+
+                {/* Punch Out */}
+                <span className="text-xs font-mono text-[#C8CEDB] whitespace-nowrap">
+                  {r.lastPunchOut ? fmtHHMM(r.lastPunchOut) : r.isCurrentlyIn
+                    ? <span className="text-[#0f9d58] text-[11px]">● live</span>
+                    : <span className="text-[#3A4150]">—</span>}
+                </span>
+
+                {/* Total */}
+                <span className={`text-xs font-mono font-semibold whitespace-nowrap ${r.totalMinutes > 0 ? "text-[#E6E9F0]" : "text-[#3A4150]"}`}>
+                  {r.totalMinutes > 0 ? fmtDuration(r.totalMinutes) : "—"}
+                </span>
+
+                {/* Location + Device — mentor-only column */}
+                <div className="flex flex-col gap-0.5 min-w-0">
+                  {r.punchLocation ? (
+                    <a
+                      href={`https://www.google.com/maps?q=${r.punchLocation.lat},${r.punchLocation.lng}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-1 text-[11px] text-[#00C2FF] hover:underline truncate"
+                    >
+                      <MapPin className="w-3 h-3 shrink-0" />
+                      {r.punchLocation.lat.toFixed(4)}, {r.punchLocation.lng.toFixed(4)}
+                      <span className="text-[#5A6275] ml-0.5">±{r.punchLocation.accuracy}m</span>
+                    </a>
+                  ) : r.firstPunchIn ? (
+                    <span className="text-[11px] text-[#3A4150] flex items-center gap-1"><MapPin className="w-3 h-3" /> No location</span>
+                  ) : null}
+                  {r.punchDevice && (
+                    <span className="text-[11px] text-[#5A6275] flex items-center gap-1 truncate">
+                      <Monitor className="w-3 h-3 shrink-0" />{r.punchDevice}
+                    </span>
+                  )}
+                </div>
+
+                {/* Flags */}
+                <div className="flex items-center gap-1.5">
+                  {!r.firstPunchIn && (
+                    <span className="text-[11px] text-[#3A4150]">Absent</span>
+                  )}
+                  {r.firstPunchIn && !r.isLate && !r.idleFlag && (
+                    <span className="flex items-center gap-0.5 text-[11px] text-[#0f9d58]"><CheckCircle className="w-3 h-3" /> On time</span>
+                  )}
+                  {r.isLate && (
+                    <span className="flex items-center gap-0.5 text-[11px] text-[#F59E0B]"><AlertCircle className="w-3 h-3" /> Late</span>
+                  )}
+                  {r.idleFlag && (
+                    <span className="flex items-center gap-0.5 text-[11px] text-[#ff6d00]"><Timer className="w-3 h-3" /> Idle?</span>
+                  )}
+                </div>
+
+                {/* Actions */}
+                <button onClick={() => openOverride(r)}
+                  className="flex items-center gap-1 px-2 py-1 text-[11px] text-[#8A92A6] hover:text-[#00C2FF] hover:bg-[#0E2532] rounded-lg transition-colors whitespace-nowrap">
+                  <Edit2 className="w-3 h-3" /> Adjust
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Override modal */}
+      {overrideFor && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60" onClick={() => setOverrideFor(null)} />
+          <div className="relative bg-[#12151D] border border-[#262A35] rounded-2xl p-6 w-full max-w-sm space-y-4 shadow-2xl">
+            <h3 className="font-semibold text-[#E6E9F0] flex items-center gap-2">
+              <Edit2 className="w-4 h-4 text-[#00C2FF]" /> Adjust Attendance
+            </h3>
+            <p className="text-xs text-[#8A92A6]">
+              Manually set punch times for <span className="text-[#E6E9F0] font-medium">{overrideFor.intern.fullName}</span> on {date}.
+            </p>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-[11px] font-medium text-[#8A92A6] mb-1">Punch In</label>
+                <input type="datetime-local"
+                  className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+                  value={overrideForm.punchIn} onChange={e => setOverrideForm(p => ({ ...p, punchIn: e.target.value }))} />
+              </div>
+              <div>
+                <label className="block text-[11px] font-medium text-[#8A92A6] mb-1">Punch Out</label>
+                <input type="datetime-local"
+                  className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+                  value={overrideForm.punchOut} onChange={e => setOverrideForm(p => ({ ...p, punchOut: e.target.value }))} />
+              </div>
+              <div>
+                <label className="block text-[11px] font-medium text-[#8A92A6] mb-1">Reason (optional)</label>
+                <input type="text"
+                  className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] placeholder:text-[#5A6275] focus:outline-none focus:border-[#00C2FF]/60"
+                  placeholder="e.g. Forgot to punch in"
+                  value={overrideForm.reason} onChange={e => setOverrideForm(p => ({ ...p, reason: e.target.value }))} />
+              </div>
+            </div>
+            <div className="flex gap-2 justify-end pt-1">
+              <button onClick={() => setOverrideFor(null)} className="px-3 py-1.5 text-sm text-[#8A92A6] hover:bg-[#1B1F2A] rounded-lg">Cancel</button>
+              <button onClick={saveOverride} disabled={savingOverride}
+                className="flex items-center gap-1.5 px-4 py-1.5 bg-[#00C2FF] text-[#06121A] text-sm font-semibold rounded-lg hover:bg-[#0098E6] disabled:opacity-50">
+                {savingOverride ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-4 h-4" /> Save</>}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

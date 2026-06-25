@@ -4,5 +4,5 @@ import { ChatView } from "@/components/ChatView";
 
 export default async function ChatPage() {
   const user = getSessionUserFromCookieStore(await cookies());
-  return <ChatView currentUserId={user!.id} />;
+  return <ChatView currentUserId={user!.id} userRole={user!.role} />;
 }
