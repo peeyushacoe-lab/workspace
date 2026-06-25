@@ -24,23 +24,40 @@ export async function POST(request: Request) {
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
 
-  const lastPunch = await prisma.auditLog.findFirst({
+  const todayPunches = await prisma.auditLog.findMany({
     where: {
       actorId: user.id,
       action: { in: ["INTERN_PUNCH_IN", "INTERN_PUNCH_OUT"] },
       createdAt: { gte: todayStart },
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: { createdAt: "asc" },
   });
 
-  const alreadyPunchedIn = lastPunch?.action === "INTERN_PUNCH_IN";
-  const action = alreadyPunchedIn ? "INTERN_PUNCH_OUT" : "INTERN_PUNCH_IN";
+  const hasPunchIn  = todayPunches.some(p => p.action === "INTERN_PUNCH_IN");
+  const hasPunchOut = todayPunches.some(p => p.action === "INTERN_PUNCH_OUT");
+
+  // Enforce one punch-in and one punch-out per day
+  if (hasPunchIn && hasPunchOut) {
+    const punchInLog  = todayPunches.find(p => p.action === "INTERN_PUNCH_IN");
+    const punchOutLog = [...todayPunches].reverse().find(p => p.action === "INTERN_PUNCH_OUT");
+    const inTime  = punchInLog  ? new Date(punchInLog.createdAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) : null;
+    const outTime = punchOutLog ? new Date(punchOutLog.createdAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) : null;
+    const detail  = inTime && outTime ? ` (in: ${inTime}, out: ${outTime})` : "";
+    return NextResponse.json(
+      { error: "already_complete", message: `You've already punched in and out for today${detail}.` },
+      { status: 409 }
+    );
+  }
+
+  const action = hasPunchIn ? "INTERN_PUNCH_OUT" : "INTERN_PUNCH_IN";
 
   let sessionId: string;
-  if (!alreadyPunchedIn) {
+  if (!hasPunchIn) {
     sessionId = randomUUID();
   } else {
-    const meta = lastPunch?.metadata as Record<string, unknown> | null;
+    // Recover sessionId from the existing punch-in
+    const punchInLog = todayPunches.find(p => p.action === "INTERN_PUNCH_IN");
+    const meta = punchInLog?.metadata as Record<string, unknown> | null;
     sessionId = (meta?.sessionId as string) ?? randomUUID();
   }
 

@@ -12,6 +12,12 @@ interface PunchMeta {
   location?: { lat: number; lng: number; accuracy: number } | null;
   device?: string | null;
 }
+interface BreakPeriod {
+  from: string;        // ISO datetime
+  to: string;          // ISO datetime
+  label?: string | null;
+}
+
 interface OverrideMeta {
   internId: string;
   date: string;
@@ -19,6 +25,7 @@ interface OverrideMeta {
   punchOut: string | null;
   reason: string | null;
   setBy: string;
+  breaks?: BreakPeriod[];
 }
 
 function toDateStr(d: Date) {
@@ -56,14 +63,30 @@ export async function GET(request: Request) {
   // Fetch schedule for late detection
   const rawSchedule = await redis.get(SCHEDULE_KEY);
   const schedule = rawSchedule
-    ? { lateGraceMinutes: 15, startTime: "09:00", ...((typeof rawSchedule === "string" ? JSON.parse(rawSchedule) : rawSchedule) as Record<string, unknown>) }
-    : { startTime: "09:00", endTime: "17:00", lateGraceMinutes: 15 };
+    ? {
+        lateGraceMinutes: 15,
+        startTime: "09:00",
+        defaultBreakFrom: "12:00",
+        defaultBreakTo: "13:00",
+        ...((typeof rawSchedule === "string" ? JSON.parse(rawSchedule) : rawSchedule) as Record<string, unknown>),
+      }
+    : { startTime: "09:00", endTime: "17:00", lateGraceMinutes: 15, defaultBreakFrom: "12:00", defaultBreakTo: "13:00" };
 
   const scheduleStartMinutes = (() => {
     const [h, m] = (schedule.startTime as string).split(":").map(Number);
     return h * 60 + m;
   })();
   const graceMinutes = Number(schedule.lateGraceMinutes ?? 15);
+
+  // Build the auto-break window (UTC) for this date
+  const breakFrom = schedule.defaultBreakFrom as string | undefined;
+  const breakTo   = schedule.defaultBreakTo   as string | undefined;
+  const autoBreakWindowMs = (breakFrom && breakTo)
+    ? {
+        start: new Date(`${dateParam}T${breakFrom}:00.000Z`).getTime(),
+        end:   new Date(`${dateParam}T${breakTo}:00.000Z`).getTime(),
+      }
+    : null;
 
   // Get all interns (mentor view: all; intern view: just self)
   let internUsers: { id: string; fullName: string; avatarUrl: string | null }[] = [];
@@ -198,6 +221,30 @@ export async function GET(request: Request) {
     );
     const idleFlag = punchedIn && longestSession > 90 && activityCount === 0;
 
+    // Auto-break: overlap of each completed session with the schedule break window
+    const autoBreakMinutes = (autoBreakWindowMs && sessions.length > 0)
+      ? sessions.reduce((acc, s) => {
+          if (!s.punchOut) return acc; // active sessions handled client-side
+          const sStart = new Date(s.punchIn).getTime();
+          const sEnd   = new Date(s.punchOut).getTime();
+          const overlapStart = Math.max(sStart, autoBreakWindowMs.start);
+          const overlapEnd   = Math.min(sEnd,   autoBreakWindowMs.end);
+          if (overlapEnd <= overlapStart) return acc;
+          return acc + Math.round((overlapEnd - overlapStart) / 60000);
+        }, 0)
+      : 0;
+
+    // Manual break deductions from override metadata (additional to auto-break)
+    const breaks: BreakPeriod[] = overrideMeta?.breaks ?? [];
+    const manualBreakMinutes = breaks.reduce((acc, b) => {
+      if (!b.from || !b.to) return acc;
+      const mins = diffMinutes(b.from, b.to);
+      return acc + (mins > 0 ? mins : 0);
+    }, 0);
+
+    const breakMinutes = autoBreakMinutes + manualBreakMinutes;
+    const netMinutes = Math.max(0, totalMinutes - breakMinutes);
+
     // Surface the first session's location + device at the top level for the mentor view
     const firstSession = sessions[0] ?? null;
 
@@ -207,7 +254,13 @@ export async function GET(request: Request) {
       sessions,
       firstPunchIn,
       lastPunchOut,
-      totalMinutes,
+      totalMinutes: netMinutes,
+      breakMinutes,
+      autoBreakMinutes,
+      breakWindow: autoBreakWindowMs
+        ? { from: breakFrom as string, to: breakTo as string }
+        : null,
+      breaks,
       isCurrentlyIn,
       isLate,
       idleFlag,

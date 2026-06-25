@@ -17,6 +17,7 @@ export async function POST(request: Request) {
     punchIn?: string;    // ISO datetime
     punchOut?: string;   // ISO datetime
     reason?: string;
+    breaks?: { from: string; to: string; label?: string }[];
   };
 
   if (!body.internId || !body.date) {
@@ -53,6 +54,7 @@ export async function POST(request: Request) {
         punchOut: body.punchOut ?? null,
         reason: body.reason ?? null,
         setBy: user.id,
+        breaks: (body.breaks ?? []).filter(b => b.from && b.to),
       },
     },
   });

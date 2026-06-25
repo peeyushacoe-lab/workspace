@@ -2736,6 +2736,8 @@ interface AttendanceSchedule {
   endTime: string;
   timezone: string;
   lateGraceMinutes: number;
+  defaultBreakFrom: string;
+  defaultBreakTo: string;
   updatedBy: string | null;
   updatedAt: string | null;
 }
@@ -2748,6 +2750,12 @@ interface AttendanceSession {
   device: string | null;
 }
 
+interface BreakPeriod {
+  from: string;
+  to: string;
+  label?: string | null;
+}
+
 interface AttendanceRecord {
   intern: { id: string; fullName: string; avatarUrl?: string | null };
   date: string;
@@ -2755,6 +2763,10 @@ interface AttendanceRecord {
   firstPunchIn: string | null;
   lastPunchOut: string | null;
   totalMinutes: number;
+  breakMinutes: number;
+  autoBreakMinutes: number;
+  breakWindow: { from: string; to: string } | null;
+  breaks: BreakPeriod[];
   isCurrentlyIn: boolean;
   isLate: boolean;
   idleFlag: boolean;
@@ -2894,9 +2906,14 @@ function AttendanceTab({ isMentor, userId }: { isMentor: boolean; userId: string
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ device, location }),
       });
+      const data = await res.json() as { action?: string; error?: string; message?: string };
+      if (res.status === 409) {
+        toast.error(data.message ?? "You've already completed attendance for today.");
+        await loadToday();
+        return;
+      }
       if (!res.ok) throw new Error();
-      const data = await res.json() as { action: string };
-      toast.success(data.action === "INTERN_PUNCH_IN" ? "Punched in — have a productive session! 🚀" : "Punched out — good work today!");
+      toast.success(data.action === "INTERN_PUNCH_IN" ? "Punched in — have a productive session!" : "Punched out — good work today!");
       await loadToday();
       await loadHistory();
     } catch { toast.error("Failed to record punch"); }
@@ -2905,13 +2922,27 @@ function AttendanceTab({ isMentor, userId }: { isMentor: boolean; userId: string
 
   const isPunchedIn = record?.isCurrentlyIn ?? false;
 
-  // Live elapsed timer
+  // Live elapsed timer — deducts auto-break overlap for the active session
   const [elapsed, setElapsed] = useState(0);
   useEffect(() => {
     if (!isPunchedIn || !record?.sessions.length) return;
     const lastIn = [...record.sessions].reverse().find(s => !s.punchOut)?.punchIn;
     if (!lastIn) return;
-    const update = () => setElapsed(Math.floor((Date.now() - new Date(lastIn).getTime()) / 60000));
+    const update = () => {
+      const rawMs = Date.now() - new Date(lastIn).getTime();
+      let breakMs = 0;
+      if (record.breakWindow) {
+        const today = new Date().toISOString().slice(0, 10);
+        const bStart = new Date(`${today}T${record.breakWindow.from}:00`).getTime();
+        const bEnd   = new Date(`${today}T${record.breakWindow.to}:00`).getTime();
+        const sStart = new Date(lastIn).getTime();
+        const now    = Date.now();
+        const overlapStart = Math.max(sStart, bStart);
+        const overlapEnd   = Math.min(now,    bEnd);
+        if (overlapEnd > overlapStart) breakMs = overlapEnd - overlapStart;
+      }
+      setElapsed(Math.max(0, Math.floor((rawMs - breakMs) / 60000)));
+    };
     update();
     const timer = setInterval(update, 30000);
     return () => clearInterval(timer);
@@ -2921,12 +2952,22 @@ function AttendanceTab({ isMentor, userId }: { isMentor: boolean; userId: string
     <div className="max-w-xl mx-auto space-y-5">
       {/* Working hours banner */}
       {schedule && (
-        <div className="flex items-center gap-3 px-4 py-3 bg-[#0E2532] border border-[#00C2FF]/20 rounded-xl">
-          <Clock className="w-4 h-4 text-[#00C2FF] shrink-0" />
-          <div className="text-sm text-[#C8CEDB]">
-            Official working hours: <span className="text-[#00C2FF] font-semibold">{schedule.startTime} – {schedule.endTime}</span>
-            <span className="ml-2 text-[#5A6275] text-xs">({schedule.lateGraceMinutes}min grace period)</span>
+        <div className="px-4 py-3 bg-[#0E2532] border border-[#00C2FF]/20 rounded-xl space-y-1">
+          <div className="flex items-center gap-3">
+            <Clock className="w-4 h-4 text-[#00C2FF] shrink-0" />
+            <div className="text-sm text-[#C8CEDB]">
+              Working hours: <span className="text-[#00C2FF] font-semibold">{schedule.startTime} – {schedule.endTime}</span>
+              <span className="ml-2 text-[#5A6275] text-xs">({schedule.lateGraceMinutes}min grace)</span>
+            </div>
           </div>
+          {schedule.defaultBreakFrom && schedule.defaultBreakTo && (
+            <div className="flex items-center gap-3 pl-7">
+              <span className="text-xs text-[#5A6275]">
+                Break: <span className="text-[#C8CEDB] font-mono font-medium">{schedule.defaultBreakFrom} – {schedule.defaultBreakTo}</span>
+                <span className="ml-1.5 text-[#3A4150]">· automatically deducted, no punch-out needed</span>
+              </span>
+            </div>
+          )}
         </div>
       )}
 
@@ -2968,17 +3009,24 @@ function AttendanceTab({ isMentor, userId }: { isMentor: boolean; userId: string
 
         {/* Punch button — desktop only */}
         <div className="hidden sm:block">
-          <button
-            onClick={punch}
-            disabled={punching || loadingRecord}
-            className={`w-full py-3 rounded-xl text-base font-bold flex items-center justify-center gap-2 transition-all ${
-              isPunchedIn
-                ? "bg-[#ea4335]/15 border border-[#ea4335]/40 text-[#ea4335] hover:bg-[#ea4335]/25"
-                : "bg-[#00C2FF] text-[#06121A] hover:bg-[#0098E6]"
-            } disabled:opacity-50`}
-          >
-            {punching ? <Loader2 className="w-5 h-5 animate-spin" /> : isPunchedIn ? <><LogOut className="w-5 h-5" /> Punch Out</> : <><LogIn className="w-5 h-5" /> Punch In</>}
-          </button>
+          {record?.firstPunchIn && record?.lastPunchOut ? (
+            // Attendance complete — both punches done, no more allowed today
+            <div className="w-full py-3 rounded-xl border border-[#0f9d58]/30 bg-[#0f9d58]/10 flex items-center justify-center gap-2 text-[#0f9d58] text-sm font-semibold">
+              <CheckCircle className="w-4 h-4" /> Attendance complete for today
+            </div>
+          ) : (
+            <button
+              onClick={punch}
+              disabled={punching || loadingRecord}
+              className={`w-full py-3 rounded-xl text-base font-bold flex items-center justify-center gap-2 transition-all ${
+                isPunchedIn
+                  ? "bg-[#ea4335]/15 border border-[#ea4335]/40 text-[#ea4335] hover:bg-[#ea4335]/25"
+                  : "bg-[#00C2FF] text-[#06121A] hover:bg-[#0098E6]"
+              } disabled:opacity-50`}
+            >
+              {punching ? <Loader2 className="w-5 h-5 animate-spin" /> : isPunchedIn ? <><LogOut className="w-5 h-5" /> Punch Out</> : <><LogIn className="w-5 h-5" /> Punch In</>}
+            </button>
+          )}
         </div>
 
         {/* Mobile — no punch allowed */}
@@ -3017,10 +3065,14 @@ function AttendanceTab({ isMentor, userId }: { isMentor: boolean; userId: string
                 <div className="flex items-center gap-2">
                   {h.idleFlag && <span title="No activity detected"><AlertCircle className="w-3.5 h-3.5 text-[#F59E0B]" /></span>}
                   {h.hasOverride && <span title="Manually adjusted"><Edit2 className="w-3 h-3 text-[#5A6275]" /></span>}
-                  {h.firstPunchIn
-                    ? <span className={`text-xs font-mono font-semibold ${h.isLate ? "text-[#F59E0B]" : "text-[#E6E9F0]"}`}>{fmtDuration(h.totalMinutes)}</span>
-                    : <span className="text-xs text-[#3A4150]">—</span>
-                  }
+                  {h.firstPunchIn ? (
+                    <div className="text-right">
+                      <span className={`text-xs font-mono font-semibold ${h.isLate ? "text-[#F59E0B]" : "text-[#E6E9F0]"}`}>{fmtDuration(h.totalMinutes)}</span>
+                      {h.breakMinutes > 0 && (
+                        <p className="text-[10px] text-[#5A6275]">−{fmtDuration(h.breakMinutes)} break</p>
+                      )}
+                    </div>
+                  ) : <span className="text-xs text-[#3A4150]">—</span>}
                 </div>
               </div>
             ))}
@@ -3036,7 +3088,7 @@ function AttendanceTab({ isMentor, userId }: { isMentor: boolean; userId: string
 function MentorAttendanceSubTab() {
   const [schedule, setSchedule] = useState<AttendanceSchedule | null>(null);
   const [savingSchedule, setSavingSchedule] = useState(false);
-  const [scheduleForm, setScheduleForm] = useState({ startTime: "09:00", endTime: "17:00", lateGraceMinutes: 15 });
+  const [scheduleForm, setScheduleForm] = useState({ startTime: "09:00", endTime: "17:00", lateGraceMinutes: 15, defaultBreakFrom: "12:00", defaultBreakTo: "13:00" });
   const [editingSchedule, setEditingSchedule] = useState(false);
 
   const [date, setDate] = useState(todayStr());
@@ -3046,6 +3098,7 @@ function MentorAttendanceSubTab() {
   // Override modal
   const [overrideFor, setOverrideFor] = useState<AttendanceRecord | null>(null);
   const [overrideForm, setOverrideForm] = useState({ punchIn: "", punchOut: "", reason: "" });
+  const [overrideBreaks, setOverrideBreaks] = useState<{ from: string; to: string; label: string }[]>([]);
   const [savingOverride, setSavingOverride] = useState(false);
 
   const loadSchedule = useCallback(async () => {
@@ -3053,7 +3106,7 @@ function MentorAttendanceSubTab() {
     if (res.ok) {
       const s = await res.json() as AttendanceSchedule;
       setSchedule(s);
-      setScheduleForm({ startTime: s.startTime, endTime: s.endTime, lateGraceMinutes: s.lateGraceMinutes });
+      setScheduleForm({ startTime: s.startTime, endTime: s.endTime, lateGraceMinutes: s.lateGraceMinutes, defaultBreakFrom: s.defaultBreakFrom ?? "12:00", defaultBreakTo: s.defaultBreakTo ?? "13:00" });
     }
   }, []);
 
@@ -3091,6 +3144,13 @@ function MentorAttendanceSubTab() {
       punchOut: r.lastPunchOut ? toLocalDatetimeInput(r.lastPunchOut) : `${date}T17:00`,
       reason: r.overrideReason ?? "",
     });
+    setOverrideBreaks(
+      (r.breaks ?? []).map(b => ({
+        from: toLocalDatetimeInput(b.from),
+        to: toLocalDatetimeInput(b.to),
+        label: b.label ?? "",
+      }))
+    );
   };
 
   const saveOverride = async () => {
@@ -3106,11 +3166,19 @@ function MentorAttendanceSubTab() {
           punchIn: overrideForm.punchIn ? new Date(overrideForm.punchIn).toISOString() : null,
           punchOut: overrideForm.punchOut ? new Date(overrideForm.punchOut).toISOString() : null,
           reason: overrideForm.reason || null,
+          breaks: overrideBreaks
+            .filter(b => b.from && b.to)
+            .map(b => ({
+              from: new Date(b.from).toISOString(),
+              to: new Date(b.to).toISOString(),
+              label: b.label || null,
+            })),
         }),
       });
       if (!res.ok) throw new Error();
       toast.success("Attendance manually adjusted");
       setOverrideFor(null);
+      setOverrideBreaks([]);
       await loadRecords();
     } catch { toast.error("Failed to save override"); }
     finally { setSavingOverride(false); }
@@ -3162,6 +3230,20 @@ function MentorAttendanceSubTab() {
                   value={scheduleForm.lateGraceMinutes} onChange={e => setScheduleForm(p => ({ ...p, lateGraceMinutes: Number(e.target.value) }))} />
               </div>
             </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[11px] font-medium text-[#8A92A6] mb-1">Default break start</label>
+                <input type="time"
+                  className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+                  value={scheduleForm.defaultBreakFrom} onChange={e => setScheduleForm(p => ({ ...p, defaultBreakFrom: e.target.value }))} />
+              </div>
+              <div>
+                <label className="block text-[11px] font-medium text-[#8A92A6] mb-1">Default break end</label>
+                <input type="time"
+                  className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+                  value={scheduleForm.defaultBreakTo} onChange={e => setScheduleForm(p => ({ ...p, defaultBreakTo: e.target.value }))} />
+              </div>
+            </div>
             <p className="text-[11px] text-[#5A6275]">Saving will notify all interns immediately and update their Attendance tab banner.</p>
             <div className="flex gap-2 justify-end">
               <button onClick={() => setEditingSchedule(false)} className="px-3 py-1.5 text-xs text-[#8A92A6] hover:bg-[#1B1F2A] rounded-lg">Cancel</button>
@@ -3172,9 +3254,12 @@ function MentorAttendanceSubTab() {
             </div>
           </div>
         ) : schedule ? (
-          <div className="flex items-center gap-6 text-sm">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm">
             <span className="text-[#C8CEDB]"><span className="text-[#00C2FF] font-semibold font-mono">{schedule.startTime}</span> – <span className="text-[#00C2FF] font-semibold font-mono">{schedule.endTime}</span></span>
             <span className="text-[#5A6275]">{schedule.lateGraceMinutes} min grace</span>
+            {(schedule.defaultBreakFrom && schedule.defaultBreakTo) && (
+              <span className="text-[#5A6275]">Break: <span className="font-mono text-[#C8CEDB]">{schedule.defaultBreakFrom} – {schedule.defaultBreakTo}</span></span>
+            )}
             {schedule.updatedAt && <span className="text-[#3A4150] text-xs">Updated {fmt(schedule.updatedAt)}</span>}
           </div>
         ) : <LoadingSpinner />}
@@ -3245,10 +3330,15 @@ function MentorAttendanceSubTab() {
                     : <span className="text-[#3A4150]">—</span>}
                 </span>
 
-                {/* Total */}
-                <span className={`text-xs font-mono font-semibold whitespace-nowrap ${r.totalMinutes > 0 ? "text-[#E6E9F0]" : "text-[#3A4150]"}`}>
-                  {r.totalMinutes > 0 ? fmtDuration(r.totalMinutes) : "—"}
-                </span>
+                {/* Total (net of breaks) */}
+                <div className="flex flex-col gap-0.5">
+                  <span className={`text-xs font-mono font-semibold whitespace-nowrap ${r.totalMinutes > 0 ? "text-[#E6E9F0]" : "text-[#3A4150]"}`}>
+                    {r.totalMinutes > 0 ? fmtDuration(r.totalMinutes) : "—"}
+                  </span>
+                  {r.breakMinutes > 0 && (
+                    <span className="text-[10px] text-[#5A6275] whitespace-nowrap">−{fmtDuration(r.breakMinutes)} break</span>
+                  )}
+                </div>
 
                 {/* Location + Device — mentor-only column */}
                 <div className="flex flex-col gap-0.5 min-w-0">
@@ -3303,8 +3393,8 @@ function MentorAttendanceSubTab() {
       {/* Override modal */}
       {overrideFor && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60" onClick={() => setOverrideFor(null)} />
-          <div className="relative bg-[#12151D] border border-[#262A35] rounded-2xl p-6 w-full max-w-sm space-y-4 shadow-2xl">
+          <div className="absolute inset-0 bg-black/60" onClick={() => { setOverrideFor(null); setOverrideBreaks([]); }} />
+          <div className="relative bg-[#12151D] border border-[#262A35] rounded-2xl p-6 w-full max-w-sm space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
             <h3 className="font-semibold text-[#E6E9F0] flex items-center gap-2">
               <Edit2 className="w-4 h-4 text-[#00C2FF]" /> Adjust Attendance
             </h3>
@@ -3324,6 +3414,58 @@ function MentorAttendanceSubTab() {
                   className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
                   value={overrideForm.punchOut} onChange={e => setOverrideForm(p => ({ ...p, punchOut: e.target.value }))} />
               </div>
+              {/* Breaks */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-[11px] font-medium text-[#8A92A6]">Breaks</label>
+                  <button
+                    type="button"
+                    onClick={() => setOverrideBreaks(p => [...p, { from: `${date}T${scheduleForm.defaultBreakFrom}`, to: `${date}T${scheduleForm.defaultBreakTo}`, label: "" }])}
+                    className="flex items-center gap-1 text-[11px] text-[#00C2FF] hover:underline"
+                  >
+                    <Plus className="w-3 h-3" /> Add break
+                  </button>
+                </div>
+                {overrideBreaks.length === 0 && (
+                  <p className="text-[11px] text-[#3A4150]">No breaks set — click "Add break" to record one.</p>
+                )}
+                <div className="space-y-2">
+                  {overrideBreaks.map((b, i) => (
+                    <div key={i} className="flex items-end gap-2">
+                      <div className="flex-1">
+                        <p className="text-[10px] text-[#5A6275] mb-0.5">From</p>
+                        <input type="datetime-local"
+                          className="w-full px-2 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-xs text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+                          value={b.from}
+                          onChange={e => setOverrideBreaks(p => p.map((x, j) => j === i ? { ...x, from: e.target.value } : x))} />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-[10px] text-[#5A6275] mb-0.5">To</p>
+                        <input type="datetime-local"
+                          className="w-full px-2 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-xs text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+                          value={b.to}
+                          onChange={e => setOverrideBreaks(p => p.map((x, j) => j === i ? { ...x, to: e.target.value } : x))} />
+                      </div>
+                      <div className="w-24">
+                        <p className="text-[10px] text-[#5A6275] mb-0.5">Label</p>
+                        <input type="text"
+                          className="w-full px-2 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-xs text-[#E6E9F0] placeholder:text-[#3A4150] focus:outline-none focus:border-[#00C2FF]/60"
+                          placeholder="Lunch…"
+                          value={b.label}
+                          onChange={e => setOverrideBreaks(p => p.map((x, j) => j === i ? { ...x, label: e.target.value } : x))} />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setOverrideBreaks(p => p.filter((_, j) => j !== i))}
+                        className="mb-0.5 p-1.5 text-[#5A6275] hover:text-[#ea4335] hover:bg-[#ea4335]/10 rounded-lg transition-colors"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div>
                 <label className="block text-[11px] font-medium text-[#8A92A6] mb-1">Reason (optional)</label>
                 <input type="text"
@@ -3333,7 +3475,7 @@ function MentorAttendanceSubTab() {
               </div>
             </div>
             <div className="flex gap-2 justify-end pt-1">
-              <button onClick={() => setOverrideFor(null)} className="px-3 py-1.5 text-sm text-[#8A92A6] hover:bg-[#1B1F2A] rounded-lg">Cancel</button>
+              <button onClick={() => { setOverrideFor(null); setOverrideBreaks([]); }} className="px-3 py-1.5 text-sm text-[#8A92A6] hover:bg-[#1B1F2A] rounded-lg">Cancel</button>
               <button onClick={saveOverride} disabled={savingOverride}
                 className="flex items-center gap-1.5 px-4 py-1.5 bg-[#00C2FF] text-[#06121A] text-sm font-semibold rounded-lg hover:bg-[#0098E6] disabled:opacity-50">
                 {savingOverride ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-4 h-4" /> Save</>}

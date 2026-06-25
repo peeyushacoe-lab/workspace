@@ -9,10 +9,12 @@ const MENTOR_ROLES = ["ADMIN", "CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER"] a
 const HUB_ROLES = ["INTERNSHIP", ...MENTOR_ROLES] as const;
 
 export interface AttendanceSchedule {
-  startTime: string;   // "HH:MM"
-  endTime: string;     // "HH:MM"
+  startTime: string;        // "HH:MM"
+  endTime: string;          // "HH:MM"
   timezone: string;
   lateGraceMinutes: number;
+  defaultBreakFrom: string; // "HH:MM" — default break start shown in Add break
+  defaultBreakTo: string;   // "HH:MM" — default break end shown in Add break
   updatedBy: string | null;
   updatedAt: string | null;
 }
@@ -22,6 +24,8 @@ const DEFAULT_SCHEDULE: AttendanceSchedule = {
   endTime: "17:00",
   timezone: "UTC",
   lateGraceMinutes: 15,
+  defaultBreakFrom: "12:00",
+  defaultBreakTo: "13:00",
   updatedBy: null,
   updatedAt: null,
 };
@@ -51,6 +55,8 @@ export async function POST(request: Request) {
     endTime: body.endTime ?? DEFAULT_SCHEDULE.endTime,
     timezone: body.timezone ?? DEFAULT_SCHEDULE.timezone,
     lateGraceMinutes: body.lateGraceMinutes ?? DEFAULT_SCHEDULE.lateGraceMinutes,
+    defaultBreakFrom: body.defaultBreakFrom ?? DEFAULT_SCHEDULE.defaultBreakFrom,
+    defaultBreakTo: body.defaultBreakTo ?? DEFAULT_SCHEDULE.defaultBreakTo,
     updatedBy: user.id,
     updatedAt: new Date().toISOString(),
   };
