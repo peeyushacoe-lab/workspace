@@ -12,12 +12,16 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
   const { id } = await params;
+  const isMentor = MENTOR_ROLES.includes(user.role as typeof MENTOR_ROLES[number]);
 
   const task = await prisma.internTask.findUnique({
     where: { id },
     include: {
       createdBy: { select: { id: true, fullName: true, avatarUrl: true } },
       submissions: {
+        // Interns only receive their own submissions — filter server-side so
+        // other interns' work never leaves the database for this request.
+        where: isMentor ? {} : { submitterId: user.id },
         include: {
           submitter: { select: { id: true, fullName: true, avatarUrl: true } },
           reviews: {
