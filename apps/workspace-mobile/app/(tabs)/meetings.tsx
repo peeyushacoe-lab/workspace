@@ -13,7 +13,7 @@ interface MeetingParticipant { user: MeetingUser }
 interface Meeting {
   id: string;
   title: string;
-  status: "SCHEDULED" | "ACTIVE" | "ENDED";
+  status: "SCHEDULED" | "LIVE" | "ENDED" | "CANCELLED";
   roomName: string;
   scheduledAt?: string | null;
   startedAt?: string | null;
@@ -22,13 +22,14 @@ interface Meeting {
 }
 
 const STATUS_BADGE: Record<Meeting["status"], { label: string; bg: string; color: string }> = {
-  ACTIVE:    { label: "LIVE", bg: "rgba(34,197,94,0.15)", color: "#22c55e" },
+  LIVE:      { label: "LIVE", bg: "rgba(34,197,94,0.15)", color: "#22c55e" },
   SCHEDULED: { label: "Scheduled", bg: "rgba(0,210,255,0.1)", color: "#00d2ff" },
   ENDED:     { label: "Ended", bg: "rgba(92,107,114,0.15)", color: "#5c6b72" },
+  CANCELLED: { label: "Cancelled", bg: "rgba(255,77,109,0.1)", color: "#ff4d6d" },
 };
 
 function formatMeetingTime(m: Meeting) {
-  if (m.status === "ACTIVE" && m.startedAt) {
+  if (m.status === "LIVE" && m.startedAt) {
     const diff = Math.floor((Date.now() - new Date(m.startedAt).getTime()) / 60_000);
     return diff < 1 ? "Just started" : `Started ${diff}m ago`;
   }
@@ -96,9 +97,9 @@ export default function MeetingsScreen() {
   };
 
   const groups = {
-    live: (meetings ?? []).filter(m => m.status === "ACTIVE"),
+    live: (meetings ?? []).filter(m => m.status === "LIVE"),
     upcoming: (meetings ?? []).filter(m => m.status === "SCHEDULED"),
-    past: (meetings ?? []).filter(m => m.status === "ENDED"),
+    past: (meetings ?? []).filter(m => m.status === "ENDED" || m.status === "CANCELLED"),
   };
 
   const sections = [
@@ -147,15 +148,15 @@ export default function MeetingsScreen() {
                   <Text style={s.sectionHeader}>{item._section}</Text>
                 )}
                 <TouchableOpacity
-                  style={[s.card, item.status === "ACTIVE" && s.cardLive]}
-                  onPress={() => item.status !== "ENDED" && joinMeeting(item)}
-                  activeOpacity={item.status === "ENDED" ? 1 : 0.75}
+                  style={[s.card, item.status === "LIVE" && s.cardLive]}
+                  onPress={() => item.status !== "ENDED" && item.status !== "CANCELLED" && joinMeeting(item)}
+                  activeOpacity={item.status === "ENDED" || item.status === "CANCELLED" ? 1 : 0.75}
                 >
                   <View style={s.cardTop}>
                     <View style={[s.statusBadge, { backgroundColor: badge.bg }]}>
                       <Text style={[s.statusText, { color: badge.color }]}>{badge.label}</Text>
                     </View>
-                    {item.status === "ACTIVE" && (
+                    {item.status === "LIVE" && (
                       <View style={s.liveDot} />
                     )}
                   </View>
@@ -173,10 +174,10 @@ export default function MeetingsScreen() {
                     </Text>
                   )}
 
-                  {item.status !== "ENDED" && (
-                    <TouchableOpacity style={[s.joinBtn, item.status === "ACTIVE" ? s.joinBtnLive : s.joinBtnScheduled]} onPress={() => joinMeeting(item)}>
-                      <Text style={[s.joinBtnText, item.status === "ACTIVE" && s.joinBtnTextLive]}>
-                        {item.status === "ACTIVE" ? "Join Now" : "Open"}
+                  {item.status !== "ENDED" && item.status !== "CANCELLED" && (
+                    <TouchableOpacity style={[s.joinBtn, item.status === "LIVE" ? s.joinBtnLive : s.joinBtnScheduled]} onPress={() => joinMeeting(item)}>
+                      <Text style={[s.joinBtnText, item.status === "LIVE" && s.joinBtnTextLive]}>
+                        {item.status === "LIVE" ? "Join Now" : "Open"}
                       </Text>
                     </TouchableOpacity>
                   )}

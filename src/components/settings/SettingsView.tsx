@@ -126,7 +126,7 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-[#12151D] border border-[#262A35] rounded-[13px] overflow-hidden mb-6">
+    <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden mb-6">
       <div className="px-6 pt-5 pb-4 border-b border-[#262A35]/60">
         <h3 className="text-[15px] font-bold text-[#E6E9F0] tracking-tight">{title}</h3>
         {description && <p className="text-[13px] text-[#6B7385] mt-1">{description}</p>}
@@ -662,34 +662,92 @@ function SignatureTab({ userName }: { userName: string }) {
 // ─── Appearance Tab ───────────────────────────────────────────────────────────
 
 function AppearanceTab() {
-  const [density, setDensity] = useState<"comfortable" | "compact">("comfortable");
-  const [fontSize, setFontSize] = useState<"normal" | "large">("normal");
+  const [density,     setDensity]     = useState<"comfortable" | "compact">("comfortable");
+  const [fontSize,    setFontSize]    = useState<"normal" | "large">("normal");
+  const [sidebarMode, setSidebarMode] = useState<"full" | "icons">("full");
+  const [animations,  setAnimations]  = useState(true);
+  const [readingPane, setReadingPane] = useState<"right" | "bottom" | "off">("right");
+  const [chatBubbles, setChatBubbles] = useState<"modern" | "classic">("modern");
 
   useEffect(() => {
-    // Always enforce dark mode
+    // Always dark — just restore saved preferences
     document.documentElement.classList.add("dark");
-    localStorage.setItem("theme", "dark");
-    try { const d = localStorage.getItem("ui_density") as typeof density | null; if (d) setDensity(d); } catch {}
-    try { const f = localStorage.getItem("font_size") as typeof fontSize | null; if (f) setFontSize(f); } catch {}
+    try {
+      const d = localStorage.getItem("ui_density") as typeof density | null;
+      if (d) setDensity(d);
+      const f = localStorage.getItem("font_size") as typeof fontSize | null;
+      if (f) { setFontSize(f); document.documentElement.style.fontSize = f === "large" ? "16px" : "14px"; }
+      const s = localStorage.getItem("sidebar_mode") as typeof sidebarMode | null;
+      if (s) setSidebarMode(s);
+      const a = localStorage.getItem("animations");
+      if (a !== null) setAnimations(a !== "false");
+      const r = localStorage.getItem("reading_pane") as typeof readingPane | null;
+      if (r) setReadingPane(r);
+      const c = localStorage.getItem("chat_bubbles") as typeof chatBubbles | null;
+      if (c) setChatBubbles(c);
+    } catch {}
   }, []);
+
+  const save = (key: string, value: string) => { try { localStorage.setItem(key, value); } catch {} };
 
   return (
     <>
       <SectionCard title="Layout Density" description="Control spacing and information density">
         <SettingRow label="Comfortable" description="More whitespace, easier to scan">
-          <input type="radio" name="density" checked={density === "comfortable"} onChange={() => { setDensity("comfortable"); localStorage.setItem("ui_density","comfortable"); }} className="accent-[#00d2ff]" />
+          <input type="radio" name="density" checked={density === "comfortable"} onChange={() => { setDensity("comfortable"); save("ui_density","comfortable"); }} className="accent-[#00C2FF]" />
         </SettingRow>
         <SettingRow label="Compact" description="Tighter spacing, more content visible">
-          <input type="radio" name="density" checked={density === "compact"} onChange={() => { setDensity("compact"); localStorage.setItem("ui_density","compact"); }} className="accent-[#00d2ff]" />
+          <input type="radio" name="density" checked={density === "compact"} onChange={() => { setDensity("compact"); save("ui_density","compact"); }} className="accent-[#00C2FF]" />
         </SettingRow>
       </SectionCard>
 
       <SectionCard title="Text Size">
         <SettingRow label="Normal (14px)">
-          <input type="radio" name="fontSize" checked={fontSize === "normal"} onChange={() => { setFontSize("normal"); localStorage.setItem("font_size","normal"); document.documentElement.style.fontSize = "14px"; }} className="accent-[#00d2ff]" />
+          <input type="radio" name="fontSize" checked={fontSize === "normal"} onChange={() => { setFontSize("normal"); save("font_size","normal"); document.documentElement.style.fontSize = "14px"; }} className="accent-[#00C2FF]" />
         </SettingRow>
         <SettingRow label="Large (16px)" description="Easier on the eyes">
-          <input type="radio" name="fontSize" checked={fontSize === "large"} onChange={() => { setFontSize("large"); localStorage.setItem("font_size","large"); document.documentElement.style.fontSize = "16px"; }} className="accent-[#00d2ff]" />
+          <input type="radio" name="fontSize" checked={fontSize === "large"} onChange={() => { setFontSize("large"); save("font_size","large"); document.documentElement.style.fontSize = "16px"; }} className="accent-[#00C2FF]" />
+        </SettingRow>
+      </SectionCard>
+
+      <SectionCard title="Sidebar" description="How the navigation rail appears on desktop">
+        <SettingRow label="Full labels" description="Show icon + label">
+          <input type="radio" name="sidebarMode" checked={sidebarMode === "full"} onChange={() => { setSidebarMode("full"); save("sidebar_mode","full"); }} className="accent-[#00C2FF]" />
+        </SettingRow>
+        <SettingRow label="Icons only" description="Collapse sidebar to icon rail — more reading space">
+          <input type="radio" name="sidebarMode" checked={sidebarMode === "icons"} onChange={() => { setSidebarMode("icons"); save("sidebar_mode","icons"); }} className="accent-[#00C2FF]" />
+        </SettingRow>
+      </SectionCard>
+
+      <SectionCard title="Motion & Animations">
+        <SettingRow label="Enable animations" description="Transitions, hover lifts, and aurora glow effects">
+          <Toggle value={animations} onChange={(v) => {
+            setAnimations(v);
+            save("animations", String(v));
+            if (!v) document.documentElement.classList.add("motion-reduce");
+            else document.documentElement.classList.remove("motion-reduce");
+          }} />
+        </SettingRow>
+      </SectionCard>
+
+      <SectionCard title="Email Reading Pane" description="Where the open thread appears relative to the inbox list">
+        <SettingRow label="Right panel" description="Thread opens to the right of the list">
+          <input type="radio" name="readingPane" checked={readingPane === "right"} onChange={() => { setReadingPane("right"); save("reading_pane","right"); }} className="accent-[#00C2FF]" />
+        </SettingRow>
+        <SettingRow label="Bottom panel" description="Thread opens below the list">
+          <input type="radio" name="readingPane" checked={readingPane === "bottom"} onChange={() => { setReadingPane("bottom"); save("reading_pane","bottom"); }} className="accent-[#00C2FF]" />
+        </SettingRow>
+        <SettingRow label="Off (full-width)" description="Click a thread to open it full-width">
+          <input type="radio" name="readingPane" checked={readingPane === "off"} onChange={() => { setReadingPane("off"); save("reading_pane","off"); }} className="accent-[#00C2FF]" />
+        </SettingRow>
+      </SectionCard>
+
+      <SectionCard title="Chat Bubbles" description="Message bubble style in channels and DMs">
+        <SettingRow label="Modern" description="Rounded bubbles with sender avatars">
+          <input type="radio" name="chatBubbles" checked={chatBubbles === "modern"} onChange={() => { setChatBubbles("modern"); save("chat_bubbles","modern"); }} className="accent-[#00C2FF]" />
+        </SettingRow>
+        <SettingRow label="Classic" description="Flat rows with timestamps, like a desktop client">
+          <input type="radio" name="chatBubbles" checked={chatBubbles === "classic"} onChange={() => { setChatBubbles("classic"); save("chat_bubbles","classic"); }} className="accent-[#00C2FF]" />
         </SettingRow>
       </SectionCard>
     </>
@@ -1311,6 +1369,166 @@ function CustomRolesTab() {
   );
 }
 
+// ─── Mailboxes Tab ────────────────────────────────────────────────────────────
+
+type DelegationGranted = {
+  id: string;
+  role: string;
+  createdAt: string;
+  user: { fullName: string; email: string; role: string };
+};
+
+type DelegationReceived = {
+  id: string;
+  mailboxId: string;
+  role: string;
+  createdAt: string;
+  mailbox: {
+    email: string;
+    displayName: string | null;
+    accessLogs: { user: { fullName: string } }[];
+  };
+};
+
+function MailboxesTab({ userEmail }: { userEmail: string }) {
+  const [granted, setGranted]   = useState<DelegationGranted[]>([]);
+  const [received, setReceived] = useState<DelegationReceived[]>([]);
+  const [loading, setLoading]   = useState(true);
+  const [revoking, setRevoking] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/settings/delegation")
+      .then(r => r.json())
+      .then((d: { granted: DelegationGranted[]; received: DelegationReceived[] }) => {
+        setGranted(Array.isArray(d.granted)  ? d.granted  : []);
+        setReceived(Array.isArray(d.received) ? d.received : []);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const revoke = async (id: string) => {
+    setRevoking(id);
+    try {
+      await fetch(`/api/settings/delegation?id=${id}`, { method: "DELETE" });
+      setGranted(p => p.filter(g => g.id !== id));
+      toast.success("Access revoked");
+    } catch { toast.error("Failed to revoke"); }
+    finally { setRevoking(null); }
+  };
+
+  const roleBadge = (role: string) => (
+    <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide ${
+      role === "sender" ? "bg-[#00C2FF]/10 text-[#00C2FF]" : "bg-[#1B1F2A] text-[#8A92A6]"
+    }`}>{role}</span>
+  );
+
+  if (loading) return (
+    <div className="flex justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-[#00C2FF]" /></div>
+  );
+
+  return (
+    <>
+      {/* Primary mailbox */}
+      <SectionCard title="Your Mailbox" description="Your primary workspace inbox">
+        <div className="flex items-center gap-3 p-3 rounded-xl bg-[#00C2FF]/5 border border-[#00C2FF]/15">
+          <div className="h-9 w-9 rounded-full bg-[#0E2532] flex items-center justify-center flex-shrink-0">
+            <Mail className="h-4 w-4 text-[#00C2FF]" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-[#E6E9F0] truncate">{userEmail}</p>
+            <p className="text-xs text-[#00C2FF] font-medium">Primary · Owner</p>
+          </div>
+          <span className="h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0" title="Active" />
+        </div>
+      </SectionCard>
+
+      {/* Shared mailboxes you can access */}
+      <SectionCard
+        title="Shared mailboxes"
+        description="Inboxes other users have delegated access to you"
+      >
+        {received.length === 0 ? (
+          <div className="text-center py-8">
+            <Mail className="h-9 w-9 text-[#262b3a] mx-auto mb-2" />
+            <p className="text-sm text-[#8A92A6]">No shared mailboxes yet.</p>
+            <p className="text-xs text-[#5A6275] mt-1">A colleague can grant you access from their delegation settings.</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {received.map(r => {
+              const ownerName = r.mailbox.accessLogs[0]?.user?.fullName ?? "Unknown";
+              return (
+                <div key={r.id} className="flex items-center gap-3 p-3 rounded-xl bg-[#1B1F2A] border border-[#262A35]">
+                  <div className="h-9 w-9 rounded-full bg-[#12151D] border border-[#262A35] flex items-center justify-center flex-shrink-0">
+                    <Mail className="h-4 w-4 text-[#8A92A6]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-[#E6E9F0] truncate">
+                      {r.mailbox.displayName ?? r.mailbox.email}
+                    </p>
+                    <p className="text-xs text-[#8A92A6] truncate">{r.mailbox.email} · owned by {ownerName}</p>
+                  </div>
+                  {roleBadge(r.role)}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </SectionCard>
+
+      {/* Delegations you've granted to others */}
+      <SectionCard
+        title="Access you've granted"
+        description="People who can access your inbox"
+      >
+        {granted.length === 0 ? (
+          <div className="text-center py-8">
+            <Users className="h-9 w-9 text-[#262b3a] mx-auto mb-2" />
+            <p className="text-sm text-[#8A92A6]">You haven&apos;t granted anyone access yet.</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {granted.map(g => (
+              <div key={g.id} className="flex items-center gap-3 p-3 rounded-xl bg-[#1B1F2A] border border-[#262A35]">
+                <div
+                  className="h-9 w-9 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold text-white"
+                  style={{ background: `hsl(${Math.abs(g.user.email.split("").reduce((a,c) => a + c.charCodeAt(0), 0)) % 360}deg 45% 30%)` }}
+                >
+                  {g.user.fullName?.[0]?.toUpperCase() ?? "?"}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-[#E6E9F0] truncate">{g.user.fullName}</p>
+                  <p className="text-xs text-[#8A92A6] truncate">{g.user.email}</p>
+                </div>
+                {roleBadge(g.role)}
+                <button
+                  onClick={() => void revoke(g.id)}
+                  disabled={revoking === g.id}
+                  className="p-1.5 rounded-lg text-[#8A92A6] hover:text-[#ea4335] hover:bg-[#ea4335]/10 transition-colors disabled:opacity-50"
+                  title="Revoke access"
+                >
+                  {revoking === g.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-4 pt-4 border-t border-[#262A35]/60">
+          <a
+            href="/settings/delegation"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-[#00C2FF] hover:text-[#47d6ff] transition-colors"
+          >
+            <Users className="h-4 w-4" />
+            Manage delegation settings →
+          </a>
+        </div>
+      </SectionCard>
+    </>
+  );
+}
+
 // ─── Mail Rules Tab ───────────────────────────────────────────────────────────
 
 type MailRule = {
@@ -1616,11 +1834,11 @@ export function SettingsView({
   });
 
   return (
-    <div className="bg-[#0B0D12] min-h-screen">
+    <div className="min-h-screen">
       <div className="flex flex-col lg:flex-row lg:h-[calc(100vh-3.5rem)]">
 
         {/* ── Mobile: full-width select dropdown ──────────────────────────── */}
-        <div className="lg:hidden border-b border-[#262A35] px-4 py-3 bg-[#0F1218]">
+        <div className="lg:hidden border-b border-[#262A35]/60 px-4 py-3 glass">
           <div className="relative">
             {/* Icon of active tab */}
             {(() => {
@@ -1652,7 +1870,7 @@ export function SettingsView({
         </div>
 
         {/* ── Desktop: sidebar rail ─────────────────────────────────────────── */}
-        <aside className="hidden lg:flex lg:w-[220px] flex-none border-r border-[#262A35] py-[18px] px-3">
+        <aside className="hidden lg:flex lg:w-[220px] flex-none border-r border-[#262A35]/50 py-[18px] px-3 glass-strong">
           <nav className="flex flex-col gap-1 w-full">
             {visibleTabs.map((tab) => {
               const Icon = tab.icon;
@@ -1695,21 +1913,7 @@ export function SettingsView({
             {activeTab === "mail-rules"    && <MailRulesTab />}
             {activeTab === "forwarding"    && <ForwardingTab />}
 
-            {activeTab === "mailboxes" && (
-              <SectionCard title="Your Mailboxes" description="Shared and personal mailboxes you can access">
-                <div className="flex items-center justify-between p-3 rounded-xl bg-[#00C2FF]/5 border border-[#00C2FF]/15 mb-2">
-                  <div className="flex items-center gap-3">
-                    <Mail className="h-4 w-4 text-[#00C2FF]" />
-                    <div>
-                      <p className="text-sm font-medium text-[#E6E9F0]">{user.email}</p>
-                      <p className="text-xs text-[#00C2FF] font-medium">Primary · Owner</p>
-                    </div>
-                  </div>
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                </div>
-                <p className="text-xs text-[#8A92A6] text-center mt-4">Additional shared mailboxes are assigned by your administrator.</p>
-              </SectionCard>
-            )}
+            {activeTab === "mailboxes" && <MailboxesTab userEmail={user.email} />}
 
             {activeTab === "security" && (
               <>

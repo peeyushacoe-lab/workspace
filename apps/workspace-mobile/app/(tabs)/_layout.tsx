@@ -1,6 +1,6 @@
 import { Tabs } from "expo-router";
 import { View } from "react-native";
-import Svg, { Path, Circle, Rect } from "react-native-svg";
+import Svg, { Path, Circle, Rect, Polyline, Line } from "react-native-svg";
 
 function InboxIcon({ color }: { color: string }) {
   return (
@@ -19,27 +19,34 @@ function ChatIcon({ color }: { color: string }) {
   );
 }
 
-function CalendarIcon({ color }: { color: string }) {
+function MeetingsIcon({ color }: { color: string }) {
   return (
     <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
-      <Rect x="3" y="4" width="18" height="18" rx="2" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"/>
-      <Path d="M16 2v4M8 2v4M3 10h18" stroke={color} strokeWidth={1.8} strokeLinecap="round"/>
+      <Path d="M23 7l-7 5 7 5V7z" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"/>
+      <Rect x="1" y="5" width="15" height="14" rx="2" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"/>
     </Svg>
   );
 }
 
-function DriveIcon({ color }: { color: string }) {
+function NotesIcon({ color }: { color: string }) {
   return (
     <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
-      <Path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"/>
+      <Path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"/>
+      <Polyline points="14 2 14 8 20 8" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"/>
+      <Line x1="16" y1="13" x2="8" y2="13" stroke={color} strokeWidth={1.8} strokeLinecap="round"/>
+      <Line x1="16" y1="17" x2="8" y2="17" stroke={color} strokeWidth={1.8} strokeLinecap="round"/>
+      <Polyline points="10 9 9 9 8 9" stroke={color} strokeWidth={1.8} strokeLinecap="round"/>
     </Svg>
   );
 }
 
-function ActivityIcon({ color }: { color: string }) {
+function AIIcon({ color }: { color: string }) {
   return (
     <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
-      <Path d="M22 12h-4l-3 9L9 3l-3 9H2" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"/>
+      <Path d="M12 2a4 4 0 014 4v1h1a3 3 0 010 6h-1v1a4 4 0 01-8 0v-1H7a3 3 0 010-6h1V6a4 4 0 014-4z" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"/>
+      <Circle cx="9" cy="10" r="1" fill={color}/>
+      <Circle cx="15" cy="10" r="1" fill={color}/>
+      <Path d="M9 15s1 1 3 1 3-1 3-1" stroke={color} strokeWidth={1.8} strokeLinecap="round"/>
     </Svg>
   );
 }
@@ -100,24 +107,24 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="calendar"
+        name="meetings"
         options={{
-          title: "Calendar",
-          tabBarIcon: ({ focused }) => <TabIcon Icon={CalendarIcon} focused={focused} />,
+          title: "Meet",
+          tabBarIcon: ({ focused }) => <TabIcon Icon={MeetingsIcon} focused={focused} />,
         }}
       />
       <Tabs.Screen
-        name="drive"
+        name="notes"
         options={{
-          title: "Drive",
-          tabBarIcon: ({ focused }) => <TabIcon Icon={DriveIcon} focused={focused} />,
+          title: "Notes",
+          tabBarIcon: ({ focused }) => <TabIcon Icon={NotesIcon} focused={focused} />,
         }}
       />
       <Tabs.Screen
-        name="activity"
+        name="ai"
         options={{
-          title: "Activity",
-          tabBarIcon: ({ focused }) => <TabIcon Icon={ActivityIcon} focused={focused} />,
+          title: "AI",
+          tabBarIcon: ({ focused }) => <TabIcon Icon={AIIcon} focused={focused} />,
         }}
       />
       <Tabs.Screen
@@ -127,13 +134,11 @@ export default function TabsLayout() {
           tabBarIcon: ({ focused }) => <TabIcon Icon={MoreIcon} focused={focused} />,
         }}
       />
-      {/* Settings is still accessible from More / ProfileSidebar */}
-      <Tabs.Screen
-        name="settings"
-        options={{
-          href: null,
-        }}
-      />
+      {/* Hidden tabs — accessible via router.push */}
+      <Tabs.Screen name="calendar" options={{ href: null }} />
+      <Tabs.Screen name="drive" options={{ href: null }} />
+      <Tabs.Screen name="activity" options={{ href: null }} />
+      <Tabs.Screen name="settings" options={{ href: null }} />
     </Tabs>
   );
 }
