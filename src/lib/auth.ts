@@ -117,6 +117,7 @@ const pathAccess: Array<{ prefix: string; roles: UserRole[] }> = [
   { prefix: "/profile",        roles: ALL_ROLES },
   { prefix: "/mfa-challenge",   roles: ALL_ROLES },
   { prefix: "/reset-password", roles: ALL_ROLES },
+  { prefix: "/setup-passkey",  roles: ALL_ROLES },
   { prefix: "/compose",        roles: ALL_ROLES },
   { prefix: "/dashboard",      roles: MGMT_ROLES },
   { prefix: "/contacts",       roles: MGMT_ROLES },

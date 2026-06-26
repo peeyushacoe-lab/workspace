@@ -1,21 +1,21 @@
-﻿"use client";
+"use client";
 
-import { useState } from "react";
-import { Shield, ShieldCheck, ShieldOff, Download, Copy, RefreshCw, X } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import {
+  Shield, ShieldCheck, ShieldOff, Fingerprint,
+  Smartphone, Trash2, Plus, Loader2, RefreshCw,
+} from "lucide-react";
+import { startRegistration } from "@simplewebauthn/browser";
+import type { PublicKeyCredentialCreationOptionsJSON } from "@simplewebauthn/browser";
 
-type SetupData = {
-  secret: string;
-  qrCode: string;
-  otpauthUrl: string;
+type Passkey = {
+  id: string;
+  name: string;
+  deviceType: string;
+  backedUp: boolean;
+  createdAt: string;
+  lastUsedAt: string | null;
 };
-
-type State =
-  | { kind: "disabled" }
-  | { kind: "setting-up"; data: SetupData }
-  | { kind: "backup-codes"; codes: string[] }
-  | { kind: "enabled" };
-
-type ModalAction = "disable" | "regenerate";
 
 export function MFASetup({
   mfaEnabled,
@@ -24,385 +24,218 @@ export function MFASetup({
   mfaEnabled: boolean;
   onStatusChange: () => void;
 }) {
-  const [state, setState] = useState<State>(
-    mfaEnabled ? { kind: "enabled" } : { kind: "disabled" }
-  );
-  const [tokenInput, setTokenInput] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [passkeys, setPasskeys] = useState<Passkey[]>([]);
+  const [loadingList, setLoadingList] = useState(true);
+  const [registering, setRegistering] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [newName, setNewName] = useState("");
+  const [showNameInput, setShowNameInput] = useState(false);
   const [error, setError] = useState("");
-  const [modal, setModal] = useState<{ action: ModalAction; token: string } | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [success, setSuccess] = useState("");
 
-  function clearError() {
-    setError("");
-  }
-
-  async function startSetup() {
-    setLoading(true);
-    clearError();
+  const fetchPasskeys = useCallback(async () => {
+    setLoadingList(true);
     try {
-      const res = await fetch("/api/auth/mfa/setup");
-      if (!res.ok) throw new Error("Failed to load setup");
-      const data = (await res.json()) as SetupData;
-      setState({ kind: "setting-up", data });
-      setTokenInput("");
+      const res = await fetch("/api/auth/passkey/list");
+      const data = await res.json() as { passkeys: Passkey[] };
+      setPasskeys(data.passkeys ?? []);
     } catch {
-      setError("Could not start MFA setup. Please try again.");
+      // ignore
     } finally {
-      setLoading(false);
+      setLoadingList(false);
     }
-  }
+  }, []);
 
-  async function verifyAndEnable() {
-    if (state.kind !== "setting-up") return;
-    if (!tokenInput.trim()) {
-      setError("Enter the 6-digit code from your authenticator app.");
-      return;
-    }
-    setLoading(true);
-    clearError();
+  useEffect(() => { void fetchPasskeys(); }, [fetchPasskeys]);
+
+  async function register() {
+    setRegistering(true);
+    setError("");
+    setSuccess("");
     try {
-      const res = await fetch("/api/auth/mfa/verify", {
+      const optRes = await fetch("/api/auth/passkey/register-options", { method: "POST" });
+      if (!optRes.ok) throw new Error("Failed to start registration");
+      const options = await optRes.json() as PublicKeyCredentialCreationOptionsJSON;
+
+      const credential = await startRegistration({ optionsJSON: options });
+
+      const verRes = await fetch("/api/auth/passkey/register-verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ secret: state.data.secret, token: tokenInput.trim() }),
+        body: JSON.stringify({ ...credential, name: newName.trim() || "My passkey" }),
       });
-      if (!res.ok) {
-        const body = (await res.json()) as { error?: string };
-        throw new Error(body.error ?? "Verification failed");
-      }
-      const { backupCodes } = (await res.json()) as { backupCodes: string[] };
-      setState({ kind: "backup-codes", codes: backupCodes });
-      setTokenInput("");
+      const verData = await verRes.json() as { verified?: boolean; error?: string };
+      if (!verRes.ok || !verData.verified) throw new Error(verData.error ?? "Verification failed");
+
+      setSuccess("Passkey registered successfully.");
+      setShowNameInput(false);
+      setNewName("");
+      await fetchPasskeys();
       onStatusChange();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Verification failed");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleModalSubmit() {
-    if (!modal) return;
-    if (!modal.token.trim()) {
-      setError("Enter your current TOTP code.");
-      return;
-    }
-    setLoading(true);
-    clearError();
-    try {
-      if (modal.action === "disable") {
-        const res = await fetch("/api/auth/mfa/disable", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token: modal.token.trim() }),
-        });
-        if (!res.ok) {
-          const body = (await res.json()) as { error?: string };
-          throw new Error(body.error ?? "Failed to disable MFA");
-        }
-        setState({ kind: "disabled" });
-        setModal(null);
-        onStatusChange();
-      } else {
-        const res = await fetch("/api/auth/mfa/backup-codes", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token: modal.token.trim() }),
-        });
-        if (!res.ok) {
-          const body = (await res.json()) as { error?: string };
-          throw new Error(body.error ?? "Failed to regenerate codes");
-        }
-        const { backupCodes } = (await res.json()) as { backupCodes: string[] };
-        setModal(null);
-        setState({ kind: "backup-codes", codes: backupCodes });
-        onStatusChange();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Registration failed";
+      if (!msg.toLowerCase().includes("cancel") && !msg.toLowerCase().includes("abort") && !msg.includes("NotAllowedError")) {
+        setError(msg);
       }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Action failed");
     } finally {
-      setLoading(false);
+      setRegistering(false);
     }
   }
 
-  function downloadCodes(codes: string[]) {
-    const text = [
-      "Nexus — MFA Backup Codes",
-      "Keep these codes safe. Each code can only be used once.",
-      "",
-      ...codes,
-      "",
-      `Generated: ${new Date().toISOString()}`,
-    ].join("\n");
-    const blob = new Blob([text], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "cybersage-backup-codes.txt";
-    a.click();
-    URL.revokeObjectURL(url);
+  async function removePasskey(id: string) {
+    setDeletingId(id);
+    setError("");
+    try {
+      const res = await fetch(`/api/auth/passkey/list?id=${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to remove passkey");
+      await fetchPasskeys();
+      onStatusChange();
+    } catch {
+      setError("Could not remove passkey. Try again.");
+    } finally {
+      setDeletingId(null);
+    }
   }
 
-  async function copySecret(secret: string) {
-    await navigator.clipboard.writeText(secret);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  function formatDate(iso: string) {
+    return new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
   }
 
   return (
     <div className="space-y-4">
-      {error && (
-        <div className="text-sm text-[#ea4335] bg-[#ea4335]/10 border border-[#ea4335]/30 rounded-lg p-3 flex items-center justify-between">
-          <span>{error}</span>
-          <button onClick={clearError} className="ml-2 text-red-400 hover:text-red-400">
-            <X className="h-4 w-4" />
+      {/* Header */}
+      <div className="flex items-start gap-3">
+        <div className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${mfaEnabled ? "bg-[#e6f4ea]" : "bg-[#f1f3f4]"}`}>
+          {mfaEnabled
+            ? <ShieldCheck className="h-5 w-5 text-[#0f9d58]" />
+            : <Shield className="h-5 w-5 text-[#5f6368]" />}
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-[#202124]">Passkey (biometric) authentication</p>
+          <p className="text-xs text-[#5f6368] mt-0.5">
+            {mfaEnabled
+              ? `${passkeys.length} passkey${passkeys.length !== 1 ? "s" : ""} registered — sign-in requires biometric approval`
+              : "Use Face ID, fingerprint, or your device PIN to verify sign-ins. No codes needed."}
+          </p>
+        </div>
+        <span className={`ml-auto shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${mfaEnabled ? "bg-[#e6f4ea] text-[#0f9d58]" : "bg-[#f1f3f4] text-[#5f6368]"}`}>
+          {mfaEnabled ? "Active" : "Inactive"}
+        </span>
+      </div>
+
+      {/* Passkey list */}
+      {loadingList ? (
+        <div className="flex items-center gap-2 py-2 text-xs text-[#5f6368]">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading…
+        </div>
+      ) : passkeys.length > 0 ? (
+        <div className="space-y-2">
+          {passkeys.map((pk) => (
+            <div key={pk.id} className="flex items-center gap-3 rounded-lg border border-[#e8eaed] bg-[#f8f9fa] px-3 py-2.5">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[#e8f0fe]">
+                {pk.deviceType === "multiDevice"
+                  ? <Smartphone className="h-4 w-4 text-[#1a56db]" />
+                  : <Fingerprint className="h-4 w-4 text-[#1a56db]" />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-[#202124] truncate">{pk.name}</p>
+                <p className="text-[11px] text-[#80868b]">
+                  Added {formatDate(pk.createdAt)}
+                  {pk.lastUsedAt && ` · Last used ${formatDate(pk.lastUsedAt)}`}
+                  {pk.backedUp && " · Synced to cloud"}
+                </p>
+              </div>
+              <button
+                onClick={() => void removePasskey(pk.id)}
+                disabled={deletingId === pk.id}
+                className="shrink-0 p-1.5 rounded-md text-[#80868b] hover:text-[#ea4335] hover:bg-[#fce8e6] transition-colors disabled:opacity-40"
+                title="Remove passkey"
+              >
+                {deletingId === pk.id
+                  ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  : <Trash2 className="h-3.5 w-3.5" />}
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : mfaEnabled ? (
+        <p className="text-xs text-[#80868b]">No passkeys found — add one below.</p>
+      ) : null}
+
+      {/* Feedback */}
+      {error && <p className="text-xs text-[#ea4335]">{error}</p>}
+      {success && <p className="text-xs text-[#0f9d58]">{success}</p>}
+
+      {/* Add passkey */}
+      {showNameInput ? (
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            placeholder="e.g. Work MacBook, iPhone 15"
+            className="flex-1 px-3 py-2 bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg text-xs text-[#202124] placeholder:text-[#80868b] focus:outline-none focus:border-[#1a56db]/60 focus:ring-2 focus:ring-[#1a56db]/20 transition-colors"
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === "Enter") void register();
+              if (e.key === "Escape") setShowNameInput(false);
+            }}
+          />
+          <button
+            onClick={() => void register()}
+            disabled={registering}
+            className="px-3 py-2 text-xs font-semibold rounded-lg bg-[#1a56db] text-white hover:bg-[#1648c7] transition-colors disabled:opacity-40 flex items-center gap-1.5 whitespace-nowrap"
+          >
+            {registering ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Fingerprint className="h-3.5 w-3.5" />}
+            {registering ? "Waiting for biometric…" : "Register"}
+          </button>
+          <button
+            onClick={() => setShowNameInput(false)}
+            className="px-3 py-2 text-xs font-medium rounded-lg text-[#5f6368] hover:bg-[#f1f3f4] transition-colors"
+          >
+            Cancel
           </button>
         </div>
-      )}
-
-      {state.kind === "disabled" && (
-        <div className="p-6 bg-[#12151D] border border-[#262A35] rounded-xl">
-          <div className="flex items-start gap-4">
-            <div className="p-2 rounded-xl bg-[#1B1F2A]">
-              <Shield className="h-6 w-6 text-[#8A92A6]" />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-xl font-semibold text-[#E6E9F0]">Two-Factor Authentication</h3>
-              <p className="text-sm text-[#8A92A6] mt-1">
-                Add an extra layer of security by requiring a code from your authenticator app at login.
-              </p>
-              <button
-                onClick={startSetup}
-                disabled={loading}
-                className="mt-4 bg-[#00C2FF] text-[#06121A] hover:bg-[#12151D] rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50 transition-colors"
-              >
-                {loading ? "Loading..." : "Enable Two-Factor Authentication"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {state.kind === "setting-up" && (
-        <div className="p-6 bg-[#12151D] border border-[#262A35] rounded-xl space-y-6">
-          <div>
-            <h3 className="text-xl font-semibold text-[#E6E9F0]">Scan QR Code</h3>
-            <p className="text-sm text-[#8A92A6] mt-1">
-              Open your authenticator app (Google Authenticator, Authy, etc.) and scan the QR code below.
-            </p>
-          </div>
-
-          <div className="flex flex-col items-center gap-4">
-            <div className="p-3 bg-[#12151D] rounded-xl border border-[#262A35] shadow-sm">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={state.data.qrCode}
-                alt="TOTP QR Code"
-                className="h-48 w-48"
-              />
-            </div>
-
-            <div className="w-full">
-              <p className="text-xs font-semibold text-[#8A92A6] mb-2">
-                Or enter manually
-              </p>
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-[#1B1F2A] border border-[#262A35] font-mono text-sm text-[#E6E9F0] break-all">
-                <span className="flex-1">{state.data.secret}</span>
-                <button
-                  onClick={() => copySecret(state.data.secret)}
-                  className="flex-shrink-0 text-[#8A92A6] hover:text-[#E6E9F0] transition-colors"
-                  title="Copy secret"
-                >
-                  <Copy className="h-4 w-4" />
-                </button>
-              </div>
-              {copied && (
-                <p className="text-xs text-green-400 mt-1">Copied to clipboard</p>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-[#E6E9F0] mb-2">
-              Enter 6-digit verification code
-            </label>
-            <input
-              type="text"
-              inputMode="numeric"
-              maxLength={6}
-              value={tokenInput}
-              onChange={(e) => setTokenInput(e.target.value.replace(/\D/g, ""))}
-              placeholder="000000"
-              className="w-full px-4 py-3 rounded-lg border border-[#262A35] text-center text-2xl font-mono tracking-[0.5em] focus:outline-none focus:ring-2 focus:ring-[#00C2FF]/20 focus:border-transparent bg-[#1B1F2A] text-[#E6E9F0]"
-            />
-          </div>
-
-          <div className="flex gap-3">
+      ) : (
+        <div className="flex gap-2 flex-wrap">
+          <button
+            onClick={() => { setShowNameInput(true); setError(""); setSuccess(""); }}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#1a56db] text-white hover:bg-[#1648c7] transition-colors"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Add passkey
+          </button>
+          {passkeys.length > 0 && (
             <button
-              onClick={() => { setState({ kind: "disabled" }); clearError(); }}
-              className="bg-[#1B1F2A] text-[#8A92A6] hover:bg-[#303444] border border-[#262A35] rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+              onClick={() => void fetchPasskeys()}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg text-[#5f6368] hover:bg-[#f1f3f4] transition-colors"
             >
-              Cancel
+              <RefreshCw className="h-3.5 w-3.5" />
+              Refresh
             </button>
+          )}
+          {mfaEnabled && passkeys.length > 0 && (
             <button
-              onClick={verifyAndEnable}
-              disabled={loading || tokenInput.length !== 6}
-              className="flex-1 bg-[#00C2FF] text-[#06121A] hover:bg-[#12151D] rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50 transition-colors"
+              onClick={async () => {
+                if (!confirm("Remove all passkeys and disable MFA?")) return;
+                for (const pk of passkeys) await removePasskey(pk.id);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg text-[#ea4335] hover:bg-[#fce8e6] transition-colors"
             >
-              {loading ? "Verifying..." : "Verify & Enable"}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {state.kind === "backup-codes" && (
-        <div className="p-6 bg-[#12151D] border border-[#262A35] rounded-xl space-y-6">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <ShieldCheck className="h-6 w-6 text-emerald-400" />
-              <h3 className="text-xl font-semibold text-[#E6E9F0]">MFA Enabled Successfully</h3>
-            </div>
-            <p className="text-sm text-[#8A92A6]">
-              Save these backup codes somewhere safe. Each code can only be used once to sign in if you lose access to your authenticator app.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 p-4 rounded-xl bg-[#1B1F2A] border border-[#262A35]">
-            {state.codes.map((code, i) => (
-              <div
-                key={i}
-                className="font-mono text-sm text-[#E6E9F0] px-3 py-2 rounded-lg bg-[#1B1F2A] border border-[#262A35] text-center tracking-widest"
-              >
-                {code}
-              </div>
-            ))}
-          </div>
-
-          <div className="flex gap-3">
-            <button
-              onClick={() => downloadCodes(state.codes)}
-              className="bg-[#1B1F2A] text-[#8A92A6] hover:bg-[#303444] border border-[#262A35] rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2 transition-colors"
-            >
-              <Download className="h-4 w-4" />
-              Download
-            </button>
-            <button
-              onClick={() => setState({ kind: "enabled" })}
-              className="flex-1 bg-[#00C2FF] text-[#06121A] hover:bg-[#12151D] rounded-lg px-4 py-2 text-sm font-medium transition-colors"
-            >
-              I&apos;ve saved these codes
-            </button>
-          </div>
-        </div>
-      )}
-
-      {state.kind === "enabled" && (
-        <div className="p-6 bg-[#12151D] border border-[#262A35] rounded-xl space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-emerald-500/15">
-                <ShieldCheck className="h-6 w-6 text-emerald-400" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-xl font-semibold text-[#E6E9F0]">Two-Factor Authentication</h3>
-                  <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-emerald-500/15 text-emerald-400">
-                    Enabled
-                  </span>
-                </div>
-                <p className="text-sm text-[#8A92A6] mt-0.5">Your account is protected with TOTP authentication.</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex gap-3 pt-2">
-            <button
-              onClick={() => { setModal({ action: "regenerate", token: "" }); clearError(); }}
-              className="bg-[#1B1F2A] text-[#8A92A6] hover:bg-[#303444] border border-[#262A35] rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2 transition-colors"
-            >
-              <RefreshCw className="h-4 w-4" />
-              Regenerate Backup Codes
-            </button>
-            <button
-              onClick={() => { setModal({ action: "disable", token: "" }); clearError(); }}
-              className="bg-[#ea4335]/10 text-[#ea4335] hover:bg-[#ea4335]/20 border border-[#ea4335]/30 rounded-lg px-4 py-2 text-sm font-medium flex items-center gap-2 transition-colors"
-            >
-              <ShieldOff className="h-4 w-4" />
+              <ShieldOff className="h-3.5 w-3.5" />
               Disable MFA
             </button>
-          </div>
+          )}
         </div>
       )}
 
-      {modal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 ">
-          <div className="bg-[#12151D] rounded-xl shadow-2xl w-full max-w-sm mx-4 p-6 space-y-4 border border-[#262A35]">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-[#E6E9F0]">
-                {modal.action === "disable" ? "Disable MFA" : "Regenerate Backup Codes"}
-              </h3>
-              <button
-                onClick={() => { setModal(null); clearError(); }}
-                className="text-[#8A92A6] hover:text-[#E6E9F0] transition-colors"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            {modal.action === "disable" && (
-              <p className="text-sm text-[#ea4335] bg-[#ea4335]/10 border border-[#ea4335]/30 rounded-lg p-3">
-                This will remove MFA protection from your account. You will need your authenticator app code to confirm.
-              </p>
-            )}
-
-            <div>
-              <label className="block text-sm font-medium text-[#E6E9F0] mb-2">
-                Enter current authenticator code
-              </label>
-              <input
-                type="text"
-                inputMode="numeric"
-                maxLength={6}
-                value={modal.token}
-                onChange={(e) =>
-                  setModal({ ...modal, token: e.target.value.replace(/\D/g, "") })
-                }
-                placeholder="000000"
-                className="w-full px-4 py-3 rounded-lg border border-[#262A35] text-center text-2xl font-mono tracking-[0.5em] focus:outline-none focus:ring-2 focus:ring-[#00C2FF]/20 focus:border-transparent bg-[#1B1F2A] text-[#E6E9F0]"
-                autoFocus
-              />
-            </div>
-
-            {error && (
-              <p className="text-sm text-red-400">{error}</p>
-            )}
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => { setModal(null); clearError(); }}
-                className="flex-1 bg-[#1B1F2A] text-[#8A92A6] hover:bg-[#303444] border border-[#262A35] rounded-lg px-4 py-2 text-sm font-medium transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleModalSubmit}
-                disabled={loading || modal.token.length !== 6}
-                className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg text-white disabled:opacity-50 transition-colors ${
-                  modal.action === "disable"
-                    ? "bg-red-600 hover:bg-red-700"
-                    : "bg-[#2563eb] hover:bg-[#0098E6]"
-                }`}
-              >
-                {loading
-                  ? "Please wait..."
-                  : modal.action === "disable"
-                  ? "Disable MFA"
-                  : "Regenerate"}
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Explainer for new users */}
+      {!mfaEnabled && (
+        <p className="text-[11px] text-[#80868b] leading-relaxed">
+          Passkeys use your device&apos;s built-in biometrics (Face ID, Touch ID, Windows Hello) or PIN —
+          nothing is shared with Nexus. Verification happens entirely on your device.
+          Phishing-proof and more secure than any code or push notification.
+        </p>
       )}
     </div>
   );

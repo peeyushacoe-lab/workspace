@@ -54,8 +54,24 @@ export async function POST(request: NextRequest) {
       maxAge: 60 * 60 * 8,
     };
 
-    const response = NextResponse.json({ success: true, redirectTo: "/inbox" });
+    // New users (forced reset) must set up a passkey before accessing the app
+    const isForcedReset = user.mustResetPassword;
+    const redirectTo = isForcedReset ? "/setup-passkey" : "/inbox";
+
+    const response = NextResponse.json({ success: true, redirectTo });
     response.cookies.set("cybersage_user", signPayload(JSON.stringify(updatedUser)), cookieOptions);
+
+    if (isForcedReset) {
+      // Gate cookie — middleware blocks portal access until passkey is registered
+      response.cookies.set("pending_mfa_setup", "1", {
+        httpOnly: true,
+        sameSite: "lax" as const,
+        secure: process.env.NODE_ENV === "production",
+        path: "/",
+        maxAge: 60 * 30, // 30 min to complete setup
+      });
+    }
+
     return response;
   } catch (error) {
     if (error instanceof z.ZodError) {

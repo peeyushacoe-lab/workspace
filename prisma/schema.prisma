@@ -131,6 +131,7 @@ model User {
   legalHolds        LegalHold[]        @relation("LegalHoldUser")
   legalHoldsPlaced  LegalHold[]        @relation("LegalHoldPlacedBy")
   mobilePushTokens  MobilePushToken[]
+  passkeys          Passkey[]
 
   // Internship Hub relations
   internAnnouncements  InternAnnouncement[]   @relation("AnnouncementAuthor")
@@ -147,6 +148,22 @@ model User {
   internWeekCompletions InternWeekCompletion[] @relation("WeekCompletions")
   internWeekNotes      InternWeekMentorNote[] @relation("WeekMentorNotes")
   internModuleCompletions InternModuleCompletion[] @relation("ModuleCompletions")
+}
+
+// WebAuthn passkey credentials
+model Passkey {
+  id           String    @id @default(cuid())
+  userId       String
+  name         String    @default("My passkey")
+  credentialId String    @unique
+  publicKey    Bytes
+  counter      BigInt    @default(0)
+  deviceType   String    // "singleDevice" | "multiDevice"
+  backedUp     Boolean   @default(false)
+  transports   String[]
+  createdAt    DateTime  @default(now())
+  lastUsedAt   DateTime?
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // Admin-defined custom roles (supplements UserRole enum)

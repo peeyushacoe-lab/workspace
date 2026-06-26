@@ -30,6 +30,7 @@ const protectedRoutes = [
   "/compliance",
   "/notifications",
   "/download",
+  "/setup-passkey",
 ];
 
 const validRoles = new Set<string>([
@@ -135,6 +136,13 @@ export async function middleware(request: NextRequest) {
 
   if (!canAccessPath(user, request.nextUrl.pathname)) {
     return NextResponse.redirect(new URL(portalHome, request.url));
+  }
+
+  // New user onboarding gate: force passkey setup before accessing the app
+  const pendingMfaSetup = request.cookies.get("pending_mfa_setup")?.value === "1";
+  const isOnSetupPasskey = request.nextUrl.pathname.startsWith("/setup-passkey");
+  if (pendingMfaSetup && !isOnSetupPasskey) {
+    return NextResponse.redirect(new URL("/setup-passkey", request.url));
   }
 
   // MFA enforcement: admin-level roles with MFA enabled must complete the challenge each session

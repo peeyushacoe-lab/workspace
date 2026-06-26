@@ -104,8 +104,18 @@ function AuthGate({ children }: { children: React.ReactNode }) {
         roomName?: string;
         media?: string;
         callerName?: string;
+        challengeId?: string;
+        number?: number;
+        options?: number[];
       };
-      if (data?.type === "call" && data?.callId) {
+      if (data?.type === "mfa_challenge" && data?.challengeId) {
+        const q = new URLSearchParams({
+          challengeId: data.challengeId,
+          number: String(data.number ?? ""),
+          options: JSON.stringify(data.options ?? []),
+        }).toString();
+        router.push(`/(auth)/mfa-approve?${q}` as never);
+      } else if (data?.type === "call" && data?.callId) {
         const q = new URLSearchParams({
           roomName: data.roomName ?? "",
           media: data.media ?? "audio",
