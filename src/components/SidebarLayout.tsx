@@ -1,9 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { LogOut, ChevronLeft, ChevronRight, Menu, X, Settings, BellOff, Bell, Inbox, MessageSquare, Video, Sparkles, CalendarDays, CheckSquare, Search } from "lucide-react"; // eslint-disable-line @typescript-eslint/no-unused-vars
+import { LogOut, ChevronLeft, ChevronRight, Menu, X, Settings, Inbox, MessageSquare, Video, Sparkles, CalendarDays, CheckSquare, Search } from "lucide-react"; // eslint-disable-line @typescript-eslint/no-unused-vars
 // Search is used in the Suspense fallback pill
 import { SidebarNav } from "./SidebarNav";
 import { SearchTrigger } from "./GlobalSearch";
@@ -25,7 +25,6 @@ export function SidebarLayout({
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [isDnd, setIsDnd] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const pathname = usePathname();
   const currentUserId = currentUser?.id;
@@ -40,12 +39,7 @@ export function SidebarLayout({
     try {
       if (localStorage.getItem("sidebar_collapsed") === "true") setCollapsed(true);
     } catch {}
-    // Load current presence status (requires userId param)
     if (currentUserId) {
-      fetch(`/api/presence?userIds=${currentUserId}`)
-        .then(r => r.ok ? r.json() : null)
-        .then(d => { if (d?.[currentUserId]?.status === "dnd") setIsDnd(true); })
-        .catch(() => {});
       // Load avatar
       fetch("/api/profile")
         .then(r => r.ok ? r.json() : null)
@@ -53,18 +47,6 @@ export function SidebarLayout({
         .catch(() => {});
     }
   }, [currentUserId]);
-
-  const toggleDnd = useCallback(async () => {
-    const next = !isDnd;
-    setIsDnd(next);
-    try {
-      await fetch("/api/presence", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: next ? "dnd" : "online" }),
-      });
-    } catch {}
-  }, [isDnd]);
 
   const toggleCollapsed = () => {
     setCollapsed((prev) => {
@@ -118,25 +100,6 @@ export function SidebarLayout({
                 </div>
               </div>
             )}
-
-            {/* Do Not Disturb toggle */}
-            <button
-              onClick={toggleDnd}
-              title={isDnd ? "Do Not Disturb: On" : "Do Not Disturb: Off"}
-              className={`flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13px] transition-colors w-full ${
-                collapsed && !isMobile ? "justify-center w-9 px-0" : ""
-              } ${
-                isDnd
-                  ? "text-[#00C2FF] bg-[#0E2532] hover:bg-[#0E2532]"
-                  : "text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0]"
-              }`}
-            >
-              {isDnd
-                ? <BellOff className="h-[15px] w-[15px] flex-shrink-0" />
-                : <Bell className="h-[15px] w-[15px] flex-shrink-0" />
-              }
-              {(!collapsed || isMobile) && (isDnd ? "Do Not Disturb" : "Notifications on")}
-            </button>
 
             {/* Sign out */}
             <form
