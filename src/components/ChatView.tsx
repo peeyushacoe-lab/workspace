@@ -1821,7 +1821,7 @@ function CommandPalette({
 // ─── Main ChatView ────────────────────────────────────────────────────────────
 
 export function ChatView({ currentUserId, userRole }: { currentUserId: string; userRole?: string }) {
-  const canCall = userRole !== "INTERNSHIP";
+  const canCall = false; // Call feature hidden — Jitsi calling not fully built
   const { startCall, busy: callBusy } = useCall();
   const [channels, setChannels] = useState<Channel[]>([]);
   const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null);
