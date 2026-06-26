@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   User, Shield, Bell, Mail, FileSignature, Palette,
   Globe, Lock, Filter, Plus, Trash2, Loader2, X,
-  Sun, Moon, Monitor, Check, ToggleRight,
+  Check, ToggleRight,
   Download, AlertTriangle, Camera, Key, Cpu,
   Copy, Eye, EyeOff, Building2, Phone, MapPin,
   Link2, Tag, Briefcase, Users, Forward,
@@ -662,56 +662,19 @@ function SignatureTab({ userName }: { userName: string }) {
 // ─── Appearance Tab ───────────────────────────────────────────────────────────
 
 function AppearanceTab() {
-  const [theme,   setTheme]   = useState<"light" | "dark" | "system">("dark");
   const [density, setDensity] = useState<"comfortable" | "compact">("comfortable");
   const [fontSize, setFontSize] = useState<"normal" | "large">("normal");
 
   useEffect(() => {
-    try {
-      const s = localStorage.getItem("theme") as typeof theme | null;
-      if (s) {
-        setTheme(s);
-        // Re-apply on mount so navigating back to this tab reflects reality
-        const dark = s === "dark" || (s === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
-        document.documentElement.classList.toggle("dark", dark);
-      } else {
-        // Default: dark
-        document.documentElement.classList.add("dark");
-      }
-    } catch {}
+    // Always enforce dark mode
+    document.documentElement.classList.add("dark");
+    localStorage.setItem("theme", "dark");
     try { const d = localStorage.getItem("ui_density") as typeof density | null; if (d) setDensity(d); } catch {}
     try { const f = localStorage.getItem("font_size") as typeof fontSize | null; if (f) setFontSize(f); } catch {}
   }, []);
 
-  const applyTheme = (t: typeof theme) => {
-    setTheme(t);
-    try {
-      localStorage.setItem("theme", t);
-      const dark = t === "dark" || (t === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
-      document.documentElement.classList.toggle("dark", dark);
-      document.documentElement.setAttribute("data-theme", t);
-    } catch {}
-    toast.success(`Theme set to ${t}`);
-  };
-
   return (
     <>
-      <SectionCard title="Theme" description="Choose how CyberSage looks on your device">
-        <div className="grid grid-cols-3 gap-3">
-          {([["light","Light",Sun],["dark","Dark",Moon],["system","System",Monitor]] as const).map(([val, label, Icon]) => {
-            const active = theme === val;
-            return (
-              <button key={val} onClick={() => applyTheme(val)}
-                className={`flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all ${active ? "border-[#00C2FF] bg-[#00C2FF]/10" : "border-[#262A35] hover:border-[#9aa3b8]"}`}>
-                <Icon className={`h-6 w-6 ${active ? "text-[#00C2FF]" : "text-[#8A92A6]"}`} />
-                <span className={`text-sm font-medium ${active ? "text-[#00C2FF]" : "text-[#8A92A6]"}`}>{label}</span>
-                {active && <Check className="h-4 w-4 text-[#00C2FF]" />}
-              </button>
-            );
-          })}
-        </div>
-      </SectionCard>
-
       <SectionCard title="Layout Density" description="Control spacing and information density">
         <SettingRow label="Comfortable" description="More whitespace, easier to scan">
           <input type="radio" name="density" checked={density === "comfortable"} onChange={() => { setDensity("comfortable"); localStorage.setItem("ui_density","comfortable"); }} className="accent-[#00d2ff]" />

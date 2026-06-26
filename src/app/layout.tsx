@@ -95,10 +95,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${dmSans.variable} ${inter.variable} ${jakarta.variable} ${jetbrains.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
-        {/* Apply saved theme before first paint — prevents flash of wrong theme */}
+        {/* Always dark mode */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('theme')||'dark';var dark=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',dark);document.documentElement.setAttribute('data-theme',t);}catch(e){}})();`,
+            __html: `document.documentElement.classList.add('dark');`,
           }}
         />
       </head>
