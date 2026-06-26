@@ -16,6 +16,7 @@ import {
   ZoomIn,
   ZoomOut,
   RotateCcw,
+  RotateCw,
     } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
@@ -76,6 +77,7 @@ type ImageState = {
   scale: number;
   panX: number;
   panY: number;
+  rotation: number;
   isDragging: boolean;
   dragStartX: number;
   dragStartY: number;
@@ -103,6 +105,7 @@ export function FilePreviewModal({
     scale: 1,
     panX: 0,
     panY: 0,
+    rotation: 0,
     isDragging: false,
     dragStartX: 0,
     dragStartY: 0,
@@ -171,7 +174,7 @@ export function FilePreviewModal({
     setPreviewUrl(null);
     setTextContent(null);
     setCsvData(null);
-    setImgState((s) => ({ ...s, scale: 1, panX: 0, panY: 0 }));
+    setImgState((s) => ({ ...s, scale: 1, panX: 0, panY: 0, rotation: 0 }));
 
     async function load() {
       try {
@@ -253,7 +256,8 @@ export function FilePreviewModal({
 
   const handleZoomIn = () => setImgState((s) => ({ ...s, scale: Math.min(s.scale + 0.25, 5) }));
   const handleZoomOut = () => setImgState((s) => ({ ...s, scale: Math.max(s.scale - 0.25, 0.25) }));
-  const handleZoomReset = () => setImgState((s) => ({ ...s, scale: 1, panX: 0, panY: 0 }));
+  const handleRotate = () => setImgState((s) => ({ ...s, rotation: s.rotation + 90 }));
+  const handleZoomReset = () => setImgState((s) => ({ ...s, scale: 1, panX: 0, panY: 0, rotation: 0 }));
 
   return (
     <div
@@ -322,9 +326,17 @@ export function FilePreviewModal({
                 >
                   <ZoomIn className="h-3.5 w-3.5" />
                 </button>
+                <span className="mx-0.5 h-4 w-px bg-[#262A35]" />
+                <button
+                  onClick={handleRotate}
+                  title="Rotate 90°"
+                  className="p-1.5 text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0] rounded-md transition-colors"
+                >
+                  <RotateCw className="h-3.5 w-3.5" />
+                </button>
                 <button
                   onClick={handleZoomReset}
-                  title="Reset zoom"
+                  title="Reset view"
                   className="p-1.5 text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0] rounded-md transition-colors"
                 >
                   <RotateCcw className="h-3.5 w-3.5" />
@@ -412,7 +424,7 @@ export function FilePreviewModal({
                 draggable={false}
                 className="max-w-full max-h-full rounded-lg shadow-2xl select-none"
                 style={{
-                  transform: `scale(${imgState.scale}) translate(${imgState.panX / imgState.scale}px, ${imgState.panY / imgState.scale}px)`,
+                  transform: `scale(${imgState.scale}) translate(${imgState.panX / imgState.scale}px, ${imgState.panY / imgState.scale}px) rotate(${imgState.rotation}deg)`,
                   transition: imgState.isDragging ? "none" : "transform 150ms ease-out",
                 }}
               />

@@ -2235,7 +2235,7 @@ function GridFileCard({
           </div>
         )}
         {file.isStarred && (
-          <Star className="absolute right-2.5 top-2.5 h-[15px] w-[15px] fill-[#FFB020] text-[#FFB020]" />
+          <Star className="absolute right-2.5 bottom-2.5 h-[15px] w-[15px] fill-[#FFB020] text-[#FFB020] drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)] opacity-100 group-hover:opacity-0 transition-opacity" />
         )}
         <div className="absolute right-1 top-1 hidden flex-wrap gap-1 group-hover:flex">
           <ActionBtn

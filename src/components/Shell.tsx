@@ -37,7 +37,7 @@ export function PageHeader({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="border-b border-[#1C1F28] bg-[#12151D]">
+    <div className="border-b glass">
       <div className="px-6 py-5 lg:px-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex-1 min-w-0">

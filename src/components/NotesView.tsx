@@ -34,13 +34,13 @@ type Folder = { id: string; name: string };
 
 const NOTE_COLORS = [
   { label: "Default", value: "",           bg: "bg-[#12151D]",          border: "border-[#262A35]", dot: "#262A35" },
-  { label: "Blue",    value: "#0E2532",    bg: "bg-blue-500/10",        border: "border-blue-500/20",  dot: "#93c5fd" },
-  { label: "Green",   value: "#dcfce7",    bg: "bg-emerald-500/10",     border: "border-emerald-500/20", dot: "#6ee7b7" },
-  { label: "Yellow",  value: "#fef9c3",    bg: "bg-yellow-500/10",      border: "border-yellow-500/20", dot: "#fde047" },
-  { label: "Red",     value: "#fee2e2",    bg: "bg-red-500/10",         border: "border-red-500/20",   dot: "#fca5a5" },
-  { label: "Purple",  value: "#f3e8ff",    bg: "bg-purple-500/10",      border: "border-purple-500/20", dot: "#d8b4fe" },
-  { label: "Orange",  value: "#ffedd5",    bg: "bg-orange-500/10",      border: "border-orange-500/20", dot: "#fdba74" },
-  { label: "Grey",    value: "#1B1F2A",    bg: "bg-[#1B1F2A]",      border: "border-[#2E333F]", dot: "#bdc1c6" },
+  { label: "Blue",    value: "#0E2532",    bg: "bg-blue-500/25",        border: "border-blue-500/50",  dot: "#93c5fd" },
+  { label: "Green",   value: "#dcfce7",    bg: "bg-emerald-500/25",     border: "border-emerald-500/50", dot: "#6ee7b7" },
+  { label: "Yellow",  value: "#fef9c3",    bg: "bg-yellow-500/25",      border: "border-yellow-500/50", dot: "#fde047" },
+  { label: "Red",     value: "#fee2e2",    bg: "bg-red-500/25",         border: "border-red-500/50",   dot: "#fca5a5" },
+  { label: "Purple",  value: "#f3e8ff",    bg: "bg-purple-500/25",      border: "border-purple-500/50", dot: "#d8b4fe" },
+  { label: "Orange",  value: "#ffedd5",    bg: "bg-orange-500/25",      border: "border-orange-500/50", dot: "#fdba74" },
+  { label: "Grey",    value: "#1B1F2A",    bg: "bg-slate-400/25",       border: "border-slate-400/50", dot: "#bdc1c6" },
 ];
 
 function getNoteColor(color: string | null) {

@@ -168,12 +168,12 @@ export function SidebarLayout({
   }
 
   return (
-    <div className="min-h-screen bg-[#0B0D12]">
+    <div className="min-h-screen bg-transparent">
       <div className="flex min-h-screen">
 
         {/* ── Desktop sidebar ───────────────────────────────── */}
         <aside
-          className={`hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 bg-[#0F1117] border-r border-[#1C1F28] transition-all duration-200 z-30 ${desktopWidth}`}
+          className={`hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 glass-strong border-r transition-all duration-200 z-30 ${desktopWidth}`}
         >
           {/* Logo header */}
           <div
@@ -218,7 +218,7 @@ export function SidebarLayout({
               className="absolute inset-0 bg-black/40"
               onClick={() => setMobileOpen(false)}
             />
-            <aside className="relative z-10 flex w-[228px] flex-col bg-[#0F1117] shadow-xl border-r border-[#1C1F28]">
+            <aside className="relative z-10 flex w-[228px] flex-col glass-strong shadow-xl border-r">
               <div className="flex h-[52px] items-center gap-2.5 border-b border-[#1C1F28] px-4">
                 <img src="/nexusLogo-dark.png" alt="CyberSage Nexus" className="h-[24px] w-auto object-contain max-w-[130px]" />
                 <div className="flex-1" />
@@ -235,7 +235,7 @@ export function SidebarLayout({
         )}
 
         {/* ── Mobile top bar — Gmail-style search-first ─────── */}
-        <div className="lg:hidden fixed top-0 inset-x-0 z-40 flex h-[60px] items-center gap-2 bg-[#0B0D12] px-3">
+        <div className="lg:hidden fixed top-0 inset-x-0 z-40 flex h-[60px] items-center gap-2 glass px-3">
           {/* Hamburger */}
           <button
             onClick={() => setMobileOpen(true)}
@@ -264,7 +264,7 @@ export function SidebarLayout({
 
         {/* ── Mobile bottom tab bar — 4-tab pip style ───────── */}
         <nav
-          className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-[#0F1117] border-t border-[#1C1F28]"
+          className="lg:hidden fixed bottom-0 inset-x-0 z-40 glass border-t"
           style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         >
           <div className="flex h-[56px] items-stretch">
@@ -297,12 +297,12 @@ export function SidebarLayout({
         </nav>
 
         {/* ── Desktop top bar (search + actions) ───────────── */}
-        <div className={`hidden lg:flex fixed top-0 inset-x-0 z-20 h-[56px] items-center gap-4 px-5 bg-[#0B0D12] border-b border-[#1C1F28] transition-all duration-200 ${contentPad}`}>
+        <div className={`hidden lg:flex fixed top-0 inset-x-0 z-20 h-[56px] items-center gap-4 px-5 glass border-b transition-all duration-200 ${contentPad}`}>
           <div className="flex-1 flex justify-center">
             <SearchTrigger variant="topbar" />
           </div>
           {currentUser && (
-            <div className="flex items-center gap-1.5 flex-shrink-0">
+            <div className="topbar-actions flex items-center gap-1.5 flex-shrink-0">
               <Suspense fallback={null}>
                 <NotificationCenter userId={currentUser.id} />
               </Suspense>

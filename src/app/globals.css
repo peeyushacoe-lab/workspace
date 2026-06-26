@@ -415,6 +415,175 @@ button, a, [role="button"], input, textarea, select {
   transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   NEXUS "AURORA" GLASSMORPHISM + MOTION LAYER
+   Animated aurora background · frosted-glass surfaces · hover glow · shimmer.
+   Applied app-wide through shared shell components + global card overrides.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Corner glow — a soft aurora orb tucked behind the top-right actions ───── */
+@keyframes corner-pulse {
+  0%, 100% { opacity: 0.72; transform: scale(1) translate(0, 0); filter: hue-rotate(0deg); }
+  50%      { opacity: 1;    transform: scale(1.12) translate(-10px, 6px); filter: hue-rotate(35deg); }
+}
+
+.dark body::before {
+  content: "";
+  position: fixed;
+  top: -150px;
+  right: -150px;
+  width: 460px;
+  height: 460px;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 68% 32%,
+    rgba(0, 194, 255, 0.22),
+    rgba(124, 92, 255, 0.13) 42%,
+    rgba(255, 64, 160, 0.06) 60%,
+    transparent 72%);
+  animation: corner-pulse 8s ease-in-out infinite;
+  will-change: opacity, transform, filter;
+}
+/* Keep all app content stacked above the corner glow */
+body > * { position: relative; z-index: 1; }
+
+/* Glass pill that frames the top-right actions, lit by the corner glow */
+.dark .topbar-actions {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 9999px;
+  padding: 3px 5px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+/* The notification bell glows softly while it carries an unread dot */
+.dark .topbar-actions button:has(.nexpulse-dot) {
+  border-radius: 9999px;
+  animation: glow-breathe 2.6s ease-in-out infinite;
+}
+
+/* ── Frosted glass surfaces ───────────────────────────────────────────────── */
+@utility glass {
+  background: rgba(18, 21, 29, 0.55);
+  backdrop-filter: blur(20px) saturate(155%);
+  -webkit-backdrop-filter: blur(20px) saturate(155%);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+@utility glass-strong {
+  background: rgba(13, 15, 21, 0.68);
+  backdrop-filter: blur(26px) saturate(160%);
+  -webkit-backdrop-filter: blur(26px) saturate(160%);
+  border-color: rgba(255, 255, 255, 0.10);
+}
+/* Frosted glass card — top inner highlight + depth shadow + hover glow */
+@utility glass-card {
+  position: relative;
+  background: linear-gradient(160deg, rgba(28, 33, 46, 0.60), rgba(15, 17, 23, 0.52)) !important;
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.40), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+}
+.glass-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(0, 194, 255, 0.50);
+  box-shadow: 0 22px 56px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(0, 194, 255, 0.25),
+              0 0 42px rgba(0, 194, 255, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.10);
+}
+
+/* Generic hover-lift — drop on any interactive tile */
+@utility hover-lift {
+  transition: transform 0.24s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.24s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.50);
+}
+
+/* ── Shimmer sweep — drop on primary buttons / banners ────────────────────── */
+@keyframes shimmer-sweep {
+  0%   { transform: translateX(-130%); }
+  55%, 100% { transform: translateX(260%); }
+}
+@utility shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 55%;
+  height: 100%;
+  background: linear-gradient(110deg, transparent, rgba(255, 255, 255, 0.40), transparent);
+  transform: translateX(-130%);
+  pointer-events: none;
+}
+.shimmer:hover::after { animation: shimmer-sweep 0.95s ease; }
+
+/* ── Breathing glow — live indicators / status pills ──────────────────────── */
+@keyframes glow-breathe {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 194, 255, 0.50); }
+  50%      { box-shadow: 0 0 22px 3px rgba(0, 194, 255, 0.40); }
+}
+@utility glow-breathe { animation: glow-breathe 2.6s ease-in-out infinite; }
+
+/* ── Animated aurora gradient text — headings / brand ─────────────────────── */
+@keyframes text-sheen { to { background-position: 200% center; } }
+@utility text-aurora {
+  background: linear-gradient(100deg, #00C2FF, #7C5CFF, #FF40A0, #00C2FF);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: text-sheen 5s linear infinite;
+}
+
+/* ── "Cards everywhere": auto-frost the common dark card surfaces ──────────────
+   Rules outside @layer beat Tailwind's layered utilities, so any element using
+   these dark fills together with a card radius becomes frosted glass + lifts.   */
+.dark .bg-\[\#12151D\].rounded-xl,
+.dark .bg-\[\#12151D\].rounded-2xl,
+.dark .bg-\[\#0F1117\].rounded-xl,
+.dark .bg-\[\#0F1117\].rounded-2xl,
+.dark .bg-\[\#141828\].rounded-xl,
+.dark .bg-\[\#141828\].rounded-2xl,
+.dark .bg-\[\#0D1017\].rounded-xl,
+.dark .bg-\[\#0D1017\].rounded-2xl,
+.dark .glass-panel {
+  background: linear-gradient(160deg, rgba(28, 33, 46, 0.58), rgba(15, 17, 23, 0.50)) !important;
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border-color: rgba(255, 255, 255, 0.09) !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+}
+/* Lift + cyan glow on hover for those auto-frosted cards */
+.dark .bg-\[\#12151D\].rounded-xl:hover,
+.dark .bg-\[\#12151D\].rounded-2xl:hover,
+.dark .bg-\[\#0F1117\].rounded-xl:hover,
+.dark .bg-\[\#141828\].rounded-2xl:hover {
+  transform: translateY(-4px);
+  border-color: rgba(0, 194, 255, 0.45) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.52), 0 0 0 1px rgba(0, 194, 255, 0.20),
+              0 0 36px rgba(0, 194, 255, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* Primary cyan buttons — global glow + lift on hover */
+.dark button.bg-\[\#00C2FF\],
+.dark a.bg-\[\#00C2FF\] {
+  box-shadow: 0 4px 18px rgba(0, 194, 255, 0.28);
+}
+.dark button.bg-\[\#00C2FF\]:hover,
+.dark a.bg-\[\#00C2FF\]:hover {
+  box-shadow: 0 8px 28px rgba(0, 194, 255, 0.45);
+  transform: translateY(-1px);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.001ms !important;

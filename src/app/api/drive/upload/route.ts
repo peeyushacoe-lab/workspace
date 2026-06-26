@@ -67,6 +67,19 @@ function isAllowedFile(fileName: string, mimeType: string): string | null {
   // append "; codecs=..." to MIME types (e.g. "audio/mp4; codecs=mp4a.40.2")
   // which would cause a false 415 against the exact-match set.
   const baseMime = (mimeType || "application/octet-stream").split(";")[0].trim();
+  // Wildcard-allow whole media families. Browsers/OSes emit a long tail of
+  // image/* video/* audio/* text/* subtypes (heic, jfif, x-* aliases, etc.)
+  // that an exact-match set will always miss — the root cause of plain image
+  // uploads failing with a false 415. The extension blocklist above still
+  // stops executables, so this stays safe.
+  if (
+    baseMime.startsWith("image/") ||
+    baseMime.startsWith("video/") ||
+    baseMime.startsWith("audio/") ||
+    baseMime.startsWith("text/")
+  ) {
+    return null;
+  }
   if (!ALLOWED_MIME_TYPES.has(baseMime)) {
     return `MIME type '${baseMime}' is not permitted`;
   }
