@@ -95,7 +95,9 @@ export const portalNavItems: PortalNavItem[] = [
   // Developer page hidden — broken, not ready
   // { href: "/developer",   label: "Developer",   hint: "API keys & webhooks",        roles: MGMT_ROLES },
   { href: "/internship",             label: "Intern Hub",  hint: "Internship workspace",   roles: ["INTERNSHIP", ...MGMT_ROLES] },
-  { href: "/internship/attendance",  label: "Attendance",  hint: "Punch-in / timesheet",   roles: ["INTERNSHIP", ...MGMT_ROLES] },
+  // Mentors get the full management hub (curriculum, attendance, HR); interns keep a simple punch-in page.
+  { href: "/mentor",                 label: "Mentor",      hint: "Interns, attendance & HR", roles: MGMT_ROLES },
+  { href: "/internship/attendance",  label: "Attendance",  hint: "Punch-in / timesheet",   roles: ["INTERNSHIP"] },
   // Settings is shown via the hardcoded icon in SidebarLayout (top bar + bottom of sidebar) — no need for a nav item
   // { href: "/settings",    label: "Settings",    hint: "Signature & security",       roles: ALL_ROLES },
   // Desktop App download hidden for now
@@ -142,6 +144,7 @@ const pathAccess: Array<{ prefix: string; roles: UserRole[] }> = [
   { prefix: "/access",         roles: ["ADMIN", "CISO"] },
   { prefix: "/brain",          roles: ALL_ROLES },
   { prefix: "/internship",     roles: ["INTERNSHIP", "ADMIN", "CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER"] },
+  { prefix: "/mentor",         roles: MGMT_ROLES },
 ];
 
 const validRoles = new Set<UserRole>(ALL_ROLES);

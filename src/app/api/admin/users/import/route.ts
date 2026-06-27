@@ -4,6 +4,7 @@ import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { logAudit } from "@/lib/audit";
 import { sendInviteEmail } from "@/lib/email";
+import { generateEmployeeId } from "@/lib/employee-id";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 
@@ -69,12 +70,15 @@ export async function POST(request: Request) {
       const tempPassword = crypto.randomBytes(16).toString("hex");
       const passwordHash = await bcrypt.hash(tempPassword, 12);
 
+      const employeeId = await generateEmployeeId(role).catch(() => null);
+
       await prisma.user.create({
         data: {
           email,
           fullName,
           role: role as Parameters<typeof prisma.user.create>[0]["data"]["role"],
           passwordHash,
+          ...(employeeId ? { preferences: { hr: { employeeId } } } : {}),
           mustResetPassword: true,
           invitedBy: currentUser.id,
         },

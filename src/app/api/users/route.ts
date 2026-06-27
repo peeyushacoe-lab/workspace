@@ -6,6 +6,7 @@ import { randomBytes } from "crypto";
 import { getCurrentUser } from "@/lib/session";
 import { CREATOR_PERMISSIONS, KEY_ROLES } from "@/lib/auth";
 import { sendInviteEmail, sendInternWelcomeEmail, sendWelcomeInboxMessage } from "@/lib/email";
+import { generateEmployeeId } from "@/lib/employee-id";
 import type { UserRole } from "@/generated/prisma/enums";
 
 const createUserSchema = z.object({
@@ -97,6 +98,13 @@ export async function POST(request: Request) {
     const tempPassword = generateTempPassword();
     const hashedPassword = await bcrypt.hash(tempPassword, 12);
 
+    // Auto-assign an employee ID (SI… for interns, SE… for staff). Stored in the
+    // preferences JSON blob so no schema migration is needed.
+    const employeeId = await generateEmployeeId(role).catch((err) => {
+      console.error("[employee id]", err);
+      return null;
+    });
+
     const user = await prisma.user.create({
       data: {
         email: validated.workEmail,
@@ -105,6 +113,7 @@ export async function POST(request: Request) {
         fullName: validated.fullName,
         role,
         ...(validated.customRole ? { customRole: validated.customRole } : {}),
+        ...(employeeId ? { preferences: { hr: { employeeId } } } : {}),
         mustResetPassword: true,
         invitedBy: currentUser.id,
         organizationId: currentUser.organizationId ?? undefined,
