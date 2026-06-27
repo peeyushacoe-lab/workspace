@@ -631,7 +631,6 @@ interface HRRow {
   };
 }
 
-type HRScope = "interns" | "staff" | "all";
 type HRDraft = { employeeId: string; startDate: string; endDate: string; phone: string; emergencyContactName: string; emergencyContactPhone: string };
 
 function rowToDraft(r: HRRow): HRDraft {
@@ -646,7 +645,7 @@ function rowToDraft(r: HRRow): HRDraft {
 }
 
 function MentorHRSubTab() {
-  const [scope, setScope] = useState<HRScope>("interns");
+  // Mentor HR is scoped to interns only. Staff HR lives in the admin HR tab.
   const [rows, setRows] = useState<HRRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [drafts, setDrafts] = useState<Record<string, HRDraft>>({});
@@ -656,13 +655,13 @@ function MentorHRSubTab() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/internship/hr?scope=${scope}`);
+      const res = await fetch(`/api/internship/hr?scope=interns`);
       const data = res.ok ? (await res.json() as HRRow[]) : [];
       setRows(data);
       setDrafts(Object.fromEntries(data.map(r => [r.id, rowToDraft(r)])));
     } catch { setRows([]); }
     finally { setLoading(false); }
-  }, [scope]);
+  }, []);
 
   useEffect(() => { load(); }, [load]);
 
@@ -692,7 +691,7 @@ function MentorHRSubTab() {
       const res = await fetch("/api/internship/hr", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "backfill", scope }),
+        body: JSON.stringify({ action: "backfill", scope: "interns" }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error();
@@ -707,18 +706,7 @@ function MentorHRSubTab() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex gap-1">
-          {([
-            { id: "interns" as HRScope, label: "Interns" },
-            { id: "staff" as HRScope, label: "Staff" },
-            { id: "all" as HRScope, label: "Everyone" },
-          ]).map(s => (
-            <button key={s.id} onClick={() => setScope(s.id)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-                scope === s.id ? "bg-[#00C2FF]/10 text-[#00C2FF]" : "text-[#8A92A6] hover:text-[#E6E9F0] hover:bg-[#1B1F2A]"
-              }`}>{s.label}</button>
-          ))}
-        </div>
+        <p className="text-sm text-[#8A92A6]">Intern HR records · <span className="text-[#E6E9F0] font-medium">{rows.length}</span></p>
         <button onClick={backfill} disabled={backfilling || missingCount === 0}
           className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#0E2532] text-[#00C2FF] hover:bg-[#133347] disabled:opacity-50 transition-colors">
           {backfilling ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}

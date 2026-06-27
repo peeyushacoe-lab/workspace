@@ -90,6 +90,7 @@ export const portalNavItems: PortalNavItem[] = [
   { href: "/billing",    label: "Billing",     hint: "Plans & usage",          roles: ["ADMIN"] },
   { href: "/org",       label: "Org",        hint: "Organization settings",  roles: ["ADMIN"] },
   { href: "/admin",     label: "Admin",      hint: "System administration", roles: ["ADMIN"] },
+  { href: "/admin/hr",  label: "HR",         hint: "Employee records",      roles: ["ADMIN"] },
   { href: "/compliance",  label: "Compliance",  hint: "Audit logs & GDPR",         roles: ["ADMIN", "CISO"] },
   { href: "/soc",         label: "SOC",         hint: "Security operations centre", roles: ["ADMIN", "CISO", "CEO"] },
   // Developer page hidden — broken, not ready

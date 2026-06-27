@@ -7,7 +7,7 @@ import {
   Globe, Lock, Filter, Plus, Trash2, Loader2, X,
   Check, ToggleRight,
   Download, AlertTriangle, Camera, Key, Cpu,
-  Copy, Eye, EyeOff, Building2, Phone, MapPin,
+  Copy, Eye, EyeOff, Phone, MapPin,
   Link2, Tag, Briefcase, Users, Forward,
 } from "lucide-react";
 import { sanitizeHtml } from "@/lib/sanitize-html";
@@ -20,6 +20,7 @@ import { toast } from "sonner";
 
 type Tab =
   | "profile"
+  | "hr"
   | "appearance"
   | "notifications"
   | "signature"
@@ -177,6 +178,7 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
 
 const ALL_TABS: { id: Tab; label: string; icon: React.ElementType; description: string; adminOnly?: boolean; roleOnly?: string[] }[] = [
   { id: "profile",       label: "Profile",          icon: User,          description: "Personal info and avatar" },
+  { id: "hr",            label: "My HR",            icon: Briefcase,     description: "Employee ID & emergency contact" },
   { id: "appearance",    label: "Appearance",        icon: Palette,       description: "Theme, density, and fonts" },
   { id: "notifications", label: "Notifications",     icon: Bell,          description: "Alerts and digests" },
   { id: "signature",     label: "Signature",         icon: FileSignature, description: "Email signature editor" },
@@ -257,7 +259,6 @@ function ProfileTab({ userId }: { userId: string }) {
           displayName:  profile.displayName,
           bio:          profile.bio,
           jobTitle:     profile.jobTitle,
-          company:      profile.company,
           department:   profile.department,
           phone:        profile.phone,
           website:      profile.website,
@@ -472,12 +473,6 @@ function ProfileTab({ userId }: { userId: string }) {
               <Briefcase className="h-3 w-3" /> Job Title
             </label>
             <input value={profile.jobTitle ?? ""} onChange={(e) => update("jobTitle", e.target.value)} className={inputClass} placeholder="e.g. Senior Developer" />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-[#8A92A6] mb-1 block flex items-center gap-1">
-              <Building2 className="h-3 w-3" /> Company
-            </label>
-            <input value={profile.company ?? ""} onChange={(e) => update("company", e.target.value)} className={inputClass} placeholder="Organisation name" />
           </div>
           <div>
             <label className="text-xs font-medium text-[#8A92A6] mb-1 block flex items-center gap-1">
@@ -1829,6 +1824,106 @@ function MailRulesTab() {
   );
 }
 
+// ─── My HR Tab (self-service) ─────────────────────────────────────────────────
+
+type MyHR = {
+  employeeId: string | null;
+  role: string;
+  hr: { startDate?: string; endDate?: string; phone?: string; emergencyContactName?: string; emergencyContactPhone?: string };
+};
+
+function MyHRTab() {
+  const [data, setData] = useState<MyHR | null>(null);
+  const [form, setForm] = useState({ phone: "", emergencyContactName: "", emergencyContactPhone: "" });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/me/hr")
+      .then(r => r.json())
+      .then((d: MyHR) => {
+        setData(d);
+        setForm({
+          phone: d.hr?.phone ?? "",
+          emergencyContactName: d.hr?.emergencyContactName ?? "",
+          emergencyContactPhone: d.hr?.emergencyContactPhone ?? "",
+        });
+      })
+      .catch(() => toast.error("Failed to load HR record"))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/me/hr", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+      if (!res.ok) throw new Error();
+      toast.success("Contact details saved");
+    } catch { toast.error("Save failed"); }
+    finally { setSaving(false); }
+  };
+
+  if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-[#00C2FF]" /></div>;
+
+  return (
+    <>
+      <SectionCard title="Employee record" description="Your employee ID and key dates — assigned and managed by HR">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label className="text-xs font-medium text-[#8A92A6] mb-1 block">Employee number</label>
+            <div className="flex items-center gap-2">
+              <input readOnly value={data?.employeeId ?? "Not assigned yet"} className={`${inputClass} font-mono ${data?.employeeId ? "" : "text-[#5A6275]"}`} />
+              {data?.employeeId && (
+                <button
+                  type="button"
+                  onClick={() => { void navigator.clipboard?.writeText(data.employeeId!); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
+                  className="h-[42px] flex-none px-3 rounded-[9px] border border-[#2E333F] text-[#8A92A6] hover:text-[#E6E9F0] hover:bg-[#1B1F2A] transition-colors"
+                  title="Copy employee number"
+                >
+                  {copied ? <Check className="h-4 w-4 text-[#0f9d58]" /> : <Copy className="h-4 w-4" />}
+                </button>
+              )}
+            </div>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-[#8A92A6] mb-1 block">Start date</label>
+            <input readOnly value={data?.hr?.startDate || "—"} className={inputClass} />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-[#8A92A6] mb-1 block">End date</label>
+            <input readOnly value={data?.hr?.endDate || "—"} className={inputClass} />
+          </div>
+        </div>
+      </SectionCard>
+
+      <SectionCard title="Contact & emergency" description="Keep these current so we can reach you and your emergency contact">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="text-xs font-medium text-[#8A92A6] mb-1 block flex items-center gap-1"><Phone className="h-3 w-3" /> Contact phone</label>
+            <input value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} className={inputClass} placeholder="+44 7700 000000" type="tel" />
+          </div>
+          <div className="hidden sm:block" />
+          <div>
+            <label className="text-xs font-medium text-[#8A92A6] mb-1 block">Emergency contact name</label>
+            <input value={form.emergencyContactName} onChange={e => setForm(p => ({ ...p, emergencyContactName: e.target.value }))} className={inputClass} placeholder="Full name" />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-[#8A92A6] mb-1 block">Emergency contact phone</label>
+            <input value={form.emergencyContactPhone} onChange={e => setForm(p => ({ ...p, emergencyContactPhone: e.target.value }))} className={inputClass} placeholder="+44 7700 000000" type="tel" />
+          </div>
+        </div>
+        <div className="flex justify-end mt-5">
+          <button onClick={() => void save()} disabled={saving} className={btnPrimary}>
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+            {saving ? "Saving…" : "Save"}
+          </button>
+        </div>
+      </SectionCard>
+    </>
+  );
+}
+
 // ─── Main SettingsView ────────────────────────────────────────────────────────
 
 export function SettingsView({
@@ -1924,6 +2019,7 @@ export function SettingsView({
             })()}
 
             {activeTab === "profile"       && <ProfileTab userId={user.id} />}
+            {activeTab === "hr"            && <MyHRTab />}
             {activeTab === "appearance"    && <AppearanceTab />}
             {activeTab === "notifications" && <NotificationsTab />}
             {activeTab === "signature"     && <SignatureTab userName={user.fullName} />}
