@@ -680,7 +680,16 @@ function AppearanceTab() {
       const s = localStorage.getItem("sidebar_mode") as typeof sidebarMode | null;
       if (s) setSidebarMode(s);
       const a = localStorage.getItem("animations");
-      if (a !== null) setAnimations(a !== "false");
+      if (a !== null) {
+        const enabled = a !== "false";
+        setAnimations(enabled);
+        if (!enabled && !document.getElementById("__no-motion")) {
+          const s = document.createElement("style");
+          s.id = "__no-motion";
+          s.textContent = "*, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }";
+          document.head.appendChild(s);
+        }
+      }
       const r = localStorage.getItem("reading_pane") as typeof readingPane | null;
       if (r) setReadingPane(r);
       const c = localStorage.getItem("chat_bubbles") as typeof chatBubbles | null;
@@ -724,8 +733,16 @@ function AppearanceTab() {
           <Toggle value={animations} onChange={(v) => {
             setAnimations(v);
             save("animations", String(v));
-            if (!v) document.documentElement.classList.add("motion-reduce");
-            else document.documentElement.classList.remove("motion-reduce");
+            // Inject/remove a <style> tag that kills transitions when disabled
+            const existing = document.getElementById("__no-motion");
+            if (!v && !existing) {
+              const s = document.createElement("style");
+              s.id = "__no-motion";
+              s.textContent = "*, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }";
+              document.head.appendChild(s);
+            } else if (v && existing) {
+              existing.remove();
+            }
           }} />
         </SettingRow>
       </SectionCard>
@@ -1386,7 +1403,7 @@ type DelegationReceived = {
   mailbox: {
     email: string;
     displayName: string | null;
-    accessLogs: { user: { fullName: string } }[];
+    user: { fullName: string } | null;
   };
 };
 
@@ -1457,7 +1474,7 @@ function MailboxesTab({ userEmail }: { userEmail: string }) {
         ) : (
           <div className="space-y-2">
             {received.map(r => {
-              const ownerName = r.mailbox.accessLogs[0]?.user?.fullName ?? "Unknown";
+              const ownerName = r.mailbox.user?.fullName ?? "Unknown";
               return (
                 <div key={r.id} className="flex items-center gap-3 p-3 rounded-xl bg-[#1B1F2A] border border-[#262A35]">
                   <div className="h-9 w-9 rounded-full bg-[#12151D] border border-[#262A35] flex items-center justify-center flex-shrink-0">
