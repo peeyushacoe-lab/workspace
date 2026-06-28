@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { SquarePen, X, Maximize2, ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -71,10 +71,72 @@ function ComposeModal({
   const router = useRouter();
   const [minimized, setMinimized] = useState(false);
 
+  // ── Drag state ────────────────────────────────────────────────────────────
+  // Default: bottom-right corner (matches old fixed position)
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+  const dragging = useRef(false);
+  const dragOffset = useRef({ x: 0, y: 0 });
+  const windowRef = useRef<HTMLDivElement>(null);
+
+  // Initialise position to bottom-right on first render
+  useEffect(() => {
+    const w = 580;
+    const h = 0; // height unknown yet, we pin from bottom
+    setPos({
+      x: window.innerWidth - w - 24,
+      y: window.innerHeight - 480 - 24, // approx composer height
+    });
+  }, []);
+
+  // Clamp helper — keeps window inside viewport
+  const clamp = (x: number, y: number) => {
+    const el = windowRef.current;
+    const W = el?.offsetWidth  ?? 580;
+    const H = el?.offsetHeight ?? 480;
+    return {
+      x: Math.max(0, Math.min(x, window.innerWidth  - W)),
+      y: Math.max(0, Math.min(y, window.innerHeight - H)),
+    };
+  };
+
+  const onMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Only drag from the header, not from its buttons
+    if ((e.target as HTMLElement).closest("button")) return;
+    dragging.current = true;
+    const rect = windowRef.current?.getBoundingClientRect();
+    dragOffset.current = {
+      x: e.clientX - (rect?.left ?? 0),
+      y: e.clientY - (rect?.top  ?? 0),
+    };
+    e.preventDefault();
+  };
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      if (!dragging.current) return;
+      setPos(clamp(
+        e.clientX - dragOffset.current.x,
+        e.clientY - dragOffset.current.y,
+      ));
+    };
+    const onUp = () => { dragging.current = false; };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup",   onUp);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup",   onUp);
+    };
+  }, []);
+
   const expandToFullPage = () => {
     onClose();
     router.push("/compose");
   };
+
+  // While position is being calculated, render offscreen
+  const style: React.CSSProperties = pos
+    ? { left: pos.x, top: pos.y, right: "auto", bottom: "auto" }
+    : { right: 24, bottom: 24 };
 
   return createPortal(
     <>
@@ -88,19 +150,22 @@ function ComposeModal({
 
       {/* Compose window */}
       <div
-        className={`fixed z-[200] transition-all duration-200 ${
+        ref={windowRef}
+        style={style}
+        className={`fixed z-[200] transition-shadow duration-200 ${
           minimized
-            ? "bottom-0 right-6 w-72 rounded-t-2xl shadow-lg"
-            : "bottom-6 right-6 w-[580px] max-w-[calc(100vw-3rem)] rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.5)] border border-[#262A35]"
+            ? "w-72 rounded-t-2xl shadow-lg"
+            : "w-[580px] max-w-[calc(100vw-3rem)] rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.5)] border border-[#262A35]"
         } bg-[#12151D] overflow-hidden`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
+        {/* Header — drag handle */}
         <div
-          className={`flex items-center justify-between px-5 py-3.5 ${
+          onMouseDown={onMouseDown}
+          className={`flex items-center justify-between px-5 py-3.5 select-none ${
             minimized
               ? "bg-[#1B1F2A] rounded-t-2xl cursor-pointer"
-              : "bg-[#1B1F2A]"
+              : "bg-[#1B1F2A] cursor-grab active:cursor-grabbing"
           }`}
           onClick={minimized ? () => setMinimized(false) : undefined}
         >
