@@ -1854,6 +1854,11 @@ export function ChatView({ currentUserId, userRole }: { currentUserId: string; u
   const [showPins, setShowPins] = useState(false);
   const [pinnedMessages, setPinnedMessages] = useState<Message[]>([]);
 
+  // Group rename state
+  const [renamingChannel, setRenamingChannel] = useState(false);
+  const [renameValue, setRenameValue] = useState("");
+  const [renameSaving, setRenameSaving] = useState(false);
+
   // Voice note recording
   const [recording, setRecording] = useState(false);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
@@ -2491,6 +2496,26 @@ export function ChatView({ currentUserId, userRole }: { currentUserId: string; u
     }
   };
 
+  const handleRenameChannel = async () => {
+    if (!selectedChannelId || !renameValue.trim()) return;
+    setRenameSaving(true);
+    try {
+      const res = await fetch(`/api/chat/channels/${selectedChannelId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: renameValue.trim() }),
+      });
+      if (!res.ok) { const e = await res.json() as { error?: string }; throw new Error(e.error ?? "Failed"); }
+      setChannels(prev => prev.map(c => c.id === selectedChannelId ? { ...c, name: renameValue.trim() } : c));
+      setRenamingChannel(false);
+      toast.success("Group renamed");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not rename");
+    } finally {
+      setRenameSaving(false);
+    }
+  };
+
   const handleDeleteChannel = async () => {
     if (!selectedChannelId || !selectedChannel) return;
     if (!confirm(`Delete #${selectedChannel.name}? This cannot be undone.`)) return;
@@ -2780,27 +2805,70 @@ export function ChatView({ currentUserId, userRole }: { currentUserId: string; u
               ) : (
                 <span className="text-base font-semibold text-[#5A6275] leading-none flex-shrink-0">#</span>
               )}
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <h2 className="font-bold text-[#E6E9F0] text-[14.5px] truncate">{selectedChannel?.name}</h2>
-                  {selectedChannel?.type === "DIRECT" && (
-                    <span className="text-[10px] font-semibold text-[#5A6275] bg-[#1B1F2A] border border-[#262A35] px-1.5 py-0.5 rounded-full flex-shrink-0">DM</span>
-                  )}
-                  {selectedChannel?.type === "GROUP" && (
-                    <span className="text-[10px] font-semibold text-[#5A6275] bg-[#1B1F2A] border border-[#262A35] px-1.5 py-0.5 rounded-full flex-shrink-0">Group</span>
-                  )}
-                  {selectedChannel?.isBroadcast && (
-                    <span className="text-[10px] font-semibold text-[#8A92A6] bg-[#1B1F2A] border border-[#262A35] px-1.5 py-0.5 rounded-full flex-shrink-0">Broadcast</span>
-                  )}
-                </div>
-                <p className="text-xs text-[#5A6275] truncate mt-px">
-                  {selectedChannel?.type === "DIRECT"
-                    ? "Direct Message"
-                    : `${selectedChannel?.members.length ?? 0} member${(selectedChannel?.members.length ?? 0) === 1 ? "" : "s"}${onlineUsers.size > 0 ? ` · ${onlineUsers.size} online` : ""}`}
-                  {selectedChannel?.type !== "DIRECT" && selectedChannel?.description ? ` · ${selectedChannel.description}` : ""}
-                </p>
+              <div className="min-w-0 flex-1">
+                {/* Inline rename input for GROUP channels */}
+                {renamingChannel && selectedChannel?.type === "GROUP" ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      autoFocus
+                      value={renameValue}
+                      onChange={e => setRenameValue(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === "Enter") void handleRenameChannel();
+                        if (e.key === "Escape") setRenamingChannel(false);
+                      }}
+                      className="flex-1 min-w-0 bg-[#1B1F2A] border border-[#00C2FF]/50 rounded-lg px-2.5 py-1 text-sm font-bold text-[#E6E9F0] outline-none focus:border-[#00C2FF] max-w-[220px]"
+                      placeholder="Group name…"
+                    />
+                    <button
+                      onClick={() => void handleRenameChannel()}
+                      disabled={renameSaving}
+                      className="p-1.5 rounded-lg bg-[#00C2FF]/10 text-[#00C2FF] hover:bg-[#00C2FF]/20 transition-colors disabled:opacity-40"
+                    >
+                      {renameSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                    </button>
+                    <button
+                      onClick={() => setRenamingChannel(false)}
+                      className="p-1.5 rounded-lg text-[#5A6275] hover:text-[#E6E9F0] hover:bg-[#1B1F2A] transition-colors"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <h2 className="font-bold text-[#E6E9F0] text-[14.5px] truncate">{selectedChannel?.name}</h2>
+                    {selectedChannel?.type === "DIRECT" && (
+                      <span className="text-[10px] font-semibold text-[#5A6275] bg-[#1B1F2A] border border-[#262A35] px-1.5 py-0.5 rounded-full flex-shrink-0">DM</span>
+                    )}
+                    {selectedChannel?.type === "GROUP" && (
+                      <>
+                        <span className="text-[10px] font-semibold text-[#5A6275] bg-[#1B1F2A] border border-[#262A35] px-1.5 py-0.5 rounded-full flex-shrink-0">Group</span>
+                        {/* Rename button — only for channel admin */}
+                        {selectedChannel.members.find(m => m.userId === currentUserId)?.role === "ADMIN" && (
+                          <button
+                            onClick={() => { setRenameValue(selectedChannel.name); setRenamingChannel(true); }}
+                            className="p-0.5 rounded text-[#5A6275] hover:text-[#00C2FF] transition-colors flex-shrink-0"
+                            title="Rename group"
+                          >
+                            <Edit3 className="w-3 h-3" />
+                          </button>
+                        )}
+                      </>
+                    )}
+                    {selectedChannel?.isBroadcast && (
+                      <span className="text-[10px] font-semibold text-[#8A92A6] bg-[#1B1F2A] border border-[#262A35] px-1.5 py-0.5 rounded-full flex-shrink-0">Broadcast</span>
+                    )}
+                  </div>
+                )}
+                {!renamingChannel && (
+                  <p className="text-xs text-[#5A6275] truncate mt-px">
+                    {selectedChannel?.type === "DIRECT"
+                      ? "Direct Message"
+                      : `${selectedChannel?.members.length ?? 0} member${(selectedChannel?.members.length ?? 0) === 1 ? "" : "s"}${onlineUsers.size > 0 ? ` · ${onlineUsers.size} online` : ""}`}
+                    {selectedChannel?.type !== "DIRECT" && selectedChannel?.description ? ` · ${selectedChannel.description}` : ""}
+                  </p>
+                )}
               </div>
-              <div className="flex-1" />
               <div className="flex items-center gap-2 flex-shrink-0">
                 {/* Start a call — hidden for interns */}
                 {canCall && (selectedChannel?.type === "DIRECT" || selectedChannel?.type === "GROUP") ? (
