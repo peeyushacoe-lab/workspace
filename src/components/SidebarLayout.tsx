@@ -3,7 +3,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { LogOut, ChevronLeft, ChevronRight, Menu, X, Settings, Inbox, MessageSquare, Video, Sparkles, CalendarDays, CheckSquare, Search } from "lucide-react"; // eslint-disable-line @typescript-eslint/no-unused-vars
+import { LogOut, ChevronLeft, ChevronRight, Menu, X, Settings, Inbox, MessageSquare, Video, Sparkles, Search } from "lucide-react";
 // Search is used in the Suspense fallback pill
 import { SidebarNav } from "./SidebarNav";
 import { SearchTrigger } from "./GlobalSearch";
@@ -232,13 +232,10 @@ export function SidebarLayout({
         >
           <div className="flex h-[56px] items-stretch">
             {([
-              { href: "/inbox",    icon: Inbox,          label: "Inbox"    },
-              { href: "/chat",     icon: MessageSquare,  label: "Chat"     },
-              // Meet + AI hidden — not fully built
-              // { href: "/meet",  icon: Video,          label: "Meet"     },
-              // { href: "/ai",    icon: Sparkles,       label: "AI"       },
-              { href: "/calendar", icon: CalendarDays,   label: "Calendar" },
-              { href: "/tasks",    icon: CheckSquare,    label: "Tasks"    },
+              { href: "/inbox", icon: Inbox,        label: "Inbox" },
+              { href: "/chat",  icon: MessageSquare, label: "Chat"  },
+              { href: "/meet",  icon: Video,         label: "Meet"  },
+              { href: "/ai",    icon: Sparkles,      label: "AI"    },
             ] as const).map(({ href, icon: Icon, label }) => {
               const active = pathname === href || pathname?.startsWith(href + "/");
               return (
