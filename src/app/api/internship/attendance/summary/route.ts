@@ -53,7 +53,7 @@ export async function GET(request: Request) {
     select: { actorId: true, createdAt: true },
   });
 
-  // All overrides in range (treat override with punchIn as present)
+  // All overrides in range
   const overrides = await prisma.auditLog.findMany({
     where: {
       action: "INTERN_ATTENDANCE_OVERRIDE",
@@ -75,28 +75,37 @@ export async function GET(request: Request) {
   }
 
   // Process overrides — targetId is "internId:YYYY-MM-DD"
+  const leaveSet = new Set<string>(); // keys where intern has approved leave
   const seenOverrides = new Set<string>();
   for (const ov of overrides) {
     if (!ov.targetId || seenOverrides.has(ov.targetId)) continue;
     seenOverrides.add(ov.targetId);
-    const meta = ov.metadata as { punchIn?: string | null } | null;
-    if (meta?.punchIn) {
-      presentSet.add(ov.targetId); // has a punchIn = present
+    const meta = ov.metadata as { punchIn?: string | null; reason?: string | null } | null;
+    if (meta?.reason === "APPROVED_LEAVE") {
+      leaveSet.add(ov.targetId); // approved leave — not absent, not present
+    } else if (meta?.punchIn) {
+      presentSet.add(ov.targetId); // manually overridden as present
     }
   }
 
   const result = interns.map(intern => {
     const presentDays = workingDays.filter(d => presentSet.has(`${intern.id}:${d}`));
-    const absentDays  = workingDays.filter(d => !presentSet.has(`${intern.id}:${d}`));
+    const leaveDays   = workingDays.filter(d => leaveSet.has(`${intern.id}:${d}`) && !presentSet.has(`${intern.id}:${d}`));
+    const absentDays  = workingDays.filter(d => !presentSet.has(`${intern.id}:${d}`) && !leaveSet.has(`${intern.id}:${d}`));
+
+    // Attendance rate = present / (working days - leave days)
+    const effectiveDays = totalWorkingDays - leaveDays.length;
 
     return {
       intern: { id: intern.id, fullName: intern.fullName, avatarUrl: intern.avatarUrl },
       totalWorkingDays,
       daysPresent: presentDays.length,
       daysAbsent: absentDays.length,
-      attendanceRate: totalWorkingDays > 0 ? Math.round((presentDays.length / totalWorkingDays) * 100) : 0,
+      daysLeave: leaveDays.length,
+      attendanceRate: effectiveDays > 0 ? Math.round((presentDays.length / effectiveDays) * 100) : 0,
       absentDates: absentDays,
       presentDates: presentDays,
+      leaveDates: leaveDays,
     };
   });
 

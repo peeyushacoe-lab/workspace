@@ -9,7 +9,8 @@ import {
   Plus, Trash2, X, BookOpen, CalendarClock, UserCheck, GraduationCap,
   Pencil, Loader2, Save, AlertTriangle, CheckCircle2, Lock, Unlock,
   RefreshCw, Clock, ChevronLeft, ChevronRight, AlertCircle, Timer,
-  Edit2, MapPin, Monitor, CheckCircle,
+  Edit2, MapPin, Monitor, CheckCircle, TrendingUp, TrendingDown,
+  ChevronDown, FileText, MessageSquare, Plane,
 } from "lucide-react";
 import { toast } from "sonner";
 import { avatarGradient } from "@/lib/avatar";
@@ -44,7 +45,7 @@ interface AttendanceRecord {
   totalMinutes: number; breakMinutes: number; autoBreakMinutes: number;
   breakWindow: { from: string; to: string } | null; breaks: BreakPeriod[];
   isCurrentlyIn: boolean; isLate: boolean; idleFlag: boolean; activityCount: number;
-  hasOverride: boolean; overrideReason: string | null;
+  hasOverride: boolean; isLeave: boolean; overrideReason: string | null;
   punchLocation: { lat: number; lng: number; accuracy: number } | null; punchDevice: string | null;
 }
 
@@ -764,6 +765,7 @@ function HRField({ label, value, onChange, type = "text", placeholder, mono }: {
 }
 
 function MentorAttendanceSubTab() {
+  const [activeView, setActiveView] = useState<"daily" | "summary">("daily");
   const [schedule, setSchedule] = useState<AttendanceSchedule | null>(null);
   const [savingSchedule, setSavingSchedule] = useState(false);
   const [scheduleForm, setScheduleForm] = useState({ startTime: "09:00", endTime: "17:00", lateGraceMinutes: 15, defaultBreakFrom: "12:00", defaultBreakTo: "13:00" });
@@ -778,6 +780,7 @@ function MentorAttendanceSubTab() {
   const [overrideForm, setOverrideForm] = useState({ punchIn: "", punchOut: "", reason: "" });
   const [overrideBreaks, setOverrideBreaks] = useState<{ from: string; to: string; label: string }[]>([]);
   const [savingOverride, setSavingOverride] = useState(false);
+  const [idleDetailId, setIdleDetailId] = useState<string | null>(null);
 
   const loadSchedule = useCallback(async () => {
     const res = await fetch("/api/internship/attendance/schedule");
@@ -862,6 +865,27 @@ function MentorAttendanceSubTab() {
     finally { setSavingOverride(false); }
   };
 
+  const markLeave = async (r: AttendanceRecord) => {
+    const isAlreadyLeave = r.isLeave;
+    try {
+      const res = await fetch("/api/internship/attendance/override", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          internId: r.intern.id,
+          date,
+          punchIn: isAlreadyLeave ? null : null,
+          punchOut: null,
+          reason: isAlreadyLeave ? null : "APPROVED_LEAVE",
+          breaks: [],
+        }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success(isAlreadyLeave ? "Leave removed" : `${r.intern.fullName} marked as on leave`);
+      await loadRecords();
+    } catch { toast.error("Failed to update leave status"); }
+  };
+
   const shiftDate = (days: number) => {
     const d = new Date(date + "T12:00:00");
     d.setDate(d.getDate() + days);
@@ -874,6 +898,19 @@ function MentorAttendanceSubTab() {
 
   return (
     <div className="space-y-5">
+      {/* Tab toggle */}
+      <div className="flex items-center gap-1 bg-[#12151D] border border-[#262A35] rounded-xl p-1 w-fit">
+        {(["daily", "summary"] as const).map(tab => (
+          <button key={tab} onClick={() => setActiveView(tab)}
+            className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors
+              ${activeView === tab ? "bg-[#00C2FF] text-[#06121A]" : "text-[#8A92A6] hover:text-[#E6E9F0]"}`}>
+            {tab === "daily" ? "Daily Timesheet" : "Intern Summary"}
+          </button>
+        ))}
+      </div>
+
+      {activeView === "summary" ? <AttendanceSummaryPanel /> : <>
+
       {/* Working hours config */}
       <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-4">
         <div className="flex items-center justify-between mb-3">
@@ -976,19 +1013,19 @@ function MentorAttendanceSubTab() {
         <EmptyState icon={CalendarClock} title="No interns found" desc="No intern accounts exist yet." />
       ) : (
         <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
-          <div className="grid grid-cols-[1fr_60px_60px_54px_1fr_auto_auto] text-[11px] font-semibold text-[#5A6275] px-4 py-2 border-b border-[#262A35] gap-3">
+          <div className="grid grid-cols-[1fr_60px_60px_54px_1fr_auto_auto] text-[11px] font-semibold text-[#5A6275] px-4 py-2 border-b border-[#262A35] gap-2">
             <span>Intern</span>
             <span>In</span>
             <span>Out</span>
             <span>Total</span>
             <span>Location / Device</span>
             <span>Status</span>
-            <span></span>
+            <span>Actions</span>
           </div>
           <div className="divide-y divide-[#262A35]">
             {records.map(r => (
               <div key={r.intern.id}
-                className={`grid grid-cols-[1fr_60px_60px_54px_1fr_auto_auto] items-center px-4 py-3 gap-3 transition-colors ${r.idleFlag ? "bg-[#ff6d00]/5 hover:bg-[#ff6d00]/8" : "hover:bg-[#1B1F2A]/40"}`}>
+                className={`grid grid-cols-[1fr_60px_60px_54px_1fr_auto_auto] items-center px-4 py-3 gap-2 transition-colors ${r.isLeave ? "bg-[#7C3AED]/5" : r.idleFlag ? "bg-[#ff6d00]/5 hover:bg-[#ff6d00]/8" : "hover:bg-[#1B1F2A]/40"}`}>
                 {/* Intern */}
                 <div className="flex items-center gap-2 min-w-0">
                   <Avatar user={r.intern} size={7} />
@@ -1047,7 +1084,12 @@ function MentorAttendanceSubTab() {
 
                 {/* Flags */}
                 <div className="flex flex-col gap-1">
-                  {!r.firstPunchIn && (
+                  {r.isLeave && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#7C3AED]/20 text-[#A78BFA] text-xs font-medium">
+                      <Plane className="w-3 h-3" /> On Leave
+                    </span>
+                  )}
+                  {!r.firstPunchIn && !r.isLeave && (
                     <span className="text-xs text-[#3A4150]">Absent</span>
                   )}
                   {r.firstPunchIn && !r.isLate && !r.idleFlag && (
@@ -1060,18 +1102,46 @@ function MentorAttendanceSubTab() {
                       <AlertCircle className="w-3 h-3" /> Late
                     </span>
                   )}
-                  {r.idleFlag && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#ff6d00]/20 text-[#ff6d00] text-xs font-semibold">
-                      <Timer className="w-3 h-3" /> Idle flag
-                    </span>
-                  )}
+                  {r.idleFlag && (() => {
+                    const longestMin = r.sessions.length > 0
+                      ? Math.max(...r.sessions.map(s => {
+                          const start = new Date(s.punchIn).getTime();
+                          const end = s.punchOut ? new Date(s.punchOut).getTime() : Date.now();
+                          return Math.round((end - start) / 60000);
+                        }))
+                      : 0;
+                    return (
+                      <div>
+                        <button onClick={() => setIdleDetailId(idleDetailId === r.intern.id ? null : r.intern.id)}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#ff6d00]/20 text-[#ff6d00] text-xs font-semibold">
+                          <Timer className="w-3 h-3" /> Idle {fmtDuration(longestMin)}
+                        </button>
+                        {idleDetailId === r.intern.id && (
+                          <div className="mt-1.5 p-2 bg-[#ff6d00]/10 border border-[#ff6d00]/20 rounded-lg text-[11px] text-[#ff6d00] space-y-0.5">
+                            <p className="font-semibold">Idle flag details</p>
+                            <p>Longest session: <span className="font-mono">{fmtDuration(longestMin)}</span></p>
+                            <p>In since: <span className="font-mono">{r.firstPunchIn ? fmtHHMM(r.firstPunchIn) : "—"}</span></p>
+                            <p>Activities (submissions + discussions): <span className="font-mono">{r.activityCount}</span></p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Actions */}
-                <button onClick={() => openOverride(r)}
-                  className="flex items-center gap-1 px-2 py-1 text-[11px] text-[#8A92A6] hover:text-[#00C2FF] hover:bg-[#0E2532] rounded-lg transition-colors whitespace-nowrap">
-                  <Edit2 className="w-3 h-3" /> Adjust
-                </button>
+                <div className="flex items-center gap-1">
+                  <button onClick={() => markLeave(r)}
+                    title={r.isLeave ? "Remove leave" : "Mark as on leave"}
+                    className={`flex items-center gap-1 px-2 py-1 text-[11px] rounded-lg transition-colors whitespace-nowrap
+                      ${r.isLeave ? "text-[#A78BFA] bg-[#7C3AED]/20 hover:bg-[#7C3AED]/30" : "text-[#8A92A6] hover:text-[#A78BFA] hover:bg-[#7C3AED]/10"}`}>
+                    <Plane className="w-3 h-3" /> {r.isLeave ? "Remove Leave" : "Leave"}
+                  </button>
+                  <button onClick={() => openOverride(r)}
+                    className="flex items-center gap-1 px-2 py-1 text-[11px] text-[#8A92A6] hover:text-[#00C2FF] hover:bg-[#0E2532] rounded-lg transition-colors whitespace-nowrap">
+                    <Edit2 className="w-3 h-3" /> Adjust
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -1170,6 +1240,227 @@ function MentorAttendanceSubTab() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+      </>}
+    </div>
+  );
+}
+
+// ─── Attendance Summary Panel ─────────────────────────────────────────────────
+
+interface SummaryInternRow {
+  intern: { id: string; fullName: string; avatarUrl?: string | null };
+  totalWorkingDays: number;
+  daysPresent: number;
+  daysAbsent: number;
+  daysLeave: number;
+  attendanceRate: number;
+  absentDates: string[];
+  presentDates: string[];
+  leaveDates: string[];
+}
+
+function AttendanceSummaryPanel() {
+  const today = todayStr();
+  const thirtyAgo = new Date(Date.now() - 29 * 86400_000).toISOString().slice(0, 10);
+  const [from, setFrom] = useState(thirtyAgo);
+  const [to, setTo] = useState(today);
+  const [data, setData] = useState<{ from: string; to: string; totalWorkingDays: number; interns: SummaryInternRow[] } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [profile, setProfile] = useState<{
+    row: SummaryInternRow;
+    submissions: { id: string; task: { title: string }; status: string; submittedAt: string }[];
+    discussions: { id: string; body: string; createdAt: string }[];
+    loading: boolean;
+  } | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/internship/attendance/summary?from=${from}&to=${to}`);
+      if (res.ok) setData(await res.json());
+    } finally { setLoading(false); }
+  }, [from, to]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const openProfile = async (row: SummaryInternRow) => {
+    if (expanded === row.intern.id) { setExpanded(null); setProfile(null); return; }
+    setExpanded(row.intern.id);
+    setProfile({ row, submissions: [], discussions: [], loading: true });
+    const [sRes, dRes] = await Promise.all([
+      fetch(`/api/internship/submissions?internId=${row.intern.id}`),
+      fetch(`/api/internship/discussions?internId=${row.intern.id}`),
+    ]);
+    setProfile({
+      row,
+      submissions: sRes.ok ? await sRes.json() : [],
+      discussions: dRes.ok ? await dRes.json() : [],
+      loading: false,
+    });
+  };
+
+  const presets = [
+    { label: "Last 7d",   from: new Date(Date.now() -  6 * 86400_000).toISOString().slice(0, 10), to: today },
+    { label: "Last 30d",  from: new Date(Date.now() - 29 * 86400_000).toISOString().slice(0, 10), to: today },
+    { label: "This month", from: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10), to: today },
+  ];
+
+  return (
+    <div className="space-y-4">
+      {/* Date range */}
+      <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-4 flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-2 text-sm flex-wrap">
+          <label className="text-[#8A92A6]">From</label>
+          <input type="date" value={from} max={to} onChange={e => setFrom(e.target.value)}
+            className="px-2 py-1 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-[#E6E9F0] text-sm focus:outline-none focus:border-[#00C2FF]/60" />
+          <label className="text-[#8A92A6]">To</label>
+          <input type="date" value={to} min={from} max={today} onChange={e => setTo(e.target.value)}
+            className="px-2 py-1 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-[#E6E9F0] text-sm focus:outline-none focus:border-[#00C2FF]/60" />
+        </div>
+        <div className="flex items-center gap-2 ml-auto">
+          {presets.map(p => (
+            <button key={p.label} onClick={() => { setFrom(p.from); setTo(p.to); }}
+              className="px-2.5 py-1 text-xs rounded-lg bg-[#1B1F2A] text-[#8A92A6] hover:text-[#00C2FF] hover:bg-[#0E2532] transition-colors">
+              {p.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Stats */}
+      {data && (
+        <div className="grid grid-cols-3 gap-3">
+          <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-3 text-center">
+            <p className="text-2xl font-bold text-[#E6E9F0]">{data.interns.length}</p>
+            <p className="text-xs text-[#5A6275] mt-0.5">Active Interns</p>
+          </div>
+          <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-3 text-center">
+            <p className="text-2xl font-bold text-[#E6E9F0]">{data.totalWorkingDays}</p>
+            <p className="text-xs text-[#5A6275] mt-0.5">Working Days</p>
+          </div>
+          <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-3 text-center">
+            <p className="text-2xl font-bold text-[#0f9d58]">
+              {data.interns.length > 0 ? Math.round(data.interns.reduce((a, i) => a + i.attendanceRate, 0) / data.interns.length) : 0}%
+            </p>
+            <p className="text-xs text-[#5A6275] mt-0.5">Avg Attendance</p>
+          </div>
+        </div>
+      )}
+
+      {/* Rows */}
+      {loading ? <LoadingSpinner /> : !data || data.interns.length === 0 ? (
+        <EmptyState icon={CalendarClock} title="No interns yet" desc="No active intern accounts found." />
+      ) : (
+        <div className="space-y-2">
+          {data.interns.map(row => {
+            const isOpen = expanded === row.intern.id;
+            const rc = row.attendanceRate >= 80 ? "#0f9d58" : row.attendanceRate >= 60 ? "#F59E0B" : "#ea4335";
+            return (
+              <div key={row.intern.id} className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
+                <button onClick={() => openProfile(row)}
+                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#1B1F2A] transition-colors text-left">
+                  <Avatar user={row.intern} size={9} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-[#E6E9F0] truncate">{row.intern.fullName}</p>
+                    <p className="text-xs text-[#5A6275]">
+                      {row.daysPresent} present · {row.daysAbsent} absent
+                      {row.daysLeave > 0 && <span className="text-[#A78BFA]"> · {row.daysLeave} leave</span>}
+                    </p>
+                  </div>
+                  <div className="hidden sm:flex items-center gap-2 w-28">
+                    <div className="flex-1 h-1.5 bg-[#262A35] rounded-full overflow-hidden">
+                      <div className="h-full rounded-full" style={{ width: `${row.attendanceRate}%`, background: rc }} />
+                    </div>
+                    <span className="text-xs font-semibold w-8 text-right" style={{ color: rc }}>{row.attendanceRate}%</span>
+                  </div>
+                  {row.attendanceRate >= 80
+                    ? <TrendingUp className="w-4 h-4 text-[#0f9d58] flex-shrink-0" />
+                    : <TrendingDown className="w-4 h-4 text-[#ea4335] flex-shrink-0" />}
+                  <ChevronDown className={`w-4 h-4 text-[#5A6275] flex-shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                </button>
+
+                {isOpen && profile && profile.row.intern.id === row.intern.id && (
+                  <div className="border-t border-[#262A35] px-4 pb-4 pt-3">
+                    {profile.loading ? <LoadingSpinner /> : (
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        {/* Calendar */}
+                        <div className="space-y-2">
+                          <h4 className="text-xs font-semibold text-[#8A92A6] flex items-center gap-1.5">
+                            <CalendarClock className="w-3.5 h-3.5" /> Attendance
+                          </h4>
+                          <div className="flex flex-wrap gap-1">
+                            {[
+                              ...profile.row.presentDates.map(d => ({ d, type: "present" as const })),
+                              ...profile.row.absentDates.map(d => ({ d, type: "absent" as const })),
+                              ...profile.row.leaveDates.map(d => ({ d, type: "leave" as const })),
+                            ].sort((a, b) => a.d.localeCompare(b.d)).map(({ d, type }) => (
+                              <div key={d} title={`${d} — ${type}`}
+                                className={`w-6 h-6 rounded text-[9px] flex items-center justify-center font-medium cursor-default
+                                  ${type === "present" ? "bg-[#0f9d58]/20 text-[#0f9d58]"
+                                    : type === "leave" ? "bg-[#7C3AED]/20 text-[#A78BFA]"
+                                    : "bg-[#ea4335]/20 text-[#ea4335]"}`}>
+                                {new Date(d + "T12:00:00").getDate()}
+                              </div>
+                            ))}
+                          </div>
+                          <div className="flex flex-wrap gap-2 text-[10px] text-[#5A6275]">
+                            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[#0f9d58]/40" />Present</span>
+                            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[#ea4335]/40" />Absent</span>
+                            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[#7C3AED]/40" />Leave</span>
+                          </div>
+                        </div>
+
+                        {/* Submissions */}
+                        <div className="space-y-2">
+                          <h4 className="text-xs font-semibold text-[#8A92A6] flex items-center gap-1.5">
+                            <FileText className="w-3.5 h-3.5" /> Submissions ({profile.submissions.length})
+                          </h4>
+                          {profile.submissions.length === 0 ? <p className="text-xs text-[#3A4150]">No submissions yet.</p> : (
+                            <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                              {profile.submissions.slice(0, 20).map(s => (
+                                <div key={s.id} className="bg-[#1B1F2A] rounded-lg px-3 py-2">
+                                  <p className="text-xs font-medium text-[#C8CEDB] truncate">{s.task?.title ?? "Task"}</p>
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded
+                                      ${s.status === "APPROVED" ? "bg-[#0f9d58]/20 text-[#0f9d58]"
+                                        : s.status === "REJECTED" ? "bg-[#ea4335]/20 text-[#ea4335]"
+                                        : "bg-[#F59E0B]/20 text-[#F59E0B]"}`}>
+                                      {s.status}
+                                    </span>
+                                    <span className="text-[10px] text-[#5A6275]">{fmt(s.submittedAt)}</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Discussions */}
+                        <div className="space-y-2">
+                          <h4 className="text-xs font-semibold text-[#8A92A6] flex items-center gap-1.5">
+                            <MessageSquare className="w-3.5 h-3.5" /> Discussions ({profile.discussions.length})
+                          </h4>
+                          {profile.discussions.length === 0 ? <p className="text-xs text-[#3A4150]">No discussion activity.</p> : (
+                            <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                              {profile.discussions.slice(0, 20).map(d => (
+                                <div key={d.id} className="bg-[#1B1F2A] rounded-lg px-3 py-2">
+                                  <p className="text-xs text-[#C8CEDB] line-clamp-2">{d.body}</p>
+                                  <p className="text-[10px] text-[#5A6275] mt-0.5">{fmt(d.createdAt)}</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

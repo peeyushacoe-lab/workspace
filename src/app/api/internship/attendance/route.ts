@@ -181,15 +181,18 @@ export async function GET(request: Request) {
     });
 
     // Apply override if present
-    if (overrideMeta) {
+    const isLeave = overrideMeta?.reason === "APPROVED_LEAVE";
+    if (overrideMeta && !isLeave) {
       if (sessions.length === 0) {
-        sessions.push({
-          punchIn: overrideMeta.punchIn ?? new Date(dayStart).toISOString(),
-          punchOut: overrideMeta.punchOut,
-          sessionId: "override",
-          location: null,
-          device: null,
-        });
+        if (overrideMeta.punchIn) {
+          sessions.push({
+            punchIn: overrideMeta.punchIn,
+            punchOut: overrideMeta.punchOut,
+            sessionId: "override",
+            location: null,
+            device: null,
+          });
+        }
       } else {
         // Override first session
         if (overrideMeta.punchIn) sessions[0].punchIn = overrideMeta.punchIn;
@@ -266,6 +269,7 @@ export async function GET(request: Request) {
       idleFlag,
       activityCount,
       hasOverride: !!overrideMeta,
+      isLeave,
       overrideReason: overrideMeta?.reason ?? null,
       // Mentor-only fields (never rendered in intern UI)
       punchLocation: firstSession?.location ?? null,

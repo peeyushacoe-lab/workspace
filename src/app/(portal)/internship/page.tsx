@@ -754,11 +754,11 @@ function TaskDetail({ task: initialTask, isMentor, userId, onBack }: { task: Int
     setSending(false);
   };
 
-  const reviewSub = async (subId: string, verdict: string, comment: string) => {
+  const reviewSub = async (subId: string, verdict: string, comment: string, score?: number) => {
     await fetch(`/api/internship/submissions/${subId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ verdict, comment }),
+      body: JSON.stringify({ verdict, comment, ...(score !== undefined ? { score } : {}) }),
     });
     toast.success("Review saved");
     const updated = await fetch(`/api/internship/tasks/${task.id}`).then(r => r.json());
@@ -921,11 +921,83 @@ function SubmissionFiles({ files }: { files?: Submission["files"] }) {
   );
 }
 
-function SubmissionCard({ sub, isMentor, onReview }: { sub: Submission; isMentor: boolean; onReview: (id: string, verdict: string, comment: string) => void }) {
+function parseScoreBreakdown(comment: string | null | undefined): { research?: number; format?: number; understanding?: number; notes?: string } | null {
+  if (!comment) return null;
+  try { const p = JSON.parse(comment); return typeof p === "object" && p !== null && ("research" in p || "format" in p || "understanding" in p) ? p : null; } catch { return null; }
+}
+
+function ReviewScoreDisplay({ review }: { review: Review }) {
+  const bd = parseScoreBreakdown(review.comment);
+  const verdictColor = review.verdict === "approved" ? "bg-[#0f9d58]/12 text-[#0f9d58] border-[#0f9d58]/20"
+    : review.verdict === "rejected" ? "bg-[#ea4335]/12 text-[#ea4335] border-[#ea4335]/20"
+    : "bg-[#ff6d00]/12 text-[#ff6d00] border-[#ff6d00]/20";
+  return (
+    <div className={`rounded-lg p-3 border text-xs mt-2 ${verdictColor}`}>
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="font-semibold capitalize">{review.verdict.replace("_", " ")}</span>
+        <span className="text-[10px] opacity-70">by {review.reviewer.fullName}</span>
+      </div>
+      {bd ? (
+        <div className="space-y-1">
+          {([["Research Quality", bd.research], ["Format & Clarity", bd.format], ["Depth of Understanding", bd.understanding]] as [string, number | undefined][]).map(([label, val]) => (
+            <div key={label} className="flex items-center justify-between gap-2">
+              <span className="opacity-80">{label}</span>
+              <div className="flex items-center gap-1.5">
+                <div className="flex gap-0.5">
+                  {[1,2,3,4,5].map(i => (
+                    <div key={i} className={`w-3 h-1.5 rounded-full ${(val ?? 0) >= i ? "bg-current" : "bg-current/20"}`} />
+                  ))}
+                </div>
+                <span className="font-semibold font-mono w-5 text-right">{val ?? 0}/5</span>
+              </div>
+            </div>
+          ))}
+          {review.score != null && (
+            <div className="flex items-center justify-between font-semibold pt-1.5 mt-1 border-t border-current/20">
+              <span>Total Score</span><span className="font-mono">{review.score}/15</span>
+            </div>
+          )}
+          {bd.notes && <p className="opacity-70 mt-1.5 text-[11px]">{bd.notes}</p>}
+        </div>
+      ) : (
+        <>
+          {review.comment && <p className="opacity-80">{review.comment}</p>}
+          {review.score != null && <span className="font-semibold font-mono">{review.score}/15</span>}
+        </>
+      )}
+    </div>
+  );
+}
+
+function ScoreInput({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <span className="text-[11px] text-[#8A92A6] flex-1">{label}</span>
+      <div className="flex items-center gap-1">
+        {[0,1,2,3,4,5].map(i => (
+          <button key={i} type="button" onClick={() => onChange(i)}
+            className={`w-6 h-6 rounded text-[10px] font-semibold transition-colors
+              ${value === i ? "bg-[#00C2FF] text-[#06121A]" : "bg-[#1B1F2A] text-[#5A6275] hover:text-[#E6E9F0]"}`}>
+            {i}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SubmissionCard({ sub, isMentor, onReview }: { sub: Submission; isMentor: boolean; onReview: (id: string, verdict: string, comment: string, score?: number) => void }) {
   const [reviewOpen, setReviewOpen] = useState(false);
   const [verdict, setVerdict] = useState("approved");
-  const [comment, setComment] = useState("");
+  const [notes, setNotes] = useState("");
+  const [scores, setScores] = useState({ research: 3, format: 3, understanding: 3 });
+  const total = scores.research + scores.format + scores.understanding;
   const latestReview = sub.reviews?.[0];
+
+  const submit = () => {
+    onReview(sub.id, verdict, JSON.stringify({ ...scores, notes }), total);
+    setReviewOpen(false);
+  };
 
   return (
     <div className="border border-[#262A35] rounded-lg p-3">
@@ -949,33 +1021,37 @@ function SubmissionCard({ sub, isMentor, onReview }: { sub: Submission; isMentor
           ))}
         </div>
       )}
-      {latestReview && (
-        <div className={`text-xs rounded p-2 mb-2 ${latestReview.verdict === "approved" ? "bg-[#0f9d58]/12 text-[#0f9d58]" : latestReview.verdict === "rejected" ? "bg-[#ea4335]/12 text-[#ea4335]" : "bg-[#ff6d00]/12 text-[#ff6d00]"}`}>
-          {latestReview.verdict.replace("_", " ")} by {latestReview.reviewer.fullName}
-          {latestReview.comment && <span> — {latestReview.comment}</span>}
-          {latestReview.score != null && <span className="ml-1 font-semibold">[{latestReview.score}/100]</span>}
-        </div>
-      )}
+      {latestReview && <ReviewScoreDisplay review={latestReview} />}
       {isMentor && sub.status === "submitted" && (
         reviewOpen ? (
-          <div className="space-y-2 mt-2">
-            <select className="w-full px-2 py-1 bg-[#1B1F2A] border border-[#2E333F] rounded text-xs"
+          <div className="space-y-2.5 mt-3 pt-3 border-t border-[#262A35]">
+            <select className="w-full px-2 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded text-xs"
               value={verdict} onChange={e => setVerdict(e.target.value)}>
               <option value="approved">Approve</option>
               <option value="revision_requested">Request Revision</option>
               <option value="rejected">Reject</option>
             </select>
+            {/* 3-field scoring */}
+            <div className="bg-[#0E1018] rounded-lg p-3 space-y-2">
+              <p className="text-[10px] font-semibold text-[#5A6275] mb-1">Score (each field 0–5)</p>
+              <ScoreInput label="Research Quality" value={scores.research} onChange={v => setScores(p => ({ ...p, research: v }))} />
+              <ScoreInput label="Format & Clarity" value={scores.format} onChange={v => setScores(p => ({ ...p, format: v }))} />
+              <ScoreInput label="Depth of Understanding" value={scores.understanding} onChange={v => setScores(p => ({ ...p, understanding: v }))} />
+              <div className="flex justify-between items-center pt-1.5 mt-0.5 border-t border-[#262A35] text-xs font-semibold text-[#E6E9F0]">
+                <span>Total</span><span className="font-mono text-[#00C2FF]">{total}/15</span>
+              </div>
+            </div>
             <input className="w-full px-2 py-1 bg-[#1B1F2A] border border-[#2E333F] rounded text-xs placeholder:text-[#5A6275]"
-              placeholder="Feedback (optional)…" value={comment} onChange={e => setComment(e.target.value)} />
+              placeholder="Additional notes (optional)…" value={notes} onChange={e => setNotes(e.target.value)} />
             <div className="flex gap-1.5">
-              <button onClick={() => onReview(sub.id, verdict, comment)}
+              <button onClick={submit}
                 className="flex-1 px-2 py-1 bg-[#00C2FF] text-[#06121A] text-xs font-semibold rounded">Submit Review</button>
               <button onClick={() => setReviewOpen(false)} className="px-2 py-1 text-xs text-[#8A92A6] hover:bg-[#1B1F2A] rounded">Cancel</button>
             </div>
           </div>
         ) : (
           <button onClick={() => setReviewOpen(true)}
-            className="text-xs text-[#00C2FF] hover:underline font-medium">Review this submission →</button>
+            className="text-xs text-[#00C2FF] hover:underline font-medium mt-2">Review &amp; score this submission →</button>
         )
       )}
     </div>
@@ -996,11 +1072,11 @@ function SubmissionsTab({ isMentor }: { isMentor: boolean; userId: string }) {
 
   useEffect(() => { load(); }, [load]);
 
-  const reviewSub = async (subId: string, verdict: string, comment: string) => {
+  const reviewSub = async (subId: string, verdict: string, comment: string, score?: number) => {
     const res = await fetch(`/api/internship/submissions/${subId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ verdict, comment }),
+      body: JSON.stringify({ verdict, comment, ...(score !== undefined ? { score } : {}) }),
     });
     if (!res.ok) { toast.error("Could not save review"); return; }
     toast.success("Review saved");
@@ -1043,11 +1119,16 @@ function SubmissionsTab({ isMentor }: { isMentor: boolean; userId: string }) {
   );
 }
 
-function SubmissionRow({ sub, isMentor, onReview }: { sub: Submission; isMentor: boolean; onReview: (id: string, verdict: string, comment: string) => void }) {
+function SubmissionRow({ sub, isMentor, onReview }: { sub: Submission; isMentor: boolean; onReview: (id: string, verdict: string, comment: string, score?: number) => void }) {
   const latestReview = sub.reviews?.[0];
   const [reviewOpen, setReviewOpen] = useState(false);
   const [verdict, setVerdict] = useState("approved");
-  const [comment, setComment] = useState("");
+  const [notes, setNotes] = useState("");
+  const [scores, setScores] = useState({ research: 3, format: 3, understanding: 3 });
+  const total = scores.research + scores.format + scores.understanding;
+
+  const submit = () => { onReview(sub.id, verdict, JSON.stringify({ ...scores, notes }), total); setReviewOpen(false); };
+
   return (
     <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-4">
       <div className="flex items-start justify-between mb-2">
@@ -1072,32 +1153,36 @@ function SubmissionRow({ sub, isMentor, onReview }: { sub: Submission; isMentor:
           ))}
         </div>
       )}
-      {latestReview && (
-        <div className="text-xs text-[#8A92A6] mt-2 bg-[#1B1F2A] rounded p-2">
-          {latestReview.reviewer.fullName}: {latestReview.comment ?? latestReview.verdict}
-          {latestReview.score != null && <span className="ml-1 font-semibold text-[#00C2FF] font-mono">[{latestReview.score}/100]</span>}
-        </div>
-      )}
+      {latestReview && <ReviewScoreDisplay review={latestReview} />}
       {isMentor && sub.status === "submitted" && (
         reviewOpen ? (
-          <div className="space-y-2 mt-3 border-t border-[#262A35] pt-3">
+          <div className="space-y-2.5 mt-3 border-t border-[#262A35] pt-3">
             <select className="w-full px-2 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded text-xs"
               value={verdict} onChange={e => setVerdict(e.target.value)}>
               <option value="approved">Approve</option>
               <option value="revision_requested">Request Revision</option>
               <option value="rejected">Reject</option>
             </select>
+            <div className="bg-[#0E1018] rounded-lg p-3 space-y-2">
+              <p className="text-[10px] font-semibold text-[#5A6275] mb-1">Score (each field 0–5)</p>
+              <ScoreInput label="Research Quality" value={scores.research} onChange={v => setScores(p => ({ ...p, research: v }))} />
+              <ScoreInput label="Format & Clarity" value={scores.format} onChange={v => setScores(p => ({ ...p, format: v }))} />
+              <ScoreInput label="Depth of Understanding" value={scores.understanding} onChange={v => setScores(p => ({ ...p, understanding: v }))} />
+              <div className="flex justify-between items-center pt-1.5 mt-0.5 border-t border-[#262A35] text-xs font-semibold text-[#E6E9F0]">
+                <span>Total</span><span className="font-mono text-[#00C2FF]">{total}/15</span>
+              </div>
+            </div>
             <input className="w-full px-2 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded text-xs placeholder:text-[#5A6275]"
-              placeholder="Feedback (optional)…" value={comment} onChange={e => setComment(e.target.value)} />
+              placeholder="Additional notes (optional)…" value={notes} onChange={e => setNotes(e.target.value)} />
             <div className="flex gap-1.5">
-              <button onClick={() => { onReview(sub.id, verdict, comment); setReviewOpen(false); }}
+              <button onClick={submit}
                 className="flex-1 px-2 py-1.5 bg-[#00C2FF] text-[#06121A] text-xs font-semibold rounded">Submit Review</button>
               <button onClick={() => setReviewOpen(false)} className="px-2 py-1.5 text-xs text-[#8A92A6] hover:bg-[#1B1F2A] rounded">Cancel</button>
             </div>
           </div>
         ) : (
           <button onClick={() => setReviewOpen(true)}
-            className="text-xs text-[#00C2FF] hover:underline font-medium mt-2">Review / mark this submission →</button>
+            className="text-xs text-[#00C2FF] hover:underline font-medium mt-2">Review &amp; score this submission →</button>
         )
       )}
       <div className="text-[10px] text-[#5A6275] mt-2 font-mono">{fmt(sub.createdAt)}</div>

@@ -77,7 +77,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     userId: submission.submitter.id,
     type: "SYSTEM",
     title: `Submission reviewed: ${verdictLabel[data.verdict] ?? data.verdict}`,
-    body: `"${submission.task.title}"${data.score !== undefined ? ` — Score: ${data.score}/100` : ""}${data.comment ? ` — ${data.comment.slice(0, 80)}` : ""}`,
+    body: `"${submission.task.title}"${data.score !== undefined ? ` — Score: ${data.score}/15` : ""}`,
     link: "/internship",
   }).catch(() => {});
 
