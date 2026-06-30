@@ -14,14 +14,15 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const taskId = searchParams.get("taskId");
+  const internId = searchParams.get("internId");
 
-  // Interns only see their own submissions; mentors see all
+  // Interns only see their own submissions; mentors see all (or filtered by internId)
   const isMentor = MENTOR_ROLES.includes(user.role as typeof MENTOR_ROLES[number]);
 
   const submissions = await prisma.internSubmission.findMany({
     where: {
       ...(taskId ? { taskId } : {}),
-      ...(!isMentor ? { submitterId: user.id } : {}),
+      ...(!isMentor ? { submitterId: user.id } : internId ? { submitterId: internId } : {}),
     },
     orderBy: { createdAt: "desc" },
     include: {

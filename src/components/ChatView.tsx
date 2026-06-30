@@ -2056,15 +2056,34 @@ export function ChatView({ currentUserId, userRole }: { currentUserId: string; u
     fetch(`/api/chat/channels/${selectedChannelId}/read`, { method: 'POST' }).catch(() => {});
   }, [selectedChannelId]);
 
-  // Fetch initial presence snapshot (one-time REST, no polling)
+  // Presence: heartbeat POST every 30s + GET poll every 30s (fallback when no Socket.IO)
   useEffect(() => {
     if (!selectedChannelId) return;
-    fetch(`/api/chat/channels/${selectedChannelId}/presence`)
-      .then((r) => r.json())
-      .then((online: { userId: string; fullName: string }[]) =>
-        setOnlineUsers(new Map(online.map((u) => [u.userId, u.fullName])))
-      )
-      .catch(() => {});
+
+    const fetchPresence = () =>
+      fetch(`/api/chat/channels/${selectedChannelId}/presence`)
+        .then((r) => r.json())
+        .then((online: { userId: string; fullName: string }[]) =>
+          setOnlineUsers(new Map(online.map((u) => [u.userId, u.fullName])))
+        )
+        .catch(() => {});
+
+    const heartbeat = () =>
+      fetch(`/api/chat/channels/${selectedChannelId}/presence`, { method: "POST" }).catch(() => {});
+
+    // Run immediately
+    fetchPresence();
+    heartbeat();
+
+    const presenceInterval = setInterval(fetchPresence, 30_000);
+    const heartbeatInterval = setInterval(heartbeat, 30_000);
+
+    return () => {
+      clearInterval(presenceInterval);
+      clearInterval(heartbeatInterval);
+      // Remove self from presence on channel leave
+      fetch(`/api/chat/channels/${selectedChannelId}/presence`, { method: "DELETE" }).catch(() => {});
+    };
   }, [selectedChannelId]);
 
   // Load top-level messages when channel changes
@@ -2318,7 +2337,11 @@ export function ChatView({ currentUserId, userRole }: { currentUserId: string; u
 
   const handleDelete = async (messageId: string) => {
     try {
-      await fetch(`/api/chat/messages/${messageId}`, { method: "DELETE" });
+      const res = await fetch(`/api/chat/messages/${messageId}`, { method: "DELETE" });
+      if (!res.ok && res.status !== 204) throw new Error("Failed");
+      const now = new Date().toISOString();
+      setMessages((prev) => prev.map((m) => m.id === messageId ? { ...m, deletedAt: now } : m));
+      setThreadMessages((prev) => prev.map((m) => m.id === messageId ? { ...m, deletedAt: now } : m));
     } catch {
       toast.error("Failed to delete message");
     }

@@ -5,6 +5,7 @@ import {
   Clock, LogIn, LogOut, AlertCircle, CheckCircle, CheckCircle2,
   Loader2, Edit2, Monitor, MapPin, UserCheck, Timer,
   CalendarClock, ChevronLeft, ChevronRight, Plus, X, Pencil, Save,
+  BarChart2, FileText, MessageSquare, TrendingUp, TrendingDown, ChevronDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/Shell";
@@ -391,6 +392,7 @@ function InternAttendanceView({ userId }: { userId: string }) {
 // ─── Mentor timesheet view ─────────────────────────────────────────────────────
 
 function MentorAttendanceView() {
+  const [activeView, setActiveView] = useState<"daily" | "summary">("daily");
   const [schedule, setSchedule] = useState<AttendanceSchedule | null>(null);
   const [savingSchedule, setSavingSchedule] = useState(false);
   const [scheduleForm, setScheduleForm] = useState({ startTime: "09:00", endTime: "17:00", lateGraceMinutes: 15, defaultBreakFrom: "12:00", defaultBreakTo: "13:00" });
@@ -500,6 +502,19 @@ function MentorAttendanceView() {
 
   return (
     <div className="space-y-5">
+      {/* Tab toggle */}
+      <div className="flex items-center gap-1 bg-[#12151D] border border-[#262A35] rounded-xl p-1 w-fit">
+        {(["daily", "summary"] as const).map(tab => (
+          <button key={tab} onClick={() => setActiveView(tab)}
+            className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors capitalize
+              ${activeView === tab ? "bg-[#00C2FF] text-[#06121A]" : "text-[#8A92A6] hover:text-[#E6E9F0]"}`}>
+            {tab === "daily" ? "Daily Timesheet" : "Intern Summary"}
+          </button>
+        ))}
+      </div>
+
+      {activeView === "summary" ? <InternSummaryTab /> : <>
+
       {/* Working hours config */}
       <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-4">
         <div className="flex items-center justify-between mb-3">
@@ -748,6 +763,263 @@ function MentorAttendanceView() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+      </>}
+    </div>
+  );
+}
+
+// ─── Intern Summary Tab ───────────────────────────────────────────────────────
+
+interface SummaryIntern {
+  intern: { id: string; fullName: string; avatarUrl?: string | null };
+  totalWorkingDays: number;
+  daysPresent: number;
+  daysAbsent: number;
+  attendanceRate: number;
+  absentDates: string[];
+  presentDates: string[];
+}
+
+interface SummaryData {
+  from: string;
+  to: string;
+  totalWorkingDays: number;
+  interns: SummaryIntern[];
+}
+
+interface InternProfile {
+  intern: SummaryIntern;
+  submissions: { id: string; task: { title: string }; status: string; submittedAt: string }[];
+  discussions: { id: string; body: string; createdAt: string }[];
+  loadingProfile: boolean;
+}
+
+function InternSummaryTab() {
+  const today = todayStr();
+  const thirtyDaysAgo = new Date(Date.now() - 29 * 86400_000).toISOString().slice(0, 10);
+
+  const [from, setFrom] = useState(thirtyDaysAgo);
+  const [to, setTo] = useState(today);
+  const [summary, setSummary] = useState<SummaryData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [profile, setProfile] = useState<InternProfile | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/internship/attendance/summary?from=${from}&to=${to}`);
+      if (res.ok) setSummary(await res.json());
+    } finally { setLoading(false); }
+  }, [from, to]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const openProfile = async (intern: SummaryIntern) => {
+    if (expanded === intern.intern.id) { setExpanded(null); setProfile(null); return; }
+    setExpanded(intern.intern.id);
+    setProfile({ intern, submissions: [], discussions: [], loadingProfile: true });
+
+    const [subRes, discRes] = await Promise.all([
+      fetch(`/api/internship/submissions?internId=${intern.intern.id}`),
+      fetch(`/api/internship/discussions?internId=${intern.intern.id}`),
+    ]);
+    const submissions = subRes.ok ? await subRes.json() : [];
+    const discussions = discRes.ok ? await discRes.json() : [];
+    setProfile({ intern, submissions, discussions, loadingProfile: false });
+  };
+
+  const presets = [
+    { label: "Last 7 days",  from: new Date(Date.now() - 6  * 86400_000).toISOString().slice(0, 10), to: today },
+    { label: "Last 30 days", from: new Date(Date.now() - 29 * 86400_000).toISOString().slice(0, 10), to: today },
+    { label: "This month",   from: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10), to: today },
+  ];
+
+  return (
+    <div className="space-y-4">
+      {/* Date range */}
+      <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-4 flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-2 text-sm">
+          <label className="text-[#8A92A6]">From</label>
+          <input type="date" value={from} max={to} onChange={e => setFrom(e.target.value)}
+            className="px-2 py-1 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-[#E6E9F0] text-sm focus:outline-none focus:border-[#00C2FF]/60" />
+          <label className="text-[#8A92A6]">To</label>
+          <input type="date" value={to} min={from} max={today} onChange={e => setTo(e.target.value)}
+            className="px-2 py-1 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-[#E6E9F0] text-sm focus:outline-none focus:border-[#00C2FF]/60" />
+        </div>
+        <div className="flex items-center gap-2 ml-auto">
+          {presets.map(p => (
+            <button key={p.label} onClick={() => { setFrom(p.from); setTo(p.to); }}
+              className="px-2.5 py-1 text-xs rounded-lg bg-[#1B1F2A] text-[#8A92A6] hover:text-[#00C2FF] hover:bg-[#0E2532] transition-colors">
+              {p.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Summary stats banner */}
+      {summary && (
+        <div className="grid grid-cols-3 gap-3">
+          <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-3 text-center">
+            <p className="text-2xl font-bold text-[#E6E9F0]">{summary.interns.length}</p>
+            <p className="text-xs text-[#5A6275] mt-0.5">Active Interns</p>
+          </div>
+          <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-3 text-center">
+            <p className="text-2xl font-bold text-[#E6E9F0]">{summary.totalWorkingDays}</p>
+            <p className="text-xs text-[#5A6275] mt-0.5">Working Days</p>
+          </div>
+          <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-3 text-center">
+            <p className="text-2xl font-bold text-[#0f9d58]">
+              {summary.interns.length > 0
+                ? Math.round(summary.interns.reduce((a, i) => a + i.attendanceRate, 0) / summary.interns.length)
+                : 0}%
+            </p>
+            <p className="text-xs text-[#5A6275] mt-0.5">Avg Attendance</p>
+          </div>
+        </div>
+      )}
+
+      {/* Intern rows */}
+      {loading ? <LoadingSpinner /> : !summary || summary.interns.length === 0 ? (
+        <EmptyState icon={UserCheck} title="No interns yet" desc="No active intern accounts found." />
+      ) : (
+        <div className="space-y-2">
+          {summary.interns.map(item => {
+            const isOpen = expanded === item.intern.id;
+            const rate = item.attendanceRate;
+            const rateColor = rate >= 80 ? "#0f9d58" : rate >= 60 ? "#F59E0B" : "#ea4335";
+
+            return (
+              <div key={item.intern.id} className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
+                {/* Row */}
+                <button
+                  onClick={() => openProfile(item)}
+                  className="w-full flex items-center gap-4 px-4 py-3 hover:bg-[#1B1F2A] transition-colors text-left"
+                >
+                  {/* Avatar */}
+                  {item.intern.avatarUrl
+                    ? <img src={item.intern.avatarUrl} alt={item.intern.fullName} className="h-9 w-9 rounded-full object-cover flex-shrink-0" />
+                    : <div className="h-9 w-9 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0"
+                        style={{ background: avatarGradient(item.intern.fullName) }}>
+                        {item.intern.fullName.charAt(0).toUpperCase()}
+                      </div>
+                  }
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-[#E6E9F0] truncate">{item.intern.fullName}</p>
+                    <p className="text-xs text-[#5A6275]">{item.daysPresent} present · {item.daysAbsent} absent</p>
+                  </div>
+                  {/* Attendance bar */}
+                  <div className="hidden sm:flex items-center gap-2 w-32">
+                    <div className="flex-1 h-1.5 bg-[#262A35] rounded-full overflow-hidden">
+                      <div className="h-full rounded-full transition-all" style={{ width: `${rate}%`, background: rateColor }} />
+                    </div>
+                    <span className="text-xs font-semibold w-8 text-right" style={{ color: rateColor }}>{rate}%</span>
+                  </div>
+                  {/* Trend icon */}
+                  {rate >= 80
+                    ? <TrendingUp className="w-4 h-4 text-[#0f9d58] flex-shrink-0" />
+                    : <TrendingDown className="w-4 h-4 text-[#ea4335] flex-shrink-0" />
+                  }
+                  <ChevronDown className={`w-4 h-4 text-[#5A6275] flex-shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                </button>
+
+                {/* Expanded profile */}
+                {isOpen && profile && profile.intern.intern.id === item.intern.id && (
+                  <div className="border-t border-[#262A35] px-4 pb-4 pt-3 space-y-4">
+                    {profile.loadingProfile ? <LoadingSpinner /> : (
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+                        {/* Attendance calendar */}
+                        <div className="lg:col-span-1 space-y-2">
+                          <h4 className="text-xs font-semibold text-[#8A92A6] flex items-center gap-1.5">
+                            <CalendarClock className="w-3.5 h-3.5" /> Attendance ({summary.from} → {summary.to})
+                          </h4>
+                          <div className="flex flex-wrap gap-1">
+                            {[...profile.intern.presentDates.map(d => ({ d, present: true })),
+                              ...profile.intern.absentDates.map(d => ({ d, present: false }))]
+                              .sort((a, b) => a.d.localeCompare(b.d))
+                              .map(({ d, present }) => (
+                                <div key={d} title={d}
+                                  className={`w-6 h-6 rounded text-[9px] flex items-center justify-center font-medium cursor-default
+                                    ${present ? "bg-[#0f9d58]/20 text-[#0f9d58]" : "bg-[#ea4335]/20 text-[#ea4335]"}`}>
+                                  {new Date(d + "T12:00:00").getDate()}
+                                </div>
+                              ))
+                            }
+                          </div>
+                          <div className="flex items-center gap-3 text-[10px] text-[#5A6275]">
+                            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[#0f9d58]/40" />Present</span>
+                            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[#ea4335]/40" />Absent</span>
+                          </div>
+                          {profile.intern.absentDates.length > 0 && (
+                            <div className="mt-2">
+                              <p className="text-[10px] font-semibold text-[#5A6275] mb-1">Missed days:</p>
+                              <div className="space-y-0.5 max-h-28 overflow-y-auto">
+                                {profile.intern.absentDates.map(d => (
+                                  <p key={d} className="text-[11px] text-[#ea4335]">
+                                    {new Date(d + "T12:00:00").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}
+                                  </p>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Submissions */}
+                        <div className="space-y-2">
+                          <h4 className="text-xs font-semibold text-[#8A92A6] flex items-center gap-1.5">
+                            <FileText className="w-3.5 h-3.5" /> Task Submissions ({profile.submissions.length})
+                          </h4>
+                          {profile.submissions.length === 0 ? (
+                            <p className="text-xs text-[#3A4150]">No submissions yet.</p>
+                          ) : (
+                            <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                              {profile.submissions.slice(0, 20).map((s) => (
+                                <div key={s.id} className="bg-[#1B1F2A] rounded-lg px-3 py-2">
+                                  <p className="text-xs font-medium text-[#C8CEDB] truncate">{s.task?.title ?? "Task"}</p>
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded
+                                      ${s.status === "APPROVED" ? "bg-[#0f9d58]/20 text-[#0f9d58]"
+                                        : s.status === "REJECTED" ? "bg-[#ea4335]/20 text-[#ea4335]"
+                                        : "bg-[#F59E0B]/20 text-[#F59E0B]"}`}>
+                                      {s.status}
+                                    </span>
+                                    <span className="text-[10px] text-[#5A6275]">{fmt(s.submittedAt)}</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Discussions */}
+                        <div className="space-y-2">
+                          <h4 className="text-xs font-semibold text-[#8A92A6] flex items-center gap-1.5">
+                            <MessageSquare className="w-3.5 h-3.5" /> Discussions ({profile.discussions.length})
+                          </h4>
+                          {profile.discussions.length === 0 ? (
+                            <p className="text-xs text-[#3A4150]">No discussion activity yet.</p>
+                          ) : (
+                            <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                              {profile.discussions.slice(0, 20).map((d) => (
+                                <div key={d.id} className="bg-[#1B1F2A] rounded-lg px-3 py-2">
+                                  <p className="text-xs text-[#C8CEDB] line-clamp-2">{d.body}</p>
+                                  <p className="text-[10px] text-[#5A6275] mt-0.5">{fmt(d.createdAt)}</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

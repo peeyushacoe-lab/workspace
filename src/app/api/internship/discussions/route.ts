@@ -16,11 +16,12 @@ export async function GET(request: Request) {
   // An empty/absent taskId means the general channel — treat "" as null so it
   // matches rows stored with taskId = null (the bug: "" never matched null).
   const taskId = searchParams.get("taskId") || null;
+  const internId = searchParams.get("internId") || null;
 
   const discussions = await prisma.internDiscussion.findMany({
     where: {
       parentId: null, // top-level only
-      taskId: taskId,
+      ...(internId ? { authorId: internId } : { taskId: taskId }),
     },
     orderBy: [{ isPinned: "desc" }, { createdAt: "asc" }],
     include: {
