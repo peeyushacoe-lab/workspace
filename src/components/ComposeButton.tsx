@@ -81,26 +81,32 @@ function ComposeModal({
       {/* Backdrop — only when not minimized */}
       {!minimized && (
         <div
-          className="fixed inset-0 z-[199] bg-black/20"
+          style={{ position: "fixed", inset: 0, zIndex: 199, background: "rgba(0,0,0,0.2)" }}
           onClick={onClose}
         />
       )}
 
-      {/* Compose window */}
+      {/* Compose window — inline style so nothing in the cascade can override position */}
       <div
-        className={`fixed z-[200] transition-all duration-200 ${
+        style={{
+          position: "fixed",
+          bottom: minimized ? 0 : 24,
+          right: 24,
+          zIndex: 200,
+          width: minimized ? 288 : 580,
+          maxWidth: "calc(100vw - 3rem)",
+        }}
+        className={`bg-[#12151D] overflow-hidden transition-[width] duration-200 ${
           minimized
-            ? "bottom-0 right-6 w-72 rounded-t-2xl shadow-lg"
-            : "bottom-6 right-6 w-[580px] max-w-[calc(100vw-3rem)] rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.5)] border border-[#262A35]"
-        } bg-[#12151D] overflow-hidden`}
+            ? "rounded-t-2xl shadow-lg"
+            : "rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.5)] border border-[#262A35]"
+        }`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div
-          className={`flex items-center justify-between px-5 py-3.5 ${
-            minimized
-              ? "bg-[#1B1F2A] rounded-t-2xl cursor-pointer"
-              : "bg-[#1B1F2A]"
+          className={`flex items-center justify-between px-5 py-3.5 bg-[#1B1F2A] ${
+            minimized ? "rounded-t-2xl cursor-pointer" : ""
           }`}
           onClick={minimized ? () => setMinimized(false) : undefined}
         >
@@ -108,14 +114,14 @@ function ComposeModal({
           <div className="flex items-center gap-0.5">
             <button
               onClick={(e) => { e.stopPropagation(); setMinimized(!minimized); }}
-              className="rounded-md p-1.5 text-white/60 hover:bg-[#12151D]/10 hover:text-white transition-colors"
+              className="rounded-md p-1.5 text-white/60 hover:bg-white/10 hover:text-white transition-colors"
               aria-label={minimized ? "Restore" : "Minimise"}
             >
               <ChevronDown className={`h-3.5 w-3.5 transition-transform ${minimized ? "rotate-180" : ""}`} />
             </button>
             <button
               onClick={expandToFullPage}
-              className="rounded-md p-1.5 text-white/60 hover:bg-[#12151D]/10 hover:text-white transition-colors"
+              className="rounded-md p-1.5 text-white/60 hover:bg-white/10 hover:text-white transition-colors"
               aria-label="Expand to full page"
               title="Open full compose"
             >
@@ -123,7 +129,7 @@ function ComposeModal({
             </button>
             <button
               onClick={onClose}
-              className="rounded-md p-1.5 text-white/60 hover:bg-[#12151D]/10 hover:text-white transition-colors"
+              className="rounded-md p-1.5 text-white/60 hover:bg-white/10 hover:text-white transition-colors"
               aria-label="Close"
             >
               <X className="h-3.5 w-3.5" />
@@ -131,9 +137,9 @@ function ComposeModal({
           </div>
         </div>
 
-        {/* Body */}
+        {/* Body — height capped so it never overflows viewport */}
         {!minimized && (
-          <div className="max-h-[70vh] overflow-y-auto">
+          <div style={{ maxHeight: "calc(100vh - 120px)", overflowY: "auto" }}>
             <SimpleComposer
               userRole={userRole}
               bare
