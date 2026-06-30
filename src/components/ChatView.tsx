@@ -100,6 +100,7 @@ type UserSummary = {
   fullName: string;
   email: string;
   role: string;
+  avatarUrl?: string | null;
 };
 
 // ─── Emoji Picker Data ────────────────────────────────────────────────────────
@@ -253,8 +254,15 @@ function formatFileSize(bytes: number): string {
 
 // ─── Avatar ───────────────────────────────────────────────────────────────────
 
-function Avatar({ name, size = "sm" }: { name: string; size?: "sm" | "md" }) {
+function Avatar({ name, avatarUrl, size = "sm" }: { name: string; avatarUrl?: string | null; size?: "sm" | "md" }) {
   const sz = size === "sm" ? "w-8 h-8 text-xs" : "w-10 h-10 text-sm";
+
+  if (avatarUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={avatarUrl} alt={name} className={`${sz} rounded-full object-cover flex-shrink-0`} />
+    );
+  }
 
   return (
     <div
@@ -541,9 +549,7 @@ const MessageItem = memo(function MessageItem({
       }}
     >
       <div className="w-[38px] flex-shrink-0 flex justify-center">
-        <div className="w-[38px] h-[38px] rounded-full text-white flex items-center justify-center font-bold text-[13px]" style={{ background: avatarGradient(msg.user.fullName) }}>
-          {msg.user.fullName.charAt(0).toUpperCase()}
-        </div>
+        <Avatar name={msg.user.fullName} avatarUrl={msg.user.avatarUrl} size="md" />
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline gap-2 mb-0.5">
@@ -797,7 +803,7 @@ function ThreadPanel({
       {/* Parent message preview */}
       <div className="px-4 py-3 bg-[#00C2FF]/10 border-b border-[#262A35] flex-shrink-0">
         <div className="flex items-start gap-2">
-          <Avatar name={parentMsg.user.fullName} size="sm" />
+          <Avatar name={parentMsg.user.fullName} avatarUrl={parentMsg.user.avatarUrl} size="sm" />
           <div className="flex-1 min-w-0">
             <span className="text-xs font-semibold text-[#E6E9F0]">{parentMsg.user.fullName}</span>
             <p className="text-xs text-[#8A92A6] mt-0.5 line-clamp-3 whitespace-pre-wrap break-words">
@@ -1134,7 +1140,7 @@ function NewGroupDMModal({
                 >
                   {selected.has(u.id) && <Check className="w-3 h-3 text-white" />}
                 </div>
-                <Avatar name={u.fullName} size="sm" />
+                <Avatar name={u.fullName} avatarUrl={u.avatarUrl} size="sm" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-[#E6E9F0] truncate">{u.fullName}</p>
                   <p className="text-[10px] text-[#8A92A6] truncate">{u.email}</p>
