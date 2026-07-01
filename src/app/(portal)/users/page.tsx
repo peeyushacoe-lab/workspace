@@ -255,18 +255,20 @@ export default function UsersPage() {
   };
 
   const [resendingInvite, setResendingInvite] = useState<string | null>(null);
-  const handleResendInvite = async (userId: string, userName: string) => {
+  const handleResendInvite = async (userId: string, userName: string, alreadySetup = false) => {
     setResendingInvite(userId);
     try {
       const res = await fetch(`/api/users/${userId}/resend-invite`, { method: "POST" });
       const data = await res.json() as { error?: string };
       if (res.ok) {
-        toast.success(`Invite resent to ${userName}`);
+        toast.success(alreadySetup
+          ? `Password reset email sent to ${userName}'s personal email`
+          : `Invite resent to ${userName}`);
       } else {
-        toast.error(data.error ?? "Failed to resend invite");
+        toast.error(data.error ?? "Failed to send reset email");
       }
     } catch {
-      toast.error("An error occurred resending the invite");
+      toast.error("An error occurred");
     } finally {
       setResendingInvite(null);
     }
@@ -526,14 +528,14 @@ export default function UsersPage() {
                             <History className="w-3.5 h-3.5" />
                           </Button>
                         </Link>
-                        {/* Resend invite — shown only when user hasn't logged in yet */}
-                        {user.mustResetPassword && user.id !== currentUser?.id && (
+                        {/* Send/resend invite — always available so admin can reset forgotten passwords */}
+                        {user.id !== currentUser?.id && (
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => void handleResendInvite(user.id, user.fullName)}
+                            onClick={() => void handleResendInvite(user.id, user.fullName, !user.mustResetPassword)}
                             disabled={resendingInvite === user.id}
-                            title="Resend invite email"
+                            title={user.mustResetPassword ? "Resend invite email" : "Send password reset to personal email"}
                           >
                             {resendingInvite === user.id
                               ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
