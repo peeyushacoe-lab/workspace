@@ -256,6 +256,10 @@ export default function UsersPage() {
 
   const [resendingInvite, setResendingInvite] = useState<string | null>(null);
   const handleResendInvite = async (userId: string, userName: string, alreadySetup = false) => {
+    // Warn before resetting an active user — this invalidates their current password
+    if (alreadySetup && !confirm(`This will reset ${userName}'s password and send a new temporary password to their personal email.\n\nThey will need to log in with the new temporary password and set a new one.\n\nContinue?`)) {
+      return;
+    }
     setResendingInvite(userId);
     try {
       const res = await fetch(`/api/users/${userId}/resend-invite`, { method: "POST" });

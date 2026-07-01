@@ -9,13 +9,19 @@ import {
 import { startRegistration } from "@simplewebauthn/browser";
 import type { PublicKeyCredentialCreationOptionsJSON } from "@simplewebauthn/browser";
 
-type Step = "intro" | "naming" | "registering" | "done" | "error";
+type Step = "intro" | "naming" | "registering" | "done" | "error" | "skipping";
 
 export default function SetupPasskeyPage() {
   const router = useRouter();
   const [step, setStep] = useState<Step>("intro");
   const [name, setName] = useState("");
   const [error, setError] = useState("");
+
+  async function skipPasskey() {
+    setStep("skipping");
+    await fetch("/api/auth/skip-passkey", { method: "POST" });
+    router.replace("/inbox");
+  }
 
   async function register() {
     setStep("registering");
@@ -188,12 +194,20 @@ export default function SetupPasskeyPage() {
           )}
         </div>
 
-        {/* Sign out link */}
-        <p className="text-center mt-6">
+        {/* Skip / sign out */}
+        <div className="flex items-center justify-center gap-4 mt-6">
+          <button
+            onClick={() => void skipPasskey()}
+            disabled={step === "skipping"}
+            className="text-xs text-[#5f6368] hover:text-[#202124] transition-colors underline underline-offset-2 disabled:opacity-50"
+          >
+            {step === "skipping" ? "Redirecting…" : "Skip for now"}
+          </button>
+          <span className="text-[#e8eaed] text-xs">·</span>
           <a href="/api/auth/logout" className="text-xs text-[#80868b] hover:text-[#5f6368] transition-colors">
             Sign out
           </a>
-        </p>
+        </div>
       </div>
     </div>
   );
