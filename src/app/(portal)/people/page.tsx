@@ -133,7 +133,7 @@ function CopyEmail({ email }: { email: string }) {
 
 function PersonCard({ person }: { person: PersonRecord }) {
   return (
-    <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-4 flex flex-col gap-3 hover:border-[rgba(255,255,255,0.13)] transition-colors">
+    <Link href={`/people/${person.id}`} className="block bg-[#12151D] border border-[#262A35] rounded-xl p-4 flex flex-col gap-3 hover:border-[rgba(255,255,255,0.13)] transition-colors cursor-pointer">
       <div className="flex items-start gap-3">
         <Avatar person={person} size="lg" />
         <div className="flex-1 min-w-0">
@@ -157,7 +157,7 @@ function PersonCard({ person }: { person: PersonRecord }) {
           </span>
         )}
       </div>
-    </div>
+    </Link>
   );
 }
 
@@ -167,15 +167,15 @@ function PersonRow({ person }: { person: PersonRecord }) {
   return (
     <tr className="border-b border-[#1C1F28] hover:bg-[#1B1F2A]/30 transition-colors">
       <td className="px-4 py-3">
-        <div className="flex items-center gap-3">
+        <Link href={`/people/${person.id}`} className="flex items-center gap-3 group">
           <Avatar person={person} size="sm" />
           <div className="min-w-0">
-            <p className="text-sm text-[#E6E9F0] font-medium truncate">{person.fullName}</p>
+            <p className="text-sm text-[#E6E9F0] font-medium truncate group-hover:text-[#00C2FF] transition-colors">{person.fullName}</p>
             {person.jobTitle && (
               <p className="text-[10px] text-[#5A6275] truncate">{person.jobTitle}</p>
             )}
           </div>
-        </div>
+        </Link>
       </td>
       <td className="px-4 py-3">
         <span

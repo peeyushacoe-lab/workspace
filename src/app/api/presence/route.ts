@@ -19,9 +19,14 @@ export interface PresenceData {
 }
 
 const PRESENCE_TTL = 300; // 5 minutes
+const LAST_SEEN_TTL = 60 * 60 * 24 * 30; // 30 days
 
 function presenceKey(userId: string) {
   return `presence:${userId}`;
+}
+
+function lastSeenKey(userId: string) {
+  return `presence:lastseen:${userId}`;
 }
 
 // ─── GET ?userIds=id1,id2,id3 ─────────────────────────────────────────────────
@@ -61,9 +66,11 @@ export async function GET(request: NextRequest) {
         }
       }
       if (!result[userId]) {
+        // Try to get last seen timestamp for "Last seen X ago" display
+        const lastSeen = await redis.get(lastSeenKey(userId));
         result[userId] = {
           status: "offline",
-          updatedAt: new Date().toISOString(),
+          updatedAt: lastSeen ?? new Date().toISOString(),
         };
       }
     })
@@ -138,13 +145,18 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const now = new Date().toISOString();
+
+  // Always update last-seen (long-lived, survives the 5-min presence TTL)
+  await redis.set(lastSeenKey(user.id), now, "EX", LAST_SEEN_TTL);
+
   const existing = await redis.get(presenceKey(user.id));
 
   if (!existing) {
     // User has no active presence — set them online by default
     const data: PresenceData = {
       status: "online",
-      updatedAt: new Date().toISOString(),
+      updatedAt: now,
     };
     await redis.set(presenceKey(user.id), JSON.stringify(data), "EX", PRESENCE_TTL);
     return NextResponse.json({ ok: true, refreshed: false, created: true });

@@ -1270,6 +1270,7 @@ function ChannelSection({
   channels,
   selectedChannelId,
   onlineUsers,
+  presenceData,
   onSelect,
   onNew,
   newTitle,
@@ -1279,6 +1280,7 @@ function ChannelSection({
   channels: Channel[];
   selectedChannelId: string | null;
   onlineUsers: Map<string, string>;
+  presenceData?: Record<string, { status: string; updatedAt: string }>;
   onSelect: (id: string) => void;
   onNew?: () => void;
   newTitle?: string;
@@ -1329,7 +1331,9 @@ function ChannelSection({
             if (showAvatarRow) {
               // Direct message / group row — 44px with avatar + presence dot
               const other = ch.members?.find((m) => m.userId !== currentUserId);
-              const presence = other && onlineUsers.has(other.userId) ? "#10B981" : "#5A6275";
+              const otherStatus = other ? presenceData?.[other.userId]?.status ?? "offline" : "offline";
+              const statusColors: Record<string, string> = { online: "#10B981", away: "#f59e0b", busy: "#ef4444", in_meeting: "#a855f7", dnd: "#ef4444", offline: "#5A6275" };
+              const presence = statusColors[otherStatus] ?? "#5A6275";
               return (
                 <button
                   key={ch.id}
@@ -1844,6 +1848,7 @@ export function ChatView({ currentUserId, userRole }: { currentUserId: string; u
   const [threadParentMsg, setThreadParentMsg] = useState<Message | null>(null);
   const [threadMessages, setThreadMessages] = useState<Message[]>([]);
   const [onlineUsers, setOnlineUsers] = useState<Map<string, string>>(new Map());
+  const [presenceData, setPresenceData] = useState<Record<string, { status: string; updatedAt: string }>>();
 
   // Drag-drop state
   const [isDragOver, setIsDragOver] = useState(false);
@@ -2062,35 +2067,48 @@ export function ChatView({ currentUserId, userRole }: { currentUserId: string; u
     fetch(`/api/chat/channels/${selectedChannelId}/read`, { method: 'POST' }).catch(() => {});
   }, [selectedChannelId]);
 
-  // Presence: heartbeat POST every 30s + GET poll every 30s (fallback when no Socket.IO)
+  // Global presence: poll Redis-backed presence for all channel members every 60s
   useEffect(() => {
-    if (!selectedChannelId) return;
+    const allMemberIds = Array.from(
+      new Set(channels.flatMap((c) => c.members.map((m) => m.userId)).filter((id) => id !== currentUserId))
+    );
+    if (allMemberIds.length === 0) return;
 
-    const fetchPresence = () =>
-      fetch(`/api/chat/channels/${selectedChannelId}/presence`)
-        .then((r) => r.json())
-        .then((online: { userId: string; fullName: string }[]) =>
-          setOnlineUsers(new Map(online.map((u) => [u.userId, u.fullName])))
-        )
-        .catch(() => {});
+    const fetchGlobalPresence = async () => {
+      try {
+        const res = await fetch(`/api/presence?userIds=${encodeURIComponent(allMemberIds.join(","))}`, { cache: "no-store" });
+        if (!res.ok) return;
+        const data = await res.json() as Record<string, { status: string; updatedAt: string }>;
+        setPresenceData(data);
+        // Build onlineUsers map: only users with status "online"
+        const online = new Map<string, string>();
+        for (const [uid, p] of Object.entries(data)) {
+          if (p.status === "online" || p.status === "away" || p.status === "busy" || p.status === "in_meeting") {
+            online.set(uid, uid); // value not used for display
+          }
+        }
+        setOnlineUsers(online);
+      } catch {
+        // ignore
+      }
+    };
 
-    const heartbeat = () =>
-      fetch(`/api/chat/channels/${selectedChannelId}/presence`, { method: "POST" }).catch(() => {});
+    // Also send our own heartbeat (supplements PresenceStatusPicker)
+    const sendHeartbeat = () =>
+      fetch("/api/presence", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ heartbeat: true }) }).catch(() => {});
 
-    // Run immediately
-    fetchPresence();
-    heartbeat();
+    fetchGlobalPresence();
+    sendHeartbeat();
 
-    const presenceInterval = setInterval(fetchPresence, 30_000);
-    const heartbeatInterval = setInterval(heartbeat, 30_000);
+    const presenceInterval = setInterval(fetchGlobalPresence, 60_000);
+    const heartbeatInterval = setInterval(sendHeartbeat, 240_000);
 
     return () => {
       clearInterval(presenceInterval);
       clearInterval(heartbeatInterval);
-      // Remove self from presence on channel leave
-      fetch(`/api/chat/channels/${selectedChannelId}/presence`, { method: "DELETE" }).catch(() => {});
     };
-  }, [selectedChannelId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [channels, currentUserId]);
 
   // Load top-level messages when channel changes
   useEffect(() => {
@@ -2740,6 +2758,7 @@ export function ChatView({ currentUserId, userRole }: { currentUserId: string; u
             channels={publicChannels.filter((c) => !sidebarSearch || c.name.toLowerCase().includes(sidebarSearch.toLowerCase()))}
             selectedChannelId={selectedChannelId}
             onlineUsers={onlineUsers}
+            presenceData={presenceData}
             onSelect={setSelectedChannelId}
             onNew={sidebarSearch ? undefined : () => setShowNewChannel(true)}
             newTitle="New Channel"
@@ -2751,6 +2770,7 @@ export function ChatView({ currentUserId, userRole }: { currentUserId: string; u
             channels={directChannels.filter((c) => !sidebarSearch || c.name.toLowerCase().includes(sidebarSearch.toLowerCase()))}
             selectedChannelId={selectedChannelId}
             onlineUsers={onlineUsers}
+            presenceData={presenceData}
             onSelect={setSelectedChannelId}
             onNew={sidebarSearch ? undefined : () => setShowNewGroupDM(true)}
             newTitle="New Direct Message"
@@ -2762,6 +2782,7 @@ export function ChatView({ currentUserId, userRole }: { currentUserId: string; u
             channels={groupChannels.filter((c) => !sidebarSearch || c.name.toLowerCase().includes(sidebarSearch.toLowerCase()))}
             selectedChannelId={selectedChannelId}
             onlineUsers={onlineUsers}
+            presenceData={presenceData}
             onSelect={setSelectedChannelId}
             onNew={sidebarSearch ? undefined : () => setShowNewGroupDM(true)}
             newTitle="New Group"
@@ -2892,7 +2913,24 @@ export function ChatView({ currentUserId, userRole }: { currentUserId: string; u
                 {!renamingChannel && (
                   <p className="text-xs text-[#5A6275] truncate mt-px">
                     {selectedChannel?.type === "DIRECT"
-                      ? "Direct Message"
+                      ? (() => {
+                          const other = selectedChannel.members.find((m) => m.userId !== currentUserId);
+                          if (!other) return "Direct Message";
+                          const p = presenceData?.[other.userId];
+                          if (!p || p.status === "offline") {
+                            // Show "Last seen X ago" if we have a real timestamp
+                            const ts = p?.updatedAt ? new Date(p.updatedAt) : null;
+                            const now = Date.now();
+                            const ageMs = ts ? now - ts.getTime() : null;
+                            // If timestamp is very fresh (within 30s) it might be our fallback "now" — skip it
+                            if (ts && ageMs !== null && ageMs > 30_000) {
+                              return `Last seen ${formatDistanceToNow(ts, { addSuffix: true })}`;
+                            }
+                            return "Offline";
+                          }
+                          const labels: Record<string, string> = { online: "Online", away: "Away", busy: "Busy", in_meeting: "In a meeting", dnd: "Do not disturb" };
+                          return labels[p.status] ?? "Online";
+                        })()
                       : `${selectedChannel?.members.length ?? 0} member${(selectedChannel?.members.length ?? 0) === 1 ? "" : "s"}${onlineUsers.size > 0 ? ` · ${onlineUsers.size} online` : ""}`}
                     {selectedChannel?.type !== "DIRECT" && selectedChannel?.description ? ` · ${selectedChannel.description}` : ""}
                   </p>
