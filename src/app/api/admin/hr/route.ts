@@ -13,10 +13,12 @@ const HR_FIELDS = [
 // Staff = everyone except interns (interns are managed in Mentor → HR).
 const STAFF_WHERE = { role: { not: "INTERNSHIP" as never } };
 
+const HR_MGMT_ROLES = ["ADMIN", "CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER"];
+
 async function requireAdmin() {
   const session = await getCurrentUser();
   if (!session) return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
-  if (session.role !== "ADMIN") return { error: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
+  if (!HR_MGMT_ROLES.includes(session.role)) return { error: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
   return { session };
 }
 

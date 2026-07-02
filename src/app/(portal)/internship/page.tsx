@@ -13,6 +13,7 @@ import {
 import { toast } from "sonner";
 import { PageHeader } from "@/components/Shell";
 import { avatarGradient } from "@/lib/avatar";
+import InternGrowth from "@/components/InternGrowth";
 
 // ─── Markdown renderer ───────────────────────────────────────────────────────
 
@@ -1764,6 +1765,9 @@ function ProgressTab({ isMentor, userId }: { isMentor: boolean; userId: string }
           </div>
         </div>
       )}
+
+      {/* Evaluations, shared 1:1 notes & certificates */}
+      <InternGrowth />
     </div>
   );
 }

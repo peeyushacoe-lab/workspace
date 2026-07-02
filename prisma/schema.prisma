@@ -148,6 +148,22 @@ model User {
   internWeekCompletions InternWeekCompletion[] @relation("WeekCompletions")
   internWeekNotes      InternWeekMentorNote[] @relation("WeekMentorNotes")
   internModuleCompletions InternModuleCompletion[] @relation("ModuleCompletions")
+  // HR suite
+  leaveRequests       LeaveRequest[]       @relation("LeaveRequester")
+  leaveReviews        LeaveRequest[]       @relation("LeaveReviewer")
+  hrDocuments         HRDocument[]         @relation("HRDocOwner")
+  hrDocsUploaded      HRDocument[]         @relation("HRDocUploader")
+  onboardingItems     OnboardingItem[]     @relation("OnboardingOwner")
+  onboardingCreated   OnboardingItem[]     @relation("OnboardingCreator")
+  // Mentor workspace
+  mentorAssignments   MentorAssignment[]   @relation("AssignmentMentor")
+  internAssignment    MentorAssignment?    @relation("AssignmentIntern")
+  evaluationsReceived InternEvaluation[]   @relation("EvalIntern")
+  evaluationsGiven    InternEvaluation[]   @relation("EvalMentor")
+  mentorNotesGiven    MentorNote[]         @relation("MentorNoteAuthor")
+  mentorNotesReceived MentorNote[]         @relation("MentorNoteIntern")
+  certificates        InternCertificate[]  @relation("CertIntern")
+  certificatesIssued  InternCertificate[]  @relation("CertIssuer")
 }
 
 // WebAuthn passkey credentials
@@ -2053,4 +2069,170 @@ model InternWeekMentorNote {
 
   @@index([weekId])
   @@index([authorId])
+}
+
+// ─── HR Suite ────────────────────────────────────────────────────────────────
+
+enum LeaveType {
+  ANNUAL
+  SICK
+  CASUAL
+  UNPAID
+  WFH
+  OTHER
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum HRDocCategory {
+  CONTRACT
+  OFFER_LETTER
+  ID_DOCUMENT
+  CERTIFICATE
+  POLICY
+  PAYSLIP
+  OTHER
+}
+
+enum ChecklistKind {
+  ONBOARDING
+  OFFBOARDING
+}
+
+model LeaveRequest {
+  id         String      @id @default(cuid())
+  userId     String
+  type       LeaveType
+  startDate  DateTime
+  endDate    DateTime
+  days       Float
+  reason     String?
+  status     LeaveStatus @default(PENDING)
+  reviewerId String?
+  reviewNote String?
+  reviewedAt DateTime?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  user     User  @relation("LeaveRequester", fields: [userId], references: [id], onDelete: Cascade)
+  reviewer User? @relation("LeaveReviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
+
+  @@index([userId, status])
+  @@index([status])
+}
+
+model CompanyHoliday {
+  id        String   @id @default(cuid())
+  name      String
+  date      DateTime
+  createdAt DateTime @default(now())
+
+  @@index([date])
+}
+
+model HRDocument {
+  id           String        @id @default(cuid())
+  userId       String
+  uploadedById String?
+  title        String
+  category     HRDocCategory @default(OTHER)
+  fileName     String
+  storageKey   String
+  mimeType     String
+  size         Int
+  createdAt    DateTime      @default(now())
+
+  user       User  @relation("HRDocOwner", fields: [userId], references: [id], onDelete: Cascade)
+  uploadedBy User? @relation("HRDocUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+}
+
+model OnboardingItem {
+  id          String        @id @default(cuid())
+  userId      String
+  kind        ChecklistKind @default(ONBOARDING)
+  title       String
+  description String?
+  order       Int           @default(0)
+  dueDate     DateTime?
+  completedAt DateTime?
+  createdById String?
+  createdAt   DateTime      @default(now())
+
+  user      User  @relation("OnboardingOwner", fields: [userId], references: [id], onDelete: Cascade)
+  createdBy User? @relation("OnboardingCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([userId, kind])
+}
+
+// ─── Mentor Workspace ────────────────────────────────────────────────────────
+
+model MentorAssignment {
+  id        String   @id @default(cuid())
+  mentorId  String
+  internId  String   @unique
+  createdAt DateTime @default(now())
+
+  mentor User @relation("AssignmentMentor", fields: [mentorId], references: [id], onDelete: Cascade)
+  intern User @relation("AssignmentIntern", fields: [internId], references: [id], onDelete: Cascade)
+
+  @@index([mentorId])
+}
+
+model InternEvaluation {
+  id           String   @id @default(cuid())
+  internId     String
+  mentorId     String
+  period       String // e.g. "Week 4", "Midpoint", "Final"
+  isFinal      Boolean  @default(false)
+  scores       Json // { technical, communication, initiative, reliability, teamwork } each 1-5
+  overall      Float
+  strengths    String?
+  improvements String?
+  comment      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  intern User @relation("EvalIntern", fields: [internId], references: [id], onDelete: Cascade)
+  mentor User @relation("EvalMentor", fields: [mentorId], references: [id], onDelete: Cascade)
+
+  @@index([internId])
+}
+
+model MentorNote {
+  id          String   @id @default(cuid())
+  mentorId    String
+  internId    String
+  meetingDate DateTime @default(now())
+  note        String
+  actionItems String?
+  isPrivate   Boolean  @default(true) // true = mentors only; false = intern can see
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  mentor User @relation("MentorNoteAuthor", fields: [mentorId], references: [id], onDelete: Cascade)
+  intern User @relation("MentorNoteIntern", fields: [internId], references: [id], onDelete: Cascade)
+
+  @@index([internId])
+}
+
+model InternCertificate {
+  id         String   @id @default(cuid())
+  internId   String
+  issuedById String?
+  title      String
+  serial     String   @unique
+  grade      String? // e.g. "Distinction", "Merit", "Pass"
+  issuedAt   DateTime @default(now())
+
+  intern   User  @relation("CertIntern", fields: [internId], references: [id], onDelete: Cascade)
+  issuedBy User? @relation("CertIssuer", fields: [issuedById], references: [id], onDelete: SetNull)
+
+  @@index([internId])
 }

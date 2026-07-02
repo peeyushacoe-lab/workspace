@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { avatarGradient } from "@/lib/avatar";
+import { MentorOverviewSubTab, MentorInternsSubTab } from "@/components/MentorInterns";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -145,10 +146,11 @@ function QuizEditor({ quiz, onChange }: { quiz: Quiz; onChange: (q: Quiz) => voi
 
 // ─── MENTOR PANEL TAB ─────────────────────────────────────────────────────────
 
-type MentorSubTab = "weeks" | "edit_week" | "new_week" | "seed" | "attendance" | "hr";
+type MentorSubTab = "overview" | "interns" | "weeks" | "edit_week" | "new_week" | "seed" | "attendance" | "hr";
 
 export function MentorPanelTab() {
-  const [subTab, setSubTab] = useState<MentorSubTab>("weeks");
+  const [subTab, setSubTab] = useState<MentorSubTab>("overview");
+  const [openInternId, setOpenInternId] = useState<string | null>(null);
   const [weeks, setWeeks] = useState<InternWeek[]>([]);
   const [loading, setLoading] = useState(true);
   const [seedLoading, setSeedLoading] = useState(false);
@@ -283,15 +285,17 @@ export function MentorPanelTab() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-4">
+    <div className="max-w-5xl mx-auto space-y-4">
       {/* Sub-tab bar */}
       <div className="flex gap-1 border-b border-[#262A35] pb-0 flex-wrap">
         {([
+          { id: "overview" as MentorSubTab, label: "Overview", icon: TrendingUp },
+          { id: "interns" as MentorSubTab, label: "Interns", icon: GraduationCap },
           { id: "weeks" as MentorSubTab, label: "Weeks", icon: BookOpen },
           { id: "attendance" as MentorSubTab, label: "Attendance", icon: CalendarClock },
           { id: "hr" as MentorSubTab, label: "HR", icon: UserCheck },
           { id: "new_week" as MentorSubTab, label: "Add Week", icon: Plus },
-          { id: "seed" as MentorSubTab, label: "Seed Handbook", icon: GraduationCap },
+          { id: "seed" as MentorSubTab, label: "Seed Handbook", icon: RefreshCw },
         ]).map(t => (
           <button key={t.id} onClick={() => setSubTab(t.id)}
             className={`flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium border-b-2 transition-colors ${
@@ -306,6 +310,20 @@ export function MentorPanelTab() {
           </button>
         )}
       </div>
+
+      {/* Overview dashboard */}
+      {subTab === "overview" && (
+        <MentorOverviewSubTab onOpenIntern={(id) => { setOpenInternId(id); setSubTab("interns"); }} />
+      )}
+
+      {/* Interns roster / profile */}
+      {subTab === "interns" && (
+        <MentorInternsSubTab
+          openInternId={openInternId}
+          onOpenIntern={setOpenInternId}
+          onBack={() => setOpenInternId(null)}
+        />
+      )}
 
       {/* Attendance sub-tab */}
       {subTab === "attendance" && <MentorAttendanceSubTab />}
