@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { canAccessPath, portalHome, type SessionUser } from "@/lib/auth";
+import { canAccessPath, getPortalHome, type SessionUser } from "@/lib/auth";
 
 const protectedRoutes = [
   "/dashboard",
@@ -38,7 +38,7 @@ const protectedRoutes = [
 const validRoles = new Set<string>([
   "ADMIN", "CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER",
   "DEVELOPER", "CYBER_SECURITY", "QA", "MARKETING",
-  "RESEARCH", "FINANCE", "OPERATIONS", "SUPPORT", "INTERNSHIP",
+  "RESEARCH", "FINANCE", "OPERATIONS", "SUPPORT", "HR", "INTERNSHIP",
 ]);
 
 const MFA_ENFORCED_ROLES = new Set<string>([
@@ -137,7 +137,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (!canAccessPath(user, request.nextUrl.pathname)) {
-    return NextResponse.redirect(new URL(portalHome, request.url));
+    return NextResponse.redirect(new URL(getPortalHome(user.role), request.url));
   }
 
   // New user onboarding gate: force passkey setup before accessing the app

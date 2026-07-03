@@ -34,6 +34,7 @@ export const roleLabels: Record<UserRole, string> = {
   FINANCE: "Finance",
   OPERATIONS: "Operations",
   SUPPORT: "Support",
+  HR: "HR",
   INTERNSHIP: "Internship",
 };
 
@@ -44,13 +45,20 @@ const ALL_ROLES: UserRole[] = [
   "ADMIN", "CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER",
   "DEVELOPER", "CYBER_SECURITY", "QA", "MARKETING",
   "RESEARCH", "FINANCE", "OPERATIONS", "SUPPORT",
-  "INTERNSHIP",
+  "HR", "INTERNSHIP",
 ];
 
 // Roles excluding interns — for features not yet ready for intern access
 const ALL_ROLES_EXCEPT_INTERN: UserRole[] = ALL_ROLES.filter((r) => r !== "INTERNSHIP");
 
 export const portalHome = "/inbox";
+
+// Role-specific landing page — HR goes straight to the HR dashboard
+export function getPortalHome(role: string): string {
+  if (role === "HR") return "/admin/hr";
+  if (role === "INTERNSHIP") return "/internship/attendance";
+  return "/inbox";
+}
 
 // Key roles — only one account of each can exist in the system
 export const KEY_ROLES = new Set<UserRole>(["CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER"]);
@@ -62,7 +70,7 @@ export const CREATOR_PERMISSIONS: Partial<Record<UserRole, UserRole[]>> = {
   ADMIN: ["CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER",
           "DEVELOPER", "CYBER_SECURITY", "QA", "MARKETING",
           "RESEARCH", "FINANCE", "OPERATIONS", "SUPPORT",
-          "INTERNSHIP"],
+          "HR", "INTERNSHIP"],
   CEO:        ["MARKETING", "FINANCE"],
   CISO:       ["CYBER_SECURITY"],
   R_AND_D:    ["DEVELOPER", "QA", "RESEARCH"],
@@ -70,26 +78,29 @@ export const CREATOR_PERMISSIONS: Partial<Record<UserRole, UserRole[]>> = {
   OPS_MANAGER: ["SUPPORT", "OPERATIONS"],
 };
 
+// All roles except HR — used for features the HR account should not access
+const NON_HR_ROLES: UserRole[] = ALL_ROLES.filter(r => r !== "HR");
+
 export const portalNavItems: PortalNavItem[] = [
   { href: "/inbox",     label: "Inbox",      hint: "Workspace mail",        roles: ALL_ROLES },
-  { href: "/chat",      label: "Chat",       hint: "Team messaging",        roles: ALL_ROLES },
-  { href: "/meet",      label: "Meet",       hint: "Video meetings",        roles: ALL_ROLES },
-  { href: "/calendar",  label: "Calendar",   hint: "Events & scheduling",   roles: ALL_ROLES },
-  { href: "/whiteboard", label: "Whiteboard", hint: "Visual canvas",         roles: ALL_ROLES },
-  { href: "/ai",         label: "AI",         hint: "AI assistant",          roles: ALL_ROLES },
+  { href: "/chat",      label: "Chat",       hint: "Team messaging",        roles: NON_HR_ROLES },
+  { href: "/meet",      label: "Meet",       hint: "Video meetings",        roles: NON_HR_ROLES },
+  { href: "/calendar",  label: "Calendar",   hint: "Events & scheduling",   roles: NON_HR_ROLES },
+  { href: "/whiteboard", label: "Whiteboard", hint: "Visual canvas",         roles: NON_HR_ROLES },
+  { href: "/ai",         label: "AI",         hint: "AI assistant",          roles: NON_HR_ROLES },
   { href: "/notifications", label: "Notifications", hint: "Activity & alerts",   roles: ALL_ROLES },
   { href: "/people",    label: "People",     hint: "Team directory",        roles: ALL_ROLES },
-  { href: "/teams",     label: "Teams",      hint: "Team spaces",           roles: ALL_ROLES },
-  { href: "/tasks",     label: "Tasks",      hint: "Work items",            roles: ALL_ROLES },
-  { href: "/apps",      label: "Apps",       hint: "App marketplace",       roles: ALL_ROLES },
-  { href: "/hr",        label: "My HR",      hint: "Leave, documents & onboarding", roles: ALL_ROLES },
+  { href: "/teams",     label: "Teams",      hint: "Team spaces",           roles: NON_HR_ROLES },
+  { href: "/tasks",     label: "Tasks",      hint: "Work items",            roles: NON_HR_ROLES },
+  { href: "/apps",      label: "Apps",       hint: "App marketplace",       roles: NON_HR_ROLES },
+  { href: "/hr",        label: "My HR",      hint: "Leave, documents & onboarding", roles: NON_HR_ROLES },
   { href: "/dashboard", label: "Dashboard",  hint: "Executive overview",    roles: MGMT_ROLES },
   { href: "/contacts",  label: "Contacts",   hint: "Recipient book",        roles: MGMT_ROLES },
   { href: "/users",     label: "Users",      hint: "Manage team accounts",  roles: MGMT_ROLES },
   { href: "/billing",    label: "Billing",     hint: "Plans & usage",          roles: ["ADMIN"] },
   { href: "/org",       label: "Org",        hint: "Organization settings",  roles: ["ADMIN"] },
   { href: "/admin",     label: "Admin",      hint: "System administration", roles: ["ADMIN"] },
-  { href: "/admin/hr",  label: "HR",         hint: "People, leave & org",   roles: MGMT_ROLES },
+  { href: "/admin/hr",  label: "HR Console", hint: "People, leave & org",   roles: [...MGMT_ROLES, "HR"] },
   { href: "/compliance",  label: "Compliance",  hint: "Audit logs & GDPR",         roles: ["ADMIN", "CISO"] },
   { href: "/soc",         label: "SOC",         hint: "Security operations centre", roles: ["ADMIN", "CISO", "CEO"] },
   // Developer page hidden — broken, not ready
@@ -107,14 +118,14 @@ export const portalNavItems: PortalNavItem[] = [
 // Explicit access control map — default-deny for anything not listed.
 const pathAccess: Array<{ prefix: string; roles: UserRole[] }> = [
   { prefix: "/inbox",          roles: ALL_ROLES },
-  { prefix: "/chat",           roles: ALL_ROLES },
-  { prefix: "/meet",           roles: ALL_ROLES },
-  { prefix: "/drive",          roles: ALL_ROLES },
-  { prefix: "/calendar",       roles: ALL_ROLES },
-  { prefix: "/notes",          roles: ALL_ROLES },
-  { prefix: "/docs",           roles: ALL_ROLES },
-  { prefix: "/whiteboard",     roles: ALL_ROLES },
-  { prefix: "/ai",             roles: ALL_ROLES },
+  { prefix: "/chat",           roles: NON_HR_ROLES },
+  { prefix: "/meet",           roles: NON_HR_ROLES },
+  { prefix: "/drive",          roles: NON_HR_ROLES },
+  { prefix: "/calendar",       roles: NON_HR_ROLES },
+  { prefix: "/notes",          roles: NON_HR_ROLES },
+  { prefix: "/docs",           roles: NON_HR_ROLES },
+  { prefix: "/whiteboard",     roles: NON_HR_ROLES },
+  { prefix: "/ai",             roles: NON_HR_ROLES },
   { prefix: "/settings",        roles: ALL_ROLES },
   { prefix: "/profile",        roles: ALL_ROLES },
   { prefix: "/mfa-challenge",   roles: ALL_ROLES },
@@ -126,25 +137,25 @@ const pathAccess: Array<{ prefix: string; roles: UserRole[] }> = [
   { prefix: "/users",          roles: MGMT_ROLES },
   { prefix: "/billing",        roles: ["ADMIN"] },
   { prefix: "/org",            roles: ["ADMIN"] },
-  { prefix: "/hr",             roles: ALL_ROLES },
+  { prefix: "/hr",             roles: NON_HR_ROLES },
+  { prefix: "/admin/hr",       roles: [...MGMT_ROLES, "HR"] },
   { prefix: "/admin",          roles: ["ADMIN"] },
-  { prefix: "/admin/hr",       roles: MGMT_ROLES },
   { prefix: "/compliance",     roles: ["ADMIN", "CISO"] },
-  { prefix: "/meet/intelligence", roles: ALL_ROLES },
+  { prefix: "/meet/intelligence", roles: NON_HR_ROLES },
   { prefix: "/admin/queues",   roles: ["ADMIN"] },
   { prefix: "/admin/deliverability", roles: ["ADMIN"] },
   { prefix: "/notifications",    roles: ALL_ROLES },
   { prefix: "/people",          roles: ALL_ROLES },
-  { prefix: "/teams",          roles: ALL_ROLES },
-  { prefix: "/tasks",          roles: ALL_ROLES },
-  { prefix: "/apps",           roles: ALL_ROLES },
+  { prefix: "/teams",          roles: NON_HR_ROLES },
+  { prefix: "/tasks",          roles: NON_HR_ROLES },
+  { prefix: "/apps",           roles: NON_HR_ROLES },
   { prefix: "/onboarding",     roles: ALL_ROLES },
   { prefix: "/status",         roles: ALL_ROLES },
   { prefix: "/download",       roles: ALL_ROLES },
   { prefix: "/soc",            roles: ["ADMIN", "CISO", "CEO"] },
   { prefix: "/developer",      roles: ["ADMIN"] },
   { prefix: "/access",         roles: ["ADMIN", "CISO"] },
-  { prefix: "/brain",          roles: ALL_ROLES },
+  { prefix: "/brain",          roles: NON_HR_ROLES },
   { prefix: "/internship",     roles: ["INTERNSHIP", "ADMIN", "CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER"] },
   { prefix: "/mentor",         roles: MGMT_ROLES },
 ];

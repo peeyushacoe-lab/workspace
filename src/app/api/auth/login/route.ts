@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { canAccessPath, portalHome, type SessionUser } from "@/lib/auth";
+import { canAccessPath, getPortalHome, type SessionUser } from "@/lib/auth";
 import { signPayload, generateSessionToken } from "@/lib/session-crypto";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { logAudit } from "@/lib/audit";
@@ -47,14 +47,14 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  let requestedNext = portalHome;
+  let requestedNext = "";
   let email = "";
 
   try {
     const formData = await request.formData();
     email = String(formData.get("email") ?? "").trim().toLowerCase();
     const password = String(formData.get("password") ?? "");
-    requestedNext = String(formData.get("next") ?? portalHome);
+    requestedNext = String(formData.get("next") ?? "");
 
     if (!email || !password) {
       return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
@@ -113,12 +113,13 @@ export async function POST(request: NextRequest) {
       orgRole: user.orgRole,
     };
 
+    const roleHome = getPortalHome(user.role);
     // Forced password reset takes priority over any requested destination
     const redirectTo = user.mustResetPassword
       ? "/reset-password"
       : requestedNext.startsWith("/") && canAccessPath(sessionUser, requestedNext)
         ? requestedNext
-        : portalHome;
+        : roleHome;
 
     const cookieOptions = {
       httpOnly: true,

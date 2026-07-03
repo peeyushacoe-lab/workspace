@@ -13,7 +13,7 @@ export const LEAVE_ALLOWANCES: Record<string, number | null> = {
 export const LEAVE_TYPES = ["ANNUAL", "SICK", "CASUAL", "UNPAID", "WFH", "OTHER"] as const;
 export type LeaveTypeStr = (typeof LEAVE_TYPES)[number];
 
-export const HR_MGMT_ROLES = ["ADMIN", "CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER"] as const;
+export const HR_MGMT_ROLES = ["ADMIN", "CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER", "HR"] as const;
 
 export function isHRManager(role: string) {
   return (HR_MGMT_ROLES as readonly string[]).includes(role);

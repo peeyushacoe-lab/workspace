@@ -20,6 +20,7 @@ const roleTileColors: Record<UserRole, string> = {
   FINANCE:       "bg-[#0f9d58]/10 text-[#0f9d58]",
   OPERATIONS:    "bg-amber-500/10 text-amber-300",
   SUPPORT:       "bg-sky-500/10 text-sky-300",
+  HR:            "bg-pink-500/10 text-pink-600",
   INTERNSHIP:    "bg-[#f1f3f4] text-[#5f6368]",
 };
 
