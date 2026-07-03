@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 import { generateEmployeeId, readEmployeeId } from "@/lib/employee-id";
+import { isHRManager } from "@/lib/hr";
 import type { Prisma } from "@/generated/prisma/client";
 
 // HR fields stored under preferences.hr (jobTitle/department are real columns).
@@ -10,15 +11,13 @@ const HR_FIELDS = [
   "reportingManager", "employmentType", "employmentStatus",
 ] as const;
 
-// Staff = everyone except interns (interns are managed in Mentor → HR).
-const STAFF_WHERE = { role: { not: "INTERNSHIP" as never } };
-
-const HR_MGMT_ROLES = ["ADMIN", "CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER"];
+// Staff = everyone except interns and the HR admin account itself.
+const STAFF_WHERE = { role: { notIn: ["INTERNSHIP", "HR"] as never[] } };
 
 async function requireAdmin() {
   const session = await getCurrentUser();
   if (!session) return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
-  if (!HR_MGMT_ROLES.includes(session.role)) return { error: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
+  if (!isHRManager(session.role)) return { error: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
   return { session };
 }
 

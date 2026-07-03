@@ -78,19 +78,19 @@ function fmtSize(bytes: number) {
 }
 
 const fieldClass =
-  "w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] placeholder:text-[#5A6275] focus:outline-none focus:border-[#00C2FF]/60";
+  "w-full px-3 py-2 bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg text-sm text-[#202124] placeholder:text-[#80868b] focus:outline-none focus:border-[#1a56db]/60 focus:ring-2 focus:ring-[#1a56db]/20 transition-colors";
 
 const STATUS_STYLE: Record<string, string> = {
-  PENDING: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-  APPROVED: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-  REJECTED: "bg-red-500/10 text-red-400 border-red-500/20",
-  CANCELLED: "bg-[#1B1F2A] text-[#5A6275] border-[#2E333F]",
+  PENDING:   "bg-amber-50 text-amber-700 border-amber-200",
+  APPROVED:  "bg-green-50 text-[#0f9d58] border-green-200",
+  REJECTED:  "bg-red-50 text-[#ea4335] border-red-200",
+  CANCELLED: "bg-[#f1f3f4] text-[#5f6368] border-[#e8eaed]",
 };
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-[11px] font-medium text-[#8A92A6] mb-1">{label}</label>
+      <label className="block text-xs font-medium text-[#5f6368] mb-1">{label}</label>
       {children}
     </div>
   );
@@ -107,11 +107,11 @@ function AvatarChip({ name, avatarUrl, size = 7 }: { name: string; avatarUrl?: s
 type Tab = "dashboard" | "people" | "leave" | "holidays" | "orgchart";
 
 const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
-  { id: "dashboard", label: "Dashboard", icon: BarChart3 },
-  { id: "people", label: "People", icon: Users },
-  { id: "leave", label: "Leave", icon: CalendarDays },
-  { id: "holidays", label: "Holidays", icon: CalendarOff },
-  { id: "orgchart", label: "Org chart", icon: Network },
+  { id: "dashboard", label: "Dashboard",  icon: BarChart3 },
+  { id: "people",    label: "People",     icon: Users },
+  { id: "leave",     label: "Leave",      icon: CalendarDays },
+  { id: "holidays",  label: "Holidays",   icon: CalendarOff },
+  { id: "orgchart",  label: "Org chart",  icon: Network },
 ];
 
 export default function AdminHRPage() {
@@ -123,29 +123,31 @@ export default function AdminHRPage() {
   }, []);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-white">
       <PageHeader
-        eyebrow="Admin"
-        title="HR"
-        description="People records, leave, holidays, onboarding and the org chart. Interns are managed in Mentor."
+        eyebrow="HR Console"
+        title="Human Resources"
+        description="People records, leave approvals, holidays, onboarding and org chart."
       />
-      <div className="px-6 border-b border-[#1C1F28] flex gap-1 overflow-x-auto">
+      <div className="px-6 border-b border-[#e8eaed] flex gap-1 overflow-x-auto">
         {TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
             className={`flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
-              tab === t.id ? "border-[#00C2FF] text-[#00C2FF]" : "border-transparent text-[#8A92A6] hover:text-[#E6E9F0]"
+              tab === t.id
+                ? "border-[#1a56db] text-[#1a56db]"
+                : "border-transparent text-[#5f6368] hover:text-[#202124]"
             }`}>
             <t.icon className="w-4 h-4" />{t.label}
           </button>
         ))}
       </div>
-      <div className="flex-1 overflow-auto bg-[#0B0D12] p-6">
+      <div className="flex-1 overflow-auto bg-[#f8f9fa] p-6">
         <div className="max-w-5xl mx-auto">
           {tab === "dashboard" && <DashboardTab />}
-          {tab === "people" && <PeopleTab />}
-          {tab === "leave" && <LeaveTab />}
-          {tab === "holidays" && <HolidaysTab />}
-          {tab === "orgchart" && <OrgChartTab />}
+          {tab === "people"    && <PeopleTab />}
+          {tab === "leave"     && <LeaveTab />}
+          {tab === "holidays"  && <HolidaysTab />}
+          {tab === "orgchart"  && <OrgChartTab />}
         </div>
       </div>
     </div>
@@ -165,9 +167,9 @@ interface Summary {
 
 function StatCard({ label, value, accent }: { label: string; value: number | string; accent?: boolean }) {
   return (
-    <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-4">
-      <p className="text-xs font-medium text-[#8A92A6]">{label}</p>
-      <p className={`text-2xl font-semibold tracking-tight mt-1 ${accent ? "text-[#00C2FF]" : "text-[#E6E9F0]"}`}>{value}</p>
+    <div className="bg-white border border-[#e8eaed] rounded-xl p-4">
+      <p className="text-xs font-medium text-[#5f6368]">{label}</p>
+      <p className={`text-2xl font-semibold tracking-tight mt-1 ${accent ? "text-[#1a56db]" : "text-[#202124]"}`}>{value}</p>
     </div>
   );
 }
@@ -179,7 +181,7 @@ function DashboardTab() {
     fetch("/api/hr/summary").then(r => (r.ok ? r.json() : null)).then(setData).catch(() => setData(null));
   }, []);
 
-  if (!data) return <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-[#00C2FF]" /></div>;
+  if (!data) return <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-[#1a56db]" /></div>;
 
   const deptEntries = Object.entries(data.byDepartment).sort((a, b) => b[1] - a[1]);
   const maxDept = Math.max(1, ...deptEntries.map(([, v]) => v));
@@ -195,51 +197,55 @@ function DashboardTab() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-4">
-          <h3 className="text-sm font-semibold text-[#E6E9F0] mb-3">On leave today</h3>
+        <div className="bg-white border border-[#e8eaed] rounded-xl p-4">
+          <h3 className="text-sm font-semibold text-[#202124] mb-3">On leave today</h3>
           {data.onLeaveToday.length === 0 ? (
-            <p className="text-sm text-[#5A6275]">Everyone is in — no approved leave covers today.</p>
+            <p className="text-sm text-[#5f6368]">Everyone is in — no approved leave covers today.</p>
           ) : (
             <div className="space-y-2">
               {data.onLeaveToday.map(l => (
                 <div key={l.id} className="flex items-center gap-3">
                   <AvatarChip name={l.user.fullName} avatarUrl={l.user.avatarUrl} />
                   <div className="min-w-0">
-                    <p className="text-sm text-[#E6E9F0] truncate">{l.user.fullName}</p>
-                    <p className="text-xs text-[#5A6275]">{l.type.toLowerCase()} · until {fmt(l.endDate)}</p>
+                    <p className="text-sm text-[#202124] truncate">{l.user.fullName}</p>
+                    <p className="text-xs text-[#5f6368]">{l.type.toLowerCase()} · until {fmt(l.endDate)}</p>
                   </div>
                 </div>
               ))}
             </div>
           )}
-          <h3 className="text-sm font-semibold text-[#E6E9F0] mt-5 mb-2">Upcoming holidays</h3>
+          <h3 className="text-sm font-semibold text-[#202124] mt-5 mb-2">Upcoming holidays</h3>
           {data.upcomingHolidays.length === 0 ? (
-            <p className="text-sm text-[#5A6275]">None in the next 30 days.</p>
+            <p className="text-sm text-[#5f6368]">None in the next 30 days.</p>
           ) : (
             data.upcomingHolidays.map(h => (
               <div key={h.id} className="flex items-center justify-between py-1.5">
-                <span className="text-sm text-[#E6E9F0]">{h.name}</span>
-                <span className="text-xs font-mono text-[#8A92A6]">{fmt(h.date)}</span>
+                <span className="text-sm text-[#202124]">{h.name}</span>
+                <span className="text-xs font-mono text-[#5f6368]">{fmt(h.date)}</span>
               </div>
             ))
           )}
         </div>
 
-        <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-4">
-          <h3 className="text-sm font-semibold text-[#E6E9F0] mb-3">Headcount by department</h3>
-          <div className="space-y-2.5">
-            {deptEntries.map(([dept, count]) => (
-              <div key={dept}>
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-[#8A92A6]">{dept}</span>
-                  <span className="font-mono text-[#E6E9F0]">{count}</span>
+        <div className="bg-white border border-[#e8eaed] rounded-xl p-4">
+          <h3 className="text-sm font-semibold text-[#202124] mb-3">Headcount by department</h3>
+          {deptEntries.length === 0 ? (
+            <p className="text-sm text-[#5f6368]">No department data yet. Fill in the People tab.</p>
+          ) : (
+            <div className="space-y-2.5">
+              {deptEntries.map(([dept, count]) => (
+                <div key={dept}>
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="text-[#5f6368]">{dept}</span>
+                    <span className="font-mono text-[#202124]">{count}</span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-[#f1f3f4] overflow-hidden">
+                    <div className="h-full rounded-full bg-[#1a56db]" style={{ width: `${(count / maxDept) * 100}%` }} />
+                  </div>
                 </div>
-                <div className="h-1.5 rounded-full bg-[#1B1F2A] overflow-hidden">
-                  <div className="h-full rounded-full bg-[#00C2FF]" style={{ width: `${(count / maxDept) * 100}%` }} />
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -314,41 +320,41 @@ function PeopleTab() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <p className="text-sm text-[#8A92A6]">Staff records · <span className="text-[#E6E9F0] font-medium">{rows.length}</span></p>
+        <p className="text-sm text-[#5f6368]">Staff records · <span className="text-[#202124] font-medium">{rows.length}</span></p>
         <button onClick={backfill} disabled={backfilling || missingCount === 0}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#0E2532] text-[#00C2FF] hover:bg-[#133347] disabled:opacity-50 transition-colors">
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-[#e8eaed] text-[#5f6368] hover:bg-[#f1f3f4] disabled:opacity-50 transition-colors">
           {backfilling ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
           {missingCount > 0 ? `Assign ${missingCount} missing ID${missingCount !== 1 ? "s" : ""}` : "All IDs assigned"}
         </button>
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-16"><Loader2 className="w-7 h-7 text-[#00C2FF] animate-spin" /></div>
+        <div className="flex items-center justify-center py-16"><Loader2 className="w-7 h-7 text-[#1a56db] animate-spin" /></div>
       ) : rows.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-[#0E2532] flex items-center justify-center mb-4"><Users className="w-7 h-7 text-[#00C2FF]" /></div>
-          <p className="font-semibold text-[#E6E9F0]">No staff found</p>
-          <p className="text-sm text-[#5A6275] mt-1 max-w-xs">No non-intern accounts exist yet.</p>
+          <div className="w-14 h-14 rounded-2xl bg-[#e8f0fe] flex items-center justify-center mb-4"><Users className="w-7 h-7 text-[#1a56db]" /></div>
+          <p className="font-semibold text-[#202124]">No staff found</p>
+          <p className="text-sm text-[#5f6368] mt-1 max-w-xs">No non-intern accounts exist yet.</p>
         </div>
       ) : (
         <div className="space-y-3">
           {rows.map(r => {
             const d = drafts[r.id] ?? rowToDraft(r);
             return (
-              <div key={r.id} className="bg-[#12151D] border border-[#262A35] rounded-xl p-4">
+              <div key={r.id} className="bg-white border border-[#e8eaed] rounded-xl p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <AvatarChip name={r.fullName} avatarUrl={r.avatarUrl} />
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-[#E6E9F0] truncate">{r.fullName}</p>
-                    <p className="text-[11px] text-[#5A6275] truncate">{r.email} · {r.role}</p>
+                    <p className="text-sm font-medium text-[#202124] truncate">{r.fullName}</p>
+                    <p className="text-[11px] text-[#5f6368] truncate">{r.email} · {r.role}</p>
                   </div>
                   <button onClick={() => setExpanded(expanded === r.id ? null : r.id)}
-                    className="ml-auto flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg text-[#8A92A6] hover:text-[#E6E9F0] hover:bg-[#1B1F2A] transition-colors">
+                    className="ml-auto flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg text-[#5f6368] hover:text-[#202124] hover:bg-[#f1f3f4] transition-colors">
                     {expanded === r.id ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
                     Docs & onboarding
                   </button>
                   <button onClick={() => saveRow(r.id)} disabled={savingId === r.id}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#00C2FF] text-[#06121A] text-xs font-semibold rounded-lg hover:bg-[#0098E6] disabled:opacity-50">
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1a56db] text-white text-xs font-semibold rounded-lg hover:bg-[#1648c7] disabled:opacity-50 transition-colors">
                     {savingId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />} Save
                   </button>
                 </div>
@@ -478,20 +484,20 @@ function PersonExtras({ userId }: { userId: string }) {
     if (res.ok) void load();
   }
 
-  if (loading) return <div className="mt-4 pt-4 border-t border-[#262A35] flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-[#00C2FF]" /></div>;
+  if (loading) return <div className="mt-4 pt-4 border-t border-[#e8eaed] flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-[#1a56db]" /></div>;
 
   return (
-    <div className="mt-4 pt-4 border-t border-[#262A35] grid grid-cols-1 lg:grid-cols-2 gap-5">
+    <div className="mt-4 pt-4 border-t border-[#e8eaed] grid grid-cols-1 lg:grid-cols-2 gap-5">
       {/* Documents */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <p className="text-xs font-semibold text-[#E6E9F0] flex items-center gap-1.5"><FileText className="w-3.5 h-3.5 text-[#00C2FF]" /> Documents</p>
+          <p className="text-xs font-semibold text-[#202124] flex items-center gap-1.5"><FileText className="w-3.5 h-3.5 text-[#1a56db]" /> Documents</p>
           <div className="flex items-center gap-2">
             <select value={docCategory} onChange={e => setDocCategory(e.target.value)}
-              className="px-2 py-1 bg-[#1B1F2A] border border-[#2E333F] rounded-md text-[11px] text-[#E6E9F0]">
+              className="px-2 py-1 bg-[#f1f3f4] border border-[#e8eaed] rounded-md text-[11px] text-[#202124]">
               {DOC_CATEGORIES.map(c => <option key={c} value={c}>{c.replace("_", " ").toLowerCase()}</option>)}
             </select>
-            <label className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium rounded-md bg-[#0E2532] text-[#00C2FF] hover:bg-[#133347] cursor-pointer transition-colors">
+            <label className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium rounded-md bg-[#e8f0fe] text-[#1a56db] hover:bg-[#d2e3fc] cursor-pointer transition-colors">
               {uploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />} Upload
               <input type="file" className="hidden" disabled={uploading}
                 onChange={e => { const f = e.target.files?.[0]; if (f) void upload(f); e.target.value = ""; }} />
@@ -499,17 +505,17 @@ function PersonExtras({ userId }: { userId: string }) {
           </div>
         </div>
         {docs.length === 0 ? (
-          <p className="text-xs text-[#5A6275] py-3">No documents on file.</p>
+          <p className="text-xs text-[#5f6368] py-3">No documents on file.</p>
         ) : (
           docs.map(d => (
-            <div key={d.id} className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-md hover:bg-[#1B1F2A]">
+            <div key={d.id} className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-md hover:bg-[#f1f3f4]">
               <div className="min-w-0">
-                <p className="text-xs text-[#E6E9F0] truncate">{d.title}</p>
-                <p className="text-[10px] text-[#5A6275]">{d.category.replace("_", " ").toLowerCase()} · {fmtSize(d.size)} · {fmt(d.createdAt)}</p>
+                <p className="text-xs text-[#202124] truncate">{d.title}</p>
+                <p className="text-[10px] text-[#5f6368]">{d.category.replace("_", " ").toLowerCase()} · {fmtSize(d.size)} · {fmt(d.createdAt)}</p>
               </div>
               <div className="flex items-center gap-1 shrink-0">
-                <a href={`/api/hr/documents/${d.id}`} target="_blank" rel="noreferrer" className="p-1 rounded text-[#5A6275] hover:text-[#00C2FF]"><Download className="w-3.5 h-3.5" /></a>
-                <button onClick={() => void removeDoc(d.id)} className="p-1 rounded text-[#5A6275] hover:text-red-400"><Trash2 className="w-3.5 h-3.5" /></button>
+                <a href={`/api/hr/documents/${d.id}`} target="_blank" rel="noreferrer" className="p-1 rounded text-[#5f6368] hover:text-[#1a56db]"><Download className="w-3.5 h-3.5" /></a>
+                <button onClick={() => void removeDoc(d.id)} className="p-1 rounded text-[#5f6368] hover:text-[#ea4335]"><Trash2 className="w-3.5 h-3.5" /></button>
               </div>
             </div>
           ))
@@ -519,29 +525,29 @@ function PersonExtras({ userId }: { userId: string }) {
       {/* Onboarding */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <p className="text-xs font-semibold text-[#E6E9F0] flex items-center gap-1.5"><ClipboardList className="w-3.5 h-3.5 text-[#00C2FF]" /> Onboarding</p>
+          <p className="text-xs font-semibold text-[#202124] flex items-center gap-1.5"><ClipboardList className="w-3.5 h-3.5 text-[#1a56db]" /> Onboarding checklist</p>
           {items.length === 0 && (
             <button onClick={() => void applyTemplate()}
-              className="px-2 py-1 text-[11px] font-medium rounded-md bg-[#0E2532] text-[#00C2FF] hover:bg-[#133347] transition-colors">
-              Apply default checklist
+              className="px-2 py-1 text-[11px] font-medium rounded-md bg-[#e8f0fe] text-[#1a56db] hover:bg-[#d2e3fc] transition-colors">
+              Apply default
             </button>
           )}
         </div>
         {items.map(item => (
-          <div key={item.id} className="group flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-[#1B1F2A]">
+          <div key={item.id} className="group flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-[#f1f3f4]">
             <button onClick={() => void toggle(item)} className="shrink-0">
               {item.completedAt
-                ? <Check className="w-3.5 h-3.5 text-emerald-400" />
-                : <div className="w-3.5 h-3.5 rounded-full border-2 border-[#2E333F]" />}
+                ? <Check className="w-3.5 h-3.5 text-[#0f9d58]" />
+                : <div className="w-3.5 h-3.5 rounded-full border-2 border-[#d0d5dd]" />}
             </button>
-            <span className={`text-xs flex-1 ${item.completedAt ? "text-[#5A6275] line-through" : "text-[#E6E9F0]"}`}>{item.title}</span>
-            <button onClick={() => void removeItem(item.id)} className="opacity-0 group-hover:opacity-100 p-0.5 text-[#5A6275] hover:text-red-400"><X className="w-3 h-3" /></button>
+            <span className={`text-xs flex-1 ${item.completedAt ? "text-[#80868b] line-through" : "text-[#202124]"}`}>{item.title}</span>
+            <button onClick={() => void removeItem(item.id)} className="opacity-0 group-hover:opacity-100 p-0.5 text-[#80868b] hover:text-[#ea4335]"><X className="w-3 h-3" /></button>
           </div>
         ))}
         <div className="flex gap-2 mt-2">
           <input value={newItem} onChange={e => setNewItem(e.target.value)} onKeyDown={e => e.key === "Enter" && void addItem()}
             placeholder="Add checklist item…" className={`${fieldClass} !py-1.5 !text-xs`} />
-          <button onClick={() => void addItem()} className="px-2.5 rounded-lg bg-[#0E2532] text-[#00C2FF] hover:bg-[#133347]"><Plus className="w-3.5 h-3.5" /></button>
+          <button onClick={() => void addItem()} className="px-2.5 rounded-lg bg-[#e8f0fe] text-[#1a56db] hover:bg-[#d2e3fc]"><Plus className="w-3.5 h-3.5" /></button>
         </div>
       </div>
     </div>
@@ -581,31 +587,31 @@ function LeaveTab() {
     } finally { setActingId(null); }
   }
 
-  if (loading) return <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-[#00C2FF]" /></div>;
+  if (loading) return <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-[#1a56db]" /></div>;
 
   const pending = requests.filter(r => r.status === "PENDING");
   const history = requests.filter(r => r.status !== "PENDING");
 
   const Row = ({ r, actions }: { r: LeaveRow; actions?: boolean }) => (
-    <div className="flex items-center justify-between gap-3 px-3 py-2.5 bg-[#12151D] border border-[#262A35] rounded-lg">
+    <div className="flex items-center justify-between gap-3 px-3 py-2.5 bg-white border border-[#e8eaed] rounded-lg">
       <div className="flex items-center gap-3 min-w-0">
         <AvatarChip name={r.user.fullName} avatarUrl={r.user.avatarUrl} />
         <div className="min-w-0">
-          <p className="text-sm text-[#E6E9F0] truncate">
-            {r.user.fullName} <span className="text-[#8A92A6]">· {r.type.toLowerCase()}</span>
+          <p className="text-sm text-[#202124] truncate">
+            {r.user.fullName} <span className="text-[#5f6368]">· {r.type.toLowerCase()}</span>
           </p>
-          <p className="text-xs font-mono text-[#5A6275]">{fmt(r.startDate)} → {fmt(r.endDate)} · {r.days}d{r.reason ? ` · ${r.reason}` : ""}</p>
+          <p className="text-xs font-mono text-[#80868b]">{fmt(r.startDate)} → {fmt(r.endDate)} · {r.days}d{r.reason ? ` · ${r.reason}` : ""}</p>
         </div>
       </div>
       <div className="flex items-center gap-2 shrink-0">
         {actions ? (
           <>
             <button onClick={() => void review(r.id, "approve")} disabled={actingId === r.id}
-              className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 disabled:opacity-50 transition-colors">
+              className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-green-50 text-[#0f9d58] border border-green-200 hover:bg-green-100 disabled:opacity-50 transition-colors">
               <Check className="w-3.5 h-3.5" /> Approve
             </button>
             <button onClick={() => void review(r.id, "reject")} disabled={actingId === r.id}
-              className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 disabled:opacity-50 transition-colors">
+              className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-red-50 text-[#ea4335] border border-red-200 hover:bg-red-100 disabled:opacity-50 transition-colors">
               <X className="w-3.5 h-3.5" /> Reject
             </button>
           </>
@@ -619,15 +625,15 @@ function LeaveTab() {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-sm font-semibold text-[#E6E9F0] mb-2">Pending approval · {pending.length}</h3>
+        <h3 className="text-sm font-semibold text-[#202124] mb-2">Pending approval · {pending.length}</h3>
         {pending.length === 0
-          ? <p className="text-sm text-[#5A6275]">Nothing waiting for review.</p>
+          ? <p className="text-sm text-[#5f6368]">Nothing waiting for review.</p>
           : <div className="space-y-2">{pending.map(r => <Row key={r.id} r={r} actions />)}</div>}
       </div>
       <div>
-        <h3 className="text-sm font-semibold text-[#E6E9F0] mb-2">History</h3>
+        <h3 className="text-sm font-semibold text-[#202124] mb-2">History</h3>
         {history.length === 0
-          ? <p className="text-sm text-[#5A6275]">No reviewed requests yet.</p>
+          ? <p className="text-sm text-[#5f6368]">No reviewed requests yet.</p>
           : <div className="space-y-2">{history.slice(0, 50).map(r => <Row key={r.id} r={r} />)}</div>}
       </div>
     </div>
@@ -670,22 +676,22 @@ function HolidaysTab() {
       <div className="flex gap-2">
         <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Holiday name (e.g. Christmas Day)" className={fieldClass} />
         <input type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} className={`${fieldClass} !w-44`} />
-        <button onClick={() => void add()} className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-lg bg-[#00C2FF] text-[#06121A] hover:bg-[#33cfff] shrink-0 transition-colors">
+        <button onClick={() => void add()} className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-lg bg-[#1a56db] text-white hover:bg-[#1648c7] shrink-0 transition-colors">
           <Plus className="w-4 h-4" /> Add
         </button>
       </div>
       {loading ? (
-        <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-[#00C2FF]" /></div>
+        <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-[#1a56db]" /></div>
       ) : holidays.length === 0 ? (
-        <p className="text-sm text-[#5A6275] py-6 text-center">No holidays for this year yet. Holidays are excluded from leave-day counts.</p>
+        <p className="text-sm text-[#5f6368] py-6 text-center">No holidays for this year yet. Holidays are excluded from leave-day counts.</p>
       ) : (
         <div className="space-y-1.5">
           {holidays.map(h => (
-            <div key={h.id} className="group flex items-center justify-between px-3 py-2.5 bg-[#12151D] border border-[#262A35] rounded-lg">
-              <span className="text-sm text-[#E6E9F0]">{h.name}</span>
+            <div key={h.id} className="group flex items-center justify-between px-3 py-2.5 bg-white border border-[#e8eaed] rounded-lg">
+              <span className="text-sm text-[#202124]">{h.name}</span>
               <div className="flex items-center gap-3">
-                <span className="text-xs font-mono text-[#8A92A6]">{fmt(h.date)}</span>
-                <button onClick={() => void remove(h.id)} className="opacity-0 group-hover:opacity-100 p-1 text-[#5A6275] hover:text-red-400"><Trash2 className="w-3.5 h-3.5" /></button>
+                <span className="text-xs font-mono text-[#5f6368]">{fmt(h.date)}</span>
+                <button onClick={() => void remove(h.id)} className="opacity-0 group-hover:opacity-100 p-1 text-[#80868b] hover:text-[#ea4335]"><Trash2 className="w-3.5 h-3.5" /></button>
               </div>
             </div>
           ))}
@@ -705,7 +711,7 @@ function OrgChartTab() {
     fetch("/api/admin/hr").then(r => (r.ok ? r.json() : [])).then(d => { setRows(d); setLoading(false); }).catch(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-[#00C2FF]" /></div>;
+  if (loading) return <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-[#1a56db]" /></div>;
 
   const byManager: Record<string, StaffRow[]> = {};
   const names = new Set(rows.map(r => r.fullName));
@@ -716,16 +722,26 @@ function OrgChartTab() {
     else roots.push(r);
   }
 
+  if (rows.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="w-14 h-14 rounded-2xl bg-[#e8f0fe] flex items-center justify-center mb-4"><Network className="w-7 h-7 text-[#1a56db]" /></div>
+        <p className="font-semibold text-[#202124]">No org chart yet</p>
+        <p className="text-sm text-[#5f6368] mt-1 max-w-xs">Fill in the reporting manager field in the People tab to build the org chart.</p>
+      </div>
+    );
+  }
+
   const Node = ({ person, depth }: { person: StaffRow; depth: number }) => (
     <div style={{ marginLeft: depth === 0 ? 0 : 24 }}>
-      <div className={`flex items-center gap-3 px-3 py-2 rounded-lg border mb-1.5 ${depth === 0 ? "bg-[#0E2532] border-[#00C2FF]/30" : "bg-[#12151D] border-[#262A35]"}`}>
+      <div className={`flex items-center gap-3 px-3 py-2 rounded-lg border mb-1.5 ${depth === 0 ? "bg-[#e8f0fe] border-[#1a56db]/20" : "bg-white border-[#e8eaed]"}`}>
         <AvatarChip name={person.fullName} avatarUrl={person.avatarUrl} />
         <div className="min-w-0">
-          <p className="text-sm text-[#E6E9F0] truncate">{person.fullName}</p>
-          <p className="text-[11px] text-[#5A6275] truncate">{person.jobTitle || person.role}{person.department ? ` · ${person.department}` : ""}</p>
+          <p className="text-sm text-[#202124] truncate">{person.fullName}</p>
+          <p className="text-[11px] text-[#5f6368] truncate">{person.jobTitle || person.role}{person.department ? ` · ${person.department}` : ""}</p>
         </div>
         {byManager[person.fullName]?.length ? (
-          <span className="ml-auto text-[10px] font-mono text-[#8A92A6] shrink-0">{byManager[person.fullName].length} report{byManager[person.fullName].length !== 1 ? "s" : ""}</span>
+          <span className="ml-auto text-[10px] font-mono text-[#80868b] shrink-0">{byManager[person.fullName].length} report{byManager[person.fullName].length !== 1 ? "s" : ""}</span>
         ) : null}
       </div>
       {(byManager[person.fullName] ?? []).map(c => <Node key={c.id} person={c} depth={depth + 1} />)}
@@ -734,7 +750,7 @@ function OrgChartTab() {
 
   return (
     <div className="max-w-2xl">
-      <p className="text-sm text-[#8A92A6] mb-4">Built from the “Reporting manager” field in People. Anyone without a manager appears at the top level.</p>
+      <p className="text-sm text-[#5f6368] mb-4">Built from the Reporting manager field in People. Anyone without a manager appears at the top level.</p>
       {roots.map(r => <Node key={r.id} person={r} depth={0} />)}
     </div>
   );
