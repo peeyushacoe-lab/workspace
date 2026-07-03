@@ -231,11 +231,6 @@ async function handleInboundEmail(data: InboundEmailPayload) {
     return NextResponse.json({ ok: true, ignored: "bounce-tracking sender" });
   }
 
-  // HR mailbox only accepts email from internal @cybersage.uk senders.
-  if (recipientEmail === "hr@cybersage.uk" && !senderEmail.endsWith("@cybersage.uk")) {
-    return NextResponse.json({ ok: true, ignored: "external sender not allowed for HR mailbox" });
-  }
-
   // Fetch full body from Resend API — inbound webhook only sends metadata
   let textBody = data.text ?? null;
   let htmlBody = data.html ?? null;
