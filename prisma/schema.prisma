@@ -58,6 +58,9 @@ enum UserRole {
   OPERATIONS
   SUPPORT
 
+  // Dedicated HR account
+  HR
+
   INTERNSHIP
 }
 
