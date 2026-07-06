@@ -28,7 +28,7 @@ export async function GET() {
       },
       include: {
         members: {
-          select: { userId: true, role: true, lastReadAt: true },
+          select: { userId: true, role: true, lastReadAt: true, joinedAt: true },
         },
         _count: { select: { messages: true } },
       },
@@ -39,18 +39,24 @@ export async function GET() {
     const channelsWithUnread = await Promise.all(
       channels.map(async (ch) => {
         const membership = ch.members.find((m) => m.userId === user.id);
-        const lastReadAt = membership?.lastReadAt;
+        // Unread = messages from OTHERS since the channel was last read.
+        // - own messages never count as unread (sending shouldn't light the badge)
+        // - never-opened channels fall back to joinedAt so auto-joined public
+        //   channels don't report their entire history as unread
+        const readFloor = membership?.lastReadAt ?? membership?.joinedAt ?? null;
         const unreadCount = await prisma.chatMessage.count({
           where: {
             channelId: ch.id,
             deletedAt: null,
-            ...(lastReadAt ? { createdAt: { gt: lastReadAt } } : {}),
+            userId: { not: user.id },
+            ...(readFloor ? { createdAt: { gt: readFloor } } : {}),
           },
         }).catch(() =>
           prisma.chatMessage.count({
             where: {
               channelId: ch.id,
-              ...(lastReadAt ? { createdAt: { gt: lastReadAt } } : {}),
+              userId: { not: user.id },
+              ...(readFloor ? { createdAt: { gt: readFloor } } : {}),
             },
           }).catch(() => 0)
         );

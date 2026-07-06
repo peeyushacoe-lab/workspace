@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Megaphone, ClipboardList, Upload, MessageSquare, Bug, BarChart2,
   Plus, Pin, ChevronDown, ChevronRight, Send, Loader2, X,
-  CheckCircle2, Clock, AlertTriangle, ExternalLink, RefreshCw,
-  Star, Flag, Lightbulb, Shield, Circle, ArrowUpRight, Sparkles,
-  BookOpen, Lock, Unlock, GraduationCap, Link2,
-  FileText, Pencil, Save, Trash2, CalendarClock, LogIn, LogOut,
-  AlertCircle, CheckCircle, UserCheck, Timer, Edit2, ChevronLeft, MapPin, Monitor,
+  CheckCircle2, Clock, ExternalLink, RefreshCw,
+  Star, Lightbulb, Shield, Circle, Sparkles,
+  BookOpen, Lock, Link2, FileText, Trash2, CalendarClock,
+  TrendingUp, ArrowRight, CalendarDays,
 } from "lucide-react";
+import Link from "next/link";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/Shell";
 import { avatarGradient } from "@/lib/avatar";
@@ -66,7 +66,7 @@ function MarkdownBody({ content }: { content: string }) {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Tab = "announcements" | "tasks" | "discussion" | "findings" | "progress" | "learning";
+type Tab = "overview" | "tasks" | "findings" | "growth" | "learning";
 
 interface User { id: string; fullName: string; avatarUrl?: string | null; role?: string; }
 
@@ -86,7 +86,7 @@ interface InternTask {
 }
 
 interface Submission {
-  id: string; taskId: string; status: string; notes?: string | null;
+  id: string; taskId: string; status: string; notes?: string | null; submitterId?: string;
   files?: { name: string; url?: string | null; key?: string; type?: string; ext?: string; size?: number }[];
   links: string[]; version: number; submitter?: User;
   task?: { id: string; title: string; priority?: string; deadline?: string | null };
@@ -220,18 +220,17 @@ function SeverityBadge({ s }: { s?: string | null }) {
 // ─── TABS ─────────────────────────────────────────────────────────────────────
 
 const TABS: { id: Tab; label: string; icon: React.ElementType; mentorOnly?: boolean }[] = [
-  { id: "announcements", label: "Announcements", icon: Megaphone },
-  { id: "tasks",         label: "Tasks",         icon: ClipboardList },
-  { id: "discussion",    label: "Discussion",    icon: MessageSquare },
-  { id: "findings",      label: "Findings",      icon: Bug },
-  { id: "learning",      label: "Learning",      icon: BookOpen },
-  { id: "progress",      label: "Progress",      icon: BarChart2 },
+  { id: "overview",  label: "Overview",  icon: BarChart2 },
+  { id: "tasks",     label: "Tasks",     icon: ClipboardList },
+  { id: "learning",  label: "Learning",  icon: BookOpen },
+  { id: "growth",    label: "Growth",    icon: TrendingUp },
+  { id: "findings",  label: "Findings",  icon: Bug },
 ];
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 
 export default function InternshipHubPage() {
-  const [tab, setTab] = useState<Tab>("announcements");
+  const [tab, setTab] = useState<Tab>("overview");
   const [currentUser, setCurrentUser] = useState<(User & { role: string; id: string; isMentor?: boolean }) | null>(null);
 
   useEffect(() => {
@@ -271,12 +270,11 @@ export default function InternshipHubPage() {
       <div className="flex-1 overflow-auto bg-[#0B0D12] p-6">
         {currentUser && (
           <>
-            {tab === "announcements" && <AnnouncementsTab isMentor={isMentor} userId={currentUser.id} />}
+            {tab === "overview"      && <OverviewTab isMentor={isMentor} userId={currentUser.id} onNavigate={setTab} />}
             {tab === "tasks"         && <TasksTab isMentor={isMentor} userId={currentUser.id} />}
-            {tab === "discussion"    && <DiscussionTab userId={currentUser.id} currentUser={currentUser} />}
             {tab === "findings"      && <FindingsTab isMentor={isMentor} userId={currentUser.id} currentUser={currentUser} />}
             {tab === "learning"      && <LearningTab isMentor={isMentor} userId={currentUser.id} />}
-            {tab === "progress"      && (
+            {tab === "growth"        && (
               <div className="space-y-8">
                 <ProgressTab isMentor={isMentor} userId={currentUser.id} />
                 <div>
@@ -289,6 +287,193 @@ export default function InternshipHubPage() {
             )}
           </>
         )}
+      </div>
+    </div>
+  );
+}
+
+// ─── OVERVIEW TAB (landing dashboard) ─────────────────────────────────────────
+
+function fmtCountdown(iso: string): { label: string; overdue: boolean } {
+  const diff = new Date(iso).getTime() - Date.now();
+  const overdue = diff < 0;
+  const mins = Math.abs(Math.floor(diff / 60000));
+  const days = Math.floor(mins / 1440);
+  const hrs = Math.floor((mins % 1440) / 60);
+  const label = days > 0 ? `${days}d ${hrs}h` : hrs > 0 ? `${hrs}h ${mins % 60}m` : `${mins}m`;
+  return { label: overdue ? `overdue by ${label}` : `in ${label}`, overdue };
+}
+
+function QuickLink({ href, icon: Icon, title, sub }: { href: string; icon: React.ElementType; title: string; sub: string }) {
+  return (
+    <Link href={href}
+      className="flex items-center gap-3 bg-[#12151D] border border-[#262A35] rounded-xl px-4 py-3 hover:border-[#00C2FF]/40 hover:shadow-sm transition-all group">
+      <span className="w-9 h-9 rounded-lg bg-[#0E2532] text-[#00C2FF] flex items-center justify-center shrink-0"><Icon className="w-4 h-4" /></span>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold text-[#E6E9F0] group-hover:text-[#00C2FF] transition-colors truncate">{title}</p>
+        <p className="text-xs text-[#5A6275] truncate">{sub}</p>
+      </div>
+      <ArrowRight className="w-4 h-4 text-[#3A4150] group-hover:text-[#00C2FF] transition-colors shrink-0" />
+    </Link>
+  );
+}
+
+function OverviewTab({ isMentor, userId, onNavigate }: { isMentor: boolean; userId: string; onNavigate: (t: Tab) => void }) {
+  const [stats, setStats] = useState<InternStats | MentorStats | null>(null);
+  const [tasks, setTasks] = useState<InternTask[]>([]);
+  const [weeks, setWeeks] = useState<InternWeek[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const tasksUrl = isMentor ? "/api/internship/tasks" : `/api/internship/tasks?assigneeId=${userId}`;
+    Promise.all([
+      fetch("/api/internship/stats").then(r => r.json()).catch(() => null),
+      fetch(tasksUrl).then(r => r.json()).catch(() => []),
+      fetch("/api/internship/weeks").then(r => r.json()).catch(() => []),
+    ]).then(([s, t, w]) => {
+      setStats(s);
+      setTasks(Array.isArray(t) ? t : []);
+      setWeeks(Array.isArray(w) ? w : []);
+    }).finally(() => setLoading(false));
+  }, [isMentor, userId]);
+
+  if (loading) return <LoadingSpinner />;
+
+  const nextDeadline = tasks
+    // Skip tasks this intern already has approved — no deadline pressure there.
+    .filter(t => t.deadline && (isMentor || internTaskStatus(t, userId) !== "approved"))
+    .sort((a, b) => new Date(a.deadline!).getTime() - new Date(b.deadline!).getTime())
+    .find(t => new Date(t.deadline!).getTime() > Date.now() - 7 * 864e5);
+
+  const activeWeek = weeks.find(w => w.isUnlocked && !w.completions.some(c => c.internId === userId));
+  const activeWeekProgress = (() => {
+    if (!activeWeek) return 0;
+    const quizzes = activeWeek.topics.filter(t => (t.quiz?.questions?.length ?? 0) > 0);
+    if (quizzes.length === 0) return 0;
+    return Math.round((quizzes.filter(t => (t.completions?.length ?? 0) > 0).length / quizzes.length) * 100);
+  })();
+
+  const iStats = !isMentor ? (stats as InternStats | null) : null;
+  const mStats = isMentor ? (stats as MentorStats | null) : null;
+  const latestReview = iStats?.recentReviews?.[0];
+
+  const metricCards = isMentor
+    ? [
+        { label: "Active interns", value: mStats?.internCount ?? 0, color: "text-[#00C2FF]", bg: "bg-[#0E2532]", icon: Sparkles, tab: "growth" as Tab },
+        { label: "Awaiting review", value: mStats?.pendingReviews ?? 0, color: "text-[#F59E0B]", bg: "bg-[#F59E0B]/12", icon: Clock, tab: "growth" as Tab },
+        { label: "Open findings", value: mStats?.openFindings ?? 0, color: "text-[#ea4335]", bg: "bg-[#ea4335]/12", icon: Bug, tab: "findings" as Tab },
+        { label: "Total tasks", value: mStats?.taskCount ?? 0, color: "text-[#0f9d58]", bg: "bg-[#0f9d58]/12", icon: ClipboardList, tab: "tasks" as Tab },
+      ]
+    : [
+        { label: "To do", value: Math.max(0, (iStats?.assigned ?? 0) - (iStats?.approved ?? 0)), color: "text-[#00C2FF]", bg: "bg-[#0E2532]", icon: ClipboardList, tab: "tasks" as Tab },
+        { label: "In review", value: iStats?.pendingReview ?? 0, color: "text-[#F59E0B]", bg: "bg-[#F59E0B]/12", icon: Clock, tab: "growth" as Tab },
+        { label: "Approved", value: iStats?.approved ?? 0, color: "text-[#0f9d58]", bg: "bg-[#0f9d58]/12", icon: CheckCircle2, tab: "growth" as Tab },
+        { label: "Findings filed", value: iStats?.findings ?? 0, color: "text-[#ea4335]", bg: "bg-[#ea4335]/12", icon: Bug, tab: "findings" as Tab },
+      ];
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-4">
+      {/* Quick links */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <QuickLink href="/internship/attendance" icon={CalendarClock} title="Attendance" sub="Clock in / out and view your timesheet" />
+        <QuickLink href="/chat" icon={MessageSquare} title="Intern chat" sub="Ask questions and chat with the cohort" />
+      </div>
+
+      {/* Metric cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {metricCards.map(m => (
+          <button key={m.label} onClick={() => onNavigate(m.tab)}
+            className="text-left bg-[#12151D] border border-[#262A35] rounded-xl p-4 hover:border-[#00C2FF]/40 transition-all">
+            <div className={`inline-flex p-2 rounded-lg ${m.bg} mb-3`}><m.icon className={`w-4 h-4 ${m.color}`} /></div>
+            <div className={`text-2xl font-bold font-mono ${m.color}`}>{m.value}</div>
+            <div className="text-xs text-[#8A92A6] mt-0.5">{m.label}</div>
+          </button>
+        ))}
+      </div>
+
+      {/* Two-column widgets */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Next deadline */}
+        <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-5">
+          <h3 className="text-xs font-semibold text-[#8A92A6] mb-3 flex items-center gap-1.5"><CalendarDays className="w-3.5 h-3.5" /> Next deadline</h3>
+          {nextDeadline ? (() => {
+            const cd = fmtCountdown(nextDeadline.deadline!);
+            return (
+              <button onClick={() => onNavigate("tasks")} className="text-left w-full group">
+                <p className="text-sm font-semibold text-[#E6E9F0] group-hover:text-[#00C2FF] transition-colors">{nextDeadline.title}</p>
+                <div className="flex items-center gap-2 mt-1.5">
+                  <PriorityBadge p={nextDeadline.priority} />
+                  <span className={`text-xs font-mono flex items-center gap-1 ${cd.overdue ? "text-[#ea4335]" : "text-[#F59E0B]"}`}>
+                    <Clock className="w-3 h-3" /> {cd.label}
+                  </span>
+                </div>
+              </button>
+            );
+          })() : <p className="text-sm text-[#5A6275]">Nothing due right now. Nice and clear.</p>}
+        </div>
+
+        {/* Continue learning / curriculum status */}
+        <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-5">
+          <h3 className="text-xs font-semibold text-[#8A92A6] mb-3 flex items-center gap-1.5"><BookOpen className="w-3.5 h-3.5" /> {isMentor ? "Curriculum" : "Continue learning"}</h3>
+          {isMentor ? (
+            <button onClick={() => onNavigate("learning")} className="text-left w-full group">
+              <p className="text-sm font-semibold text-[#E6E9F0] group-hover:text-[#00C2FF] transition-colors">
+                {weeks.filter(w => w.isUnlocked).length} of {weeks.length} weeks unlocked
+              </p>
+              <p className="text-xs text-[#5A6275] mt-1">Manage weeks and quiz responses →</p>
+            </button>
+          ) : activeWeek ? (
+            <button onClick={() => onNavigate("learning")} className="text-left w-full group">
+              <p className="text-sm font-semibold text-[#E6E9F0] group-hover:text-[#00C2FF] transition-colors">
+                {activeWeek.weekNumber === 0 ? "Prerequisites" : `Week ${activeWeek.weekNumber}`} · {activeWeek.title}
+              </p>
+              <div className="flex items-center gap-2 mt-2">
+                <div className="flex-1 h-1.5 bg-[#262A35] rounded-full overflow-hidden max-w-40">
+                  <div className="h-full bg-[#00C2FF] rounded-full transition-all" style={{ width: `${activeWeekProgress}%` }} />
+                </div>
+                <span className="text-[10px] text-[#5A6275] font-mono">{activeWeekProgress}% · resume →</span>
+              </div>
+            </button>
+          ) : <p className="text-sm text-[#5A6275]">{weeks.length ? "All open weeks complete — nice work." : "Curriculum not loaded yet."}</p>}
+        </div>
+      </div>
+
+      {/* Latest feedback (intern) / review nudge (mentor) */}
+      {!isMentor && latestReview && (
+        <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-5">
+          <h3 className="text-xs font-semibold text-[#8A92A6] mb-3 flex items-center gap-1.5"><Star className="w-3.5 h-3.5" /> Latest feedback</h3>
+          <div className="flex items-start gap-3">
+            <Avatar user={latestReview.reviewer} size={8} />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <span className="text-sm font-medium text-[#E6E9F0]">{latestReview.reviewer.fullName}</span>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
+                  latestReview.verdict === "approved" ? "bg-[#0f9d58]/12 text-[#0f9d58]" :
+                  latestReview.verdict === "rejected" ? "bg-[#ea4335]/12 text-[#ea4335]" : "bg-[#ff6d00]/12 text-[#ff6d00]"
+                }`}>{latestReview.verdict.replace("_", " ")}</span>
+              </div>
+              <p className="text-xs text-[#5A6275]">on &ldquo;{latestReview.submission.task.title}&rdquo;</p>
+            </div>
+            <button onClick={() => onNavigate("growth")} className="text-xs text-[#00C2FF] hover:underline font-medium shrink-0">View all →</button>
+          </div>
+        </div>
+      )}
+      {isMentor && (mStats?.pendingReviews ?? 0) > 0 && (
+        <button onClick={() => onNavigate("growth")}
+          className="w-full flex items-center gap-3 bg-[#F59E0B]/10 border border-[#F59E0B]/30 rounded-xl px-5 py-4 hover:bg-[#F59E0B]/15 transition-colors text-left">
+          <Clock className="w-5 h-5 text-[#F59E0B] shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-[#E6E9F0]">{mStats?.pendingReviews} submission{mStats?.pendingReviews !== 1 ? "s" : ""} awaiting your review</p>
+            <p className="text-xs text-[#8A92A6]">Open the Growth tab to score them.</p>
+          </div>
+          <ArrowRight className="w-4 h-4 text-[#F59E0B]" />
+        </button>
+      )}
+
+      {/* Announcements feed */}
+      <div>
+        <h2 className="text-sm font-semibold text-[#E6E9F0] mb-3 flex items-center gap-2"><Megaphone className="w-4 h-4 text-[#00C2FF]" /> Announcements</h2>
+        <AnnouncementsTab isMentor={isMentor} userId={userId} />
       </div>
     </div>
   );
@@ -643,57 +828,113 @@ function TasksTab({ isMentor, userId }: { isMentor: boolean; userId: string }) {
 
       {tasks.length === 0 && <EmptyState icon={ClipboardList} title="No tasks yet" desc={isMentor ? "Create a task to assign to interns." : "No tasks assigned to you yet."} />}
 
-      {(["urgent", "high", "medium", "low"] as const).map(priority => {
-        const group = grouped[priority];
-        if (group.length === 0) return null;
-        return (
-          <div key={priority}>
-            <div className="flex items-center gap-2 mb-2">
-              <PriorityBadge p={priority} />
-              <span className="text-xs text-[#5A6275]">{group.length} task{group.length !== 1 ? "s" : ""}</span>
-            </div>
-            <div className="space-y-2">
-              {group.map(task => (
-                <div key={task.id}
-                  className="bg-[#12151D] border border-[#262A35] rounded-xl p-4 hover:border-[#00C2FF]/30 hover:shadow-sm transition-all group">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setSelected(task)}>
-                      <h4 className="font-semibold text-[#E6E9F0] group-hover:text-[#00C2FF] transition-colors truncate">{task.title}</h4>
-                      <p className="text-sm text-[#8A92A6] mt-0.5 line-clamp-2">{task.description}</p>
-                    </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      {isMentor && (
-                        <button onClick={e => { e.stopPropagation(); deleteTask(task.id); }} disabled={deleting === task.id}
-                          className="p-1.5 text-[#5A6275] hover:text-[#ea4335] hover:bg-[#ea4335]/12 rounded-lg transition-colors">
-                          {deleting === task.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                        </button>
-                      )}
-                      <ChevronRight className="w-4 h-4 text-[#5A6275] cursor-pointer" onClick={() => setSelected(task)} />
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 mt-3 flex-wrap">
-                    {task.deadline && (
-                      <span className={`flex items-center gap-1 text-xs font-mono ${isPast(task.deadline) ? "text-[#ea4335]" : "text-[#5A6275]"}`}>
-                        <Clock className="w-3 h-3" />
-                        {isPast(task.deadline) ? "Overdue — " : ""}{fmt(task.deadline)}
-                      </span>
-                    )}
-                    <span className="flex items-center gap-1 text-xs text-[#5A6275]">
-                      <Upload className="w-3 h-3" /> <span className="font-mono">{task.submissions.length}</span> submission{task.submissions.length !== 1 ? "s" : ""}
-                    </span>
-                    <span className="flex items-center gap-1 text-xs text-[#5A6275]">
-                      <MessageSquare className="w-3 h-3" /> <span className="font-mono">{task._count.discussions}</span>
-                    </span>
-                    {task.assigneeIds.length > 0 && (
-                      <span className="text-xs text-[#5A6275]"><span className="font-mono">{task.assigneeIds.length}</span> assignee{task.assigneeIds.length !== 1 ? "s" : ""}</span>
-                    )}
-                  </div>
+      {tasks.length > 0 && (isMentor
+        ? (["urgent", "high", "medium", "low"] as const).map(priority => {
+            const group = grouped[priority];
+            if (group.length === 0) return null;
+            return (
+              <div key={priority}>
+                <div className="flex items-center gap-2 mb-2">
+                  <PriorityBadge p={priority} />
+                  <span className="text-xs text-[#5A6275]">{group.length} task{group.length !== 1 ? "s" : ""}</span>
                 </div>
-              ))}
-            </div>
+                <div className="space-y-2">
+                  {group.map(task => (
+                    <TaskCard key={task.id} task={task} isMentor onOpen={() => setSelected(task)}
+                      onDelete={() => deleteTask(task.id)} deleting={deleting === task.id} />
+                  ))}
+                </div>
+              </div>
+            );
+          })
+        : <KanbanBoard tasks={tasks} userId={userId} onOpen={setSelected} />
+      )}
+    </div>
+  );
+}
+
+// ─── KANBAN BOARD (intern task view) ──────────────────────────────────────────
+
+const KANBAN_COLS: { id: string; label: string; color: string }[] = [
+  { id: "todo",     label: "To do",     color: "#00C2FF" },
+  { id: "review",   label: "In review", color: "#F59E0B" },
+  { id: "revision", label: "Revision",  color: "#ff6d00" },
+  { id: "approved", label: "Approved",  color: "#0f9d58" },
+];
+
+function internTaskStatus(task: InternTask, userId: string): string {
+  // API returns submissions newest-first; only THIS intern's submissions count.
+  // No fallback to other interns' submissions — a cohort-wide task must stay
+  // in "To do" for interns who haven't submitted yet.
+  const latest = task.submissions.find(s => s.submitterId === userId);
+  if (!latest) return "todo";
+  if (latest.status === "approved") return "approved";
+  if (latest.status === "revision_requested" || latest.status === "rejected") return "revision";
+  return "review";
+}
+
+function KanbanBoard({ tasks, userId, onOpen }: { tasks: InternTask[]; userId: string; onOpen: (t: InternTask) => void }) {
+  const byCol = KANBAN_COLS.map(col => ({
+    ...col,
+    items: tasks.filter(t => internTaskStatus(t, userId) === col.id),
+  }));
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      {byCol.map(col => (
+        <div key={col.id} className="bg-[#0E1018] border border-[#262A35] rounded-xl p-2.5 min-h-24">
+          <div className="flex items-center gap-2 px-1 pb-2.5 mb-0.5">
+            <span className="w-2 h-2 rounded-full" style={{ background: col.color }} />
+            <span className="text-xs font-semibold" style={{ color: col.color }}>{col.label}</span>
+            <span className="text-xs text-[#5A6275] font-mono ml-auto">{col.items.length}</span>
           </div>
-        );
-      })}
+          <div className="space-y-2">
+            {col.items.map(task => (
+              <TaskCard key={task.id} task={task} isMentor={false} compact onOpen={() => onOpen(task)} />
+            ))}
+            {col.items.length === 0 && (
+              <p className="text-[11px] text-[#3A4150] text-center py-4">Nothing here</p>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function TaskCard({ task, isMentor, compact, onOpen, onDelete, deleting }: {
+  task: InternTask; isMentor: boolean; compact?: boolean;
+  onOpen: () => void; onDelete?: () => void; deleting?: boolean;
+}) {
+  const cd = task.deadline ? fmtCountdown(task.deadline) : null;
+  return (
+    <div onClick={onOpen}
+      className="bg-[#12151D] border border-[#262A35] rounded-xl p-3.5 hover:border-[#00C2FF]/40 hover:shadow-sm transition-all cursor-pointer group">
+      <div className="flex items-start justify-between gap-2">
+        <h4 className="font-semibold text-sm text-[#E6E9F0] group-hover:text-[#00C2FF] transition-colors line-clamp-2 flex-1 min-w-0">{task.title}</h4>
+        {isMentor && onDelete && (
+          <button onClick={e => { e.stopPropagation(); onDelete(); }} disabled={deleting}
+            className="p-1 -mr-1 text-[#5A6275] hover:text-[#ea4335] hover:bg-[#ea4335]/12 rounded transition-colors shrink-0">
+            {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+          </button>
+        )}
+      </div>
+      {!compact && <p className="text-sm text-[#8A92A6] mt-0.5 line-clamp-2">{task.description}</p>}
+      <div className="flex items-center gap-2 mt-2.5 flex-wrap">
+        {!compact && <PriorityBadge p={task.priority} />}
+        {cd && (
+          <span className={`flex items-center gap-1 text-[11px] font-mono ${cd.overdue ? "text-[#ea4335]" : "text-[#5A6275]"}`}>
+            <Clock className="w-3 h-3" /> {cd.label}
+          </span>
+        )}
+        {task._count.discussions > 0 && (
+          <span className="flex items-center gap-1 text-[11px] text-[#5A6275]">
+            <MessageSquare className="w-3 h-3" /> <span className="font-mono">{task._count.discussions}</span>
+          </span>
+        )}
+        {isMentor && task.assigneeIds.length > 0 && (
+          <span className="text-[11px] text-[#5A6275]"><span className="font-mono">{task.assigneeIds.length}</span> assigned</span>
+        )}
+      </div>
     </div>
   );
 }
@@ -1191,114 +1432,6 @@ function SubmissionRow({ sub, isMentor, onReview }: { sub: Submission; isMentor:
   );
 }
 
-// ─── DISCUSSION TAB ───────────────────────────────────────────────────────────
-
-function DiscussionTab({ userId, currentUser }: { userId: string; currentUser: User & { role: string } }) {
-  const [messages, setMessages] = useState<Discussion[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [text, setText] = useState("");
-  const [sending, setSending] = useState(false);
-  const bottomRef = useRef<HTMLDivElement>(null);
-
-  const load = useCallback(async () => {
-    const res = await fetch("/api/internship/discussions?taskId=");
-    setMessages(await res.json());
-    setLoading(false);
-  }, []);
-
-  useEffect(() => { load(); }, [load]);
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
-
-  const send = async () => {
-    if (!text.trim()) return;
-    setSending(true);
-    await fetch("/api/internship/discussions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ body: text, taskId: null }),
-    });
-    setText("");
-    await load();
-    setSending(false);
-  };
-
-  const isMentorRole = (role?: string) => role && ["ADMIN","CEO","CISO","R_AND_D","COO","OPS_MANAGER"].includes(role);
-
-  const canDelete = (_msg: Discussion) => currentUser.role === "ADMIN";
-  const remove = async (id: string) => {
-    if (!window.confirm("Delete this message?")) return;
-    setMessages(prev => prev.filter(m => m.id !== id));
-    await fetch(`/api/internship/discussions/${id}`, { method: "DELETE" }).catch(() => {});
-    await load();
-  };
-
-  if (loading) return <LoadingSpinner />;
-
-  return (
-    <div className="max-w-2xl mx-auto flex flex-col h-[calc(100vh-280px)] min-h-96">
-      <div className="flex-1 bg-[#12151D] border border-[#262A35] rounded-xl overflow-y-auto p-4 space-y-3 mb-3">
-        {messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full text-center py-8">
-            <MessageSquare className="w-10 h-10 text-[#3A4150] mb-3" />
-            <p className="text-sm font-medium text-[#E6E9F0]">General Discussion</p>
-            <p className="text-xs text-[#5A6275] mt-1">Start the conversation — ask questions, share updates, tag mentors.</p>
-          </div>
-        )}
-        {messages.map(msg => {
-          const isMe = msg.author.id === userId;
-          return (
-            <div key={msg.id} className={`flex gap-2 ${isMe ? "flex-row-reverse" : ""}`}>
-              <Avatar user={msg.author} size={7} />
-              <div className={`max-w-[80%] ${isMe ? "items-end" : "items-start"} flex flex-col`}>
-                <div className="flex items-center gap-2 mb-0.5">
-                  {!isMe && <span className="text-xs font-semibold text-[#E6E9F0]">{msg.author.fullName}</span>}
-                  {isMentorRole(msg.author.role) && <span className="text-[10px] bg-[#0E2532] text-[#00C2FF] px-1.5 rounded font-medium">Mentor</span>}
-                  {msg.isPinned && <Pin className="w-3 h-3 text-[#00C2FF]" />}
-                  <span className="text-[10px] text-[#5A6275] font-mono">{fmtTime(msg.createdAt)}</span>
-                  {canDelete(msg) && (
-                    <button onClick={() => void remove(msg.id)} title="Delete message" className="text-[#5A6275] hover:text-[#ea4335] transition-colors">
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  )}
-                </div>
-                <div className={`px-3 py-2 rounded-2xl text-sm ${isMe ? "bg-[#00C2FF] text-[#06121A] rounded-tr-sm" : "bg-[#1B1F2A] text-[#E6E9F0] rounded-tl-sm"}`}>
-                  {msg.body}
-                </div>
-                {msg.replies.length > 0 && (
-                  <div className="mt-2 ml-2 space-y-1.5 w-full">
-                    {msg.replies.map(r => (
-                      <div key={r.id} className="flex gap-1.5">
-                        <Avatar user={r.author} size={5} />
-                        <div className="bg-[#12151D] border border-[#262A35] rounded-xl px-3 py-1.5 text-xs text-[#C8CEDB] flex-1">
-                          <span className="font-medium">{r.author.fullName}</span> {r.body}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
-        <div ref={bottomRef} />
-      </div>
-
-      <div className="flex gap-2">
-        <input
-          className="flex-1 px-4 py-2.5 bg-[#12151D] border border-[#262A35] rounded-xl text-sm placeholder:text-[#5A6275] focus:outline-none focus:border-[#00C2FF]/60 focus:ring-2 focus:ring-[#00C2FF]/20"
-          placeholder="Type a message… (Enter to send)"
-          value={text} onChange={e => setText(e.target.value)}
-          onKeyDown={e => e.key === "Enter" && !e.shiftKey && send()}
-        />
-        <button onClick={send} disabled={sending}
-          className="px-4 py-2.5 bg-[#00C2FF] text-[#06121A] rounded-xl hover:bg-[#0098E6] disabled:opacity-50 transition-colors">
-          {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-        </button>
-      </div>
-    </div>
-  );
-}
-
 // ─── FINDINGS TAB ─────────────────────────────────────────────────────────────
 
 function FindingsTab({ isMentor, userId, currentUser }: { isMentor: boolean; userId: string; currentUser: User & { role: string } }) {
@@ -1641,15 +1774,17 @@ function ProgressTab({ isMentor, userId }: { isMentor: boolean; userId: string }
           ))}
         </div>
 
-        {/* Per-intern table */}
+        {/* Per-intern leaderboard */}
         <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
           <div className="px-5 py-4 border-b border-[#262A35]">
-            <h3 className="font-semibold text-[#E6E9F0]">Intern Overview</h3>
+            <h3 className="font-semibold text-[#E6E9F0]">Leaderboard</h3>
+            <p className="text-xs text-[#5A6275] mt-0.5">Ranked by approved submissions</p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[#262A35] bg-[#1B1F2A]">
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-[#8A92A6] w-10">#</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-[#8A92A6]">Intern</th>
                   <th className="text-center px-4 py-3 text-xs font-semibold text-[#8A92A6]">Assigned</th>
                   <th className="text-center px-4 py-3 text-xs font-semibold text-[#8A92A6]">Submitted</th>
@@ -1660,12 +1795,15 @@ function ProgressTab({ isMentor, userId }: { isMentor: boolean; userId: string }
               </thead>
               <tbody className="divide-y divide-[#1B1F2A]">
                 {s.internStats.length === 0 && (
-                  <tr><td colSpan={6} className="px-5 py-8 text-center text-sm text-[#5A6275]">No interns yet — create intern accounts from Users.</td></tr>
+                  <tr><td colSpan={7} className="px-5 py-8 text-center text-sm text-[#5A6275]">No interns yet — create intern accounts from Users.</td></tr>
                 )}
-                {s.internStats.map(({ intern, assigned, submitted, approved, discussions }) => {
+                {[...s.internStats]
+                  .sort((a, b) => b.approved - a.approved || b.submitted - a.submitted)
+                  .map(({ intern, assigned, submitted, approved, discussions }, rank) => {
                   const score = assigned > 0 ? Math.round((approved / assigned) * 100) : null;
                   return (
                     <tr key={intern.id} className="hover:bg-[#1B1F2A]">
+                      <td className={`px-4 py-3 font-mono font-bold ${rank < 3 ? "text-[#00C2FF]" : "text-[#5A6275]"}`}>{rank + 1}</td>
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-2">
                           <Avatar user={intern} size={7} />
@@ -1902,8 +2040,8 @@ function LearningTab({ isMentor, userId }: { isMentor: boolean; userId: string }
           desc={isMentor ? "Use the Mentor Panel → Seed Handbook to load the curriculum." : "Your mentor hasn't loaded the curriculum yet. Check back soon."} />
       )}
 
-      <div className="space-y-3">
-        {weeks.map(week => {
+      <div className="relative">
+        {weeks.map((week, idx) => {
           const isPrereq = week.weekNumber === 0;
           const locked = !week.isUnlocked;
           const completed = week.completions.some(c => c.internId === userId);
@@ -1913,47 +2051,54 @@ function LearningTab({ isMentor, userId }: { isMentor: boolean; userId: string }
             ? Math.round((doneModules / quizTopics.length) * 100)
             : completed ? 100 : 0;
           const hasProgress = quizTopics.length > 0;
+          const isLast = idx === weeks.length - 1;
+          const nodeCls = completed ? "bg-green-500/10 text-[#0f9d58] border-[#0f9d58]/30" :
+            locked ? "bg-[#1B1F2A] text-[#5A6275] border-[#262A35]" :
+            "bg-[#0E2532] text-[#00C2FF] border-[#00C2FF]/40";
 
           return (
-            <div key={week.id}
-              onClick={() => !locked && setSelected(week)}
-              className={`bg-[#12151D] border rounded-xl p-5 transition-all ${
-                locked ? "border-[#262A35] opacity-60 cursor-not-allowed" :
-                "border-[#262A35] hover:border-[#00C2FF]/30 hover:shadow-sm cursor-pointer group"
-              }`}>
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-3 flex-1 min-w-0">
-                  <div className={`mt-0.5 shrink-0 w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold ${
-                    isPrereq ? "bg-[#0E2532] text-[#00C2FF]" :
-                    completed ? "bg-green-500/10 text-[#0f9d58]" :
-                    locked ? "bg-[#1B1F2A] text-[#5A6275]" :
-                    "bg-[#0E2532] text-[#00C2FF]"
-                  }`}>
-                    {isPrereq ? "P" : week.weekNumber}
-                  </div>
+            <div key={week.id} className="flex gap-4">
+              {/* Timeline rail */}
+              <div className="flex flex-col items-center shrink-0">
+                <div className={`w-9 h-9 rounded-xl border flex items-center justify-center text-sm font-bold ${nodeCls}`}>
+                  {completed ? <CheckCircle2 className="w-4 h-4" /> : locked ? <Lock className="w-3.5 h-3.5" /> : isPrereq ? "P" : week.weekNumber}
+                </div>
+                {!isLast && <div className="w-px flex-1 min-h-6 bg-[#262A35] my-1" />}
+              </div>
+
+              {/* Card */}
+              <div
+                onClick={() => !locked && setSelected(week)}
+                className={`flex-1 min-w-0 mb-3 bg-[#12151D] border rounded-xl p-4 transition-all ${
+                  locked ? "border-[#262A35] opacity-60 cursor-not-allowed" :
+                  "border-[#262A35] hover:border-[#00C2FF]/30 hover:shadow-sm cursor-pointer group"
+                }`}>
+                <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                      <h3 className={`font-semibold text-sm ${locked ? "text-[#5A6275]" : "text-[#E6E9F0] group-hover:text-[#00C2FF] transition-colors"}`}>
-                        {week.title}
-                      </h3>
+                      <span className="text-[10px] font-semibold text-[#5A6275] font-mono">{isPrereq ? "PREREQ" : `WEEK ${week.weekNumber}`}</span>
                       {isPrereq && <span className="text-[10px] bg-green-500/10 text-[#0f9d58] px-1.5 py-0.5 rounded font-semibold">Always open</span>}
                       {completed && <span className="text-[10px] bg-green-500/10 text-[#0f9d58] px-1.5 py-0.5 rounded font-semibold flex items-center gap-0.5"><CheckCircle2 className="w-2.5 h-2.5" /> Complete</span>}
+                      {locked && <span className="text-[10px] bg-[#1B1F2A] text-[#5A6275] px-1.5 py-0.5 rounded font-semibold">Locked</span>}
                     </div>
-                    <p className="text-xs text-[#8A92A6] line-clamp-2">{week.overview}</p>
+                    <h3 className={`font-semibold text-sm ${locked ? "text-[#5A6275]" : "text-[#E6E9F0] group-hover:text-[#00C2FF] transition-colors"}`}>
+                      {week.title}
+                    </h3>
+                    <p className="text-xs text-[#8A92A6] line-clamp-2 mt-0.5">{week.overview}</p>
                     {!locked && (hasProgress || week.checkpoints.length > 0) && (
                       <div className="flex items-center gap-2 mt-2">
-                        <div className="flex-1 h-1.5 bg-[#262A35] rounded-full overflow-hidden max-w-32">
+                        <div className="flex-1 h-1.5 bg-[#262A35] rounded-full overflow-hidden max-w-40">
                           <div className="h-full bg-[#00C2FF] rounded-full transition-all" style={{ width: `${progress}%` }} />
                         </div>
                         <span className="text-[10px] text-[#5A6275] font-mono">
-                          {hasProgress ? `${doneModules}/${quizTopics.length} quizzes done` : `${week.topics.length} modules · ${week.checkpoints.length} checkpoints`}
+                          {hasProgress ? `${doneModules}/${quizTopics.length} quizzes` : `${week.topics.length} modules · ${week.checkpoints.length} checkpoints`}
                         </span>
                       </div>
                     )}
                   </div>
-                </div>
-                <div className="shrink-0">
-                  {locked ? <Lock className="w-4 h-4 text-[#5A6275]" /> : <ChevronRight className="w-4 h-4 text-[#5A6275] group-hover:text-[#00C2FF]" />}
+                  <div className="shrink-0">
+                    {!locked && <ChevronRight className="w-4 h-4 text-[#5A6275] group-hover:text-[#00C2FF]" />}
+                  </div>
                 </div>
               </div>
             </div>
@@ -2287,367 +2432,6 @@ function MentorQuizResponses({ topic, responses }: { topic: InternWeekTopic; res
     </div>
   );
 }
-
-// ─── QUIZ EDITOR (mentor) ─────────────────────────────────────────────────────
-
-const qid = () => `q_${Math.random().toString(36).slice(2, 10)}`;
-
-// ─── ATTENDANCE TAB (intern-facing) ───────────────────────────────────────────
-
-interface AttendanceSchedule {
-  startTime: string;
-  endTime: string;
-  timezone: string;
-  lateGraceMinutes: number;
-  defaultBreakFrom: string;
-  defaultBreakTo: string;
-  updatedBy: string | null;
-  updatedAt: string | null;
-}
-
-interface AttendanceSession {
-  punchIn: string;
-  punchOut: string | null;
-  sessionId: string;
-  location: { lat: number; lng: number; accuracy: number } | null;
-  device: string | null;
-}
-
-interface BreakPeriod {
-  from: string;
-  to: string;
-  label?: string | null;
-}
-
-interface AttendanceRecord {
-  intern: { id: string; fullName: string; avatarUrl?: string | null };
-  date: string;
-  sessions: AttendanceSession[];
-  firstPunchIn: string | null;
-  lastPunchOut: string | null;
-  totalMinutes: number;
-  breakMinutes: number;
-  autoBreakMinutes: number;
-  breakWindow: { from: string; to: string } | null;
-  breaks: BreakPeriod[];
-  isCurrentlyIn: boolean;
-  isLate: boolean;
-  idleFlag: boolean;
-  activityCount: number;
-  hasOverride: boolean;
-  overrideReason: string | null;
-  // Mentor-only — never shown in intern UI
-  punchLocation: { lat: number; lng: number; accuracy: number } | null;
-  punchDevice: string | null;
-}
-
-function fmtDuration(minutes: number) {
-  if (minutes <= 0) return "0m";
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return h > 0 ? `${h}h ${m}m` : `${m}m`;
-}
-
-function fmtHHMM(iso: string) {
-  return new Date(iso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
-}
-
-function todayStr() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-/** Convert a UTC ISO string to the "YYYY-MM-DDTHH:MM" format that datetime-local inputs expect (local time). */
-function toLocalDatetimeInput(iso: string): string {
-  const d = new Date(iso);
-  const pad = (n: number) => n.toString().padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
-// ─── Attendance helpers ────────────────────────────────────────────────────────
-
-/** Parse UA string into a short human-readable "Browser on OS" label */
-function parseUserAgent(ua: string): string {
-  let browser = "Unknown browser";
-  if (/Edg\//.test(ua)) browser = "Edge";
-  else if (/OPR\/|Opera/.test(ua)) browser = "Opera";
-  else if (/Chrome\//.test(ua)) browser = "Chrome";
-  else if (/Safari\//.test(ua) && !/Chrome/.test(ua)) browser = "Safari";
-  else if (/Firefox\//.test(ua)) browser = "Firefox";
-
-  let os = "Unknown OS";
-  if (/Windows NT 10/.test(ua)) os = "Windows 10/11";
-  else if (/Windows NT/.test(ua)) os = "Windows";
-  else if (/Mac OS X/.test(ua)) os = "macOS";
-  else if (/Android/.test(ua)) os = "Android";
-  else if (/iPhone|iPad/.test(ua)) os = "iOS";
-  else if (/Linux/.test(ua)) os = "Linux";
-
-  return `${browser} on ${os}`;
-}
-
-/** Request geolocation with a 5-second timeout. Returns null on denial or timeout. */
-function getGeoLocation(): Promise<{ lat: number; lng: number; accuracy: number } | null> {
-  return new Promise(resolve => {
-    if (!navigator.geolocation) { resolve(null); return; }
-    const timer = setTimeout(() => resolve(null), 5000);
-    navigator.geolocation.getCurrentPosition(
-      pos => {
-        clearTimeout(timer);
-        resolve({
-          lat: Math.round(pos.coords.latitude * 1e6) / 1e6,
-          lng: Math.round(pos.coords.longitude * 1e6) / 1e6,
-          accuracy: Math.round(pos.coords.accuracy),
-        });
-      },
-      () => { clearTimeout(timer); resolve(null); },
-      { timeout: 5000, maximumAge: 300000 },
-    );
-  });
-}
-
-function AttendanceTab({ isMentor, userId }: { isMentor: boolean; userId: string }) {
-  const [schedule, setSchedule] = useState<AttendanceSchedule | null>(null);
-  const [record, setRecord] = useState<AttendanceRecord | null>(null);
-  const [history, setHistory] = useState<AttendanceRecord[]>([]);
-  const [punching, setPunching] = useState(false);
-  const [loadingRecord, setLoadingRecord] = useState(true);
-
-  const today = todayStr();
-
-  const loadSchedule = useCallback(async () => {
-    const res = await fetch("/api/internship/attendance/schedule");
-    if (res.ok) setSchedule(await res.json());
-  }, []);
-
-  const loadToday = useCallback(async () => {
-    setLoadingRecord(true);
-    try {
-      const res = await fetch(`/api/internship/attendance?date=${today}`);
-      if (res.ok) {
-        const data = await res.json() as AttendanceRecord[];
-        const mine = data.find(r => r.intern.id === userId);
-        setRecord(mine ?? null);
-      }
-    } finally { setLoadingRecord(false); }
-  }, [today, userId]);
-
-  const loadHistory = useCallback(async () => {
-    const dateStrings = Array.from({ length: 6 }, (_, i) => {
-      const d = new Date();
-      d.setDate(d.getDate() - (i + 1));
-      return d.toISOString().slice(0, 10);
-    });
-    const results = await Promise.all(
-      dateStrings.map(dateStr =>
-        fetch(`/api/internship/attendance?date=${dateStr}`)
-          .then(r => r.ok ? r.json() as Promise<AttendanceRecord[]> : Promise.resolve([]))
-          .catch(() => [] as AttendanceRecord[])
-      )
-    );
-    const days = results.map((data, i) => {
-      const mine = data.find(r => r.intern.id === userId);
-      return mine ? { ...mine, date: dateStrings[i] } : null;
-    }).filter((r): r is AttendanceRecord => r !== null);
-    setHistory(days);
-  }, [userId]);
-
-  useEffect(() => {
-    loadSchedule();
-    loadToday();
-    loadHistory();
-  }, [loadSchedule, loadToday, loadHistory]);
-
-  const punch = async () => {
-    setPunching(true);
-    try {
-      // Collect device + location silently — punch fires regardless of outcome
-      const device = parseUserAgent(navigator.userAgent);
-      const location = await getGeoLocation();
-
-      const res = await fetch("/api/internship/attendance/punch", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ device, location }),
-      });
-      const data = await res.json() as { action?: string; error?: string; message?: string };
-      if (res.status === 409) {
-        toast.error(data.message ?? "You've already completed attendance for today.");
-        await loadToday();
-        return;
-      }
-      if (!res.ok) throw new Error();
-      toast.success(data.action === "INTERN_PUNCH_IN" ? "Punched in — have a productive session!" : "Punched out — good work today!");
-      await loadToday();
-      await loadHistory();
-    } catch { toast.error("Failed to record punch"); }
-    finally { setPunching(false); }
-  };
-
-  const isPunchedIn = record?.isCurrentlyIn ?? false;
-
-  // Live elapsed timer — deducts auto-break overlap for the active session
-  const [elapsed, setElapsed] = useState(0);
-  useEffect(() => {
-    if (!isPunchedIn || !record?.sessions.length) return;
-    const lastIn = [...record.sessions].reverse().find(s => !s.punchOut)?.punchIn;
-    if (!lastIn) return;
-    const update = () => {
-      const rawMs = Date.now() - new Date(lastIn).getTime();
-      let breakMs = 0;
-      if (record.breakWindow) {
-        const today = new Date().toISOString().slice(0, 10);
-        const bStart = new Date(`${today}T${record.breakWindow.from}:00`).getTime();
-        const bEnd   = new Date(`${today}T${record.breakWindow.to}:00`).getTime();
-        const sStart = new Date(lastIn).getTime();
-        const now    = Date.now();
-        const overlapStart = Math.max(sStart, bStart);
-        const overlapEnd   = Math.min(now,    bEnd);
-        if (overlapEnd > overlapStart) breakMs = overlapEnd - overlapStart;
-      }
-      setElapsed(Math.max(0, Math.floor((rawMs - breakMs) / 60000)));
-    };
-    update();
-    const timer = setInterval(update, 30000);
-    return () => clearInterval(timer);
-  }, [isPunchedIn, record]);
-
-  return (
-    <div className="max-w-xl mx-auto space-y-5">
-      {/* Working hours banner */}
-      {schedule && (
-        <div className="px-4 py-3 bg-[#0E2532] border border-[#00C2FF]/20 rounded-xl space-y-1">
-          <div className="flex items-center gap-3">
-            <Clock className="w-4 h-4 text-[#00C2FF] shrink-0" />
-            <div className="text-sm text-[#C8CEDB]">
-              Working hours: <span className="text-[#00C2FF] font-semibold">{schedule.startTime} – {schedule.endTime}</span>
-              <span className="ml-2 text-[#5A6275] text-xs">({schedule.lateGraceMinutes}min grace)</span>
-            </div>
-          </div>
-          {schedule.defaultBreakFrom && schedule.defaultBreakTo && (
-            <div className="flex items-center gap-3 pl-7">
-              <span className="text-xs text-[#5A6275]">
-                Break: <span className="text-[#C8CEDB] font-mono font-medium">{schedule.defaultBreakFrom} – {schedule.defaultBreakTo}</span>
-                <span className="ml-1.5 text-[#3A4150]">· automatically deducted, no punch-out needed</span>
-              </span>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Punch card */}
-      <div className="bg-[#12151D] border border-[#262A35] rounded-2xl p-6 text-center space-y-4">
-        <div className="flex items-center justify-center gap-2 mb-1">
-          <div className={`w-2.5 h-2.5 rounded-full ${isPunchedIn ? "bg-[#0f9d58] animate-pulse" : "bg-[#5A6275]"}`} />
-          <span className={`text-sm font-semibold ${isPunchedIn ? "text-[#0f9d58]" : "text-[#5A6275]"}`}>
-            {isPunchedIn ? "Currently clocked in" : "Not clocked in"}
-          </span>
-        </div>
-
-        {isPunchedIn && record && (
-          <div className="text-4xl font-mono font-bold text-[#E6E9F0] tabular-nums">
-            {fmtDuration(record.totalMinutes + elapsed)}
-          </div>
-        )}
-
-        {!isPunchedIn && record?.totalMinutes != null && record.totalMinutes > 0 && (
-          <div className="text-sm text-[#8A92A6]">
-            Total today: <span className="text-[#E6E9F0] font-semibold font-mono">{fmtDuration(record.totalMinutes)}</span>
-          </div>
-        )}
-
-        {record?.firstPunchIn && (
-          <div className="flex justify-center gap-6 text-xs text-[#5A6275]">
-            <span><LogIn className="w-3 h-3 inline mr-1 text-[#0f9d58]" />In: <span className="text-[#C8CEDB] font-mono">{fmtHHMM(record.firstPunchIn)}</span></span>
-            {record.lastPunchOut && (
-              <span><LogOut className="w-3 h-3 inline mr-1 text-[#ea4335]" />Out: <span className="text-[#C8CEDB] font-mono">{fmtHHMM(record.lastPunchOut)}</span></span>
-            )}
-          </div>
-        )}
-
-        {record?.isLate && (
-          <div className="flex items-center justify-center gap-1.5 text-xs text-[#F59E0B]">
-            <AlertCircle className="w-3.5 h-3.5" /> Punched in late
-          </div>
-        )}
-
-        {/* Punch button — desktop only */}
-        <div className="hidden sm:block">
-          {record?.firstPunchIn && record?.lastPunchOut ? (
-            // Attendance complete — both punches done, no more allowed today
-            <div className="w-full py-3 rounded-xl border border-[#0f9d58]/30 bg-[#0f9d58]/10 flex items-center justify-center gap-2 text-[#0f9d58] text-sm font-semibold">
-              <CheckCircle className="w-4 h-4" /> Attendance complete for today
-            </div>
-          ) : (
-            <button
-              onClick={punch}
-              disabled={punching || loadingRecord}
-              className={`w-full py-3 rounded-xl text-base font-bold flex items-center justify-center gap-2 transition-all ${
-                isPunchedIn
-                  ? "bg-[#ea4335]/15 border border-[#ea4335]/40 text-[#ea4335] hover:bg-[#ea4335]/25"
-                  : "bg-[#00C2FF] text-[#06121A] hover:bg-[#0098E6]"
-              } disabled:opacity-50`}
-            >
-              {punching ? <Loader2 className="w-5 h-5 animate-spin" /> : isPunchedIn ? <><LogOut className="w-5 h-5" /> Punch Out</> : <><LogIn className="w-5 h-5" /> Punch In</>}
-            </button>
-          )}
-        </div>
-
-        {/* Mobile — no punch allowed */}
-        <div className="sm:hidden flex items-center justify-center gap-2 py-2.5 rounded-xl border border-[#2E333F] bg-[#1B1F2A] text-[#5A6275] text-sm">
-          <Monitor className="w-4 h-4" />
-          Attendance can only be recorded on desktop
-        </div>
-
-        {isMentor && (
-          <p className="text-[11px] text-[#5A6275]">As a mentor, your attendance is optional. Full timesheet view is in Mentor Panel → Attendance.</p>
-        )}
-      </div>
-
-      {/* History — last 6 days */}
-      {history.length > 0 && (
-        <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
-          <div className="px-4 py-3 border-b border-[#262A35]">
-            <h3 className="text-sm font-semibold text-[#E6E9F0]">Last 6 days</h3>
-          </div>
-          <div className="divide-y divide-[#262A35]">
-            {history.map(h => (
-              <div key={h.date} className="flex items-center justify-between px-4 py-3">
-                <div className="flex items-center gap-3">
-                  <div className={`w-2 h-2 rounded-full ${h.firstPunchIn ? (h.isLate ? "bg-[#F59E0B]" : "bg-[#0f9d58]") : "bg-[#3A4150]"}`} />
-                  <div>
-                    <p className="text-xs font-medium text-[#C8CEDB]">
-                      {new Date(h.date + "T12:00:00").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}
-                    </p>
-                    {h.firstPunchIn && (
-                      <p className="text-[11px] text-[#5A6275] font-mono">
-                        {fmtHHMM(h.firstPunchIn)} {h.lastPunchOut ? `→ ${fmtHHMM(h.lastPunchOut)}` : "(no punch out)"}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {h.idleFlag && <span title="No activity detected"><AlertCircle className="w-3.5 h-3.5 text-[#F59E0B]" /></span>}
-                  {h.hasOverride && <span title="Manually adjusted"><Edit2 className="w-3 h-3 text-[#5A6275]" /></span>}
-                  {h.firstPunchIn ? (
-                    <div className="text-right">
-                      <span className={`text-xs font-mono font-semibold ${h.isLate ? "text-[#F59E0B]" : "text-[#E6E9F0]"}`}>{fmtDuration(h.totalMinutes)}</span>
-                      {h.breakMinutes > 0 && (
-                        <p className="text-[10px] text-[#5A6275]">−{fmtDuration(h.breakMinutes)} break</p>
-                      )}
-                    </div>
-                  ) : <span className="text-xs text-[#3A4150]">—</span>}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── MENTOR ATTENDANCE SUB-TAB ────────────────────────────────────────────────
-
 
 // ─── SHARED COMPONENTS ────────────────────────────────────────────────────────
 

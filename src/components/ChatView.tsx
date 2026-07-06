@@ -1269,7 +1269,6 @@ function ChannelSection({
   label,
   channels,
   selectedChannelId,
-  onlineUsers,
   presenceData,
   onSelect,
   onNew,
@@ -1279,7 +1278,7 @@ function ChannelSection({
   label: string;
   channels: Channel[];
   selectedChannelId: string | null;
-  onlineUsers: Map<string, string>;
+  onlineUsers?: Map<string, string>;
   presenceData?: Record<string, { status: string; updatedAt: string }>;
   onSelect: (id: string) => void;
   onNew?: () => void;
@@ -1324,9 +1323,12 @@ function ChannelSection({
         <div className="space-y-0.5">
           {channels.map((ch) => {
             const isSelected = selectedChannelId === ch.id;
+            // Badge = unread messages only. The selected channel never shows a
+            // badge (you're reading it) — previously it showed online-user count
+            // here, which read as a bogus unread number.
             const hasUnread = !isSelected && (ch.unreadCount ?? 0) > 0;
-            const badgeCount = isSelected && onlineUsers.size > 0 ? onlineUsers.size : ch.unreadCount ?? 0;
-            const showBadge = (isSelected && onlineUsers.size > 0) || hasUnread;
+            const badgeCount = ch.unreadCount ?? 0;
+            const showBadge = hasUnread;
 
             if (showAvatarRow) {
               // Direct message / group row — 44px with avatar + presence dot
@@ -2025,9 +2027,11 @@ export function ChatView({ currentUserId, userRole }: { currentUserId: string; u
     const nonSelected = channels.filter((c) => c.id !== selectedChannelId);
     nonSelected.forEach((c) => socket.emit("chat:join", { channelId: c.id }));
 
-    const onGlobalMessage = (msg: { channelId?: string; id?: string }) => {
+    const onGlobalMessage = (msg: { channelId?: string; id?: string; userId?: string }) => {
       const chId = msg.channelId;
       if (!chId || chId === selectedChannelId) return;
+      // Never count your own messages (e.g. sent from another tab/device) as unread
+      if (msg.userId && msg.userId === currentUserId) return;
       setLocalUnread((prev) => {
         const m = new Map(prev);
         m.set(chId, (m.get(chId) ?? 0) + 1);
@@ -2065,6 +2069,12 @@ export function ChatView({ currentUserId, userRole }: { currentUserId: string; u
     );
     // Persist lastReadAt so badge stays clear on next page load
     fetch(`/api/chat/channels/${selectedChannelId}/read`, { method: 'POST' }).catch(() => {});
+    return () => {
+      // Mark read again on leave — messages that arrived WHILE this channel was
+      // open are after the lastReadAt set above, and would otherwise reappear
+      // as unread on the next page load. keepalive lets it survive navigation.
+      fetch(`/api/chat/channels/${selectedChannelId}/read`, { method: 'POST', keepalive: true }).catch(() => {});
+    };
   }, [selectedChannelId]);
 
   // Global presence: poll Redis-backed presence for all channel members every 60s
