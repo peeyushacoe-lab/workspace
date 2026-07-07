@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   CalendarDays, CalendarOff, CheckCircle2, ClipboardList, Download, FileText,
-  Loader2, Plane, Plus, Send, Stethoscope, Upload, X,
+  Loader2, Plane, Plus, Send, ShieldCheck, Stethoscope, Upload, X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/Shell";
@@ -24,6 +24,13 @@ interface HRDoc {
 interface ChecklistItem {
   id: string; kind: string; title: string; description?: string | null;
   dueDate?: string | null; completedAt?: string | null;
+}
+interface Lifecycle {
+  status?: "ONBOARDING" | "ACTIVE" | "OFFBOARDING" | "EXITED";
+  type?: "RESIGNATION" | "TERMINATION";
+  ref?: string; letterDocId?: string; letterSentAt?: string;
+  signedDocId?: string; signedReturnedAt?: string; confidentialityAckAt?: string; signedVerifiedAt?: string;
+  lastWorkingDay?: string; nocRef?: string; nocDocId?: string; nocIssuedAt?: string;
 }
 
 /* ── helpers ───────────────────────────────────────────────────────────── */
@@ -78,6 +85,125 @@ function Card({ title, icon: Icon, action, children }: {
   );
 }
 
+/* ── Lifecycle card (onboarding / exit letter → sign & return → NOC) ──── */
+
+function LifecycleCard({ lifecycle: lc, onChanged }: { lifecycle: Lifecycle; onChanged: () => void }) {
+  const [file, setFile] = useState<File | null>(null);
+  const [ack, setAck] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  if (!lc.status || lc.status === "ACTIVE") return null;
+
+  const isOnboarding = lc.status === "ONBOARDING";
+  const isExited = lc.status === "EXITED";
+  const returned = !!lc.signedReturnedAt;
+
+  async function submit() {
+    if (!file) { toast.error("Attach your signed letter first"); return; }
+    if (!ack) { toast.error("You must acknowledge the confidentiality declaration"); return; }
+    setSubmitting(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("ack", "true");
+      const res = await fetch("/api/hr/lifecycle/return", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) { toast.error(data.error ?? "Failed to submit"); return; }
+      toast.success("Signed letter returned — HR has been notified");
+      setFile(null); setAck(false);
+      onChanged();
+    } finally { setSubmitting(false); }
+  }
+
+  // ── exited: show the NOC ──
+  if (isExited) {
+    return (
+      <div className="bg-[#12151D] border border-emerald-500/30 rounded-xl p-4">
+        <div className="flex items-center gap-2 mb-1">
+          <ShieldCheck className="w-4 h-4 text-emerald-400" />
+          <h2 className="text-sm font-semibold text-[#E6E9F0]">Exit complete — NOC issued</h2>
+          <span className="px-2 py-0.5 text-[11px] font-medium rounded-full border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">Cleared</span>
+        </div>
+        <p className="text-xs text-[#8A92A6] mb-3">
+          You are no longer associated with Cybersage{lc.nocRef ? ` · Ref ${lc.nocRef}` : ""}. The certificate was also emailed to you.
+        </p>
+        {lc.nocDocId && (
+          <a href={`/api/hr/documents/${lc.nocDocId}`} target="_blank" rel="noreferrer"
+            className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg bg-[#1B1F2A] border border-[#262A35] text-[#E6E9F0] hover:border-emerald-500/40 transition-colors">
+            <Download className="w-4 h-4 text-emerald-400" /> Download NOC
+          </a>
+        )}
+      </div>
+    );
+  }
+
+  // ── onboarding / offboarding: letter + sign & return ──
+  return (
+    <div className="bg-[#12151D] border border-[#00C2FF]/30 rounded-xl p-4 space-y-3">
+      <div className="flex items-center gap-2 flex-wrap">
+        <FileText className="w-4 h-4 text-[#00C2FF]" />
+        <h2 className="text-sm font-semibold text-[#E6E9F0]">
+          {isOnboarding ? "Your onboarding letter" : lc.type === "TERMINATION" ? "Your termination letter" : "Your exit letter"}
+        </h2>
+        {lc.ref && <span className="text-[11px] font-mono text-[#5A6275]">{lc.ref}</span>}
+        {returned && (
+          <span className="px-2 py-0.5 text-[11px] font-medium rounded-full border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+            Returned ✓ {isOnboarding ? "— awaiting HR verification" : "— NOC on its way"}
+          </span>
+        )}
+      </div>
+
+      <p className="text-xs text-[#8A92A6]">
+        {isOnboarding
+          ? "Download the letter, sign it, and return it below within 7 days."
+          : `Download the letter, sign it, and return it below.${lc.lastWorkingDay ? ` Last working day: ${fmt(lc.lastWorkingDay)}.` : ""} Your NOC is issued once HR verifies the signed copy.`}
+      </p>
+
+      <div className="flex items-center gap-2 flex-wrap">
+        {lc.letterDocId && (
+          <a href={`/api/hr/documents/${lc.letterDocId}`} target="_blank" rel="noreferrer"
+            className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg bg-[#1B1F2A] border border-[#262A35] text-[#E6E9F0] hover:border-[#00C2FF]/40 transition-colors">
+            <Download className="w-4 h-4 text-[#00C2FF]" /> Download letter
+          </a>
+        )}
+        {lc.signedDocId && (
+          <a href={`/api/hr/documents/${lc.signedDocId}`} target="_blank" rel="noreferrer"
+            className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg bg-[#1B1F2A] border border-[#262A35] text-[#8A92A6] hover:text-[#E6E9F0] transition-colors">
+            <FileText className="w-4 h-4 text-emerald-400" /> Your signed copy
+          </a>
+        )}
+      </div>
+
+      {!returned && (
+        <div className="space-y-3 pt-1">
+          <label className={`flex items-center gap-2 px-3 py-3 border border-dashed rounded-lg cursor-pointer text-sm transition-colors ${
+            file ? "border-[#00C2FF]/50 text-[#E6E9F0]" : "border-[#2E333F] text-[#5A6275] hover:border-[#00C2FF]/40"}`}>
+            <Upload className="w-4 h-4 shrink-0" />
+            {file ? file.name : "Attach your signed letter (PDF or photo/scan)"}
+            <input type="file" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg" className="hidden"
+              onChange={(e) => { setFile(e.target.files?.[0] ?? null); e.target.value = ""; }} />
+          </label>
+
+          <label className="flex items-start gap-2.5 px-3 py-2.5 bg-amber-500/5 border border-amber-500/25 rounded-lg cursor-pointer">
+            <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} className="mt-0.5 accent-[#00C2FF]" />
+            <span className="text-xs text-[#C8CEDB] leading-relaxed">
+              <b className="text-amber-400">Confidentiality acknowledgment (required)</b> — I acknowledge that I must not leak,
+              disclose, use or retain any product details, source code, security research, client information or internal data
+              belonging to Cybersage, during or after my association with the company.
+            </span>
+          </label>
+
+          <button onClick={() => void submit()} disabled={submitting || !file || !ack}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-[#00C2FF] text-[#06121A] hover:bg-[#33cfff] disabled:opacity-40 transition-colors">
+            {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+            Submit signed letter
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ── page ──────────────────────────────────────────────────────────────── */
 
 export default function MyHRPage() {
@@ -87,6 +213,7 @@ export default function MyHRPage() {
   const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [docs, setDocs] = useState<HRDoc[]>([]);
   const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
+  const [lifecycle, setLifecycle] = useState<Lifecycle>({});
 
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ type: "ANNUAL", startDate: "", endDate: "", reason: "" });
@@ -95,12 +222,14 @@ export default function MyHRPage() {
 
   const load = useCallback(async () => {
     try {
-      const [leaveRes, holRes, docRes, obRes] = await Promise.all([
+      const [leaveRes, holRes, docRes, obRes, lcRes] = await Promise.all([
         fetch("/api/hr/leave"),
         fetch("/api/hr/holidays"),
         fetch("/api/hr/documents"),
         fetch("/api/hr/onboarding"),
+        fetch("/api/hr/lifecycle"),
       ]);
+      if (lcRes.ok) setLifecycle((await lcRes.json()).lifecycle ?? {});
       if (leaveRes.ok) {
         const d = await leaveRes.json();
         setBalances(d.balances ?? []);
@@ -193,6 +322,8 @@ export default function MyHRPage() {
         <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-[#00C2FF]" /></div>
       ) : (
         <>
+          <LifecycleCard lifecycle={lifecycle} onChanged={() => void load()} />
+
           {/* Leave balances */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {tracked.map((b) => {

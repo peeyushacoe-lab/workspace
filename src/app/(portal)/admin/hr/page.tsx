@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   BarChart3, CalendarDays, CalendarOff, Check, ChevronDown, ChevronRight, ClipboardList,
-  Download, FileText, Loader2, Network, Plus, RefreshCw, Save, Trash2, Upload, Users, X,
+  Download, FileText, Loader2, Network, Plus, RefreshCw, Save, Send, ShieldCheck, Trash2, Upload, Users, X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/Shell";
@@ -319,6 +319,7 @@ function PeopleTab() {
 
   return (
     <div className="space-y-4">
+      <SignatoriesCard />
       <div className="flex items-center justify-between flex-wrap gap-3">
         <p className="text-sm text-[#5f6368]">Staff records · <span className="text-[#202124] font-medium">{rows.length}</span></p>
         <button onClick={backfill} disabled={backfilling || missingCount === 0}
@@ -400,10 +401,386 @@ function PeopleTab() {
                     <input value={d.emergencyContactPhone} onChange={e => setField(r.id, "emergencyContactPhone", e.target.value)} placeholder="+44…" className={fieldClass} />
                   </Field>
                 </div>
-                {expanded === r.id && <PersonExtras userId={r.id} />}
+                {expanded === r.id && (
+                  <>
+                    <LifecyclePanel userId={r.id} firstName={r.fullName.split(" ")[0]} />
+                    <PersonExtras userId={r.id} />
+                  </>
+                )}
               </div>
             );
           })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Letter signatories (who signs the PDFs; stamp is always hard-coded) ── */
+
+interface SignatoryRow {
+  id: string; name: string; title: string; builtIn: boolean;
+  hasSignature: boolean; signatureUrl: string | null;
+}
+
+function SignatoriesCard() {
+  const [list, setList] = useState<SignatoryRow[] | null>(null);
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({ name: "", title: "" });
+  const [newFile, setNewFile] = useState<File | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    const res = await fetch("/api/hr/signatories");
+    if (res.ok) setList((await res.json()).signatories ?? []);
+    else setList([]);
+  }, []);
+
+  useEffect(() => { void load(); }, [load]);
+
+  async function save(fields: { id?: string; name: string; title: string; file?: File | null }) {
+    setBusyId(fields.id ?? "new");
+    try {
+      const fd = new FormData();
+      if (fields.id) fd.append("id", fields.id);
+      fd.append("name", fields.name);
+      fd.append("title", fields.title);
+      if (fields.file) fd.append("signature", fields.file);
+      const res = await fetch("/api/hr/signatories", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) { toast.error(data.error ?? "Failed to save"); return; }
+      toast.success("Signatory saved");
+      setForm({ name: "", title: "" }); setNewFile(null);
+      void load();
+    } finally { setBusyId(null); }
+  }
+
+  async function remove(row: SignatoryRow) {
+    if (!window.confirm(row.builtIn ? `Reset ${row.name} (removes the uploaded signature)?` : `Remove ${row.name} as a signatory?`)) return;
+    const res = await fetch(`/api/hr/signatories?id=${row.id}`, { method: "DELETE" });
+    if (res.ok) { toast.success(row.builtIn ? "Reset" : "Removed"); void load(); }
+    else toast.error("Failed");
+  }
+
+  return (
+    <div className="bg-white border border-[#e8eaed] rounded-xl p-4">
+      <button onClick={() => setOpen(v => !v)} className="w-full flex items-center gap-2 text-left">
+        <ShieldCheck className="w-4 h-4 text-[#1a56db]" />
+        <p className="text-sm font-semibold text-[#202124]">Letter signatories</p>
+        <span className="text-xs text-[#5f6368]">— who signs onboarding/exit letters &amp; NOCs</span>
+        {open ? <ChevronDown className="w-4 h-4 text-[#5f6368] ml-auto" /> : <ChevronRight className="w-4 h-4 text-[#5f6368] ml-auto" />}
+      </button>
+
+      {open && (
+        <div className="mt-3 pt-3 border-t border-[#e8eaed] space-y-2">
+          <p className="text-[11px] text-[#5f6368]">
+            The official Cybersage seal is stamped on every letter automatically and cannot be changed here.
+            Upload each signatory&apos;s handwritten signature (PNG/JPEG, transparent background works best).
+          </p>
+          {list === null ? (
+            <div className="flex justify-center py-4"><Loader2 className="w-4 h-4 animate-spin text-[#1a56db]" /></div>
+          ) : (
+            list.map(s => (
+              <div key={s.id} className="flex items-center gap-3 px-3 py-2 bg-[#f8f9fa] border border-[#e8eaed] rounded-lg">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm text-[#202124] font-medium truncate">
+                    {s.name}
+                    {s.builtIn && <span className="ml-2 px-1.5 py-0.5 text-[10px] rounded bg-[#e8f0fe] text-[#1a56db] font-medium">default</span>}
+                  </p>
+                  <p className="text-[11px] text-[#5f6368] truncate">{s.title}</p>
+                </div>
+                {s.hasSignature && s.signatureUrl ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img src={s.signatureUrl} alt={`${s.name} signature`} className="h-8 max-w-28 object-contain bg-white border border-[#e8eaed] rounded px-1" />
+                ) : (
+                  <span className="text-[11px] text-[#80868b] italic">no signature</span>
+                )}
+                <label className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium rounded-md bg-[#e8f0fe] text-[#1a56db] hover:bg-[#d2e3fc] cursor-pointer transition-colors shrink-0">
+                  {busyId === s.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
+                  {s.hasSignature ? "Replace" : "Upload"} signature
+                  <input type="file" accept="image/png,image/jpeg" className="hidden" disabled={busyId === s.id}
+                    onChange={e => { const f = e.target.files?.[0]; if (f) void save({ id: s.id, name: s.name, title: s.title, file: f }); e.target.value = ""; }} />
+                </label>
+                <button onClick={() => void remove(s)} title={s.builtIn ? "Reset" : "Remove"}
+                  className="p-1 rounded text-[#80868b] hover:text-[#ea4335] shrink-0">
+                  {s.builtIn ? <RefreshCw className="w-3.5 h-3.5" /> : <Trash2 className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+            ))
+          )}
+
+          {/* add new */}
+          <div className="flex items-center gap-2 flex-wrap pt-1">
+            <input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
+              placeholder="Full name" className={`${fieldClass} !w-44 !py-1.5 !text-xs`} />
+            <input value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
+              placeholder="Title (e.g. Head of People)" className={`${fieldClass} !w-52 !py-1.5 !text-xs`} />
+            <label className={`flex items-center gap-1 px-2 py-1.5 text-[11px] font-medium rounded-md border cursor-pointer transition-colors ${newFile ? "bg-green-50 text-[#0f9d58] border-green-200" : "bg-white text-[#5f6368] border-[#e8eaed] hover:bg-[#f1f3f4]"}`}>
+              <Upload className="w-3 h-3" /> {newFile ? newFile.name.slice(0, 18) : "Signature (optional)"}
+              <input type="file" accept="image/png,image/jpeg" className="hidden"
+                onChange={e => { setNewFile(e.target.files?.[0] ?? null); e.target.value = ""; }} />
+            </label>
+            <button
+              onClick={() => {
+                if (!form.name.trim() || !form.title.trim()) { toast.error("Name and title required"); return; }
+                void save({ name: form.name.trim(), title: form.title.trim(), file: newFile });
+              }}
+              disabled={busyId === "new"}
+              className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-semibold rounded-md bg-[#1a56db] text-white hover:bg-[#1648c7] disabled:opacity-50 transition-colors">
+              {busyId === "new" ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />} Add signatory
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Lifecycle (onboarding / offboarding letters + NOC) ────────────────── */
+
+interface Lifecycle {
+  status?: "ONBOARDING" | "ACTIVE" | "OFFBOARDING" | "EXITED";
+  type?: "RESIGNATION" | "TERMINATION";
+  ref?: string; letterDocId?: string; letterSentAt?: string;
+  signedDocId?: string; signedReturnedAt?: string; confidentialityAckAt?: string; signedVerifiedAt?: string;
+  lastWorkingDay?: string; reason?: string;
+  nocRef?: string; nocDocId?: string; nocIssuedAt?: string;
+}
+
+const LC_CHIP: Record<string, string> = {
+  ONBOARDING: "bg-[#e8f0fe] text-[#1a56db] border-[#1a56db]/20",
+  ACTIVE: "bg-green-50 text-[#0f9d58] border-green-200",
+  OFFBOARDING: "bg-amber-50 text-amber-700 border-amber-200",
+  EXITED: "bg-red-50 text-[#ea4335] border-red-200",
+};
+
+function StepDot({ done, current, label }: { done?: boolean; current?: boolean; label: string }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <div className={`w-5 h-5 rounded-full flex items-center justify-center border ${
+        done ? "bg-green-50 border-green-300 text-[#0f9d58]" :
+        current ? "bg-[#e8f0fe] border-[#1a56db]/40 text-[#1a56db]" :
+        "bg-[#f1f3f4] border-[#e8eaed] text-[#80868b]"}`}>
+        {done ? <Check className="w-3 h-3" /> : <span className="w-1.5 h-1.5 rounded-full bg-current" />}
+      </div>
+      <span className={`text-[11px] ${done || current ? "font-medium text-[#202124]" : "text-[#80868b]"}`}>{label}</span>
+    </div>
+  );
+}
+
+function LifecyclePanel({ userId, firstName }: { userId: string; firstName: string }) {
+  const [lc, setLc] = useState<Lifecycle | null>(null);
+  const [acting, setActing] = useState<string | null>(null);
+  const [offboardType, setOffboardType] = useState<"RESIGNATION" | "TERMINATION" | null>(null);
+  const [lwd, setLwd] = useState("");
+  const [reason, setReason] = useState("");
+  const [signatories, setSignatories] = useState<SignatoryRow[]>([]);
+  const [signatoryId, setSignatoryId] = useState<string>("");
+
+  const load = useCallback(async () => {
+    const res = await fetch(`/api/hr/lifecycle?userId=${userId}`);
+    if (res.ok) setLc((await res.json()).lifecycle ?? {});
+    else setLc({});
+  }, [userId]);
+
+  useEffect(() => { void load(); }, [load]);
+
+  useEffect(() => {
+    fetch("/api/hr/signatories").then(r => (r.ok ? r.json() : { signatories: [] }))
+      .then(d => {
+        const sigs = (d.signatories ?? []) as SignatoryRow[];
+        setSignatories(sigs);
+        if (sigs.length > 0) setSignatoryId(prev => prev || sigs[0].id);
+      }).catch(() => {});
+  }, []);
+
+  async function act(label: string, body: Record<string, unknown>, confirmMsg?: string) {
+    if (confirmMsg && !window.confirm(confirmMsg)) return;
+    setActing(label);
+    try {
+      const res = await fetch("/api/hr/lifecycle", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, signatoryId: signatoryId || undefined, ...body }),
+      });
+      const data = await res.json();
+      if (!res.ok) { toast.error(data.error ?? "Action failed"); return; }
+      toast.success(`${label} ✓`);
+      setOffboardType(null); setLwd(""); setReason("");
+      void load();
+    } finally { setActing(null); }
+  }
+
+  if (lc === null) {
+    return <div className="mt-4 pt-4 border-t border-[#e8eaed] flex justify-center"><Loader2 className="w-4 h-4 animate-spin text-[#1a56db]" /></div>;
+  }
+
+  const status = lc.status;
+  const btnBase = "flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-semibold rounded-lg border transition-colors disabled:opacity-50";
+
+  const offboardButtons = (
+    <>
+      <button onClick={() => { setOffboardType("RESIGNATION"); setReason(""); }} disabled={!!acting}
+        className={`${btnBase} bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100`}>
+        Offboard — Resignation…
+      </button>
+      <button onClick={() => { setOffboardType("TERMINATION"); setReason(""); }} disabled={!!acting}
+        className={`${btnBase} bg-red-50 text-[#ea4335] border-red-200 hover:bg-red-100`}>
+        Offboard — Termination…
+      </button>
+    </>
+  );
+
+  return (
+    <div className="mt-4 pt-4 border-t border-[#e8eaed]">
+      <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+        <p className="text-xs font-semibold text-[#202124] flex items-center gap-1.5">
+          <ShieldCheck className="w-3.5 h-3.5 text-[#1a56db]" /> Lifecycle
+          {status && (
+            <span className={`px-2 py-0.5 text-[10px] font-medium rounded-full border ${LC_CHIP[status] ?? ""}`}>
+              {status === "OFFBOARDING" ? `Offboarding — ${lc.type === "TERMINATION" ? "termination" : "resignation"}` :
+               status === "EXITED" ? "Exited — NOC issued" : status.toLowerCase()}
+            </span>
+          )}
+          {lc.ref && <span className="text-[10px] font-mono text-[#80868b]">{lc.ref}</span>}
+        </p>
+        {signatories.length > 0 && status !== "EXITED" && (
+          <label className="flex items-center gap-1.5 text-[11px] text-[#5f6368]">
+            Letters signed by
+            <select value={signatoryId} onChange={e => setSignatoryId(e.target.value)}
+              className="px-2 py-1 bg-[#f1f3f4] border border-[#e8eaed] rounded-md text-[11px] text-[#202124]">
+              {signatories.map(s => (
+                <option key={s.id} value={s.id}>{s.name} — {s.title}{s.hasSignature ? "" : " (no signature)"}</option>
+              ))}
+            </select>
+          </label>
+        )}
+      </div>
+
+      {/* Stepper for open flows */}
+      {(status === "ONBOARDING" || status === "OFFBOARDING") && (
+        <div className="flex items-center gap-3 flex-wrap mb-3">
+          <StepDot done label={`${status === "ONBOARDING" ? "Onboarding" : "Exit"} letter sent`} />
+          <div className="w-5 h-px bg-[#e8eaed]" />
+          <StepDot done={!!lc.signedReturnedAt} current={!lc.signedReturnedAt} label="Signed copy returned" />
+          <div className="w-5 h-px bg-[#e8eaed]" />
+          <StepDot done={!!lc.confidentialityAckAt} label="Confidentiality acknowledged" />
+          <div className="w-5 h-px bg-[#e8eaed]" />
+          {status === "OFFBOARDING"
+            ? <StepDot done={!!lc.nocIssuedAt} current={!!lc.signedVerifiedAt && !lc.nocIssuedAt} label="NOC issued" />
+            : <StepDot done={!!lc.signedVerifiedAt} current={!!lc.signedReturnedAt && !lc.signedVerifiedAt} label="Verified → active" />}
+        </div>
+      )}
+
+      {/* Documents involved */}
+      <div className="flex items-center gap-3 flex-wrap mb-3">
+        {lc.letterDocId && (
+          <a href={`/api/hr/documents/${lc.letterDocId}`} target="_blank" rel="noreferrer"
+            className="flex items-center gap-1 text-[11px] text-[#1a56db] hover:underline">
+            <FileText className="w-3 h-3" /> Letter PDF
+          </a>
+        )}
+        {lc.signedDocId && (
+          <a href={`/api/hr/documents/${lc.signedDocId}`} target="_blank" rel="noreferrer"
+            className="flex items-center gap-1 text-[11px] text-[#0f9d58] hover:underline">
+            <FileText className="w-3 h-3" /> Signed copy {lc.signedReturnedAt ? `· ${fmt(lc.signedReturnedAt)}` : ""}
+          </a>
+        )}
+        {lc.nocDocId && (
+          <a href={`/api/hr/documents/${lc.nocDocId}`} target="_blank" rel="noreferrer"
+            className="flex items-center gap-1 text-[11px] text-[#1a56db] hover:underline">
+            <ShieldCheck className="w-3 h-3" /> NOC {lc.nocRef}
+          </a>
+        )}
+      </div>
+
+      {/* Actions per state */}
+      <div className="flex items-center gap-2 flex-wrap">
+        {(!status || status === "ACTIVE") && (
+          <>
+            {!status && (
+              <button onClick={() => void act("Onboarding letter sent", { action: "onboard" })} disabled={!!acting}
+                className={`${btnBase} bg-[#1a56db] text-white border-[#1a56db] hover:bg-[#1648c7]`}>
+                {acting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />} Send onboarding letter
+              </button>
+            )}
+            {offboardButtons}
+          </>
+        )}
+
+        {status === "ONBOARDING" && (
+          <>
+            <button onClick={() => void act("Onboarding letter resent", { action: "onboard" })} disabled={!!acting}
+              className={`${btnBase} bg-white text-[#5f6368] border-[#e8eaed] hover:bg-[#f1f3f4]`}>
+              <RefreshCw className="w-3 h-3" /> Resend letter
+            </button>
+            <button onClick={() => void act("Marked signed & active", { action: "mark-signed" })} disabled={!!acting}
+              className={`${btnBase} bg-green-50 text-[#0f9d58] border-green-200 hover:bg-green-100`}>
+              <Check className="w-3 h-3" /> Mark signed copy received
+            </button>
+          </>
+        )}
+
+        {status === "OFFBOARDING" && (
+          <>
+            {!lc.signedVerifiedAt && (
+              <button onClick={() => void act("Signed copy verified", { action: "mark-signed" })} disabled={!!acting}
+                className={`${btnBase} bg-green-50 text-[#0f9d58] border-green-200 hover:bg-green-100`}>
+                <Check className="w-3 h-3" /> Mark signed copy received
+              </button>
+            )}
+            <button
+              onClick={() => void act("NOC issued", { action: "issue-noc" },
+                `Issue the NOC and mark ${firstName} as exited? This confirms they are no longer part of Cybersage.`)}
+              disabled={!!acting || (!lc.signedVerifiedAt && !lc.signedReturnedAt)}
+              title={!lc.signedVerifiedAt && !lc.signedReturnedAt ? "Waiting for the signed exit letter" : undefined}
+              className={`${btnBase} bg-[#1a56db] text-white border-[#1a56db] hover:bg-[#1648c7]`}>
+              {acting === "NOC issued" ? <Loader2 className="w-3 h-3 animate-spin" /> : <ShieldCheck className="w-3 h-3" />}
+              Issue NOC & mark exited
+            </button>
+          </>
+        )}
+
+        {status === "EXITED" && (
+          <p className="text-[11px] text-[#5f6368]">
+            Exit closed{lc.nocIssuedAt ? ` on ${fmt(lc.nocIssuedAt)}` : ""} · no longer part of Cybersage.
+          </p>
+        )}
+      </div>
+
+      {/* Offboard dialog (inline) */}
+      {offboardType && (
+        <div className="mt-3 p-3 bg-[#f8f9fa] border border-[#e8eaed] rounded-lg space-y-2.5">
+          <p className="text-xs font-semibold text-[#202124]">
+            {offboardType === "RESIGNATION" ? "Offboard — accept resignation" : "Offboard — terminate employment"}
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <Field label="Last working day">
+              <input type="date" value={lwd} onChange={e => setLwd(e.target.value)} className={fieldClass} />
+            </Field>
+            {offboardType === "TERMINATION" && (
+              <Field label="Reason on record">
+                <input value={reason} onChange={e => setReason(e.target.value)} placeholder="e.g. Policy violation" className={fieldClass} />
+              </Field>
+            )}
+          </div>
+          <p className="text-[11px] text-[#5f6368]">
+            This generates the exit letter PDF, emails it to {firstName}, and assigns the offboarding checklist.
+            The NOC is issued separately once the signed copy comes back.
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                if (!lwd) { toast.error("Pick the last working day"); return; }
+                void act("Exit letter sent", { action: "offboard", type: offboardType, lastWorkingDay: lwd, reason: reason || undefined });
+              }}
+              disabled={!!acting}
+              className={`${btnBase} ${offboardType === "TERMINATION" ? "bg-red-50 text-[#ea4335] border-red-200 hover:bg-red-100" : "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100"}`}>
+              {acting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+              Send exit letter
+            </button>
+            <button onClick={() => setOffboardType(null)} className={`${btnBase} bg-white text-[#5f6368] border-[#e8eaed] hover:bg-[#f1f3f4]`}>Cancel</button>
+          </div>
         </div>
       )}
     </div>
