@@ -2031,6 +2031,20 @@ function LearningTab({ isMentor, userId }: { isMentor: boolean; userId: string }
 
   return (
     <div className="max-w-3xl mx-auto space-y-4">
+      {/* Forage SSO launch banner */}
+      <div className="flex items-center justify-between gap-4 px-4 py-3 bg-[#0E2532] border border-[#00C2FF]/20 rounded-xl">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-[#E6E9F0]">Forage — Cybersecurity Courses</p>
+          <p className="text-xs text-[#8A92A6] mt-0.5">Launch Forage and sign in automatically with your Nexus account.</p>
+        </div>
+        <a
+          href="/api/sso/authorize?redirect_uri=https://forage.cybersage.uk/api/auth/callback/nexus"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-[#00C2FF] text-[#06121A] text-xs font-semibold rounded-lg hover:bg-[#33cfff] shrink-0 transition-colors"
+        >
+          <ExternalLink className="w-3.5 h-3.5" /> Launch Forage
+        </a>
+      </div>
+
       <p className="text-sm text-[#8A92A6]">
         Complete each week in order. Prerequisites are always available — later weeks unlock when your mentor opens them.
       </p>
