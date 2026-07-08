@@ -1935,6 +1935,19 @@ export function ChatView({ currentUserId, userRole }: { currentUserId: string; u
 
   const selectedChannel = channels.find((c) => c.id === selectedChannelId);
 
+  // Header display name — for DMs ALWAYS show the OTHER person's name. The stored
+  // channel name was set from the creator's perspective, so the recipient would
+  // otherwise see their own name at the top of the conversation.
+  const selectedChannelName = (() => {
+    if (!selectedChannel) return "";
+    if (selectedChannel.type === "DIRECT") {
+      const other = selectedChannel.members.find((m) => m.userId !== currentUserId);
+      const otherName = other ? dmMemberNames.get(other.userId) : null;
+      if (otherName) return otherName;
+    }
+    return selectedChannel.name;
+  })();
+
   // Keep ref in sync for SSE closure
   useEffect(() => {
     threadParentIdRef.current = threadParentMsg?.id ?? null;
@@ -2896,7 +2909,7 @@ export function ChatView({ currentUserId, userRole }: { currentUserId: string; u
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <h2 className="font-bold text-[#E6E9F0] text-[14.5px] truncate">{selectedChannel?.name}</h2>
+                    <h2 className="font-bold text-[#E6E9F0] text-[14.5px] truncate">{selectedChannelName}</h2>
                     {selectedChannel?.type === "DIRECT" && (
                       <span className="text-[10px] font-semibold text-[#5A6275] bg-[#1B1F2A] border border-[#262A35] px-1.5 py-0.5 rounded-full flex-shrink-0">DM</span>
                     )}
@@ -2951,17 +2964,17 @@ export function ChatView({ currentUserId, userRole }: { currentUserId: string; u
                 {canCall && (selectedChannel?.type === "DIRECT" || selectedChannel?.type === "GROUP") ? (
                   <>
                     <button
-                      onClick={() => { if (selectedChannelId && selectedChannel) void startCall(selectedChannelId, selectedChannel.name, "audio"); }}
+                      onClick={() => { if (selectedChannelId && selectedChannel) void startCall(selectedChannelId, selectedChannelName, "audio"); }}
                       disabled={callBusy}
-                      title={`Voice call ${selectedChannel.name}`}
+                      title={`Voice call ${selectedChannelName}`}
                       className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#00C2FF]/30 bg-[#00C2FF]/10 text-[#00C2FF] hover:bg-[#00C2FF]/20 disabled:opacity-40 transition-colors flex-shrink-0"
                     >
                       <Phone className="w-[17px] h-[17px]" />
                     </button>
                     <button
-                      onClick={() => { if (selectedChannelId && selectedChannel) void startCall(selectedChannelId, selectedChannel.name, "video"); }}
+                      onClick={() => { if (selectedChannelId && selectedChannel) void startCall(selectedChannelId, selectedChannelName, "video"); }}
                       disabled={callBusy}
-                      title={`Video call ${selectedChannel.name}`}
+                      title={`Video call ${selectedChannelName}`}
                       className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#00C2FF]/30 bg-[#00C2FF]/10 text-[#00C2FF] hover:bg-[#00C2FF]/20 disabled:opacity-40 transition-colors flex-shrink-0"
                     >
                       <Video className="w-[17px] h-[17px]" />
