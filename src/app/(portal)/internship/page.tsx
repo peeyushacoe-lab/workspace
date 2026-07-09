@@ -7,7 +7,7 @@ import {
   CheckCircle2, Clock, ExternalLink, RefreshCw,
   Star, Lightbulb, Shield, Circle, Sparkles,
   BookOpen, Lock, Link2, FileText, Trash2, CalendarClock,
-  TrendingUp, ArrowRight, CalendarDays,
+  TrendingUp, ArrowRight, CalendarDays, Download,
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -1088,7 +1088,18 @@ function TaskDetail({ task: initialTask, isMentor, userId, onBack }: { task: Int
           {/* Submissions list */}
           {mySubmissions.length > 0 && (
             <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-5">
-              <h3 className="font-semibold text-[#E6E9F0] mb-3">Submissions</h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold text-[#E6E9F0]">Submissions</h3>
+                {isMentor && (
+                  <a
+                    href={`/api/internship/tasks/${task.id}/submissions/download`}
+                    download
+                    className="flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg bg-[#1a56db] text-white hover:bg-[#1648c7] transition-colors"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Download all files
+                  </a>
+                )}
+              </div>
               <div className="space-y-3">
                 {mySubmissions.map(sub => (
                   <SubmissionCard key={sub.id} sub={sub} isMentor={isMentor} onReview={reviewSub} />
