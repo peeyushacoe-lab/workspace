@@ -58,6 +58,8 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["lucide-react", "date-fns"],
   },
+  // node-ical uses BigInt in ways webpack can't bundle — keep it as a native Node module
+  serverExternalPackages: ["node-ical"],
   async headers() {
     return [
       {
