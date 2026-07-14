@@ -57,6 +57,7 @@ const patchSchema = z.object({
   deadline: z.string().datetime().optional().nullable(),
   assigneeIds: z.array(z.string()).optional(),
   attachments: z.array(z.object({ name: z.string(), url: z.string(), type: z.string() })).optional(),
+  isClosed: z.boolean().optional(),
 });
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -74,6 +75,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     data: {
       ...data,
       deadline: data.deadline !== undefined ? (data.deadline ? new Date(data.deadline) : null) : undefined,
+      ...(data.isClosed !== undefined ? { closedAt: data.isClosed ? new Date() : null } : {}),
     },
     include: {
       createdBy: { select: { id: true, fullName: true, avatarUrl: true } },

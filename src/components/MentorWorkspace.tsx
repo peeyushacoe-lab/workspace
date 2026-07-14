@@ -10,12 +10,13 @@ import {
   Pencil, Loader2, Save, AlertTriangle, CheckCircle2, Lock, Unlock,
   RefreshCw, Clock, ChevronLeft, ChevronRight, AlertCircle, Timer,
   Edit2, MapPin, Monitor, CheckCircle, TrendingUp, TrendingDown,
-  ChevronDown, FileText, MessageSquare, Plane, Trophy, Swords, Crown,
+  ChevronDown, FileText, MessageSquare, Plane, Trophy,
 } from "lucide-react";
 import { toast } from "sonner";
 import { avatarGradient } from "@/lib/avatar";
 import HRLifecyclePanel from "@/components/HRLifecyclePanel";
 import { MentorOverviewSubTab, MentorInternsSubTab } from "@/components/MentorInterns";
+import { ChallengesTab } from "@/components/ChallengesPanel";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -152,6 +153,11 @@ type MentorSubTab = "overview" | "interns" | "weeks" | "edit_week" | "new_week" 
 export function MentorPanelTab() {
   const [subTab, setSubTab] = useState<MentorSubTab>("overview");
   const [openInternId, setOpenInternId] = useState<string | null>(null);
+  const [mentorId, setMentorId] = useState<string>("");
+
+  useEffect(() => {
+    fetch("/api/internship/me").then(r => r.json()).then(u => setMentorId(u?.id ?? "")).catch(() => {});
+  }, []);
   const [weeks, setWeeks] = useState<InternWeek[]>([]);
   const [loading, setLoading] = useState(true);
   const [seedLoading, setSeedLoading] = useState(false);
@@ -333,8 +339,8 @@ export function MentorPanelTab() {
       {/* HR sub-tab */}
       {subTab === "hr" && <MentorHRSubTab />}
 
-      {/* Challenges sub-tab */}
-      {subTab === "challenges" && <MentorChallengesSubTab />}
+      {/* Challenges sub-tab — same component as the Intern Hub's Challenges tab */}
+      {subTab === "challenges" && <ChallengesTab isMentor userId={mentorId} />}
 
       {/* New week form */}
       {subTab === "new_week" && (
@@ -784,140 +790,6 @@ function HRField({ label, value, onChange, type = "text", placeholder, mono }: {
       <input type={type} value={value} placeholder={placeholder}
         onChange={e => onChange(e.target.value)}
         className={`w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] placeholder:text-[#5A6275] focus:outline-none focus:border-[#00C2FF]/60 ${mono ? "font-mono" : ""}`} />
-    </div>
-  );
-}
-
-// ─── Challenges sub-tab ───────────────────────────────────────────────────────
-
-interface ChallengeTeamBasic { id: string; name: string; color?: string | null; scores: { points: number }[]; }
-interface ChallengeBasic { id: string; title: string; description?: string | null; status: string; deadline?: string | null; teams: ChallengeTeamBasic[]; }
-
-function MentorChallengesSubTab() {
-  const [challenges, setChallenges] = useState<ChallengeBasic[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ title: "", description: "", deadline: "", teams: [{ name: "Red Team", color: "red" }, { name: "Blue Team", color: "blue" }] });
-  const [saving, setSaving] = useState(false);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/internship/challenges");
-      setChallenges(await res.json());
-    } catch { setChallenges([]); }
-    finally { setLoading(false); }
-  }, []);
-
-  useEffect(() => { load(); }, [load]);
-
-  const create = async () => {
-    if (!form.title.trim()) return;
-    setSaving(true);
-    try {
-      const res = await fetch("/api/internship/challenges", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: form.title, description: form.description, deadline: form.deadline || null, teams: form.teams }),
-      });
-      if (res.ok) { setShowForm(false); setForm({ title: "", description: "", deadline: "", teams: [{ name: "Red Team", color: "red" }, { name: "Blue Team", color: "blue" }] }); load(); }
-      else toast.error("Failed to create challenge");
-    } catch { toast.error("Failed to create challenge"); }
-    finally { setSaving(false); }
-  };
-
-  const updateStatus = async (id: string, status: string) => {
-    await fetch(`/api/internship/challenges/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status }) });
-    load();
-  };
-
-  if (loading) return <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-[#00C2FF]" /></div>;
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-[#E6E9F0] flex items-center gap-2"><Trophy className="w-4 h-4 text-[#f4b400]" /> Team Challenges</h3>
-        <button onClick={() => setShowForm(v => !v)}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-[#00C2FF] text-[#06121A] text-sm font-semibold rounded-lg hover:bg-[#0098E6] transition-colors">
-          <Plus className="w-4 h-4" /> New Challenge
-        </button>
-      </div>
-
-      {showForm && (
-        <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-5 space-y-4">
-          <h4 className="font-semibold text-[#E6E9F0] text-sm">Create Challenge</h4>
-          <div className="space-y-3">
-            <input value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} placeholder="Challenge title"
-              className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] placeholder:text-[#5A6275] focus:outline-none focus:border-[#00C2FF]/60" />
-            <textarea value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} placeholder="Description (optional)" rows={2}
-              className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] placeholder:text-[#5A6275] focus:outline-none focus:border-[#00C2FF]/60 resize-none" />
-            <input type="datetime-local" value={form.deadline} onChange={e => setForm(p => ({ ...p, deadline: e.target.value }))}
-              className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60" />
-            <div className="space-y-2">
-              <p className="text-xs text-[#8A92A6] font-medium">Teams</p>
-              {form.teams.map((t, i) => (
-                <div key={i} className="flex gap-2">
-                  <input value={t.name} onChange={e => setForm(p => ({ ...p, teams: p.teams.map((tt, j) => j === i ? { ...tt, name: e.target.value } : tt) }))}
-                    className="flex-1 px-3 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60" placeholder="Team name" />
-                  {form.teams.length > 2 && <button onClick={() => setForm(p => ({ ...p, teams: p.teams.filter((_, j) => j !== i) }))} className="text-[#5A6275] hover:text-[#ea4335]"><X className="w-4 h-4" /></button>}
-                </div>
-              ))}
-              <button onClick={() => setForm(p => ({ ...p, teams: [...p.teams, { name: `Team ${p.teams.length + 1}`, color: "green" }] }))}
-                className="text-xs text-[#00C2FF] hover:underline">+ Add team</button>
-            </div>
-          </div>
-          <div className="flex gap-2 justify-end">
-            <button onClick={() => setShowForm(false)} className="px-3 py-1.5 text-sm text-[#8A92A6] hover:text-[#E6E9F0]">Cancel</button>
-            <button onClick={create} disabled={saving || !form.title.trim()}
-              className="flex items-center gap-1.5 px-4 py-1.5 bg-[#00C2FF] text-[#06121A] text-sm font-semibold rounded-lg hover:bg-[#0098E6] disabled:opacity-50 transition-colors">
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Trophy className="w-4 h-4" /> Create</>}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {challenges.length === 0 && !showForm && (
-        <div className="text-center py-12 text-[#5A6275]">
-          <Trophy className="w-10 h-10 mx-auto mb-3 opacity-30" />
-          <p className="text-sm">No challenges yet — create a team competition above.</p>
-        </div>
-      )}
-
-      <div className="space-y-3">
-        {challenges.map(c => {
-          const total = (t: ChallengeTeamBasic) => t.scores.reduce((a, s) => a + s.points, 0);
-          return (
-            <div key={c.id} className="bg-[#12151D] border border-[#262A35] rounded-xl p-4 space-y-3">
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <Swords className="w-4 h-4 text-[#00C2FF]" />
-                  <span className="font-semibold text-sm text-[#E6E9F0]">{c.title}</span>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${c.status === "ACTIVE" ? "bg-green-500/10 text-green-400" : c.status === "ENDED" ? "bg-[#5A6275]/20 text-[#5A6275]" : "bg-yellow-500/10 text-yellow-400"}`}>
-                    {c.status}
-                  </span>
-                </div>
-                <div className="flex gap-1">
-                  {c.status === "DRAFT" && <button onClick={() => updateStatus(c.id, "ACTIVE")} className="px-2 py-1 text-xs font-semibold bg-green-500/10 text-green-400 rounded hover:bg-green-500/20">Start</button>}
-                  {c.status === "ACTIVE" && <button onClick={() => updateStatus(c.id, "ENDED")} className="px-2 py-1 text-xs font-semibold bg-[#5A6275]/20 text-[#8A92A6] rounded hover:bg-[#5A6275]/30">End</button>}
-                </div>
-              </div>
-              {c.description && <p className="text-xs text-[#8A92A6]">{c.description}</p>}
-              <div className="flex gap-4">
-                {c.teams.map(t => (
-                  <div key={t.id} className="flex items-center gap-2 text-sm">
-                    <span className="w-2 h-2 rounded-full" style={{ background: t.color ?? "#00C2FF" }} />
-                    <span className="text-[#E6E9F0] font-medium">{t.name}</span>
-                    <span className="text-[#8A92A6]">{total(t)} pts</span>
-                    {c.teams.length > 1 && total(t) === Math.max(...c.teams.map(total)) && total(t) > 0 && (
-                      <Crown className="w-3 h-3 text-[#f4b400]" />
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
     </div>
   );
 }

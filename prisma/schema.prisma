@@ -1934,18 +1934,20 @@ model InternAnnouncement {
 }
 
 model InternTask {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   title       String
   description String
-  priority    String   @default("medium") // low | medium | high | urgent
+  priority    String    @default("medium") // low | medium | high | urgent
   deadline    DateTime?
-  assigneeIds String[] @default([])       // intern user IDs assigned
-  skillTags   String[] @default([])       // e.g. ["Networking", "SIEM", "Python"]
-  attachments Json?                        // [{name, url, type}]
-  weekId      String?                      // optional link to a learning week
+  assigneeIds String[]  @default([])       // intern user IDs assigned
+  skillTags   String[]  @default([])       // e.g. ["Networking", "SIEM", "Python"]
+  attachments Json?                         // [{name, url, type}]
+  weekId      String?                       // optional link to a learning week
+  isClosed    Boolean   @default(false)     // mentor-stopped/closed — hidden from active work, kept for records
+  closedAt    DateTime?
   createdById String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   createdBy   User             @relation("InternTaskCreator", fields: [createdById], references: [id], onDelete: Cascade)
   submissions InternSubmission[]
