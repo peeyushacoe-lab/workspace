@@ -113,6 +113,8 @@ model User {
   ssoProvider       String?
   ssoSubject        String?
   signature         Signature?
+  emailTemplates    SavedEmailTemplate[]
+  vacationResponder VacationResponder?
   loginEvents       LoginEvent[]
   emailLogs         EmailLog[]
   chatMemberships   ChatMember[]
@@ -226,6 +228,45 @@ model Signature {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+model SavedEmailTemplate {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  subject   String
+  body      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_email_templates")
+  @@index([userId])
+}
+
+model VacationResponder {
+  id        String    @id @default(cuid())
+  userId    String    @unique
+  isEnabled Boolean   @default(false)
+  subject   String    @default("Automatic reply")
+  message   String    @default("")
+  startDate DateTime?
+  endDate   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VacationAutoReplyLog {
+  id          String   @id @default(cuid())
+  userId      String
+  senderEmail String
+  sentAt      DateTime @default(now())
+
+  @@unique([userId, senderEmail])
+  @@index([userId])
+}
+
 model Mailbox {
   id             String     @id @default(cuid())
   email          String     @unique
@@ -241,6 +282,7 @@ model Mailbox {
   accessLogs   MailboxAccess[]
   threads      InboxThread[]
   folders      MailFolder[]
+  importJobs   MailImportJob[]
 
   @@index([organizationId])
 }
@@ -343,6 +385,8 @@ model InboxThread {
   isTrashed    Boolean         @default(false)
   isSnoozed    Boolean         @default(false)
   snoozedUntil DateTime?
+  isSpam       Boolean         @default(false)
+  spamReportedAt DateTime?
   priority     ThreadPriority  @default(NORMAL)
   labels       String[]        @default([])
   // Shared mailbox fields
@@ -364,6 +408,7 @@ model InboxThread {
   @@index([mailboxId, isArchived])
   @@index([mailboxId, isTrashed])
   @@index([mailboxId, isSnoozed])
+  @@index([mailboxId, isSpam])
   @@index([folderId])
   @@index([assignedToId])
 }
@@ -415,6 +460,9 @@ model EmailAttachment {
   storageUrl  String?
   key         String?
   bucket      String?
+  // "SAFE" | "MACRO_RISK" | "ARCHIVE" | "DANGEROUS"
+  threatVerdict String? @default("SAFE")
+  isDangerous   Boolean @default(false)
   createdAt   DateTime @default(now())
 
   @@index([messageId])
@@ -458,7 +506,37 @@ model ThreatScan {
   message     InboxMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
   riskScore   Int
   findings    Json
+  // "PASS" | "FAIL" | "NONE" | "UNKNOWN"
+  spfResult   String?  @default("UNKNOWN")
+  dkimResult  String?  @default("UNKNOWN")
+  dmarcResult String?  @default("UNKNOWN")
+  // "CLEAN" | "SUSPICIOUS" | "SPAM" | "PHISHING"
+  verdict     String   @default("CLEAN")
+  isFirstTimeSender Boolean @default(false)
+  linksRewritten    Boolean @default(false)
   scannedAt   DateTime @default(now())
+
+  @@index([verdict])
+}
+
+// Per-mailbox sender reputation — built from send history and user-reported
+// spam/not-spam feedback. Consulted on every inbound message to bias the
+// spam/phishing verdict without re-running expensive checks each time.
+model SenderReputation {
+  id           String   @id @default(cuid())
+  mailboxId    String
+  senderEmail  String
+  senderDomain String
+  firstSeenAt  DateTime @default(now())
+  messageCount Int      @default(0)
+  spamReports  Int      @default(0)
+  hamReports   Int      @default(0)
+  isBlocked    Boolean  @default(false)
+  isTrusted    Boolean  @default(false)
+  updatedAt    DateTime @updatedAt
+
+  @@unique([mailboxId, senderEmail])
+  @@index([mailboxId, senderDomain])
 }
 
 model Contact {
@@ -1022,6 +1100,25 @@ model IncidentTimeline {
 
   @@index([incidentId])
   @@index([userId])
+}
+
+// ─── Compliance track: SOC 2 / GDPR / pen-test readiness ──────────────────────
+
+model ComplianceControl {
+  id          String   @id @default(cuid())
+  category    String   // SOC2 | GDPR | PENTEST
+  key         String   // stable slug within the category, e.g. "access-reviews"
+  label       String
+  description String?
+  status      String   @default("NOT_STARTED") // NOT_STARTED | IN_PROGRESS | DONE | NOT_APPLICABLE
+  owner       String?
+  notes       String?
+  dueDate     DateTime?
+  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now())
+
+  @@unique([category, key])
+  @@index([category])
 }
 
 // ─── Phase 9: Notes ───────────────────────────────────────────────────────────
@@ -2238,4 +2335,122 @@ model InternCertificate {
   issuedBy User? @relation("CertIssuer", fields: [issuedById], references: [id], onDelete: SetNull)
 
   @@index([internId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Mail Migration Wizard — import from Gmail / any IMAP provider
+// ─────────────────────────────────────────────────────────────────────────
+
+enum ImportProvider {
+  GMAIL
+  OUTLOOK
+  YAHOO
+  IMAP
+}
+
+enum ImportStatus {
+  PENDING
+  CONNECTING
+  IMPORTING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+model MailImportJob {
+  id                String         @id @default(cuid())
+  userId            String
+  mailboxId         String
+  mailbox           Mailbox        @relation(fields: [mailboxId], references: [id], onDelete: Cascade)
+  provider          ImportProvider @default(IMAP)
+  host              String
+  port              Int            @default(993)
+  secure            Boolean        @default(true)
+  username          String
+  // AES-256-GCM encrypted app password — never store plaintext. See src/lib/crypto-secret.ts
+  encryptedPassword String
+  // [{ source: "INBOX", target: "inbox" | "archive" | "custom", label: "Old Gmail" }]
+  folderMapping     Json?
+  status            ImportStatus   @default(PENDING)
+  totalMessages     Int            @default(0)
+  importedMessages  Int            @default(0)
+  skippedMessages    Int            @default(0)
+  failedMessages    Int            @default(0)
+  currentFolder     String?
+  // string[] of the most recent errors (capped in application code)
+  errorLog          Json?
+  startedAt         DateTime?
+  completedAt       DateTime?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@index([userId])
+  @@index([mailboxId])
+  @@index([status])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Account Export / Takeout — full-account export as a downloadable zip
+// ─────────────────────────────────────────────────────────────────────────
+
+enum ExportStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+model ExportJob {
+  id             String       @id @default(cuid())
+  userId         String
+  includeMail     Boolean     @default(true)
+  includeDrive    Boolean     @default(true)
+  includeDocs     Boolean     @default(true)
+  includeContacts Boolean     @default(true)
+  includeCalendar Boolean     @default(true)
+  status         ExportStatus @default(PENDING)
+  totalItems     Int          @default(0)
+  processedItems Int          @default(0)
+  currentStage   String?
+  resultKey      String?
+  resultSize     Int?
+  // Signed download URLs expire — this is when the current one was issued,
+  // so the UI knows when to ask the API to re-sign.
+  errorLog       Json?
+  startedAt      DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Public status page — periodic health snapshots + restore-drill records
+// ─────────────────────────────────────────────────────────────────────────
+
+model SystemStatusPing {
+  id         String   @id @default(cuid())
+  checkedAt  DateTime @default(now())
+  dbOk       Boolean
+  redisOk    Boolean
+  emailOk    Boolean
+  overallOk  Boolean
+  latencyMs  Int?
+
+  @@index([checkedAt])
+}
+
+model BackupVerification {
+  id            String   @id @default(cuid())
+  status        String   // PASSED | FAILED
+  tablesVerified Int     @default(0)
+  rowsVerified  Int      @default(0)
+  backupTimestamp String?
+  details       Json?
+  error         String?
+  testedAt      DateTime @default(now())
+
+  @@index([testedAt])
 }
