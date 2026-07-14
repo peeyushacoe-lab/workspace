@@ -10,14 +10,14 @@ export async function PUT(request: Request, { params }: Params) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const existing = await prisma.emailTemplate.findUnique({ where: { id } });
+  const existing = await prisma.savedEmailTemplate.findUnique({ where: { id } });
   if (!existing || existing.userId !== user.id) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
   const body = (await request.json()) as { name?: string; subject?: string; body?: string };
 
-  const updated = await prisma.emailTemplate.update({
+  const updated = await prisma.savedEmailTemplate.update({
     where: { id },
     data: {
       ...(body.name !== undefined ? { name: body.name.trim() || existing.name } : {}),
@@ -34,11 +34,11 @@ export async function DELETE(_request: Request, { params }: Params) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const existing = await prisma.emailTemplate.findUnique({ where: { id } });
+  const existing = await prisma.savedEmailTemplate.findUnique({ where: { id } });
   if (!existing || existing.userId !== user.id) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  await prisma.emailTemplate.delete({ where: { id } });
+  await prisma.savedEmailTemplate.delete({ where: { id } });
   return NextResponse.json({ ok: true });
 }

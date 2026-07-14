@@ -7,7 +7,7 @@ export async function GET() {
   const user = getSessionUserFromCookieStore(await cookies());
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const templates = await prisma.emailTemplate.findMany({
+  const templates = await prisma.savedEmailTemplate.findMany({
     where: { userId: user.id },
     orderBy: { updatedAt: "desc" },
   });
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Template name is required" }, { status: 400 });
   }
 
-  const template = await prisma.emailTemplate.create({
+  const template = await prisma.savedEmailTemplate.create({
     data: {
       userId: user.id,
       name: body.name.trim(),
