@@ -49,7 +49,7 @@ export function PresenceDot({
 
 // ─── PresenceIndicator — fetches & polls ─────────────────────────────────────
 
-const POLL_INTERVAL_MS = 60_000; // 60 seconds
+const POLL_INTERVAL_MS = 180_000; // 3 minutes
 
 export function PresenceIndicator({
   userId,

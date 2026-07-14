@@ -1,8 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getCurrentUser } from "@/lib/session";
-import { redis } from "@/lib/redis";
+import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
+
+// A user is considered "online" if their last heartbeat was within this window.
+const ONLINE_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
 
 export type PresenceStatus =
   | "online"
@@ -15,18 +18,34 @@ export type PresenceStatus =
 export interface PresenceData {
   status: PresenceStatus;
   customMessage?: string;
-  updatedAt: string;
+  updatedAt?: string;
 }
 
-const PRESENCE_TTL = 300; // 5 minutes
-const LAST_SEEN_TTL = 60 * 60 * 24 * 30; // 30 days
-
-function presenceKey(userId: string) {
-  return `presence:${userId}`;
+// Map Prisma enum → API string
+function toApiStatus(dbStatus: string, lastSeenAt: Date): PresenceStatus {
+  const isRecent = Date.now() - lastSeenAt.getTime() < ONLINE_WINDOW_MS;
+  if (!isRecent) return "offline";
+  const map: Record<string, PresenceStatus> = {
+    ONLINE: "online",
+    AWAY: "away",
+    BUSY: "busy",
+    INVISIBLE: "offline",
+    OFFLINE: "offline",
+  };
+  return map[dbStatus] ?? "offline";
 }
 
-function lastSeenKey(userId: string) {
-  return `presence:lastseen:${userId}`;
+// Map API string → Prisma enum
+function toDbStatus(apiStatus: PresenceStatus): string {
+  const map: Record<PresenceStatus, string> = {
+    online: "ONLINE",
+    away: "AWAY",
+    busy: "BUSY",
+    in_meeting: "BUSY",
+    dnd: "BUSY",
+    offline: "OFFLINE",
+  };
+  return map[apiStatus] ?? "OFFLINE";
 }
 
 // ─── GET ?userIds=id1,id2,id3 ─────────────────────────────────────────────────
@@ -41,46 +60,34 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const userIds = raw
-    .split(",")
-    .map((id) => id.trim())
-    .filter(Boolean);
-
+  const userIds = raw.split(",").map((id) => id.trim()).filter(Boolean);
   if (userIds.length === 0) {
-    return NextResponse.json(
-      { error: "At least one userId is required" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "At least one userId is required" }, { status: 400 });
   }
 
+  // Single Postgres query for all users — no Redis needed
+  const rows = await prisma.userPresence.findMany({
+    where: { userId: { in: userIds } },
+    select: { userId: true, status: true, statusMessage: true, lastSeenAt: true },
+  });
+
+  const byId = new Map(rows.map((r) => [r.userId, r]));
   const result: Record<string, PresenceData> = {};
 
-  await Promise.all(
-    userIds.map(async (userId) => {
-      try {
-        const raw = await redis.get(presenceKey(userId));
-        if (raw) {
-          try {
-            result[userId] = JSON.parse(raw) as PresenceData;
-          } catch {
-            // corrupt data → treat as offline
-          }
-        }
-        if (!result[userId]) {
-          // Return the real last-seen timestamp so the UI can show "Last seen X ago".
-          // If no key exists, omit updatedAt — the client treats missing as truly unknown.
-          const lastSeen = await redis.get(lastSeenKey(userId));
-          result[userId] = {
-            status: "offline",
-            ...(lastSeen ? { updatedAt: lastSeen } : {}),
-          } as PresenceData;
-        }
-      } catch {
-        // Redis unavailable — fall back to offline with no timestamp
-        result[userId] ??= { status: "offline" } as PresenceData;
-      }
-    })
-  );
+  for (const userId of userIds) {
+    const row = byId.get(userId);
+    if (!row) {
+      result[userId] = { status: "offline" };
+      continue;
+    }
+    const status = toApiStatus(row.status, row.lastSeenAt);
+    result[userId] = {
+      status,
+      ...(row.statusMessage ? { customMessage: row.statusMessage } : {}),
+      // Only expose lastSeenAt when offline so UI can show "Last seen X ago"
+      ...(status === "offline" ? { updatedAt: row.lastSeenAt.toISOString() } : {}),
+    };
+  }
 
   return NextResponse.json(result);
 }
@@ -88,9 +95,7 @@ export async function GET(request: NextRequest) {
 // ─── PATCH { status, customMessage? } ────────────────────────────────────────
 export async function PATCH(request: NextRequest) {
   const user = await getCurrentUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   let body: { status?: unknown; customMessage?: unknown };
   try {
@@ -99,43 +104,39 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const validStatuses: PresenceStatus[] = [
-    "online",
-    "away",
-    "busy",
-    "in_meeting",
-    "dnd",
-    "offline",
-  ];
-
+  const validStatuses: PresenceStatus[] = ["online", "away", "busy", "in_meeting", "dnd", "offline"];
   if (!body.status || !validStatuses.includes(body.status as PresenceStatus)) {
     return NextResponse.json(
-      {
-        error: `status must be one of: ${validStatuses.join(", ")}`,
-      },
+      { error: `status must be one of: ${validStatuses.join(", ")}` },
       { status: 400 }
     );
   }
 
-  const data: PresenceData = {
-    status: body.status as PresenceStatus,
-    updatedAt: new Date().toISOString(),
-    ...(typeof body.customMessage === "string" && body.customMessage.trim()
-      ? { customMessage: body.customMessage.trim().slice(0, 200) }
-      : {}),
-  };
+  const apiStatus = body.status as PresenceStatus;
+  const now = new Date();
 
-  await redis.set(presenceKey(user.id), JSON.stringify(data), "EX", PRESENCE_TTL);
+  await prisma.userPresence.upsert({
+    where: { userId: user.id },
+    create: {
+      userId: user.id,
+      status: toDbStatus(apiStatus) as never,
+      statusMessage: typeof body.customMessage === "string" ? body.customMessage.trim().slice(0, 200) : null,
+      lastSeenAt: now,
+    },
+    update: {
+      status: toDbStatus(apiStatus) as never,
+      statusMessage: typeof body.customMessage === "string" ? body.customMessage.trim().slice(0, 200) : null,
+      lastSeenAt: now,
+    },
+  });
 
-  return NextResponse.json({ ok: true, presence: data });
+  return NextResponse.json({ ok: true, presence: { status: apiStatus, updatedAt: now.toISOString() } });
 }
 
 // ─── POST { heartbeat: true } ─────────────────────────────────────────────────
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   let body: { heartbeat?: unknown };
   try {
@@ -145,30 +146,16 @@ export async function POST(request: NextRequest) {
   }
 
   if (!body.heartbeat) {
-    return NextResponse.json(
-      { error: "body must contain { heartbeat: true }" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "body must contain { heartbeat: true }" }, { status: 400 });
   }
 
-  const now = new Date().toISOString();
+  const now = new Date();
 
-  // Always update last-seen (long-lived, survives the 5-min presence TTL)
-  await redis.set(lastSeenKey(user.id), now, "EX", LAST_SEEN_TTL);
+  await prisma.userPresence.upsert({
+    where: { userId: user.id },
+    create: { userId: user.id, status: "ONLINE" as never, lastSeenAt: now },
+    update: { status: "ONLINE" as never, lastSeenAt: now },
+  });
 
-  const existing = await redis.get(presenceKey(user.id));
-
-  if (!existing) {
-    // User has no active presence — set them online by default
-    const data: PresenceData = {
-      status: "online",
-      updatedAt: now,
-    };
-    await redis.set(presenceKey(user.id), JSON.stringify(data), "EX", PRESENCE_TTL);
-    return NextResponse.json({ ok: true, refreshed: false, created: true });
-  }
-
-  // Reset TTL without changing stored data
-  await redis.expire(presenceKey(user.id), PRESENCE_TTL);
   return NextResponse.json({ ok: true, refreshed: true });
 }

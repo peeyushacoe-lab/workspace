@@ -2123,7 +2123,7 @@ export function ChatView({ currentUserId, userRole }: { currentUserId: string; u
     fetchGlobalPresence();
     sendHeartbeat();
 
-    const presenceInterval = setInterval(fetchGlobalPresence, 60_000);
+    const presenceInterval = setInterval(fetchGlobalPresence, 180_000);
     const heartbeatInterval = setInterval(sendHeartbeat, 240_000);
 
     return () => {
