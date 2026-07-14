@@ -56,8 +56,8 @@ export async function GET(request: Request) {
   const dayStart = new Date(`${dateParam}T00:00:00.000Z`);
   const dayEnd = new Date(`${dateParam}T23:59:59.999Z`);
 
-  // Fetch schedule for late detection
-  const rawSchedule = await redis.get(SCHEDULE_KEY);
+  // Fetch schedule for late detection — fall back to defaults if Redis is unavailable
+  const rawSchedule = await redis.get(SCHEDULE_KEY).catch(() => null);
   const schedule = rawSchedule
     ? {
         lateGraceMinutes: 15,

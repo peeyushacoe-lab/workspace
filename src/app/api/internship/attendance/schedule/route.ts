@@ -36,7 +36,7 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
-  const raw = await redis.get(SCHEDULE_KEY);
+  const raw = await redis.get(SCHEDULE_KEY).catch(() => null);
   if (!raw) return NextResponse.json(DEFAULT_SCHEDULE);
 
   const schedule = typeof raw === "string" ? JSON.parse(raw) : raw;

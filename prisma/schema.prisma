@@ -169,6 +169,11 @@ model User {
   mentorNotesReceived MentorNote[]         @relation("MentorNoteIntern")
   certificates        InternCertificate[]  @relation("CertIntern")
   certificatesIssued  InternCertificate[]  @relation("CertIssuer")
+  // Team challenges
+  challengesCreated    Challenge[]          @relation("ChallengeCreator")
+  challengeTeamsLed    ChallengeTeam[]      @relation("ChallengeTeamLead")
+  challengeScoresGiven ChallengeScore[]     @relation("ChallengeScorer")
+  challengeSubmissions ChallengeSubmission[] @relation("ChallengeSubmitter")
 }
 
 // WebAuthn passkey credentials
@@ -2335,6 +2340,91 @@ model InternCertificate {
   issuedBy User? @relation("CertIssuer", fields: [issuedById], references: [id], onDelete: SetNull)
 
   @@index([internId])
+}
+
+// ─── Intern Team Challenges ──────────────────────────────────────────────────
+// Reusable team-vs-team competition system (e.g. "Week 4: Red vs Blue").
+
+model Challenge {
+  id            String    @id @default(cuid())
+  title         String
+  description   String                        // overall brief / objective
+  status        String    @default("upcoming") // upcoming | active | judging | completed | cancelled
+  deadline      DateTime?
+  scoringSchema Json                            // [{ key, label, maxPoints }] — categories, should sum to 100
+  winnerTeamId  String?
+  createdById   String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  createdBy   User                  @relation("ChallengeCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  winnerTeam  ChallengeTeam?        @relation("ChallengeWinner", fields: [winnerTeamId], references: [id], onDelete: SetNull)
+  teams       ChallengeTeam[]       @relation("ChallengeTeams")
+  scores      ChallengeScore[]
+  submissions ChallengeSubmission[]
+
+  @@index([createdById])
+  @@index([status])
+}
+
+model ChallengeTeam {
+  id          String   @id @default(cuid())
+  challengeId String
+  name        String                     // e.g. "Team Red"
+  color       String?                    // e.g. "red" | "blue" — UI badge accent
+  mission     String?                    // team-specific mission brief
+  leadId      String?
+  memberIds   String[] @default([])      // intern user IDs on this team
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  challenge     Challenge             @relation("ChallengeTeams", fields: [challengeId], references: [id], onDelete: Cascade)
+  lead          User?                 @relation("ChallengeTeamLead", fields: [leadId], references: [id], onDelete: SetNull)
+  scores        ChallengeScore[]
+  submissions   ChallengeSubmission[]
+  wonChallenges Challenge[]           @relation("ChallengeWinner")
+
+  @@index([challengeId])
+}
+
+model ChallengeScore {
+  id          String   @id @default(cuid())
+  challengeId String
+  teamId      String
+  category    String                 // key matching a scoringSchema entry, e.g. "technical"
+  points      Float
+  maxPoints   Float
+  comment     String?
+  scoredById  String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  challenge Challenge     @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  team      ChallengeTeam @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  scoredBy  User          @relation("ChallengeScorer", fields: [scoredById], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, category])
+  @@index([challengeId])
+  @@index([teamId])
+}
+
+model ChallengeSubmission {
+  id          String   @id @default(cuid())
+  challengeId String
+  teamId      String
+  submitterId String
+  notes       String?
+  files       Json?                    // [{name, url, type, size}]
+  links       String[] @default([])    // report / repo / doc links
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  challenge Challenge     @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  team      ChallengeTeam @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  submitter User          @relation("ChallengeSubmitter", fields: [submitterId], references: [id], onDelete: Cascade)
+
+  @@index([challengeId])
+  @@index([teamId])
 }
 
 // ─────────────────────────────────────────────────────────────────────────

@@ -57,21 +57,27 @@ export async function GET(request: NextRequest) {
 
   await Promise.all(
     userIds.map(async (userId) => {
-      const raw = await redis.get(presenceKey(userId));
-      if (raw) {
-        try {
-          result[userId] = JSON.parse(raw) as PresenceData;
-        } catch {
-          // corrupt data → treat as offline
+      try {
+        const raw = await redis.get(presenceKey(userId));
+        if (raw) {
+          try {
+            result[userId] = JSON.parse(raw) as PresenceData;
+          } catch {
+            // corrupt data → treat as offline
+          }
         }
-      }
-      if (!result[userId]) {
-        // Try to get last seen timestamp for "Last seen X ago" display
-        const lastSeen = await redis.get(lastSeenKey(userId));
-        result[userId] = {
-          status: "offline",
-          updatedAt: lastSeen ?? new Date().toISOString(),
-        };
+        if (!result[userId]) {
+          // Return the real last-seen timestamp so the UI can show "Last seen X ago".
+          // If no key exists, omit updatedAt — the client treats missing as truly unknown.
+          const lastSeen = await redis.get(lastSeenKey(userId));
+          result[userId] = {
+            status: "offline",
+            ...(lastSeen ? { updatedAt: lastSeen } : {}),
+          } as PresenceData;
+        }
+      } catch {
+        // Redis unavailable — fall back to offline with no timestamp
+        result[userId] ??= { status: "offline" } as PresenceData;
       }
     })
   );
