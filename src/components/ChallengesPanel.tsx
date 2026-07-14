@@ -13,7 +13,7 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   Plus, Trash2, Loader2, Clock, CalendarClock, ArrowRight, Trophy, Users,
-  Award, Crown, Swords, Star, FileText, Link2, Send, Lock,
+  Award, Crown, Swords, Star, FileText, Link2, Send, Lock, X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { avatarGradient } from "@/lib/avatar";
@@ -418,6 +418,7 @@ function ChallengeDetail({ challenge, isMentor, userId, interns, onBack, onRefre
 }) {
   const [savingStatus, setSavingStatus] = useState(false);
   const [announcing, setAnnouncing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const max = schemaMax(challenge.scoringSchema);
   const cd = challenge.deadline ? fmtCountdown(challenge.deadline) : null;
 
@@ -447,17 +448,29 @@ function ChallengeDetail({ challenge, isMentor, userId, interns, onBack, onRefre
     finally { setSavingStatus(false); }
   };
 
-  const announceWinner = async (winnerTeamId: string) => {
+  const setWinner = async (winnerTeamId: string | null) => {
     setAnnouncing(true);
     try {
       const res = await fetch(`/api/internship/challenges/${challenge.id}`, {
         method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ winnerTeamId }),
       });
       if (!res.ok) throw new Error();
-      toast.success("Winner announced");
+      toast.success(winnerTeamId ? "Winner announced" : "Winner cleared — challenge reopened");
       onRefresh();
-    } catch { toast.error("Failed to announce winner"); }
+    } catch { toast.error("Failed to update winner"); }
     finally { setAnnouncing(false); }
+  };
+
+  const deleteChallenge = async () => {
+    if (!confirm(`Delete "${challenge.title}"? This removes both teams, all scores, and all submissions permanently.`)) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/internship/challenges/${challenge.id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      toast.success("Challenge deleted");
+      onBack();
+    } catch { toast.error("Failed to delete challenge"); }
+    finally { setDeleting(false); }
   };
 
   return (
@@ -494,21 +507,35 @@ function ChallengeDetail({ challenge, isMentor, userId, interns, onBack, onRefre
               className="px-2.5 py-1 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-xs text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60">
               {Object.keys(CHALLENGE_STATUS_CFG).map(s => <option key={s} value={s}>{CHALLENGE_STATUS_CFG[s].label}</option>)}
             </select>
-            {!challenge.winnerTeamId && (
+            {!challenge.winnerTeamId ? (
               <div className="flex items-center gap-1.5 ml-auto">
                 <span className="text-xs text-[#8A92A6]">Announce winner:</span>
                 {challenge.teams.map(t => (
-                  <button key={t.id} disabled={announcing} onClick={() => announceWinner(t.id)}
+                  <button key={t.id} disabled={announcing} onClick={() => setWinner(t.id)}
                     className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border transition-colors hover:bg-[#1B1F2A]"
                     style={{ borderColor: teamColorHex(t.color), color: teamColorHex(t.color) }}>
                     <Trophy className="w-3 h-3" /> {t.name}
                   </button>
                 ))}
               </div>
+            ) : (
+              <button disabled={announcing} onClick={() => setWinner(null)}
+                className="flex items-center gap-1.5 ml-auto px-2.5 py-1 rounded-full text-xs font-semibold text-[#8A92A6] border border-[#262A35] hover:text-[#ea4335] hover:border-[#ea4335]/40 transition-colors">
+                {announcing ? <Loader2 className="w-3 h-3 animate-spin" /> : <X className="w-3 h-3" />} Undo winner
+              </button>
             )}
           </div>
         )}
       </div>
+
+      {isMentor && (
+        <div className="flex justify-end">
+          <button onClick={deleteChallenge} disabled={deleting}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#5A6275] hover:text-[#ea4335] hover:bg-[#ea4335]/10 rounded-lg transition-colors disabled:opacity-50">
+            {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />} Delete challenge
+          </button>
+        </div>
+      )}
 
       {/* Leaderboard — hidden from interns until judging is complete */}
       {canSeeLeaderboard ? (

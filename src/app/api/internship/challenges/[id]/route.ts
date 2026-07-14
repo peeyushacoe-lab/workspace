@@ -105,15 +105,26 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const winnerJustAnnounced = data.winnerTeamId !== undefined && data.winnerTeamId !== null && data.winnerTeamId !== existing.winnerTeamId;
+  const winnerJustCleared = data.winnerTeamId === null && existing.winnerTeamId !== null;
+
+  // Setting a real winner locks status to "completed" (unless an explicit
+  // status was also sent). Clearing a mistaken winner (winnerTeamId: null)
+  // reopens the challenge back to "active" so scoring/submissions can
+  // continue — again, unless the caller explicitly requested a status.
+  let statusUpdate = data.status;
+  if (data.winnerTeamId !== undefined) {
+    if (data.winnerTeamId) statusUpdate = data.status ?? "completed";
+    else if (data.status === undefined) statusUpdate = "active";
+  }
 
   await prisma.challenge.update({
     where: { id },
     data: {
       ...(data.title !== undefined ? { title: data.title } : {}),
       ...(data.description !== undefined ? { description: data.description } : {}),
-      ...(data.status !== undefined ? { status: data.status } : {}),
+      ...(statusUpdate !== undefined ? { status: statusUpdate } : {}),
       ...(data.deadline !== undefined ? { deadline: data.deadline ? new Date(data.deadline) : null } : {}),
-      ...(data.winnerTeamId !== undefined ? { winnerTeamId: data.winnerTeamId, status: data.status ?? "completed" } : {}),
+      ...(data.winnerTeamId !== undefined ? { winnerTeamId: data.winnerTeamId } : {}),
     },
   });
 
@@ -149,6 +160,35 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     );
   }
 
+  if (winnerJustCleared) {
+    const allTeams = await prisma.challengeTeam.findMany({ where: { challengeId: id } });
+    const allIds = Array.from(new Set(allTeams.flatMap(t => [...t.memberIds, ...(t.leadId ? [t.leadId] : [])])));
+    await Promise.all(
+      allIds.map(userId =>
+        createNotification({
+          userId,
+          type: "SYSTEM",
+          title: `Result retracted: ${existing.title}`,
+          body: `The winner announcement for "${existing.title}" was undone — the challenge is active again.`,
+          link: "/internship",
+        }).catch(() => {}),
+      ),
+    );
+  }
+
   const updated = await prisma.challenge.findUnique({ where: { id }, include: challengeInclude });
   return NextResponse.json(updated);
+}
+
+export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  const session = await getCurrentUser();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!(await isMentorUser(session.id, session.role))) {
+    return NextResponse.json({ error: "Only mentors can delete challenges" }, { status: 403 });
+  }
+  const { id } = await params;
+  const existing = await prisma.challenge.findUnique({ where: { id }, select: { id: true } });
+  if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  await prisma.challenge.delete({ where: { id } });
+  return NextResponse.json({ success: true });
 }
