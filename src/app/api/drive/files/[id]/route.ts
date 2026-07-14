@@ -4,6 +4,7 @@ import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getAttachmentUrl } from "@/lib/s3";
 import { logAudit } from "@/lib/audit";
+import { indexingQueue } from "@/lib/queues/indexing.queue";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -74,6 +75,18 @@ export async function PUT(request: Request, { params }: Params) {
     metadata: { fileName: updated.name, changes: { name, isStarred, isTrashed } },
   });
 
+  if (updated.isTrashed) {
+    indexingQueue.add("deindex-file", { type: "DEINDEX", resource: "file", resourceId: id }).catch(() => {});
+  } else {
+    indexingQueue.add("index-file", {
+      type: "INDEX",
+      resource: "file",
+      resourceId: id,
+      content: updated.name,
+      metadata: { ownerId: user.id, name: updated.name, mimeType: updated.mimeType },
+    }).catch(() => {});
+  }
+
   return NextResponse.json({ ...updated, size: updated.size.toString() });
 }
 
@@ -96,5 +109,6 @@ export async function DELETE(_request: Request, { params }: Params) {
   });
 
   await prisma.driveFile.delete({ where: { id } });
+  indexingQueue.add("deindex-file", { type: "DEINDEX", resource: "file", resourceId: id }).catch(() => {});
   return new Response(null, { status: 204 });
 }

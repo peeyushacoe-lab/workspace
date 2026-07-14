@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Shield, Download, Trash2, RefreshCw, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Shield, Download, Trash2, RefreshCw, Search, ChevronLeft, ChevronRight, CheckCircle2, Circle, Clock3, MinusCircle, Globe, FileText, ShieldAlert } from "lucide-react";
 import { PageHeader } from "@/components/Shell";
 
 type AuditEntry = {
@@ -15,7 +15,148 @@ type AuditEntry = {
   actor: { email: string; fullName: string } | null;
 };
 
+type ComplianceControl = {
+  id: string;
+  category: string;
+  key: string;
+  label: string;
+  description: string | null;
+  status: "NOT_STARTED" | "IN_PROGRESS" | "DONE" | "NOT_APPLICABLE";
+  owner: string | null;
+  notes: string | null;
+  updatedAt: string;
+};
+
+const STATUS_CONFIG: Record<ComplianceControl["status"], { label: string; color: string; Icon: React.ElementType }> = {
+  NOT_STARTED:    { label: "Not started", color: "text-[#5A6275]", Icon: Circle },
+  IN_PROGRESS:    { label: "In progress", color: "text-[#f4b400]", Icon: Clock3 },
+  DONE:           { label: "Done",        color: "text-[#0f9d58]", Icon: CheckCircle2 },
+  NOT_APPLICABLE: { label: "N/A",         color: "text-[#5A6275]", Icon: MinusCircle },
+};
+
+function ChecklistTab({ category, title, hint }: { category: string; title: string; hint: string }) {
+  const [controls, setControls] = useState<ComplianceControl[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/compliance/controls?category=${category}`);
+      if (res.ok) setControls(await res.json());
+    } finally {
+      setLoading(false);
+    }
+  }, [category]);
+
+  useEffect(() => { void load(); }, [load]);
+
+  const cycleStatus = async (control: ComplianceControl) => {
+    const order: ComplianceControl["status"][] = ["NOT_STARTED", "IN_PROGRESS", "DONE", "NOT_APPLICABLE"];
+    const next = order[(order.indexOf(control.status) + 1) % order.length];
+    setControls(prev => prev.map(c => c.id === control.id ? { ...c, status: next } : c));
+    await fetch("/api/compliance/controls", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: control.id, status: next }),
+    }).catch(() => void load());
+  };
+
+  const doneCount = controls.filter(c => c.status === "DONE" || c.status === "NOT_APPLICABLE").length;
+
+  return (
+    <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-[#262A35]">
+        <Shield className="w-4 h-4 text-[#00C2FF]" />
+        <span className="text-sm font-medium">{title}</span>
+        <span className="text-xs text-[#5A6275]">{hint}</span>
+        <div className="flex-1" />
+        {controls.length > 0 && (
+          <span className="text-xs text-[#5A6275] font-mono">{doneCount}/{controls.length} complete</span>
+        )}
+        <button onClick={load} className="p-1.5 text-[#5A6275] hover:text-[#8A92A6]">
+          <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+        </button>
+      </div>
+      <div className="divide-y divide-[#1C1F28]">
+        {loading && controls.length === 0 ? (
+          <p className="text-center text-[#5A6275] py-8 text-sm">Loading…</p>
+        ) : (
+          controls.map(c => {
+            const cfg = STATUS_CONFIG[c.status];
+            return (
+              <button
+                key={c.id}
+                onClick={() => void cycleStatus(c)}
+                className="w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-[#1B1F2A]/40 transition-colors"
+              >
+                <cfg.Icon className={`w-4 h-4 mt-0.5 flex-shrink-0 ${cfg.color}`} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-[#E6E9F0]">{c.label}</p>
+                  {c.description && <p className="text-xs text-[#5A6275] mt-0.5">{c.description}</p>}
+                </div>
+                <span className={`text-[11px] font-medium flex-shrink-0 ${cfg.color}`}>{cfg.label}</span>
+              </button>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DataResidencyTab() {
+  return (
+    <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-5 space-y-4">
+      <div className="flex items-center gap-2">
+        <Globe className="w-4 h-4 text-[#00C2FF]" />
+        <span className="text-sm font-medium">Data residency</span>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+        <div className="bg-[#0D1017] border border-[#1C1F28] rounded-lg p-3">
+          <p className="text-[10px] text-[#5A6275] mb-1">Application hosting</p>
+          <p className="text-[#E6E9F0]">Vercel (serverless functions + edge network)</p>
+        </div>
+        <div className="bg-[#0D1017] border border-[#1C1F28] rounded-lg p-3">
+          <p className="text-[10px] text-[#5A6275] mb-1">Primary database</p>
+          <p className="text-[#E6E9F0]">Neon PostgreSQL — us-east-1 (AWS)</p>
+        </div>
+        <div className="bg-[#0D1017] border border-[#1C1F28] rounded-lg p-3">
+          <p className="text-[10px] text-[#5A6275] mb-1">File storage</p>
+          <p className="text-[#E6E9F0]">Cloudflare R2 (object storage)</p>
+        </div>
+        <div className="bg-[#0D1017] border border-[#1C1F28] rounded-lg p-3">
+          <p className="text-[10px] text-[#5A6275] mb-1">Cache / queues</p>
+          <p className="text-[#E6E9F0]">Upstash Redis</p>
+        </div>
+        <div className="bg-[#0D1017] border border-[#1C1F28] rounded-lg p-3">
+          <p className="text-[10px] text-[#5A6275] mb-1">Email delivery</p>
+          <p className="text-[#E6E9F0]">Resend</p>
+        </div>
+        <div className="bg-[#0D1017] border border-[#1C1F28] rounded-lg p-3">
+          <p className="text-[10px] text-[#5A6275] mb-1">AI processing</p>
+          <p className="text-[#E6E9F0]">Anthropic Claude API</p>
+        </div>
+      </div>
+      <p className="text-xs text-[#5A6275] leading-relaxed">
+        Customer data is currently hosted in the United States across the providers above. Region-pinned or
+        EU-resident deployments are not yet offered as a self-serve option — treat requests for data residency
+        guarantees outside the US as a sales/legal conversation until a regional deployment story exists.
+      </p>
+    </div>
+  );
+}
+
 export default function CompliancePage() {
+  const [tab, setTab] = useState<"audit" | "soc2" | "gdpr" | "residency" | "pentest">("audit");
+
+  const tabs: { key: typeof tab; label: string; Icon: React.ElementType }[] = [
+    { key: "audit",     label: "Audit log",       Icon: Shield },
+    { key: "soc2",      label: "SOC 2 readiness", Icon: ShieldAlert },
+    { key: "gdpr",      label: "GDPR & DPA",       Icon: FileText },
+    { key: "residency", label: "Data residency",   Icon: Globe },
+    { key: "pentest",   label: "Pen testing",      Icon: ShieldAlert },
+  ];
+
   const [logs, setLogs] = useState<AuditEntry[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -78,6 +219,51 @@ export default function CompliancePage() {
       />
 
       <div className="px-6 pb-8 max-w-6xl space-y-6">
+        {/* Tab bar */}
+        <div className="flex flex-wrap gap-2 border-b border-[#262A35] pb-3">
+          {tabs.map(t => (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                tab === t.key ? "bg-[#00C2FF]/10 text-[#00C2FF] border border-[#00C2FF]/20" : "text-[#8A92A6] hover:bg-[#1B1F2A]"
+              }`}
+            >
+              <t.Icon className="w-3.5 h-3.5" /> {t.label}
+            </button>
+          ))}
+        </div>
+
+        {tab === "soc2" && (
+          <ChecklistTab category="SOC2" title="SOC 2 readiness" hint="Trust Service Criteria checklist" />
+        )}
+
+        {tab === "gdpr" && (
+          <div className="space-y-4">
+            <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-4 flex items-center justify-between flex-wrap gap-3">
+              <div>
+                <p className="text-sm font-medium">Data Processing Agreement</p>
+                <p className="text-xs text-[#5A6275] mt-0.5">Starting-point DPA template — have counsel review before executing with customers.</p>
+              </div>
+              <a
+                href="/api/compliance/dpa"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#00C2FF]/10 text-[#00C2FF] border border-[#00C2FF]/20 text-sm hover:bg-[#00C2FF]/20 transition-colors"
+              >
+                <Download className="w-4 h-4" /> Download DPA template
+              </a>
+            </div>
+            <ChecklistTab category="GDPR" title="GDPR readiness" hint="Articles 28/30/33 obligations" />
+          </div>
+        )}
+
+        {tab === "residency" && <DataResidencyTab />}
+
+        {tab === "pentest" && (
+          <ChecklistTab category="PENTEST" title="Penetration testing" hint="Annual test cadence" />
+        )}
+
+        {tab !== "audit" ? null : (
+        <>
         {/* Actions row */}
         <div className="flex flex-wrap gap-3">
           <button onClick={() => handleExport("json")} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#00C2FF]/10 text-[#00C2FF] border border-[#00C2FF]/20 text-sm hover:bg-[#00C2FF]/20 transition-colors">
@@ -165,6 +351,8 @@ export default function CompliancePage() {
             </div>
           )}
         </div>
+        </>
+        )}
       </div>
     </div>
   );

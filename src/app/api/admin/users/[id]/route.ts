@@ -4,6 +4,7 @@ import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { logAudit } from "@/lib/audit";
 import { revokeUserMobileTokens } from "@/lib/mobile-auth";
+import { indexingQueue } from "@/lib/queues/indexing.queue";
 import type { UserRole } from "@/generated/prisma/enums";
 
 const ALL_VALID_ROLES: UserRole[] = [
@@ -68,6 +69,15 @@ export async function PATCH(
   // so they can't keep using the app until the token naturally expires.
   if (updateData.isActive === false) {
     revokeUserMobileTokens(id).catch(() => {});
+    indexingQueue.add("deindex-person", { type: "DEINDEX", resource: "person", resourceId: id }).catch(() => {});
+  } else {
+    indexingQueue.add("index-person", {
+      type: "INDEX",
+      resource: "person",
+      resourceId: updated.id,
+      content: `${updated.fullName} ${updated.email}`,
+      metadata: { role: updated.role, fullName: updated.fullName, email: updated.email },
+    }).catch(() => {});
   }
 
   await logAudit({

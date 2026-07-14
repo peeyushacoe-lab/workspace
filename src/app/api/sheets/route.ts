@@ -20,7 +20,7 @@ export async function GET() {
   // We store share data as doc:share:sheet:{noteId} hash
   // To find what's shared with user: scan keys matching doc:share:sheet:*
   // and check if user.id is a field. We'll do a pattern scan.
-  const sharedSheets: typeof ownSheets = [];
+  const sharedSheets: (typeof ownSheets[number] & { sharedRole: string })[] = [];
   try {
     const keys = await redis.keys(`doc:share:sheet:*`);
     for (const key of keys) {
@@ -31,14 +31,14 @@ export async function GET() {
           where: { id: docId, color: SHEET_MARKER },
           select: { id: true, title: true, pinned: true, createdAt: true, updatedAt: true, userId: true },
         });
-        if (doc) sharedSheets.push({ ...doc, pinned: false });
+        if (doc) sharedSheets.push({ ...doc, pinned: false, sharedRole: role });
       }
     }
   } catch { /* Redis unavailable */ }
 
   const all = [
-    ...ownSheets.map((s) => ({ ...s, isOwner: true, sharedRole: null })),
-    ...sharedSheets.map((s) => ({ ...s, isOwner: false, sharedRole: "editor" })),
+    ...ownSheets.map((s) => ({ ...s, isOwner: true, sharedRole: null as string | null })),
+    ...sharedSheets.map((s) => ({ ...s, isOwner: false })),
   ];
 
   return NextResponse.json(all);

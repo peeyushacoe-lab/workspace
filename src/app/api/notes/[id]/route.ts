@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { indexingQueue } from "@/lib/queues/indexing.queue";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -49,6 +50,14 @@ export async function PUT(request: Request, { params }: Params) {
     },
   });
 
+  indexingQueue.add("index-note", {
+    type: "INDEX",
+    resource: "note",
+    resourceId: updated.id,
+    content: `${updated.title} ${updated.content}`,
+    metadata: { ownerId: user.id, title: updated.title, updatedAt: updated.updatedAt.toISOString() },
+  }).catch(() => {});
+
   return NextResponse.json(updated);
 }
 
@@ -69,6 +78,7 @@ export async function DELETE(_request: Request, { params }: Params) {
   }
 
   await prisma.note.delete({ where: { id } });
+  indexingQueue.add("deindex-note", { type: "DEINDEX", resource: "note", resourceId: id }).catch(() => {});
 
   return NextResponse.json({ ok: true });
 }

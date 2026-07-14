@@ -9,6 +9,8 @@ import { createCleanupWorker } from "../src/workers/cleanup.worker";
 import { createIndexingWorker } from "../src/workers/indexing.worker";
 import { createSecuritySyncWorker } from "../src/workers/security-sync.worker";
 import { createMailRulesWorker } from "../src/workers/mail-rules.worker";
+import { createImportWorker } from "../src/workers/import.worker";
+import { createExportWorker } from "../src/workers/export.worker";
 import { processScheduledEmails } from "../src/workers/scheduled-send.worker";
 import { cleanupQueue } from "../src/lib/queues/cleanup.queue";
 import { logger } from "../src/lib/logger";
@@ -55,6 +57,8 @@ const previewWorker      = createPreviewWorker();
 const cleanupWorker      = createCleanupWorker();
 const indexingWorker     = createIndexingWorker();
 const securitySyncWorker = createSecuritySyncWorker();
+const importWorker       = createImportWorker();
+const exportWorker       = createExportWorker();
 
 // ---------------------------------------------------------------------------
 // Rate-limit backoff — pauses the worker for 5 min when Upstash quota is hit
@@ -96,6 +100,8 @@ const allWorkers: [Worker, string][] = [
   [indexingWorker,     "search-indexing"],
   [securitySyncWorker, "security-sync"],
   [mailRulesWorker,    "mail-rules"],
+  [importWorker,       "mail-import"],
+  [exportWorker,       "account-export"],
 ];
 
 for (const [worker, name] of allWorkers) {
@@ -120,6 +126,14 @@ async function scheduleCleanupJobs() {
   await cleanupQueue.add("old-audit-logs",      { type: "OLD_AUDIT_LOGS",      olderThanDays: 90 }, { repeat: repeatOpts, jobId: "cleanup-audit-logs" });
   await cleanupQueue.add("trashed-files",       { type: "TRASHED_FILES",       olderThanDays: 30 }, { repeat: repeatOpts, jobId: "cleanup-trashed-files" });
   await cleanupQueue.add("expired-drafts",      { type: "EXPIRED_DRAFTS",      olderThanDays: 60 }, { repeat: repeatOpts, jobId: "cleanup-drafts" });
+  // Status ping runs far more often than the other cleanup jobs — it feeds
+  // the public status page's uptime %, so 5-minute granularity is the point.
+  await cleanupQueue.add("status-ping",         { type: "STATUS_PING" }, { repeat: { pattern: "*/5 * * * *" }, jobId: "status-ping" });
+  // Snoozed threads need to resurface promptly, so this also runs on a short cycle.
+  await cleanupQueue.add("unsnooze-threads",    { type: "UNSNOOZE_DUE_THREADS" }, { repeat: { pattern: "*/5 * * * *" }, jobId: "unsnooze-threads" });
+  // Sentinel Brain — correlates recent alerts/DLP violations per user into
+  // auto-assembled incidents. 15-minute cadence balances freshness vs. AI cost.
+  await cleanupQueue.add("sentinel-correlation", { type: "SENTINEL_CORRELATION" }, { repeat: { pattern: "*/15 * * * *" }, jobId: "sentinel-correlation" });
 
   logger.info("Recurring cleanup jobs scheduled");
 }

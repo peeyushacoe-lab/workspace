@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { parseSearchQuery, type ParsedSearchQuery } from "@/lib/search-filters";
+import { isSearchAvailable, searchIndex } from "@/lib/search-engine";
 
 // ─── Result shape expected by GlobalSearch.tsx ───────────────────────────────
 
@@ -24,20 +26,51 @@ interface SearchResult {
   metadata?: Record<string, string>;
 }
 
+/** True when the parsed query has ONLY free text — no filter tokens.
+ * Meilisearch gives us ranked/typo-tolerant results but doesn't (yet) get
+ * fed our filter semantics, so anything with a filter token goes straight
+ * to the Prisma path, which supports every filter precisely. */
+function isPlainTextOnly(parsed: ParsedSearchQuery): boolean {
+  return !parsed.from && !parsed.in && !parsed.hasAttachment && !parsed.before &&
+    !parsed.after && !parsed.isUnread && !parsed.isStarred;
+}
+
 export async function GET(request: Request) {
   const user = getSessionUserFromCookieStore(await cookies());
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(request.url);
-  const q = searchParams.get("q")?.trim() ?? "";
+  const rawQ = searchParams.get("q")?.trim() ?? "";
   const typeFilter = searchParams.get("type") ?? "all";
   const limit = Math.min(parseInt(searchParams.get("limit") ?? "20", 10), 50);
 
-  if (q.length < 2) {
-    return NextResponse.json({ results: [], total: 0, query: q });
+  const parsed = parseSearchQuery(rawQ);
+  const q = parsed.text;
+
+  if (q.length < 2 && isPlainTextOnly(parsed)) {
+    return NextResponse.json({ results: [], total: 0, query: rawQ });
   }
 
   const perTypeLimit = Math.ceil(limit / 6);
+  const tryMeili = isPlainTextOnly(parsed) && q.length >= 2 ? await isSearchAvailable() : false;
+
+  // Meilisearch is attempted first for mail/chat (the two indexes that have
+  // real producers today — see indexing.queue.ts callers). Any miss/error
+  // falls straight through to the existing Prisma ILIKE query below.
+  let meiliMailIds: string[] | null = null;
+  let meiliChatIds: string[] | null = null;
+  if (tryMeili) {
+    const [emailHits, chatHits] = await Promise.all([
+      (typeFilter === "all" || typeFilter === "mail")
+        ? searchIndex("email", q, { limit: perTypeLimit }).catch(() => [])
+        : Promise.resolve([]),
+      (typeFilter === "all" || typeFilter === "chat")
+        ? searchIndex("chat_message", q, { limit: perTypeLimit }).catch(() => [])
+        : Promise.resolve([]),
+    ]);
+    if (emailHits.length > 0) meiliMailIds = emailHits.map((h) => String(h.threadId ?? h.id));
+    if (chatHits.length > 0) meiliChatIds = chatHits.map((h) => String(h.id));
+  }
 
   // ── Parallel search across all entity types ──────────────────────────────
 
@@ -50,29 +83,39 @@ export async function GET(request: Request) {
     noteResults,
     peopleResults,
   ] = await Promise.all([
-    // Mail: search by thread subject OR message body
+    // Mail: Meilisearch thread IDs (ranked) when available, else ILIKE + filters
     (typeFilter === "all" || typeFilter === "mail")
       ? prisma.inboxThread
           .findMany({
-            where: {
-              isTrashed: false,
-              mailbox: {
-                accessLogs: { some: { userId: user.id } },
-              },
-              OR: [
-                { subject: { contains: q, mode: "insensitive" } },
-                {
-                  messages: {
-                    some: {
-                      OR: [
-                        { textBody: { contains: q, mode: "insensitive" } },
+            where: meiliMailIds
+              ? { id: { in: meiliMailIds }, isTrashed: false, mailbox: { accessLogs: { some: { userId: user.id } } } }
+              : {
+                  isTrashed: parsed.in === "trash" ? true : false,
+                  ...(parsed.in === "archive" ? { isArchived: true } : {}),
+                  isStarred: parsed.isStarred ? true : undefined,
+                  mailbox: { accessLogs: { some: { userId: user.id } } },
+                  ...(parsed.before || parsed.after
+                    ? { updatedAt: { ...(parsed.after ? { gte: parsed.after } : {}), ...(parsed.before ? { lte: parsed.before } : {}) } }
+                    : {}),
+                  OR: q
+                    ? [
                         { subject: { contains: q, mode: "insensitive" } },
-                      ],
-                    },
-                  },
+                        {
+                          messages: {
+                            some: {
+                              OR: [
+                                { textBody: { contains: q, mode: "insensitive" } },
+                                { subject: { contains: q, mode: "insensitive" } },
+                              ],
+                            },
+                          },
+                        },
+                      ]
+                    : undefined,
+                  ...(parsed.from ? { messages: { some: { from: { contains: parsed.from, mode: "insensitive" } } } } : {}),
+                  ...(parsed.hasAttachment ? { messages: { some: { attachments: { some: {} } } } } : {}),
+                  ...(parsed.isUnread ? { messages: { some: { isRead: false } } } : {}),
                 },
-              ],
-            },
             select: {
               id: true,
               subject: true,
@@ -90,15 +133,23 @@ export async function GET(request: Request) {
           .catch(() => [])
       : Promise.resolve([]),
 
-    // Chat: messages in channels the user is a member of
+    // Chat: Meilisearch message IDs (ranked) when available, else ILIKE + filters
     (typeFilter === "all" || typeFilter === "chat")
       ? prisma.chatMessage
           .findMany({
-            where: {
-              content: { contains: q, mode: "insensitive" },
-              deletedAt: null,
-              channel: { members: { some: { userId: user.id } } },
-            },
+            where: meiliChatIds
+              ? { id: { in: meiliChatIds }, deletedAt: null, channel: { members: { some: { userId: user.id } } } }
+              : {
+                  deletedAt: null,
+                  channel: { members: { some: { userId: user.id } } },
+                  ...(q ? { content: { contains: q, mode: "insensitive" } } : {}),
+                  ...(parsed.from ? { user: { fullName: { contains: parsed.from, mode: "insensitive" } } } : {}),
+                  ...(parsed.in ? { channel: { name: { contains: parsed.in, mode: "insensitive" }, members: { some: { userId: user.id } } } } : {}),
+                  ...(parsed.hasAttachment ? { attachmentUrl: { not: null } } : {}),
+                  ...(parsed.before || parsed.after
+                    ? { createdAt: { ...(parsed.after ? { gte: parsed.after } : {}), ...(parsed.before ? { lte: parsed.before } : {}) } }
+                    : {}),
+                },
             select: {
               id: true,
               content: true,
@@ -119,10 +170,18 @@ export async function GET(request: Request) {
             where: {
               ownerId: user.id,
               isTrashed: false,
-              OR: [
-                { name: { contains: q, mode: "insensitive" } },
-                { description: { contains: q, mode: "insensitive" } },
-              ],
+              ...(parsed.isStarred ? { isStarred: true } : {}),
+              ...(parsed.before || parsed.after
+                ? { createdAt: { ...(parsed.after ? { gte: parsed.after } : {}), ...(parsed.before ? { lte: parsed.before } : {}) } }
+                : {}),
+              ...(q
+                ? {
+                    OR: [
+                      { name: { contains: q, mode: "insensitive" } },
+                      { description: { contains: q, mode: "insensitive" } },
+                    ],
+                  }
+                : {}),
             },
             select: {
               id: true,
@@ -147,12 +206,19 @@ export async function GET(request: Request) {
                 { organizerId: user.id },
                 { attendees: { some: { userId: user.id } } },
               ],
-              AND: {
-                OR: [
-                  { title: { contains: q, mode: "insensitive" } },
-                  { description: { contains: q, mode: "insensitive" } },
-                ],
-              },
+              ...(parsed.before || parsed.after
+                ? { startAt: { ...(parsed.after ? { gte: parsed.after } : {}), ...(parsed.before ? { lte: parsed.before } : {}) } }
+                : {}),
+              ...(q
+                ? {
+                    AND: {
+                      OR: [
+                        { title: { contains: q, mode: "insensitive" } },
+                        { description: { contains: q, mode: "insensitive" } },
+                      ],
+                    },
+                  }
+                : {}),
             },
             select: {
               id: true,
@@ -176,12 +242,19 @@ export async function GET(request: Request) {
                 { organizerId: user.id },
                 { participants: { some: { userId: user.id } } },
               ],
-              AND: {
-                OR: [
-                  { title: { contains: q, mode: "insensitive" } },
-                  { description: { contains: q, mode: "insensitive" } },
-                ],
-              },
+              ...(parsed.before || parsed.after
+                ? { scheduledAt: { ...(parsed.after ? { gte: parsed.after } : {}), ...(parsed.before ? { lte: parsed.before } : {}) } }
+                : {}),
+              ...(q
+                ? {
+                    AND: {
+                      OR: [
+                        { title: { contains: q, mode: "insensitive" } },
+                        { description: { contains: q, mode: "insensitive" } },
+                      ],
+                    },
+                  }
+                : {}),
             },
             select: {
               id: true,
@@ -203,10 +276,18 @@ export async function GET(request: Request) {
           .findMany({
             where: {
               userId: user.id,
-              OR: [
-                { title: { contains: q, mode: "insensitive" } },
-                { content: { contains: q, mode: "insensitive" } },
-              ],
+              ...(parsed.isStarred ? { pinned: true } : {}),
+              ...(parsed.before || parsed.after
+                ? { updatedAt: { ...(parsed.after ? { gte: parsed.after } : {}), ...(parsed.before ? { lte: parsed.before } : {}) } }
+                : {}),
+              ...(q
+                ? {
+                    OR: [
+                      { title: { contains: q, mode: "insensitive" } },
+                      { content: { contains: q, mode: "insensitive" } },
+                    ],
+                  }
+                : {}),
             },
             select: {
               id: true,
@@ -222,24 +303,30 @@ export async function GET(request: Request) {
       : Promise.resolve([]),
 
     // People: always search users by name or email
-    prisma.user
-      .findMany({
-        where: {
-          OR: [
-            { fullName: { contains: q, mode: "insensitive" } },
-            { email: { contains: q, mode: "insensitive" } },
-          ],
-        },
-        select: {
-          id: true,
-          fullName: true,
-          email: true,
-          role: true,
-          jobTitle: true,
-        },
-        take: Math.min(perTypeLimit, 5),
-      })
-      .catch(() => []),
+    (typeFilter === "all" || typeFilter === "people")
+      ? prisma.user
+          .findMany({
+            where: q
+              ? {
+                  OR: [
+                    { fullName: { contains: q, mode: "insensitive" } },
+                    { email: { contains: q, mode: "insensitive" } },
+                    { jobTitle: { contains: q, mode: "insensitive" } },
+                    { department: { contains: q, mode: "insensitive" } },
+                  ],
+                }
+              : {},
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              role: true,
+              jobTitle: true,
+            },
+            take: Math.min(perTypeLimit, 5),
+          })
+          .catch(() => [])
+      : Promise.resolve([]),
   ]);
 
   // ── Shape into unified SearchResult[] ────────────────────────────────────
@@ -363,6 +450,6 @@ export async function GET(request: Request) {
   return NextResponse.json({
     results,
     total: results.length,
-    query: q,
+    query: rawQ,
   });
 }

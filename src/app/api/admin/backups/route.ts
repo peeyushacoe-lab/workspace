@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { cleanupQueue } from "@/lib/queues/cleanup.queue";
 
 type BackupStatus = "ok" | "warning" | "error";
 type VerificationStatus = "not_tested" | "ok" | "failed";
@@ -77,7 +78,13 @@ export async function GET(): Promise<NextResponse> {
     // table may be empty
   }
 
-  const payload: BackupsPayload = {
+  // Real restore-drill result, recorded by the persistent worker process
+  // (scripts/restore-drill.ts) — see the RESTORE_DRILL cleanup job.
+  const latestVerification = await prisma.backupVerification.findFirst({
+    orderBy: { testedAt: "desc" },
+  }).catch(() => null);
+
+  const payload: BackupsPayload & { verificationDetail?: unknown } = {
     database: {
       lastBackup,
       size: rowsToSizeString(totalRows),
@@ -85,13 +92,21 @@ export async function GET(): Promise<NextResponse> {
       retentionDays: 30,
     },
     verification: {
-      lastTested: null,
-      status: "not_tested",
+      lastTested: latestVerification?.testedAt.toISOString() ?? null,
+      status: !latestVerification ? "not_tested" : latestVerification.status === "PASSED" ? "ok" : "failed",
     },
     storage: {
       provider: "Vercel/Postgres",
       region: "auto",
     },
+    verificationDetail: latestVerification
+      ? {
+          tablesVerified: latestVerification.tablesVerified,
+          rowsVerified: latestVerification.rowsVerified,
+          backupTimestamp: latestVerification.backupTimestamp,
+          error: latestVerification.error,
+        }
+      : null,
   };
 
   return NextResponse.json(payload);
@@ -106,17 +121,20 @@ export async function POST(request: Request): Promise<NextResponse> {
   const action = searchParams.get("action");
 
   if (action === "test") {
-    // Simulate a restore test: run a lightweight read query to verify DB connectivity.
+    // The actual restore drill (gunzip the latest backup, load every row into
+    // a scratch table, verify counts match) needs local disk access to the
+    // ./backups directory, which only the persistent worker process has —
+    // this serverless route can't run it inline. Enqueue it there instead.
     try {
-      await prisma.$queryRaw`SELECT 1`;
+      await cleanupQueue.add("restore-drill", { type: "RESTORE_DRILL" }, { jobId: `restore-drill-${Date.now()}` });
       return NextResponse.json({
         ok: true,
-        message: "Restore test passed — database connectivity verified.",
-        testedAt: new Date().toISOString(),
+        message: "Restore drill queued on the worker — refresh this page in a minute for the result.",
+        queuedAt: new Date().toISOString(),
       });
     } catch (err) {
       return NextResponse.json(
-        { ok: false, message: "Restore test failed", error: (err as Error).message },
+        { ok: false, message: "Could not queue restore drill", error: (err as Error).message },
         { status: 500 },
       );
     }

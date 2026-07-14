@@ -3,6 +3,7 @@ import { z } from "zod";
 import bcrypt from "bcrypt";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
+import { indexingQueue } from "@/lib/queues/indexing.queue";
 
 const nstr = (max: number) => z.string().max(max).nullish();
 
@@ -120,6 +121,19 @@ export async function PUT(request: Request) {
         preferences: true, updatedAt: true,
       },
     });
+
+    indexingQueue.add("index-person", {
+      type: "INDEX",
+      resource: "person",
+      resourceId: updated.id,
+      content: `${updated.fullName} ${updated.email} ${updated.jobTitle ?? ""} ${updated.department ?? ""}`,
+      metadata: {
+        role: updated.role,
+        fullName: updated.fullName,
+        email: updated.email,
+        department: updated.department ?? "",
+      },
+    }).catch(() => {});
 
     return NextResponse.json(updated);
   } catch (err) {

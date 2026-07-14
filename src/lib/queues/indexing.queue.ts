@@ -16,13 +16,13 @@ export const indexingQueue = new Queue(INDEXING_QUEUE_NAME, {
 export type IndexingJobData =
   | {
       type: "INDEX";
-      resource: "email" | "chat_message" | "file" | "note" | "doc" | "calendar_event";
+      resource: "email" | "chat_message" | "file" | "note" | "doc" | "calendar_event" | "meeting" | "person";
       resourceId: string;
       content: string;
       metadata: Record<string, string | number | boolean>;
     }
   | {
       type: "DEINDEX";
-      resource: "email" | "chat_message" | "file" | "note" | "doc" | "calendar_event";
+      resource: "email" | "chat_message" | "file" | "note" | "doc" | "calendar_event" | "meeting" | "person";
       resourceId: string;
     };

@@ -41,10 +41,11 @@ const validRoles = new Set<string>([
   "RESEARCH", "FINANCE", "OPERATIONS", "SUPPORT", "HR", "INTERNSHIP",
 ]);
 
-const MFA_ENFORCED_ROLES = new Set<string>([
-  "ADMIN", "CEO", "CISO",
-  "DEVELOPER", "CYBER_SECURITY", "FINANCE", "R_AND_D", "COO", "OPS_MANAGER",
-]);
+// MFA/passkey enforcement removed app-wide (2026-07-14) — it was blocking
+// interns from getting into the app at all on first login. MFA is still
+// available as a self-serve opt-in via /settings for anyone who wants it;
+// this set staying empty is what keeps the challenge from ever being forced.
+const MFA_ENFORCED_ROLES = new Set<string>([]);
 
 function fromBase64Url(str: string): Uint8Array<ArrayBuffer> {
   const padded = str.replace(/-/g, "+").replace(/_/g, "/");
@@ -140,14 +141,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(getPortalHome(user.role), request.url));
   }
 
-  // New user onboarding gate: force passkey setup before accessing the app
-  const pendingMfaSetup = request.cookies.get("pending_mfa_setup")?.value === "1";
-  const isOnSetupPasskey = request.nextUrl.pathname.startsWith("/setup-passkey");
-  if (pendingMfaSetup && !isOnSetupPasskey) {
-    return NextResponse.redirect(new URL("/setup-passkey", request.url));
-  }
-
   // MFA enforcement: admin-level roles with MFA enabled must complete the challenge each session
+  // (MFA_ENFORCED_ROLES is intentionally empty — see comment above. Kept as
+  // dead-but-inert logic rather than deleted, so re-enabling for specific
+  // roles later is a one-line change.)
   const isMfaEnforcedRole = MFA_ENFORCED_ROLES.has(user.role);
   const hasMfaEnabled = user.mfaEnabled === true;
   const isOnMfaChallenge = request.nextUrl.pathname.startsWith("/mfa-challenge");

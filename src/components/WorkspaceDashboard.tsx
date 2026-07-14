@@ -2,7 +2,7 @@
 ﻿"use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Send, User, Loader2, CheckCircle2, AlertCircle, Sparkles, X, Paperclip, Flag } from "lucide-react";
+import { Send, User, Loader2, CheckCircle2, AlertCircle, Sparkles, X, Paperclip, Flag, Clock, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { getAllowedSendersForRole, type EmailAddressConfig } from "@/lib/email-config";
 import { avatarGradient } from "@/lib/avatar";
@@ -263,7 +263,84 @@ export function SimpleComposer({
   const [draftSaveStatus, setDraftSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [attachments, setAttachments] = useState<File[]>([]);
   const [priority, setPriority] = useState<"NORMAL" | "HIGH" | "URGENT">("NORMAL");
+  const [showScheduleMenu, setShowScheduleMenu] = useState(false);
+  const [scheduleAt, setScheduleAt] = useState("");
+  const [isScheduling, setIsScheduling] = useState(false);
+  const [templates, setTemplates] = useState<{ id: string; name: string; subject: string; body: string }[]>([]);
+  const [showTemplateMenu, setShowTemplateMenu] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    fetch("/api/templates")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => setTemplates(Array.isArray(data) ? data : []))
+      .catch(() => {});
+  }, []);
+
+  const applyTemplate = (t: { subject: string; body: string }) => {
+    if (t.subject && !subject) setSubject(t.subject);
+    setBody((prev) => (prev ? `${prev}\n\n${t.body}` : t.body));
+    setShowTemplateMenu(false);
+  };
+
+  const saveAsTemplate = async () => {
+    const name = window.prompt("Template name?", subject || "Untitled template");
+    if (!name?.trim()) return;
+    try {
+      const res = await fetch("/api/templates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, subject, body }),
+      });
+      if (!res.ok) throw new Error("Failed to save template");
+      const saved = await res.json();
+      setTemplates((prev) => [saved, ...prev]);
+      toast.success("Template saved");
+    } catch (err) {
+      toast.error((err as Error).message);
+    }
+  };
+
+  const handleScheduleSend = async () => {
+    if (!recipient.trim() || !subject.trim()) { toast.error("Recipient and subject are required"); return; }
+    if (!scheduleAt) { toast.error("Pick a date and time"); return; }
+    const when = new Date(scheduleAt);
+    if (Number.isNaN(when.getTime()) || when <= new Date()) {
+      toast.error("Scheduled time must be in the future");
+      return;
+    }
+    const parseEmails = (raw: string) => raw.split(",").map(s => s.trim()).filter(Boolean);
+    setIsScheduling(true);
+    try {
+      const res = await fetch("/api/inbox/scheduled", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          scheduledAt: when.toISOString(),
+          subject,
+          body,
+          toAddresses: parseEmails(recipient),
+          ccAddresses: cc.trim() ? parseEmails(cc) : [],
+          bccAddresses: bcc.trim() ? parseEmails(bcc) : [],
+          fromEmail: selectedSenderEmail || allowedSenders[0]?.email,
+          signatureId: selectedSignatureId || undefined,
+        }),
+      });
+      const data = await res.json() as { error?: string };
+      if (!res.ok) throw new Error(data.error ?? "Failed to schedule");
+      toast.success(`Scheduled for ${when.toLocaleString()}`);
+      setShowScheduleMenu(false);
+      setScheduleAt("");
+      setRecipient(""); setCc(""); setBcc(""); setShowCc(false); setShowBcc(false);
+      setSubject(""); setBody(""); setHasDraft(false); setDraftSaveStatus("idle");
+      if (draftId) { fetch(`/api/drafts/${draftId}`, { method: "DELETE" }).catch(() => {}); setDraftId(undefined); }
+      if (onSuccess) onSuccess();
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setIsScheduling(false);
+    }
+  };
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
@@ -393,7 +470,7 @@ export function SimpleComposer({
       ...(priority !== "NORMAL" ? { priority } : {}),
     };
 
-    const DELAY = 8;
+    const DELAY = 30;
     let remaining = DELAY;
     const toastId = "undo-send";
 
@@ -662,6 +739,44 @@ export function SimpleComposer({
           <Paperclip className="w-3.5 h-3.5" />
           Attach files
         </button>
+
+        <div className="relative inline-block ml-4">
+          <button
+            type="button"
+            onClick={() => setShowTemplateMenu((v) => !v)}
+            className="flex items-center gap-1.5 text-xs font-medium text-[#8A92A6] hover:text-[#E6E9F0] transition-colors"
+          >
+            <Clock className="w-3.5 h-3.5" />
+            Templates
+          </button>
+          {showTemplateMenu && (
+            <div className="absolute bottom-full left-0 mb-2 w-64 rounded-lg border border-[#262A35] bg-[#12151D] p-2 shadow-xl z-10 max-h-64 overflow-y-auto">
+              {templates.length === 0 ? (
+                <p className="text-xs text-[#5A6275] px-2 py-1.5">No saved templates yet.</p>
+              ) : (
+                templates.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => applyTemplate(t)}
+                    className="w-full text-left px-2 py-1.5 text-xs text-[#E6E9F0] hover:bg-[#1B1F2A] rounded-md truncate"
+                  >
+                    {t.name}
+                  </button>
+                ))
+              )}
+              <div className="border-t border-[#262A35] mt-1 pt-1">
+                <button
+                  type="button"
+                  onClick={() => void saveAsTemplate()}
+                  className="w-full text-left px-2 py-1.5 text-xs text-[#00C2FF] hover:bg-[#1B1F2A] rounded-md"
+                >
+                  Save current as template
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
         {attachments.length > 0 && (
           <ul className="mt-2 space-y-1">
             {attachments.map((f) => (
@@ -682,22 +797,65 @@ export function SimpleComposer({
         )}
       </div>
 
-      <button
-        disabled={isPending}
-        className="w-full bg-[#00C2FF] text-[#06121A] font-medium py-3 rounded-md hover:bg-[#0098E6] transition-colors active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
-      >
-        {isPending ? (
-          <>
-            <Loader2 className="w-4 h-4 animate-spin" />
-            Sending…
-          </>
-        ) : (
-          <>
-            <Send className="w-4 h-4" />
-            {attachments.length > 0 ? `Send (${attachments.length} attachment${attachments.length > 1 ? "s" : ""})` : "Send"}
-          </>
+      <div className="relative flex">
+        <button
+          disabled={isPending}
+          className="flex-1 bg-[#00C2FF] text-[#06121A] font-medium py-3 rounded-l-md hover:bg-[#0098E6] transition-colors active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+        >
+          {isPending ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Sending…
+            </>
+          ) : (
+            <>
+              <Send className="w-4 h-4" />
+              {attachments.length > 0 ? `Send (${attachments.length} attachment${attachments.length > 1 ? "s" : ""})` : "Send"}
+            </>
+          )}
+        </button>
+        <button
+          type="button"
+          disabled={isPending}
+          onClick={() => setShowScheduleMenu((v) => !v)}
+          className="px-3 bg-[#00C2FF] text-[#06121A] rounded-r-md border-l border-[#06121A]/20 hover:bg-[#0098E6] transition-colors disabled:opacity-50"
+          title="Send later"
+        >
+          <ChevronDown className="w-4 h-4" />
+        </button>
+
+        {showScheduleMenu && (
+          <div className="absolute bottom-full right-0 mb-2 w-72 rounded-lg border border-[#262A35] bg-[#12151D] p-3 shadow-xl z-10">
+            <p className="text-xs font-medium text-[#8A92A6] mb-2 flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5" /> Send later
+            </p>
+            <input
+              type="datetime-local"
+              value={scheduleAt}
+              onChange={(e) => setScheduleAt(e.target.value)}
+              min={new Date(Date.now() + 60_000).toISOString().slice(0, 16)}
+              className="w-full mb-2 px-2.5 py-1.5 bg-[#0B0D12] border border-[#262A35] rounded-md text-xs text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+            />
+            <div className="flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowScheduleMenu(false)}
+                className="px-2.5 py-1.5 text-xs text-[#8A92A6] hover:text-[#E6E9F0] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isScheduling}
+                onClick={() => void handleScheduleSend()}
+                className="px-3 py-1.5 text-xs font-medium rounded-md bg-[#00C2FF] text-[#06121A] hover:bg-[#0098E6] transition-colors disabled:opacity-50"
+              >
+                {isScheduling ? "Scheduling…" : "Schedule"}
+              </button>
+            </div>
+          </div>
         )}
-      </button>
+      </div>
 
       {showAIWrite && (
         <AIWriteModal

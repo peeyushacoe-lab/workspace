@@ -48,11 +48,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
   }
 
-  if (user.mfaEnabled) {
-    // Signal to mobile to prompt for TOTP
-    const mfaToken = sign({ userId: user.id, mfaPending: true }, 300); // 5 min
-    return NextResponse.json({ mfaRequired: true, mfaToken }, { status: 200 });
-  }
+  // MFA is no longer enforced at login (app-wide, 2026-07-14) — it's a
+  // self-serve opt-in setting now, not a login gate.
 
   const tokenPayload = {
     userId: user.id,

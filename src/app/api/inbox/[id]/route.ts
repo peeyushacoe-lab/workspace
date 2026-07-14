@@ -50,8 +50,18 @@ export async function GET(request: Request, { params }: Params) {
           htmlBody: true,
           isRead: true,
           receivedAt: true,
-          attachments: { select: { id: true, filename: true, storageUrl: true, key: true, mimeType: true, size: true } },
-          threatScan: { select: { riskScore: true, findings: true } },
+          attachments: { select: { id: true, filename: true, storageUrl: true, key: true, mimeType: true, size: true, threatVerdict: true, isDangerous: true } },
+          threatScan: {
+            select: {
+              riskScore: true,
+              findings: true,
+              spfResult: true,
+              dkimResult: true,
+              dmarcResult: true,
+              verdict: true,
+              isFirstTimeSender: true,
+            },
+          },
         },
       },
       mailbox: {

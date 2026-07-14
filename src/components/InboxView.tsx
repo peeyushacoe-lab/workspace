@@ -28,6 +28,7 @@ type ThreadSummary = {
   isStarred: boolean;
   isArchived: boolean;
   isTrashed: boolean;
+  isSpam: boolean;
   isSnoozed: boolean;
   snoozedUntil: string | null;
   priority: ThreadPriority;
@@ -58,8 +59,17 @@ type Draft = {
   subject: string; body: string; signatureId: string | null; savedAt: string;
 };
 
-type Attachment = { id: string; filename: string; storageUrl: string | null; key?: string | null; mimeType: string; size?: number };
-type ThreatScan  = { riskScore: number; findings: string[] };
+type Attachment = {
+  id: string; filename: string; storageUrl: string | null; key?: string | null; mimeType: string; size?: number;
+  threatVerdict?: string | null; isDangerous?: boolean;
+};
+type AuthResult = "PASS" | "FAIL" | "NONE" | "UNKNOWN";
+type ThreatScan  = {
+  riskScore: number; findings: string[];
+  spfResult?: AuthResult; dkimResult?: AuthResult; dmarcResult?: AuthResult;
+  verdict?: "CLEAN" | "SUSPICIOUS" | "SPAM" | "PHISHING";
+  isFirstTimeSender?: boolean;
+};
 
 type MailRule = {
   id: string;
@@ -672,7 +682,7 @@ function RulesModal({ customFolders, onClose }: {
 }
 
 // ── System folder type ────────────────────────────────────────────────────────
-type SystemFolder = "inbox" | "starred" | "sent" | "drafts" | "trash" | "archive" | "snoozed" | "scheduled";
+type SystemFolder = "inbox" | "starred" | "sent" | "drafts" | "trash" | "archive" | "spam" | "snoozed" | "scheduled";
 
 const SYSTEM_FOLDERS: { key: SystemFolder; label: string; Icon: React.ElementType }[] = [
   { key: "inbox",     label: "Inbox",     Icon: Inbox       },
@@ -682,6 +692,7 @@ const SYSTEM_FOLDERS: { key: SystemFolder; label: string; Icon: React.ElementTyp
   { key: "snoozed",   label: "Snoozed",   Icon: BellOff     },
   { key: "scheduled", label: "Scheduled", Icon: CalendarClock },
   { key: "archive",   label: "Archive",   Icon: Archive     },
+  { key: "spam",      label: "Spam",      Icon: ShieldAlert },
   { key: "trash",     label: "Trash",     Icon: Trash2      },
 ];
 
@@ -773,6 +784,8 @@ export function InboxView({ userRole, initialThreads }: {
         apiFolder = "trash";
       } else if (activeFolder === "archive") {
         apiFolder = "archive";
+      } else if (activeFolder === "spam") {
+        apiFolder = "spam";
       } else {
         apiFolder = "inbox"; // inbox, starred, snoozed, custom folders all use inbox data
       }
@@ -796,10 +809,36 @@ export function InboxView({ userRole, initialThreads }: {
     // just when initialThreads is empty — otherwise search never fires on
     // pre-populated inboxes because the guard short-circuits.
     loadThreads();
+    // Fallback safety net in case the SSE stream below is unavailable
+    // (Redis down, proxy strips the connection, etc.) — the poll interval is
+    // now just a backstop, not the primary delivery path.
     const interval = setInterval(() => {
       if (document.visibilityState === "visible") loadThreads(true);
-    }, 8000); // 8s feels near-realtime without hammering the DB
+    }, 8000);
     return () => clearInterval(interval);
+  }, [loadThreads]);
+
+  // Real-time: refresh the moment new mail actually lands, instead of
+  // waiting for the next poll tick. See /api/inbox/stream + the Redis
+  // publish in /api/webhooks/resend.
+  useEffect(() => {
+    let es: EventSource | null = null;
+
+    function connect() {
+      if (es) return;
+      es = new EventSource("/api/inbox/stream");
+      es.onmessage = () => { void loadThreads(true); };
+      es.onerror = () => { es?.close(); es = null; };
+    }
+    function disconnect() { es?.close(); es = null; }
+    function onVisibility() {
+      if (document.visibilityState === "visible") { connect(); void loadThreads(true); }
+      else disconnect();
+    }
+
+    if (document.visibilityState === "visible") connect();
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => { disconnect(); document.removeEventListener("visibilitychange", onVisibility); };
   }, [loadThreads]);
 
   useEffect(() => {
@@ -923,6 +962,24 @@ export function InboxView({ userRole, initialThreads }: {
     e.stopPropagation();
     void patchThread(id, { isTrashed: false });
     toast.success("Restored to inbox");
+  };
+
+  const handleReportSpam = async (id: string, action: "report" | "unreport", e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setThreads(prev => prev.map(t => t.id === id ? { ...t, isSpam: action === "report" } : t));
+    if (selectedThreadId === id && action === "report") { setSelectedThreadId(null); setThreadDetail(null); }
+    try {
+      const res = await fetch(`/api/inbox/${id}/spam`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success(action === "report" ? "Reported as spam" : "Marked as not spam");
+    } catch {
+      toast.error("Failed to update spam status");
+      loadThreads(true);
+    }
   };
 
   const handleMarkUnread = (id: string, e: React.MouseEvent) => {
@@ -1059,9 +1116,11 @@ export function InboxView({ userRole, initialThreads }: {
     if (activeCustomFolder) return t.folderId === activeCustomFolder && !t.isTrashed;
     if (activeFolder === "trash")    return t.isTrashed;
     if (activeFolder === "archive")  return t.isArchived && !t.isTrashed;
+    if (activeFolder === "spam")     return t.isSpam && !t.isTrashed;
     if (activeFolder === "snoozed")  return t.isSnoozed && !t.isTrashed;
     if (t.isTrashed) return false;
     if (t.isArchived) return false;
+    if (t.isSpam) return false;
     if (t.isSnoozed && activeFolder !== "starred") return false;
     if (activeFolder === "starred")  return t.isStarred;
     if (showUnreadOnly && t.unreadCount === 0) return false;
@@ -1083,6 +1142,54 @@ export function InboxView({ userRole, initialThreads }: {
     setActiveFolder(key);
     setActiveCustomFolder(null);
   };
+
+  // Gmail-style keyboard shortcuts: j/k navigate, e archives, r opens reply.
+  // Ignored while typing in any input/textarea/contenteditable.
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || target?.isContentEditable) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+      if (e.key === "j" || e.key === "k") {
+        e.preventDefault();
+        if (visibleThreads.length === 0) return;
+        const currentIndex = visibleThreads.findIndex(t => t.id === selectedThreadId);
+        let nextIndex: number;
+        if (currentIndex === -1) {
+          nextIndex = 0;
+        } else if (e.key === "j") {
+          nextIndex = Math.min(currentIndex + 1, visibleThreads.length - 1);
+        } else {
+          nextIndex = Math.max(currentIndex - 1, 0);
+        }
+        const next = visibleThreads[nextIndex];
+        if (next) void loadThreadDetail(next.id);
+        return;
+      }
+
+      if (e.key === "e" && selectedThreadId) {
+        e.preventDefault();
+        void patchThread(selectedThreadId, { isArchived: true });
+        setSelectedThreadId(null);
+        setThreadDetail(null);
+        toast.success("Archived");
+        return;
+      }
+
+      if (e.key === "r" && selectedThreadId) {
+        e.preventDefault();
+        setShowReply(true);
+        setShowSmartReply(false);
+        setShowForward(false);
+      }
+    };
+
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visibleThreads, selectedThreadId]);
 
   return (
     <div className="flex h-[calc(100vh-7.25rem)] lg:h-[calc(100vh-3.5rem)] bg-[#12151D] overflow-hidden">
@@ -1474,6 +1581,23 @@ export function InboxView({ userRole, initialThreads }: {
                     >
                       <Inbox className="w-3.5 h-3.5" />
                     </button>
+                  ) : activeFolder === "spam" ? (
+                    <>
+                      <button
+                        onClick={(e) => void handleReportSpam(thread.id, "unreport", e)}
+                        className="p-1.5 text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#0f9d58] rounded-full transition-colors"
+                        title="Not spam — move to inbox"
+                      >
+                        <ShieldCheck className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={(e) => handleDelete(thread.id, e)}
+                        className="p-1.5 text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#ea4335] rounded-full transition-colors"
+                        title="Delete permanently"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </>
                   ) : (
                     <>
                       <button
@@ -1504,6 +1628,15 @@ export function InboxView({ userRole, initialThreads }: {
                       >
                         <Archive className="w-3.5 h-3.5" />
                       </button>
+                      {activeFolder === "inbox" && !activeCustomFolder && (
+                        <button
+                          onClick={(e) => void handleReportSpam(thread.id, "report", e)}
+                          className="p-1.5 text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#ff9f43] rounded-full transition-colors"
+                          title="Report spam"
+                        >
+                          <ShieldAlert className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                       <button
                         onClick={(e) => handleDelete(thread.id, e)}
                         className="p-1.5 text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#ea4335] rounded-full transition-colors"
@@ -1702,6 +1835,29 @@ export function InboxView({ userRole, initialThreads }: {
               >
                 <Archive className="w-4 h-4" />
               </button>
+              {(() => {
+                const t = threads.find(th => th.id === threadDetail.id);
+                if (t?.isSpam) {
+                  return (
+                    <button
+                      onClick={(e) => void handleReportSpam(threadDetail.id, "unreport", e)}
+                      title="Not spam — move to inbox"
+                      className="w-[34px] h-[34px] flex items-center justify-center rounded-lg border border-[#262A35] bg-[#12151D] text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#0f9d58] transition-colors"
+                    >
+                      <ShieldCheck className="w-4 h-4" />
+                    </button>
+                  );
+                }
+                return (
+                  <button
+                    onClick={(e) => void handleReportSpam(threadDetail.id, "report", e)}
+                    title="Report spam"
+                    className="w-[34px] h-[34px] flex items-center justify-center rounded-lg border border-[#262A35] bg-[#12151D] text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#ff9f43] transition-colors"
+                  >
+                    <ShieldAlert className="w-4 h-4" />
+                  </button>
+                );
+              })()}
               <button
                 onClick={(e) => handleDelete(threadDetail.id, e)}
                 title="Delete"
@@ -1717,6 +1873,11 @@ export function InboxView({ userRole, initialThreads }: {
               if (!firstMsg) return null;
               const ext = isExternalSender(firstMsg.from);
               const fromDomain = firstMsg.from.split("@")[1] ?? "";
+              const scan = firstMsg.threatScan;
+              const dot = (result?: AuthResult) => {
+                const color = result === "PASS" ? "bg-[#0f9d58]" : result === "FAIL" ? "bg-[#ea4335]" : "bg-[#5A6275]";
+                return <span className={`w-1.5 h-1.5 rounded-full ${color}`} />;
+              };
               return (
                 <div className={`flex items-center gap-3 px-5 py-1.5 text-[11px] border-b ${ext ? "bg-[#b06000]/[0.04] border-[#b06000]/15" : "bg-transparent border-[#262A35]"}`}>
                   {ext ? (
@@ -1730,11 +1891,17 @@ export function InboxView({ userRole, initialThreads }: {
                   )}
                   <span className="text-[#bdc1c6]">·</span>
                   <span className="text-[#5A6275] font-mono">{fromDomain}</span>
+                  {scan?.isFirstTimeSender && (
+                    <>
+                      <span className="text-[#bdc1c6]">·</span>
+                      <span className="text-[#00C2FF]">First time sender</span>
+                    </>
+                  )}
                   <div className="flex-1" />
-                  <span className="flex items-center gap-1.5 text-[#bdc1c6]">
-                    <span className="flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full bg-[#12151D]" />SPF</span>
-                    <span className="flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full bg-[#12151D]" />DKIM</span>
-                    <span className="flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full bg-[#12151D]" />DMARC</span>
+                  <span className="flex items-center gap-1.5 text-[#bdc1c6]" title={`SPF: ${scan?.spfResult ?? "UNKNOWN"} · DKIM: ${scan?.dkimResult ?? "UNKNOWN"} · DMARC: ${scan?.dmarcResult ?? "UNKNOWN"}`}>
+                    <span className="flex items-center gap-0.5">{dot(scan?.spfResult)}SPF</span>
+                    <span className="flex items-center gap-0.5">{dot(scan?.dkimResult)}DKIM</span>
+                    <span className="flex items-center gap-0.5">{dot(scan?.dmarcResult)}DMARC</span>
                   </span>
                 </div>
               );
@@ -1895,7 +2062,10 @@ export function InboxView({ userRole, initialThreads }: {
                           {msg.attachments.map((att) => {
                             const riskyExts = [".exe",".bat",".cmd",".vbs",".jar",".ps1",".msi",".scr",".dll"];
                             const ext = att.filename.slice(att.filename.lastIndexOf(".")).toLowerCase();
-                            const isRisky = riskyExts.includes(ext);
+                            // Prefer the server-computed verdict (covers macro-enabled
+                            // office docs and archives too); fall back to the extension
+                            // heuristic for attachments scanned before this field existed.
+                            const isRisky = att.isDangerous !== undefined ? att.isDangerous : riskyExts.includes(ext);
                             // Use the server-side proxy — avoids relative-path R2 URLs and
                             // handles signing. A file is "available" if it has a storageUrl
                             // OR a key (the proxy will sign it).

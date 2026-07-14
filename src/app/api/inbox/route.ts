@@ -36,8 +36,10 @@ export async function GET(request: Request) {
         ? { ...userAccessFilter, isTrashed: true }
         : folder === "archive"
         ? { ...userAccessFilter, isArchived: true, isTrashed: false }
+        : folder === "spam"
+        ? { ...userAccessFilter, isSpam: true, isTrashed: false }
         : {
-            // "inbox" (default) — exclude trash, archive, and pure sent-copy threads.
+            // "inbox" (default) — exclude trash, archive, spam, and pure sent-copy threads.
             // Use `messages.some { from: { not: userEmail } }` rather than
             // `NOT { messages.every { from: userEmail } }` — the latter has
             // unreliable behaviour in Prisma when the relation set is empty (vacuous
@@ -46,6 +48,7 @@ export async function GET(request: Request) {
             ...userAccessFilter,
             isTrashed: false,
             isArchived: false,
+            isSpam: false,
             messages: { some: { from: { not: userEmail } } },
           };
 
@@ -136,6 +139,7 @@ export async function GET(request: Request) {
         isStarred: t.isStarred,
         isArchived: t.isArchived,
         isTrashed: t.isTrashed,
+        isSpam: t.isSpam,
         isSnoozed: t.isSnoozed,
         snoozedUntil: t.snoozedUntil,
         priority: t.priority,

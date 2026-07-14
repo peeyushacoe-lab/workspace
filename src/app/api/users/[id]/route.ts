@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcrypt";
 import { getCurrentUser } from "@/lib/session";
+import { indexingQueue } from "@/lib/queues/indexing.queue";
 import type { UserRole } from "@/generated/prisma/enums";
 
 const updateUserSchema = z.object({
@@ -133,6 +134,7 @@ export async function DELETE(
     await prisma.user.delete({
       where: { id }
     });
+    indexingQueue.add("deindex-person", { type: "DEINDEX", resource: "person", resourceId: id }).catch(() => {});
 
     return NextResponse.json({ success: true });
   } catch (error) {

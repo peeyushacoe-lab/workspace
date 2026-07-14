@@ -13,12 +13,18 @@ type ShareEntry = {
 
 type Props = {
   docId: string;
-  docType: "sheet" | "pres";
+  docType: "sheet" | "pres" | "doc";
   onClose: () => void;
 };
 
+const API_BASE_BY_TYPE: Record<Props["docType"], string> = {
+  sheet: "sheets",
+  pres: "slides",
+  doc: "docs",
+};
+
 export function DocShareModal({ docId, docType, onClose }: Props) {
-  const apiBase = docType === "sheet" ? `/api/sheets/${docId}/share` : `/api/slides/${docId}/share`;
+  const apiBase = `/api/${API_BASE_BY_TYPE[docType]}/${docId}/share`;
   const [shares, setShares] = useState<ShareEntry[]>([]);
   const [_ownerId, setOwnerId] = useState<string>("");
   const [loading, setLoading] = useState(true);
@@ -78,7 +84,9 @@ export function DocShareModal({ docId, docType, onClose }: Props) {
       <div className="bg-[#12151D] rounded-2xl shadow-xl w-full max-w-md border border-[#262A35]">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-[#262A35]">
-          <h2 className="text-sm font-semibold text-[#E6E9F0]">Share {docType === "sheet" ? "Spreadsheet" : "Presentation"}</h2>
+          <h2 className="text-sm font-semibold text-[#E6E9F0]">
+            Share {docType === "sheet" ? "Spreadsheet" : docType === "pres" ? "Presentation" : "Document"}
+          </h2>
           <button onClick={onClose} className="p-1.5 rounded-full hover:bg-[#1B1F2A] text-[#8A92A6]">
             <X className="w-4 h-4" />
           </button>

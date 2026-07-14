@@ -10,6 +10,7 @@ import {
 import { toast } from "sonner";
 import { PageHeader } from "@/components/Shell";
 import { avatarGradient } from "@/lib/avatar";
+import { zonedTimeToUtc, COMMON_TIMEZONES } from "@/lib/tz";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -248,9 +249,13 @@ function InternAttendanceView({ userId }: { userId: string }) {
       const rawMs = Date.now() - new Date(lastIn).getTime();
       let breakMs = 0;
       if (record.breakWindow) {
+        // Must match the server's interpretation (schedule.timezone), not
+        // the browser's local timezone — otherwise this live counter and
+        // the server's own totals disagree by whatever the offset is.
         const todayDate = new Date().toISOString().slice(0, 10);
-        const bStart = new Date(`${todayDate}T${record.breakWindow.from}:00`).getTime();
-        const bEnd   = new Date(`${todayDate}T${record.breakWindow.to}:00`).getTime();
+        const tz = schedule?.timezone || "UTC";
+        const bStart = zonedTimeToUtc(todayDate, record.breakWindow.from, tz).getTime();
+        const bEnd   = zonedTimeToUtc(todayDate, record.breakWindow.to, tz).getTime();
         const sStart = new Date(lastIn).getTime();
         const now    = Date.now();
         const overlapStart = Math.max(sStart, bStart);
@@ -262,7 +267,7 @@ function InternAttendanceView({ userId }: { userId: string }) {
     update();
     const timer = setInterval(update, 30000);
     return () => clearInterval(timer);
-  }, [isPunchedIn, record]);
+  }, [isPunchedIn, record, schedule]);
 
   return (
     <div className="max-w-xl mx-auto space-y-5">
@@ -395,7 +400,7 @@ function MentorAttendanceView() {
   const [activeView, setActiveView] = useState<"daily" | "summary">("daily");
   const [schedule, setSchedule] = useState<AttendanceSchedule | null>(null);
   const [savingSchedule, setSavingSchedule] = useState(false);
-  const [scheduleForm, setScheduleForm] = useState({ startTime: "09:00", endTime: "17:00", lateGraceMinutes: 15, defaultBreakFrom: "12:00", defaultBreakTo: "13:00" });
+  const [scheduleForm, setScheduleForm] = useState({ startTime: "09:00", endTime: "17:00", timezone: "UTC", lateGraceMinutes: 15, defaultBreakFrom: "12:00", defaultBreakTo: "13:00" });
   const [editingSchedule, setEditingSchedule] = useState(false);
 
   const [date, setDate] = useState(todayStr());
@@ -412,7 +417,7 @@ function MentorAttendanceView() {
     if (res.ok) {
       const s = await res.json() as AttendanceSchedule;
       setSchedule(s);
-      setScheduleForm({ startTime: s.startTime, endTime: s.endTime, lateGraceMinutes: s.lateGraceMinutes, defaultBreakFrom: s.defaultBreakFrom ?? "12:00", defaultBreakTo: s.defaultBreakTo ?? "13:00" });
+      setScheduleForm({ startTime: s.startTime, endTime: s.endTime, timezone: s.timezone || "UTC", lateGraceMinutes: s.lateGraceMinutes, defaultBreakFrom: s.defaultBreakFrom ?? "12:00", defaultBreakTo: s.defaultBreakTo ?? "13:00" });
     }
   }, []);
 
@@ -549,6 +554,20 @@ function MentorAttendanceView() {
                   value={scheduleForm.lateGraceMinutes} onChange={e => setScheduleForm(p => ({ ...p, lateGraceMinutes: Number(e.target.value) }))} />
               </div>
             </div>
+            <div>
+              <label className="block text-[11px] font-medium text-[#8A92A6] mb-1">Office timezone</label>
+              <select
+                className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+                value={scheduleForm.timezone} onChange={e => setScheduleForm(p => ({ ...p, timezone: e.target.value }))}>
+                {COMMON_TIMEZONES.map(tz => <option key={tz} value={tz}>{tz}</option>)}
+                {!(COMMON_TIMEZONES as readonly string[]).includes(scheduleForm.timezone) && (
+                  <option value={scheduleForm.timezone}>{scheduleForm.timezone}</option>
+                )}
+              </select>
+              <p className="text-[10px] text-[#5A6275] mt-1">
+                Start/end/break times above are wall-clock times in this zone — this is what makes &ldquo;late&rdquo;, break deductions, and punch displays agree with each other.
+              </p>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-[11px] font-medium text-[#8A92A6] mb-1">Default break start</label>
@@ -575,6 +594,7 @@ function MentorAttendanceView() {
         ) : schedule ? (
           <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm">
             <span className="text-[#C8CEDB]"><span className="text-[#00C2FF] font-semibold font-mono">{schedule.startTime}</span> – <span className="text-[#00C2FF] font-semibold font-mono">{schedule.endTime}</span></span>
+            <span className="text-[#5A6275] font-mono text-xs">{schedule.timezone || "UTC"}</span>
             <span className="text-[#5A6275]">{schedule.lateGraceMinutes} min grace</span>
             {(schedule.defaultBreakFrom && schedule.defaultBreakTo) && (
               <span className="text-[#5A6275]">Break: <span className="font-mono text-[#C8CEDB]">{schedule.defaultBreakFrom} – {schedule.defaultBreakTo}</span></span>

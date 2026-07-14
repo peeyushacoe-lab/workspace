@@ -488,7 +488,7 @@ export function GlobalSearch({
           <input
             ref={inputRef}
             type="text"
-            placeholder="Search or type a command..."
+            placeholder="Search or type a command... (try from:, in:, has:attachment, before:, after:)"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}

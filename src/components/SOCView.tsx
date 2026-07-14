@@ -28,6 +28,7 @@ type Incident = {
   severity: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
   status: "OPEN" | "INVESTIGATING" | "CONTAINED" | "RESOLVED" | "CLOSED";
   assignedTo?: string;
+  sourceType?: string | null;
   createdAt: string;
   updatedAt: string;
   assignee?: { id: string; fullName: string; avatarUrl?: string };
@@ -486,7 +487,17 @@ export function SOCView(_props: { currentUserId: string }) {
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2 mb-2">
-                    <p className="font-medium text-sm text-[#E6E9F0] line-clamp-1">{incident.title}</p>
+                    <p className="font-medium text-sm text-[#E6E9F0] line-clamp-1 flex items-center gap-1.5">
+                      {incident.sourceType === "SENTINEL_BRAIN" && (
+                        <span
+                          title="Auto-correlated by Sentinel Brain"
+                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#00C2FF]/10 text-[#00C2FF] border border-[#00C2FF]/25 flex-shrink-0"
+                        >
+                          <Sparkles className="w-2.5 h-2.5" /> Brain
+                        </span>
+                      )}
+                      <span className="line-clamp-1">{incident.title}</span>
+                    </p>
                     <SeverityBadge severity={incident.severity} />
                   </div>
                   <p className="text-xs text-[#8A92A6] line-clamp-2 mb-2">{incident.description}</p>

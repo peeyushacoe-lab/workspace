@@ -19,4 +19,8 @@ export type CleanupJobData =
   | { type: "STALE_NOTIFICATIONS"; olderThanDays: number }
   | { type: "OLD_AUDIT_LOGS"; olderThanDays: number }
   | { type: "TRASHED_FILES"; olderThanDays: number }
-  | { type: "EXPIRED_DRAFTS"; olderThanDays: number };
+  | { type: "EXPIRED_DRAFTS"; olderThanDays: number }
+  | { type: "STATUS_PING" }
+  | { type: "RESTORE_DRILL" }
+  | { type: "UNSNOOZE_DUE_THREADS" }
+  | { type: "SENTINEL_CORRELATION" };

@@ -1537,6 +1537,48 @@ function MailboxesTab({ userEmail }: { userEmail: string }) {
           </a>
         </div>
       </SectionCard>
+
+      {/* Migration wizard — import from another provider */}
+      <SectionCard
+        title="Switching from Gmail or another provider?"
+        description="Import your mail, contacts, and calendar into Nexus"
+      >
+        <a
+          href="/settings/import"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-[#00C2FF] hover:text-[#47d6ff] transition-colors"
+        >
+          <Mail className="h-4 w-4" />
+          Start migration wizard →
+        </a>
+      </SectionCard>
+
+      {/* Account export / takeout */}
+      <SectionCard
+        title="Export your data"
+        description="Download your mail, files, notes, contacts, and calendar as a single archive"
+      >
+        <a
+          href="/settings/export"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-[#00C2FF] hover:text-[#47d6ff] transition-colors"
+        >
+          <Download className="h-4 w-4" />
+          Start account export →
+        </a>
+      </SectionCard>
+
+      {/* Vacation responder */}
+      <SectionCard
+        title="Vacation responder"
+        description="Automatically reply to incoming mail while you're away"
+      >
+        <a
+          href="/settings/vacation-responder"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-[#00C2FF] hover:text-[#47d6ff] transition-colors"
+        >
+          <Mail className="h-4 w-4" />
+          Configure vacation responder →
+        </a>
+      </SectionCard>
     </>
   );
 }

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { redis } from "@/lib/redis";
 import { getCurrentUser } from "@/lib/session";
 import { uploadToR2, getAttachmentUrl } from "@/lib/s3";
-import { isHRManager, listSignatories, SIGNATORIES_KEY, DEFAULT_SIGNATORIES, type Signatory } from "@/lib/hr";
+import { isHRManager, MENTOR_MGMT_ROLES, listSignatories, SIGNATORIES_KEY, DEFAULT_SIGNATORIES, type Signatory } from "@/lib/hr";
 
 const MAX_SIG_SIZE = 2 * 1024 * 1024; // 2 MB
 const ALLOWED = new Set(["image/png", "image/jpeg"]);
@@ -14,9 +14,11 @@ const ALLOWED = new Set(["image/png", "image/jpeg"]);
  */
 
 // GET /api/hr/signatories → { signatories: [{ id, name, title, builtIn, hasSignature, signatureUrl? }] }
+// Readable by HR and by mentors (MGMT) — they pick a signatory when sending intern letters.
 export async function GET() {
   const user = await getCurrentUser();
-  if (!user || !isHRManager(user.role)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const canRead = user && (isHRManager(user.role) || (MENTOR_MGMT_ROLES as readonly string[]).includes(user.role));
+  if (!canRead) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const all = await listSignatories();
   const signatories = await Promise.all(

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 import { sendEmail, renderComposeHtml } from "@/lib/email";
-import { getTokensForUser, sendExpoPush } from "@/lib/expo-push";
+import { getTokensForUser, sendExpoPush, getUnreadBadgeCount } from "@/lib/expo-push";
 import { indexingQueue } from "@/lib/queues/indexing.queue";
 import { uploadToR2, isS3Configured } from "@/lib/s3";
 
@@ -233,10 +233,12 @@ export async function POST(request: Request) {
       if (!owner) return;
       const tokens = await getTokensForUser(owner.userId);
       if (tokens.length) {
+        const badge = await getUnreadBadgeCount(owner.userId);
         await sendExpoPush(tokens, {
           title: `New mail from ${user.fullName}`,
           body: subject,
           data: { type: "email", threadId: thread.id },
+          badge,
         });
       }
     }).catch(() => {});

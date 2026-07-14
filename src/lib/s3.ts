@@ -53,6 +53,23 @@ export async function uploadToR2(file: Buffer, key: string, contentType: string)
   return { key, url: `${process.env.R2_PUBLIC_URL ?? ""}/${key}` };
 }
 
+/** Downloads an object's full body into memory. Used by the account-export
+ * worker to bundle Drive files into a zip — for large-scale streaming use
+ * a presigned URL (getAttachmentUrl) instead of buffering. */
+export async function downloadFromR2(key: string): Promise<Buffer> {
+  const client = getClient();
+  const result = await client.send(new GetObjectCommand({ Bucket: bucketName, Key: key }));
+  const body = result.Body;
+  if (!body) throw new Error(`Empty body for R2 key: ${key}`);
+  const chunks: Uint8Array[] = [];
+  // AWS SDK v3 Body is a web/node stream depending on runtime — both are async-iterable.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  for await (const chunk of body as any) {
+    chunks.push(chunk instanceof Uint8Array ? chunk : new Uint8Array(chunk));
+  }
+  return Buffer.concat(chunks);
+}
+
 export async function getAttachmentUrl(key: string, filename?: string, inline = false): Promise<string> {
   const client = getClient();
   const dispType = inline ? "inline" : "attachment";

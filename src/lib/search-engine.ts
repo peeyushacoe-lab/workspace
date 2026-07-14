@@ -26,7 +26,7 @@ async function getClient(): Promise<Meilisearch | null> {
   }
 }
 
-export type SearchableResource = "email" | "chat_message" | "file" | "doc" | "note" | "calendar_event";
+export type SearchableResource = "email" | "chat_message" | "file" | "doc" | "note" | "calendar_event" | "meeting" | "person";
 
 const INDEX_NAMES: Record<SearchableResource, string> = {
   email:          "emails",
@@ -35,19 +35,21 @@ const INDEX_NAMES: Record<SearchableResource, string> = {
   doc:            "docs",
   note:           "notes",
   calendar_event: "calendar_events",
+  meeting:        "meetings",
+  person:         "people",
 };
 
 // Settings applied once when an index is first created
 const INDEX_SETTINGS: Partial<Record<SearchableResource, object>> = {
   email: {
     searchableAttributes: ["subject", "body", "fromEmail", "toEmail"],
-    filterableAttributes: ["userId", "threadId", "isRead", "priority"],
+    filterableAttributes: ["userId", "mailboxId", "threadId", "isRead", "priority", "hasAttachment", "isTrashed", "isArchived"],
     sortableAttributes: ["updatedAt"],
     rankingRules: ["words", "typo", "proximity", "attribute", "sort", "exactness"],
   },
   chat_message: {
     searchableAttributes: ["content", "senderName", "channelName"],
-    filterableAttributes: ["userId", "channelId", "isMember"],
+    filterableAttributes: ["userId", "channelId", "isMember", "hasAttachment"],
     sortableAttributes: ["createdAt"],
   },
   doc: {
@@ -55,10 +57,30 @@ const INDEX_SETTINGS: Partial<Record<SearchableResource, object>> = {
     filterableAttributes: ["ownerId"],
     sortableAttributes: ["updatedAt"],
   },
+  note: {
+    searchableAttributes: ["title", "content", "ownerName"],
+    filterableAttributes: ["ownerId"],
+    sortableAttributes: ["updatedAt"],
+  },
   file: {
-    searchableAttributes: ["name", "mimeType"],
+    searchableAttributes: ["name", "mimeType", "ownerName"],
     filterableAttributes: ["ownerId"],
     sortableAttributes: ["createdAt"],
+  },
+  calendar_event: {
+    searchableAttributes: ["title", "description", "organizerName"],
+    filterableAttributes: ["organizerId"],
+    sortableAttributes: ["startAt"],
+  },
+  meeting: {
+    searchableAttributes: ["title", "description", "organizerName"],
+    filterableAttributes: ["organizerId", "status"],
+    sortableAttributes: ["scheduledAt"],
+  },
+  person: {
+    searchableAttributes: ["fullName", "email", "jobTitle", "department"],
+    filterableAttributes: ["role", "department"],
+    sortableAttributes: ["fullName"],
   },
 };
 

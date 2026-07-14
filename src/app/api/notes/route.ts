@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { indexingQueue } from "@/lib/queues/indexing.queue";
 
 export async function GET(request: Request) {
   const user = getSessionUserFromCookieStore(await cookies());
@@ -58,6 +59,14 @@ export async function POST(request: Request) {
       userId: user.id,
     },
   });
+
+  indexingQueue.add("index-note", {
+    type: "INDEX",
+    resource: "note",
+    resourceId: note.id,
+    content: `${note.title} ${note.content}`,
+    metadata: { ownerId: user.id, title: note.title, updatedAt: note.updatedAt.toISOString() },
+  }).catch(() => {});
 
   return NextResponse.json(note, { status: 201 });
 }

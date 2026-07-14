@@ -7,6 +7,7 @@ import { getCurrentUser } from "@/lib/session";
 import { CREATOR_PERMISSIONS, KEY_ROLES } from "@/lib/auth";
 import { sendInviteEmail, sendInternWelcomeEmail, sendWelcomeInboxMessage } from "@/lib/email";
 import { generateEmployeeId } from "@/lib/employee-id";
+import { indexingQueue } from "@/lib/queues/indexing.queue";
 import type { UserRole } from "@/generated/prisma/enums";
 
 const createUserSchema = z.object({
@@ -151,6 +152,14 @@ export async function POST(request: Request) {
         create: { mailboxId: mailbox.id, userId: user.id, role: "OWNER" },
       }).catch(err => console.error("[mailbox access]", err));
     }
+
+    indexingQueue.add("index-person", {
+      type: "INDEX",
+      resource: "person",
+      resourceId: user.id,
+      content: `${user.fullName} ${user.email}`,
+      metadata: { role: user.role, fullName: user.fullName, email: user.email },
+    }).catch(() => {});
 
     // Send welcome email to personal address — interns get a custom email
     const emailPayload = {

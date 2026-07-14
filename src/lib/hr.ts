@@ -20,6 +20,21 @@ export function isHRManager(role: string) {
   return role === "HR";
 }
 
+/** Leadership roles that mentor interns (mirror of internship API MENTOR_ROLES). */
+export const MENTOR_MGMT_ROLES = ["ADMIN", "CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER"] as const;
+
+/**
+ * Lifecycle access: HR manages everyone; mentors (MGMT) manage interns only.
+ * Pass the target's role when known — with no target role, only HR qualifies.
+ */
+export function canManageLifecycle(actorRole: string, targetRole?: string | null): boolean {
+  if (isHRManager(actorRole)) return true;
+  if (targetRole === "INTERNSHIP") {
+    return (MENTOR_MGMT_ROLES as readonly string[]).includes(actorRole);
+  }
+  return false;
+}
+
 function toDateStr(d: Date) {
   return d.toISOString().slice(0, 10);
 }

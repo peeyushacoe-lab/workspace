@@ -28,7 +28,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
 import { DocShareModal } from "./DocShareModal";
-import { evaluateFormula, formatValue, indexToCol, parseRange, parseRef, getRangeVals, isSpill } from "@/lib/sheets/formula";
+import { evaluateFormula, formatValue, indexToCol, parseRange, parseRef, getRangeVals, isSpill, shiftFormulaRefs } from "@/lib/sheets/formula";
 import type { CellValue, NumberFormat, SpillResult } from "@/lib/sheets/formula";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -275,6 +275,24 @@ function detectNameSeq(last: string): { list: string[]; idx: number } | null {
 }
 
 // Continue a series from `source` for `count` more cells (Excel-style autofill).
+/** When every cell in `source` is a formula (starts with "="), dragging the fill
+ * handle shifts relative references per target offset instead of repeating the
+ * formula text verbatim — mirrors Excel/Google Sheets fill-handle behavior.
+ * `rowStep`/`colStep` should be (1, 0) for a vertical (downward) fill or
+ * (0, 1) for a horizontal (rightward) fill. */
+function fillFormulaSeries(source: string[], count: number, rowStep: number, colStep: number): string[] {
+  const out: string[] = [];
+  const n = source.length;
+  for (let k = 0; k < count; k++) {
+    const srcIdx = k % n;
+    // Number of grid positions this target cell sits after the specific
+    // source cell it cyclically repeats from (n cells per cycle).
+    const delta = n * (Math.floor(k / n) + 1);
+    out.push(shiftFormulaRefs(source[srcIdx], rowStep * delta, colStep * delta));
+  }
+  return out;
+}
+
 function fillSeries(source: string[], count: number): string[] {
   const out: string[] = [];
   const n = source.length;
@@ -598,7 +616,10 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
               while (rr >= 0 && raw(rr, c) !== "" && run.length < 200) { run.unshift(raw(rr, c)); rr--; }
               for (let i = run.length - 1; i >= 0; i--) source.unshift(run[i]);
             }
-            const filled = fillSeries(source, downExtent);
+            const allFormulas = source.length > 0 && source.every(s => s.trim().startsWith("="));
+            const filled = allFormulas
+              ? fillFormulaSeries(source, downExtent, 1, 0)
+              : fillSeries(source, downExtent);
             const baseStyle = srcStyle(src.r2, c);
             filled.forEach((v, i) => {
               const rr = src.r2 + 1 + i;
@@ -616,7 +637,10 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
               while (cc >= 0 && raw(r, cc) !== "" && run.length < 200) { run.unshift(raw(r, cc)); cc--; }
               for (let i = run.length - 1; i >= 0; i--) source.unshift(run[i]);
             }
-            const filled = fillSeries(source, rightExtent);
+            const allFormulas = source.length > 0 && source.every(s => s.trim().startsWith("="));
+            const filled = allFormulas
+              ? fillFormulaSeries(source, rightExtent, 0, 1)
+              : fillSeries(source, rightExtent);
             const baseStyle = srcStyle(r, src.c2);
             filled.forEach((v, i) => {
               const cc = src.c2 + 1 + i;
@@ -690,7 +714,13 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
     c2: selEnd ? Math.max(sel.c, selEnd.c) : sel.c,
   }), [sel, selEnd]);
 
-  const copySelection = useCallback(async () => {
+  // Remembers where an in-app copy came from (sheet + top-left cell) so a
+  // same-session paste can shift formula references the way Excel/Sheets do.
+  // A paste of text copied from elsewhere (or after switching sheets) falls
+  // back to pasting formulas verbatim, since there's no known origin.
+  const lastCopyOriginRef = useRef<{ sheetId: string; r: number; c: number; text: string; isCut: boolean } | null>(null);
+
+  const copySelection = useCallback(async (isCut = false) => {
     const { r1, r2, c1, c2 } = selRect();
     const lines: string[] = [];
     for (let r = r1; r <= r2; r++) {
@@ -698,8 +728,10 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
       for (let c = c1; c <= c2; c++) cols.push(activeSheet.cells[ck(r, c)]?.v ?? "");
       lines.push(cols.join("\t"));
     }
-    try { await navigator.clipboard.writeText(lines.join("\n")); } catch { /* clipboard blocked */ }
-  }, [selRect, activeSheet]);
+    const text = lines.join("\n");
+    lastCopyOriginRef.current = { sheetId: activeSheetId, r: r1, c: c1, text, isCut };
+    try { await navigator.clipboard.writeText(text); } catch { /* clipboard blocked */ }
+  }, [selRect, activeSheet, activeSheetId]);
 
   const pasteFromClipboard = useCallback(async () => {
     let text = "";
@@ -707,6 +739,18 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
     if (!text) return;
     const grid = text.replace(/\r/g, "").split("\n").map(l => l.split("\t"));
     if (grid.length > 1 && grid[grid.length - 1].length === 1 && grid[grid.length - 1][0] === "") grid.pop();
+
+    // If this paste's text matches our last in-app copy, we know exactly
+    // where it came from and can shift any formula cells relative refs.
+    // Exception: a cut-then-paste is a move, not a duplication — Excel/Sheets
+    // convention is that the moved formula's own text stays exactly as it
+    // was, so we skip the reference shift when the origin was a cut.
+    const origin = lastCopyOriginRef.current;
+    const isKnownOrigin = origin && origin.text === text && origin.sheetId === activeSheetId;
+    const shouldShiftFormulas = isKnownOrigin && !origin.isCut;
+    const rowDelta = shouldShiftFormulas ? sel.r - origin.r : 0;
+    const colDelta = shouldShiftFormulas ? sel.c - origin.c : 0;
+
     setSheets(prev => {
       const next = prev.map(sh => {
         if (sh.id !== activeSheetId) return sh;
@@ -715,7 +759,10 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
           const rr = sel.r + dr, cc = sel.c + dc;
           if (rr >= ROWS || cc >= COLS) return;
           if (v === "") delete cells[ck(rr, cc)];
-          else cells[ck(rr, cc)] = { ...cells[ck(rr, cc)], v };
+          else {
+            const pasted = shouldShiftFormulas && v.trim().startsWith("=") ? shiftFormulaRefs(v, rowDelta, colDelta) : v;
+            cells[ck(rr, cc)] = { ...cells[ck(rr, cc)], v: pasted };
+          }
         }));
         return { ...sh, cells };
       });
@@ -723,10 +770,14 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
     });
     const h = grid.length, w = Math.max(...grid.map(g => g.length));
     setSelEnd({ r: Math.min(ROWS - 1, sel.r + h - 1), c: Math.min(COLS - 1, sel.c + w - 1) });
+    // A cut is single-use — once pasted, revert to normal copy semantics so a
+    // second paste of the same clipboard text (e.g. Ctrl+V again) doesn't
+    // keep behaving like a move.
+    if (origin?.isCut) lastCopyOriginRef.current = { ...origin, isCut: false };
   }, [sel, activeSheetId, pushHistory, scheduleSave, title]);
 
   const cutSelection = useCallback(async () => {
-    await copySelection();
+    await copySelection(true);
     const { r1, r2, c1, c2 } = selRect();
     setSheets(prev => {
       const next = prev.map(sh => {

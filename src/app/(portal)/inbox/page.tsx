@@ -41,6 +41,7 @@ export default async function InboxPage() {
       isStarred: t.isStarred,
       isArchived: t.isArchived,
       isTrashed: t.isTrashed,
+      isSpam: t.isSpam,
       isSnoozed: t.isSnoozed,
       snoozedUntil: t.snoozedUntil?.toISOString() ?? null,
       priority: t.priority as "LOW" | "NORMAL" | "HIGH" | "URGENT",

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 import { uploadToR2 } from "@/lib/s3";
-import { isHRManager, DEFAULT_ONBOARDING, DEFAULT_OFFBOARDING, readLifecycle, writeLifecycle, getSignatory } from "@/lib/hr";
+import { isHRManager, canManageLifecycle, MENTOR_MGMT_ROLES, DEFAULT_ONBOARDING, DEFAULT_OFFBOARDING, readLifecycle, writeLifecycle, getSignatory } from "@/lib/hr";
 import { generateOnboardingLetter, generateOffboardingLetter, generateNocLetter, makeRef, type LetterSignatory } from "@/lib/hr-letters";
 import { getAttachmentUrl } from "@/lib/s3";
 import { sendEmail } from "@/lib/email";
@@ -109,15 +109,17 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const targetId = searchParams.get("userId");
-  if (targetId && targetId !== user.id && !isHRManager(user.role)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
 
   const target = await prisma.user.findUnique({
     where: { id: targetId ?? user.id },
-    select: { preferences: true },
+    select: { preferences: true, role: true },
   });
   if (!target) return NextResponse.json({ error: "User not found" }, { status: 404 });
+
+  // Own lifecycle is always readable; others need HR, or MGMT for interns.
+  if (targetId && targetId !== user.id && !canManageLifecycle(user.role, target.role)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   return NextResponse.json({ lifecycle: readLifecycle(target.preferences) });
 }
@@ -130,7 +132,11 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const actor = await getCurrentUser();
   if (!actor) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!isHRManager(actor.role)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  // HR manages everyone; mentors (MGMT) manage interns — verified against the
+  // target's role after it is loaded below.
+  if (!isHRManager(actor.role) && !(MENTOR_MGMT_ROLES as readonly string[]).includes(actor.role)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
   if (!body) return NextResponse.json({ error: "Invalid body" }, { status: 400 });
@@ -140,9 +146,12 @@ export async function POST(request: Request) {
 
   const target = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, fullName: true, email: true, jobTitle: true, department: true, preferences: true, createdAt: true },
+    select: { id: true, fullName: true, email: true, jobTitle: true, department: true, preferences: true, createdAt: true, role: true },
   });
   if (!target) return NextResponse.json({ error: "User not found" }, { status: 404 });
+  if (!canManageLifecycle(actor.role, target.role)) {
+    return NextResponse.json({ error: "Mentors can only manage intern lifecycles" }, { status: 403 });
+  }
   if (target.id === actor.id && action !== "onboard") {
     return NextResponse.json({ error: "You cannot offboard yourself" }, { status: 400 });
   }

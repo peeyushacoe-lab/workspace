@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { indexingQueue } from "@/lib/queues/indexing.queue";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -60,6 +61,23 @@ export async function PUT(request: Request, { params }: Params) {
     },
   });
 
+  if (updated.status === "CANCELLED") {
+    indexingQueue.add("deindex-meeting", { type: "DEINDEX", resource: "meeting", resourceId: id }).catch(() => {});
+  } else {
+    indexingQueue.add("index-meeting", {
+      type: "INDEX",
+      resource: "meeting",
+      resourceId: id,
+      content: `${updated.title} ${updated.description ?? ""}`,
+      metadata: {
+        organizerId: user.id,
+        title: updated.title,
+        status: updated.status,
+        scheduledAt: (updated.scheduledAt ?? new Date()).toISOString(),
+      },
+    }).catch(() => {});
+  }
+
   return NextResponse.json(updated);
 }
 
@@ -72,5 +90,6 @@ export async function DELETE(_request: Request, { params }: Params) {
   if (!meeting) return NextResponse.json({ error: "Not found or not organizer" }, { status: 404 });
 
   await prisma.meeting.delete({ where: { id } });
+  indexingQueue.add("deindex-meeting", { type: "DEINDEX", resource: "meeting", resourceId: id }).catch(() => {});
   return NextResponse.json({ deleted: true });
 }

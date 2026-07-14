@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { redis } from "@/lib/redis";
+import { zonedTimeToUtc, minutesSinceMidnightInZone } from "@/lib/tz";
 
 const SCHEDULE_KEY = "attendance:schedule";
 const MENTOR_ROLES = ["ADMIN", "CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER"] as const;
@@ -30,11 +31,6 @@ interface OverrideMeta {
 
 function toDateStr(d: Date) {
   return d.toISOString().slice(0, 10);
-}
-
-function minutesSinceMidnight(iso: string) {
-  const d = new Date(iso);
-  return d.getHours() * 60 + d.getMinutes();
 }
 
 function diffMinutes(a: string, b: string) {
@@ -68,23 +64,31 @@ export async function GET(request: Request) {
         startTime: "09:00",
         defaultBreakFrom: "12:00",
         defaultBreakTo: "13:00",
+        timezone: "UTC",
         ...((typeof rawSchedule === "string" ? JSON.parse(rawSchedule) : rawSchedule) as Record<string, unknown>),
       }
-    : { startTime: "09:00", endTime: "17:00", lateGraceMinutes: 15, defaultBreakFrom: "12:00", defaultBreakTo: "13:00" };
+    : { startTime: "09:00", endTime: "17:00", lateGraceMinutes: 15, defaultBreakFrom: "12:00", defaultBreakTo: "13:00", timezone: "UTC" };
 
+  // All schedule "HH:MM" strings are wall-clock times in this timezone, not
+  // UTC and not whatever timezone this server process happens to run in —
+  // route every comparison through the schedule's actual IANA zone (see
+  // lib/tz.ts) so "9am" means the same instant here as it did to the intern
+  // who saw "9am" on the schedule banner.
+  const scheduleTz = (schedule.timezone as string) || "UTC";
+
+  const graceMinutes = Number(schedule.lateGraceMinutes ?? 15);
   const scheduleStartMinutes = (() => {
     const [h, m] = (schedule.startTime as string).split(":").map(Number);
     return h * 60 + m;
   })();
-  const graceMinutes = Number(schedule.lateGraceMinutes ?? 15);
 
-  // Build the auto-break window (UTC) for this date
+  // Build the auto-break window, correctly anchored to the schedule's timezone.
   const breakFrom = schedule.defaultBreakFrom as string | undefined;
   const breakTo   = schedule.defaultBreakTo   as string | undefined;
   const autoBreakWindowMs = (breakFrom && breakTo)
     ? {
-        start: new Date(`${dateParam}T${breakFrom}:00.000Z`).getTime(),
-        end:   new Date(`${dateParam}T${breakTo}:00.000Z`).getTime(),
+        start: zonedTimeToUtc(dateParam, breakFrom, scheduleTz).getTime(),
+        end:   zonedTimeToUtc(dateParam, breakTo, scheduleTz).getTime(),
       }
     : null;
 
@@ -212,7 +216,7 @@ export async function GET(request: Request) {
     const punchedIn = firstPunchIn !== null;
 
     const isLate = firstPunchIn
-      ? minutesSinceMidnight(firstPunchIn) > scheduleStartMinutes + graceMinutes
+      ? minutesSinceMidnightInZone(firstPunchIn, scheduleTz) > scheduleStartMinutes + graceMinutes
       : false;
 
     const activityCount = activityByIntern[intern.id] ?? 0;

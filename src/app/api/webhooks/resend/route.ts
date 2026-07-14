@@ -5,11 +5,16 @@ import { Webhook } from "svix";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { invalidate } from "@/lib/cache";
+import { redis } from "@/lib/redis";
 import { mailRulesQueue } from "@/lib/queues/mail-rules.queue";
 import { isS3Configured, uploadToR2 } from "@/lib/s3";
 import { sendWebPush, type PushSubscriptionJSON } from "@/lib/web-push";
 import { shouldNotify } from "@/lib/notif-prefs";
+import { runInboundScan } from "@/lib/sentinel/inbound-scan";
+import { sendEmail } from "@/lib/email";
 import { Resend } from "resend";
+
+const NO_REPLY_SENDER_RE = /^(no-?reply|mailer-daemon|postmaster|bounces?)@/i;
 
 const resendClient = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
@@ -326,6 +331,7 @@ async function handleInboundEmail(data: InboundEmailPayload) {
   // Persist attachments from the Cloudflare Email Worker — upload binary content
   // to R2 so the file is downloadable; fall back to metadata-only if no content.
   const inboundAttachments = data.attachments ?? [];
+  const createdAttachments: { id: string; filename: string }[] = [];
   for (const a of inboundAttachments) {
     let storageUrl: string | null = null;
     let savedKey: string | null = null;
@@ -341,7 +347,7 @@ async function handleInboundEmail(data: InboundEmailPayload) {
     } catch (uploadErr) {
       console.error("[webhook] attachment upload failed:", uploadErr);
     }
-    await prisma.emailAttachment.create({
+    const createdAttachment = await prisma.emailAttachment.create({
       data: {
         messageId: inboxMessage.id,
         filename: a.filename ?? "attachment",
@@ -352,6 +358,7 @@ async function handleInboundEmail(data: InboundEmailPayload) {
         bucket: null,
       },
     });
+    createdAttachments.push({ id: createdAttachment.id, filename: createdAttachment.filename });
   }
 
   // Bump the thread so it surfaces at the top of the inbox (list is ordered by
@@ -365,14 +372,58 @@ async function handleInboundEmail(data: InboundEmailPayload) {
   // New unread mail — drop cached unread badge counts so they refresh promptly
   await invalidate("unread:*").catch(() => {});
 
-  // 4. Security Scan (Phase 7)
-  await performSecurityScan(inboxMessage.id, data.text || "");
+  // 4. Security scan — SPF/DKIM/DMARC, link analysis + rewriting, attachment
+  // verdicts, and sender reputation. Replaces the old keyword-only scan.
+  const scan = await runInboundScan({
+    messageId: inboxMessage.id,
+    mailboxId: mailbox.id,
+    senderEmail,
+    subject,
+    textBody: textBody ?? "",
+    htmlBody: htmlBody ?? null,
+    authHeader: data.headers?.["authentication-results"],
+    attachments: createdAttachments,
+  }).catch((err) => {
+    console.error("[webhook] inbound scan failed:", err);
+    return null;
+  });
+
+  if (scan?.rewrittenHtml) {
+    await prisma.inboxMessage.update({
+      where: { id: inboxMessage.id },
+      data: { htmlBody: scan.rewrittenHtml },
+    }).catch(() => {});
+  }
+
+  if (scan?.isSpam) {
+    await prisma.inboxThread.update({
+      where: { id: thread.id },
+      data: { isSpam: true },
+    }).catch(() => {});
+  }
 
   // 5. Mail Rules evaluation (Phase 19)
   const mailboxOwner = await prisma.mailboxAccess.findFirst({
     where: { mailboxId: mailbox.id, role: "OWNER" },
     select: { userId: true },
   });
+
+  // Push an instant "new mail" signal to any open inbox — without this the
+  // UI only finds out on its next poll (up to 8s away), which is what made
+  // new mail feel like it needed a manual refresh. Delivered mailboxes with
+  // delegated access (viewer/sender) get it too so shared inboxes update live.
+  if (mailboxOwner?.userId) {
+    const delegates = await prisma.mailboxAccess.findMany({
+      where: { mailboxId: mailbox.id },
+      select: { userId: true },
+    }).catch(() => []);
+    const recipients = new Set([mailboxOwner.userId, ...delegates.map((d) => d.userId)]);
+    const payload = JSON.stringify({ threadId: thread.id, mailboxId: mailbox.id });
+    await Promise.all(
+      [...recipients].map((uid) => redis.publish(`mail:${uid}`, payload).catch(() => {})),
+    );
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (mailRulesQueue as any).add("evaluate", {
     messageId: inboxMessage.id,
@@ -380,8 +431,43 @@ async function handleInboundEmail(data: InboundEmailPayload) {
     userId: mailboxOwner?.userId ?? null,
   }).catch(() => {});
 
+  // 5b. Vacation responder — auto-reply once per sender per 24h, only for
+  // real inbound mail (not spam, not another auto-responder/no-reply address).
+  if (mailboxOwner?.userId && !scan?.isSpam && !mailbox.isNoReply && !NO_REPLY_SENDER_RE.test(senderEmail)) {
+    void (async () => {
+      const responder = await prisma.vacationResponder.findUnique({
+        where: { userId: mailboxOwner.userId },
+      }).catch(() => null);
+
+      if (!responder?.isEnabled) return;
+      const now = new Date();
+      if (responder.startDate && now < responder.startDate) return;
+      if (responder.endDate && now > responder.endDate) return;
+
+      const recentReply = await prisma.vacationAutoReplyLog.findUnique({
+        where: { userId_senderEmail: { userId: mailboxOwner.userId, senderEmail } },
+      }).catch(() => null);
+      if (recentReply && now.getTime() - recentReply.sentAt.getTime() < 24 * 60 * 60 * 1000) return;
+
+      await sendEmail(
+        `Re: ${cleanSubject}`,
+        responder.message,
+        { email: senderEmail, name: senderEmail.split("@")[0], status: "" },
+        undefined,
+        mailbox.email,
+      ).catch((err) => console.error("[webhook] vacation auto-reply failed:", err));
+
+      await prisma.vacationAutoReplyLog.upsert({
+        where: { userId_senderEmail: { userId: mailboxOwner.userId, senderEmail } },
+        update: { sentAt: now },
+        create: { userId: mailboxOwner.userId, senderEmail, sentAt: now },
+      }).catch(() => {});
+    })();
+  }
+
   // 6. External email forwarding — for eligible roles (CEO / CISO / R_AND_D / OPS_MANAGER)
-  if (mailboxOwner?.userId && resendClient) {
+  // Never forward mail flagged as spam/phishing to a personal address.
+  if (mailboxOwner?.userId && resendClient && !scan?.isSpam) {
     void (async () => {
       const owner = await prisma.user.findUnique({
         where: { id: mailboxOwner.userId },
@@ -418,7 +504,8 @@ async function handleInboundEmail(data: InboundEmailPayload) {
   }
 
   // 8. Web Push — notify mailbox owner of new email (respects notification preferences)
-  if (mailboxOwner?.userId) {
+  // Skip push for spam/phishing — don't interrupt the user for junk.
+  if (mailboxOwner?.userId && !scan?.isSpam) {
     void (async () => {
       // Check user's notification preferences before firing push
       const ownerPrefs = await prisma.user.findUnique({
@@ -457,43 +544,4 @@ async function handleInboundEmail(data: InboundEmailPayload) {
   }
 
   return NextResponse.json({ ok: true, threadId: thread.id });
-}
-
-async function performSecurityScan(messageId: string, content: string) {
-  const findings: string[] = [];
-  let riskScore = 0;
-
-  // Simple URL detection
-  const urlRegex = /https?:\/\/[^\s]+/g;
-  const urls = content.match(urlRegex) || [];
-  
-  if (urls.length > 0) {
-    riskScore += 10;
-    findings.push(`Detected ${urls.length} URLs in message body.`);
-    
-    // Check for suspicious domains (placeholder logic)
-    const suspiciousKeywords = ["bit.ly", "tinyurl.com", "verify", "secure", "login"];
-    for (const url of urls) {
-      if (suspiciousKeywords.some(kw => url.toLowerCase().includes(kw))) {
-        riskScore += 20;
-        findings.push(`Suspicious URL detected: ${url}`);
-      }
-    }
-  }
-
-  // Phishing keyword check
-  const phishingKeywords = ["password", "urgent", "account suspended", "bank", "invoice"];
-  if (phishingKeywords.some(kw => content.toLowerCase().includes(kw))) {
-    riskScore += 15;
-    findings.push("Detected phishing-related keywords.");
-  }
-
-  // Save scan results
-  await prisma.threatScan.create({
-    data: {
-      messageId,
-      riskScore,
-      findings: findings,
-    },
-  });
 }

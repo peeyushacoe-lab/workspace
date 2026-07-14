@@ -25,6 +25,13 @@ import { toast } from "sonner";
 type BackupStatus = "ok" | "warning" | "error";
 type VerificationStatus = "not_tested" | "ok" | "failed";
 
+type VerificationDetail = {
+  tablesVerified: number;
+  rowsVerified: number;
+  backupTimestamp: string | null;
+  error: string | null;
+} | null;
+
 type BackupsData = {
   database: {
     lastBackup: string | null;
@@ -40,6 +47,7 @@ type BackupsData = {
     provider: string;
     region: string;
   };
+  verificationDetail?: VerificationDetail;
 };
 
 type BackupRow = {
@@ -161,10 +169,16 @@ export default function BackupsPage() {
     try {
       const res = await fetch("/api/admin/backups?action=test", { method: "POST" });
       const json = (await res.json()) as { ok: boolean; message?: string };
-      if (json.ok) toast.success(json.message ?? "Restore test passed");
-      else toast.error(json.message ?? "Restore test failed");
+      if (json.ok) {
+        toast.success(json.message ?? "Restore drill queued");
+        // The drill runs asynchronously on the persistent worker — poll once
+        // after a delay so the page picks up the result without a manual refresh.
+        setTimeout(() => void load(), 15000);
+      } else {
+        toast.error(json.message ?? "Could not queue restore drill");
+      }
     } catch {
-      toast.error("Network error during restore test");
+      toast.error("Network error during restore drill");
     } finally {
       setTestingRestore(false);
     }
@@ -289,6 +303,39 @@ export default function BackupsPage() {
             sub={data ? `Region: ${data.storage.region}` : undefined}
           />
         </div>
+
+        {/* ── Last restore drill detail ── */}
+        {data?.verificationDetail && (
+          <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <FlaskConical className="w-4 h-4 text-[#00C2FF]" />
+              <span className="text-sm font-medium">Last restore drill</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+              <div>
+                <p className="text-[10px] text-[#5A6275] mb-1">Tables verified</p>
+                <p className="font-semibold text-[#E6E9F0]">{data.verificationDetail.tablesVerified}</p>
+              </div>
+              <div>
+                <p className="text-[10px] text-[#5A6275] mb-1">Rows verified</p>
+                <p className="font-semibold text-[#E6E9F0]">{data.verificationDetail.rowsVerified.toLocaleString()}</p>
+              </div>
+              <div>
+                <p className="text-[10px] text-[#5A6275] mb-1">Backup tested</p>
+                <p className="font-semibold text-[#E6E9F0]">
+                  {data.verificationDetail.backupTimestamp
+                    ? new Date(data.verificationDetail.backupTimestamp).toLocaleString()
+                    : "—"}
+                </p>
+              </div>
+            </div>
+            {data.verificationDetail.error && (
+              <p className="mt-3 text-xs text-red-400 leading-relaxed">
+                {data.verificationDetail.error}
+              </p>
+            )}
+          </div>
+        )}
 
         {/* ── Backup status table ── */}
         <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">

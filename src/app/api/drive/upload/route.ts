@@ -7,6 +7,7 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { emitEvent } from "@/lib/events";
 import { previewQueue } from "@/lib/queues/preview.queue";
 import { securitySyncQueue } from "@/lib/queues/security-sync.queue";
+import { indexingQueue } from "@/lib/queues/indexing.queue";
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
 
@@ -217,6 +218,18 @@ export async function POST(request: Request) {
     fileName: record.name,
     mimeType: record.mimeType,
     s3Key: key,
+  }).catch(() => {});
+
+  indexingQueue.add("index-file", {
+    type: "INDEX",
+    resource: "file",
+    resourceId: record.id,
+    content: record.name,
+    metadata: {
+      ownerId: user.id,
+      name: record.name,
+      mimeType: record.mimeType,
+    },
   }).catch(() => {});
 
   return NextResponse.json(

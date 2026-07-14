@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { indexingQueue } from "@/lib/queues/indexing.queue";
 import { z } from "zod";
 
 const createSchema = z.object({
@@ -80,6 +81,19 @@ export async function POST(request: Request) {
       },
     },
   });
+
+  indexingQueue.add("index-meeting", {
+    type: "INDEX",
+    resource: "meeting",
+    resourceId: meeting.id,
+    content: `${meeting.title} ${meeting.description ?? ""}`,
+    metadata: {
+      organizerId: user.id,
+      title: meeting.title,
+      status: meeting.status,
+      scheduledAt: (meeting.scheduledAt ?? new Date()).toISOString(),
+    },
+  }).catch(() => {});
 
   return NextResponse.json(meeting, { status: 201 });
 }

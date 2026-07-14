@@ -3,7 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getMobileUser } from "@/lib/mobile-auth";
 import { sendEmail } from "@/lib/email";
-import { getTokensForUser, sendExpoPush } from "@/lib/expo-push";
+import { getTokensForUser, sendExpoPush, getUnreadBadgeCount } from "@/lib/expo-push";
 
 const composeSchema = z.object({
   to:      z.string().email(),
@@ -94,10 +94,12 @@ export async function POST(request: Request) {
       if (!owner) return;
       const tokens = await getTokensForUser(owner.userId);
       if (tokens.length) {
+        const badge = await getUnreadBadgeCount(owner.userId);
         await sendExpoPush(tokens, {
           title: `New mail from ${sender.fullName}`,
           body: subject,
           data: { type: "email", threadId: thread!.id },
+          badge,
         });
       }
     }).catch(() => {});

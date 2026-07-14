@@ -26,7 +26,7 @@ export async function GET() {
     select: { id: true, title: true, pinned: true, createdAt: true, updatedAt: true, userId: true },
   });
 
-  const sharedPres: typeof ownPres = [];
+  const sharedPres: (typeof ownPres[number] & { sharedRole: string })[] = [];
   try {
     const keys = await redis.keys(`doc:share:pres:*`);
     for (const key of keys) {
@@ -37,14 +37,14 @@ export async function GET() {
           where: { id: docId, color: SLIDE_MARKER },
           select: { id: true, title: true, pinned: true, createdAt: true, updatedAt: true, userId: true },
         });
-        if (doc) sharedPres.push({ ...doc, pinned: false });
+        if (doc) sharedPres.push({ ...doc, pinned: false, sharedRole: role });
       }
     }
   } catch { /* Redis unavailable */ }
 
   const all = [
-    ...ownPres.map((p) => ({ ...p, isOwner: true, sharedRole: null })),
-    ...sharedPres.map((p) => ({ ...p, isOwner: false, sharedRole: "editor" })),
+    ...ownPres.map((p) => ({ ...p, isOwner: true, sharedRole: null as string | null })),
+    ...sharedPres.map((p) => ({ ...p, isOwner: false })),
   ];
 
   return NextResponse.json(all);

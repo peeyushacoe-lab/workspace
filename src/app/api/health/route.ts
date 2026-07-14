@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { redisConnection } from "@/lib/redis";
 import { Queue } from "bullmq";
 import { ALL_QUEUE_NAMES } from "@/lib/queues";
+import { runHealthCheck } from "@/lib/health-check";
 
 async function getQueueMetrics(name: string) {
   try {
@@ -25,18 +25,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const detailed = searchParams.get("detail") === "1";
 
-  let dbOk = false;
-  let redisOk = false;
-
-  const [dbResult, redisResult] = await Promise.allSettled([
-    prisma.$queryRaw`SELECT 1`,
-    redisConnection.ping(),
-  ]);
-
-  dbOk = dbResult.status === "fulfilled";
-  redisOk = redisResult.status === "fulfilled";
-
-  const ok = dbOk && redisOk;
+  const { dbOk, redisOk, emailOk, overallOk: ok } = await runHealthCheck();
 
   if (!detailed) {
     return NextResponse.json(
@@ -61,6 +50,7 @@ export async function GET(request: Request) {
       services: {
         database: dbOk ? "ok" : "down",
         redis: redisOk ? "ok" : "down",
+        email: emailOk ? "ok" : "down",
       },
       queues: queueMetrics,
     },

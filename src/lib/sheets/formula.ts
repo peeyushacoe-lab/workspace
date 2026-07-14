@@ -54,6 +54,38 @@ export function parseRange(range: string) {
   };
 }
 
+/**
+ * Shifts every A1-style cell reference inside a formula string by
+ * (rowDelta, colDelta) — the same behavior Excel/Sheets use when you drag
+ * the fill handle or copy/paste a formula to a new cell. `$`-locked row/col
+ * components are left unchanged (absolute reference semantics), matching
+ * how `$A$1`, `A$1`, `$A1`, and `A1` each behave differently.
+ *
+ * Skips references inside quoted strings so text like `="A1"` isn't mangled.
+ */
+export function shiftFormulaRefs(formula: string, rowDelta: number, colDelta: number): string {
+  if (!formula.startsWith("=") || (rowDelta === 0 && colDelta === 0)) return formula;
+
+  const REF_RE = /("(?:[^"\\]|\\.)*")|(\$?)([A-Za-z]{1,3})(\$?)(\d+)/g;
+
+  return formula.replace(REF_RE, (match, quoted: string | undefined, colLock: string, colLetters: string, rowLock: string, rowDigits: string) => {
+    if (quoted !== undefined) return quoted; // leave string literals untouched
+
+    const colIdx = colToIndex(colLetters);
+    const rowIdx = parseInt(rowDigits, 10) - 1;
+    if (Number.isNaN(colIdx) || Number.isNaN(rowIdx)) return match;
+
+    const newCol = colLock ? colIdx : colIdx + colDelta;
+    const newRow = rowLock ? rowIdx : rowIdx + rowDelta;
+
+    // Out-of-bounds refs become #REF! (matches spreadsheet convention), but
+    // only for the unlocked axis that actually moved off the grid.
+    if (newCol < 0 || newRow < 0) return "#REF!";
+
+    return `${colLock}${indexToCol(newCol)}${rowLock}${newRow + 1}`;
+  });
+}
+
 export function getRangeVals(range: string, g: CellGetter): CellValue[] {
   const r = parseRange(range);
   if (!r) return [];
@@ -470,10 +502,6 @@ function evalFn(name: string, rawArgs: string[], g: CellGetter): CellValue | Spi
     }
     case "COLUMNS": { const r = parseRange(rawArgs[0]); return r ? r.endCol - r.startCol + 1 : "#REF!"; }
     case "ROWS": { const r = parseRange(rawArgs[0]); return r ? r.endRow - r.startRow + 1 : "#REF!"; }
-    case "TRANSPOSE": {
-      const r = parseRange(rawArgs[0]); if (!r) return "#REF!";
-      return g(r.startRow, r.startCol); // simplified — returns first cell
-    }
 
     // ── Financial ─────────────────────────────────────────────────────────
     case "PMT": {

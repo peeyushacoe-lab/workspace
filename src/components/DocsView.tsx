@@ -742,11 +742,18 @@ export function DocsView() {
 
     setSaving(true);
     try {
-      await fetch(`/api/docs/${selectedId}`, {
+      const res = await fetch(`/api/docs/${selectedId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content }),
       });
+      if (!res.ok) {
+        // Most commonly a 403 — a viewer-only collaborator's edits can't be
+        // persisted. Without this, the editor looks like it saved (spinner
+        // clears) while the change silently never reaches the server.
+        toast.error(res.status === 403 ? "You have view-only access — changes weren't saved" : "Failed to save document");
+        return;
+      }
       setDocs(prev => prev.map(d => d.id === selectedId ? { ...d, content, updatedAt: new Date().toISOString() } : d));
       // Real save succeeded — refresh the cached draft to mirror server state.
       try {
@@ -757,11 +764,15 @@ export function DocsView() {
 
   const saveTitle = async (t: string) => {
     if (!selectedId) return;
-    await fetch(`/api/docs/${selectedId}`, {
+    const res = await fetch(`/api/docs/${selectedId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title: t }),
     });
+    if (!res.ok) {
+      toast.error(res.status === 403 ? "You have view-only access — title wasn't saved" : "Failed to rename document");
+      return;
+    }
     setDocs(prev => prev.map(d => d.id === selectedId ? { ...d, title: t } : d));
   };
 
@@ -1788,7 +1799,7 @@ blockquote{border-left:4px solid #00C2FF;margin:0;padding-left:1em;color:#8A92A6
       )}
 
       {showShare && selectedDoc && (
-        <DocShareModal docId={selectedDoc.id} docType="sheet" onClose={() => setShowShare(false)} />
+        <DocShareModal docId={selectedDoc.id} docType="doc" onClose={() => setShowShare(false)} />
       )}
 
       {showFindReplace && (

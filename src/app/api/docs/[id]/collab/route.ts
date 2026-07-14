@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redis } from "@/lib/redis";
+import { getDocAccessRole } from "../share/route";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,11 @@ export async function GET(request: Request, { params }: Params) {
   const user = getSessionUserFromCookieStore(await cookies());
   if (!user) return new Response("Unauthorized", { status: 401 });
   const { id: documentId } = await params;
+
+  const doc = await prisma.note.findUnique({ where: { id: documentId }, select: { userId: true, color: true } });
+  if (!doc || doc.color !== "document") return new Response("Not found", { status: 404 });
+  const role = await getDocAccessRole(documentId, doc, user);
+  if (!role) return new Response("Forbidden", { status: 403 });
 
   // Register session
   const colorIndex = Math.abs(user.id.charCodeAt(0) % CURSOR_COLORS.length);
@@ -105,6 +111,11 @@ export async function POST(request: Request, { params }: Params) {
   const user = getSessionUserFromCookieStore(await cookies());
   if (!user) return new Response("Unauthorized", { status: 401 });
   const { id: documentId } = await params;
+
+  const doc = await prisma.note.findUnique({ where: { id: documentId }, select: { userId: true, color: true } });
+  if (!doc || doc.color !== "document") return new Response("Not found", { status: 404 });
+  const role = await getDocAccessRole(documentId, doc, user);
+  if (!role) return new Response("Forbidden", { status: 403 });
 
   const body = await request.json() as { type: string; cursor?: unknown; selection?: unknown };
 

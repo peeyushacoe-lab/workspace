@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { avatarGradient } from "@/lib/avatar";
+import HRLifecyclePanel from "@/components/HRLifecyclePanel";
 import { MentorOverviewSubTab, MentorInternsSubTab } from "@/components/MentorInterns";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -760,6 +761,7 @@ function MentorHRSubTab() {
                   <HRField label="Emergency contact" value={d.emergencyContactName} onChange={v => setField(r.id, "emergencyContactName", v)} placeholder="Name" />
                   <HRField label="Emergency phone" value={d.emergencyContactPhone} onChange={v => setField(r.id, "emergencyContactPhone", v)} placeholder="+44…" />
                 </div>
+                <HRLifecyclePanel userId={r.id} firstName={r.fullName.split(" ")[0]} />
               </div>
             );
           })}
