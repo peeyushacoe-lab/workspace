@@ -4,7 +4,7 @@ import { CLEANUP_QUEUE_NAME, type CleanupJobData } from "@/lib/queues/cleanup.qu
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 import { runHealthCheck } from "@/lib/health-check";
-import { runAndRecordRestoreDrill } from "../../scripts/restore-drill";
+import { runAndRecordRestoreDrill } from "@/lib/restore-drill";
 import { runSentinelCorrelation } from "@/lib/sentinel/correlation-engine";
 
 export function createCleanupWorker() {

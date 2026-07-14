@@ -6,7 +6,7 @@
  * Usage: npm run restore-drill
  */
 import { prisma } from "@/lib/prisma";
-import { runAndRecordRestoreDrill } from "./restore-drill";
+import { runAndRecordRestoreDrill } from "../src/lib/restore-drill";
 
 async function main() {
   console.log("[restore-drill] Starting…");
