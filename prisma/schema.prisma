@@ -62,6 +62,10 @@ enum UserRole {
   HR
 
   INTERNSHIP
+
+  // Neutral baseline — custom-role-only users hold MEMBER; grants nothing on its own.
+  // Real access comes from UserRoleAssignment (see RFC-001).
+  MEMBER
 }
 
 model User {
@@ -74,6 +78,9 @@ model User {
   // Multi-tenant
   organizationId  String?
   orgRole         String?  @default("MEMBER") // OWNER, ADMIN, MEMBER, GUEST
+  // RBAC (RFC-001): bumped whenever this user's effective permissions change,
+  // so the signed session cookie can be detected as stale and silently refreshed.
+  permEpoch       Int      @default(0)
   organization    Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
   avatarUrl       String?
   coverUrl        String?
@@ -174,6 +181,11 @@ model User {
   challengeTeamsLed    ChallengeTeam[]      @relation("ChallengeTeamLead")
   challengeScoresGiven ChallengeScore[]     @relation("ChallengeScorer")
   challengeSubmissions ChallengeSubmission[] @relation("ChallengeSubmitter")
+
+  // RBAC + org hierarchy (RFC-001)
+  roleAssignments      UserRoleAssignment[]     @relation("AssignmentUser")
+  permissionOverrides  UserPermissionOverride[] @relation("OverrideUser")
+  teamMemberships      TeamMember[]             @relation("TeamMemberUser")
 }
 
 // WebAuthn passkey credentials
@@ -201,6 +213,148 @@ model CustomRole {
   color       String?  // hex for UI badge
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+// ─── Dynamic RBAC (RFC-001) ───────────────────────────────────────────────────
+// Role → Permissions, User → Role(s). Replaces hardcoded role logic.
+// NOTE: the permission-catalog model is named `PermissionDef` for now to avoid
+// a name collision with the legacy per-user `Permission` model (dropped in the
+// final cleanup PR, at which point PermissionDef is renamed to Permission).
+
+model Role {
+  id             String   @id @default(cuid())
+  organizationId String?  // null = global/system role template (seeded from UserRole enum)
+  key            String   // stable slug, e.g. "developer", "ciso"
+  name           String   // display name
+  description    String?
+  color          String?
+  isSystem       Boolean  @default(false) // seeded, cannot be deleted
+  isSingleton    Boolean  @default(false) // only one holder (CEO, CISO, …)
+  rank           Int      @default(100)   // lower = more privileged; used for "can't manage a higher role"
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization?        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  permissions  RolePermission[]
+  assignments  UserRoleAssignment[]
+
+  @@unique([organizationId, key])
+  @@index([organizationId])
+}
+
+model PermissionDef {
+  id          String   @id @default(cuid())
+  key         String   @unique // "email.read", "drive.delete", "hr.manage"
+  resource    String   // "email", "drive", "hr"
+  action      String   // "read", "delete", "manage"
+  label       String   // human label for the admin UI
+  description String?
+  category    String   // grouping in the UI: "Workspace", "Security", "Admin"
+  isDangerous Boolean  @default(false) // require extra confirmation to grant
+
+  roles     RolePermission[]
+  overrides UserPermissionOverride[]
+
+  @@index([resource])
+  @@index([category])
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role          @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   PermissionDef @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@index([permissionId])
+}
+
+model UserRoleAssignment {
+  id        String   @id @default(cuid())
+  userId    String
+  roleId    String
+  scopeType String?  // null = org-wide; reserved for "department" | "team" (deferred)
+  scopeId   String?
+  createdAt DateTime @default(now())
+
+  user User @relation("AssignmentUser", fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId, scopeType, scopeId])
+  @@index([userId])
+  @@index([roleId])
+}
+
+model UserPermissionOverride {
+  id           String   @id @default(cuid())
+  userId       String
+  permissionId String
+  granted      Boolean  // true = extra grant, false = explicit deny (deny wins)
+  grantedBy    String?
+  reason       String?
+  createdAt    DateTime @default(now())
+
+  user       User          @relation("OverrideUser", fields: [userId], references: [id], onDelete: Cascade)
+  permission PermissionDef @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, permissionId])
+  @@index([userId])
+}
+
+// ─── Org hierarchy (RFC-001) ──────────────────────────────────────────────────
+
+model Department {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  slug           String
+  managerId      String?  // a User who heads the department
+  parentId       String?  // optional nesting (Security > SOC)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  parent       Department?  @relation("DeptTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children     Department[] @relation("DeptTree")
+  teams        Team[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+}
+
+model Team {
+  id             String   @id @default(cuid())
+  organizationId String
+  departmentId   String?
+  name           String
+  slug           String
+  icon           String?
+  color          String?
+  managerId      String?
+  isSystem       Boolean  @default(false) // seeded from DEFAULT_TEAMS
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  department   Department?  @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  members      TeamMember[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+  @@index([departmentId])
+}
+
+model TeamMember {
+  teamId   String
+  userId   String
+  isLead   Boolean  @default(false)
+  joinedAt DateTime @default(now())
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation("TeamMemberUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([teamId, userId])
+  @@index([userId])
 }
 
 model LoginEvent {
@@ -1389,14 +1543,20 @@ model Organization {
   brandColor   String?  // hex, e.g. "#00d2ff"
   billingEmail String?
   trialEndsAt  DateTime?
-  settings     Json?    // feature flags, preferences, etc.
+  settings     Json?    // feature flags, preferences, policies, etc.
+  // RBAC (RFC-001): bumped on org-wide role/permission edits to invalidate
+  // every member's session cookie in one shot.
+  permEpoch    Int      @default(0)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  users     User[]
-  mailboxes Mailbox[]
-  channels  ChatChannel[]
-  invites   OrganizationInvite[]
+  users       User[]
+  mailboxes   Mailbox[]
+  channels    ChatChannel[]
+  invites     OrganizationInvite[]
+  roles       Role[]
+  departments Department[]
+  teams       Team[]
 
   @@index([slug])
   @@index([domain])

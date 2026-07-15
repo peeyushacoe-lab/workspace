@@ -1832,7 +1832,7 @@ function CommandPalette({
 
 // ─── Main ChatView ────────────────────────────────────────────────────────────
 
-export function ChatView({ currentUserId, userRole }: { currentUserId: string; userRole?: string }) {
+export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId: string; userRole?: string }) {
   const canCall = true;
   const { startCall, busy: callBusy } = useCall();
   const [channels, setChannels] = useState<Channel[]>([]);
@@ -2130,7 +2130,6 @@ export function ChatView({ currentUserId, userRole }: { currentUserId: string; u
       clearInterval(presenceInterval);
       clearInterval(heartbeatInterval);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [channels, currentUserId]);
 
   // Load top-level messages when channel changes

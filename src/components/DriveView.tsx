@@ -42,7 +42,6 @@ import {
   Info,
   ChevronUp,
   Move,
-  History,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
@@ -142,7 +141,7 @@ function getMimeIcon(mimeType: string) {
 }
 
 // Google-style type-coloured icon tint
-function getMimeColor(mimeType: string): string {
+function _getMimeColor(mimeType: string): string {
   if (mimeType === "application/pdf") return "#ea4335"; // red
   if (mimeType.includes("sheet") || mimeType.includes("excel") || mimeType === "text/csv")
     return "#0f9d58"; // green

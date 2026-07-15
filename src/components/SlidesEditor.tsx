@@ -17,7 +17,7 @@ import {
   Sparkles, Layers, Grid3x3, LayoutGrid,   Undo2, Redo2, ZoomIn, ZoomOut,
   LayoutTemplate, Eye, EyeOff, FolderPlus, ChevronRight as ChevronRightIcon, Images,
   Triangle, Star, MoveRight, Minus, Grid, Timer, RotateCcw,
-  Search, Replace, Video, Hash, Lock, Unlock, Music, Volume2, Printer,
+  Search, Video, Hash, Lock, Unlock, Music, Volume2,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -516,8 +516,8 @@ export default function SlidesEditor({ presId }: { presId: string }) {
   const findCursor = useRef<{ slide: number; el: number; occ: number }>({ slide: 0, el: -1, occ: -1 });
 
   // Print / Export PDF
-  const [printing, setPrinting] = useState(false);
-  const printRef = useRef<HTMLDivElement>(null);
+  const [_printing, _setPrinting] = useState(false);
+  const _printRef = useRef<HTMLDivElement>(null);
 
   // Presenter mode live clock
   const [presenterTime, setPresenterTime] = useState(() => new Date().toLocaleTimeString());
@@ -1083,11 +1083,11 @@ export default function SlidesEditor({ presId }: { presId: string }) {
   };
 
   // ── Print / Export PDF ────────────────────────────────────────────────────
-  const handlePrint = () => {
-    setPrinting(true);
+  const _handlePrint = () => {
+    _setPrinting(true);
     setTimeout(() => {
       window.print();
-      setTimeout(() => setPrinting(false), 500);
+      setTimeout(() => _setPrinting(false), 500);
     }, 100);
   };
 

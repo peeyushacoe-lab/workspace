@@ -12,7 +12,7 @@ import {
   Plus, Search, Trash2, Pin, PinOff, StickyNote, Palette, MoreVertical,
   Folder, Check, X, Sparkles, Loader2, Bold, Italic, Strikethrough, Code, List, ListOrdered, ListChecks,
   Quote, Minus, Link2, Image as ImageIcon, Type, Hash, Download, Copy,
-  LayoutTemplate, WifiOff, Mic, Paperclip, Archive, ArchiveRestore, Bell, BellOff, Tag, ChevronLeft,
+  LayoutTemplate, WifiOff, Mic, Paperclip, Archive, ArchiveRestore, Bell, BellOff, ChevronLeft,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow, format } from "date-fns";
@@ -128,19 +128,9 @@ function parseContent(raw: string): ContentJSON {
   return { body: raw, tags: [] };
 }
 
-/** Encode body + tags back into a JSON string for storage. */
-function encodeContent(body: string, tags: string[]): string {
-  return JSON.stringify({ body, tags });
-}
-
 /** Extract just the HTML body from a raw content string. */
 function getBody(raw: string): string {
   return parseContent(raw).body;
-}
-
-/** Extract tags from a raw content string. */
-function getTags(raw: string): string[] {
-  return parseContent(raw).tags ?? [];
 }
 
 // ─── Archive + reminders (client-side localStorage) ──────────────────────────
@@ -488,7 +478,7 @@ export function NotesView() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState(""); // HTML body only (no JSON)
   const [selectedNoteTags, setSelectedNoteTags] = useState<string[]>([]); // tags for the selected note
-  const [tagInput, setTagInput] = useState("");
+  const [_tagInput, setTagInput] = useState("");
   const [search, setSearch] = useState("");
   const [_viewMode, _setViewMode] = useState<"grid" | "list">("grid");
 

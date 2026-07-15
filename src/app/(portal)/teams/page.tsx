@@ -33,7 +33,7 @@ function TeamIcon({ icon, color, size = 18 }: { icon: string; color: string; siz
 }
 
 // ── Avatar stack ───────────────────────────────────────────────────────────────
-function AvatarStack({ members, color }: { members: { id: string; fullName: string }[]; color: string }) {
+function AvatarStack({ members, color: _color }: { members: { id: string; fullName: string }[]; color: string }) {
   const visible = members.slice(0, 4);
   const rest = members.length - visible.length;
 

@@ -36,6 +36,7 @@ export const roleLabels: Record<UserRole, string> = {
   SUPPORT: "Support",
   HR: "HR",
   INTERNSHIP: "Internship",
+  MEMBER: "Member",
 };
 
 // Leadership roles that can access management features
@@ -45,11 +46,11 @@ const ALL_ROLES: UserRole[] = [
   "ADMIN", "CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER",
   "DEVELOPER", "CYBER_SECURITY", "QA", "MARKETING",
   "RESEARCH", "FINANCE", "OPERATIONS", "SUPPORT",
-  "HR", "INTERNSHIP",
+  "HR", "INTERNSHIP", "MEMBER",
 ];
 
 // Roles excluding interns — for features not yet ready for intern access
-const ALL_ROLES_EXCEPT_INTERN: UserRole[] = ALL_ROLES.filter((r) => r !== "INTERNSHIP");
+export const ALL_ROLES_EXCEPT_INTERN: UserRole[] = ALL_ROLES.filter((r) => r !== "INTERNSHIP");
 
 export const portalHome = "/inbox";
 

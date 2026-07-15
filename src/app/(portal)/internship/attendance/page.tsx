@@ -5,7 +5,7 @@ import {
   Clock, LogIn, LogOut, AlertCircle, CheckCircle, CheckCircle2,
   Loader2, Edit2, Monitor, MapPin, UserCheck, Timer,
   CalendarClock, ChevronLeft, ChevronRight, Plus, X, Pencil, Save,
-  BarChart2, FileText, MessageSquare, TrendingUp, TrendingDown, ChevronDown,
+  FileText, MessageSquare, TrendingUp, TrendingDown, ChevronDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/Shell";

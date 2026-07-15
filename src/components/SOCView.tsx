@@ -10,7 +10,6 @@ import {
   Plus,
   X,
   Clock,
-  User,
   RefreshCw,
   Loader2,
   Send,

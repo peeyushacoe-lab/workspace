@@ -1509,7 +1509,7 @@ function SubmissionRow({ sub, isMentor, onReview }: { sub: Submission; isMentor:
 
 // ─── FINDINGS TAB ─────────────────────────────────────────────────────────────
 
-function FindingsTab({ isMentor, userId, currentUser }: { isMentor: boolean; userId: string; currentUser: User & { role: string } }) {
+function FindingsTab({ isMentor, userId: _userId, currentUser: _currentUser }: { isMentor: boolean; userId: string; currentUser: User & { role: string } }) {
   const [findings, setFindings] = useState<Finding[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -1818,7 +1818,7 @@ function FindingsTab({ isMentor, userId, currentUser }: { isMentor: boolean; use
 
 // ─── PROGRESS TAB ─────────────────────────────────────────────────────────────
 
-function ProgressTab({ isMentor, userId }: { isMentor: boolean; userId: string }) {
+function ProgressTab({ isMentor, userId: _userId }: { isMentor: boolean; userId: string }) {
   const [stats, setStats] = useState<InternStats | MentorStats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -2198,7 +2198,7 @@ function LearningTab({ isMentor, userId }: { isMentor: boolean; userId: string }
   );
 }
 
-function WeekDetail({ week, userId, isMentor, completed, onMarkComplete, onRefresh, onBack }: {
+function WeekDetail({ week, userId: _userId, isMentor, completed, onMarkComplete, onRefresh, onBack }: {
   week: InternWeek; userId: string; isMentor: boolean;
   completed: boolean; onMarkComplete: () => void; onRefresh: () => void; onBack: () => void;
 }) {

@@ -22,6 +22,7 @@ const roleTileColors: Record<UserRole, string> = {
   SUPPORT:       "bg-sky-500/10 text-sky-300",
   HR:            "bg-pink-500/10 text-pink-600",
   INTERNSHIP:    "bg-[#f1f3f4] text-[#5f6368]",
+  MEMBER:        "bg-[#f1f3f4] text-[#5f6368]",
 };
 
 export type LoginUser = {

@@ -22,7 +22,7 @@ import {
   BookmarkPlus, GitMerge,
 } from "lucide-react";
 import { toast } from "sonner";
-import { formatDistanceToNow, format } from "date-fns";
+import { formatDistanceToNow } from "date-fns";
 import { useEditor, EditorContent } from "@tiptap/react";
 import { Mark } from "@tiptap/core";
 import { ReplaceStep } from "prosemirror-transform";
@@ -38,7 +38,8 @@ import Superscript from "@tiptap/extension-superscript";
 import * as Y from "yjs";
 
 import Collaboration from "@tiptap/extension-collaboration";
-import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
+// CollaborationCursor imported lazily to avoid CRDT hydration issues
+// import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
 
 import { DocShareModal } from "./DocShareModal";
 
@@ -646,7 +647,6 @@ export function DocsView() {
   }, []);
 
   // ── Version auto-save every 5 minutes ────────────────────────────────────
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!selectedId) return;
     const interval = setInterval(() => {
@@ -816,7 +816,7 @@ export function DocsView() {
     toast.success("Version saved");
   }, [editor, selectedId]);
 
-  const saveVersionAuto = useCallback(() => {
+  const _saveVersionAuto = useCallback(() => {
     if (!editor || !selectedId) return;
     const content = editor.getJSON ? JSON.stringify(editor.getJSON()) : editor.getHTML();
     if (!content || content === "{}" || content === "null") return;
