@@ -10,6 +10,11 @@ export type SessionUser = {
   mfaEnabled?: boolean;
   organizationId?: string | null;
   orgRole?: string | null;
+  // RBAC (RFC-001): effective permission keys + epoch, embedded at login and
+  // refreshed when the DB epoch advances. Optional so cookies issued before the
+  // RBAC rollout still parse.
+  perms?: string[];
+  permEpoch?: number;
 };
 
 export type PortalNavItem = {
@@ -190,6 +195,8 @@ export function parseSessionUser(signedValue: string | undefined): SessionUser |
         mustResetPassword: parsed.mustResetPassword === true,
         organizationId: parsed.organizationId ?? null,
         orgRole: parsed.orgRole ?? null,
+        perms: Array.isArray(parsed.perms) ? parsed.perms : undefined,
+        permEpoch: typeof parsed.permEpoch === "number" ? parsed.permEpoch : undefined,
       };
     }
   } catch {

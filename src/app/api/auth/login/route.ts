@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { canAccessPath, getPortalHome, type SessionUser } from "@/lib/auth";
 import { signPayload, generateSessionToken } from "@/lib/session-crypto";
+import { getSessionPerms } from "@/lib/rbac/session-perms";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { logAudit } from "@/lib/audit";
 import { createSession } from "@/lib/session-tracker";
@@ -102,6 +103,10 @@ export async function POST(request: NextRequest) {
       })
       .catch(() => {});
 
+    // RBAC (RFC-001): embed the user's effective permissions + epoch in the cookie
+    // so Edge middleware can gate pages without a DB call.
+    const { perms, permEpoch } = await getSessionPerms(user.id);
+
     const sessionUser: SessionUser = {
       id: user.id,
       email: user.email,
@@ -111,6 +116,8 @@ export async function POST(request: NextRequest) {
       mfaEnabled: user.mfaEnabled,
       organizationId: user.organizationId,
       orgRole: user.orgRole,
+      perms,
+      permEpoch,
     };
 
     const roleHome = getPortalHome(user.role);

@@ -122,6 +122,15 @@ function isOnTeam(team: ChallengeTeam, userId: string): boolean {
   return team.memberIds.includes(userId) || team.leadId === userId;
 }
 
+// datetime-local inputs want "YYYY-MM-DDTHH:mm" in the browser's local time,
+// with no timezone suffix — Date#toISOString() is always UTC, so convert by
+// subtracting the local offset before slicing.
+function toLocalInputValue(iso: string): string {
+  const d = new Date(iso);
+  const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 16);
+}
+
 // ─── Main tab ─────────────────────────────────────────────────────────────────
 
 export function ChallengesTab({ isMentor, userId }: { isMentor: boolean; userId: string }) {
@@ -419,6 +428,9 @@ function ChallengeDetail({ challenge, isMentor, userId, interns, onBack, onRefre
   const [savingStatus, setSavingStatus] = useState(false);
   const [announcing, setAnnouncing] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [editingDeadline, setEditingDeadline] = useState(false);
+  const [deadlineDraft, setDeadlineDraft] = useState(challenge.deadline ? toLocalInputValue(challenge.deadline) : "");
+  const [savingDeadline, setSavingDeadline] = useState(false);
   const max = schemaMax(challenge.scoringSchema);
   const cd = challenge.deadline ? fmtCountdown(challenge.deadline) : null;
 
@@ -461,6 +473,21 @@ function ChallengeDetail({ challenge, isMentor, userId, interns, onBack, onRefre
     finally { setAnnouncing(false); }
   };
 
+  const saveDeadline = async () => {
+    setSavingDeadline(true);
+    try {
+      const res = await fetch(`/api/internship/challenges/${challenge.id}`, {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ deadline: deadlineDraft ? new Date(deadlineDraft).toISOString() : null }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success("Deadline updated");
+      setEditingDeadline(false);
+      onRefresh();
+    } catch { toast.error("Failed to update deadline"); }
+    finally { setSavingDeadline(false); }
+  };
+
   const deleteChallenge = async () => {
     if (!confirm(`Delete "${challenge.title}"? This removes both teams, all scores, and all submissions permanently.`)) return;
     setDeleting(true);
@@ -493,12 +520,44 @@ function ChallengeDetail({ challenge, isMentor, userId, interns, onBack, onRefre
             </div>
             <p className="text-sm text-[#8A92A6] mt-2 whitespace-pre-wrap">{challenge.description}</p>
           </div>
-          {cd && (
-            <span className={`flex items-center gap-1.5 text-sm font-mono shrink-0 ${cd.overdue ? "text-[#ea4335]" : "text-[#00C2FF]"}`}>
-              <CalendarClock className="w-4 h-4" /> {cd.label}
-            </span>
+          {!editingDeadline && (
+            <div className="flex items-center gap-1.5 shrink-0">
+              {cd ? (
+                <span className={`flex items-center gap-1.5 text-sm font-mono ${cd.overdue ? "text-[#ea4335]" : "text-[#00C2FF]"}`}>
+                  <CalendarClock className="w-4 h-4" /> {cd.label}
+                </span>
+              ) : (
+                <span className="text-sm text-[#5A6275]">No deadline set</span>
+              )}
+              {isMentor && (
+                <button onClick={() => setEditingDeadline(true)} className="text-[11px] text-[#00C2FF] hover:underline">
+                  Edit
+                </button>
+              )}
+            </div>
           )}
         </div>
+
+        {isMentor && editingDeadline && (
+          <div className="flex items-center gap-2 mt-3 flex-wrap bg-[#1B1F2A] border border-[#2E333F] rounded-lg p-2.5">
+            <label className="text-xs text-[#8A92A6]">Deadline:</label>
+            <input type="datetime-local" value={deadlineDraft} onChange={e => setDeadlineDraft(e.target.value)}
+              className="px-2.5 py-1 bg-[#0E1018] border border-[#2E333F] rounded-lg text-xs text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60" />
+            <button onClick={saveDeadline} disabled={savingDeadline}
+              className="flex items-center gap-1 px-2.5 py-1 bg-[#00C2FF] text-[#06121A] text-xs font-semibold rounded-lg hover:bg-[#0098E6] disabled:opacity-50">
+              {savingDeadline ? <Loader2 className="w-3 h-3 animate-spin" /> : "Save"}
+            </button>
+            {deadlineDraft && (
+              <button onClick={() => setDeadlineDraft("")} className="text-xs text-[#8A92A6] hover:text-[#ea4335]">
+                Clear
+              </button>
+            )}
+            <button onClick={() => { setEditingDeadline(false); setDeadlineDraft(challenge.deadline ? toLocalInputValue(challenge.deadline) : ""); }}
+              className="text-xs text-[#8A92A6] hover:text-[#E6E9F0] ml-auto">
+              Cancel
+            </button>
+          </div>
+        )}
 
         {isMentor && (
           <div className="flex items-center gap-2 mt-4 flex-wrap">

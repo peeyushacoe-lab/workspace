@@ -162,5 +162,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(mfaUrl);
   }
 
-  return NextResponse.next();
+  // Expose the current path to Server Components (RSC can't read it otherwise).
+  // Used by the portal layout to build the return URL for a stale-cookie refresh
+  // (RFC-001, PR6). Header-only — does not affect access gating.
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-pathname", request.nextUrl.pathname);
+  return NextResponse.next({ request: { headers: requestHeaders } });
 }
