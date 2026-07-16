@@ -33,6 +33,10 @@ import {
   Phone,
   Megaphone,
   Paperclip,
+  LogOut,
+  Crown,
+  UserMinus,
+  Settings,
 } from "lucide-react";
 import { formatDistanceToNow, isToday, isYesterday, format } from "date-fns";
 import { toast } from "sonner";
@@ -1540,6 +1544,133 @@ function AddMembersModal({
   );
 }
 
+// ─── Manage Members Modal ──────────────────────────────────────────────────────
+
+function ManageMembersModal({
+  channel,
+  currentUserId,
+  onClose,
+  onChangeRole,
+  onRemove,
+  onLeave,
+}: {
+  channel: Channel;
+  currentUserId: string;
+  onClose: () => void;
+  onChangeRole: (userId: string, role: "ADMIN" | "MEMBER") => Promise<void>;
+  onRemove: (userId: string, name: string) => Promise<void>;
+  onLeave: () => void;
+}) {
+  const [users, setUsers] = useState<UserSummary[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [busyUserId, setBusyUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/workspace/members")
+      .then((r) => r.json())
+      .then((data: UserSummary[]) => setUsers(data))
+      .catch(() => toast.error("Failed to load users"))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const usersById = new Map(users.map((u) => [u.id, u]));
+  const myMembership = channel.members.find((m) => m.userId === currentUserId);
+  const isChannelAdmin = myMembership?.role === "ADMIN";
+  const roster = [...channel.members].sort((a, b) => {
+    if (a.role !== b.role) return a.role === "ADMIN" ? -1 : 1;
+    const nameA = usersById.get(a.userId)?.fullName ?? "";
+    const nameB = usersById.get(b.userId)?.fullName ?? "";
+    return nameA.localeCompare(nameB);
+  });
+
+  const runAction = async (userId: string, action: () => Promise<void>) => {
+    setBusyUserId(userId);
+    try {
+      await action();
+    } finally {
+      setBusyUserId(null);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+      <div className="bg-[#12151D] rounded-2xl shadow-xl p-6 w-full max-w-md mx-4 border border-[#262A35]">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-[#E6E9F0]">
+            Members {channel.type !== "DIRECT" ? `(${channel.members.length})` : ""}
+          </h2>
+          <button onClick={onClose} className="text-[#8A92A6] hover:text-[#E6E9F0]">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="max-h-80 overflow-y-auto space-y-1 mb-4">
+          {loading ? (
+            <p className="text-sm text-[#8A92A6] text-center py-4">Loading members…</p>
+          ) : (
+            roster.map((m) => {
+              const u = usersById.get(m.userId);
+              const name = u?.fullName ?? "Unknown user";
+              const isSelf = m.userId === currentUserId;
+              const isAdmin = m.role === "ADMIN";
+              const busy = busyUserId === m.userId;
+              return (
+                <div key={m.userId} className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm hover:bg-[#1B1F2A]">
+                  <div className="w-8 h-8 rounded-full bg-[#1B1F2A] border border-[#262A35] flex items-center justify-center text-xs font-semibold text-[#00C2FF] flex-shrink-0">
+                    {name[0]?.toUpperCase() ?? "?"}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate text-[#E6E9F0] flex items-center gap-1.5">
+                      {name}{isSelf ? " (you)" : ""}
+                      {isAdmin && <Crown className="w-3 h-3 text-[#f4b400] flex-shrink-0" />}
+                    </p>
+                    <p className="text-xs text-[#8A92A6] truncate">{u?.email ?? ""}</p>
+                  </div>
+
+                  {channel.type !== "DIRECT" && isChannelAdmin && !isSelf && (
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <button
+                        onClick={() => void runAction(m.userId, () => onChangeRole(m.userId, isAdmin ? "MEMBER" : "ADMIN"))}
+                        disabled={busy}
+                        title={isAdmin ? "Remove admin" : "Make admin"}
+                        className="p-1.5 rounded-lg text-[#8A92A6] hover:text-[#f4b400] hover:bg-[#f4b400]/10 transition-colors disabled:opacity-40"
+                      >
+                        <Crown className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => void runAction(m.userId, () => onRemove(m.userId, name))}
+                        disabled={busy}
+                        title="Remove from group"
+                        className="p-1.5 rounded-lg text-[#8A92A6] hover:text-[#ea4335] hover:bg-[#ea4335]/10 transition-colors disabled:opacity-40"
+                      >
+                        <UserMinus className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        <div className="flex gap-2">
+          <button onClick={onClose} className="flex-1 px-4 py-2 border border-[#262A35] text-[#8A92A6] rounded-xl text-sm hover:bg-[#1B1F2A]">
+            Close
+          </button>
+          {channel.type === "GROUP" && (
+            <button
+              onClick={onLeave}
+              className="flex-1 px-4 py-2 border border-[#ea4335]/40 text-[#ea4335] rounded-xl text-sm font-semibold hover:bg-[#ea4335]/10 flex items-center justify-center gap-1.5"
+            >
+              <LogOut className="w-3.5 h-3.5" /> Leave group
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── GIF Picker ──────────────────────────────────────────────────────────────
 
 type GifResult = { id: string; title: string; url: string; previewUrl: string };
@@ -1846,6 +1977,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
   const [showNewChannel, setShowNewChannel] = useState(false);
   const [showNewGroupDM, setShowNewGroupDM] = useState(false);
   const [showAddMembers, setShowAddMembers] = useState(false);
+  const [showManageMembers, setShowManageMembers] = useState(false);
   const [typingNames, setTypingNames] = useState<Map<string, string>>(new Map());
   const [threadParentMsg, setThreadParentMsg] = useState<Message | null>(null);
   const [threadMessages, setThreadMessages] = useState<Message[]>([]);
@@ -2599,6 +2731,61 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
     }
   };
 
+  const handleLeaveChannel = async () => {
+    if (!selectedChannelId || !selectedChannel) return;
+    if (!confirm(`Leave "${selectedChannel.name}"? You'll need to be re-added to rejoin.`)) return;
+    try {
+      const res = await fetch(`/api/chat/channels/${selectedChannelId}/members`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: currentUserId }),
+      });
+      if (!res.ok) { const e = await res.json().catch(() => ({})) as { error?: string }; throw new Error(e.error ?? "Failed"); }
+      setChannels(prev => prev.filter(c => c.id !== selectedChannelId));
+      setSelectedChannelId(null);
+      toast.success("Left the group");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not leave group");
+    }
+  };
+
+  const handleChangeMemberRole = async (userId: string, role: "ADMIN" | "MEMBER") => {
+    if (!selectedChannelId) return;
+    try {
+      const res = await fetch(`/api/chat/channels/${selectedChannelId}/members`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, role }),
+      });
+      if (!res.ok) { const e = await res.json().catch(() => ({})) as { error?: string }; throw new Error(e.error ?? "Failed"); }
+      setChannels(prev => prev.map(c => c.id === selectedChannelId
+        ? { ...c, members: c.members.map(m => m.userId === userId ? { ...m, role } : m) }
+        : c));
+      toast.success(role === "ADMIN" ? "Promoted to admin" : "Removed as admin");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not update role");
+    }
+  };
+
+  const handleRemoveMember = async (userId: string, name: string) => {
+    if (!selectedChannelId) return;
+    if (!confirm(`Remove ${name} from this group?`)) return;
+    try {
+      const res = await fetch(`/api/chat/channels/${selectedChannelId}/members`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+      if (!res.ok) { const e = await res.json().catch(() => ({})) as { error?: string }; throw new Error(e.error ?? "Failed"); }
+      setChannels(prev => prev.map(c => c.id === selectedChannelId
+        ? { ...c, members: c.members.filter(m => m.userId !== userId) }
+        : c));
+      toast.success(`Removed ${name}`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not remove member");
+    }
+  };
+
   const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     dragCounterRef.current = 0;
@@ -3048,6 +3235,26 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                     <UserPlus className="w-[17px] h-[17px]" />
                   </button>
                 )}
+              {/* Manage members — view roster, promote/demote, remove members */}
+              {selectedChannel?.type !== "DIRECT" && (
+                <button
+                  onClick={() => setShowManageMembers(true)}
+                  className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#262A35] bg-[#12151D] text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0] transition-colors flex-shrink-0"
+                  title="Manage members"
+                >
+                  <Settings className="w-[17px] h-[17px]" />
+                </button>
+              )}
+              {/* Leave group — available to any member of a GROUP channel */}
+              {selectedChannel?.type === "GROUP" && (
+                <button
+                  onClick={() => void handleLeaveChannel()}
+                  title="Leave group"
+                  className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#262A35] bg-[#12151D] text-[#8A92A6] hover:bg-[#ea4335]/10 hover:text-[#ea4335] hover:border-[#ea4335]/40 transition-colors flex-shrink-0"
+                >
+                  <LogOut className="w-[17px] h-[17px]" />
+                </button>
+              )}
               {/* Delete channel — only visible to channel admins */}
               {selectedChannel?.type !== "DIRECT" && selectedChannel?.members?.find(m => m.userId === currentUserId)?.role === "ADMIN" && (
                 <button
@@ -3337,6 +3544,17 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
           onAdded={(updatedChannel) => {
             setChannels((prev) => prev.map((c) => c.id === updatedChannel.id ? updatedChannel : c));
           }}
+        />
+      )}
+
+      {showManageMembers && selectedChannel && (
+        <ManageMembersModal
+          channel={selectedChannel}
+          currentUserId={currentUserId}
+          onClose={() => setShowManageMembers(false)}
+          onChangeRole={handleChangeMemberRole}
+          onRemove={handleRemoveMember}
+          onLeave={() => { setShowManageMembers(false); void handleLeaveChannel(); }}
         />
       )}
 
