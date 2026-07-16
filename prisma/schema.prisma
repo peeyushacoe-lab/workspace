@@ -657,6 +657,9 @@ model AuditLog {
   @@index([action])
   @@index([createdAt])
   @@index([organizationId])
+  // Hot path: push-subscription lookups filter actorId + action="PUSH_SUBSCRIBE"
+  // on every chat message / DM / inbound email / notification-worker run.
+  @@index([actorId, action])
 }
 
 model ThreatScan {
@@ -751,6 +754,8 @@ model EmailLog {
   @@index([userId])
   @@index([recipient])
   @@index([resendId])
+  // Deliverability dashboard: filter by status, sorted by recency.
+  @@index([status, createdAt])
 }
 
 model SuppressionList {
@@ -1017,6 +1022,10 @@ model DriveFile {
   @@index([ownerId])
   @@index([folderId])
   @@index([classification])
+  // Main Drive list: owner's files filtered by trash flag, sorted by recency.
+  @@index([ownerId, isTrashed, updatedAt])
+  // Folder browsing filtered by trash flag.
+  @@index([folderId, isTrashed])
 }
 
 model DriveActivity {
@@ -1113,6 +1122,8 @@ model CalendarEvent {
 
   @@index([organizerId])
   @@index([startAt, endAt])
+  // Calendar visibility query scans all-users' PUBLIC events within a date range.
+  @@index([visibility, startAt])
 }
 
 model EventAttendee {
@@ -1158,6 +1169,8 @@ model AIInteraction {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  // AI history / memory: per-user interactions fetched most-recent-first. High growth.
+  @@index([userId, createdAt])
 }
 
 // ─── Phase 8: Notifications ───────────────────────────────────────────────────
@@ -1188,6 +1201,8 @@ model Notification {
 
   @@index([userId, read])
   @@index([createdAt])
+  // Notification hub: per-user feed sorted by recency (the default, non-unread query).
+  @@index([userId, createdAt])
 }
 
 // ─── Phase 9: Session Management ─────────────────────────────────────────────

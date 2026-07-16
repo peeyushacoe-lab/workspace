@@ -17,6 +17,7 @@
     "prisma:seed": "tsx prisma/seed.ts",
     "seed:rbac": "tsx prisma/seed-rbac.ts",
     "backfill:rbac": "tsx prisma/backfill-rbac.ts",
+    "test:rbac-parity": "tsx scripts/rbac-parity-test.ts",
     "create-user": "tsx scripts/create-user.ts",
     "worker": "tsx scripts/worker.ts",
     "dashboard": "tsx scripts/dashboard.ts",

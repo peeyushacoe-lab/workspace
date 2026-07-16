@@ -1,22 +1,27 @@
 // ─── System role definitions (RFC-001) ────────────────────────────────────────
 // The 16 built-in UserRole enum values become seeded system `Role` rows. This file
-// is the single translation of the OLD access model (pathAccess arrays in auth.ts +
-// ROLE_DEFAULTS in permissions.ts) into the NEW permission-key model.
+// is the single translation of the ENFORCED access model — the `pathAccess` arrays
+// in src/lib/auth.ts — into the new permission-key model.
 //
-// The PR7 seed-parity test asserts that the access decision produced from these
-// sets equals the old role-based decision for every route. Treat every change here
-// as security-sensitive.
+// IMPORTANT: the old ROLE_DEFAULTS map in permissions.ts was DEAD CODE (never
+// imported/enforced), so it is NOT used as a source here. Only `pathAccess` (the
+// real page gate) is mirrored. That is why CISO/COO/OPS_MANAGER do NOT get
+// admin.manage (they never had /admin access) and CEO is NOT a super-role (it was
+// excluded from /admin, /billing, /org, /compliance).
+//
+// The PR7 seed-parity test asserts this mapping reproduces the old per-route
+// decision for all 16 original roles. Treat every change here as security-sensitive.
 
 import type { PermissionKey } from "./catalog";
 
 export type SystemRoleDef = {
-  key: string;        // matches UserRole enum value (lowercased for the Role.key slug)
+  key: string;        // matches UserRole enum value, lowercased for Role.key slug
   enumValue: string;  // exact UserRole enum value
   name: string;
   description: string;
   rank: number;       // lower = more privileged
   isSingleton: boolean;
-  isSuper?: boolean;  // super-roles implicitly hold every permission
+  isSuper?: boolean;  // super-roles implicitly hold every permission (ADMIN only)
   permissions: PermissionKey[];
 };
 
@@ -29,13 +34,14 @@ const BASE_WORKSPACE: PermissionKey[] = [
   "drive.read", "drive.upload", "drive.share",
   "docs.read", "docs.edit",
   "tasks.read", "tasks.write",
+  "teams.read", "apps.use",
   "ai.use",
   "people.read",
   "hr.read",
 ];
 
-// The HR account is deliberately scoped away from chat/ai/teams/tasks (see auth.ts
-// NON_HR_ROLES) and instead runs the HR console.
+// The HR account is deliberately scoped away from chat/ai/teams/tasks and the
+// personal /hr page (see auth.ts NON_HR_ROLES); it runs the HR console instead.
 const HR_WORKSPACE: PermissionKey[] = [
   "email.read", "email.send",
   "meet.join",
@@ -46,8 +52,12 @@ const HR_WORKSPACE: PermissionKey[] = [
   "hr.manage",
 ];
 
-// Extra grants for leadership (MGMT_ROLES) — dashboard, contacts, user management.
-const MGMT_EXTRA: PermissionKey[] = ["dashboard.view", "contacts.read", "users.manage"];
+// Leadership (MGMT_ROLES) extras: dashboard, contacts, user management, mentor
+// workspace and the internship hub.
+const MGMT_EXTRA: PermissionKey[] = [
+  "dashboard.view", "contacts.read", "users.manage",
+  "mentor.manage", "internship.view",
+];
 
 const uniq = (...groups: PermissionKey[][]): PermissionKey[] =>
   Array.from(new Set(groups.flat()));
@@ -60,8 +70,9 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
   },
   {
     key: "ceo", enumValue: "CEO", name: "CEO",
-    description: "Chief Executive — full access.",
-    rank: 10, isSingleton: true, isSuper: true, permissions: [],
+    description: "Chief Executive — workspace, leadership and SOC access.",
+    rank: 10, isSingleton: true,
+    permissions: uniq(BASE_WORKSPACE, MGMT_EXTRA, ["soc.view", "soc.manage"]),
   },
   {
     key: "ciso", enumValue: "CISO", name: "CISO",
@@ -71,30 +82,29 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
       "sentinel.view", "sentinel.manage",
       "soc.view", "soc.manage",
       "dlp.manage", "compliance.view",
-      "admin.manage",
     ]),
   },
   {
     key: "coo", enumValue: "COO", name: "COO",
     description: "Chief Operating Officer.",
     rank: 20, isSingleton: true,
-    permissions: uniq(BASE_WORKSPACE, MGMT_EXTRA, ["admin.manage", "email.delete"]),
+    permissions: uniq(BASE_WORKSPACE, MGMT_EXTRA),
   },
   {
     key: "r_and_d", enumValue: "R_AND_D", name: "R&D Head",
     description: "Head of Research & Development.",
     rank: 30, isSingleton: true,
-    permissions: uniq(BASE_WORKSPACE, MGMT_EXTRA, ["drive.delete", "docs.delete"]),
+    permissions: uniq(BASE_WORKSPACE, MGMT_EXTRA),
   },
   {
     key: "ops_manager", enumValue: "OPS_MANAGER", name: "Operations Manager",
     description: "Operations manager.",
     rank: 30, isSingleton: true,
-    permissions: uniq(BASE_WORKSPACE, MGMT_EXTRA, ["admin.manage", "email.delete"]),
+    permissions: uniq(BASE_WORKSPACE, MGMT_EXTRA),
   },
   {
     key: "hr", enumValue: "HR", name: "HR",
-    description: "Human Resources.",
+    description: "Human Resources — HR console.",
     rank: 40, isSingleton: false,
     permissions: HR_WORKSPACE,
   },
@@ -141,8 +151,9 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
   },
   {
     key: "internship", enumValue: "INTERNSHIP", name: "Internship",
-    description: "Intern — workspace access, internship hub.",
-    rank: 200, isSingleton: false, permissions: BASE_WORKSPACE,
+    description: "Intern — workspace access, internship hub and attendance.",
+    rank: 200, isSingleton: false,
+    permissions: uniq(BASE_WORKSPACE, ["internship.view"]),
   },
   {
     key: "member", enumValue: "MEMBER", name: "Member",
@@ -151,7 +162,7 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
   },
 ];
 
-/** Super-roles bypass every permission check (kept in sync with permissions.ts). */
+/** Super-roles bypass every permission check. ADMIN only. */
 export const SUPER_ROLE_ENUMS: ReadonlySet<string> = new Set(
   SYSTEM_ROLES.filter((r) => r.isSuper).map((r) => r.enumValue),
 );

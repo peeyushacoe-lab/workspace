@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { canAccessPath, getPortalHome, type SessionUser } from "@/lib/auth";
+import { canAccessPath, canAccessPathByPerms, getPortalHome, type SessionUser } from "@/lib/auth";
 
 const protectedRoutes = [
   "/dashboard",
@@ -137,7 +137,27 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (!canAccessPath(user, request.nextUrl.pathname)) {
+  // ── Access gating (RFC-001, PR7) ──────────────────────────────────────────
+  // Role-based decision (old) vs permission-based decision (new, from cookie perms).
+  const path = request.nextUrl.pathname;
+  const oldDecision = canAccessPath(user, path);
+  const newDecision = canAccessPathByPerms(user.perms, path); // boolean | null
+
+  // Shadow mode: log any divergence so we can confirm the map is correct in prod
+  // BEFORE flipping RBAC_ENFORCE on. The log should be empty in steady state.
+  if (newDecision !== null && newDecision !== oldDecision) {
+    console.warn(
+      `[rbac-shadow] role=${user.role} path=${path} old=${oldDecision} new=${newDecision}`,
+    );
+  }
+
+  // Enforce the permission decision when RBAC_ENFORCE=true and the cookie has perms;
+  // otherwise fall back to the role-based decision (safe default, and covers cookies
+  // issued before the RBAC rollout — those get refreshed by the portal layout).
+  const enforce = process.env.RBAC_ENFORCE === "true";
+  const effective = enforce ? (newDecision ?? oldDecision) : oldDecision;
+
+  if (!effective) {
     return NextResponse.redirect(new URL(getPortalHome(user.role), request.url));
   }
 

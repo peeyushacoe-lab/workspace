@@ -63,6 +63,9 @@ export const portalHome = "/inbox";
 export function getPortalHome(role: string): string {
   if (role === "HR") return "/admin/hr";
   if (role === "INTERNSHIP") return "/internship/attendance";
+  // MEMBER is a neutral baseline with no workspace permissions — send it to a
+  // universally-accessible page so a bare member never hits a redirect loop.
+  if (role === "MEMBER") return "/profile";
   return "/inbox";
 }
 
@@ -122,7 +125,9 @@ export const portalNavItems: PortalNavItem[] = [
 ];
 
 // Explicit access control map — default-deny for anything not listed.
-const pathAccess: Array<{ prefix: string; roles: UserRole[] }> = [
+// Exported so the RBAC seed-parity test (scripts/rbac-parity-test.ts) can prove the
+// permission-based route map reproduces these role decisions.
+export const pathAccess: Array<{ prefix: string; roles: UserRole[] }> = [
   { prefix: "/inbox",          roles: ALL_ROLES },
   { prefix: "/chat",           roles: NON_HR_ROLES },
   { prefix: "/meet",           roles: ALL_ROLES },
@@ -223,6 +228,83 @@ export function canAccessPath(user: SessionUser, pathname: string): boolean {
   // Default-deny: unknown paths are blocked
   if (!match) return false;
   return match.roles.includes(user.role);
+}
+
+// ─── RBAC route gating (RFC-001, PR7) ─────────────────────────────────────────
+// Maps each page prefix to the single permission that gates it. `null` = the route
+// only needs authentication (universal / self-service pages). This mirrors the
+// `pathAccess` role arrays above; the seed-parity test proves the two agree for all
+// 16 original roles (with two documented ADMIN super-role exceptions).
+//
+// PermissionKey is inlined as a string here so this module stays Edge-safe; the
+// keys are validated against the catalog by the parity test.
+export const routePermission: Array<{ prefix: string; permission: string | null }> = [
+  { prefix: "/inbox",                permission: "email.read" },
+  { prefix: "/chat",                 permission: "chat.read" },
+  { prefix: "/meet/intelligence",    permission: "ai.use" },
+  { prefix: "/meet",                 permission: "meet.join" },
+  { prefix: "/drive",                permission: "drive.read" },
+  { prefix: "/calendar",             permission: "calendar.read" },
+  { prefix: "/notes",                permission: "docs.read" },
+  { prefix: "/docs",                 permission: "docs.read" },
+  { prefix: "/whiteboard",           permission: "docs.edit" },
+  { prefix: "/ai",                   permission: "ai.use" },
+  { prefix: "/brain",                permission: "ai.use" },
+  { prefix: "/compose",              permission: "email.send" },
+  { prefix: "/people",               permission: "people.read" },
+  { prefix: "/teams",                permission: "teams.read" },
+  { prefix: "/tasks",                permission: "tasks.read" },
+  { prefix: "/apps",                 permission: "apps.use" },
+  { prefix: "/hr",                   permission: "hr.read" },
+  { prefix: "/dashboard",            permission: "dashboard.view" },
+  { prefix: "/contacts",             permission: "contacts.read" },
+  { prefix: "/users",                permission: "users.manage" },
+  { prefix: "/billing",              permission: "billing.manage" },
+  { prefix: "/org",                  permission: "org.manage" },
+  { prefix: "/admin/hr",             permission: "hr.manage" },
+  { prefix: "/admin/queues",         permission: "admin.manage" },
+  { prefix: "/admin/deliverability", permission: "admin.manage" },
+  { prefix: "/admin",                permission: "admin.manage" },
+  { prefix: "/developer",            permission: "admin.manage" },
+  { prefix: "/compliance",           permission: "compliance.view" },
+  { prefix: "/access",               permission: "compliance.view" },
+  { prefix: "/soc",                  permission: "soc.view" },
+  { prefix: "/mentor",               permission: "mentor.manage" },
+  // /internship/attendance is NOT a separate pathAccess entry — it inherits the
+  // /internship gate (interns + their managers), so we deliberately do not add a
+  // narrower rule here that would lock managers out.
+  { prefix: "/internship",           permission: "internship.view" },
+  // Universal / self-service — authentication only.
+  { prefix: "/settings",       permission: null },
+  { prefix: "/profile",        permission: null },
+  { prefix: "/notifications",  permission: null },
+  { prefix: "/mfa-challenge",  permission: null },
+  { prefix: "/reset-password", permission: null },
+  { prefix: "/setup-passkey",  permission: null },
+  { prefix: "/onboarding",     permission: null },
+  { prefix: "/status",         permission: null },
+  { prefix: "/download",       permission: null },
+];
+
+/**
+ * Permission-based access decision, using the permission keys embedded in the
+ * session cookie. Returns `null` if the cookie has no perms yet (pre-rollout
+ * cookie) so the caller can fall back to role-based gating.
+ */
+export function canAccessPathByPerms(
+  perms: string[] | undefined,
+  pathname: string,
+): boolean | null {
+  if (!perms) return null; // no perms in cookie — caller decides fallback
+
+  const match = routePermission
+    .filter((item) => pathname === item.prefix || pathname.startsWith(`${item.prefix}/`))
+    .sort((a, b) => b.prefix.length - a.prefix.length)[0];
+
+  // Default-deny: unknown paths are blocked.
+  if (!match) return false;
+  if (match.permission === null) return true; // auth-only route
+  return perms.includes(match.permission);
 }
 
 export function getPortalNavForRole(role: UserRole) {

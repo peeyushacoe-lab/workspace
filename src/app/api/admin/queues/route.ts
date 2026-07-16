@@ -27,19 +27,38 @@ export async function GET() {
       QUEUE_NAMES.map(async (name) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const q = new Queue(name, { connection: redis as any });
-        const [waiting, active, completed, failed, delayed] = await Promise.all([
+        const [waiting, active, completed, failed, delayed, isPaused] = await Promise.all([
           q.getWaitingCount(),
           q.getActiveCount(),
           q.getCompletedCount(),
           q.getFailedCount(),
           q.getDelayedCount(),
+          q.isPaused(),
         ]);
         await q.close();
-        return { name, waiting, active, completed, failed, delayed };
+
+        // Health signal: paused or a large dead-letter pile is critical; a growing
+        // backlog or moderate failures is a warning. Thresholds are deliberately
+        // conservative for a research-preview scale.
+        const health =
+          isPaused || failed > 50
+            ? "critical"
+            : failed > 10 || waiting > 500
+              ? "warn"
+              : "ok";
+
+        return { name, waiting, active, completed, failed, delayed, paused: isPaused, health };
       })
     );
 
-    return NextResponse.json({ queues, collectedAt: new Date().toISOString() });
+    const summary = {
+      totalFailed: queues.reduce((s, q) => s + q.failed, 0),
+      totalWaiting: queues.reduce((s, q) => s + q.waiting, 0),
+      critical: queues.filter((q) => q.health === "critical").map((q) => q.name),
+      warn: queues.filter((q) => q.health === "warn").map((q) => q.name),
+    };
+
+    return NextResponse.json({ queues, summary, collectedAt: new Date().toISOString() });
   } catch (err) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }

@@ -1,5 +1,6 @@
 import { Queue } from "bullmq";
 import { redisConnection } from "@/lib/redis";
+import { QUEUE_DEFAULT_PRIORITY } from "./priority";
 
 export const SECURITY_SYNC_QUEUE_NAME = "security-sync";
 
@@ -8,6 +9,7 @@ export const securitySyncQueue = new Queue(SECURITY_SYNC_QUEUE_NAME, {
   defaultJobOptions: {
     attempts: 3,
     backoff: { type: "exponential", delay: 3000 },
+    priority: QUEUE_DEFAULT_PRIORITY["security-sync"], // HIGH
     removeOnComplete: { count: 50 },
     removeOnFail: { count: 200 },
   },

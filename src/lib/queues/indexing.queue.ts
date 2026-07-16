@@ -1,5 +1,6 @@
 import { Queue } from "bullmq";
 import { redisConnection } from "@/lib/redis";
+import { QUEUE_DEFAULT_PRIORITY } from "./priority";
 
 export const INDEXING_QUEUE_NAME = "search-indexing";
 
@@ -8,6 +9,7 @@ export const indexingQueue = new Queue(INDEXING_QUEUE_NAME, {
   defaultJobOptions: {
     attempts: 3,
     backoff: { type: "exponential", delay: 2000 },
+    priority: QUEUE_DEFAULT_PRIORITY["search-indexing"], // LOW
     removeOnComplete: { count: 100 },
     removeOnFail: { count: 100 },
   },

@@ -1,5 +1,7 @@
 -- Internship Hub: per-module quizzes + per-intern module completion
--- Idempotent / shadow-DB safe: guarded so it skips gracefully if the table is absent.
+-- Idempotent / shadow-DB safe: all statements are guarded to skip when
+-- the referenced tables don't exist (handles shadow DB that only has
+-- migrations, not db-push-applied tables like InternWeekTopic).
 
 -- 1. Add quiz JSON column to module (InternWeekTopic)
 DO $$
@@ -32,9 +34,13 @@ CREATE INDEX IF NOT EXISTS "InternModuleCompletion_internId_idx"
 CREATE INDEX IF NOT EXISTS "InternModuleCompletion_weekId_idx"
   ON "InternModuleCompletion" ("weekId");
 
+-- 3. Foreign keys — only add when the referenced tables actually exist
 DO $$
 BEGIN
-  IF NOT EXISTS (
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'InternWeekTopic'
+  ) AND NOT EXISTS (
     SELECT 1 FROM information_schema.table_constraints
     WHERE constraint_name = 'InternModuleCompletion_topicId_fkey'
   ) THEN

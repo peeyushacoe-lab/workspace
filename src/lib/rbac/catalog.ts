@@ -43,12 +43,16 @@ export const PERMISSION_CATALOG = [
   { key: "docs.delete",    resource: "docs",     action: "delete", label: "Delete documents",  description: "Delete docs and notes.",                        category: "Workspace", isDangerous: true },
   { key: "tasks.read",     resource: "tasks",    action: "read",   label: "View tasks",        description: "See the task board.",                           category: "Workspace" },
   { key: "tasks.write",    resource: "tasks",    action: "write",  label: "Manage tasks",      description: "Create, edit and move tasks.",                  category: "Workspace" },
+  { key: "teams.read",     resource: "teams",    action: "read",   label: "View team spaces",  description: "Access team spaces and the apps marketplace.",  category: "Workspace" },
+  { key: "apps.use",       resource: "apps",     action: "use",    label: "Use apps",          description: "Open the apps marketplace and installed apps.", category: "Workspace" },
   { key: "ai.use",         resource: "ai",       action: "use",    label: "Use AI assistant",  description: "Access AI compose, summarise and chat.",        category: "Workspace" },
 
   // ── People ─────────────────────────────────────────────────────────────────
   { key: "people.read",    resource: "people",   action: "read",   label: "View directory",    description: "See the team directory and profiles.",          category: "People" },
   { key: "hr.read",        resource: "hr",       action: "read",   label: "View own HR",       description: "Access personal HR: leave, documents, onboarding.", category: "People" },
   { key: "hr.manage",      resource: "hr",       action: "manage", label: "Manage HR",         description: "Manage people, leave approvals and HR records.", category: "People", isDangerous: true },
+  { key: "internship.view",resource: "internship",action: "view",  label: "Internship hub",    description: "Access the internship hub and attendance (interns & their mentors).", category: "People" },
+  { key: "mentor.manage",  resource: "mentor",   action: "manage", label: "Mentor workspace",  description: "Manage interns, attendance and mentor HR.",      category: "People" },
 
   // ── Security ───────────────────────────────────────────────────────────────
   { key: "sentinel.view",  resource: "sentinel", action: "view",   label: "View Sentinel",     description: "See security alerts and threat intelligence.",  category: "Security" },

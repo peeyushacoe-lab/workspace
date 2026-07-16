@@ -17,9 +17,17 @@ export async function GET(request: Request, { params }: Params) {
   const file = await prisma.driveFile.findUnique({ where: { id } });
   if (!file) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  // Check access: owner OR same organization
+  // Check access: owner OR same organization. Org rollout (RFC-001) is only
+  // partially backfilled, so most users still have organizationId === null —
+  // treat "neither user has been assigned an org yet" as the same (sole)
+  // organization rather than denying access, otherwise every shared file
+  // (e.g. a screenshot posted in a chat channel) 403s for every recipient
+  // except the uploader. Real multi-org separation is unaffected: two users
+  // with different non-null organizationIds are still blocked from each other.
   const owner = await prisma.user.findUnique({ where: { id: file.ownerId }, select: { organizationId: true } });
-  const hasAccess = file.ownerId === user.id || (owner?.organizationId && owner.organizationId === user.organizationId);
+  const sameOrg = !!owner?.organizationId && owner.organizationId === user.organizationId;
+  const bothUnassigned = !owner?.organizationId && !user.organizationId;
+  const hasAccess = file.ownerId === user.id || sameOrg || bothUnassigned;
   if (!hasAccess) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { searchParams } = new URL(request.url);

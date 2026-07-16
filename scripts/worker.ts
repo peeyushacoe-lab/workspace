@@ -13,6 +13,7 @@ import { createImportWorker } from "../src/workers/import.worker";
 import { createExportWorker } from "../src/workers/export.worker";
 import { processScheduledEmails } from "../src/workers/scheduled-send.worker";
 import { cleanupQueue } from "../src/lib/queues/cleanup.queue";
+import { attachFailedJobAlerts } from "../src/lib/queues/failed-job-monitor";
 import { logger } from "../src/lib/logger";
 
 logger.info("CyberSage Background Workers Starting...");
@@ -106,6 +107,8 @@ const allWorkers: [Worker, string][] = [
 
 for (const [worker, name] of allWorkers) {
   attachRateLimitHandler(worker, name);
+  // Terminal-failure alerting + spike escalation (Phase 2b).
+  attachFailedJobAlerts(worker, name);
   worker.on("failed", (job, err) => {
     logger.error({ worker: name, jobId: job?.id, err: err.message }, "Job failed");
   });

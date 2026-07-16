@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 import type { SessionUser } from "@/lib/auth";
@@ -94,4 +95,24 @@ export async function requirePermission(permission: PermissionKey): Promise<Sess
   const ok = await can(user.id, permission);
   if (!ok) throw new ForbiddenError(permission);
   return user;
+}
+
+/**
+ * Route-handler friendly guard. Returns `{ user }` when allowed, or `{ error }`
+ * carrying a ready-to-return NextResponse (401/403). Usage:
+ *   const auth = await requireApiPermission("rbac.manage");
+ *   if ("error" in auth) return auth.error;
+ *   const { user } = auth;
+ */
+export async function requireApiPermission(
+  permission: PermissionKey,
+): Promise<{ user: SessionUser } | { error: NextResponse }> {
+  const user = await getCurrentUser();
+  if (!user) {
+    return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
+  }
+  if (!(await can(user.id, permission))) {
+    return { error: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
+  }
+  return { user };
 }

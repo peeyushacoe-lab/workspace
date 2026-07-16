@@ -1,5 +1,6 @@
 import { Queue } from "bullmq";
 import { redisConnection } from "@/lib/redis";
+import { QUEUE_DEFAULT_PRIORITY } from "./priority";
 
 export const AI_QUEUE_NAME = "ai-jobs";
 
@@ -8,6 +9,7 @@ export const aiQueue = new Queue(AI_QUEUE_NAME, {
   defaultJobOptions: {
     attempts: 2,
     backoff: { type: "exponential", delay: 5000 },
+    priority: QUEUE_DEFAULT_PRIORITY["ai-jobs"], // LOW — yields to email/security
     removeOnComplete: { count: 50 },
     removeOnFail: { count: 100 },
   },
