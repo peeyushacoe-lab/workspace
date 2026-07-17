@@ -2413,6 +2413,64 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
     };
   }, [selectedChannelId, currentUserId]);
 
+  // Live updates via SSE — this is the transport that actually works in production.
+  // Socket.IO (above) requires a separately-hosted always-on server (NEXT_PUBLIC_SOCKET_URL);
+  // on Vercel that env var is unset and the socket never connects, so without this SSE
+  // fallback new messages and reactions would only ever appear after a full page reload.
+  // The stream re-broadcasts the same Redis pub/sub events the API routes already publish
+  // (see /api/chat/channels/[id]/stream), so both transports can safely coexist — message
+  // appends are deduped by id and reaction/edit updates are idempotent.
+  useEffect(() => {
+    if (!selectedChannelId) return;
+
+    const source = new EventSource(`/api/chat/channels/${selectedChannelId}/stream`);
+
+    source.addEventListener("message", (e) => {
+      const msg = JSON.parse((e as MessageEvent).data) as Message;
+      if (msg.channelId !== selectedChannelId) return;
+      if (msg.parentId) {
+        if (threadParentIdRef.current === msg.parentId) {
+          setThreadMessages((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]));
+        }
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === msg.parentId
+              ? { ...m, replies: [...m.replies.filter((r) => r.id !== msg.id), { id: msg.id }] }
+              : m
+          )
+        );
+      } else {
+        setMessages((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]));
+      }
+    });
+
+    source.addEventListener("message_updated", (e) => {
+      const updated = JSON.parse((e as MessageEvent).data) as Message;
+      setMessages((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
+      setThreadMessages((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
+    });
+
+    source.addEventListener("message_deleted", (e) => {
+      const { id } = JSON.parse((e as MessageEvent).data) as { id: string };
+      const now = new Date().toISOString();
+      setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, deletedAt: now } : m)));
+      setThreadMessages((prev) => prev.map((m) => (m.id === id ? { ...m, deletedAt: now } : m)));
+    });
+
+    source.addEventListener("reactions_updated", (e) => {
+      const { messageId, reactions } = JSON.parse((e as MessageEvent).data) as { messageId: string; reactions: Reaction[] };
+      setMessages((prev) => prev.map((m) => (m.id === messageId ? { ...m, reactions } : m)));
+      setThreadMessages((prev) => prev.map((m) => (m.id === messageId ? { ...m, reactions } : m)));
+    });
+
+    source.onerror = () => {
+      // EventSource auto-reconnects on transient errors/timeouts (e.g. the 30s
+      // Vercel function duration cap); nothing to do here but avoid noisy logs.
+    };
+
+    return () => source.close();
+  }, [selectedChannelId]);
+
   // Auto-scroll on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -2490,14 +2548,38 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
   };
 
   const handleReact = async (messageId: string, emoji: string) => {
+    // Optimistic toggle — don't wait on the SSE round-trip to show your own reaction.
+    // The server's authoritative reaction list (via POST response + SSE broadcast)
+    // fully replaces this entry moments later, so no reconciliation is needed.
+    const applyOptimistic = (list: Message[]) =>
+      list.map((m) => {
+        if (m.id !== messageId) return m;
+        const already = m.reactions.find((r) => r.emoji === emoji && r.user.id === currentUserId);
+        return {
+          ...m,
+          reactions: already
+            ? m.reactions.filter((r) => r.id !== already.id)
+            : [...m.reactions, { id: `optimistic-${Date.now()}`, emoji, user: { id: currentUserId, fullName: "You" } }],
+        };
+      });
+    setMessages(applyOptimistic);
+    setThreadMessages(applyOptimistic);
+
     try {
-      await fetch(`/api/chat/messages/${messageId}/reactions`, {
+      const res = await fetch(`/api/chat/messages/${messageId}/reactions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ emoji }),
       });
+      if (!res.ok) throw new Error("Failed");
+      const { reactions } = (await res.json()) as { reactions: Reaction[] };
+      setMessages((prev) => prev.map((m) => (m.id === messageId ? { ...m, reactions } : m)));
+      setThreadMessages((prev) => prev.map((m) => (m.id === messageId ? { ...m, reactions } : m)));
     } catch {
       toast.error("Failed to react");
+      // Roll back the optimistic toggle by re-applying it (toggle is its own inverse)
+      setMessages(applyOptimistic);
+      setThreadMessages(applyOptimistic);
     }
   };
 

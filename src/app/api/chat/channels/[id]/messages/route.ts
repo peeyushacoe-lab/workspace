@@ -29,6 +29,14 @@ export async function GET(request: Request, { params }: Params) {
   const limit = Math.min(parseInt(searchParams.get("limit") ?? "50"), 100);
   const parentId = searchParams.get("parentId");
 
+  // Without an `after` cursor (initial load, or "load older" via `before`) we want
+  // the messages *closest to now* — fetch newest-first and take the limit, then
+  // reverse to chronological order for display. Fetching ascending with no lower
+  // bound (the old behavior) returned the OLDEST messages in the channel's entire
+  // history instead, which is why old channels appeared stuck showing days-old
+  // messages until the poller slowly crawled forward chunk by chunk.
+  const fetchNewestFirst = !after;
+
   const messageQuery = {
     where: {
       channelId,
@@ -46,12 +54,12 @@ export async function GET(request: Request, { params }: Params) {
         select: { id: true },
       },
     },
-    orderBy: { createdAt: "asc" as const },
+    orderBy: { createdAt: fetchNewestFirst ? ("desc" as const) : ("asc" as const) },
     take: limit,
   };
 
   // Fall back without deletedAt filter if the column doesn't exist in DB yet
-  const messages = await prisma.chatMessage.findMany(messageQuery).catch(() =>
+  const rawMessages = await prisma.chatMessage.findMany(messageQuery).catch(() =>
     prisma.chatMessage.findMany({
       ...messageQuery,
       include: {
@@ -63,6 +71,8 @@ export async function GET(request: Request, { params }: Params) {
       },
     })
   );
+
+  const messages = fetchNewestFirst ? rawMessages.reverse() : rawMessages;
 
   // Update last-read in parallel with the response — fire-and-forget is fine here.
   prisma.chatMember.update({
