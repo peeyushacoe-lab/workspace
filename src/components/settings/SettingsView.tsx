@@ -799,8 +799,12 @@ function NotifsMatrixCell({ value, locked, onChange }: { value: boolean; locked?
       onClick={() => !locked && onChange(!value)}
       className={`h-8 w-8 rounded-lg flex items-center justify-center transition-colors ${
         value
-          ? locked ? "bg-[#00C2FF]/10 text-[#00C2FF] cursor-default" : "bg-[#0E2532] text-[#00C2FF] hover:bg-[#0E2532]"
-          : locked ? "bg-[#12151D] text-[#dadce0] cursor-default" : "bg-[#1B1F2A] text-[#dadce0] hover:bg-[#262A35]"
+          ? locked
+            ? "bg-[#1a56db]/10 text-[#1a56db] cursor-default"
+            : "bg-[#1a56db]/10 text-[#1a56db] hover:bg-[#1a56db]/20"
+          : locked
+            ? "bg-[#f1f3f4] text-[#80868b] cursor-default"
+            : "bg-[#f1f3f4] text-[#80868b] hover:bg-[#e8eaed]"
       }`}
       title={locked ? "Always on for security" : value ? "Enabled — click to disable" : "Disabled — click to enable"}
     >
@@ -808,6 +812,159 @@ function NotifsMatrixCell({ value, locked, onChange }: { value: boolean; locked?
     </button>
   );
 }
+
+// ─── Push status card ─────────────────────────────────────────────────────────
+
+type PushStatus = "loading" | "unsupported" | "not-configured" | "denied" | "subscribed" | "unsubscribed" | "subscribing" | "error";
+
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = atob(base64);
+  return new Uint8Array([...raw].map((c) => c.charCodeAt(0)));
+}
+
+function PushStatusCard() {
+  const [status, setStatus] = useState<PushStatus>("loading");
+  const [errorMsg, setErrorMsg] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function check() {
+      if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+        if (!cancelled) setStatus("unsupported");
+        return;
+      }
+      if (Notification.permission === "denied") {
+        if (!cancelled) setStatus("denied");
+        return;
+      }
+      try {
+        const res = await fetch("/api/push/status");
+        const data = await res.json() as { serverConfigured: boolean; subscribed: boolean };
+        if (!cancelled) {
+          if (!data.serverConfigured) setStatus("not-configured");
+          else if (data.subscribed) setStatus("subscribed");
+          else setStatus("unsubscribed");
+        }
+      } catch {
+        if (!cancelled) setStatus("error");
+      }
+    }
+    void check();
+    return () => { cancelled = true; };
+  }, []);
+
+  async function enablePush() {
+    setStatus("subscribing");
+    setErrorMsg("");
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm !== "granted") { setStatus("denied"); return; }
+
+      const res = await fetch("/api/push/status");
+      const { vapidPublicKey } = await res.json() as { vapidPublicKey: string | null };
+      if (!vapidPublicKey) { setStatus("not-configured"); return; }
+
+      const reg = await navigator.serviceWorker.register("/sw.js");
+      await navigator.serviceWorker.ready;
+
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as BufferSource,
+        });
+      }
+
+      await fetch("/api/push/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sub.toJSON()),
+      });
+      setStatus("subscribed");
+      toast.success("Push notifications enabled on this device");
+    } catch (e) {
+      setErrorMsg(e instanceof Error ? e.message : "Unknown error");
+      setStatus("error");
+    }
+  }
+
+  async function disablePush() {
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) {
+        await fetch("/api/push/subscribe", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ endpoint: sub.endpoint }),
+        });
+        await sub.unsubscribe();
+      }
+      setStatus("unsubscribed");
+      toast.success("Push notifications disabled on this device");
+    } catch {
+      toast.error("Failed to unsubscribe");
+    }
+  }
+
+  const statusInfo: Record<PushStatus, { color: string; label: string; hint: string }> = {
+    loading:        { color: "text-[#80868b]",  label: "Checking…",          hint: "" },
+    unsupported:    { color: "text-[#80868b]",  label: "Not supported",       hint: "Your browser or device doesn't support Web Push." },
+    "not-configured": { color: "text-[#f4b400]", label: "Not configured",    hint: "VAPID keys are not set on the server. Contact your admin." },
+    denied:         { color: "text-[#ea4335]",  label: "Permission blocked",  hint: "You blocked notifications. Go to your browser settings to re-enable." },
+    subscribed:     { color: "text-[#0f9d58]",  label: "Active on this device", hint: "Push notifications will arrive even when the app is closed." },
+    unsubscribed:   { color: "text-[#5f6368]",  label: "Not enabled",         hint: "Enable to receive notifications when the app is closed or in the background." },
+    subscribing:    { color: "text-[#1a56db]",  label: "Enabling…",           hint: "" },
+    error:          { color: "text-[#ea4335]",  label: "Error",               hint: errorMsg || "Something went wrong. Try again." },
+  };
+
+  const info = statusInfo[status];
+
+  return (
+    <div className="flex items-start justify-between gap-4">
+      <div className="flex items-center gap-3">
+        <span className={`flex h-9 w-9 items-center justify-center rounded-full border ${
+          status === "subscribed" ? "bg-[#0f9d58]/10 border-[#0f9d58]/20" : "bg-[#f1f3f4] border-[#e8eaed]"
+        }`}>
+          <Bell className={`h-4 w-4 ${info.color}`} />
+        </span>
+        <div>
+          <p className={`text-sm font-semibold ${info.color}`}>{info.label}</p>
+          {info.hint && <p className="text-xs text-[#5f6368] mt-0.5 max-w-sm">{info.hint}</p>}
+          {status === "denied" && (
+            <p className="text-xs text-[#5f6368] mt-1">
+              On iPhone: Settings → Safari → [nexus.cybersage.uk] → Notifications → Allow
+            </p>
+          )}
+          {status === "unsupported" && (
+            <p className="text-xs text-[#5f6368] mt-1">
+              On iPhone: add Nexus to your Home Screen first, then open from there.
+            </p>
+          )}
+        </div>
+      </div>
+
+      {(status === "unsubscribed" || status === "error") && (
+        <button onClick={() => void enablePush()} className={btnPrimary}>
+          <Bell className="h-4 w-4" /> Enable
+        </button>
+      )}
+      {status === "subscribed" && (
+        <button onClick={() => void disablePush()} className="px-3 py-1.5 text-xs font-medium text-[#5f6368] hover:text-[#ea4335] hover:bg-[#ea4335]/10 rounded-lg transition-colors border border-[#e8eaed]">
+          Disable
+        </button>
+      )}
+      {status === "subscribing" && (
+        <Loader2 className="h-4 w-4 animate-spin text-[#1a56db]" />
+      )}
+    </div>
+  );
+}
+
+// ─── Notifications tab ────────────────────────────────────────────────────────
 
 function NotificationsTab() {
   const [matrix, setMatrix] = useState<NotifMatrix>(DEFAULT_MATRIX);
@@ -853,25 +1010,30 @@ function NotificationsTab() {
 
   return (
     <>
+      {/* Push status on this device */}
+      <SectionCard title="Push notifications on this device" description="Get notified even when the app is closed or in the background">
+        <PushStatusCard />
+      </SectionCard>
+
       {/* Matrix table */}
       <SectionCard title="Notification channels" description="Choose how you receive each type of notification">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr>
-                <th className="text-left py-2 pr-4 font-medium text-[#8A92A6] w-full">Notification type</th>
+                <th className="text-left py-2 pr-4 font-medium text-[#5f6368] w-full">Notification type</th>
                 {channels.map(ch => (
-                  <th key={ch.key} className="text-center py-2 px-3 font-medium text-[#8A92A6] whitespace-nowrap min-w-[80px]">{ch.label}</th>
+                  <th key={ch.key} className="text-center py-2 px-3 font-medium text-[#5f6368] whitespace-nowrap min-w-[80px]">{ch.label}</th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#1B1F2A]">
+            <tbody className="divide-y divide-[#e8eaed]">
               {NOTIF_ROWS.map((row, i) => (
-                <tr key={row.key} className={i % 2 === 0 ? "" : "bg-[#12151D]/40"}>
+                <tr key={row.key} className={i % 2 === 0 ? "" : "bg-[#f8f9fa]"}>
                   <td className="py-3 pr-4">
-                    <div className="font-medium text-[#E6E9F0]">{row.label}</div>
-                    <div className="text-xs text-[#5A6275] mt-0.5">{row.description}</div>
-                    {row.locked && <span className="text-[10px] font-medium text-[#00C2FF] bg-[#0E2532] rounded px-1.5 py-0.5 mt-1 inline-block">Always on</span>}
+                    <div className="font-medium text-[#202124]">{row.label}</div>
+                    <div className="text-xs text-[#5f6368] mt-0.5">{row.description}</div>
+                    {row.locked && <span className="text-[10px] font-medium text-[#1a56db] bg-[#1a56db]/10 rounded px-1.5 py-0.5 mt-1 inline-block">Always on</span>}
                   </td>
                   {channels.map(ch => (
                     <td key={ch.key} className="py-3 px-3 text-center">
@@ -906,11 +1068,11 @@ function NotificationsTab() {
         {quietHoursEnabled && (
           <div className="flex items-center gap-4 mt-4">
             <div>
-              <label className="text-xs text-[#8A92A6]">From</label>
+              <label className="text-xs text-[#5f6368]">From</label>
               <input type="time" value={quietStart} onChange={e => setQuietStart(e.target.value)} className={`block mt-1 ${selectClass}`} />
             </div>
             <div>
-              <label className="text-xs text-[#8A92A6]">To</label>
+              <label className="text-xs text-[#5f6368]">To</label>
               <input type="time" value={quietEnd} onChange={e => setQuietEnd(e.target.value)} className={`block mt-1 ${selectClass}`} />
             </div>
           </div>

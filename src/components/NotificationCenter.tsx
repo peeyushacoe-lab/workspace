@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -11,6 +11,7 @@ import {
   Folder,
   Info,
   BellOff,
+  Bell,
   type LucideIcon,
 } from "lucide-react";
 import type { NotificationType } from "@/generated/prisma/enums";
@@ -39,19 +40,19 @@ const TYPE_ICON: Record<NotificationType, LucideIcon> = {
 };
 
 function TypeIcon({ type }: { type: NotificationType }) {
-  const Icon = TYPE_ICON[type];
+  const Icon = TYPE_ICON[type] ?? Info;
   return <Icon className="h-3.5 w-3.5" />;
 }
 
 const TYPE_COLOR: Record<NotificationType, string> = {
-  MENTION: "bg-[#00C2FF]/10 text-[#00C2FF] border border-[#00C2FF]/20",
-  CALENDAR_INVITE: "bg-violet-400/10 text-violet-400 border border-violet-400/20",
-  CALENDAR_REMINDER: "bg-violet-400/10 text-violet-400 border border-violet-400/20",
-  SOC_ALERT: "bg-[#ea4335]/10 text-[#ea4335] border border-[#ea4335]/20",
-  DLP_VIOLATION: "bg-[#F59E0B]/10 text-[#F59E0B] border border-[#F59E0B]/20",
-  NEW_MESSAGE: "bg-[#0f9d58]/10 text-[#0f9d58] border border-[#0f9d58]/20",
-  FILE_SHARED: "bg-sky-400/10 text-sky-400 border border-sky-400/20",
-  SYSTEM: "bg-[#1B1F2A] text-[#8A92A6] border border-[#262A35]",
+  MENTION:           "bg-[#1a56db]/10 text-[#1a56db] border border-[#1a56db]/20",
+  CALENDAR_INVITE:   "bg-violet-500/10 text-violet-600 border border-violet-500/20",
+  CALENDAR_REMINDER: "bg-amber-500/10 text-amber-600 border border-amber-500/20",
+  SOC_ALERT:         "bg-[#ea4335]/10 text-[#ea4335] border border-[#ea4335]/20",
+  DLP_VIOLATION:     "bg-[#f4b400]/10 text-[#b06000] border border-[#f4b400]/20",
+  NEW_MESSAGE:       "bg-[#0f9d58]/10 text-[#0f9d58] border border-[#0f9d58]/20",
+  FILE_SHARED:       "bg-sky-500/10 text-sky-600 border border-sky-500/20",
+  SYSTEM:            "bg-[#f1f3f4] text-[#5f6368] border border-[#e8eaed]",
 };
 
 function timeAgo(iso: string): string {
@@ -81,6 +82,9 @@ function groupByDay(notifications: Notification[]): Record<string, Notification[
   return groups;
 }
 
+const RECONNECT_BASE_MS = 2_000;
+const RECONNECT_MAX_MS = 30_000;
+
 export function NotificationCenter({ userId, dark: _dark = false }: { userId: string; dark?: boolean }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -89,6 +93,8 @@ export function NotificationCenter({ userId, dark: _dark = false }: { userId: st
   const [unreadCount, setUnreadCount] = useState(0);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const panelRef = useRef<HTMLDivElement>(null);
+  const retryCountRef = useRef(0);
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -100,53 +106,75 @@ export function NotificationCenter({ userId, dark: _dark = false }: { userId: st
     } catch {}
   }, []);
 
+  // Fetch on mount (when visible) and whenever the tab becomes visible again
   useEffect(() => {
-    if (document.visibilityState !== "visible") return;
-    fetchNotifications();
+    if (document.visibilityState === "visible") fetchNotifications();
   }, [fetchNotifications]);
 
+  // SSE with exponential-backoff reconnect
   useEffect(() => {
     let es: EventSource | null = null;
+    let unmounted = false;
 
     function connect() {
-      if (es) return;
+      if (unmounted || es) return;
       es = new EventSource("/api/notifications/stream");
+
       es.onmessage = (e) => {
+        retryCountRef.current = 0; // successful message → reset backoff
         try {
           const payload = JSON.parse(e.data) as Toast;
           setUnreadCount((c) => c + 1);
-          setNotifications((prev) => [
-            { ...payload, read: false },
-            ...prev,
-          ]);
-          const toast = payload;
-          setToasts((t) => [...t, toast]);
-          setTimeout(() => {
-            setToasts((t) => t.filter((x) => x.id !== toast.id));
-          }, 4_000);
+          setNotifications((prev) => [{ ...payload, read: false }, ...prev]);
+          const t = payload;
+          setToasts((prev) => [...prev, t]);
+          setTimeout(() => setToasts((prev) => prev.filter((x) => x.id !== t.id)), 4_000);
         } catch {}
       };
-      es.onerror = () => { es?.close(); es = null; };
+
+      es.onopen = () => { retryCountRef.current = 0; };
+
+      es.onerror = () => {
+        es?.close();
+        es = null;
+        if (unmounted) return;
+        // Reconnect with exponential backoff
+        const delay = Math.min(RECONNECT_BASE_MS * 2 ** retryCountRef.current, RECONNECT_MAX_MS);
+        retryCountRef.current += 1;
+        retryTimerRef.current = setTimeout(connect, delay);
+      };
     }
 
     function disconnect() {
+      unmounted = true;
+      if (retryTimerRef.current) { clearTimeout(retryTimerRef.current); retryTimerRef.current = null; }
       es?.close();
       es = null;
     }
 
     function onVisibility() {
-      if (document.visibilityState === "visible") connect();
-      else disconnect();
+      if (document.visibilityState === "visible") {
+        // Reconnect SSE and catch up on missed notifications
+        unmounted = false;
+        retryCountRef.current = 0;
+        connect();
+        fetchNotifications();
+      } else {
+        unmounted = true;
+        if (retryTimerRef.current) { clearTimeout(retryTimerRef.current); retryTimerRef.current = null; }
+        es?.close();
+        es = null;
+      }
     }
 
     if (document.visibilityState === "visible") connect();
     document.addEventListener("visibilitychange", onVisibility);
 
     return () => {
-      disconnect();
       document.removeEventListener("visibilitychange", onVisibility);
+      disconnect();
     };
-  }, [userId]);
+  }, [userId, fetchNotifications]);
 
   useEffect(() => {
     if (!open) return;
@@ -160,21 +188,15 @@ export function NotificationCenter({ userId, dark: _dark = false }: { userId: st
   }, [open]);
 
   const markRead = useCallback(async (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
     setUnreadCount((c) => Math.max(0, c - 1));
-    try {
-      await fetch(`/api/notifications/${id}`, { method: "PATCH" });
-    } catch {}
+    try { await fetch(`/api/notifications/${id}`, { method: "PATCH" }); } catch {}
   }, []);
 
   const markAllRead = useCallback(async () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     setUnreadCount(0);
-    try {
-      await fetch("/api/notifications", { method: "DELETE" });
-    } catch {}
+    try { await fetch("/api/notifications", { method: "DELETE" }); } catch {}
   }, []);
 
   const handleClick = useCallback(
@@ -194,45 +216,38 @@ export function NotificationCenter({ userId, dark: _dark = false }: { userId: st
       <div className="relative" ref={panelRef}>
         <button
           onClick={() => setOpen((o) => !o)}
-          className="relative p-2 text-[#8A92A6] hover:text-[#E6E9F0] hover:bg-[#1B1F2A] rounded-full transition-colors"
+          className="relative p-2 text-[#5f6368] hover:text-[#202124] hover:bg-[#f1f3f4] rounded-full transition-colors"
           aria-label="Notifications"
         >
-          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-            />
-          </svg>
+          <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
-            <span className="nexpulse-dot absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[#ea4335] ring-2 ring-[#0B0D12]" />
+            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[#ea4335] ring-2 ring-white" />
           )}
         </button>
 
         {open && (
-          <div className="nexpop absolute right-0 top-10 bg-[#12151D] border border-[#262A35] rounded-xl shadow-xl w-80 z-50">
-            <div className="px-4 py-3 border-b border-[#262A35] flex items-center justify-between">
-              <h2 className="font-semibold text-[#E6E9F0] text-sm">Notifications</h2>
+          <div className="absolute right-0 top-10 bg-white border border-[#e8eaed] rounded-xl shadow-xl w-80 z-50">
+            <div className="px-4 py-3 border-b border-[#e8eaed] flex items-center justify-between">
+              <h2 className="font-semibold text-[#202124] text-sm">Notifications</h2>
               {unreadCount > 0 && (
                 <button
                   onClick={markAllRead}
-                  className="text-xs text-[#00C2FF] hover:text-[#0098E6] font-medium"
+                  className="text-xs text-[#1a56db] hover:text-[#1648c7] font-medium"
                 >
                   Mark all read
                 </button>
               )}
             </div>
 
-            <div className="flex border-b border-[#262A35]">
+            <div className="flex border-b border-[#e8eaed]">
               {(["all", "unread"] as const).map((t) => (
                 <button
                   key={t}
                   onClick={() => setTab(t)}
                   className={`flex-1 py-2 text-xs font-medium transition-colors capitalize ${
                     tab === t
-                      ? "border-b-2 border-[#00C2FF] text-[#00C2FF]"
-                      : "text-[#8A92A6] hover:text-[#E6E9F0]"
+                      ? "border-b-2 border-[#1a56db] text-[#1a56db]"
+                      : "text-[#5f6368] hover:text-[#202124]"
                   }`}
                 >
                   {t}
@@ -242,9 +257,9 @@ export function NotificationCenter({ userId, dark: _dark = false }: { userId: st
 
             <div className="max-h-96 overflow-y-auto">
               {displayed.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-[#8A92A6]">
-                  <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#1B1F2A] border border-[#262A35]">
-                    <BellOff className="h-5 w-5 text-[#5A6275]" />
+                <div className="flex flex-col items-center justify-center py-12 text-[#5f6368]">
+                  <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f1f3f4] border border-[#e8eaed]">
+                    <BellOff className="h-5 w-5 text-[#80868b]" />
                   </span>
                   <p className="text-sm">No notifications</p>
                 </div>
@@ -252,35 +267,35 @@ export function NotificationCenter({ userId, dark: _dark = false }: { userId: st
                 Object.entries(groups).map(([label, items]) =>
                   items.length === 0 ? null : (
                     <div key={label}>
-                      <div className="sticky top-0 px-4 py-1.5 text-xs font-semibold text-[#8A92A6] bg-[#1B1F2A] border-b border-[#262A35]">
+                      <div className="sticky top-0 px-4 py-1.5 text-xs font-semibold text-[#5f6368] bg-[#f8f9fa] border-b border-[#e8eaed]">
                         {label}
                       </div>
                       {items.map((n) => (
                         <button
                           key={n.id}
                           onClick={() => handleClick(n)}
-                          className={`px-4 py-3 border-b border-[#262A35] hover:bg-[#1B1F2A] cursor-pointer transition-colors flex gap-3 w-full text-left ${
-                            !n.read ? "bg-[#00C2FF]/5" : ""
+                          className={`px-4 py-3 border-b border-[#e8eaed] hover:bg-[#f8f9fa] cursor-pointer transition-colors flex gap-3 w-full text-left ${
+                            !n.read ? "bg-[#1a56db]/5" : ""
                           }`}
                         >
                           <span
-                            className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${TYPE_COLOR[n.type]}`}
+                            className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${TYPE_COLOR[n.type] ?? TYPE_COLOR.SYSTEM}`}
                           >
                             <TypeIcon type={n.type} />
                           </span>
                           <div className="min-w-0 flex-1">
                             <div className="flex items-start justify-between gap-2">
-                              <p className="text-sm font-medium text-[#E6E9F0] leading-tight truncate">
+                              <p className="text-sm font-medium text-[#202124] leading-tight truncate">
                                 {n.title}
                               </p>
-                              <span className="shrink-0 text-xs font-mono text-[#5A6275] mt-0.5">
+                              <span className="shrink-0 text-xs text-[#80868b] mt-0.5">
                                 {timeAgo(n.createdAt)}
                               </span>
                             </div>
-                            <p className="text-xs text-[#8A92A6] line-clamp-2">{n.body}</p>
+                            <p className="text-xs text-[#5f6368] line-clamp-2">{n.body}</p>
                           </div>
                           {!n.read && (
-                            <span className="w-2 h-2 rounded-full bg-[#00C2FF] flex-shrink-0 mt-1" />
+                            <span className="w-2 h-2 rounded-full bg-[#1a56db] flex-shrink-0 mt-1" />
                           )}
                         </button>
                       ))}
@@ -293,20 +308,21 @@ export function NotificationCenter({ userId, dark: _dark = false }: { userId: st
         )}
       </div>
 
+      {/* Toast stack — bottom-right */}
       <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
         {toasts.map((t) => (
           <div
             key={t.id}
-            className="pointer-events-auto flex items-start gap-3 rounded-xl border border-[#262A35] bg-[#12151D] p-4 shadow-lg w-80 animate-in slide-in-from-bottom-2 fade-in duration-200"
+            className="pointer-events-auto flex items-start gap-3 rounded-xl border border-[#e8eaed] bg-white p-4 shadow-lg w-80 animate-in slide-in-from-bottom-2 fade-in duration-200"
           >
             <span
-              className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${TYPE_COLOR[t.type]}`}
+              className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${TYPE_COLOR[t.type] ?? TYPE_COLOR.SYSTEM}`}
             >
               <TypeIcon type={t.type} />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold text-[#E6E9F0] truncate">{t.title}</p>
-              <p className="mt-0.5 text-xs text-[#8A92A6] line-clamp-2">{t.body}</p>
+              <p className="text-xs font-semibold text-[#202124] truncate">{t.title}</p>
+              <p className="mt-0.5 text-xs text-[#5f6368] line-clamp-2">{t.body}</p>
             </div>
           </div>
         ))}
