@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 const ALLOWED_REDIRECT_ORIGINS = [
   "https://forage.cybersage.uk",
   "https://www.forage.cybersage.uk",
+  "https://sage-range.vercel.app",
 ];
 
 function isAllowedRedirect(uri: string): boolean {
