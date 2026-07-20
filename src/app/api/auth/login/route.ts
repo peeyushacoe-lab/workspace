@@ -121,10 +121,12 @@ export async function POST(request: NextRequest) {
     };
 
     const roleHome = getPortalHome(user.role);
-    // Forced password reset takes priority over any requested destination
+    // Forced password reset takes priority over any requested destination.
+    // /api/sso/authorize is explicitly allowed as a next destination (internal SSO flow).
+    const isSsoNext = requestedNext.startsWith("/api/sso/authorize");
     const redirectTo = user.mustResetPassword
       ? "/reset-password"
-      : requestedNext.startsWith("/") && canAccessPath(sessionUser, requestedNext)
+      : isSsoNext || (requestedNext.startsWith("/") && canAccessPath(sessionUser, requestedNext))
         ? requestedNext
         : roleHome;
 

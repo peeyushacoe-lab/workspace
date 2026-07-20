@@ -100,6 +100,7 @@ export function LoginForm({ next, error: initialError }: { next: string; error: 
         <p style={{ fontSize: 14, color: "#8A92A6", margin: "0 0 28px" }}>Sign in to your workspace</p>
 
         <form onSubmit={handleSubmit}>
+          <input type="hidden" name="next" value={next} />
           {error && (
             <div
               style={{

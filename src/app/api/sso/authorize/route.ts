@@ -78,8 +78,8 @@ export async function GET(request: NextRequest) {
     ...(mentorName ? { mentor: mentorName } : {}),
   };
 
-  // 60-second expiry — Forage must exchange it immediately
-  const token = jwt.sign(payload, secret, { expiresIn: 60, algorithm: "HS256" });
+  // 5-minute expiry — receiver must exchange promptly
+  const token = jwt.sign(payload, secret, { expiresIn: 300, algorithm: "HS256" });
 
   const dest = new URL(redirectUri);
   dest.searchParams.set("token", token);
