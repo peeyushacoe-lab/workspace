@@ -83,6 +83,45 @@ async function verifyHmacCookie(signed: string, secret: string): Promise<string 
   }
 }
 
+// ── Content-Security-Policy (nonce-based) ─────────────────────────────────────
+// Generated fresh per request. Next.js's App Router injects its own inline
+// hydration/streaming <script> tags on every page; it automatically applies
+// whatever nonce it finds in the outgoing Content-Security-Policy header to
+// those scripts, so as long as this header is set before rendering, no manual
+// wiring is needed elsewhere. See next.config.ts for why this moved here
+// (CSP must be per-request to carry a random nonce; static headers can't).
+const isProd = process.env.NODE_ENV === "production";
+
+function buildCsp(nonce: string): string {
+  const jitsiHost = process.env.JITSI_DOMAIN ? `https://${process.env.JITSI_DOMAIN}` : "";
+  return [
+    "default-src 'self'",
+    // 'strict-dynamic' lets nonce'd scripts load further scripts (e.g. Sentry's
+    // own loader); the explicit https:// sources remain as a fallback for the
+    // rare browser that doesn't support strict-dynamic. unsafe-eval only in
+    // dev, for Turbopack/webpack HMR.
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' ${isProd ? "" : "'unsafe-eval' "}https://browser.sentry-cdn.com`,
+    `script-src-elem 'self' 'nonce-${nonce}' 'strict-dynamic' https://browser.sentry-cdn.com https://meet.jit.si ${jitsiHost}`,
+    // style-src keeps 'unsafe-inline' — inline styles are used widely and are
+    // lower-severity (no code execution) than inline scripts.
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "img-src 'self' data: blob: https://lh3.googleusercontent.com https://avatars.githubusercontent.com",
+    "font-src 'self' https://fonts.gstatic.com",
+    "connect-src 'self' https://*.sentry.io wss: ws: https://fonts.googleapis.com",
+    "media-src 'self' blob:",
+    "object-src 'none'",
+    `frame-src 'self' https://meet.jit.si ${jitsiHost}`,
+    "frame-ancestors 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join("; ");
+}
+
+function withCsp(response: NextResponse, nonce: string): NextResponse {
+  response.headers.set("Content-Security-Policy", buildCsp(nonce));
+  return response;
+}
+
 // Verifies the HMAC-signed user cookie using Web Crypto (native in Edge runtime).
 // Node.js crypto.createHmac and crypto.subtle both implement standard HMAC-SHA256,
 // so signatures produced by the login Route Handler verify correctly here.
@@ -112,12 +151,20 @@ async function parseUserCookie(signed: string): Promise<SessionUser | null> {
 }
 
 export async function middleware(request: NextRequest) {
+  // Nonce + CSP apply to EVERY request (public pages like /login need to
+  // hydrate too, not just the protected routes below) — generate it first and
+  // attach it to whichever response this function ends up returning.
+  const nonce = crypto.randomUUID();
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set("Content-Security-Policy", buildCsp(nonce));
+
   const isProtected = protectedRoutes.some((route) =>
     request.nextUrl.pathname.startsWith(route),
   );
 
   if (!isProtected) {
-    return NextResponse.next();
+    return withCsp(NextResponse.next({ request: { headers: requestHeaders } }), nonce);
   }
 
   const sessionCookie = request.cookies.get("cybersage_session")?.value;
@@ -126,7 +173,7 @@ export async function middleware(request: NextRequest) {
   if (!sessionCookie || !userCookie) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("next", request.nextUrl.pathname);
-    return NextResponse.redirect(loginUrl);
+    return withCsp(NextResponse.redirect(loginUrl), nonce);
   }
 
   const user = await parseUserCookie(userCookie);
@@ -134,7 +181,7 @@ export async function middleware(request: NextRequest) {
   if (!user) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("next", request.nextUrl.pathname);
-    return NextResponse.redirect(loginUrl);
+    return withCsp(NextResponse.redirect(loginUrl), nonce);
   }
 
   // ── Access gating (RFC-001, PR7) ──────────────────────────────────────────
@@ -158,7 +205,7 @@ export async function middleware(request: NextRequest) {
   const effective = enforce ? (newDecision ?? oldDecision) : oldDecision;
 
   if (!effective) {
-    return NextResponse.redirect(new URL(getPortalHome(user.role), request.url));
+    return withCsp(NextResponse.redirect(new URL(getPortalHome(user.role), request.url)), nonce);
   }
 
   // MFA enforcement: admin-level roles with MFA enabled must complete the challenge each session
@@ -179,13 +226,12 @@ export async function middleware(request: NextRequest) {
   if (isMfaEnforcedRole && hasMfaEnabled && !mfaVerified && !isOnMfaChallenge) {
     const mfaUrl = new URL("/mfa-challenge", request.url);
     mfaUrl.searchParams.set("next", request.nextUrl.pathname);
-    return NextResponse.redirect(mfaUrl);
+    return withCsp(NextResponse.redirect(mfaUrl), nonce);
   }
 
   // Expose the current path to Server Components (RSC can't read it otherwise).
   // Used by the portal layout to build the return URL for a stale-cookie refresh
   // (RFC-001, PR6). Header-only — does not affect access gating.
-  const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-pathname", request.nextUrl.pathname);
-  return NextResponse.next({ request: { headers: requestHeaders } });
+  return withCsp(NextResponse.next({ request: { headers: requestHeaders } }), nonce);
 }

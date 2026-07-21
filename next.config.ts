@@ -17,34 +17,21 @@ const securityHeaders = [
     key: "Strict-Transport-Security",
     value: isProd ? "max-age=63072000; includeSubDomains; preload" : "max-age=0",
   },
-  {
-    key: "Content-Security-Policy",
-    value: [
-      "default-src 'self'",
-      // unsafe-eval removed in production; kept only for dev HMR.
-      // unsafe-inline removed for scripts entirely (F-14) — the app no longer
-      // ships any inline <script> tags (the old dark-mode class toggle was
-      // moved to a static className in layout.tsx), so 'unsafe-inline' is not
-      // needed for script-src/script-src-elem in any environment. style-src
-      // keeps 'unsafe-inline' since inline styles are still used widely and
-      // are lower-severity (no code execution).
-      `script-src 'self' ${isProd ? "" : "'unsafe-eval' "}https://browser.sentry-cdn.com`,
-      // Google Fonts are loaded at runtime by some components and email templates
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "img-src 'self' data: blob: https://lh3.googleusercontent.com https://avatars.githubusercontent.com",
-      // fonts.gstatic.com serves the actual font files referenced by Google Fonts CSS
-      "font-src 'self' https://fonts.gstatic.com",
-      "connect-src 'self' https://*.sentry.io wss: ws: https://fonts.googleapis.com",
-      "media-src 'self' blob:",
-      "object-src 'none'",
-      // Allow Jitsi external API script to load from the configured domain (or public fallback)
-      `script-src-elem 'self' https://browser.sentry-cdn.com https://meet.jit.si ${process.env.JITSI_DOMAIN ? `https://${process.env.JITSI_DOMAIN}` : ""}`,
-      `frame-src 'self' https://meet.jit.si ${process.env.JITSI_DOMAIN ? `https://${process.env.JITSI_DOMAIN}` : ""}`,
-      "frame-ancestors 'none'",
-      "base-uri 'self'",
-      "form-action 'self'",
-    ].join("; "),
-  },
+  // Content-Security-Policy is intentionally NOT set here. It was previously a
+  // static header (see git blame — commit 520243b, "F-14") with 'unsafe-inline'
+  // removed from script-src entirely. That broke the app: Next.js's App Router
+  // always emits its own inline hydration/streaming scripts
+  // (`<script>self.__next_f.push(...)</script>`) on every single page, and
+  // those need either 'unsafe-inline' or a per-request nonce to be allowed to
+  // run. With neither present, the browser refused every inline script and the
+  // app never hydrated — a permanent blank page on every route.
+  // CSP now lives in src/middleware.ts, generated fresh per request with a
+  // random nonce that's threaded through to Next's own inline scripts
+  // automatically (Next detects the nonce in the CSP response header). Do not
+  // re-add a static CSP header here — a second CSP header from next.config.ts
+  // would be enforced ADDITIONALLY (browsers AND multiple CSP headers, they
+  // don't override), and a nonce-less one would immediately reintroduce this
+  // exact bug.
 ];
 
 const nextConfig: NextConfig = {
