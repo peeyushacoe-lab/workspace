@@ -3371,7 +3371,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                       onReact={handleReact}
                       onEdit={handleEdit}
                       onDelete={handleDelete}
-                      onReply={openThread}
+                      onReply={selectedChannel?.type !== "DIRECT" ? openThread : undefined}
                       onPin={handlePin}
                       memberNames={memberNames}
                     />
