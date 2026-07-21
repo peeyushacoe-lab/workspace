@@ -2,6 +2,7 @@
 ﻿"use client";
 
 import { useCallback, useEffect, useRef, useState, memo } from "react";
+import { useSearchParams } from "next/navigation";
 import { connectSocket, disconnectSocket } from "@/lib/socket-client";
 import type { Socket } from "socket.io-client";
 import {
@@ -37,6 +38,7 @@ import {
   Crown,
   UserMinus,
   Settings,
+  ListPlus,
 } from "lucide-react";
 import { formatDistanceToNow, isToday, isYesterday, format } from "date-fns";
 import { toast } from "sonner";
@@ -478,10 +480,35 @@ const MessageItem = memo(function MessageItem({
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editContent, setEditContent] = useState(msg.content);
+  const [creatingTask, setCreatingTask] = useState(false);
+  const [taskCreated, setTaskCreated] = useState(false);
   const pickerRef = useRef<HTMLDivElement>(null);
   const isOwn = msg.userId === currentUserId;
   const isDeleted = !!msg.deletedAt;
   const isFileAttachment = msg.content.startsWith("[FILE_ATTACHMENT] ");
+
+  const createTaskFromMessage = async () => {
+    setCreatingTask(true);
+    try {
+      const res = await fetch("/api/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: msg.content.slice(0, 200),
+          description: `Created from a chat message.`,
+          sourceType: "chat",
+          sourceId: msg.id,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      setTaskCreated(true);
+      toast.success("Task created from message");
+    } catch {
+      toast.error("Failed to create task");
+    } finally {
+      setCreatingTask(false);
+    }
+  };
   const isBotResponse = msg.content.startsWith("[BOT_RESPONSE] ");
 
   // Close picker when clicking outside
@@ -687,6 +714,16 @@ const MessageItem = memo(function MessageItem({
               title="Reply in thread"
             >
               <CornerDownRight className="w-4 h-4" />
+            </button>
+          )}
+          {!isDeleted && !isFileAttachment && (
+            <button
+              onClick={() => void createTaskFromMessage()}
+              disabled={creatingTask || taskCreated}
+              className={`p-1.5 hover:bg-[#1B1F2A] rounded-md text-xs transition-colors disabled:opacity-60 ${taskCreated ? "text-emerald-400" : "text-[#8A92A6] hover:text-[#E6E9F0]"}`}
+              title={taskCreated ? "Task created" : "Create task from this message"}
+            >
+              {creatingTask ? <Loader2 className="w-4 h-4 animate-spin" /> : <ListPlus className="w-4 h-4" />}
             </button>
           )}
           {onPin && (
@@ -2019,6 +2056,9 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
   // Local unread count overrides — incremented when socket messages arrive for non-selected channels,
   // reset to 0 when the channel is opened (cleared by merging into the channels state)
   const [localUnread, setLocalUnread] = useState<Map<string, number>>(new Map());
+  // Message ids already counted toward a badge — dedupes across the two live
+  // transports (Socket.IO and the per-user SSE stream) when both are active.
+  const seenUnreadIdsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     fetch("/api/workspace/members")
@@ -2088,7 +2128,13 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
   const loadChannels = useCallback(async () => {
     try {
       const res = await fetch("/api/chat/channels");
-      if (res.ok) setChannels((await res.json()) as Channel[]);
+      if (res.ok) {
+        setChannels((await res.json()) as Channel[]);
+        // Server-side unreadCount is authoritative and already includes any
+        // messages we counted locally — drop local increments so badges don't
+        // double-count after a refresh.
+        setLocalUnread(new Map());
+      }
     } catch {
       toast.error("Failed to load channels");
     }
@@ -2097,6 +2143,31 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
   useEffect(() => {
     loadChannels();
   }, [loadChannels]);
+
+  // Periodic channel-list refresh — keeps unread badges honest and picks up
+  // brand-new channels (e.g. a DM someone just started with you) that the
+  // per-user stream connected before knowing about.
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") void loadChannels();
+    }, 30_000);
+    return () => clearInterval(interval);
+  }, [loadChannels]);
+
+  // Deep link support: /chat?channel=<id> (used by notification popups)
+  const searchParams = useSearchParams();
+  const [pendingDeepLink, setPendingDeepLink] = useState<string | null>(null);
+  useEffect(() => {
+    const target = searchParams?.get("channel");
+    if (target) setPendingDeepLink(target);
+  }, [searchParams]);
+  useEffect(() => {
+    if (!pendingDeepLink) return;
+    if (channels.some((c) => c.id === pendingDeepLink)) {
+      setSelectedChannelId(pendingDeepLink);
+      setPendingDeepLink(null);
+    }
+  }, [pendingDeepLink, channels]);
 
   // Global ⌘K / Ctrl+K command palette shortcut
   useEffect(() => {
@@ -2177,6 +2248,10 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
       if (!chId || chId === selectedChannelId) return;
       // Never count your own messages (e.g. sent from another tab/device) as unread
       if (msg.userId && msg.userId === currentUserId) return;
+      if (msg.id) {
+        if (seenUnreadIdsRef.current.has(msg.id)) return;
+        seenUnreadIdsRef.current.add(msg.id);
+      }
       setLocalUnread((prev) => {
         const m = new Map(prev);
         m.set(chId, (m.get(chId) ?? 0) + 1);
@@ -2199,9 +2274,68 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [channels.length, selectedChannelId]);
 
+  // Refs mirroring state — lets the per-user SSE stream below stay open for the
+  // whole session instead of reconnecting every time the selection changes.
+  const selectedChannelIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    selectedChannelIdRef.current = selectedChannelId;
+  }, [selectedChannelId]);
+  const channelsRef = useRef<Channel[]>([]);
+  useEffect(() => {
+    channelsRef.current = channels;
+  }, [channels]);
+
+  // Per-user SSE stream (/api/chat/stream) — the production transport for
+  // messages in channels you DON'T have open. Socket.IO above only works when a
+  // dedicated socket server is configured (NEXT_PUBLIC_SOCKET_URL); on Vercel it
+  // never connects, so without this stream a DM to a non-selected channel showed
+  // no badge and no popup until a full reload. Badge increments are deduped by
+  // message id against the socket path, so both transports can coexist.
+  useEffect(() => {
+    const source = new EventSource("/api/chat/stream");
+
+    source.addEventListener("message", (e) => {
+      try {
+        const msg = JSON.parse((e as MessageEvent).data) as {
+          id?: string;
+          channelId?: string;
+          userId?: string;
+        };
+        const chId = msg.channelId;
+        if (!chId || !msg.id) return;
+        // Own messages (other tab/device) are never unread
+        if (msg.userId === currentUserId) return;
+        // The open conversation is handled by the per-channel stream/poll
+        if (chId === selectedChannelIdRef.current) return;
+        if (seenUnreadIdsRef.current.has(msg.id)) return;
+        seenUnreadIdsRef.current.add(msg.id);
+        // Brand-new channel (e.g. a DM just started with you) — refresh the list
+        if (!channelsRef.current.some((c) => c.id === chId)) void loadChannels();
+        setLocalUnread((prev) => {
+          const m = new Map(prev);
+          m.set(chId, (m.get(chId) ?? 0) + 1);
+          return m;
+        });
+      } catch {
+        // ignore malformed events
+      }
+    });
+
+    source.onerror = () => {
+      // EventSource auto-reconnects (Vercel's function cap forces periodic
+      // reconnects, which also re-snapshots channel memberships server-side).
+    };
+
+    return () => source.close();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUserId]);
+
   // Clear local unread when a channel is selected
   useEffect(() => {
     if (!selectedChannelId) return;
+    // Tell NotificationCenter which conversation is on screen so it doesn't
+    // pop toasts/urgent prompts for messages the user is already reading.
+    window.__activeChatChannelId = selectedChannelId;
     setLocalUnread((prev) => {
       if (!prev.has(selectedChannelId)) return prev;
       const m = new Map(prev);
@@ -2215,6 +2349,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
     // Persist lastReadAt so badge stays clear on next page load
     fetch(`/api/chat/channels/${selectedChannelId}/read`, { method: 'POST' }).catch(() => {});
     return () => {
+      window.__activeChatChannelId = null;
       // Mark read again on leave — messages that arrived WHILE this channel was
       // open are after the lastReadAt set above, and would otherwise reappear
       // as unread on the next page load. keepalive lets it survive navigation.

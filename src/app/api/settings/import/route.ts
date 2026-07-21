@@ -36,6 +36,31 @@ export async function GET() {
   return NextResponse.json({ jobs });
 }
 
+// Blocks SSRF / internal-port-scan via user-supplied IMAP host — rejects
+// loopback, private, link-local, and other internal/metadata hosts.
+function isPrivateOrInternalHost(host: string): boolean {
+  const hostname = host.trim().toLowerCase().replace(/^\[|\]$/g, "");
+
+  if (hostname === "localhost" || hostname === "::1" || hostname === "0.0.0.0") return true;
+
+  const ipv4 = hostname.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (ipv4) {
+    const [a, b] = [parseInt(ipv4[1], 10), parseInt(ipv4[2], 10)];
+    if (a === 127) return true; // 127.0.0.0/8 loopback
+    if (a === 10) return true; // 10.0.0.0/8
+    if (a === 172 && b >= 16 && b <= 31) return true; // 172.16.0.0/12
+    if (a === 192 && b === 168) return true; // 192.168.0.0/16
+    if (a === 169 && b === 254) return true; // 169.254.0.0/16 link-local/metadata
+    if (a === 0) return true;
+    return false;
+  }
+
+  // IPv6 unique-local / link-local
+  if (hostname.startsWith("fc") || hostname.startsWith("fd") || hostname.startsWith("fe80")) return true;
+
+  return false;
+}
+
 const folderMappingSchema = z.array(
   z.object({
     source: z.string().min(1),
@@ -83,6 +108,10 @@ export async function POST(request: Request) {
     }
     const { host, port, secure, username, password } = parsed.data;
 
+    if (isPrivateOrInternalHost(host)) {
+      return NextResponse.json({ error: "Could not connect to the specified server." }, { status: 400 });
+    }
+
     const client = new ImapFlow({ host, port, secure, auth: { user: username, pass: password }, logger: false });
     try {
       await client.connect();
@@ -92,10 +121,10 @@ export async function POST(request: Request) {
         .map((f) => ({ path: f.path, name: f.name, specialUse: f.specialUse ?? null }));
       await client.logout().catch(() => {});
       return NextResponse.json({ ok: true, folders });
-    } catch (err) {
+    } catch {
       await client.logout().catch(() => {});
       return NextResponse.json(
-        { error: `Could not connect: ${err instanceof Error ? err.message : "unknown error"}` },
+        { error: "Could not connect to the specified server." },
         { status: 400 },
       );
     }
@@ -107,6 +136,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid input" }, { status: 400 });
     }
     const { host, port, secure, username, password, provider, folderMapping } = parsed.data;
+
+    if (isPrivateOrInternalHost(host)) {
+      return NextResponse.json({ error: "Could not connect to the specified server." }, { status: 400 });
+    }
 
     const myMailbox = await prisma.mailbox.findUnique({
       where: { email: currentUser.email },

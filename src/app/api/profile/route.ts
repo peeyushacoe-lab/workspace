@@ -4,8 +4,34 @@ import bcrypt from "bcrypt";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 import { indexingQueue } from "@/lib/queues/indexing.queue";
+import { isPrivateOrInternalHost } from "@/lib/url-safety";
 
 const nstr = (max: number) => z.string().max(max).nullish();
+
+// avatarUrl / coverUrl may either be a data: URL (base64-inlined image, used
+// by the avatar upload flow) or an https(s) URL pointing at a public host.
+// Reject anything that would let this value be used to make the server (via
+// /api/workspace/avatar/[id], which fetches avatarUrl server-side) issue a
+// request to an internal/private/loopback host — an unauthenticated SSRF
+// vector (F-04) since that endpoint is intentionally public.
+function isValidAvatarUrl(value: string): boolean {
+  if (value.startsWith("data:")) return true; // inline base64 image — no fetch involved
+  try {
+    const parsed = new URL(value);
+    if (parsed.protocol !== "https:") return false;
+  } catch {
+    return false;
+  }
+  return !isPrivateOrInternalHost(value);
+}
+
+const avatarUrlSchema = z
+  .string()
+  .max(300_000)
+  .refine((v) => isValidAvatarUrl(v), {
+    message: "avatarUrl must be a data: URL or an https URL to a public host",
+  })
+  .nullish();
 
 const profileFields = z.object({
   // Identity — all nullish() so DB-read nulls pass through without rejection
@@ -24,7 +50,7 @@ const profileFields = z.object({
   birthday:       z.string().nullish(),
   statusMessage:  nstr(140),
   statusEmoji:    nstr(10),
-  avatarUrl:      z.string().max(300_000).nullish(),
+  avatarUrl:      avatarUrlSchema,
   coverUrl:       z.string().max(600_000).nullish(),
   // Password change
   currentPassword: z.string().min(1).optional(),

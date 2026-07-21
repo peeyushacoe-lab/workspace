@@ -3,10 +3,19 @@ import { cookies } from "next/headers";
 import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { upsertEmbedding } from "@/lib/embeddings";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function GET(request: Request) {
   const user = getSessionUserFromCookieStore(await cookies());
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { allowed: rateLimitOk, retryAfter } = await checkRateLimit(`ai:knowledge:${user.id}`, 30, 10 * 60);
+  if (!rateLimitOk) {
+    return NextResponse.json(
+      { error: "AI rate limit reached. Please try again later.", retryAfter },
+      { status: 429 }
+    );
+  }
 
   const { searchParams } = new URL(request.url);
   const category = searchParams.get("category") ?? undefined;
@@ -28,6 +37,14 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const user = getSessionUserFromCookieStore(await cookies());
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { allowed: rateLimitOk, retryAfter } = await checkRateLimit(`ai:knowledge:${user.id}`, 30, 10 * 60);
+  if (!rateLimitOk) {
+    return NextResponse.json(
+      { error: "AI rate limit reached. Please try again later.", retryAfter },
+      { status: 429 }
+    );
+  }
 
   const body = await request.json() as {
     title: string;
@@ -71,6 +88,14 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   const user = getSessionUserFromCookieStore(await cookies());
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { allowed: rateLimitOk, retryAfter } = await checkRateLimit(`ai:knowledge:${user.id}`, 30, 10 * 60);
+  if (!rateLimitOk) {
+    return NextResponse.json(
+      { error: "AI rate limit reached. Please try again later.", retryAfter },
+      { status: 429 }
+    );
+  }
 
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");

@@ -12,9 +12,17 @@ import {
   Info,
   BellOff,
   Bell,
+  X,
+  CheckSquare,
   type LucideIcon,
 } from "lucide-react";
 import type { NotificationType } from "@/generated/prisma/enums";
+
+type NotificationMetadata = {
+  channelId?: string;
+  urgent?: boolean;
+  senderId?: string;
+} | null;
 
 type Notification = {
   id: string;
@@ -23,10 +31,19 @@ type Notification = {
   body: string;
   read: boolean;
   link: string | null;
+  metadata?: NotificationMetadata;
   createdAt: string;
 };
 
 type Toast = Omit<Notification, "read">;
+
+/** Channel id the user is actively viewing in ChatView (set by ChatView) — used
+ *  to suppress popups for the conversation that's already on screen. */
+declare global {
+  interface Window {
+    __activeChatChannelId?: string | null;
+  }
+}
 
 const TYPE_ICON: Record<NotificationType, LucideIcon> = {
   MENTION: AtSign,
@@ -37,6 +54,9 @@ const TYPE_ICON: Record<NotificationType, LucideIcon> = {
   NEW_MESSAGE: MessageSquare,
   FILE_SHARED: Folder,
   SYSTEM: Info,
+  TASK_ASSIGNED: CheckSquare,
+  TASK_DUE_SOON: CheckSquare,
+  TASK_COMMENT: CheckSquare,
 };
 
 function TypeIcon({ type }: { type: NotificationType }) {
@@ -53,6 +73,9 @@ const TYPE_COLOR: Record<NotificationType, string> = {
   NEW_MESSAGE:       "bg-[#0f9d58]/10 text-[#0f9d58] border border-[#0f9d58]/20",
   FILE_SHARED:       "bg-sky-500/10 text-sky-600 border border-sky-500/20",
   SYSTEM:            "bg-[#f1f3f4] text-[#5f6368] border border-[#e8eaed]",
+  TASK_ASSIGNED:     "bg-[#0f9d58]/10 text-[#0f9d58] border border-[#0f9d58]/20",
+  TASK_DUE_SOON:     "bg-[#f4b400]/10 text-[#b06000] border border-[#f4b400]/20",
+  TASK_COMMENT:      "bg-[#1a56db]/10 text-[#1a56db] border border-[#1a56db]/20",
 };
 
 function timeAgo(iso: string): string {
@@ -92,6 +115,7 @@ export function NotificationCenter({ userId, dark: _dark = false }: { userId: st
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [urgentAlerts, setUrgentAlerts] = useState<Toast[]>([]);
   const panelRef = useRef<HTMLDivElement>(null);
   const retryCountRef = useRef(0);
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -126,9 +150,19 @@ export function NotificationCenter({ userId, dark: _dark = false }: { userId: st
           const payload = JSON.parse(e.data) as Toast;
           setUnreadCount((c) => c + 1);
           setNotifications((prev) => [{ ...payload, read: false }, ...prev]);
-          const t = payload;
-          setToasts((prev) => [...prev, t]);
-          setTimeout(() => setToasts((prev) => prev.filter((x) => x.id !== t.id)), 4_000);
+
+          // Don't pop anything for the conversation the user is looking at right now
+          const chId = payload.metadata?.channelId;
+          if (chId && window.__activeChatChannelId === chId) return;
+
+          if (payload.metadata?.urgent) {
+            // Urgent → persistent full-attention prompt, stays until dismissed
+            setUrgentAlerts((prev) => (prev.some((x) => x.id === payload.id) ? prev : [...prev, payload]));
+          } else {
+            const t = payload;
+            setToasts((prev) => [...prev, t]);
+            setTimeout(() => setToasts((prev) => prev.filter((x) => x.id !== t.id)), 4_000);
+          }
         } catch {}
       };
 
@@ -308,12 +342,17 @@ export function NotificationCenter({ userId, dark: _dark = false }: { userId: st
         )}
       </div>
 
-      {/* Toast stack — bottom-right */}
+      {/* Toast stack — bottom-right (click to open) */}
       <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
         {toasts.map((t) => (
-          <div
+          <button
             key={t.id}
-            className="pointer-events-auto flex items-start gap-3 rounded-xl border border-[#e8eaed] bg-white p-4 shadow-lg w-80 animate-in slide-in-from-bottom-2 fade-in duration-200"
+            type="button"
+            onClick={() => {
+              setToasts((prev) => prev.filter((x) => x.id !== t.id));
+              if (t.link) router.push(t.link);
+            }}
+            className="pointer-events-auto flex items-start gap-3 rounded-xl border border-[#e8eaed] bg-white p-4 shadow-lg w-80 text-left cursor-pointer hover:border-[#1a56db]/40 animate-in slide-in-from-bottom-2 fade-in duration-200 transition-colors"
           >
             <span
               className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${TYPE_COLOR[t.type] ?? TYPE_COLOR.SYSTEM}`}
@@ -324,9 +363,59 @@ export function NotificationCenter({ userId, dark: _dark = false }: { userId: st
               <p className="text-xs font-semibold text-[#202124] truncate">{t.title}</p>
               <p className="mt-0.5 text-xs text-[#5f6368] line-clamp-2">{t.body}</p>
             </div>
-          </div>
+          </button>
         ))}
       </div>
+
+      {/* Urgent prompt — top-center, persists until dismissed, shown on every page */}
+      {urgentAlerts.length > 0 && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 w-[min(28rem,calc(100vw-2rem))]">
+          {urgentAlerts.map((a) => (
+            <div
+              key={a.id}
+              role="alertdialog"
+              aria-label={a.title}
+              className="flex items-start gap-3 rounded-xl border border-[#ea4335]/40 border-l-4 border-l-[#ea4335] bg-white p-4 shadow-xl animate-in slide-in-from-top-2 fade-in duration-200"
+            >
+              <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#ea4335]/10 text-[#ea4335]">
+                <Siren className="h-4 w-4" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-medium text-[#ea4335]">Urgent message</p>
+                <p className="mt-0.5 text-sm font-semibold text-[#202124] truncate">{a.title}</p>
+                <p className="mt-0.5 text-xs text-[#5f6368] line-clamp-2">{a.body}</p>
+                <div className="mt-2.5 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUrgentAlerts((prev) => prev.filter((x) => x.id !== a.id));
+                      if (a.link) router.push(a.link);
+                    }}
+                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#ea4335] text-white hover:bg-[#d33426] transition-colors"
+                  >
+                    View message
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setUrgentAlerts((prev) => prev.filter((x) => x.id !== a.id))}
+                    className="px-3 py-1.5 text-xs font-medium rounded-lg text-[#5f6368] hover:text-[#202124] hover:bg-[#f1f3f4] transition-colors"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+              <button
+                type="button"
+                aria-label="Dismiss urgent alert"
+                onClick={() => setUrgentAlerts((prev) => prev.filter((x) => x.id !== a.id))}
+                className="p-1 rounded-md text-[#80868b] hover:text-[#202124] hover:bg-[#f1f3f4] transition-colors"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </>
   );
 }

@@ -137,6 +137,11 @@ async function scheduleCleanupJobs() {
   // Sentinel Brain — correlates recent alerts/DLP violations per user into
   // auto-assembled incidents. 15-minute cadence balances freshness vs. AI cost.
   await cleanupQueue.add("sentinel-correlation", { type: "SENTINEL_CORRELATION" }, { repeat: { pattern: "*/15 * * * *" }, jobId: "sentinel-correlation" });
+  // Tasks & Work Management (RFC-002): roll recurring tasks forward daily,
+  // and check for due-soon reminders a few times a day (24h window, so
+  // hourly is more than enough granularity without being noisy).
+  await cleanupQueue.add("task-recurrence", { type: "TASK_RECURRENCE" }, { repeat: repeatOpts, jobId: "task-recurrence" });
+  await cleanupQueue.add("task-due-soon",   { type: "TASK_DUE_SOON" },   { repeat: { pattern: "0 * * * *" }, jobId: "task-due-soon" });
 
   logger.info("Recurring cleanup jobs scheduled");
 }

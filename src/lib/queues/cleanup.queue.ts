@@ -23,4 +23,6 @@ export type CleanupJobData =
   | { type: "STATUS_PING" }
   | { type: "RESTORE_DRILL" }
   | { type: "UNSNOOZE_DUE_THREADS" }
-  | { type: "SENTINEL_CORRELATION" };
+  | { type: "SENTINEL_CORRELATION" }
+  | { type: "TASK_RECURRENCE" }
+  | { type: "TASK_DUE_SOON" };

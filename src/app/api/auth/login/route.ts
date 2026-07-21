@@ -10,6 +10,10 @@ import { emitEvent } from "@/lib/events";
 import { securitySyncQueue } from "@/lib/queues/security-sync.queue";
 import bcrypt from "bcrypt";
 
+// Assumes deployment is behind a trusted edge/CDN (Vercel) that sets
+// X-Forwarded-For reliably; if ever deployed without such an edge, this
+// becomes spoofable by a direct-to-origin client and should be hardened
+// (e.g. also rate-limit by account/username, not just IP).
 function getClientIp(request: NextRequest) {
   const forwarded = request.headers.get("x-forwarded-for");
   if (forwarded) return forwarded.split(",")[0]!.trim();

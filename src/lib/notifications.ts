@@ -29,6 +29,7 @@ export async function createNotification(data: {
       title: notification.title,
       body: notification.body,
       link: notification.link,
+      metadata: data.metadata ?? null,
       createdAt: notification.createdAt,
     })
   );

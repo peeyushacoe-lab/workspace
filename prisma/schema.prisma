@@ -186,6 +186,13 @@ model User {
   roleAssignments      UserRoleAssignment[]     @relation("AssignmentUser")
   permissionOverrides  UserPermissionOverride[] @relation("OverrideUser")
   teamMemberships      TeamMember[]             @relation("TeamMemberUser")
+
+  // Tasks & Work Management (RFC-002)
+  taskLists          TaskList[]       @relation("TaskListOwner")
+  tasksCreated       Task[]           @relation("TaskCreator")
+  taskAssignments    TaskAssignee[]   @relation("TaskAssigneeUser")
+  taskComments       TaskComment[]    @relation("TaskCommentAuthor")
+  taskAttachments    TaskAttachment[] @relation("TaskAttachmentUploader")
 }
 
 // WebAuthn passkey credentials
@@ -1184,6 +1191,9 @@ enum NotificationType {
   NEW_MESSAGE
   FILE_SHARED
   SYSTEM
+  TASK_ASSIGNED
+  TASK_DUE_SOON
+  TASK_COMMENT
 }
 
 model Notification {
@@ -2707,6 +2717,114 @@ model SystemStatusPing {
   latencyMs  Int?
 
   @@index([checkedAt])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Tasks & Work Management (RFC-002) — replaces the earlier Redis-backed
+// /api/tasks prototype. See docs/rfc-002-tasks-work-management.md.
+// ─────────────────────────────────────────────────────────────────────────
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model TaskList {
+  id             String   @id @default(cuid())
+  name           String
+  ownerId        String
+  organizationId String?
+  isTeamList     Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  owner User   @relation("TaskListOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  tasks Task[]
+
+  @@index([ownerId])
+  @@index([organizationId])
+}
+
+model Task {
+  id           String       @id @default(cuid())
+  listId       String?
+  title        String
+  description  String?
+  status       TaskStatus   @default(TODO)
+  priority     TaskPriority @default(MEDIUM)
+  dueDate      DateTime?
+  createdById  String
+  labels       String[]     @default([])
+  // RRULE-style recurrence string (e.g. "FREQ=WEEKLY;BYDAY=MO"); null = one-off task
+  recurrence   String?
+  parentTaskId String?
+  // Where this task originated, for cross-feature integration (Calendar/Chat/AI)
+  sourceType   String?      // "meeting" | "chat" | "email" | null
+  sourceId     String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  list        TaskList?        @relation(fields: [listId], references: [id], onDelete: SetNull)
+  createdBy   User             @relation("TaskCreator", fields: [createdById], references: [id])
+  parentTask  Task?            @relation("SubTasks", fields: [parentTaskId], references: [id], onDelete: SetNull)
+  subTasks    Task[]           @relation("SubTasks")
+  assignees   TaskAssignee[]
+  comments    TaskComment[]
+  attachments TaskAttachment[]
+
+  @@index([listId])
+  @@index([createdById])
+  @@index([status])
+  @@index([dueDate])
+  @@index([parentTaskId])
+}
+
+model TaskAssignee {
+  taskId     String
+  userId     String
+  assignedAt DateTime @default(now())
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation("TaskAssigneeUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, userId])
+  @@index([userId])
+}
+
+model TaskComment {
+  id        String   @id @default(cuid())
+  taskId    String
+  authorId  String
+  body      String
+  createdAt DateTime @default(now())
+
+  task   Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  author User @relation("TaskCommentAuthor", fields: [authorId], references: [id])
+
+  @@index([taskId])
+}
+
+model TaskAttachment {
+  id           String   @id @default(cuid())
+  taskId       String
+  fileName     String
+  storageKey   String
+  size         Int
+  uploadedById String
+  createdAt    DateTime @default(now())
+
+  task       Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  uploadedBy User @relation("TaskAttachmentUploader", fields: [uploadedById], references: [id])
+
+  @@index([taskId])
 }
 
 model BackupVerification {

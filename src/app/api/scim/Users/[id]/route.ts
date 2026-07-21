@@ -1,14 +1,19 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { revokeUserMobileTokens } from "@/lib/mobile-auth";
+import { timingSafeEqual } from "crypto";
 
 type Params = { params: Promise<{ id: string }> };
 
 function scimAuth(request: Request): boolean {
   const token = process.env.SCIM_BEARER_TOKEN;
-  if (!token) return true;
-  const auth = request.headers.get("authorization");
-  return auth === `Bearer ${token}`;
+  if (!token) return false; // No token configured — fail closed, reject all requests
+  const auth = request.headers.get("authorization") ?? "";
+  const expected = `Bearer ${token}`;
+  const authBuf = Buffer.from(auth);
+  const expectedBuf = Buffer.from(expected);
+  if (authBuf.length !== expectedBuf.length) return false;
+  return timingSafeEqual(authBuf, expectedBuf);
 }
 
 function toScimUser(user: { id: string; email: string; fullName: string; role: string; isActive: boolean; createdAt: Date }) {

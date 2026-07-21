@@ -8,6 +8,7 @@ import { getTokensForUser, sendExpoPush } from "@/lib/expo-push";
 import { sendWebPush } from "@/lib/web-push";
 import type { PushSubscriptionJSON } from "@/lib/web-push";
 import { shouldNotify } from "@/lib/notif-prefs";
+import { createNotification } from "@/lib/notifications";
 import { indexingQueue } from "@/lib/queues/indexing.queue";
 
 type Params = { params: Promise<{ id: string }> };
@@ -208,6 +209,31 @@ export async function POST(request: Request, { params }: Params) {
 
       // notifType: DM → chatMentions, group channel → chatMentions (both use same key)
       const notifType = "chatMentions" as const;
+
+      // In-app notification — creates a Notification row AND publishes to the
+      // per-user Redis channel that feeds the app-wide NotificationCenter SSE
+      // stream. This is what makes a new DM / urgent message pop up on screen
+      // no matter which page the recipient is on. `metadata.urgent` drives the
+      // persistent urgent prompt; `metadata.channelId` lets the client suppress
+      // the popup when the recipient is already viewing that conversation.
+      const inAppIds = memberIds.filter((id) => shouldNotify(prefsByUserId.get(id) ?? {}, notifType, "inApp"));
+      await Promise.all(
+        inAppIds.map((recipientId) =>
+          createNotification({
+            userId: recipientId,
+            type: "NEW_MESSAGE",
+            title: isUrgent
+              ? isDM
+                ? `Urgent message from ${user.fullName}`
+                : `Urgent in #${channel?.name ?? "channel"} — ${user.fullName}`
+              : `New message from ${user.fullName}`,
+            body: displayContent,
+            link: `/chat?channel=${channelId}`,
+            metadata: { channelId, urgent: isUrgent === true, senderId: user.id },
+          }).catch(() => {})
+        )
+      );
+
       const eligibleIds = memberIds.filter((id) => shouldNotify(prefsByUserId.get(id) ?? {}, notifType, "push"));
 
       if (eligibleIds.length) {

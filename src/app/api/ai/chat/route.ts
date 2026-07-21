@@ -70,7 +70,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ reply });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "AI request failed";
-    return NextResponse.json({ error: msg }, { status: 503 });
+    console.error("AI chat request failed:", err);
+    return NextResponse.json({ error: "AI request failed. Please try again." }, { status: 503 });
   }
 }

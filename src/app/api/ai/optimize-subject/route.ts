@@ -3,10 +3,19 @@ import { cookies } from "next/headers";
 import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { getAIClient, AI_MODEL } from "@/lib/ai";
 import { prisma } from "@/lib/prisma";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   const user = getSessionUserFromCookieStore(await cookies());
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { allowed: rateLimitOk, retryAfter } = await checkRateLimit(`ai:optimize-subject:${user.id}`, 25, 10 * 60);
+  if (!rateLimitOk) {
+    return NextResponse.json(
+      { error: "AI rate limit reached. Please try again later.", retryAfter },
+      { status: 429 }
+    );
+  }
 
   const { subject } = (await request.json()) as { subject?: string };
 

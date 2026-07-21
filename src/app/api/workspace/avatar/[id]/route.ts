@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { isPrivateOrInternalHost } from "@/lib/url-safety";
 
 export async function GET(
   _request: Request,
@@ -37,6 +38,16 @@ export async function GET(
   // Regular URL (e.g. signed S3/R2) — proxy the image content so email clients
   // (Gmail, Outlook) get a direct image response instead of following a redirect
   // to a URL that may have CORS restrictions or expired signatures.
+  //
+  // SSRF guard (F-04): this endpoint is intentionally public/unauthenticated
+  // (see comment above), and avatarUrl is stored from user-supplied input, so
+  // without this check any user could point avatarUrl at an internal/private
+  // host and use this route to make the server issue requests to it (probing
+  // internal services, cloud metadata endpoints, etc). Reject before fetching.
+  if (isPrivateOrInternalHost(avatarUrl)) {
+    return new NextResponse(null, { status: 404 });
+  }
+
   try {
     const upstream = await fetch(avatarUrl);
     if (!upstream.ok) return new NextResponse(null, { status: 404 });

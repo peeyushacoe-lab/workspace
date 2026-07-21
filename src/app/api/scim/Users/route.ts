@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { UserRole } from "@/generated/prisma/client";
 import bcrypt from "bcrypt";
+import { timingSafeEqual } from "crypto";
 
 /**
  * SCIM 2.0 /Users endpoint.
@@ -9,11 +10,31 @@ import bcrypt from "bcrypt";
  * Supports: GET (list/filter), POST (provision), PUT (replace), PATCH (update), DELETE (deprovision)
  */
 
+// Roles that SCIM provisioning is allowed to assign. Privileged/management roles
+// (ADMIN, CEO, CISO, R_AND_D, COO, OPS_MANAGER) are intentionally excluded — an
+// IdP-controlled `department` field must never be able to grant admin access.
+const SCIM_PROVISIONABLE_ROLES: UserRole[] = [
+  "DEVELOPER",
+  "QA",
+  "MARKETING",
+  "RESEARCH",
+  "FINANCE",
+  "OPERATIONS",
+  "SUPPORT",
+  "INTERNSHIP",
+  "MEMBER",
+  "CYBER_SECURITY",
+];
+
 function scimAuth(request: Request): boolean {
   const token = process.env.SCIM_BEARER_TOKEN;
-  if (!token) return true; // No token configured — open (dev only)
-  const auth = request.headers.get("authorization");
-  return auth === `Bearer ${token}`;
+  if (!token) return false; // No token configured — fail closed, reject all requests
+  const auth = request.headers.get("authorization") ?? "";
+  const expected = `Bearer ${token}`;
+  const authBuf = Buffer.from(auth);
+  const expectedBuf = Buffer.from(expected);
+  if (authBuf.length !== expectedBuf.length) return false;
+  return timingSafeEqual(authBuf, expectedBuf);
 }
 
 function toScimUser(user: { id: string; email: string; fullName: string; role: string; isActive: boolean; createdAt: Date }) {
@@ -92,7 +113,10 @@ export async function POST(request: Request) {
   }
 
   const dept    = body["urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"]?.department;
-  const role    = (dept && dept.toUpperCase() in UserRole) ? dept.toUpperCase() as UserRole : "DEVELOPER" as UserRole;
+  const deptUpper = dept?.toUpperCase();
+  const role    = (deptUpper && SCIM_PROVISIONABLE_ROLES.includes(deptUpper as UserRole))
+    ? (deptUpper as UserRole)
+    : ("DEVELOPER" as UserRole);
   const tmpPw   = await bcrypt.hash(`Scim@${Date.now()}`, 12);
 
   const user = await prisma.user.create({

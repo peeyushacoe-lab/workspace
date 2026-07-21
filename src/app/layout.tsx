@@ -93,15 +93,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${dmSans.variable} ${inter.variable} ${jakarta.variable} ${jetbrains.variable} h-full antialiased`} suppressHydrationWarning>
-      <head>
-        {/* Always dark mode */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `document.documentElement.classList.add('dark');`,
-          }}
-        />
-      </head>
+    <html lang="en" className={`${dmSans.variable} ${inter.variable} ${jakarta.variable} ${jetbrains.variable} dark h-full antialiased`} suppressHydrationWarning>
+      {/*
+        Always dark mode — this used to be applied via an inline <script>
+        (document.documentElement.classList.add('dark')) so the class was
+        present before first paint. That required 'unsafe-inline' in the CSP
+        script-src. Since the app is unconditionally dark (no user toggle),
+        the class can just be part of the static className above instead —
+        same visual result, no inline script, and CSP can drop 'unsafe-inline'.
+      */}
+      <head></head>
       <body className="min-h-full bg-[#0B0D12] text-[#E6E9F0] font-sans" suppressHydrationWarning>
         <div className="min-h-screen flex flex-col">
           {children}

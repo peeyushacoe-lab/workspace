@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   ChevronLeft,
   ChevronRight,
@@ -1275,6 +1276,7 @@ function TimeGrid({
 export function CalendarView({ currentUserId }: { currentUserId: string }) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<"month" | "week" | "day">("month");
+  const router = useRouter();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const [now, setNow] = useState(new Date());
@@ -1307,7 +1309,38 @@ export function CalendarView({ currentUserId }: { currentUserId: string }) {
       const res = await fetch(
         `/api/calendar/events?from=${from.toISOString()}&to=${to.toISOString()}`
       );
-      if (res.ok) setEvents((await res.json()) as CalendarEvent[]);
+      const realEvents = res.ok ? ((await res.json()) as CalendarEvent[]) : [];
+
+      // Tasks & Work Management (RFC-002): tasks with a due date in this range
+      // show up as lightweight read-only chips alongside real events.
+      let taskEvents: CalendarEvent[] = [];
+      try {
+        const taskRes = await fetch("/api/tasks?view=mine");
+        if (taskRes.ok) {
+          const { tasks } = (await taskRes.json()) as {
+            tasks: { id: string; title: string; dueDate?: string | null; status: string; createdBy: { id: string; fullName: string } }[];
+          };
+          taskEvents = tasks
+            .filter((t) => t.dueDate && t.status !== "DONE")
+            .filter((t) => new Date(t.dueDate!) >= from && new Date(t.dueDate!) <= to)
+            .map((t) => ({
+              id: `task-${t.id}`,
+              title: `✓ ${t.title}`,
+              startAt: t.dueDate!,
+              endAt: t.dueDate!,
+              allDay: true,
+              color: "#f4b400",
+              organizerId: t.createdBy.id,
+              isRecurring: false,
+              organizer: t.createdBy,
+              attendees: [],
+            }));
+        }
+      } catch {
+        // Non-fatal — task due-date chips are a nice-to-have overlay.
+      }
+
+      setEvents([...realEvents, ...taskEvents]);
     } catch {
       toast.error("Failed to load events");
     } finally {
@@ -1316,6 +1349,16 @@ export function CalendarView({ currentUserId }: { currentUserId: string }) {
   }, [currentDate, view]);
 
   useEffect(() => { fetchEvents(); }, [fetchEvents]);
+
+  // Task due-date chips (id prefixed "task-") link to /tasks instead of
+  // opening the real-event detail/RSVP modal.
+  const handleEventClick = useCallback((ev: CalendarEvent) => {
+    if (ev.id.startsWith("task-")) {
+      router.push(`/tasks?taskId=${ev.id.replace(/^task-/, "")}`);
+      return;
+    }
+    setSelectedEvent(ev);
+  }, [router]);
 
   const openNewEventModal = (date: Date, hour?: number) => {
     const base = hour !== undefined ? setMinutes(setHours(date, hour), 0) : date;
@@ -1525,7 +1568,7 @@ export function CalendarView({ currentUserId }: { currentUserId: string }) {
                             <EventPill
                               key={event.id}
                               event={event}
-                              onClick={() => setSelectedEvent(event)}
+                              onClick={() => handleEventClick(event)}
                             />
                           ))}
                           {dayEvents.length > 3 && (
@@ -1571,7 +1614,7 @@ export function CalendarView({ currentUserId }: { currentUserId: string }) {
                 events={events}
                 now={now}
                 onCellClick={(day, hour) => openNewEventModal(day, hour)}
-                onEventClick={setSelectedEvent}
+                onEventClick={handleEventClick}
               />
             </div>
           )}
@@ -1599,7 +1642,7 @@ export function CalendarView({ currentUserId }: { currentUserId: string }) {
                 events={events}
                 now={now}
                 onCellClick={(day, hour) => openNewEventModal(day, hour)}
-                onEventClick={setSelectedEvent}
+                onEventClick={handleEventClick}
               />
             </div>
           )}

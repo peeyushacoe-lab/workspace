@@ -11,6 +11,40 @@ type WorkflowAction = {
   config?: Record<string, unknown>;
 };
 
+const MGMT_ROLES = ["ADMIN", "CEO", "OPS_MANAGER", "COO"] as const;
+type MgmtRole = (typeof MGMT_ROLES)[number];
+
+// Blocks SSRF via workflow-configured webhook URLs — rejects loopback, private,
+// link-local, and other internal/metadata hosts.
+function isPrivateOrInternalHost(url: string): boolean {
+  let hostname: string;
+  try {
+    hostname = new URL(url).hostname.toLowerCase();
+  } catch {
+    return true; // Unparseable URL — treat as unsafe
+  }
+
+  if (hostname === "localhost" || hostname === "::1" || hostname === "0.0.0.0") return true;
+
+  // IPv4 literal checks
+  const ipv4 = hostname.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (ipv4) {
+    const [a, b] = [parseInt(ipv4[1], 10), parseInt(ipv4[2], 10)];
+    if (a === 127) return true; // 127.0.0.0/8 loopback
+    if (a === 10) return true; // 10.0.0.0/8
+    if (a === 172 && b >= 16 && b <= 31) return true; // 172.16.0.0/12
+    if (a === 192 && b === 168) return true; // 192.168.0.0/16
+    if (a === 169 && b === 254) return true; // 169.254.0.0/16 link-local/metadata
+    if (a === 0) return true;
+    return false;
+  }
+
+  // IPv6 unique-local / link-local
+  if (hostname.startsWith("fc") || hostname.startsWith("fd") || hostname.startsWith("fe80")) return true;
+
+  return false;
+}
+
 async function executeAction(
   action: WorkflowAction,
   triggerData: Record<string, unknown>,
@@ -43,6 +77,9 @@ async function executeAction(
     case "WEBHOOK": {
       const url = String(action.config?.url ?? "");
       if (!url) return { action: "WEBHOOK", status: "skipped", reason: "no url" };
+      if (isPrivateOrInternalHost(url)) {
+        return { action: "WEBHOOK", status: "failed", reason: "target host is not allowed" };
+      }
       const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -76,6 +113,13 @@ export async function POST(request: Request, { params }: Params) {
 
   const workflow = await prisma.workflow.findUnique({ where: { id } });
   if (!workflow) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  const isOwner = workflow.createdById === user.id;
+  const isMgmt = MGMT_ROLES.includes(user.role as MgmtRole);
+  if (!isOwner && !isMgmt) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   if (workflow.status !== "ACTIVE" && workflow.status !== "DRAFT") {
     return NextResponse.json({ error: "Workflow is not active" }, { status: 400 });
   }
@@ -106,7 +150,8 @@ export async function POST(request: Request, { params }: Params) {
       data: { runCount: { increment: 1 }, lastRunAt: new Date() },
     });
   } catch (err) {
-    error = err instanceof Error ? err.message : "Unknown error";
+    console.error(`Workflow run ${run.id} failed:`, err);
+    error = "Workflow run failed. Please try again.";
     await prisma.workflowRun.update({
       where: { id: run.id },
       data: { status: "FAILED", error, endedAt: new Date() },

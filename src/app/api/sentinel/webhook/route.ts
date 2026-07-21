@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma/client";
+import { timingSafeEqual } from "crypto";
 
 const VALID_SEVERITIES = new Set(["LOW", "MEDIUM", "HIGH", "CRITICAL"]);
 const VALID_TARGET_TYPES = new Set(["email", "file", "chat", "login", "user"]);
@@ -11,10 +12,15 @@ const VALID_TARGET_TYPES = new Set(["email", "file", "chat", "login", "user"]);
  * Payload: { alertType, severity, targetType, targetId, userId?, description, metadata? }
  */
 export async function POST(request: Request) {
-  const authHeader = request.headers.get("authorization");
+  const authHeader = request.headers.get("authorization") ?? "";
   const secret = process.env.SENTINEL_WEBHOOK_SECRET;
 
-  if (secret && authHeader !== `Bearer ${secret}`) {
+  const expected = `Bearer ${secret ?? ""}`;
+  const authBuf = Buffer.from(authHeader);
+  const expectedBuf = Buffer.from(expected);
+  const tokensMatch = authBuf.length === expectedBuf.length && timingSafeEqual(authBuf, expectedBuf);
+
+  if (!secret || !tokensMatch) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

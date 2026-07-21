@@ -117,7 +117,7 @@ export async function POST(request: Request) {
     );
     return NextResponse.json({ ok: true, delivery: "external" });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Send failed";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    console.error("Mobile compose send failed:", err);
+    return NextResponse.json({ error: "Failed to send email. Please try again." }, { status: 500 });
   }
 }

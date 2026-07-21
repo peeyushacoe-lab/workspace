@@ -4,8 +4,11 @@ import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getAIClient, AI_MODEL } from "@/lib/ai";
 import { Prisma } from "@/generated/prisma/client";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 type Params = { params: Promise<{ id: string }> };
+
+const MGMT_ROLES = ["ADMIN", "CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER"] as const;
 
 const AGENT_PROMPTS: Record<string, string> = {
   INBOX_TRIAGE:  "You are an email triage agent. Analyze the provided emails and categorize them by priority (URGENT/HIGH/NORMAL/LOW), suggest labels, and identify action items. Respond as JSON: {\"triaged\": [{\"id\": \"...\", \"priority\": \"...\", \"label\": \"...\", \"action\": \"...\"}]}",
@@ -21,6 +24,17 @@ const AGENT_PROMPTS: Record<string, string> = {
 export async function POST(request: Request, { params }: Params) {
   const user = getSessionUserFromCookieStore(await cookies());
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!MGMT_ROLES.includes(user.role as (typeof MGMT_ROLES)[number])) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const { allowed: rateLimitOk, retryAfter } = await checkRateLimit(`ai:agents-run:${user.id}`, 8, 10 * 60);
+  if (!rateLimitOk) {
+    return NextResponse.json(
+      { error: "AI rate limit reached. Please try again later.", retryAfter },
+      { status: 429 }
+    );
+  }
 
   const { id } = await params;
 

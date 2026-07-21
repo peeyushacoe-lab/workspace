@@ -74,7 +74,15 @@ export async function runSentinelCorrelation(): Promise<{ incidentsCreated: numb
     }),
     prisma.dLPViolation.findMany({
       where: { createdAt: { gte: since }, resolved: false, userId: { not: null } },
-      select: { id: true, resourceType: true, action: true, snippet: true, userId: true, createdAt: true },
+      select: {
+        id: true,
+        resourceType: true,
+        action: true,
+        snippet: true,
+        userId: true,
+        createdAt: true,
+        policy: { select: { name: true, severity: true } },
+      },
     }),
   ]);
 
@@ -93,7 +101,11 @@ export async function runSentinelCorrelation(): Promise<{ incidentsCreated: numb
       id: v.id,
       type: `DLP: ${v.resourceType}`,
       severity: v.action === "BLOCKED" ? "HIGH" : "MEDIUM",
-      description: v.snippet ? `${v.action} — "${v.snippet.slice(0, 120)}"` : v.action,
+      // NOTE: never include v.snippet (the raw matched sensitive text) here — this
+      // description flows into buildNarrative()'s prompt to claudeComplete(), and
+      // sending real DLP-flagged content (PII, secrets, etc.) to an external LLM
+      // would defeat the purpose of DLP. Use only non-reversible metadata.
+      description: `${v.action} — sensitive content detected (${v.policy?.name ?? "DLP policy"} match, ${v.policy?.severity ?? "unknown"} severity)`,
       createdAt: v.createdAt,
     });
     byUser.set(v.userId, list);

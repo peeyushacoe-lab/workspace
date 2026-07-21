@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { semanticSearch } from "@/lib/embeddings";
 import { prisma } from "@/lib/prisma";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 /**
  * GET /api/ai/search?q=...&type=email|file|note|doc&limit=10
@@ -11,6 +12,14 @@ import { prisma } from "@/lib/prisma";
 export async function GET(request: Request) {
   const user = getSessionUserFromCookieStore(await cookies());
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { allowed: rateLimitOk, retryAfter } = await checkRateLimit(`ai:search:${user.id}`, 30, 10 * 60);
+  if (!rateLimitOk) {
+    return NextResponse.json(
+      { error: "AI rate limit reached. Please try again later.", retryAfter },
+      { status: 429 }
+    );
+  }
 
   const { searchParams } = new URL(request.url);
   const q = searchParams.get("q")?.trim() ?? "";

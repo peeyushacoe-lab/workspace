@@ -6,6 +6,8 @@ import { logger } from "@/lib/logger";
 import { runHealthCheck } from "@/lib/health-check";
 import { runAndRecordRestoreDrill } from "@/lib/restore-drill";
 import { runSentinelCorrelation } from "@/lib/sentinel/correlation-engine";
+import { createNotification } from "@/lib/notifications";
+import { nextRecurrenceDate } from "@/lib/task-recurrence";
 
 export function createCleanupWorker() {
   const worker = new Worker<CleanupJobData>(
@@ -91,6 +93,87 @@ export function createCleanupWorker() {
           return null;
         });
         logger.info({ result }, "[cleanup-worker] Sentinel Brain correlation pass complete");
+        return;
+      }
+
+      if (type === "TASK_RECURRENCE") {
+        // Find completed recurring tasks that haven't spawned their next
+        // occurrence yet. Cloning clears `recurrence` on the original so it
+        // isn't picked up again on the next daily pass.
+        const dueForNext = await prisma.task.findMany({
+          where: { status: "DONE", recurrence: { not: null } },
+          include: { assignees: true },
+        });
+
+        let cloned = 0;
+        for (const t of dueForNext) {
+          const base = t.dueDate ?? t.updatedAt;
+          const nextDue = nextRecurrenceDate(t.recurrence!, base);
+          if (!nextDue) {
+            // Unparseable recurrence string — clear it so it doesn't loop forever.
+            await prisma.task.update({ where: { id: t.id }, data: { recurrence: null } });
+            continue;
+          }
+
+          await prisma.$transaction([
+            prisma.task.create({
+              data: {
+                title: t.title,
+                description: t.description,
+                status: "TODO",
+                priority: t.priority,
+                dueDate: nextDue,
+                labels: t.labels,
+                listId: t.listId,
+                createdById: t.createdById,
+                recurrence: t.recurrence,
+                sourceType: t.sourceType,
+                sourceId: t.sourceId,
+                assignees: { create: t.assignees.map((a) => ({ userId: a.userId })) },
+              },
+            }),
+            prisma.task.update({ where: { id: t.id }, data: { recurrence: null } }),
+          ]);
+          cloned++;
+        }
+        logger.info({ cloned }, "[cleanup-worker] Recurring tasks rolled forward");
+        return;
+      }
+
+      if (type === "TASK_DUE_SOON") {
+        // Notify assignees ~24h before a task's due date, once.
+        const windowStart = new Date();
+        const windowEnd = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        const dueSoon = await prisma.task.findMany({
+          where: {
+            status: { not: "DONE" },
+            dueDate: { gte: windowStart, lte: windowEnd },
+          },
+          include: { assignees: true },
+        });
+
+        let notified = 0;
+        for (const t of dueSoon) {
+          const recipients = new Set<string>([t.createdById, ...t.assignees.map((a) => a.userId)]);
+          for (const userId of recipients) {
+            // Best-effort de-dupe: skip if we already sent a due-soon notice
+            // for this exact task to this user (matched by link).
+            const already = await prisma.notification.findFirst({
+              where: { userId, type: "TASK_DUE_SOON", link: `/tasks?taskId=${t.id}` },
+              select: { id: true },
+            });
+            if (already) continue;
+            await createNotification({
+              userId,
+              type: "TASK_DUE_SOON",
+              title: "Task due soon",
+              body: `"${t.title}" is due within 24 hours`,
+              link: `/tasks?taskId=${t.id}`,
+            });
+            notified++;
+          }
+        }
+        logger.info({ notified }, "[cleanup-worker] Due-soon task reminders sent");
         return;
       }
 

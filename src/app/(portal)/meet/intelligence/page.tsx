@@ -3,7 +3,7 @@
 import { useState } from "react";
 import {
   Sparkles, FileText, CheckSquare, Users,
-  Loader2, ChevronDown, ChevronRight, Copy, Download
+  Loader2, ChevronDown, ChevronRight, Copy, Download, ListPlus, Check
 } from "lucide-react";
 import { PageHeader } from "@/components/Shell";
 import { toast } from "sonner";
@@ -31,8 +31,34 @@ export default function MeetingIntelligencePage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<MeetingResult | null>(null);
   const [open, setOpen] = useState<Record<string, boolean>>({ summary: true, actions: true, decisions: true });
+  const [creatingTaskIdx, setCreatingTaskIdx] = useState<number | null>(null);
+  const [createdTaskIdx, setCreatedTaskIdx] = useState<Set<number>>(new Set());
 
   const toggle = (k: string) => setOpen((p) => ({ ...p, [k]: !p[k] }));
+
+  const createTaskFromAction = async (idx: number, a: { owner: string; task: string; due: string }) => {
+    setCreatingTaskIdx(idx);
+    try {
+      const res = await fetch("/api/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: a.task,
+          description: a.owner && a.owner.toLowerCase() !== "team" ? `Owner (from meeting notes): ${a.owner}` : undefined,
+          dueDate: a.due ? undefined : undefined, // meeting-extracted due text is freeform, not a parseable date — left for the user to set
+          sourceType: "meeting",
+          sourceId: title || undefined,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      setCreatedTaskIdx((prev) => new Set(prev).add(idx));
+      toast.success("Task created");
+    } catch {
+      toast.error("Failed to create task");
+    } finally {
+      setCreatingTaskIdx(null);
+    }
+  };
 
   const analyze = async () => {
     if (!transcript.trim()) { toast.error("Paste a transcript first"); return; }
@@ -153,11 +179,26 @@ export default function MeetingIntelligencePage() {
                   ) : result.actionItems.map((a, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm">
                       <span className="w-4 h-4 border border-[#2E333F] rounded flex-shrink-0 mt-0.5" />
-                      <span>
+                      <span className="flex-1">
                         <strong className="text-[#00C2FF]">{a.owner}:</strong>{" "}
                         {a.task}
                         {a.due && <span className="text-[#5A6275] ml-1">· {a.due}</span>}
                       </span>
+                      <button
+                        onClick={() => void createTaskFromAction(i, a)}
+                        disabled={creatingTaskIdx === i || createdTaskIdx.has(i)}
+                        className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium border border-[#262A35] text-[#5A6275] hover:text-[#00C2FF] hover:border-[#00C2FF]/30 transition-colors disabled:opacity-60 flex-shrink-0"
+                        title="Create a task from this action item"
+                      >
+                        {creatingTaskIdx === i ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : createdTaskIdx.has(i) ? (
+                          <Check className="w-3 h-3 text-emerald-400" />
+                        ) : (
+                          <ListPlus className="w-3 h-3" />
+                        )}
+                        {createdTaskIdx.has(i) ? "Added" : "Create task"}
+                      </button>
                     </li>
                   ))}
                 </ul>

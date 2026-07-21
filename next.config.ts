@@ -21,8 +21,14 @@ const securityHeaders = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      // unsafe-eval removed in production; kept only for dev HMR
-      `script-src 'self' ${isProd ? "" : "'unsafe-eval' "}'unsafe-inline' https://browser.sentry-cdn.com`,
+      // unsafe-eval removed in production; kept only for dev HMR.
+      // unsafe-inline removed for scripts entirely (F-14) — the app no longer
+      // ships any inline <script> tags (the old dark-mode class toggle was
+      // moved to a static className in layout.tsx), so 'unsafe-inline' is not
+      // needed for script-src/script-src-elem in any environment. style-src
+      // keeps 'unsafe-inline' since inline styles are still used widely and
+      // are lower-severity (no code execution).
+      `script-src 'self' ${isProd ? "" : "'unsafe-eval' "}https://browser.sentry-cdn.com`,
       // Google Fonts are loaded at runtime by some components and email templates
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "img-src 'self' data: blob: https://lh3.googleusercontent.com https://avatars.githubusercontent.com",
@@ -32,7 +38,7 @@ const securityHeaders = [
       "media-src 'self' blob:",
       "object-src 'none'",
       // Allow Jitsi external API script to load from the configured domain (or public fallback)
-      `script-src-elem 'self' 'unsafe-inline' https://browser.sentry-cdn.com https://meet.jit.si ${process.env.JITSI_DOMAIN ? `https://${process.env.JITSI_DOMAIN}` : ""}`,
+      `script-src-elem 'self' https://browser.sentry-cdn.com https://meet.jit.si ${process.env.JITSI_DOMAIN ? `https://${process.env.JITSI_DOMAIN}` : ""}`,
       `frame-src 'self' https://meet.jit.si ${process.env.JITSI_DOMAIN ? `https://${process.env.JITSI_DOMAIN}` : ""}`,
       "frame-ancestors 'none'",
       "base-uri 'self'",

@@ -17,17 +17,16 @@ export async function GET(request: Request, { params }: Params) {
   const file = await prisma.driveFile.findUnique({ where: { id } });
   if (!file) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  // Check access: owner OR same organization. Org rollout (RFC-001) is only
-  // partially backfilled, so most users still have organizationId === null —
-  // treat "neither user has been assigned an org yet" as the same (sole)
-  // organization rather than denying access, otherwise every shared file
-  // (e.g. a screenshot posted in a chat channel) 403s for every recipient
-  // except the uploader. Real multi-org separation is unaffected: two users
-  // with different non-null organizationIds are still blocked from each other.
+  // Check access: owner OR same organization. NOTE: a prior "bothUnassigned"
+  // clause treated "neither user has an organizationId yet" as implicit access,
+  // which granted every user with organizationId === null access to every other
+  // such user's Drive files (most users, since RFC-001 org rollout is only
+  // partially backfilled). That was too broad — removed. Access is now strictly
+  // owner or matching non-null organizationId (plus any admin-role bypass
+  // elsewhere in this handler, if present).
   const owner = await prisma.user.findUnique({ where: { id: file.ownerId }, select: { organizationId: true } });
   const sameOrg = !!owner?.organizationId && owner.organizationId === user.organizationId;
-  const bothUnassigned = !owner?.organizationId && !user.organizationId;
-  const hasAccess = file.ownerId === user.id || sameOrg || bothUnassigned;
+  const hasAccess = file.ownerId === user.id || sameOrg;
   if (!hasAccess) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { searchParams } = new URL(request.url);
@@ -51,6 +50,36 @@ export async function GET(request: Request, { params }: Params) {
 
     const mime = file.mimeType ?? "";
     const safeName = encodeURIComponent(file.name).replace(/['()]/g, escape);
+
+    // Stored-XSS mitigation (F-02): HTML/SVG/XML files must NEVER be rendered
+    // inline on this origin, even when preview=1 is requested. Serving these
+    // types with an inline disposition would let an attacker-uploaded file
+    // execute script in the context of our own domain (stored XSS). Detect
+    // by both the stored content-type and the filename extension, since
+    // browsers/clients don't always set an accurate mimeType on upload.
+    const dangerousInlineMimes = new Set([
+      "text/html",
+      "application/xhtml+xml",
+      "image/svg+xml",
+      "text/xml",
+      "application/xml",
+    ]);
+    const dangerousInlineExtensions = new Set([".html", ".htm", ".xhtml", ".svg", ".xml"]);
+    const fileExt = "." + (file.name.split(".").pop()?.toLowerCase() ?? "");
+    const isDangerousInlineType =
+      dangerousInlineMimes.has(mime.split(";")[0].trim()) || dangerousInlineExtensions.has(fileExt);
+
+    if (isPreview && isDangerousInlineType) {
+      logAudit({
+        actorId: user.id,
+        action: "DRIVE_FILE_DOWNLOAD",
+        targetType: "DriveFile",
+        targetId: id,
+        metadata: { fileName: file.name, forcedAttachment: true },
+        ipAddress: request.headers.get("x-forwarded-for"),
+      });
+      return NextResponse.redirect(url);
+    }
 
     // For audio/video: proxy with Range passthrough so the browser's <audio>/<video>
     // element can seek. A simple redirect to R2 fails when R2 CORS isn't configured

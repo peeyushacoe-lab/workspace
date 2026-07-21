@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getAIClient } from "@/lib/ai";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function GET(request: Request) {
   const user = getSessionUserFromCookieStore(await cookies());
@@ -22,6 +23,14 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const user = getSessionUserFromCookieStore(await cookies());
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { allowed: rateLimitOk, retryAfter } = await checkRateLimit(`ai:brain-orchestrate:${user.id}`, 5, 10 * 60);
+  if (!rateLimitOk) {
+    return NextResponse.json(
+      { error: "AI rate limit reached. Please try again later.", retryAfter },
+      { status: 429 }
+    );
+  }
 
   const body = await request.json() as {
     name: string;
@@ -101,9 +110,10 @@ async function executeOrchestration(id: string, objective: string, userId: strin
       },
     }).catch(() => {});
   } catch (err) {
+    console.error(`Agent orchestration ${id} failed:`, err);
     await prisma.agentOrchestration.update({
       where: { id },
-      data: { status: "FAILED", results: { error: err instanceof Error ? err.message : "Unknown" } as never, completedAt: new Date() },
+      data: { status: "FAILED", results: { error: "Orchestration failed. Please try again." } as never, completedAt: new Date() },
     }).catch(() => {});
   }
 }
