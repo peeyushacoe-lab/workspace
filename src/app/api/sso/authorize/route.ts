@@ -32,7 +32,11 @@ export async function GET(request: NextRequest) {
   const redirectUri = searchParams.get("redirect_uri");
 
   if (!redirectUri || !isAllowedRedirect(redirectUri)) {
-    return NextResponse.json({ error: "Invalid or missing redirect_uri" }, { status: 400 });
+    return NextResponse.json({
+      error: "Invalid or missing redirect_uri",
+      received: redirectUri ?? null,
+      allowedOrigins: ALLOWED_REDIRECT_ORIGINS,
+    }, { status: 400 });
   }
 
   const cookieStore = await cookies();
