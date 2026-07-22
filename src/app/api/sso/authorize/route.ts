@@ -9,6 +9,8 @@ const ALLOWED_REDIRECT_ORIGINS = [
   "https://forage.cybersage.uk",
   "https://www.forage.cybersage.uk",
   "https://sage-range.vercel.app",
+  "https://www.cybersagevault.uk",
+  "https://cybersagevault.uk",
 ];
 
 function isAllowedRedirect(uri: string): boolean {
