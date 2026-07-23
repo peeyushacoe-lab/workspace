@@ -23,7 +23,7 @@ const GRANTABLE_ACCESS = [
 type GrantableAccess = (typeof GRANTABLE_ACCESS)[number];
 
 const CREATOR_PERMISSIONS: Record<string, string[]> = {
-  ADMIN:       ["CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER", "DEVELOPER", "CYBER_SECURITY", "QA", "MARKETING", "RESEARCH", "FINANCE", "OPERATIONS", "SUPPORT", "INTERNSHIP"],
+  ADMIN:       ["CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER", "DEVELOPER", "CYBER_SECURITY", "QA", "MARKETING", "RESEARCH", "FINANCE", "OPERATIONS", "SUPPORT", "HR", "INTERNSHIP"],
   CEO:         ["MARKETING", "FINANCE"],
   CISO:        ["CYBER_SECURITY"],
   R_AND_D:     ["DEVELOPER", "QA", "RESEARCH"],
@@ -39,12 +39,13 @@ const ROLE_LABELS: Record<string, string> = {
   CYBER_SECURITY: "Cyber Security", QA: "QA Engineer",
   MARKETING: "Marketing", RESEARCH: "Research",
   FINANCE: "Finance", OPERATIONS: "Operations", SUPPORT: "Support",
-  INTERNSHIP: "Intern",
+  HR: "HR", INTERNSHIP: "Intern",
 };
 
 const ROLE_GROUPS = [
   { label: "Leadership", roles: ["CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER"] },
   { label: "Teams", roles: ["DEVELOPER", "CYBER_SECURITY", "QA", "MARKETING", "RESEARCH", "FINANCE", "OPERATIONS", "SUPPORT"] },
+  { label: "HR", roles: ["HR"] },
   { label: "Interns", roles: ["INTERNSHIP"] },
 ];
 
@@ -53,6 +54,7 @@ const USER_SECTIONS: { label: string; roles: string[] }[] = [
   { label: "Leadership", roles: ["ADMIN", "CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER"] },
   { label: "Core Team", roles: ["DEVELOPER", "CYBER_SECURITY", "QA", "MARKETING", "RESEARCH", "FINANCE", "OPERATIONS"] },
   { label: "Support", roles: ["SUPPORT"] },
+  { label: "HR", roles: ["HR"] },
   { label: "Interns", roles: ["INTERNSHIP"] },
 ];
 
@@ -79,6 +81,7 @@ const ROLE_COLORS: Record<string, string> = {
   FINANCE: "bg-[#0f9d58]/10 text-[#0f9d58]",
   OPERATIONS: "bg-amber-500/10 text-amber-300",
   SUPPORT: "bg-sky-500/10 text-sky-300",
+  HR: "bg-pink-500/10 text-pink-300",
   INTERNSHIP: "bg-[#00C2FF]/10 text-[#00C2FF]",
 };
 

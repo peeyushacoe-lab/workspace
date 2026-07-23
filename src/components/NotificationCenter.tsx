@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import {
   AtSign,
@@ -116,6 +117,11 @@ export function NotificationCenter({ userId, dark: _dark = false }: { userId: st
   const [unreadCount, setUnreadCount] = useState(0);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [urgentAlerts, setUrgentAlerts] = useState<Toast[]>([]);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   const panelRef = useRef<HTMLDivElement>(null);
   const retryCountRef = useRef(0);
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -342,35 +348,44 @@ export function NotificationCenter({ userId, dark: _dark = false }: { userId: st
         )}
       </div>
 
-      {/* Toast stack — bottom-right (click to open) */}
-      <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
-        {toasts.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => {
-              setToasts((prev) => prev.filter((x) => x.id !== t.id));
-              if (t.link) router.push(t.link);
-            }}
-            className="pointer-events-auto flex items-start gap-3 rounded-xl border border-[#e8eaed] bg-white p-4 shadow-lg w-80 text-left cursor-pointer hover:border-[#1a56db]/40 animate-in slide-in-from-bottom-2 fade-in duration-200 transition-colors"
-          >
-            <span
-              className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${TYPE_COLOR[t.type] ?? TYPE_COLOR.SYSTEM}`}
-            >
-              <TypeIcon type={t.type} />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold text-[#202124] truncate">{t.title}</p>
-              <p className="mt-0.5 text-xs text-[#5f6368] line-clamp-2">{t.body}</p>
-            </div>
-          </button>
-        ))}
-      </div>
+      {/* Toast stack — bottom-right (click to open). Portaled to <body> so it
+          isn't clipped/repositioned by the topbar's `glass` backdrop-filter,
+          which creates a new containing block for fixed-position descendants. */}
+      {mounted &&
+        createPortal(
+          <div className="fixed bottom-4 right-4 z-[200] flex flex-col gap-2 pointer-events-none">
+            {toasts.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => {
+                  setToasts((prev) => prev.filter((x) => x.id !== t.id));
+                  if (t.link) router.push(t.link);
+                }}
+                className="pointer-events-auto flex items-start gap-3 rounded-xl border border-[#e8eaed] bg-white p-4 shadow-lg w-80 text-left cursor-pointer hover:border-[#1a56db]/40 animate-in slide-in-from-bottom-2 fade-in duration-200 transition-colors"
+              >
+                <span
+                  className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${TYPE_COLOR[t.type] ?? TYPE_COLOR.SYSTEM}`}
+                >
+                  <TypeIcon type={t.type} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold text-[#202124] truncate">{t.title}</p>
+                  <p className="mt-0.5 text-xs text-[#5f6368] line-clamp-2">{t.body}</p>
+                </div>
+              </button>
+            ))}
+          </div>,
+          document.body
+        )}
 
-      {/* Urgent prompt — top-center, persists until dismissed, shown on every page */}
-      {urgentAlerts.length > 0 && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 w-[min(28rem,calc(100vw-2rem))]">
-          {urgentAlerts.map((a) => (
+      {/* Urgent prompt — top-center, persists until dismissed, shown on every page.
+          Also portaled to <body> for the same containing-block reason as above. */}
+      {mounted &&
+        urgentAlerts.length > 0 &&
+        createPortal(
+          <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[200] flex flex-col gap-2 w-[min(28rem,calc(100vw-2rem))]">
+            {urgentAlerts.map((a) => (
             <div
               key={a.id}
               role="alertdialog"
@@ -414,8 +429,9 @@ export function NotificationCenter({ userId, dark: _dark = false }: { userId: st
               </button>
             </div>
           ))}
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </>
   );
 }

@@ -127,6 +127,7 @@ model User {
   chatMemberships   ChatMember[]
   chatMessages      ChatMessage[]
   chatReactions     ChatReaction[]
+  chatMessageReads  ChatMessageRead[]
   driveFolders      DriveFolder[]
   driveFiles        DriveFile[]
   calendarEvents    CalendarEvent[]    @relation("EventOrganizer")
@@ -865,6 +866,12 @@ model ChatMessage {
   forwardedFromId  String?
   forwardedFrom    ChatMessage?  @relation("ForwardedMessages", fields: [forwardedFromId], references: [id], onDelete: SetNull, onUpdate: NoAction)
   forwards         ChatMessage[] @relation("ForwardedMessages")
+  // Inline "quote reply" (WhatsApp-style) — distinct from the sidebar `parentId` thread
+  // concept. A quoted reply always renders inline in the main timeline with a small
+  // quote-preview card, whereas `parentId` replies live in the ThreadPanel.
+  quotedMessageId  String?
+  quotedMessage    ChatMessage?  @relation("QuotedMessages", fields: [quotedMessageId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  quotedBy         ChatMessage[] @relation("QuotedMessages")
   // Polls
   pollId           String?
   poll             ChatPoll?     @relation(fields: [pollId], references: [id], onDelete: SetNull)
@@ -883,6 +890,7 @@ model ChatMessage {
   @@index([parentId])
   @@index([isPinned])
   @@index([forwardedFromId])
+  @@index([quotedMessageId])
 }
 
 model ChatReaction {
@@ -906,6 +914,7 @@ model ChatMessageRead {
   readAt    DateTime @default(now())
 
   message ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([messageId, userId])
   @@index([channelId, userId])

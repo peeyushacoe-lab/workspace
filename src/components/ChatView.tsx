@@ -39,6 +39,7 @@ import {
   UserMinus,
   Settings,
   ListPlus,
+  Reply as ReplyIcon,
 } from "lucide-react";
 import { formatDistanceToNow, isToday, isYesterday, format } from "date-fns";
 import { toast } from "sonner";
@@ -81,6 +82,15 @@ type MessageUser = {
   role: string;
 };
 
+type QuotedMessagePreview = {
+  id: string;
+  content: string;
+  deletedAt?: string | null;
+  user: { id: string; fullName: string };
+};
+
+type ReadReceipt = { userId: string; readAt: string; user: { fullName: string } };
+
 type Message = {
   id: string;
   channelId: string;
@@ -89,6 +99,8 @@ type Message = {
   editedAt?: string | null;
   deletedAt?: string | null;
   parentId?: string | null;
+  quotedMessageId?: string | null;
+  quotedMessage?: QuotedMessagePreview | null;
   isPinned?: boolean;
   isUrgent?: boolean;
   attachmentUrl?: string | null;
@@ -99,6 +111,7 @@ type Message = {
   user: MessageUser;
   reactions: Reaction[];
   replies: Reply[];
+  readBy?: ReadReceipt[];
 };
 
 type UserSummary = {
@@ -464,8 +477,12 @@ const MessageItem = memo(function MessageItem({
   onEdit,
   onDelete,
   onReply,
+  onQuoteReply,
   onPin,
+  onJumpTo,
   memberNames = [],
+  isGroupChat = false,
+  isLastInChannel = false,
 }: {
   msg: Message;
   currentUserId: string;
@@ -473,8 +490,12 @@ const MessageItem = memo(function MessageItem({
   onEdit: (messageId: string, content: string) => void;
   onDelete: (messageId: string) => void;
   onReply?: (msg: Message) => void;
+  onQuoteReply?: (msg: Message) => void;
   onPin?: (messageId: string, pinned: boolean) => void;
+  onJumpTo?: (messageId: string) => void;
   memberNames?: string[];
+  isGroupChat?: boolean;
+  isLastInChannel?: boolean;
 }) {
   const [showActions, setShowActions] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -571,9 +592,15 @@ const MessageItem = memo(function MessageItem({
     );
   }
 
+  // Read-receipt derivation. `readBy` holds one row per (message, reader) —
+  // exclude the author (a person doesn't "read" their own sent message).
+  const readers = (msg.readBy ?? []).filter((r) => r.userId !== msg.userId);
+  const otherReaders = readers.filter((r) => r.userId !== currentUserId);
+
   return (
     <div
-      className={`group relative flex gap-3 px-6 py-1.5 transition-colors ${msg.isUrgent ? "bg-[#ea4335]/5 border-l-2 border-[#ea4335] hover:bg-[#ea4335]/10" : "hover:bg-[#1B1F2A]"}`}
+      id={`msg-${msg.id}`}
+      className={`group relative flex gap-3 px-6 py-1.5 transition-colors scroll-mt-16 ${msg.isUrgent ? "bg-[#ea4335]/5 border-l-2 border-[#ea4335] hover:bg-[#ea4335]/10" : "hover:bg-[#1B1F2A]"}`}
       onMouseEnter={() => !isDeleted && setShowActions(true)}
       onMouseLeave={() => {
         if (!showEmojiPicker) setShowActions(false);
@@ -595,6 +622,22 @@ const MessageItem = memo(function MessageItem({
             <span className="text-[11px] text-[#5A6275] italic">(edited)</span>
           )}
         </div>
+
+        {/* Quoted "replying to" preview — WhatsApp-style inline quote card */}
+        {!isDeleted && msg.quotedMessage && (
+          <button
+            type="button"
+            onClick={() => onJumpTo?.(msg.quotedMessage!.id)}
+            className="mb-1 flex max-w-md flex-col rounded-md border-l-2 border-[#00C2FF] bg-[#12151D] px-2.5 py-1 text-left hover:bg-[#171B26] transition-colors"
+          >
+            <span className="text-[11.5px] font-semibold text-[#00C2FF]">
+              {msg.quotedMessage.user.fullName}
+            </span>
+            <span className="truncate text-[12.5px] text-[#8A92A6]">
+              {msg.quotedMessage.deletedAt ? "(message deleted)" : msg.quotedMessage.content || "Attachment"}
+            </span>
+          </button>
+        )}
 
         {/* Deleted message */}
         {isDeleted ? (
@@ -671,6 +714,39 @@ const MessageItem = memo(function MessageItem({
               : "Reply in thread"}
           </button>
         )}
+
+        {/* Read receipt — WhatsApp-style "Seen" status.
+            DM: shown under the sender's own message once the other person has read it.
+            Group: shown under the single most-recent message in the channel, visible
+            to every member (not just the sender), listing who has caught up. */}
+        {!isDeleted && !isGroupChat && isOwn && (
+          <div className="mt-1 flex items-center gap-1 text-[11px] text-[#5A6275]">
+            {otherReaders.length > 0 ? (
+              <>
+                <Check className="w-3 h-3 text-[#00C2FF]" />
+                <Check className="w-3 h-3 -ml-2 text-[#00C2FF]" />
+                <span>Seen {format(new Date(otherReaders[0].readAt), "h:mm a")}</span>
+              </>
+            ) : (
+              <>
+                <Check className="w-3 h-3" />
+                <span>Sent</span>
+              </>
+            )}
+          </div>
+        )}
+        {!isDeleted && isGroupChat && isLastInChannel && readers.length > 0 && (
+          <div
+            className="mt-1 flex items-center gap-1 text-[11px] text-[#5A6275]"
+            title={readers.map((r) => `${r.user.fullName} · ${format(new Date(r.readAt), "h:mm a")}`).join("\n")}
+          >
+            <Check className="w-3 h-3 text-[#00C2FF]" />
+            <span>
+              Seen by {readers.slice(0, 2).map((r) => r.user.fullName.split(" ")[0]).join(", ")}
+              {readers.length > 2 ? ` +${readers.length - 2}` : ""}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Action buttons — only on non-deleted, non-editing, non-bot messages */}
@@ -707,6 +783,15 @@ const MessageItem = memo(function MessageItem({
             )}
           </div>
 
+          {onQuoteReply && (
+            <button
+              onClick={() => onQuoteReply(msg)}
+              className="p-1.5 hover:bg-[#1B1F2A] hover:text-[#E6E9F0] rounded-md text-xs transition-colors text-[#8A92A6]"
+              title="Reply"
+            >
+              <ReplyIcon className="w-4 h-4" />
+            </button>
+          )}
           {onReply && (
             <button
               onClick={() => onReply(msg)}
@@ -2017,6 +2102,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
   const [showManageMembers, setShowManageMembers] = useState(false);
   const [typingNames, setTypingNames] = useState<Map<string, string>>(new Map());
   const [threadParentMsg, setThreadParentMsg] = useState<Message | null>(null);
+  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [threadMessages, setThreadMessages] = useState<Message[]>([]);
   const [onlineUsers, setOnlineUsers] = useState<Map<string, string>>(new Map());
   const [presenceData, setPresenceData] = useState<Record<string, { status: string; updatedAt: string }>>();
@@ -2124,6 +2210,11 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
   useEffect(() => {
     threadParentIdRef.current = threadParentMsg?.id ?? null;
   }, [threadParentMsg]);
+
+  // Focus the composer as soon as a "reply to" quote is selected
+  useEffect(() => {
+    if (replyingTo) composerRef.current?.focus();
+  }, [replyingTo]);
 
   const loadChannels = useCallback(async () => {
     try {
@@ -2407,6 +2498,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
     setMessages([]);
     setThreadParentMsg(null);
     setThreadMessages([]);
+    setReplyingTo(null);
 
     fetch(`/api/chat/channels/${selectedChannelId}/messages`)
       .then((r) => r.json())
@@ -2502,6 +2594,17 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
       setThreadMessages((prev) => prev.map((m) => (m.id === messageId ? { ...m, reactions } : m)));
     };
 
+    const onRead = ({ userId, fullName, messageIds, readAt }: { userId: string; fullName: string; messageIds: string[]; readAt: string }) => {
+      const applyRead = (m: Message) => {
+        if (!messageIds.includes(m.id)) return m;
+        const existing = m.readBy ?? [];
+        if (existing.some((r) => r.userId === userId)) return m;
+        return { ...m, readBy: [...existing, { userId, readAt, user: { fullName } }] };
+      };
+      setMessages((prev) => prev.map(applyRead));
+      setThreadMessages((prev) => prev.map(applyRead));
+    };
+
     const onPresence = ({ userId, fullName, online }: { userId: string; fullName: string; online: boolean }) => {
       setOnlineUsers((prev) => {
         const m = new Map(prev);
@@ -2528,6 +2631,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
     socket.on("chat:message_updated", onMessageUpdated);
     socket.on("chat:message_deleted", onMessageDeleted);
     socket.on("chat:reactions_updated", onReactionsUpdated);
+    socket.on("chat:read", onRead);
     socket.on("chat:presence", onPresence);
     socket.on("chat:typing", onTyping);
 
@@ -2538,6 +2642,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
       socket.off("chat:message_updated", onMessageUpdated);
       socket.off("chat:message_deleted", onMessageDeleted);
       socket.off("chat:reactions_updated", onReactionsUpdated);
+      socket.off("chat:read", onRead);
       socket.off("chat:presence", onPresence);
       socket.off("chat:typing", onTyping);
       // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -2598,6 +2703,23 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
       setThreadMessages((prev) => prev.map((m) => (m.id === messageId ? { ...m, reactions } : m)));
     });
 
+    source.addEventListener("read", (e) => {
+      const { userId, fullName, messageIds, readAt } = JSON.parse((e as MessageEvent).data) as {
+        userId: string;
+        fullName: string;
+        messageIds: string[];
+        readAt: string;
+      };
+      const applyRead = (m: Message) => {
+        if (!messageIds.includes(m.id)) return m;
+        const existing = m.readBy ?? [];
+        if (existing.some((r) => r.userId === userId)) return m;
+        return { ...m, readBy: [...existing, { userId, readAt, user: { fullName } }] };
+      };
+      setMessages((prev) => prev.map(applyRead));
+      setThreadMessages((prev) => prev.map(applyRead));
+    });
+
     source.onerror = () => {
       // EventSource auto-reconnects on transient errors/timeouts (e.g. the 30s
       // Vercel function duration cap); nothing to do here but avoid noisy logs.
@@ -2617,8 +2739,10 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
     setSending(true);
     const text = composerText;
     const attachment = composerAttachment;
+    const quotedMessageId = replyingTo?.id;
     setComposerText("");
     setComposerAttachment(null);
+    setReplyingTo(null);
     try {
       const urgent = composerUrgent;
       setComposerUrgent(false);
@@ -2628,6 +2752,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
         body: JSON.stringify({
           content: text,
           isUrgent: urgent,
+          ...(quotedMessageId ? { quotedMessageId } : {}),
           ...(attachment ? { attachmentUrl: attachment.url, attachmentMime: attachment.mime, attachmentName: attachment.name } : {}),
         }),
       });
@@ -3120,6 +3245,16 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
     }
     listItems.push({ type: "message", msg });
   }
+  const lastMessageId = messages.length > 0 ? messages[messages.length - 1].id : null;
+
+  // Scroll a quoted/jump-to message into view and briefly highlight it.
+  const scrollToMessage = (messageId: string) => {
+    const el = document.getElementById(`msg-${messageId}`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.classList.add("bg-[#00C2FF]/10");
+    setTimeout(() => el.classList.remove("bg-[#00C2FF]/10"), 1200);
+  };
 
   // ─── Channel sections ──────────────────────────────────────────────────────
   // Merge server unreadCount with local (socket-tracked) unread increments
@@ -3507,8 +3642,12 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                       onEdit={handleEdit}
                       onDelete={handleDelete}
                       onReply={selectedChannel?.type !== "DIRECT" ? openThread : undefined}
+                      onQuoteReply={setReplyingTo}
+                      onJumpTo={scrollToMessage}
                       onPin={handlePin}
                       memberNames={memberNames}
+                      isGroupChat={selectedChannel?.type !== "DIRECT"}
+                      isLastInChannel={item.msg.id === lastMessageId}
                     />
                   )
                 )
@@ -3548,6 +3687,30 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                   <audio src={URL.createObjectURL(audioBlob)} controls className="flex-1 h-8" />
                   <button onClick={() => void sendVoiceNote()} disabled={uploadingFile} className="bg-[#00C2FF] text-[#06121A] px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-40">Send</button>
                   <button onClick={() => setAudioBlob(null)} className="text-[#8A92A6] hover:text-[#ea4335]"><X className="w-4 h-4" /></button>
+                </div>
+              )}
+
+              {/* "Replying to" quote banner — appears once a message's hover Reply
+                  button is clicked; sending the composer attaches quotedMessageId
+                  so the sent message renders with an inline quote card. */}
+              {replyingTo && (
+                <div className="flex items-center gap-2 mb-2 bg-[#1B1F2A] border-l-2 border-[#00C2FF] rounded-lg pl-3 pr-2 py-2">
+                  <ReplyIcon className="w-3.5 h-3.5 text-[#00C2FF] flex-shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[11.5px] font-semibold text-[#00C2FF]">
+                      Replying to {replyingTo.userId === currentUserId ? "yourself" : replyingTo.user.fullName}
+                    </p>
+                    <p className="truncate text-[12.5px] text-[#8A92A6]">
+                      {replyingTo.deletedAt ? "(message deleted)" : replyingTo.content || "Attachment"}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setReplyingTo(null)}
+                    className="text-[#8A92A6] hover:text-[#E6E9F0] flex-shrink-0"
+                    title="Cancel reply"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
               )}
 

@@ -34,6 +34,7 @@ const DEFAULT_TEAMS: TeamDef[] = [
   { id: "research",     name: "Research",     icon: "flask",        color: "#a855f7", roles: ["RESEARCH"] },
   { id: "qa",           name: "QA & Testing", icon: "clipboard",    color: "#22c55e", roles: ["QA"] },
   { id: "support",      name: "Support",      icon: "headphones",   color: "#06b6d4", roles: ["SUPPORT"] },
+  { id: "hr",           name: "HR",           icon: "users",        color: "#f472b6", roles: ["HR"] },
   { id: "interns",      name: "Interns",      icon: "graduation",   color: "#ec4899", roles: ["INTERNSHIP"] },
   { id: "all-hands",    name: "All Hands",    icon: "users",        color: "#6b7280", roles: [] },
 ];

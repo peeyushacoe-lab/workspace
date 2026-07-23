@@ -54,6 +54,17 @@ export async function GET(request: Request, { params }: Params) {
         where: { deletedAt: null },
         select: { id: true },
       },
+      quotedMessage: {
+        select: {
+          id: true,
+          content: true,
+          deletedAt: true,
+          user: { select: { id: true, fullName: true } },
+        },
+      },
+      readBy: {
+        select: { userId: true, readAt: true, user: { select: { fullName: true } } },
+      },
     },
     orderBy: { createdAt: fetchNewestFirst ? ("desc" as const) : ("asc" as const) },
     take: limit,
@@ -69,6 +80,17 @@ export async function GET(request: Request, { params }: Params) {
           include: { user: { select: { id: true, fullName: true } } },
         },
         replies: { select: { id: true } },
+        quotedMessage: {
+          select: {
+            id: true,
+            content: true,
+            deletedAt: true,
+            user: { select: { id: true, fullName: true } },
+          },
+        },
+        readBy: {
+          select: { userId: true, readAt: true, user: { select: { fullName: true } } },
+        },
       },
     })
   );
@@ -81,6 +103,31 @@ export async function GET(request: Request, { params }: Params) {
     data: { lastReadAt: new Date() },
     select: { id: true },
   }).catch(() => {});
+
+  // Mark the fetched messages (from other people) as read by this user — mirrors
+  // WhatsApp semantics: opening/viewing a conversation marks its messages seen.
+  // Fire-and-forget; broadcast a `read` event over the same Redis channel bridge
+  // used for `message`/`reactions_updated` so open clients update instantly.
+  void (async () => {
+    const unreadIds = messages.filter((m) => m.userId !== user.id).map((m) => m.id);
+    if (!unreadIds.length) return;
+    const readAt = new Date();
+    try {
+      await prisma.chatMessageRead.createMany({
+        data: unreadIds.map((messageId) => ({ messageId, userId: user.id, channelId, readAt })),
+        skipDuplicates: true,
+      });
+      await redis.publish(
+        `chat:channel:${channelId}`,
+        JSON.stringify({
+          type: "read",
+          data: { channelId, userId: user.id, fullName: user.fullName, messageIds: unreadIds, readAt: readAt.toISOString() },
+        })
+      );
+    } catch {
+      // non-fatal
+    }
+  })();
 
   const response = NextResponse.json(messages);
   response.headers.set("Cache-Control", "private, no-store");
@@ -103,9 +150,10 @@ export async function POST(request: Request, { params }: Params) {
     return NextResponse.json({ error: "Only the channel owner can post in a broadcast channel" }, { status: 403 });
   }
 
-  const { content, parentId, isUrgent, attachmentUrl, attachmentMime, attachmentName } = (await request.json()) as {
+  const { content, parentId, quotedMessageId, isUrgent, attachmentUrl, attachmentMime, attachmentName } = (await request.json()) as {
     content?: string;
     parentId?: string;
+    quotedMessageId?: string;
     isUrgent?: boolean;
     attachmentUrl?: string;
     attachmentMime?: string;
@@ -126,6 +174,7 @@ export async function POST(request: Request, { params }: Params) {
       userId: user.id,
       content: content?.trim() ?? "",
       parentId: parentId ?? null,
+      quotedMessageId: quotedMessageId ?? null,
       isUrgent: isUrgent === true,
       ...(attachmentUrl ? { attachmentUrl, attachmentMime: attachmentMime ?? null, attachmentName: attachmentName ?? null } : {}),
     },
@@ -133,6 +182,17 @@ export async function POST(request: Request, { params }: Params) {
       user: { select: { id: true, fullName: true, avatarUrl: true, role: true } },
       reactions: true,
       replies: { select: { id: true } },
+      quotedMessage: {
+        select: {
+          id: true,
+          content: true,
+          deletedAt: true,
+          user: { select: { id: true, fullName: true } },
+        },
+      },
+      readBy: {
+        select: { userId: true, readAt: true, user: { select: { fullName: true } } },
+      },
     },
   });
 
