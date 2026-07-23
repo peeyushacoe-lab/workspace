@@ -1,0 +1,36 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g" x1="15%" y1="0%" x2="72%" y2="100%">
+      <stop offset="0%" stop-color="#4fc3ff"/>
+      <stop offset="50%" stop-color="#1466d6"/>
+      <stop offset="100%" stop-color="#0a1a52"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#g)" d="
+    M 23 3
+    L 77 3
+    A 20 20 0 0 1 97 23
+    L 97 77
+    A 20 20 0 0 1 77 97
+    L 23 97
+    A 20 20 0 0 1 3 77
+    L 3 23
+    A 20 20 0 0 1 23 3
+    Z
+  "/>
+  <path fill="#ffffff" d="M 105 -5 L 105 30 L 44 30 L 22 86 L 12.7 82.3 L 34.7 26.3 L 34.7 -5 Z" clip-path="url(#clipBadge)"/>
+  <clipPath id="clipBadge">
+    <path d="
+      M 23 3
+      L 77 3
+      A 20 20 0 0 1 97 23
+      L 97 77
+      A 20 20 0 0 1 77 97
+      L 23 97
+      A 20 20 0 0 1 3 77
+      L 3 23
+      A 20 20 0 0 1 23 3
+      Z
+    "/>
+  </clipPath>
+</svg>

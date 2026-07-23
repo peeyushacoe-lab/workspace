@@ -13,7 +13,7 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   Plus, Trash2, Loader2, Clock, CalendarClock, ArrowRight, Trophy, Users,
-  Award, Crown, Swords, Star, FileText, Link2, Send, Lock, X,
+  Award, Crown, Swords, Star, FileText, Link2, Send, Lock, X, Paperclip, Download,
 } from "lucide-react";
 import { toast } from "sonner";
 import { avatarGradient } from "@/lib/avatar";
@@ -47,6 +47,11 @@ function fmt(iso: string) {
 }
 function initials(name: string) {
   return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+}
+function fmtBytes(bytes?: number) {
+  if (!bytes) return "";
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 function fmtCountdown(iso: string): { label: string; overdue: boolean } {
   const diff = new Date(iso).getTime() - Date.now();
@@ -649,6 +654,8 @@ function TeamPanel({ team, challenge, isMentor, userId, interns, onRefresh }: {
   const [submitNotes, setSubmitNotes] = useState("");
   const [submitLinks, setSubmitLinks] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [submitFiles, setSubmitFiles] = useState<{ name: string; url: string; type?: string; size?: number }[]>([]);
+  const [uploadingFiles, setUploadingFiles] = useState<string[]>([]);
   const [editingRoster, setEditingRoster] = useState(false);
   const [rosterLeadId, setRosterLeadId] = useState(team.leadId ?? "");
   const [rosterMemberIds, setRosterMemberIds] = useState<string[]>(team.memberIds);
@@ -681,20 +688,49 @@ function TeamPanel({ team, challenge, isMentor, userId, interns, onRefresh }: {
   };
 
   const submitReport = async () => {
-    if (!submitNotes.trim() && !submitLinks.trim()) { toast.error("Add a note or a link before submitting"); return; }
+    if (!submitNotes.trim() && !submitLinks.trim() && submitFiles.length === 0) {
+      toast.error("Add a note, a link, or attach your report file before submitting"); return;
+    }
     setSubmitting(true);
     try {
       const links = submitLinks.split(/\s|,/).map(l => l.trim()).filter(Boolean);
       const res = await fetch(`/api/internship/challenges/${challenge.id}/submissions`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ teamId: team.id, notes: submitNotes || undefined, links }),
+        body: JSON.stringify({ teamId: team.id, notes: submitNotes || undefined, links, files: submitFiles }),
       });
       if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error); }
       toast.success("Submitted");
-      setSubmitNotes(""); setSubmitLinks("");
+      setSubmitNotes(""); setSubmitLinks(""); setSubmitFiles([]);
       onRefresh();
     } catch (e) { toast.error(e instanceof Error ? e.message : "Failed to submit"); }
     finally { setSubmitting(false); }
+  };
+
+  const uploadReportFile = async (fileList: FileList | null) => {
+    if (!fileList || fileList.length === 0) return;
+    for (const file of Array.from(fileList)) {
+      const ext = file.name.split(".").pop()?.toLowerCase();
+      if (!["pdf", "doc", "docx"].includes(ext ?? "")) {
+        toast.error(`${file.name}: only PDF or Word files can be attached`); continue;
+      }
+      setUploadingFiles(prev => [...prev, file.name]);
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("teamId", team.id);
+        const res = await fetch(`/api/internship/challenges/${challenge.id}/submissions/upload`, {
+          method: "POST", body: formData,
+        });
+        if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || "Upload failed"); }
+        const uploaded = await res.json();
+        setSubmitFiles(prev => [...prev, uploaded]);
+        toast.success(`${file.name} attached`);
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : `Failed to upload ${file.name}`);
+      } finally {
+        setUploadingFiles(prev => prev.filter(n => n !== file.name));
+      }
+    }
   };
 
   const saveRoster = async () => {
@@ -824,6 +860,18 @@ function TeamPanel({ team, challenge, isMentor, userId, interns, onRefresh }: {
               <span className="text-[10px] text-[#5A6275] ml-auto">{fmt(s.createdAt)}</span>
             </div>
             {s.notes && <p className="text-[#C8CEDB] mt-1">{s.notes}</p>}
+            {s.files && s.files.length > 0 && (
+              <div className="flex flex-col gap-0.5 mt-1">
+                {s.files.map((f, i) => (
+                  <a key={i} href={f.url} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 text-[#00C2FF] hover:underline truncate">
+                    <FileText className="w-3 h-3 shrink-0" /> {f.name}
+                    {f.size ? <span className="text-[10px] text-[#5A6275]">({fmtBytes(f.size)})</span> : null}
+                    <Download className="w-3 h-3 shrink-0 ml-auto" />
+                  </a>
+                ))}
+              </div>
+            )}
             {s.links.length > 0 && (
               <div className="flex flex-col gap-0.5 mt-1">
                 {s.links.map((l, i) => (
@@ -842,8 +890,43 @@ function TeamPanel({ team, challenge, isMentor, userId, interns, onRefresh }: {
               placeholder="Report notes…" value={submitNotes} onChange={e => setSubmitNotes(e.target.value)} />
             <input className="w-full px-2 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-xs text-[#E6E9F0] placeholder:text-[#5A6275] focus:outline-none focus:border-[#00C2FF]/60"
               placeholder="Links (space or comma separated)" value={submitLinks} onChange={e => setSubmitLinks(e.target.value)} />
+
+            {/* Report file attachment — PDF/Word only, uploaded straight to this page */}
+            <label className="flex items-center gap-1.5 px-2 py-1.5 bg-[#1B1F2A] border border-dashed border-[#2E333F] rounded-lg text-xs text-[#8A92A6] hover:border-[#00C2FF]/60 hover:text-[#00C2FF] cursor-pointer transition-colors">
+              <Paperclip className="w-3.5 h-3.5" />
+              Attach report (PDF or Word)
+              <input type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                multiple className="hidden" onChange={e => { uploadReportFile(e.target.files); e.target.value = ""; }} />
+            </label>
+
+            {uploadingFiles.length > 0 && (
+              <div className="space-y-1">
+                {uploadingFiles.map(name => (
+                  <div key={name} className="flex items-center gap-1.5 text-[11px] text-[#8A92A6]">
+                    <Loader2 className="w-3 h-3 animate-spin" /> Uploading {name}…
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {submitFiles.length > 0 && (
+              <div className="space-y-1">
+                {submitFiles.map((f, i) => (
+                  <div key={i} className="flex items-center gap-1.5 px-2 py-1 bg-[#1B1F2A] rounded-lg text-[11px] text-[#E6E9F0]">
+                    <FileText className="w-3 h-3 text-[#00C2FF] shrink-0" />
+                    <span className="truncate flex-1">{f.name}</span>
+                    <span className="text-[10px] text-[#5A6275]">{fmtBytes(f.size)}</span>
+                    <button type="button" onClick={() => setSubmitFiles(prev => prev.filter((_, idx) => idx !== i))}
+                      className="text-[#5A6275] hover:text-[#ea4335]">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <div className="flex justify-end">
-              <button onClick={submitReport} disabled={submitting}
+              <button onClick={submitReport} disabled={submitting || uploadingFiles.length > 0}
                 className="flex items-center gap-1.5 px-3 py-1 text-xs font-semibold bg-[#00C2FF] text-[#06121A] rounded-lg hover:bg-[#0098E6] disabled:opacity-50">
                 {submitting ? <Loader2 className="w-3 h-3 animate-spin" /> : <><Send className="w-3 h-3" /> Submit</>}
               </button>
