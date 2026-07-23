@@ -380,7 +380,7 @@ function OverviewTab({ isMentor, userId, onNavigate }: { isMentor: boolean; user
       ];
 
   return (
-    <div className="max-w-4xl mx-auto space-y-4">
+    <div className="w-full space-y-4">
       {/* Quick links */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <QuickLink href="/internship/attendance" icon={CalendarClock} title="Attendance" sub="Clock in / out and view your timesheet" />
@@ -557,7 +557,7 @@ function AnnouncementsTab({ isMentor, userId }: { isMentor: boolean; userId: str
   if (loading) return <LoadingSpinner />;
 
   return (
-    <div className="max-w-2xl mx-auto space-y-4">
+    <div className="max-w-4xl space-y-4">
       {isMentor && (
         <div className="flex justify-end">
           <button onClick={() => setShowForm(v => !v)}
@@ -1403,22 +1403,23 @@ function SubmissionsTab({ isMentor }: { isMentor: boolean; userId: string }) {
 
   if (loading) return <LoadingSpinner />;
   if (subs.length === 0) return (
-    <div className="max-w-2xl mx-auto">
+    <div className="w-full">
       <EmptyState icon={Upload} title="No submissions yet" desc={isMentor ? "Intern submissions will appear here once they submit work." : "Submit your work from the Tasks tab."} />
     </div>
   );
 
   const pending  = subs.filter(s => s.status === "submitted");
   const reviewed = subs.filter(s => s.status !== "submitted");
+  const rowGrid = isMentor ? "grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3" : "space-y-3";
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="w-full space-y-6">
       {pending.length > 0 && (
         <div>
           <h3 className="text-sm font-semibold text-[#E6E9F0] mb-3 flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-[#00C2FF]" /> Awaiting Review ({pending.length})
           </h3>
-          <div className="space-y-3">
+          <div className={rowGrid}>
             {pending.map(s => <SubmissionRow key={s.id} sub={s} isMentor={isMentor} onReview={reviewSub} />)}
           </div>
         </div>
@@ -1428,7 +1429,7 @@ function SubmissionsTab({ isMentor }: { isMentor: boolean; userId: string }) {
           <h3 className="text-sm font-semibold text-[#E6E9F0] mb-3 flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-[#5A6275]" /> Reviewed ({reviewed.length})
           </h3>
-          <div className="space-y-3">
+          <div className={rowGrid}>
             {reviewed.map(s => <SubmissionRow key={s.id} sub={s} isMentor={isMentor} onReview={reviewSub} />)}
           </div>
         </div>
@@ -1585,7 +1586,7 @@ function FindingsTab({ isMentor, userId: _userId, currentUser: _currentUser }: {
   ];
 
   return (
-    <div className="max-w-3xl mx-auto space-y-4">
+    <div className="w-full space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex gap-1">
           {TYPE_TABS.map(t => (
@@ -1605,7 +1606,7 @@ function FindingsTab({ isMentor, userId: _userId, currentUser: _currentUser }: {
       </div>
 
       {showForm && (
-        <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-5 space-y-3">
+        <div className="max-w-2xl bg-[#12151D] border border-[#262A35] rounded-xl p-5 space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-[#8A92A6] mb-1">Type</label>
@@ -1833,7 +1834,7 @@ function ProgressTab({ isMentor, userId: _userId }: { isMentor: boolean; userId:
   if (isMentor) {
     const s = stats as MentorStats;
     return (
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="w-full space-y-6">
         {/* Headline metrics */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
@@ -1920,9 +1921,9 @@ function ProgressTab({ isMentor, userId: _userId }: { isMentor: boolean; userId:
   const completionRate = s.assigned > 0 ? Math.round((s.approved / s.assigned) * 100) : 0;
 
   return (
-    <div className="max-w-2xl mx-auto space-y-4">
+    <div className="w-full space-y-4">
       {/* Personal stat cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
         {[
           { label: "Tasks Assigned",   value: s.assigned,     color: "text-[#00C2FF]",  bg: "bg-[#0E2532]",  icon: ClipboardList },
           { label: "Submitted",        value: s.submitted,    color: "text-[#F59E0B]",  bg: "bg-[#F59E0B]/12",   icon: Upload },
@@ -2106,7 +2107,7 @@ function LearningTab({ isMentor, userId }: { isMentor: boolean; userId: string }
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-4">
+    <div className="max-w-4xl space-y-4">
       {/* Forage SSO launch banner */}
       <div className="flex items-center justify-between gap-4 px-4 py-3 bg-[#0E2532] border border-[#00C2FF]/20 rounded-xl">
         <div className="min-w-0">
@@ -2216,7 +2217,7 @@ function WeekDetail({ week, userId: _userId, isMentor, completed, onMarkComplete
   const doneCount = week.topics.filter(isTopicDone).length;
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="w-full">
       <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-[#8A92A6] hover:text-[#E6E9F0] mb-4 transition-colors">
         ← Back to curriculum
       </button>

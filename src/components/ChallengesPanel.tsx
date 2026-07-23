@@ -192,7 +192,7 @@ export function ChallengesTab({ isMentor, userId }: { isMentor: boolean; userId:
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-4">
+    <div className="w-full space-y-4">
       {isMentor && (
         <div className="flex justify-end gap-2">
           <button onClick={seedWeek4} disabled={seeding}
@@ -219,7 +219,7 @@ export function ChallengesTab({ isMentor, userId }: { isMentor: boolean; userId:
           desc={isMentor ? "Create a team-based competition — pentesting vs. forensics, red vs. blue, and more." : "No team challenges have been announced yet."} />
       )}
 
-      <div className="space-y-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
         {challenges.map(c => {
           const cd = c.deadline ? fmtCountdown(c.deadline) : null;
           const max = schemaMax(c.scoringSchema);
@@ -506,7 +506,7 @@ function ChallengeDetail({ challenge, isMentor, userId, interns, onBack, onRefre
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-5">
+    <div className="w-full space-y-5">
       <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-[#8A92A6] hover:text-[#E6E9F0] transition-colors">
         <ArrowRight className="w-4 h-4 rotate-180" /> Back to Challenges
       </button>
