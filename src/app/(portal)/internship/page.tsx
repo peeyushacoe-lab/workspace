@@ -758,7 +758,7 @@ function TasksTab({ isMentor, userId }: { isMentor: boolean; userId: string }) {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-4">
+    <div className="w-full space-y-4">
       {isMentor && (
         <div className="flex justify-end">
           <button onClick={() => setShowForm(v => !v)}
@@ -769,7 +769,7 @@ function TasksTab({ isMentor, userId }: { isMentor: boolean; userId: string }) {
       )}
 
       {showForm && (
-        <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-5 space-y-3">
+        <div className="max-w-2xl bg-[#12151D] border border-[#262A35] rounded-xl p-5 space-y-3">
           <h3 className="font-semibold text-[#E6E9F0]">Create Task</h3>
           <input className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] placeholder:text-[#5A6275] focus:outline-none focus:border-[#00C2FF]/60 focus:ring-2 focus:ring-[#00C2FF]/20"
             placeholder="Task title…" value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} />
@@ -849,7 +849,7 @@ function TasksTab({ isMentor, userId }: { isMentor: boolean; userId: string }) {
                   <PriorityBadge p={priority} />
                   <span className="text-xs text-[#5A6275]">{group.length} task{group.length !== 1 ? "s" : ""}</span>
                 </div>
-                <div className="space-y-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
                   {group.map(task => (
                     <TaskCard key={task.id} task={task} isMentor onOpen={() => setSelected(task)}
                       onDelete={() => deleteTask(task.id)} deleting={deleting === task.id} />
@@ -867,7 +867,7 @@ function TasksTab({ isMentor, userId }: { isMentor: boolean; userId: string }) {
             <span className="text-xs font-semibold text-[#5A6275]">Closed</span>
             <span className="text-xs text-[#5A6275]">{closedTasks.length} task{closedTasks.length !== 1 ? "s" : ""}</span>
           </div>
-          <div className="space-y-2 opacity-70">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 opacity-70">
             {closedTasks.map(task => (
               <TaskCard key={task.id} task={task} isMentor onOpen={() => setSelected(task)}
                 onDelete={() => deleteTask(task.id)} deleting={deleting === task.id} />
@@ -1058,7 +1058,7 @@ function TaskDetail({ task: initialTask, isMentor, userId, onBack }: { task: Int
   const discussions = (task as InternTask & { discussions?: Discussion[] }).discussions ?? [];
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="w-full">
       <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-[#8A92A6] hover:text-[#E6E9F0] mb-4 transition-colors">
         ← Back to tasks
       </button>
@@ -1096,11 +1096,11 @@ function TaskDetail({ task: initialTask, isMentor, userId, onBack }: { task: Int
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 xl:grid-cols-5 gap-4">
         {/* Submit / Submissions */}
-        <div className="space-y-4">
+        <div className="xl:col-span-3 space-y-4">
           {!isMentor && (
-            <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-5">
+            <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-5 max-w-xl">
               <h3 className="font-semibold text-[#E6E9F0] mb-3 flex items-center gap-2"><Upload className="w-4 h-4 text-[#00C2FF]" /> Submit Work</h3>
               <textarea rows={3}
                 className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] placeholder:text-[#5A6275] focus:outline-none focus:border-[#00C2FF]/60 resize-none mb-2"
@@ -1164,7 +1164,7 @@ function TaskDetail({ task: initialTask, isMentor, userId, onBack }: { task: Int
                   </a>
                 )}
               </div>
-              <div className="space-y-3">
+              <div className={isMentor ? "grid grid-cols-1 lg:grid-cols-2 gap-3" : "space-y-3"}>
                 {mySubmissions.map(sub => (
                   <SubmissionCard key={sub.id} sub={sub} isMentor={isMentor} onReview={reviewSub} />
                 ))}
@@ -1174,11 +1174,11 @@ function TaskDetail({ task: initialTask, isMentor, userId, onBack }: { task: Int
         </div>
 
         {/* Discussion */}
-        <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-5 flex flex-col">
+        <div className="xl:col-span-2 bg-[#12151D] border border-[#262A35] rounded-xl p-5 flex flex-col">
           <h3 className="font-semibold text-[#E6E9F0] mb-3 flex items-center gap-2"><MessageSquare className="w-4 h-4 text-[#00C2FF]" /> Discussion</h3>
           {detailLoading ? <LoadingSpinner /> : (
             <>
-              <div className="flex-1 space-y-3 max-h-80 overflow-y-auto mb-3">
+              <div className="flex-1 space-y-3 max-h-[32rem] overflow-y-auto mb-3">
                 {discussions.length === 0 && <p className="text-sm text-[#5A6275] text-center py-4">No messages yet — start the conversation!</p>}
                 {discussions.map(d => (
                   <div key={d.id} className="flex gap-2">
@@ -1318,13 +1318,14 @@ function SubmissionCard({ sub, isMentor, onReview }: { sub: Submission; isMentor
 
   return (
     <div className="border border-[#262A35] rounded-lg p-3">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          {sub.submitter && <Avatar user={sub.submitter} size={5} />}
-          <span className="text-xs font-medium text-[#E6E9F0] font-mono">v{sub.version}</span>
+      <div className="flex items-center justify-between mb-2 gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          {sub.submitter && <Avatar user={sub.submitter} size={6} />}
+          {sub.submitter && <span className="text-sm font-semibold text-[#E6E9F0] truncate">{sub.submitter.fullName}</span>}
+          <span className="text-xs font-medium text-[#5A6275] font-mono shrink-0">v{sub.version}</span>
           <StatusBadge s={sub.status} />
         </div>
-        <span className="text-[10px] text-[#5A6275] font-mono">{fmt(sub.createdAt)}</span>
+        <span className="text-[10px] text-[#5A6275] font-mono shrink-0">{fmt(sub.createdAt)}</span>
       </div>
       {sub.notes && <p className="text-xs text-[#8A92A6] mb-2">{sub.notes}</p>}
       <SubmissionFiles files={sub.files} />
