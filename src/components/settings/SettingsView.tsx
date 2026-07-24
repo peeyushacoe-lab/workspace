@@ -2210,7 +2210,7 @@ export function SettingsView({
         </aside>
 
         {/* Content */}
-        <main className="flex-1 min-w-0 overflow-y-auto px-4 py-6 sm:px-8 lg:px-11 lg:py-9">
+        <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden px-4 py-6 sm:px-8 lg:px-11 lg:py-9">
           <div className="max-w-[620px] mx-auto lg:mx-0">
             {(() => {
               const tab = visibleTabs.find(t => t.id === activeTab);

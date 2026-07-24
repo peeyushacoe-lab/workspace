@@ -529,7 +529,7 @@ function RulesModal({ customFolders, onClose }: {
             </button>
           </div>
         </div>
-        <div className="overflow-y-auto flex-1">
+        <div className="overflow-y-auto overflow-x-hidden flex-1">
           {showForm && (
             <div className="p-5 border-b border-[#262A35] space-y-3 bg-[#12151D]">
               <p className="text-[13px] font-medium text-[#E6E9F0]">New rule</p>
@@ -1408,7 +1408,7 @@ export function InboxView({ userRole, initialThreads }: {
         )}
 
         {/* Thread rows */}
-        <div className="flex-1 overflow-y-auto divide-y divide-[#1C1F28]">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden divide-y divide-[#1C1F28]">
 
           {/* ── Scheduled tab ── */}
           {activeFolder === "scheduled" ? (

@@ -282,8 +282,8 @@ export function SidebarLayout({
         </div>
 
         {/* ── Main content ──────────────────────────────────── */}
-        <div className={`flex-1 transition-[padding] duration-200 pt-[60px] pb-[56px] lg:pt-[56px] lg:pb-0 ${contentPad}`}>
-          <main className="min-h-[calc(100vh-116px)] lg:min-h-[calc(100vh-56px)]"><div key={pathname} className="nexpage h-full">{children}</div></main>
+        <div className={`flex-1 transition-[padding] duration-200 pt-[60px] pb-[56px] lg:pt-[56px] lg:pb-0 overflow-x-hidden ${contentPad}`}>
+          <main className="min-h-[calc(100vh-116px)] lg:min-h-[calc(100vh-56px)] overflow-x-hidden"><div key={pathname} className="nexpage h-full">{children}</div></main>
         </div>
 
       </div>

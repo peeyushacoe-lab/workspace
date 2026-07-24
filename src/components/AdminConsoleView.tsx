@@ -425,7 +425,7 @@ function CsvImportModal({ onClose, onImported }: { onClose: () => void; onImport
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 space-y-4">
           {!results ? (
             <>
               <p className="text-sm text-[#8A92A6]">
@@ -778,7 +778,7 @@ function UsersTab() {
               <X className="w-4 h-4" />
             </button>
           </div>
-          <div className="p-5 space-y-4 flex-1 overflow-y-auto text-sm">
+          <div className="p-5 space-y-4 flex-1 overflow-y-auto overflow-x-hidden text-sm">
             <div className="flex flex-col items-center gap-3 pt-2">
               <div
                 className={`w-14 h-14 rounded-full ${avatarColors[(selectedUser.fullName?.charCodeAt(0) ?? 0) % avatarColors.length]} flex items-center justify-center text-[#E6E9F0] text-xl font-semibold`}
@@ -2737,7 +2737,7 @@ export function AdminConsoleView(_props: { currentUserId: string }) {
               <X className="w-4 h-4" />
             </button>
           </div>
-          <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+          <nav className="flex-1 p-3 space-y-1 overflow-y-auto overflow-x-hidden">
             {SIDEBAR_TABS.map((tab) => {
               const Icon = tab.icon;
               return (

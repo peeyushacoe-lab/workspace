@@ -836,7 +836,7 @@ export function NotesView() {
         )}
 
         {/* Note list */}
-        <div className="flex-1 overflow-y-auto px-2 py-2 space-y-1">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-2 space-y-1">
           {loading ? (
             <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-[#00C2FF]" /></div>
           ) : (
@@ -1010,7 +1010,7 @@ export function NotesView() {
 
           {/* Editor + AI panel */}
           <div className="flex flex-1 min-h-0 overflow-hidden">
-            <div className="flex-1 overflow-y-auto flex flex-col">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col">
               <div className="w-full max-w-[680px] mx-auto px-6 pt-8 flex-shrink-0">
                 <input
                   className="w-full bg-transparent border-none outline-none text-[#E6E9F0] placeholder:text-[#5A6275] tracking-tight"
@@ -1101,7 +1101,7 @@ export function NotesView() {
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden p-4">
             {loading ? (
               <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-[#00C2FF]" /></div>
             ) : filteredNotes.length === 0 ? (

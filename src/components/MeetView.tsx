@@ -644,7 +644,7 @@ export function MeetView({
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-3 space-y-2">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 space-y-2">
             {loading ? (
               Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="h-20 bg-[#12151D] rounded-xl animate-pulse" />
@@ -675,7 +675,7 @@ export function MeetView({
         </div>
 
         {/* Main panel — hidden on mobile when no meeting selected */}
-        <div className={`${!selectedId ? "hidden lg:block" : "block"} flex-1 overflow-y-auto`}>
+        <div className={`${!selectedId ? "hidden lg:block" : "block"} flex-1 overflow-y-auto overflow-x-hidden`}>
           {!selected ? (
             <div className="px-7 pt-7 pb-7 max-w-4xl mx-auto">
               {/* Summary cards */}

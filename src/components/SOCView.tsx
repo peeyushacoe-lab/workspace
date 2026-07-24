@@ -464,7 +464,7 @@ export function SOCView(_props: { currentUserId: string }) {
             ))}
           </div>
 
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden">
             {loading ? (
               <div className="flex h-32 items-center justify-center">
                 <Loader2 className="h-6 w-6 animate-spin text-[#00C2FF]" />
@@ -553,7 +553,7 @@ export function SOCView(_props: { currentUserId: string }) {
           )}
         </div>
 
-        <div className={`${!selectedIncident ? "hidden lg:flex" : "flex"} flex-1 flex-col bg-[#12151D] overflow-y-auto`}>
+        <div className={`${!selectedIncident ? "hidden lg:flex" : "flex"} flex-1 flex-col bg-[#12151D] overflow-y-auto overflow-x-hidden`}>
           {loadingDetail ? (
             <div className="flex h-48 items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin text-[#00C2FF]" />

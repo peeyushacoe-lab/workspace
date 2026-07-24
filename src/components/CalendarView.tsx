@@ -1170,7 +1170,7 @@ function TimeGrid({
   const isSingleDay = days.length === 1;
 
   return (
-    <div className="flex-1 overflow-y-auto relative">
+    <div className="flex-1 overflow-y-auto overflow-x-hidden relative">
       <div className={`relative grid ${isSingleDay ? "grid-cols-[56px_1fr]" : "grid-cols-[56px_repeat(7,1fr)]"}`}>
         {/* Hour labels column */}
         <div className="col-span-1">
@@ -1527,7 +1527,7 @@ export function CalendarView({ currentUserId }: { currentUserId: string }) {
                   </div>
                 ))}
               </div>
-              <div className="flex-1 overflow-y-auto">
+              <div className="flex-1 overflow-y-auto overflow-x-hidden">
                 <div className="grid grid-cols-7" style={{ gridAutoRows: "minmax(100px, 1fr)" }}>
                   {calDays.map((day) => {
                     const dayStart = startOfDay(day);

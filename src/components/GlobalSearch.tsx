@@ -529,7 +529,7 @@ export function GlobalSearch({
         )}
 
         {/* Results / Actions list */}
-        <div className="flex-1 overflow-y-auto" ref={listRef}>
+        <div className="flex-1 overflow-y-auto overflow-x-hidden" ref={listRef}>
 
           {/* Actions section (always shown unless search returned lots of results and no actions match) */}
           {filteredActions.length > 0 && (

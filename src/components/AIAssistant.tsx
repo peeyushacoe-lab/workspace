@@ -1077,7 +1077,7 @@ export function AIAssistant(_props: { currentUserId: string }) {
           </nav>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 lg:p-6 bg-[#12151D]">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 lg:p-6 bg-[#12151D]">
           <div className="max-w-3xl mx-auto">
             <div className="mb-6">
               <h2 className="text-xl font-semibold text-[#E6E9F0]">

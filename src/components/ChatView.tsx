@@ -940,7 +940,7 @@ function ThreadPanel({
       </div>
 
       {/* Replies */}
-      <div className="flex-1 overflow-y-auto py-2 space-y-1">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden py-2 space-y-1">
         {messages.length === 0 ? (
           <div className="text-center text-[#8A92A6] py-8">
             <CornerDownRight className="w-8 h-8 mx-auto mb-2 opacity-20" />
@@ -3313,7 +3313,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-2.5">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-2.5">
           <ChannelSection
             label="CHANNELS"
             channels={publicChannels.filter((c) => !sidebarSearch || c.name.toLowerCase().includes(sidebarSearch.toLowerCase()))}
@@ -3621,7 +3621,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto py-2 bg-[#12151D]">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden py-2 bg-[#12151D]">
               {loadingMessages ? (
                 <div className="text-center text-[#8A92A6] py-8 text-sm">Loading messages…</div>
               ) : messages.length === 0 ? (
@@ -3843,7 +3843,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                   <X className="w-4 h-4" />
                 </button>
               </div>
-              <div className="flex-1 overflow-y-auto py-2">
+              <div className="flex-1 overflow-y-auto overflow-x-hidden py-2">
                 {pinnedMessages.length === 0 ? (
                   <div className="text-center text-[#8A92A6] py-8">
                     <Pin className="w-8 h-8 mx-auto mb-2 opacity-20" />

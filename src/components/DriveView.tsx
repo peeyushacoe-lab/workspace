@@ -637,7 +637,7 @@ function FileDetailPanel({
           AI Intel
         </button>
       </div>
-      <div className="flex-1 overflow-y-auto px-2 py-1">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-1">
         {activeTab === "activity" && <FileActivityLog fileId={file.id} />}
         {activeTab === "intelligence" && (
           <div className="p-3 space-y-3">
@@ -1659,7 +1659,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
 
         <div className="flex flex-1 overflow-hidden">
           {/* File browser area */}
-          <div className="flex-1 overflow-y-auto p-[22px]">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden p-[22px]">
             {creatingFolder && (
               <div className="mb-4 flex items-center gap-2">
                 <input
