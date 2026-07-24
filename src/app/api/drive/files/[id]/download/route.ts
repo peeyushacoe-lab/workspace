@@ -26,7 +26,26 @@ export async function GET(request: Request, { params }: Params) {
   // elsewhere in this handler, if present).
   const owner = await prisma.user.findUnique({ where: { id: file.ownerId }, select: { organizationId: true } });
   const sameOrg = !!owner?.organizationId && owner.organizationId === user.organizationId;
-  const hasAccess = file.ownerId === user.id || sameOrg;
+  let hasAccess = file.ownerId === user.id || sameOrg;
+
+  // Chat-shared files: when a file is attached to a chat message (content
+  // embeds `"fileId":"<id>"` — see ChatView's [FILE_ATTACHMENT] payload),
+  // anyone who is a member of the channel that message was posted in must be
+  // able to load the preview/download, regardless of organizationId. Without
+  // this, images sent in chat only ever render for the uploader (org check
+  // above fails for the null-organizationId majority), and every other
+  // channel member sees a broken image / 403.
+  if (!hasAccess) {
+    const sharedInChannel = await prisma.chatMessage.findFirst({
+      where: {
+        content: { contains: file.id },
+        channel: { members: { some: { userId: user.id } } },
+      },
+      select: { id: true },
+    });
+    hasAccess = !!sharedInChannel;
+  }
+
   if (!hasAccess) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { searchParams } = new URL(request.url);
