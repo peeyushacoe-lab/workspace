@@ -96,7 +96,7 @@ export function UserProfileModal({ userId, onClose, onCompose }: Props) {
         </div>
 
         {/* Content area — avatar overlaps cover */}
-        <div className="px-5 pb-5">
+        <div className="px-4 pb-4 sm:px-5 sm:pb-5">
           {/* Avatar — -mt-10 pulls it up to overlap cover bottom */}
           <div className="-mt-10 mb-3 flex items-end justify-between">
             <div className="rounded-full border-4 border-white shadow-sm overflow-hidden flex-shrink-0">
@@ -170,7 +170,7 @@ export function UserProfileModal({ userId, onClose, onCompose }: Props) {
                 )}
               </div>
 
-              <div className="flex gap-2 border-t border-[#262A35] pt-4">
+              <div className="flex flex-col sm:flex-row gap-2 border-t border-[#262A35] pt-4">
                 <button
                   onClick={() => { onCompose?.(profile.email); onClose(); }}
                   className="flex-1 flex items-center justify-center gap-2 bg-[#00C2FF] hover:bg-[#0098E6] text-[#06121A] font-semibold text-sm py-2.5 rounded-lg transition-colors"

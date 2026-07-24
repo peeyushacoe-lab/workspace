@@ -1038,7 +1038,7 @@ export function NotesView() {
 
             {/* AI sidebar */}
             {showAI && (
-              <div className="w-72 border-l border-[#262A35] bg-[#12151D] flex flex-col flex-shrink-0">
+              <div className="hidden lg:flex w-72 border-l border-[#262A35] bg-[#12151D] flex-col flex-shrink-0">
                 <div className="flex items-center justify-between px-4 py-3 border-b border-[#262A35]">
                   <div className="flex items-center gap-2 text-sm font-semibold text-[#E6E9F0]">
                     <Sparkles className="h-4 w-4 text-purple-400" /> AI Notes

@@ -1177,7 +1177,7 @@ function TimeGrid({
           {HOURS.map((h) => (
             <div
               key={h}
-              className="pr-[9px] text-right font-mono text-[10.5px] text-[#5A6275] -translate-y-1.5"
+              className="pr-[9px] text-right font-mono text-[9px] sm:text-[10.5px] text-[#5A6275] -translate-y-1.5"
               style={{ height: HOUR_HEIGHT }}
             >
               {formatHour(h)}
@@ -1456,8 +1456,8 @@ export function CalendarView({ currentUserId }: { currentUserId: string }) {
       {/* ─── Main Calendar Area ───────────────────────────────────────────── */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Toolbar */}
-        <div className="h-14 px-[22px] border-b border-[#262A35] bg-[#12151D] flex items-center gap-4 flex-shrink-0">
-          <h2 className="text-[17px] font-bold text-[#E6E9F0] tracking-[-0.3px] whitespace-nowrap">{headerTitle()}</h2>
+        <div className="px-3 sm:px-[22px] border-b border-[#262A35] bg-[#12151D] flex flex-wrap items-center gap-2 sm:gap-4 flex-shrink-0 py-2 sm:py-0 sm:h-14">
+          <h2 className="text-[15px] sm:text-[17px] font-bold text-[#E6E9F0] tracking-[-0.3px] whitespace-nowrap flex-1 sm:flex-none">{headerTitle()}</h2>
 
           {/* Prev / next joined pair */}
           <div className="flex">
@@ -1485,7 +1485,7 @@ export function CalendarView({ currentUserId }: { currentUserId: string }) {
 
           {loading && <Loader2 className="h-4 w-4 animate-spin text-[#00C2FF]" />}
 
-          <div className="flex-1" />
+          <div className="hidden sm:flex flex-1" />
 
           {/* View switcher — segmented control */}
           <div className="flex p-[3px] gap-0.5 bg-[#12151D] border border-[#262A35] rounded-[9px]">
@@ -1493,7 +1493,7 @@ export function CalendarView({ currentUserId }: { currentUserId: string }) {
               <button
                 key={v}
                 onClick={() => setView(v)}
-                className={`h-7 px-4 rounded-md text-[12.5px] font-semibold capitalize transition-colors ${
+                className={`h-7 px-2.5 sm:px-4 rounded-md text-[12.5px] font-semibold capitalize transition-colors ${
                   view === v
                     ? "bg-[#00C2FF] text-[#06121A]"
                     : "text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0]"
@@ -1507,11 +1507,11 @@ export function CalendarView({ currentUserId }: { currentUserId: string }) {
           {/* + Event primary */}
           <button
             onClick={() => openNewEventModal(currentDate)}
-            className="h-[34px] px-4 rounded-lg text-[12.5px] font-bold text-[#06121A] flex items-center gap-[7px] hover:opacity-90 transition-opacity"
+            className="h-[34px] px-3 sm:px-4 rounded-lg text-[12.5px] font-bold text-[#06121A] flex items-center gap-[7px] hover:opacity-90 transition-opacity"
             style={{ background: "linear-gradient(135deg, #00C2FF, #0098E6)" }}
           >
             <Plus className="h-[15px] w-[15px]" strokeWidth={2.6} />
-            Event
+            <span className="hidden xs:inline">Event</span>
           </button>
         </div>
 
@@ -1587,7 +1587,8 @@ export function CalendarView({ currentUserId }: { currentUserId: string }) {
 
           {/* ── Week view ── */}
           {view === "week" && (
-            <div className="flex h-full flex-col overflow-hidden">
+            <div className="h-full overflow-x-auto">
+              <div className="flex flex-col h-full min-w-[600px]">
               <div className="grid grid-cols-[56px_repeat(7,1fr)] border-b border-[#262A35] bg-[#12151D] flex-shrink-0">
                 <div />
                 {weekDays.map((day) => (
@@ -1616,6 +1617,7 @@ export function CalendarView({ currentUserId }: { currentUserId: string }) {
                 onCellClick={(day, hour) => openNewEventModal(day, hour)}
                 onEventClick={handleEventClick}
               />
+              </div>
             </div>
           )}
 

@@ -287,7 +287,7 @@ export function FilePreviewModal({
       {/* Modal container */}
       <div className="relative flex h-full max-h-[90vh] w-full max-w-5xl mx-auto my-auto flex-col rounded-2xl bg-[#12151D] shadow-2xl overflow-hidden border border-[#262A35]">
         {/* Header */}
-        <div className="bg-[#12151D] border-b border-[#262A35] px-6 py-3 flex items-center justify-between shrink-0">
+        <div className="bg-[#12151D] border-b border-[#262A35] px-3 sm:px-6 py-3 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <FileText className="h-5 w-5 text-[#00C2FF] shrink-0" />
             <div className="min-w-0">
@@ -390,7 +390,7 @@ export function FilePreviewModal({
         </div>
 
         {/* Preview area */}
-        <div className="flex-1 overflow-auto bg-[#12151D] flex items-center justify-center p-8">
+        <div className="flex-1 overflow-auto bg-[#12151D] flex items-center justify-center p-3 sm:p-8">
           {loading ? (
             <div className="flex h-full items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin text-[#00C2FF]" />

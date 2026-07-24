@@ -937,8 +937,8 @@ export function WorkspaceDashboard({
           <span className="text-xs font-medium text-[#8A92A6] font-mono">{recentLogs.length} total</span>
         </div>
 
-        <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
-          <table className="w-full text-left">
+        <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-x-auto">
+          <table className="w-full text-left min-w-[500px]">
             <thead className="border-b border-[#262A35] bg-[#1B1F2A]">
               <tr>
                 <th className="px-4 py-2.5 text-left text-[11px] font-medium text-[#5A6275]">Recipient</th>

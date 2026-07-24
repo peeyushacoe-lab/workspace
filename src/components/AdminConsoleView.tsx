@@ -31,6 +31,7 @@ import {
   Upload,
   FileText,
   Check,
+  Menu,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
@@ -232,7 +233,7 @@ function OverviewTab() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 9 }).map((_, i) => (
             <div key={i} className="h-32 bg-[#12151D] rounded-xl animate-pulse" />
           ))}
@@ -248,7 +249,7 @@ function OverviewTab() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard
           label="Total Users"
           value={stats.users.total}
@@ -315,7 +316,7 @@ function OverviewTab() {
             <p className="text-xs text-[#8A92A6] mt-0.5">{es.sent.toLocaleString()} emails sent</p>
           </div>
           <div className="p-5">
-            <div className="grid grid-cols-4 gap-4 mb-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
               <div className="text-center">
                 <p className="text-2xl font-semibold text-[#E6E9F0]">{es.sent.toLocaleString()}</p>
                 <p className="text-xs font-medium text-[#8A92A6] mt-1">Sent</p>
@@ -459,8 +460,8 @@ function CsvImportModal({ onClose, onImported }: { onClose: () => void; onImport
               {parsed.length > 0 && (
                 <div>
                   <p className="text-xs font-semibold text-[#8A92A6] mb-2">{parsed.length} users ready to import</p>
-                  <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden max-h-48 overflow-y-auto">
-                    <table className="w-full text-xs">
+                  <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden max-h-48 overflow-y-auto overflow-x-auto">
+                    <table className="w-full text-xs min-w-[400px]">
                       <thead className="bg-[#1B1F2A] border-b border-[#262A35] sticky top-0">
                         <tr>
                           <th className="px-4 py-3 text-left text-xs font-semibold text-[#8A92A6]">Email</th>
@@ -488,8 +489,8 @@ function CsvImportModal({ onClose, onImported }: { onClose: () => void; onImport
           ) : (
             <div>
               <p className="text-sm font-semibold text-[#E6E9F0] mb-3">Import Results</p>
-              <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden max-h-80 overflow-y-auto">
-                <table className="w-full text-xs">
+              <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden max-h-80 overflow-y-auto overflow-x-auto">
+                <table className="w-full text-xs min-w-[480px]">
                   <thead className="bg-[#1B1F2A] border-b border-[#262A35] sticky top-0">
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-[#8A92A6]">Email</th>
@@ -657,7 +658,7 @@ function UsersTab() {
         {error ? (
           <ErrorState message={error} />
         ) : (
-          <div className="overflow-x-auto bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
+          <div className="overflow-x-auto bg-[#12151D] border border-[#262A35] rounded-xl">
           <table className="w-full text-sm min-w-[640px]">
             <thead className="bg-[#1B1F2A] border-b border-[#262A35]">
               <tr>
@@ -770,7 +771,7 @@ function UsersTab() {
       </div>
 
       {selectedUser && (
-        <div className="w-72 border-l border-[#262A35] flex flex-col flex-shrink-0 bg-[#12151D]">
+        <div className="hidden lg:flex w-72 border-l border-[#262A35] flex-col flex-shrink-0 bg-[#12151D]">
           <div className="flex items-center justify-between px-4 py-3 border-b border-[#262A35] bg-[#12151D]">
             <span className="text-sm font-semibold text-[#E6E9F0]">User Details</span>
             <button onClick={() => setSelectedUser(null)} className="p-1.5 text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0] rounded-md transition-colors">
@@ -1438,7 +1439,7 @@ function SecurityTab() {
   if (loading) {
     return (
       <div className="p-6 space-y-4">
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="h-28 bg-[#1B1F2A] rounded-xl animate-pulse" />
           ))}
@@ -1453,7 +1454,7 @@ function SecurityTab() {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-[#ea4335]/10 border border-[#ea4335]/20 rounded-xl p-4">
           <p className="text-sm font-medium text-[#8A92A6]">Open Incidents</p>
           <p className="text-2xl font-semibold text-[#E6E9F0] mt-1">{openIncidents}</p>
@@ -2715,18 +2716,26 @@ const SIDEBAR_TABS: { id: AdminSidebarTab; label: string; icon: React.ElementTyp
 
 export function AdminConsoleView(_props: { currentUserId: string }) {
   const [activeTab, setActiveTab] = useState<AdminSidebarTab>("overview");
+  const [showSidebar, setShowSidebar] = useState(false);
 
   const activeTabMeta = SIDEBAR_TABS.find((t) => t.id === activeTab);
 
   return (
     <div className="bg-[#0B0D12] min-h-screen">
-      <div className="flex h-[calc(100vh-160px)] min-h-[400px] bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
-        <div className="w-52 bg-[#12151D] flex flex-col flex-shrink-0 border-r border-[#262A35]">
-          <div className="px-6 py-4 border-b border-[#262A35]">
+      <div className="flex h-[calc(100vh-160px)] min-h-[400px] bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden relative">
+        {/* Mobile overlay backdrop */}
+        {showSidebar && (
+          <div className="lg:hidden fixed inset-0 z-10 bg-black/40" onClick={() => setShowSidebar(false)} />
+        )}
+        <div className={`${showSidebar ? "flex" : "hidden"} lg:flex w-52 bg-[#12151D] flex-col flex-shrink-0 border-r border-[#262A35] absolute lg:relative inset-y-0 left-0 z-20 shadow-xl lg:shadow-none`}>
+          <div className="px-4 py-4 border-b border-[#262A35] flex items-center justify-between">
             <div className="flex items-center gap-2">
               <ShieldAlert className="w-5 h-5 text-[#00C2FF]" />
               <span className="text-[#E6E9F0] font-semibold text-sm">Admin Console</span>
             </div>
+            <button onClick={() => setShowSidebar(false)} className="lg:hidden p-1 text-[#8A92A6] hover:text-[#E6E9F0] transition-colors">
+              <X className="w-4 h-4" />
+            </button>
           </div>
           <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
             {SIDEBAR_TABS.map((tab) => {
@@ -2734,7 +2743,7 @@ export function AdminConsoleView(_props: { currentUserId: string }) {
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => { setActiveTab(tab.id); setShowSidebar(false); }}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-left transition-colors ${
                     activeTab === tab.id
                       ? "bg-[#00C2FF]/10 text-[#00C2FF]"
@@ -2750,10 +2759,13 @@ export function AdminConsoleView(_props: { currentUserId: string }) {
         </div>
 
         <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="px-6 py-4 border-b border-[#262A35] bg-[#12151D] flex items-center justify-between flex-shrink-0">
+          <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-[#262A35] bg-[#12151D] flex items-center gap-3 flex-shrink-0">
+            <button onClick={() => setShowSidebar(true)} className="lg:hidden p-1.5 rounded-lg text-[#8A92A6] hover:bg-[#1B1F2A] transition-colors flex-shrink-0" aria-label="Open navigation">
+              <Menu className="w-5 h-5" />
+            </button>
             <div>
-              <h1 className="text-xl font-semibold text-[#E6E9F0]">{activeTabMeta?.label}</h1>
-              <p className="text-xs text-[#8A92A6] mt-0.5">{activeTabMeta?.description}</p>
+              <h1 className="text-base sm:text-xl font-semibold text-[#E6E9F0]">{activeTabMeta?.label}</h1>
+              <p className="text-xs text-[#8A92A6] mt-0.5 hidden sm:block">{activeTabMeta?.description}</p>
             </div>
           </div>
 

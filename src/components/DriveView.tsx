@@ -42,6 +42,7 @@ import {
   Info,
   ChevronUp,
   Move,
+  Menu,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
@@ -605,7 +606,7 @@ function FileDetailPanel({
   };
 
   return (
-    <div className="bg-[#12151D] border-l border-[#262A35] w-80 flex flex-col shrink-0">
+    <div className="hidden lg:flex bg-[#12151D] border-l border-[#262A35] w-80 flex-col shrink-0">
       <div className="px-4 py-3 border-b border-[#262A35] flex items-center justify-between font-semibold text-[#E6E9F0] text-sm">
         <span className="truncate">{file.name}</span>
         <button onClick={onClose} className="rounded-lg p-1 hover:bg-[#1B1F2A] transition-colors ml-2">
@@ -687,6 +688,7 @@ function FileDetailPanel({
 
 export function DriveView({ currentUserId }: { currentUserId: string }) {
   const router = useRouter();
+  const [showSidebar, setShowSidebar] = useState(false);
   const [section, setSection] = useState<SidebarSection>("my-drive");
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [breadcrumb, setBreadcrumb] = useState<DriveFolder[]>([]);
@@ -1229,8 +1231,16 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
       />
 
       {/* Left sidebar */}
-      <aside className="bg-[#12151D] border-r border-[#262A35] w-60 flex-shrink-0 flex flex-col py-3">
+      <aside className={`${showSidebar ? "flex" : "hidden"} lg:flex bg-[#12151D] border-r border-[#262A35] w-60 flex-shrink-0 flex-col py-3 absolute lg:relative inset-y-0 left-0 z-20 shadow-xl lg:shadow-none`}>
         <div className="px-3 pb-2 relative" ref={newMenuRef}>
+          <div className="flex items-center gap-2 mb-2 lg:hidden">
+            <button
+              onClick={() => setShowSidebar(false)}
+              className="p-1.5 rounded-lg text-[#8A92A6] hover:bg-[#1B1F2A] transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
           <button
             onClick={() => setShowNewMenu((v) => !v)}
             className="flex items-center gap-3 rounded-2xl bg-[#12151D] border border-[#262A35] pl-4 pr-6 py-3 text-sm font-medium text-[#E6E9F0] shadow-sm hover:shadow transition-shadow"
@@ -1359,7 +1369,14 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
         )}
 
         {/* Top search bar */}
-        <div className="px-6 pt-4 pb-2 bg-[#12151D] flex items-center gap-3">
+        <div className="px-3 sm:px-6 pt-4 pb-2 bg-[#12151D] flex items-center gap-3">
+          <button
+            onClick={() => setShowSidebar(true)}
+            className="lg:hidden p-2 rounded-lg text-[#8A92A6] hover:bg-[#1B1F2A] transition-colors flex-shrink-0"
+            aria-label="Open navigation"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
           <div className="relative flex-1 max-w-2xl">
             <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8A92A6]" />
             <input

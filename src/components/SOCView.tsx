@@ -15,6 +15,7 @@ import {
   Send,
   ExternalLink,
   Sparkles,
+  ChevronLeft,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
@@ -382,15 +383,15 @@ export function SOCView(_props: { currentUserId: string }) {
 
   return (
     <div className="flex h-full flex-col bg-[#12151D] overflow-hidden">
-      <div className="border-b border-[#262A35] bg-[#12151D] px-6 py-4">
+      <div className="border-b border-[#262A35] bg-[#12151D] px-3 sm:px-6 py-4">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="rounded-xl bg-[#ea4335]/15 p-2.5 border border-[#ea4335]/30">
               <Shield className="h-5 w-5 text-[#ea4335]" />
             </div>
             <div>
-              <h1 className="text-lg font-semibold text-[#E6E9F0] tracking-[-0.01em]">Security Operations Center</h1>
-              <p className="text-xs text-[#8A92A6]">Real-time threat monitoring and incident management</p>
+              <h1 className="text-base sm:text-lg font-semibold text-[#E6E9F0] tracking-[-0.01em]">Security Operations Center</h1>
+              <p className="text-xs text-[#8A92A6] hidden sm:block">Real-time threat monitoring and incident management</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -412,7 +413,7 @@ export function SOCView(_props: { currentUserId: string }) {
         </div>
 
         {stats && (
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard
               icon={AlertTriangle}
               label="Open Incidents"
@@ -446,7 +447,7 @@ export function SOCView(_props: { currentUserId: string }) {
       </div>
 
       <div className="flex flex-1 overflow-hidden">
-        <div className="w-96 shrink-0 flex flex-col border-r border-[#262A35] bg-[#12151D] overflow-hidden">
+        <div className={`${selectedIncident ? "hidden lg:flex" : "flex"} w-full lg:w-96 shrink-0 flex-col border-r border-[#262A35] bg-[#12151D] overflow-hidden`}>
           <div className="flex items-center gap-1 border-b border-[#262A35] p-3">
             {(["ALL", "OPEN", "INVESTIGATING", "RESOLVED"] as const).map((s) => (
               <button
@@ -552,7 +553,7 @@ export function SOCView(_props: { currentUserId: string }) {
           )}
         </div>
 
-        <div className="flex-1 flex flex-col bg-[#12151D] overflow-y-auto">
+        <div className={`${!selectedIncident ? "hidden lg:flex" : "flex"} flex-1 flex-col bg-[#12151D] overflow-y-auto`}>
           {loadingDetail ? (
             <div className="flex h-48 items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin text-[#00C2FF]" />
@@ -566,8 +567,14 @@ export function SOCView(_props: { currentUserId: string }) {
               </p>
             </div>
           ) : (
-            <div className="p-6 space-y-6">
-              <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden mx-0 p-6">
+            <div className="p-4 sm:p-6 space-y-6">
+              <button
+                onClick={() => setSelectedIncident(null)}
+                className="lg:hidden flex items-center gap-1.5 text-[#00C2FF] text-sm font-medium mb-2"
+              >
+                <ChevronLeft className="h-4 w-4" /> Back to incidents
+              </button>
+              <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden mx-0 p-4 sm:p-6">
                 <div className="flex items-start justify-between gap-4 mb-4">
                   <div>
                     <h2 className="text-xl font-semibold text-[#E6E9F0] mb-2">
@@ -602,7 +609,7 @@ export function SOCView(_props: { currentUserId: string }) {
                 </div>
               </div>
 
-              <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden mx-0 p-6">
+              <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden mx-0 p-4 sm:p-6">
                 <h3 className="mb-4 text-sm font-semibold text-[#E6E9F0]">Update Status</h3>
                 <div className="flex items-center gap-3">
                   <select
@@ -630,7 +637,7 @@ export function SOCView(_props: { currentUserId: string }) {
               </div>
 
               {selectedIncident.timeline && selectedIncident.timeline.length > 0 && (
-                <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden mx-0 p-6">
+                <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden mx-0 p-4 sm:p-6">
                   <h3 className="mb-4 text-sm font-semibold text-[#E6E9F0]">Timeline</h3>
                   <div className="space-y-4">
                     {selectedIncident.timeline.map((entry, idx) => (
@@ -666,7 +673,7 @@ export function SOCView(_props: { currentUserId: string }) {
 
               <AIAnalysisCard incident={selectedIncident} />
 
-              <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden mx-0 p-6">
+              <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden mx-0 p-4 sm:p-6">
                 <h3 className="mb-4 text-sm font-semibold text-[#E6E9F0]">Add Note</h3>
                 <textarea
                   value={noteText}
@@ -696,8 +703,8 @@ export function SOCView(_props: { currentUserId: string }) {
       </div>
 
       {showNewIncident && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 ">
-          <div className="w-full max-w-lg rounded-xl bg-[#12151D] border border-[#262A35] p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-lg rounded-xl bg-[#12151D] border border-[#262A35] p-4 sm:p-6 shadow-2xl overflow-y-auto max-h-[90vh]">
             <div className="mb-5 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-[#E6E9F0]">New Incident</h2>
               <button
@@ -759,7 +766,7 @@ export function SOCView(_props: { currentUserId: string }) {
                 </div>
               </div>
             </div>
-            <div className="mt-6 flex justify-end gap-2">
+            <div className="mt-6 flex flex-col-reverse sm:flex-row justify-end gap-2">
               <button
                 onClick={() => setShowNewIncident(false)}
                 className="rounded-md border border-[#262A35] px-4 py-2 text-sm font-medium text-[#8A92A6] hover:bg-[#1B1F2A] transition-colors"

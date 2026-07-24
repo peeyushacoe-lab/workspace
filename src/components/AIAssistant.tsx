@@ -430,8 +430,8 @@ function SummarizeTab() {
 
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-4 gap-4">
-        <div className="col-span-3">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <div className="sm:col-span-3">
           <label className="block text-xs font-semibold text-[#8A92A6] mb-1.5">
             Text / Thread to Summarize
           </label>

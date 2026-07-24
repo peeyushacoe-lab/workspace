@@ -87,7 +87,7 @@ const defaultMailTheme: MailComposerTheme = {
   secondaryButtonClass:
     "inline-flex h-11 items-center justify-center gap-2 rounded-md border border-[var(--border-strong)] bg-[var(--surface)] px-4 text-[14px] font-medium text-[var(--foreground)] transition hover:bg-[var(--surface-sunken)] disabled:cursor-not-allowed disabled:opacity-50",
   mainSectionClass:
-    "rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-[0_1px_0_rgba(0,0,0,0.02)]",
+    "rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 sm:p-6 shadow-[0_1px_0_rgba(0,0,0,0.02)]",
   innerPanelClass: "rounded-lg border border-[var(--border)] bg-[var(--surface-sunken)] p-5",
   uploadZoneClass:
     "relative flex h-11 cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed border-[var(--accent)]/45 bg-[var(--accent-soft)] text-[14px] font-medium text-[var(--accent)] transition hover:bg-[#00C2FF]/20",
@@ -118,7 +118,7 @@ const stitchMailTheme: MailComposerTheme = {
   secondaryButtonClass:
     "inline-flex h-11 items-center justify-center gap-2 rounded-md border border-[#262A35] bg-[#12151D] px-4 text-sm font-medium text-[#8A92A6] transition hover:bg-[#1B1F2A] disabled:cursor-not-allowed disabled:opacity-50",
   mainSectionClass:
-    "rounded-xl border border-[#262A35] bg-[#12151D] p-6",
+    "rounded-xl border border-[#262A35] bg-[#12151D] p-4 sm:p-6",
   innerPanelClass: "rounded-xl border border-[#262A35] bg-[#12151D] p-5",
   uploadZoneClass:
     "relative flex h-11 cursor-pointer items-center justify-center gap-2 rounded-md border-2 border-dashed border-[#262A35] bg-[#12151D] text-sm font-medium text-[#00C2FF] transition hover:border-[#00C2FF] hover:bg-[#00C2FF]/10",
@@ -444,7 +444,7 @@ export function MailComposer({
       >
         <Toaster richColors theme="light" />
 
-        <section className="space-y-6 rounded-xl bg-[#12151D] p-6 border border-[#262A35]">
+        <section className="space-y-6 rounded-xl bg-[#12151D] p-4 sm:p-6 border border-[#262A35]">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-sm font-semibold text-[#8A92A6]">Compose & send</p>
