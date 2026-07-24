@@ -1315,7 +1315,7 @@ export function InboxView({ userRole, initialThreads }: {
       </div>
 
       {/* ── Thread List ── */}
-      <div className={`${selectedThreadId ? "hidden lg:flex" : "flex"} w-full lg:w-[300px] flex-shrink-0 bg-[#12151D] border-r border-[#262A35] flex-col overflow-x-hidden`}>
+      <div className={`${selectedThreadId ? "hidden lg:flex" : "flex"} w-full lg:w-[300px] flex-shrink-0 bg-[#12151D] border-r border-[#262A35] flex-col overflow-x-hidden min-w-0`}>
         <div className="px-4 pt-3 pb-2 border-b border-[#262A35] space-y-2">
           <div className="flex items-center justify-between min-h-[26px]">
             <h2 className="text-[13.5px] font-bold text-[#E6E9F0] flex items-center gap-1.5">
@@ -1792,7 +1792,7 @@ export function InboxView({ userRole, initialThreads }: {
         ) : threadDetail ? (
           <>
             {/* Detail Header — 50px icon toolbar (mockup) */}
-            <div className="h-[50px] flex-none px-[18px] border-b border-[#262A35] bg-[#12151D] flex items-center gap-1.5">
+            <div className="h-[50px] flex-none px-2 lg:px-[18px] border-b border-[#262A35] bg-[#12151D] flex items-center gap-1 lg:gap-1.5 overflow-x-auto">
               <button
                 className="md:hidden flex-shrink-0 w-[34px] h-[34px] flex items-center justify-center rounded-lg border border-[#262A35] bg-[#12151D] text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0] transition-colors"
                 onClick={() => setSelectedThreadId(null)}
@@ -1898,7 +1898,7 @@ export function InboxView({ userRole, initialThreads }: {
                     </>
                   )}
                   <div className="flex-1" />
-                  <span className="flex items-center gap-1.5 text-[#bdc1c6]" title={`SPF: ${scan?.spfResult ?? "UNKNOWN"} · DKIM: ${scan?.dkimResult ?? "UNKNOWN"} · DMARC: ${scan?.dmarcResult ?? "UNKNOWN"}`}>
+                  <span className="hidden sm:flex items-center gap-1.5 text-[#bdc1c6]" title={`SPF: ${scan?.spfResult ?? "UNKNOWN"} · DKIM: ${scan?.dkimResult ?? "UNKNOWN"} · DMARC: ${scan?.dmarcResult ?? "UNKNOWN"}`}>
                     <span className="flex items-center gap-0.5">{dot(scan?.spfResult)}SPF</span>
                     <span className="flex items-center gap-0.5">{dot(scan?.dkimResult)}DKIM</span>
                     <span className="flex items-center gap-0.5">{dot(scan?.dmarcResult)}DMARC</span>
@@ -1931,7 +1931,7 @@ export function InboxView({ userRole, initialThreads }: {
             )}
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto overflow-x-hidden px-9 py-6 space-y-2">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 lg:px-9 py-4 lg:py-6 space-y-2">
               {/* Subject H2 + mailbox meta */}
               <div className="mb-4">
                 <h2 className="text-[22px] font-bold text-[#E6E9F0] leading-tight tracking-[-0.4px]">{threadDetail.subject || "(No Subject)"}</h2>

@@ -600,7 +600,7 @@ const MessageItem = memo(function MessageItem({
   return (
     <div
       id={`msg-${msg.id}`}
-      className={`group relative flex gap-3 px-6 py-1.5 transition-colors scroll-mt-16 ${msg.isUrgent ? "bg-[#ea4335]/5 border-l-2 border-[#ea4335] hover:bg-[#ea4335]/10" : "hover:bg-[#1B1F2A]"}`}
+      className={`group relative flex gap-3 px-3 lg:px-6 py-1.5 transition-colors scroll-mt-16 ${msg.isUrgent ? "bg-[#ea4335]/5 border-l-2 border-[#ea4335] hover:bg-[#ea4335]/10" : "hover:bg-[#1B1F2A]"}`}
       onMouseEnter={() => !isDeleted && setShowActions(true)}
       onMouseLeave={() => {
         if (!showEmojiPicker) setShowActions(false);
@@ -911,7 +911,7 @@ function ThreadPanel({
   };
 
   return (
-    <div className="bg-[#12151D] border-l border-[#262A35] w-80 flex flex-col">
+    <div className="bg-[#12151D] border-l border-[#262A35] hidden lg:flex lg:flex-col lg:w-80">
       {/* Header */}
       <div className="px-4 py-3 border-b border-[#262A35] flex items-center justify-between font-semibold text-[#E6E9F0] text-sm flex-shrink-0">
         <div className="flex items-center gap-2">
@@ -3371,7 +3371,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
         <>
           {/* Messages pane */}
           <div
-            className="bg-[#12151D] flex-1 flex flex-col min-w-0 relative"
+            className="bg-[#12151D] flex-1 flex flex-col min-w-0 overflow-x-hidden relative"
             onDragEnter={handleDragEnter}
             onDragLeave={handleDragLeave}
             onDragOver={handleDragOver}
@@ -3804,7 +3804,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                   </button>
                 </div>
               </div>
-              <p className="text-[10px] text-[#8A92A6] mt-1.5 ml-1">
+              <p className="hidden lg:block text-[10px] text-[#8A92A6] mt-1.5 ml-1">
                 Enter to send · Shift+Enter for new line · Drag files to attach · @ to mention · ⌘K to navigate
               </p>
             </div>
@@ -3832,7 +3832,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
 
           {/* Pinned messages panel */}
           {showPins && !threadParentMsg && (
-            <div className="bg-[#12151D] border-l border-[#262A35] w-80 flex flex-col flex-shrink-0">
+            <div className="bg-[#12151D] border-l border-[#262A35] hidden lg:flex lg:flex-col lg:w-80 flex-shrink-0">
               <div className="px-4 py-3 border-b border-[#262A35] flex items-center justify-between flex-shrink-0">
                 <div className="flex items-center gap-2 text-sm font-semibold text-[#E6E9F0]">
                   <Pin className="w-4 h-4 text-[#00C2FF]" />
