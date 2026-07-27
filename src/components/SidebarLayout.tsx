@@ -4,6 +4,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { LogOut, ChevronLeft, ChevronRight, Menu, X, Settings, Inbox, MessageSquare, Video, Sparkles, Search } from "lucide-react";
+import { iconSize } from "@/components/icons";
 // Search is used in the Suspense fallback pill
 import { SidebarNav } from "./SidebarNav";
 import { SearchTrigger } from "./GlobalSearch";
@@ -113,7 +114,7 @@ export function SidebarLayout({
                   collapsed && !isMobile ? "justify-center w-9 px-0" : ""
                 }`}
               >
-                <LogOut className="h-[15px] w-[15px] flex-shrink-0" />
+                <LogOut className={`${iconSize("md")} flex-shrink-0`} />
                 {(!collapsed || isMobile) && "Sign out"}
               </button>
             </form>
@@ -156,7 +157,7 @@ export function SidebarLayout({
                   className="p-1.5 rounded-lg text-[#5A6275] hover:bg-[#1B1F2A] hover:text-[#8A92A6] transition-colors"
                   title="Collapse sidebar"
                 >
-                  <ChevronLeft className="h-3.5 w-3.5" />
+                  <ChevronLeft className={iconSize("sm")} />
                 </button>
               </>
             )}
@@ -166,7 +167,7 @@ export function SidebarLayout({
                 className="absolute -right-3 top-5 flex h-6 w-6 items-center justify-center rounded-full bg-[#12151D] border border-[#262A35] shadow-sm text-[#5A6275] hover:text-[#8A92A6] transition-colors z-10"
                 title="Expand sidebar"
               >
-                <ChevronRight className="h-3 w-3" />
+                <ChevronRight className={iconSize("xs")} />
               </button>
             )}
           </div>
@@ -189,7 +190,7 @@ export function SidebarLayout({
                   onClick={() => setMobileOpen(false)}
                   className="p-1.5 rounded-lg text-[#5A6275] hover:bg-[#1B1F2A]"
                 >
-                  <X className="h-4 w-4" />
+                  <X className={iconSize("md")} />
                 </button>
               </div>
               {sidebarContent(true)}
@@ -205,12 +206,12 @@ export function SidebarLayout({
             className="flex-shrink-0 p-1.5 rounded-lg text-[#8A92A6] hover:bg-[#1B1F2A] transition-colors"
             aria-label="Open menu"
           >
-            <Menu className="h-5 w-5" />
+            <Menu className={iconSize("xl")} />
           </button>
           {/* Search pill */}
           <Suspense fallback={
             <div className="flex-1 flex items-center gap-2.5 h-[40px] rounded-full bg-[#1B1F2A] border border-[#262A35] px-4 cursor-pointer">
-              <Search className="h-4 w-4 text-[#5A6275] flex-shrink-0" />
+              <Search className={`${iconSize("md")} text-[#5A6275] flex-shrink-0`} />
               <span className="text-[13px] text-[#5A6275]">Search in Nexus</span>
             </div>
           }>
@@ -245,7 +246,7 @@ export function SidebarLayout({
                   className="flex flex-1 flex-col items-center justify-center gap-0.5 transition-colors"
                   style={{ color: active ? "#00C2FF" : "#5A6275" }}
                 >
-                  <Icon className="h-[22px] w-[22px]" />
+                  <Icon className={iconSize("2xl")} />
                   {active
                     ? <span className="w-[20px] h-[3px] rounded-full mt-0.5" style={{ background: "#00C2FF" }} />
                     : <span className="text-[10px] font-medium mt-0.5">{label}</span>
@@ -271,7 +272,7 @@ export function SidebarLayout({
                 title="Settings"
                 className="flex h-9 w-9 items-center justify-center rounded-full text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0] transition-colors"
               >
-                <Settings className="h-[18px] w-[18px]" />
+                <Settings className={iconSize("lg")} />
               </a>
               {avatarUrl
                 ? <img src={avatarUrl} alt={currentUser.fullName} title={currentUser.fullName} className="h-8 w-8 rounded-full object-cover" />

@@ -26,6 +26,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { iconSize } from "@/components/icons";
 import type { PortalNavItem } from "@/lib/auth";
 
 const icons: Record<string, LucideIcon> = {
@@ -104,7 +105,7 @@ export function SidebarNav({
                   : "text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0]"
               }`}
             >
-              <Icon className="h-[17px] w-[17px]" />
+              <Icon className={iconSize("lg")} />
               {showBadge && (
                 <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#00C2FF] text-[9px] font-semibold text-[#06121A] px-0.5">
                   {unreadCount > 99 ? "99+" : unreadCount}
@@ -134,7 +135,7 @@ export function SidebarNav({
                 : "text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0]"
             }`}
           >
-            <Icon className="h-[17px] w-[17px] flex-shrink-0" />
+            <Icon className={`${iconSize("lg")} flex-shrink-0`} />
             <div className="flex flex-1 min-w-0 items-center justify-between">
               <span className="truncate text-[13.5px]">{item.label}</span>
               {showBadge && (
