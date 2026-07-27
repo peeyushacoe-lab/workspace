@@ -209,7 +209,7 @@ export default function MeetingIntelligencePage() {
                     <li className="text-xs text-[#5A6275]">None recorded</li>
                   ) : result.decisions.map((d, i) => (
                     <li key={i} className="text-sm text-[#8A92A6] flex items-start gap-2">
-                      <span className="text-emerald-400 flex-shrink-0">✓</span>{d}
+                      <Check className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0 mt-0.5" />{d}
                     </li>
                   ))}
                 </ul>

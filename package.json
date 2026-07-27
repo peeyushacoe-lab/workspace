@@ -36,7 +36,8 @@
     "backup": "tsx scripts/backup.ts",
     "restore-drill": "tsx scripts/restore-drill-cli.ts",
     "reindex-search": "tsx scripts/reindex-search.ts",
-    "reset-test-data": "tsx scripts/reset-test-data.ts"
+    "reset-test-data": "tsx scripts/reset-test-data.ts",
+    "check:icons": "node scripts/check-icons.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.99.0",
@@ -144,8 +145,5 @@
     "tailwindcss": "^4",
     "tsx": "^4.22.4",
     "typescript": "^5"
-  },
-  "overrides": {
-    "ws": "^8.21.0"
   }
 }

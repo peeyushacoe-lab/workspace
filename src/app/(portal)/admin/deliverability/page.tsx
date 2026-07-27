@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import {
   Shield, CheckCircle2, AlertTriangle, XCircle, Copy, ExternalLink, RefreshCw,
-  Search, Ban, Trash2, Loader2, Plus, TrendingUp, MailWarning,
+  Search, Ban, Trash2, Loader2, Plus, TrendingUp, MailWarning, UserRound,
 } from "lucide-react";
 import { PageHeader } from "@/components/Shell";
 import { toast } from "sonner";
@@ -187,7 +187,7 @@ export default function DeliverabilityPage() {
           {[
             { label: "Sending Domain", value: data?.domain ?? "—", sub: data?.isDefaultDomain ? "Default sending domain" : "Custom check" },
             { label: "From Address", value: data?.fromEmail ?? "—", sub: "Outgoing sender" },
-            { label: "DNS Records", value: loading ? "…" : `${okCount} / ${totalCount}`, sub: `${okCount === totalCount ? "All configured ✓" : "Action required"}` },
+            { label: "DNS Records", value: loading ? "…" : `${okCount} / ${totalCount}`, sub: `${okCount === totalCount ? "All configured" : "Action required"}` },
           ].map(({ label, value, sub }) => (
             <div key={label} className="bg-[#12151D] border border-[#262A35] rounded-xl p-4">
               <p className="text-[10px] text-[#5A6275] mb-1">{label}</p>
@@ -379,7 +379,7 @@ export default function DeliverabilityPage() {
         {/* Avatar/Signature guide */}
         <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-5 space-y-4">
           <h3 className="text-sm font-semibold flex items-center gap-2">
-            <span className="text-base">👤</span> Sender Avatar in Gmail &amp; Outlook
+            <UserRound className="w-4 h-4" /> Sender Avatar in Gmail &amp; Outlook
           </h3>
           <p className="text-xs text-[#8A92A6] leading-relaxed">
             The avatar shown next to your name in Gmail is pulled from the <strong className="text-[#E6E9F0]">sender&apos;s Google profile</strong> or

@@ -8,7 +8,7 @@ import {
   Check, ToggleRight,
   Download, AlertTriangle, Camera, Key, Cpu,
   Copy, Eye, EyeOff, Phone, MapPin,
-  Link2, Tag, Briefcase, Users, Forward,
+  Link2, Tag, Briefcase, Users, Forward, ChevronDown,
 } from "lucide-react";
 import { sanitizeHtml } from "@/lib/sanitize-html";
 import { avatarGradient } from "@/lib/avatar";
@@ -2178,9 +2178,7 @@ export function SettingsView({
             </select>
             {/* Chevron */}
             <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#5A6275]">
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M3 5l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              <ChevronDown className="w-3.5 h-3.5" />
             </span>
           </div>
         </div>

@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { Monitor, Smartphone } from "lucide-react";
 
 type Session = {
   id: string;
@@ -150,8 +151,8 @@ export function SessionManager() {
               className="bg-[#1B1F2A] border border-[#262A35] rounded-xl px-4 py-3 flex items-center justify-between"
             >
               <div className="flex items-start gap-3">
-                <span className="text-2xl mt-0.5" aria-hidden>
-                  {mobile ? "📱" : "🖥️"}
+                <span className="mt-0.5 text-[#8A92A6]" aria-hidden>
+                  {mobile ? <Smartphone className="w-6 h-6" /> : <Monitor className="w-6 h-6" />}
                 </span>
                 <div>
                   <div className="flex items-center gap-2">

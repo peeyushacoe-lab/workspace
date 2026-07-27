@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   CalendarDays, CalendarOff, CheckCircle2, ClipboardList, Download, FileText,
-  Loader2, Plane, Plus, Send, ShieldCheck, Stethoscope, Upload, X,
+  Loader2, Plane, Plus, Send, ShieldCheck, Stethoscope, Upload, X, Check,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/Shell";
@@ -148,7 +148,7 @@ function LifecycleCard({ lifecycle: lc, onChanged }: { lifecycle: Lifecycle; onC
         {lc.ref && <span className="text-[11px] font-mono text-[#5A6275]">{lc.ref}</span>}
         {returned && (
           <span className="px-2 py-0.5 text-[11px] font-medium rounded-full border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
-            Returned ✓ {isOnboarding ? "— awaiting HR verification" : "— NOC on its way"}
+            <Check className="w-3 h-3" /> Returned {isOnboarding ? "— awaiting HR verification" : "— NOC on its way"}
           </span>
         )}
       </div>

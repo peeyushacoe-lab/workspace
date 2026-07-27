@@ -1591,7 +1591,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                 view === "grid" ? "bg-[#0E2532] text-[#00C2FF]" : "text-[#8A92A6] hover:bg-[#1B1F2A]"
               }`}
             >
-              <Grid3x3 className="h-[15px] w-[15px]" />
+              <Grid3x3 className="h-4 w-4" />
             </button>
             <button
               onClick={() => setView("list")}
@@ -1600,7 +1600,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                 view === "list" ? "bg-[#0E2532] text-[#00C2FF]" : "text-[#8A92A6] hover:bg-[#1B1F2A]"
               }`}
             >
-              <List className="h-[15px] w-[15px]" />
+              <List className="h-4 w-4" />
             </button>
           </div>
 
@@ -1624,7 +1624,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
             className="flex h-[34px] items-center gap-[7px] rounded-lg px-4 text-[12.5px] font-bold text-[#06121A] hover:opacity-90 transition-opacity"
             style={{ background: "linear-gradient(135deg,#00C2FF,#0098E6)" }}
           >
-            <Upload className="h-[15px] w-[15px]" strokeWidth={2.6} />
+            <Upload className="h-4 w-4" />
             Upload
           </button>
         </div>
@@ -2251,7 +2251,7 @@ function GridFileCard({
           </div>
         )}
         {file.isStarred && (
-          <Star className="absolute right-2.5 bottom-2.5 h-[15px] w-[15px] fill-[#FFB020] text-[#FFB020] drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)] opacity-100 group-hover:opacity-0 transition-opacity" />
+          <Star className="absolute right-2.5 bottom-2.5 h-4 w-4 text-[#FFB020] drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)] opacity-100 group-hover:opacity-0 transition-opacity" />
         )}
         <div className="absolute right-1 top-1 hidden flex-wrap gap-1 group-hover:flex">
           <ActionBtn

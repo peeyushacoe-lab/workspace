@@ -8,7 +8,7 @@ Reply, Forward, Trash2, Star, Archive, X, Send,
   AlertCircle, AlertTriangle, Info, ShieldAlert, FileText,
   Sparkles, Loader2, ChevronDown, CalendarClock, FolderPlus,
   Folder, BellOff, Zap, Plus, MailOpen,
-  Shield, ShieldCheck, ShieldX, Globe, Lock, Pencil, } from "lucide-react";
+  Shield, ShieldCheck, ShieldX, Globe, Lock, Pencil, Check, } from "lucide-react";
 import { formatDistanceToNow, isPast, addHours, addDays, nextMonday, format, isToday, isThisYear } from "date-fns";
 import { toast } from "sonner";
 import { SimpleComposer } from "./WorkspaceDashboard";
@@ -1517,7 +1517,7 @@ export function InboxView({ userRole, initialThreads }: {
                         )}
                         <div className="flex items-center gap-2 mt-1">
                           {log.isInternalThread
-                            ? <span className="text-[10px] font-semibold text-[#0f9d58]">✓ Delivered</span>
+                            ? <span className="text-[10px] font-semibold text-[#0f9d58] inline-flex items-center gap-1"><Check className="w-3 h-3" />Delivered</span>
                             : <span className={`text-[10px] font-semibold ${statusColor}`}>{log.status}</span>
                           }
                         </div>
@@ -1619,7 +1619,7 @@ export function InboxView({ userRole, initialThreads }: {
                         className={`p-1.5 rounded-full transition-colors ${thread.isStarred ? "text-[#00C2FF]" : "text-[#8A92A6] hover:text-[#E6E9F0]"}`}
                         title={thread.isStarred ? "Unstar" : "Star"}
                       >
-                        <Star className="w-3.5 h-3.5" fill={thread.isStarred ? "currentColor" : "none"} />
+                        <Star className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={(e) => handleArchive(thread.id, e)}
@@ -1673,7 +1673,7 @@ export function InboxView({ userRole, initialThreads }: {
                           <Globe className="w-2 h-2" />EXT
                         </span>
                       )}
-                      {thread.isStarred && <Star className="w-[13px] h-[13px] text-[#FFB020] flex-shrink-0" fill="#FFB020" strokeWidth={1.5} />}
+                      {thread.isStarred && <Star className="w-3 h-3 text-[#FFB020] flex-shrink-0" />}
                       <span className="text-[11.5px] text-[#5A6275] flex-shrink-0 ml-1">
                         {thread.lastMessage ? smartTime(thread.lastMessage.receivedAt) : ""}
                       </span>
@@ -1716,7 +1716,7 @@ export function InboxView({ userRole, initialThreads }: {
                           <Globe className="w-2 h-2" />EXT
                         </span>
                       )}
-                      {thread.isStarred && <Star className="w-[14px] h-[14px] text-[#FFB020] flex-shrink-0" fill="#FFB020" strokeWidth={1.5} />}
+                      {thread.isStarred && <Star className="w-3.5 h-3.5 text-[#FFB020] flex-shrink-0" />}
                       <span className="text-[11px] font-mono text-[#5A6275] flex-shrink-0">
                         {thread.lastMessage ? smartTime(thread.lastMessage.receivedAt) : ""}
                       </span>

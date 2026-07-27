@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { Check } from "lucide-react";
 
 type Status = "offline" | "back-online" | "online";
 
@@ -54,15 +55,7 @@ export function OfflineIndicator() {
       aria-live="polite"
       className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-[#12151D] text-white text-sm px-4 py-2 rounded-full shadow-lg"
     >
-      <svg
-        className="w-4 h-4 flex-shrink-0"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        strokeWidth={2}
-      >
-        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-      </svg>
+      <Check className="w-4 h-4 flex-shrink-0" />
       Back online
     </div>
   );

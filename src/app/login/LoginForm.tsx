@@ -138,7 +138,7 @@ export function LoginForm({ next, error: initialError }: { next: string; error: 
               marginBottom: 16,
             }}
           >
-            <Mail size={17} color="#5A6275" style={{ flexShrink: 0 }} />
+            <Mail className="w-4 h-4 flex-shrink-0" color="#5A6275" />
             <input
               name="email"
               type="email"
@@ -174,7 +174,7 @@ export function LoginForm({ next, error: initialError }: { next: string; error: 
               marginBottom: 10,
             }}
           >
-            <Lock size={17} color="#5A6275" style={{ flexShrink: 0 }} />
+            <Lock className="w-4 h-4 flex-shrink-0" color="#5A6275" />
             <input
               name="password"
               type="password"
@@ -235,7 +235,7 @@ export function LoginForm({ next, error: initialError }: { next: string; error: 
             ) : (
               <>
                 Sign in
-                <ArrowRight size={17} strokeWidth={2.4} />
+                <ArrowRight className="w-[18px] h-[18px]" />
               </>
             )}
           </button>

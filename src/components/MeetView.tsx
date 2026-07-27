@@ -728,7 +728,7 @@ export function MeetView({
                   className="h-[34px] px-4 rounded-lg text-[12.5px] font-bold text-[#06121A] flex items-center gap-[7px]"
                   style={{ background: "linear-gradient(135deg, #00C2FF, #0098E6)" }}
                 >
-                  <Plus className="w-[15px] h-[15px]" strokeWidth={2.6} /> New Meeting
+                  <Plus className="w-4 h-4" /> New Meeting
                 </button>
               </div>
 

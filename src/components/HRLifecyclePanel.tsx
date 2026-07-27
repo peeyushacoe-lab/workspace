@@ -88,7 +88,7 @@ export default function HRLifecyclePanel({ userId, firstName }: { userId: string
       });
       const data = await res.json();
       if (!res.ok) { toast.error(data.error ?? "Action failed"); return; }
-      toast.success(`${label} ✓`);
+      toast.success(label);
       setOffboardType(null); setLwd(""); setReason("");
       void load();
     } finally { setActing(null); }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CircleDot } from "lucide-react";
 import { PresenceStatusPicker } from "@/components/PresenceStatusPicker";
 import { PresenceDot } from "@/components/PresenceIndicator";
 import type { PresenceStatus } from "@/app/api/presence/route";
@@ -111,10 +112,7 @@ export default function PresenceSettingsPage() {
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[rgba(0,210,255,0.08)] border border-[rgba(0,210,255,0.15)]">
-              <svg className="h-4.5 w-4.5 text-[#00C2FF]" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
-                <circle cx="10" cy="10" r="3.5" />
-                <path fillRule="evenodd" d="M10 1.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17ZM0 10a10 10 0 1 1 20 0A10 10 0 0 1 0 10Z" clipRule="evenodd" />
-              </svg>
+              <CircleDot className="h-[18px] w-[18px] text-[#00C2FF]" aria-hidden />
             </div>
             <div>
               <h1 className="text-xl font-semibold text-[#E6E9F0] leading-tight">Presence &amp; Status</h1>

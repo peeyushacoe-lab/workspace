@@ -7,6 +7,7 @@ import {
   useState,
   type KeyboardEvent,
 } from "react";
+import { Check, ChevronDown } from "lucide-react";
 import { PresenceDot } from "./PresenceIndicator";
 import type { PresenceData, PresenceStatus } from "@/app/api/presence/route";
 
@@ -161,15 +162,9 @@ export function PresenceStatusPicker({
       >
         <PresenceDot status={presence.status} size="sm" />
         <span>{currentOption.label}</span>
-        <svg
+        <ChevronDown
           className={`h-3.5 w-3.5 text-[#5A6275] transition-transform ${isOpen ? "rotate-180" : ""}`}
-          viewBox="0 0 16 16"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-        >
-          <path d="M4 6l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+        />
       </button>
 
       {/* ── Popover ── */}
@@ -221,13 +216,7 @@ export function PresenceStatusPicker({
                       </span>
                     </div>
                     {isSelected && (
-                      <svg
-                        className="h-4 w-4 text-[#00C2FF] flex-shrink-0"
-                        viewBox="0 0 16 16"
-                        fill="currentColor"
-                      >
-                        <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z" />
-                      </svg>
+                      <Check className="h-4 w-4 text-[#00C2FF] flex-shrink-0" />
                     )}
                   </button>
                 </li>

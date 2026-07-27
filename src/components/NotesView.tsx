@@ -340,7 +340,7 @@ function RichEditor({ value, onChange, placeholder }: {
       if (file.type.startsWith("image/")) {
         insertBlock('<img src="' + dataUrl + '" alt="' + safeName + '" style="max-width:100%;border-radius:8px;margin:8px 0"><p><br></p>');
       } else {
-        const chip = '<a href="' + dataUrl + '" download="' + safeName + '" style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;margin:2px 0;background:#1B1F2A;border:1px solid #262A35;border-radius:8px;color:#00C2FF;text-decoration:none;font-size:13px">📎 ' + safeName + '</a>';
+        const chip = '<a href="' + dataUrl + '" download="' + safeName + '" style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;margin:2px 0;background:#1B1F2A;border:1px solid #262A35;border-radius:8px;color:#00C2FF;text-decoration:none;font-size:13px">' + safeName + '</a>';
         insertBlock(chip + '<p><br></p>');
       }
       toast.success("Attachment added");
@@ -822,7 +822,7 @@ export function NotesView() {
               {activeTag && (
                 <button onClick={() => setActiveTag(null)}
                   className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#1B1F2A] text-[#8A92A6] hover:bg-[#262A35]">
-                  Clear ✕
+                  Clear <X className="w-3 h-3" />
                 </button>
               )}
               {allTags.map(t => (

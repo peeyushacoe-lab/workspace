@@ -404,7 +404,7 @@ function SlideElementView({ el, zoom, theme, anim, animDelay = 0, editMode = fal
     if (editMode) {
       return (
         <div style={{ ...base, background: "#0f1115", borderRadius: 6 * zoom, overflow: "hidden", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#cdd6f4", pointerEvents: "none" }}>
-          <Play style={{ width: 28 * zoom, height: 28 * zoom }} fill="currentColor" />
+          <Play style={{ width: 24 * zoom, height: 24 * zoom }} />
           <span style={{ fontSize: 11 * zoom, marginTop: 6 * zoom, opacity: 0.7, maxWidth: "90%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {embed ? "Embedded video" : (el.src ? "Video file" : "No video URL")}
           </span>

@@ -6,6 +6,7 @@ import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistratio
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { OfflineComposeBanner } from "@/components/OfflineComposeBanner";
+import { NexusIconProvider } from "@/components/icons";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -104,14 +105,22 @@ export default function RootLayout({
       */}
       <head></head>
       <body className="min-h-full bg-[#0B0D12] text-[#E6E9F0] font-sans" suppressHydrationWarning>
-        <div className="min-h-screen flex flex-col">
-          {children}
-        </div>
-        <Toaster richColors position="top-right" />
-        <OfflineIndicator />
-        <OfflineComposeBanner />
-        <ServiceWorkerRegistration />
-        <InstallPrompt />
+        {/*
+          Nexus Icon System — feeds Lucide's context so every glyph in the app
+          renders on the 24x24 grid with a 2px round-capped stroke and no fill.
+          Enforced here rather than per-call-site so consistency is the default
+          and deviation has to be deliberate. See src/components/icons.tsx.
+        */}
+        <NexusIconProvider>
+          <div className="min-h-screen flex flex-col">
+            {children}
+          </div>
+          <Toaster richColors position="top-right" />
+          <OfflineIndicator />
+          <OfflineComposeBanner />
+          <ServiceWorkerRegistration />
+          <InstallPrompt />
+        </NexusIconProvider>
       </body>
     </html>
   );

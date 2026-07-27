@@ -1325,7 +1325,7 @@ export function CalendarView({ currentUserId }: { currentUserId: string }) {
             .filter((t) => new Date(t.dueDate!) >= from && new Date(t.dueDate!) <= to)
             .map((t) => ({
               id: `task-${t.id}`,
-              title: `✓ ${t.title}`,
+              title: t.title,
               startAt: t.dueDate!,
               endAt: t.dueDate!,
               allDay: true,
@@ -1471,7 +1471,7 @@ export function CalendarView({ currentUserId }: { currentUserId: string }) {
               onClick={() => navigate("next")}
               className="w-8 h-8 flex items-center justify-center border border-l-0 border-[#262A35] rounded-r-lg bg-[#12151D] text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0] transition-colors"
             >
-              <ChevronRight className="h-[15px] w-[15px]" />
+              <ChevronRight className="h-4 w-4" />
             </button>
           </div>
 
@@ -1510,7 +1510,7 @@ export function CalendarView({ currentUserId }: { currentUserId: string }) {
             className="h-[34px] px-3 sm:px-4 rounded-lg text-[12.5px] font-bold text-[#06121A] flex items-center gap-[7px] hover:opacity-90 transition-opacity"
             style={{ background: "linear-gradient(135deg, #00C2FF, #0098E6)" }}
           >
-            <Plus className="h-[15px] w-[15px]" strokeWidth={2.6} />
+            <Plus className="h-4 w-4" />
             <span className="hidden xs:inline">Event</span>
           </button>
         </div>

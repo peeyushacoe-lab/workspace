@@ -2401,7 +2401,7 @@ function ModuleQuiz({ topic, completed, onCompleted }: { topic: InternWeekTopic;
       const data = await res.json().catch(() => null);
       if (!res.ok) { toast.error(data?.error || "Could not submit quiz"); return; }
       if (data.passed) {
-        toast.success(data.weekCompleted ? "Module complete — week finished! 🎉" : "Module complete ✓");
+        toast.success(data.weekCompleted ? "Module complete — week finished" : "Module complete");
         setRetaking(false);
         onCompleted();
       } else {

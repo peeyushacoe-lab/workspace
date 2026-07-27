@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Apple, Construction, Monitor, Package, Terminal, type LucideIcon } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Download CyberSage Desktop",
@@ -20,17 +21,17 @@ type GHRelease = {
 type Platform = {
   key: string;
   label: string;
-  icon: string;
+  icon: LucideIcon;
   ext: string;
   hint: string;
   badge?: string;
 };
 
 const PLATFORMS: Platform[] = [
-  { key: "win",   label: "Windows",  icon: "🪟", ext: ".exe",      hint: "Windows 10/11 · 64-bit", badge: "NSIS Installer" },
-  { key: "mac",   label: "macOS",    icon: "🍎", ext: ".dmg",      hint: "macOS 12+ · Intel & Apple Silicon" },
-  { key: "linux", label: "Linux",    icon: "🐧", ext: ".AppImage", hint: "Any Linux distro · 64-bit" },
-  { key: "deb",   label: "Debian",   icon: "📦", ext: ".deb",      hint: "Ubuntu, Debian, Mint" },
+  { key: "win",   label: "Windows",  icon: Monitor,  ext: ".exe",      hint: "Windows 10/11 · 64-bit", badge: "NSIS Installer" },
+  { key: "mac",   label: "macOS",    icon: Apple,    ext: ".dmg",      hint: "macOS 12+ · Intel & Apple Silicon" },
+  { key: "linux", label: "Linux",    icon: Terminal, ext: ".AppImage", hint: "Any Linux distro · 64-bit" },
+  { key: "deb",   label: "Debian",   icon: Package,  ext: ".deb",      hint: "Ubuntu, Debian, Mint" },
 ];
 
 async function getLatestRelease(): Promise<GHRelease | null> {
@@ -108,7 +109,7 @@ export default async function DownloadPage() {
         {/* Download cards */}
         {!hasRelease ? (
           <div className="bg-white border border-[#e8eaed] rounded-2xl p-10 text-center">
-            <p className="text-2xl mb-3">🚧</p>
+            <Construction className="w-8 h-8 mx-auto mb-3 text-[#8899a6]" />
             <p className="font-semibold text-white mb-2">Desktop app coming soon</p>
             <p className="text-sm text-[#8899a6] mb-6">
               We&apos;re finishing the first release. In the meantime,{" "}
@@ -133,7 +134,7 @@ export default async function DownloadPage() {
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <span className="text-3xl">{p.icon}</span>
+                      <p.icon className="w-8 h-8 text-[#5A6275]" />
                       <div>
                         <p className="font-semibold text-white">{p.label}</p>
                         <p className="text-xs text-[#9aa0a6]">{p.hint}</p>

@@ -160,13 +160,13 @@ export function UserProfileModal({ userId, onClose, onCompose }: Props) {
               )}
 
               <div className="space-y-2 mb-5">
-                <InfoRow icon={<Mail size={13} />} value={profile.email} />
-                {profile.location && <InfoRow icon={<MapPin size={13} />} value={profile.location} />}
-                {profile.department && <InfoRow icon={<Building2 size={13} />} value={profile.department} />}
-                {profile.jobTitle && <InfoRow icon={<Briefcase size={13} />} value={profile.jobTitle} />}
-                {profile.timezone && <InfoRow icon={<Clock size={13} />} value={profile.timezone} />}
+                <InfoRow icon={<Mail className="w-3.5 h-3.5" />} value={profile.email} />
+                {profile.location && <InfoRow icon={<MapPin className="w-3.5 h-3.5" />} value={profile.location} />}
+                {profile.department && <InfoRow icon={<Building2 className="w-3.5 h-3.5" />} value={profile.department} />}
+                {profile.jobTitle && <InfoRow icon={<Briefcase className="w-3.5 h-3.5" />} value={profile.jobTitle} />}
+                {profile.timezone && <InfoRow icon={<Clock className="w-3.5 h-3.5" />} value={profile.timezone} />}
                 {profile.website && (
-                  <InfoRow icon={<Globe size={13} />} value={profile.website} link={profile.website} />
+                  <InfoRow icon={<Globe className="w-3.5 h-3.5" />} value={profile.website} link={profile.website} />
                 )}
               </div>
 

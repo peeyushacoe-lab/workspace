@@ -40,6 +40,14 @@ import {
   Settings,
   ListPlus,
   Reply as ReplyIcon,
+  Siren,
+  Film,
+  Sticker,
+  User,
+  Mail,
+  Bell,
+  BellOff,
+  type LucideIcon,
 } from "lucide-react";
 import { formatDistanceToNow, isToday, isYesterday, format } from "date-fns";
 import { toast } from "sonner";
@@ -388,9 +396,7 @@ function FileAttachmentCard({ content }: { content: string }) {
       return (
         <div className="mt-1.5 flex items-center gap-2 bg-[#12151D] border border-[#262A35] rounded-2xl px-3 py-2.5 max-w-sm w-full">
           <div className="w-7 h-7 rounded-full bg-[#00C2FF]/15 flex items-center justify-center flex-shrink-0">
-            <svg viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5 text-[#00C2FF]">
-              <path d="M10 2a3 3 0 0 1 3 3v5a3 3 0 1 1-6 0V5a3 3 0 0 1 3-3zm-5 8a5 5 0 0 0 10 0h-2a3 3 0 1 1-6 0H5zm5 7v-2h-1v2H7v1h6v-1h-3z" />
-            </svg>
+            <Mic className="w-3.5 h-3.5 text-[#00C2FF]" />
           </div>
           <audio
             src={previewUrl}
@@ -613,7 +619,7 @@ const MessageItem = memo(function MessageItem({
         <div className="flex items-baseline gap-2 mb-0.5">
           <span className="font-bold text-[#E6E9F0] text-[13.5px]">{msg.user.fullName}</span>
           {msg.isUrgent && (
-            <span className="text-[10px] font-semibold text-[#ea4335] bg-[#ea4335]/15 px-1.5 py-0.5 rounded-full leading-none">🚨 Urgent</span>
+            <span className="text-[10px] font-semibold text-[#ea4335] bg-[#ea4335]/15 px-1.5 py-0.5 rounded-full leading-none inline-flex items-center gap-1"><Siren className="w-3 h-3" />Urgent</span>
           )}
           <span className="font-mono text-[11px] text-[#5A6275]">
             {formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true })}
@@ -1843,10 +1849,10 @@ function GifPicker({
     ? EMOJI_CATEGORIES.flatMap((c) => c.emojis).filter((e) => e.includes(query.trim()))
     : (EMOJI_CATEGORIES[emojiCategory]?.emojis ?? []);
 
-  const tabs: { id: MediaTab; label: string; icon: string }[] = [
-    { id: "gif", label: "GIF", icon: "🎞️" },
-    { id: "sticker", label: "Sticker", icon: "🎭" },
-    { id: "emoji", label: "Emoji", icon: "😊" },
+  const tabs: { id: MediaTab; label: string; icon: LucideIcon }[] = [
+    { id: "gif", label: "GIF", icon: Film },
+    { id: "sticker", label: "Sticker", icon: Sticker },
+    { id: "emoji", label: "Emoji", icon: Smile },
   ];
 
   return (
@@ -1864,7 +1870,7 @@ function GifPicker({
               onClick={() => { setTab(t.id); setQuery(""); }}
               className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold transition-colors ${tab === t.id ? "text-[#00C2FF] border-b-2 border-[#00C2FF]" : "text-[#5A6275] hover:text-[#8A92A6]"}`}
             >
-              <span>{t.icon}</span>{t.label}
+              <t.icon className="w-4 h-4" />{t.label}
             </button>
           ))}
           <button onClick={onClose} className="px-3 text-[#5A6275] hover:text-[#8A92A6]"><X className="w-4 h-4" /></button>
@@ -1948,7 +1954,7 @@ type CmdAction = {
   id: string;
   label: string;
   description?: string;
-  icon: string;
+  icon: LucideIcon;
   onSelect: () => void;
 };
 
@@ -1981,7 +1987,7 @@ function CommandPalette({
       id: c.id,
       label: `#${c.name}`,
       description: c.description,
-      icon: "#",
+      icon: Hash,
       onSelect: () => { onSelectChannel(c.id); onClose(); },
     }));
 
@@ -1990,13 +1996,13 @@ function CommandPalette({
     .map((c) => ({
       id: c.id,
       label: c.name,
-      icon: c.type === "GROUP" ? "👥" : "👤",
+      icon: c.type === "GROUP" ? Users : User,
       onSelect: () => { onSelectChannel(c.id); onClose(); },
     }));
 
   const actionItems: CmdAction[] = [
-    { id: "_new_channel", label: "New Channel", icon: "+", description: "Create a public or private channel", onSelect: () => { onNewChannel(); onClose(); } },
-    { id: "_new_dm", label: "New Direct Message", icon: "✉", description: "Open a DM or group conversation", onSelect: () => { onNewDM(); onClose(); } },
+    { id: "_new_channel", label: "New Channel", icon: Plus, description: "Create a public or private channel", onSelect: () => { onNewChannel(); onClose(); } },
+    { id: "_new_dm", label: "New Direct Message", icon: Mail, description: "Open a DM or group conversation", onSelect: () => { onNewDM(); onClose(); } },
   ].filter((a) => !q || a.label.toLowerCase().includes(q));
 
   const groups: { heading: string; items: CmdAction[] }[] = [
@@ -2056,7 +2062,7 @@ function CommandPalette({
                       onClick={item.onSelect}
                       className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${isActive ? "bg-[#00C2FF]/10" : "hover:bg-[#1B1F2A]"}`}
                     >
-                      <span className={`text-sm w-5 text-center flex-shrink-0 ${isActive ? "text-[#00C2FF]" : "text-[#5A6275]"}`}>{item.icon}</span>
+                      <item.icon className={`w-4 h-4 flex-shrink-0 ${isActive ? "text-[#00C2FF]" : "text-[#5A6275]"}`} />
                       <span className="flex-1 min-w-0">
                         <span className={`text-sm font-medium ${isActive ? "text-[#00C2FF]" : "text-[#E6E9F0]"}`}>{item.label}</span>
                         {item.description && (
@@ -3382,7 +3388,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
               <div className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none">
                 <div className="absolute inset-4 border-2 border-dashed border-[#00C2FF] rounded-2xl bg-[#00C2FF]/10" />
                 <div className="relative z-10 text-center">
-                  <div className="text-4xl mb-2">📎</div>
+                  <Paperclip className="w-8 h-8 mx-auto mb-2 text-[#00C2FF]" />
                   <p className="text-lg font-semibold text-[#00C2FF]">Drop to attach</p>
                   <p className="text-sm text-[#8A92A6]">File will be uploaded and shared in this channel</p>
                 </div>
@@ -3507,7 +3513,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                       title={`Voice call ${selectedChannelName}`}
                       className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#00C2FF]/30 bg-[#00C2FF]/10 text-[#00C2FF] hover:bg-[#00C2FF]/20 disabled:opacity-40 transition-colors flex-shrink-0"
                     >
-                      <Phone className="w-[17px] h-[17px]" />
+                      <Phone className="w-[18px] h-[18px]" />
                     </button>
                     <button
                       onClick={() => { if (selectedChannelId && selectedChannel) void startCall(selectedChannelId, selectedChannelName, "video"); }}
@@ -3515,7 +3521,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                       title={`Video call ${selectedChannelName}`}
                       className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#00C2FF]/30 bg-[#00C2FF]/10 text-[#00C2FF] hover:bg-[#00C2FF]/20 disabled:opacity-40 transition-colors flex-shrink-0"
                     >
-                      <Video className="w-[17px] h-[17px]" />
+                      <Video className="w-[18px] h-[18px]" />
                     </button>
                   </>
                 ) : canCall && selectedChannel ? (
@@ -3524,7 +3530,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                     title="Start a group call"
                     className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#00C2FF]/30 bg-[#00C2FF]/10 text-[#00C2FF] hover:bg-[#00C2FF]/20 transition-colors flex-shrink-0"
                   >
-                    <Video className="w-[17px] h-[17px]" />
+                    <Video className="w-[18px] h-[18px]" />
                   </button>
                 ) : null}
 
@@ -3563,7 +3569,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                   className={`w-9 h-9 flex items-center justify-center rounded-lg border transition-colors flex-shrink-0 ${showPins ? "border-[#00C2FF] text-[#00C2FF] bg-[#00C2FF]/10" : "border-[#262A35] bg-[#12151D] text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0]"}`}
                   title="Pinned messages"
                 >
-                  <Pin className="w-[17px] h-[17px]" />
+                  <Pin className="w-[18px] h-[18px]" />
                 </button>
 
 
@@ -3576,7 +3582,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                   className={`w-9 h-9 flex items-center justify-center rounded-lg border transition-colors flex-shrink-0 ${pushEnabled ? "border-[#00C2FF] text-[#00C2FF] bg-[#00C2FF]/10" : "border-[#262A35] bg-[#12151D] text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0]"} disabled:opacity-40`}
                   title={pushEnabled ? "Disable urgent push notifications" : "Enable push for urgent messages"}
                 >
-                  {pushLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <span className="text-sm">{pushEnabled ? "🔔" : "🔕"}</span>}
+                  {pushLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : (pushEnabled ? <Bell className="w-4 h-4" /> : <BellOff className="w-4 h-4" />)}
                 </button>
                 {selectedChannel?.type !== "DIRECT" && (
                   <button
@@ -3584,7 +3590,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                     className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#262A35] bg-[#12151D] text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0] transition-colors flex-shrink-0"
                     title="Add members"
                   >
-                    <UserPlus className="w-[17px] h-[17px]" />
+                    <UserPlus className="w-[18px] h-[18px]" />
                   </button>
                 )}
               {/* Manage members — view roster, promote/demote, remove members */}
@@ -3594,7 +3600,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                   className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#262A35] bg-[#12151D] text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0] transition-colors flex-shrink-0"
                   title="Manage members"
                 >
-                  <Settings className="w-[17px] h-[17px]" />
+                  <Settings className="w-[18px] h-[18px]" />
                 </button>
               )}
               {/* Leave group — available to any member of a GROUP channel */}
@@ -3604,7 +3610,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                   title="Leave group"
                   className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#262A35] bg-[#12151D] text-[#8A92A6] hover:bg-[#ea4335]/10 hover:text-[#ea4335] hover:border-[#ea4335]/40 transition-colors flex-shrink-0"
                 >
-                  <LogOut className="w-[17px] h-[17px]" />
+                  <LogOut className="w-[18px] h-[18px]" />
                 </button>
               )}
               {/* Delete channel — only visible to channel admins */}
@@ -3614,7 +3620,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                   title="Delete channel"
                   className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#ea4335]/40 text-[#ea4335] hover:bg-[#ea4335]/10 transition-colors flex-shrink-0"
                 >
-                  <Trash2 className="w-[17px] h-[17px]" />
+                  <Trash2 className="w-[18px] h-[18px]" />
                 </button>
               )}
               </div>
@@ -3767,15 +3773,15 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                         sendMessage();
                       }
                     }}
-                    placeholder={composerUrgent ? `🚨 Urgent message to #${selectedChannel?.name ?? ""}` : `Message #${selectedChannel?.name ?? ""}`}
+                    placeholder={composerUrgent ? `Urgent message to #${selectedChannel?.name ?? ""}` : `Message #${selectedChannel?.name ?? ""}`}
                     rows={1}
                     className="flex-1 bg-transparent resize-none text-sm text-[#E6E9F0] placeholder-[#9aa3b8] outline-none max-h-32 overflow-y-auto py-1.5"
                     style={{ minHeight: "1.5rem" }}
                   />
                   {/* Emoji insert */}
-                  <button onClick={() => { setMediaPickerTab("emoji"); setShowGifPicker(true); }} title="Insert emoji" className="p-1.5 mb-1 rounded-lg transition-colors flex-shrink-0 text-sm text-[#5A6275] hover:text-[#8A92A6] hover:bg-[#1B1F2A]">😊</button>
+                  <button onClick={() => { setMediaPickerTab("emoji"); setShowGifPicker(true); }} title="Insert emoji" className="p-1.5 mb-1 rounded-lg transition-colors flex-shrink-0 text-[#5A6275] hover:text-[#8A92A6] hover:bg-[#1B1F2A]"><Smile className="w-4 h-4" /></button>
                   {/* Sticker */}
-                  <button onClick={() => { setMediaPickerTab("sticker"); setShowGifPicker(true); }} title="Send a sticker" className="p-1.5 mb-1 rounded-lg transition-colors flex-shrink-0 text-sm text-[#5A6275] hover:text-[#8A92A6] hover:bg-[#1B1F2A]">🎭</button>
+                  <button onClick={() => { setMediaPickerTab("sticker"); setShowGifPicker(true); }} title="Send a sticker" className="p-1.5 mb-1 rounded-lg transition-colors flex-shrink-0 text-[#5A6275] hover:text-[#8A92A6] hover:bg-[#1B1F2A]"><Sticker className="w-4 h-4" /></button>
                   {/* GIF */}
                   <button onClick={() => { setMediaPickerTab("gif"); setShowGifPicker(true); }} title="Send a GIF" className="p-1.5 mb-1 rounded-lg transition-colors flex-shrink-0 text-xs font-semibold text-[#5A6275] hover:text-[#8A92A6] hover:bg-[#1B1F2A]">GIF</button>
                   {/* Urgent flag toggle */}
@@ -3784,7 +3790,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                     title={composerUrgent ? "Remove urgent flag" : "Mark as urgent"}
                     className={`p-1.5 mb-1 rounded-lg transition-colors flex-shrink-0 text-sm ${composerUrgent ? "bg-[#ea4335]/20 text-[#ea4335]" : "text-[#5A6275] hover:text-[#8A92A6] hover:bg-[#1B1F2A]"}`}
                   >
-                    🚨
+                    <Siren className="w-4 h-4" />
                   </button>
                   {/* Voice note button */}
                   <button
