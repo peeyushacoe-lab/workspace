@@ -47,6 +47,12 @@ type GroupDef = {
    * These carry their own role gate.
    */
   extra?: Array<RailItem & { roles: "all" | "non-hr" | UserRole[] }>;
+  /**
+   * Href that must sort to items[0]. The spine icon navigates to items[0], and
+   * `owns` is built before `extra`, so without this an owned-but-secondary route
+   * becomes the group's landing page (clicking Docs used to open Whiteboard).
+   */
+  lead?: string;
 };
 
 const HR_ROLE = "HR" as UserRole;
@@ -66,10 +72,16 @@ export const NAV_GROUPS: GroupDef[] = [
     extra: [{ href: "/drive", label: "My drive", roles: "all" }],
   },
   {
-    id: "docs", label: "Docs", icon: "docs", selfNav: true,
+    // No selfNav: the office apps are separate destinations, so the rail must
+    // list them. Order matters — items[0] is where the spine icon navigates,
+    // so Documents leads, not Whiteboard.
+    id: "docs", label: "Docs", icon: "docs", lead: "/docs",
     owns: ["/whiteboard"],
     extra: [
       { href: "/docs", label: "Documents", roles: "all" },
+      // /apps is gated to non-HR in pathAccess — match it or HR gets a 403 link.
+      { href: "/apps/sheets", label: "Sheets", roles: "non-hr" },
+      { href: "/apps/slides", label: "Slides", roles: "non-hr" },
       { href: "/notes", label: "Notes", roles: "all" },
     ],
   },
@@ -145,6 +157,13 @@ export function getNavGroups(role: UserRole): ResolvedGroup[] {
     }
 
     if (items.length === 0) continue;
+
+    // Promote the declared lead href so the spine icon lands on it.
+    if (def.lead) {
+      const i = items.findIndex((it) => it.href === def.lead);
+      if (i > 0) items.unshift(items.splice(i, 1)[0]);
+    }
+
     resolved.push({
       id: def.id,
       label: def.label,

@@ -665,8 +665,8 @@ function AppearanceTab() {
   const [chatBubbles, setChatBubbles] = useState<"modern" | "classic">("modern");
 
   useEffect(() => {
-    // Always dark — just restore saved preferences
-    document.documentElement.classList.add("dark");
+    // Atrium is light-first; dark is opt-in via the html class in layout.tsx.
+    // This tab must never force a theme — it only restores saved preferences.
     try {
       const d = localStorage.getItem("ui_density") as typeof density | null;
       if (d) setDensity(d);
@@ -2150,11 +2150,13 @@ export function SettingsView({
   });
 
   return (
-    <div className="min-h-full">
-      <div className="flex flex-col lg:flex-row lg:h-full">
+    // h-full (not min-h-full): the shell gives this a definite height and clips
+    // overflow, so the row below needs a real height for main's scroller to work.
+    <div className="h-full">
+      <div className="flex flex-col h-full lg:flex-row">
 
         {/* ── Mobile: full-width select dropdown ──────────────────────────── */}
-        <div className="lg:hidden border-b border-border/60 px-4 py-3 glass">
+        <div className="lg:hidden flex-none border-b border-border-soft px-4 py-3 bg-surface">
           <div className="relative">
             {/* Icon of active tab */}
             {(() => {
@@ -2184,7 +2186,7 @@ export function SettingsView({
         </div>
 
         {/* ── Desktop: sidebar rail ─────────────────────────────────────────── */}
-        <aside className="hidden lg:flex lg:w-[220px] flex-none border-r border-border/50 py-[18px] px-3 glass-strong">
+        <aside className="hidden lg:flex lg:w-[220px] flex-none border-r border-border-soft py-[18px] px-3 overflow-y-auto">
           <nav className="flex flex-col gap-1 w-full">
             {visibleTabs.map((tab) => {
               const Icon = tab.icon;
@@ -2193,10 +2195,10 @@ export function SettingsView({
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-[11px] text-left rounded-[9px] h-10 px-3 w-full transition-colors ${
+                  className={`flex items-center gap-[11px] text-left rounded-lg h-10 px-3 w-full transition-colors ${
                     active
-                      ? "bg-accent/10 text-accent"
-                      : "text-muted hover:bg-surface-sunken hover:text-foreground"
+                      ? "bg-accent-soft text-accent"
+                      : "text-muted hover:bg-hover hover:text-foreground"
                   }`}
                 >
                   <Icon className="h-[18px] w-[18px] flex-shrink-0" />
@@ -2214,7 +2216,7 @@ export function SettingsView({
               const tab = visibleTabs.find(t => t.id === activeTab);
               return (
                 <div>
-                  <h2 className="text-[22px] font-extrabold tracking-[-0.5px] text-foreground mb-1.5">{tab?.label}</h2>
+                  <h2 className="text-[22px] font-semibold tracking-tight text-foreground mb-1.5">{tab?.label}</h2>
                   <p className="text-[13.5px] text-muted mb-8">{tab?.description}</p>
                 </div>
               );

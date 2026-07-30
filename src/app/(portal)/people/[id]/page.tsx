@@ -188,13 +188,13 @@ export default function PersonProfilePage() {
           <div className="md:col-span-2 space-y-5">
             {person.bio && (
               <div className="bg-surface border border-border rounded-xl p-5">
-                <h2 className="text-xs font-semibold text-subtle uppercase tracking-wider mb-3">About</h2>
+                <h2 className="text-xs font-semibold text-subtle mb-3">About</h2>
                 <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{person.bio}</p>
               </div>
             )}
 
             <div className="bg-surface border border-border rounded-xl p-5">
-              <h2 className="text-xs font-semibold text-subtle uppercase tracking-wider mb-4">Contact</h2>
+              <h2 className="text-xs font-semibold text-subtle mb-4">Contact</h2>
               <div className="space-y-3">
                 <a
                   href={`mailto:${person.email}`}
@@ -227,7 +227,7 @@ export default function PersonProfilePage() {
           {/* Right: details */}
           <div className="space-y-5">
             <div className="bg-surface border border-border rounded-xl p-5">
-              <h2 className="text-xs font-semibold text-subtle uppercase tracking-wider mb-4">Details</h2>
+              <h2 className="text-xs font-semibold text-subtle mb-4">Details</h2>
               <div className="space-y-3">
                 {person.department && (
                   <div className="flex items-start gap-2.5">
@@ -270,7 +270,7 @@ export default function PersonProfilePage() {
 
             {/* Quick actions */}
             <div className="bg-surface border border-border rounded-xl p-5">
-              <h2 className="text-xs font-semibold text-subtle uppercase tracking-wider mb-3">Actions</h2>
+              <h2 className="text-xs font-semibold text-subtle mb-3">Actions</h2>
               <a
                 href={`/inbox?compose=${encodeURIComponent(person.email)}`}
                 className="flex items-center gap-2 w-full px-3 py-2 text-sm font-medium rounded-lg bg-accent/10 text-accent border border-accent/20 hover:bg-accent/20 transition-colors"

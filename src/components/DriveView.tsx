@@ -1714,7 +1714,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
               <>
                 {filteredFolders.length > 0 && (
                   <>
-                    <p className="mb-3.5 text-[11px] font-bold uppercase tracking-[0.5px] text-subtle">Folders</p>
+                    <p className="mb-3.5 text-[11px] font-semibold text-subtle">Folders</p>
                     <div
                       className="mb-7 grid gap-3.5"
                       style={{ gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))" }}
@@ -1752,7 +1752,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                 )}
                 {filteredFiles.length > 0 && (
                   <>
-                    <p className="mb-3.5 text-[11px] font-bold uppercase tracking-[0.5px] text-subtle">Files</p>
+                    <p className="mb-3.5 text-[11px] font-semibold text-subtle">Files</p>
                     <div
                       className="grid gap-4"
                       style={{ gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))" }}

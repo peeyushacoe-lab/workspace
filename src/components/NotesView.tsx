@@ -447,7 +447,7 @@ function NoteCard({ note, selected, onSelect, onPin, onDelete, onColor, onArchiv
             <button onClick={e => { onPin(e); setShowMenu(false); }} className="w-full text-left flex items-center gap-2 px-3 py-1.5 text-xs text-foreground hover:bg-surface-sunken">
               {note.pinned ? <><PinOff className="h-3 w-3" /> Unpin</> : <><Pin className="h-3 w-3" /> Pin</>}
             </button>
-            <div className="px-3 py-1.5 text-[10px] text-subtle uppercase tracking-wider">Color</div>
+            <div className="px-3 py-1.5 text-[10px] text-subtle">Color</div>
             <div className="grid grid-cols-4 gap-1 px-3 pb-2">
               {NOTE_COLORS.map(c => (
                 <button key={c.value} title={c.label} onClick={e => { onColor(c.value, e); setShowMenu(false); }}
@@ -797,7 +797,7 @@ export function NotesView() {
 
         {/* Folder list */}
         <div className="px-2 py-2 border-b border-border-soft">
-          <p className="px-2 text-[10px] font-semibold text-subtle uppercase tracking-wider mb-1">Folders</p>
+          <p className="px-2 text-[10px] font-semibold text-subtle mb-1">Folders</p>
           {folders.map(f => (
             <button key={f.id} onClick={() => setActiveFolder(f.id)}
               className={`w-full flex items-center gap-2 px-2 py-1.5 text-xs rounded-lg transition-colors ${activeFolder === f.id ? "bg-accent-soft text-accent font-semibold" : "text-muted hover:bg-surface-sunken"}`}>
@@ -817,7 +817,7 @@ export function NotesView() {
         {/* Tags (from #hashtags in notes) */}
         {allTags.length > 0 && (
           <div className="px-2 py-2 border-b border-border-soft">
-            <p className="px-2 text-[10px] font-semibold text-subtle uppercase tracking-wider mb-1.5">Tags</p>
+            <p className="px-2 text-[10px] font-semibold text-subtle mb-1.5">Tags</p>
             <div className="flex flex-wrap gap-1 px-1">
               {activeTag && (
                 <button onClick={() => setActiveTag(null)}
@@ -843,13 +843,13 @@ export function NotesView() {
             <>
               {pinnedNotes.length > 0 && (
                 <div className="space-y-1">
-                  <p className="px-2 py-1 text-[10px] font-semibold text-subtle uppercase tracking-wider">Pinned</p>
+                  <p className="px-2 py-1 text-[10px] font-semibold text-subtle">Pinned</p>
                   {pinnedNotes.map(n => <NoteListItem key={n.id} note={n} selected={n.id === selectedId} onClick={() => selectNote(n)} reminderIso={reminders[n.id]} />)}
                 </div>
               )}
               {unpinnedNotes.length > 0 && (
                 <div className="space-y-1 pt-1">
-                  {pinnedNotes.length > 0 && <p className="px-2 py-1 text-[10px] font-semibold text-subtle uppercase tracking-wider">Notes</p>}
+                  {pinnedNotes.length > 0 && <p className="px-2 py-1 text-[10px] font-semibold text-subtle">Notes</p>}
                   {unpinnedNotes.map(n => <NoteListItem key={n.id} note={n} selected={n.id === selectedId} onClick={() => selectNote(n)} reminderIso={reminders[n.id]} />)}
                 </div>
               )}

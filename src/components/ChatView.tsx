@@ -1438,7 +1438,7 @@ function ChannelSection({
           ) : (
             <ChevronDown className="w-3 h-3" />
           )}
-          <span className="text-[11px] font-bold text-subtle uppercase tracking-[0.5px]">{label}</span>
+          <span className="text-[11px] font-semibold text-subtle">{label}</span>
         </button>
         {onNew && (
           <button
@@ -3321,7 +3321,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
 
         <div className="flex-1 overflow-y-auto overflow-x-hidden p-2.5">
           <ChannelSection
-            label="CHANNELS"
+            label="Channels"
             channels={publicChannels.filter((c) => !sidebarSearch || c.name.toLowerCase().includes(sidebarSearch.toLowerCase()))}
             selectedChannelId={selectedChannelId}
             onlineUsers={onlineUsers}
@@ -3333,7 +3333,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
           />
 
           <ChannelSection
-            label="DIRECT MESSAGES"
+            label="Direct messages"
             channels={directChannels.filter((c) => !sidebarSearch || c.name.toLowerCase().includes(sidebarSearch.toLowerCase()))}
             selectedChannelId={selectedChannelId}
             onlineUsers={onlineUsers}
@@ -3345,7 +3345,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
           />
 
           <ChannelSection
-            label="GROUPS"
+            label="Groups"
             channels={groupChannels.filter((c) => !sidebarSearch || c.name.toLowerCase().includes(sidebarSearch.toLowerCase()))}
             selectedChannelId={selectedChannelId}
             onlineUsers={onlineUsers}

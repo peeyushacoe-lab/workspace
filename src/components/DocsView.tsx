@@ -1136,7 +1136,7 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
             <>
               {pinnedDocs.length > 0 && (
                 <div className="mb-1">
-                  <p className="px-3 py-1 text-[10px] font-semibold text-subtle uppercase tracking-wider">Pinned</p>
+                  <p className="px-3 py-1 text-[10px] font-semibold text-subtle">Pinned</p>
                   {pinnedDocs.map(doc => <DocItem key={doc.id} doc={doc} selected={doc.id === selectedId} onSelect={() => selectDoc(doc)} onPin={pinDoc} onDelete={deleteDoc} />)}
                   <div className="h-px bg-border mx-3 my-1" />
                 </div>
@@ -1531,7 +1531,7 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
             {/* Document outline */}
             {showOutline && outline.length > 0 && (
               <div className="w-44 border-r border-border overflow-y-auto overflow-x-hidden py-4 px-3 flex-shrink-0 bg-surface">
-                <p className="text-[10px] font-semibold text-subtle uppercase tracking-wider mb-2">Outline</p>
+                <p className="text-[10px] font-semibold text-subtle mb-2">Outline</p>
                 <nav className="space-y-1">
                   {outline.map((h, i) => (
                     <button key={i} className="w-full text-left text-xs text-muted hover:text-accent hover:bg-surface-sunken rounded px-1 py-0.5 truncate"

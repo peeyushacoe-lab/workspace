@@ -50,10 +50,11 @@ export function SidebarLayout({
   const pathname = usePathname() ?? "";
   const currentUserId = currentUser?.id;
 
-  // Editor routes open full-screen (no portal chrome), like opening a doc in Google.
-  const fullScreen =
-    /^\/apps\/(sheets|slides)\/[^/]+$/.test(pathname) ||
-    pathname === "/docs" || pathname.startsWith("/docs/");
+  // Sheet/slide editors open full-screen (no portal chrome), like opening a file
+  // in Google Drive. /docs is NOT in this list: DocsView switches between its
+  // list and editor with internal state on the same route, so making the route
+  // chromeless stranded the user with no nav and no way back.
+  const fullScreen = /^\/apps\/(sheets|slides)\/[^/]+$/.test(pathname);
 
   const activeId = useMemo(() => activeGroupId(groups, pathname), [groups, pathname]);
   const activeGroup = groups.find((g) => g.id === activeId);
