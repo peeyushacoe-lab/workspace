@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 type Params = { params: Promise<{ id: string }> };
 
-const CURSOR_COLORS = ["#1a56db","#ea4335","#0f9d58","#f4b400","#9c27b0","#ff6d00","#00bcd4"];
+const CURSOR_COLORS = ["#4f46e5","#c0362c","#0e7c5a","#b45309","#7c5cd6","#b45309","#00bcd4"];
 
 export async function GET(request: Request, { params }: Params) {
   const user = getSessionUserFromCookieStore(await cookies());

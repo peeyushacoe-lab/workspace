@@ -45,18 +45,18 @@ function timeAgo(date: string) {
 }
 
 const PRIORITY_LABELS = ["No priority", "Urgent", "High", "Medium", "Low"];
-const PRIORITY_COLORS = ["text-[#5A6275]", "text-red-400", "text-orange-500", "text-amber-500", "text-blue-500"];
+const PRIORITY_COLORS = ["text-subtle", "text-crit", "text-warn", "text-warn", "text-accent"];
 
 // State type → badge style
 function stateBadge(type: string, _color: string) {
   const map: Record<string, string> = {
-    completed: "bg-emerald-500/15 text-emerald-400",
-    cancelled: "bg-[#1B1F2A] text-[#5A6275] line-through",
-    started: "bg-blue-500/15 text-blue-400",
-    unstarted: "bg-[#1B1F2A] text-[#8A92A6]",
-    backlog: "bg-purple-500/15 text-purple-400",
+    completed: "bg-ok/15 text-ok",
+    cancelled: "bg-surface-sunken text-subtle line-through",
+    started: "bg-accent/15 text-accent",
+    unstarted: "bg-surface-sunken text-muted",
+    backlog: "bg-violet/15 text-violet",
   };
-  return map[type] ?? "bg-[#1B1F2A] text-[#8A92A6]";
+  return map[type] ?? "bg-surface-sunken text-muted";
 }
 
 // ─── Connect Panel ─────────────────────────────────────────────────────────────
@@ -88,18 +88,18 @@ function ConnectPanel({ onConnected }: { onConnected: () => void }) {
 
   return (
     <div className="max-w-lg mx-auto mt-16">
-      <div className="bg-[#12151D] border border-[#262A35] rounded-2xl p-8 text-center space-y-6">
-        <div className="w-16 h-16 rounded-2xl bg-[#5e6ad2] flex items-center justify-center mx-auto">
-          <Layers className="w-8 h-8 text-white" />
+      <div className="bg-surface border border-border rounded-2xl p-8 text-center space-y-6">
+        <div className="w-16 h-16 rounded-2xl bg-accent flex items-center justify-center mx-auto">
+          <Layers className="w-8 h-8 text-accent-foreground" />
         </div>
         <div>
-          <h2 className="text-lg font-semibold text-[#E6E9F0]">Connect Linear</h2>
-          <p className="text-sm text-[#8A92A6] mt-1">
+          <h2 className="text-lg font-semibold text-foreground">Connect Linear</h2>
+          <p className="text-sm text-muted mt-1">
             Link your Linear workspace to track issues and projects directly in Nexus.
           </p>
         </div>
         <div className="text-left space-y-3">
-          <label className="text-xs font-medium text-[#8A92A6] flex items-center gap-1.5 block">
+          <label className="text-xs font-medium text-muted flex items-center gap-1.5 block">
             <Key className="w-3.5 h-3.5" /> Personal API Key
           </label>
           <input
@@ -108,13 +108,13 @@ function ConnectPanel({ onConnected }: { onConnected: () => void }) {
             value={apiKey}
             onChange={e => setApiKey(e.target.value)}
             onKeyDown={e => e.key === "Enter" && void handleConnect()}
-            className="w-full px-3 py-2.5 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm font-mono
-                       placeholder:text-[#5A6275] focus:outline-none focus:border-[#5e6ad2]/60 focus:ring-2 focus:ring-[#5e6ad2]/20"
+            className="w-full px-3 py-2.5 bg-surface-sunken border border-border-strong rounded-lg text-sm font-mono
+                       placeholder:text-subtle focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20"
           />
-          <p className="text-xs text-[#5A6275]">
+          <p className="text-xs text-subtle">
             Generate at{" "}
             <a href="https://linear.app/settings/api" target="_blank" rel="noopener noreferrer"
-              className="text-[#5e6ad2] hover:underline">
+              className="text-accent hover:underline">
               linear.app/settings/api
             </a>
           </p>
@@ -123,7 +123,7 @@ function ConnectPanel({ onConnected }: { onConnected: () => void }) {
           onClick={() => void handleConnect()}
           disabled={!apiKey.trim() || saving}
           className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold
-                     bg-[#5e6ad2] text-white rounded-lg hover:bg-[#4f5abf] disabled:opacity-50 transition-colors">
+                     bg-accent text-accent-foreground rounded-lg hover:bg-accent disabled:opacity-50 transition-colors">
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Layers className="w-4 h-4" />}
           {saving ? "Connecting…" : "Connect Linear"}
         </button>
@@ -135,18 +135,18 @@ function ConnectPanel({ onConnected }: { onConnected: () => void }) {
 // ─── Issue Row ─────────────────────────────────────────────────────────────────
 
 function IssueRow({ issue }: { issue: LinearIssue }) {
-  const priorityCls = PRIORITY_COLORS[issue.priority] ?? "text-[#5A6275]";
+  const priorityCls = PRIORITY_COLORS[issue.priority] ?? "text-subtle";
   const priorityLabel = PRIORITY_LABELS[issue.priority] ?? "No priority";
   const stateStyle = stateBadge(issue.state.type, issue.state.color);
 
   return (
     <a href={issue.url} target="_blank" rel="noopener noreferrer"
-      className="flex items-start gap-3 px-4 py-3 hover:bg-[#12151D] transition-colors group">
+      className="flex items-start gap-3 px-4 py-3 hover:bg-surface transition-colors group">
       <Circle className="w-4 h-4 mt-0.5 shrink-0" style={{ color: issue.state.color }} />
       <div className="min-w-0 flex-1">
         <div className="flex items-start gap-2">
-          <span className="text-xs font-mono text-[#5A6275] shrink-0 mt-0.5">{issue.identifier}</span>
-          <span className="text-sm font-medium text-[#E6E9F0] group-hover:text-[#5e6ad2] transition-colors line-clamp-1">
+          <span className="text-xs font-mono text-subtle shrink-0 mt-0.5">{issue.identifier}</span>
+          <span className="text-sm font-medium text-foreground group-hover:text-accent transition-colors line-clamp-1">
             {issue.title}
           </span>
         </div>
@@ -155,18 +155,18 @@ function IssueRow({ issue }: { issue: LinearIssue }) {
             {issue.state.name}
           </span>
           <span className={`text-[10px] font-medium ${priorityCls}`}>● {priorityLabel}</span>
-          <span className="text-xs text-[#5A6275]">{issue.team.name}</span>
+          <span className="text-xs text-subtle">{issue.team.name}</span>
           {issue.labels.nodes.map(l => (
             <span key={l.name} className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
               style={{ background: `${l.color}22`, color: l.color, border: `1px solid ${l.color}44` }}>
               {l.name}
             </span>
           ))}
-          <span className="text-xs text-[#bdc1c6]">·</span>
-          <span className="text-xs text-[#5A6275]">{timeAgo(issue.updatedAt)}</span>
+          <span className="text-xs text-subtle">·</span>
+          <span className="text-xs text-subtle">{timeAgo(issue.updatedAt)}</span>
         </div>
       </div>
-      <ExternalLink className="w-3.5 h-3.5 text-[#bdc1c6] shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+      <ExternalLink className="w-3.5 h-3.5 text-subtle shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity" />
     </a>
   );
 }
@@ -175,14 +175,14 @@ function IssueRow({ issue }: { issue: LinearIssue }) {
 
 function TeamCard({ team }: { team: LinearTeam }) {
   return (
-    <div className="flex items-center gap-3 p-4 bg-[#12151D] border border-[#262A35] rounded-xl">
+    <div className="flex items-center gap-3 p-4 bg-surface border border-border rounded-xl">
       <div className="w-9 h-9 rounded-lg flex items-center justify-center text-white font-bold text-sm"
-        style={{ background: team.color || "#5e6ad2" }}>
+        style={{ background: team.color || "var(--accent)" }}>
         {team.key.slice(0, 2)}
       </div>
       <div>
-        <div className="text-sm font-semibold text-[#E6E9F0]">{team.name}</div>
-        <div className="text-xs text-[#5A6275]">{team.key}</div>
+        <div className="text-sm font-semibold text-foreground">{team.name}</div>
+        <div className="text-xs text-subtle">{team.key}</div>
       </div>
     </div>
   );
@@ -217,15 +217,15 @@ export default function LinearPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#12151D] flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-[#5e6ad2]" />
+      <div className="min-h-full bg-surface flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-accent" />
       </div>
     );
   }
 
   if (!data?.connected) {
     return (
-      <div className="min-h-screen bg-[#12151D]">
+      <div className="min-h-full bg-surface">
         <PageHeader
           eyebrow="Apps › Linear"
           title="Linear"
@@ -233,7 +233,7 @@ export default function LinearPage() {
         />
         <div className="px-6 max-w-6xl">
           {data?.error && (
-            <div className="mb-4 flex items-center gap-2 px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-xl text-sm text-red-400">
+            <div className="mb-4 flex items-center gap-2 px-4 py-3 bg-crit/10 border border-crit/20 rounded-xl text-sm text-crit">
               <X className="w-4 h-4 shrink-0" /> {data.error}
             </div>
           )}
@@ -260,7 +260,7 @@ export default function LinearPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#12151D] text-[#E6E9F0]">
+    <div className="min-h-full bg-surface text-foreground">
       <PageHeader
         eyebrow="Apps › Linear"
         title="Linear"
@@ -268,11 +268,11 @@ export default function LinearPage() {
         action={
           <div className="flex items-center gap-2">
             <button onClick={() => void load(true)} disabled={refreshing}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-[#262A35] rounded-lg text-[#8A92A6] hover:bg-[#1B1F2A] disabled:opacity-50 transition-colors">
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-border rounded-lg text-muted hover:bg-surface-sunken disabled:opacity-50 transition-colors">
               <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} /> Refresh
             </button>
             <button onClick={() => void handleDisconnect()}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-[#262A35] rounded-lg text-[#ea4335] hover:bg-red-500/10 transition-colors">
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-border rounded-lg text-crit hover:bg-crit/10 transition-colors">
               <LogOut className="w-3.5 h-3.5" /> Disconnect
             </button>
           </div>
@@ -282,49 +282,49 @@ export default function LinearPage() {
       <div className="px-6 pb-12 max-w-6xl space-y-6">
         {/* ── Profile banner ── */}
         {user && (
-          <div className="flex items-center gap-4 p-4 bg-[#12151D] border border-[#262A35] rounded-xl">
+          <div className="flex items-center gap-4 p-4 bg-surface border border-border rounded-xl">
             {user.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={user.avatarUrl} alt={user.name} className="w-12 h-12 rounded-full border border-[#262A35]" />
+              <img src={user.avatarUrl} alt={user.name} className="w-12 h-12 rounded-full border border-border" />
             ) : (
-              <div className="w-12 h-12 rounded-full bg-[#5e6ad2] flex items-center justify-center text-white font-bold text-lg">
+              <div className="w-12 h-12 rounded-full bg-accent flex items-center justify-center text-accent-foreground font-bold text-lg">
                 {user.name[0]}
               </div>
             )}
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-[#E6E9F0]">{user.name}</span>
-                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                <span className="text-xs text-emerald-400 font-medium">Connected</span>
+                <span className="font-semibold text-foreground">{user.name}</span>
+                <CheckCircle2 className="w-4 h-4 text-ok" />
+                <span className="text-xs text-ok font-medium">Connected</span>
               </div>
-              <span className="text-sm text-[#8A92A6]">{user.email}</span>
+              <span className="text-sm text-muted">{user.email}</span>
             </div>
             <div className="ml-auto flex items-center gap-6 text-sm">
               <div className="text-center">
-                <div className="font-semibold text-[#E6E9F0]">{teams.length}</div>
-                <div className="text-xs text-[#5A6275]">Teams</div>
+                <div className="font-semibold text-foreground">{teams.length}</div>
+                <div className="text-xs text-subtle">Teams</div>
               </div>
               <div className="text-center">
-                <div className="font-semibold text-[#E6E9F0]">{issues.length}</div>
-                <div className="text-xs text-[#5A6275]">Open Issues</div>
+                <div className="font-semibold text-foreground">{issues.length}</div>
+                <div className="text-xs text-subtle">Open Issues</div>
               </div>
             </div>
           </div>
         )}
 
         {/* ── Tabs ── */}
-        <div className="flex gap-1 border-b border-[#262A35]">
+        <div className="flex gap-1 border-b border-border">
           {TABS.map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
                 activeTab === tab.id
-                  ? "text-[#5e6ad2] border-[#5e6ad2]"
-                  : "text-[#8A92A6] border-transparent hover:text-[#E6E9F0]"
+                  ? "text-accent border-accent"
+                  : "text-muted border-transparent hover:text-foreground"
               }`}>
               {tab.label}
               {tab.count !== undefined && (
                 <span className={`text-[11px] px-1.5 py-0.5 rounded-full font-semibold ${
-                  activeTab === tab.id ? "bg-purple-500/15 text-[#5e6ad2]" : "bg-[#1B1F2A] text-[#5A6275]"
+                  activeTab === tab.id ? "bg-violet/15 text-accent" : "bg-surface-sunken text-subtle"
                 }`}>{tab.count}</span>
               )}
             </button>
@@ -335,16 +335,16 @@ export default function LinearPage() {
         {activeTab === "overview" && (
           <div className="space-y-6">
             <div>
-              <h3 className="text-sm font-semibold text-[#E6E9F0] mb-3">Teams</h3>
+              <h3 className="text-sm font-semibold text-foreground mb-3">Teams</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 {teams.map(t => <TeamCard key={t.id} team={t} />)}
-                {teams.length === 0 && <div className="col-span-4 py-6 text-center text-sm text-[#5A6275]">No teams found</div>}
+                {teams.length === 0 && <div className="col-span-4 py-6 text-center text-sm text-subtle">No teams found</div>}
               </div>
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-[#E6E9F0] mb-2">Assigned to Me</h3>
+              <h3 className="text-sm font-semibold text-foreground mb-2">Assigned to Me</h3>
               {Object.keys(byTeam).length === 0 ? (
-                <div className="bg-[#12151D] border border-[#262A35] rounded-xl py-12 text-center text-sm text-[#5A6275]">
+                <div className="bg-surface border border-border rounded-xl py-12 text-center text-sm text-subtle">
                   No open issues assigned to you
                 </div>
               ) : (
@@ -353,15 +353,15 @@ export default function LinearPage() {
                     <div key={key}>
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-5 h-5 rounded flex items-center justify-center text-white text-[10px] font-bold"
-                          style={{ background: teams.find(t => t.key === key)?.color ?? "#5e6ad2" }}>
+                          style={{ background: teams.find(t => t.key === key)?.color ?? "var(--accent)" }}>
                           {key.slice(0, 2)}
                         </div>
-                        <span className="text-xs font-semibold text-[#E6E9F0]">
+                        <span className="text-xs font-semibold text-foreground">
                           {teams.find(t => t.key === key)?.name ?? key}
                         </span>
-                        <span className="text-xs text-[#5A6275]">({teamIssues.length})</span>
+                        <span className="text-xs text-subtle">({teamIssues.length})</span>
                       </div>
-                      <div className="bg-[#12151D] border border-[#262A35] rounded-xl divide-y divide-[#262A35] overflow-hidden">
+                      <div className="bg-surface border border-border rounded-xl divide-y divide-border overflow-hidden">
                         {teamIssues.slice(0, 5).map(i => <IssueRow key={i.id} issue={i} />)}
                       </div>
                     </div>
@@ -374,9 +374,9 @@ export default function LinearPage() {
 
         {/* ── Issues ── */}
         {activeTab === "issues" && (
-          <div className="bg-[#12151D] border border-[#262A35] rounded-xl divide-y divide-[#262A35] overflow-hidden">
+          <div className="bg-surface border border-border rounded-xl divide-y divide-border overflow-hidden">
             {issues.length === 0
-              ? <div className="py-16 text-center text-sm text-[#5A6275]">No open issues assigned to you</div>
+              ? <div className="py-16 text-center text-sm text-subtle">No open issues assigned to you</div>
               : issues.map(i => <IssueRow key={i.id} issue={i} />)}
           </div>
         )}
@@ -385,7 +385,7 @@ export default function LinearPage() {
         {activeTab === "teams" && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {teams.length === 0
-              ? <div className="col-span-4 py-16 text-center text-sm text-[#5A6275]">No teams found</div>
+              ? <div className="col-span-4 py-16 text-center text-sm text-subtle">No teams found</div>
               : teams.map(t => <TeamCard key={t.id} team={t} />)}
           </div>
         )}

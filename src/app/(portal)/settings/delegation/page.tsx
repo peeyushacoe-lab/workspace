@@ -48,23 +48,23 @@ type DelegationData = {
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
 const inputClass =
-  "bg-[#12151D] border border-[#262A35] rounded-lg text-sm text-[#E6E9F0] placeholder-[#454e63] focus:outline-none focus:border-[#00C2FF]/50 px-3 py-2 w-full transition";
+  "bg-surface border border-border rounded-lg text-sm text-foreground placeholder-subtle focus:outline-none focus:border-accent/50 px-3 py-2 w-full transition";
 
 const btnClass =
-  "px-4 py-2 text-xs font-semibold rounded-lg bg-[#00C2FF]/10 text-[#00C2FF] border border-[#00C2FF]/20 hover:bg-[#00C2FF]/20 transition-colors";
+  "px-4 py-2 text-xs font-semibold rounded-lg bg-accent/10 text-accent border border-accent/20 hover:bg-accent/20 transition-colors";
 
 function RoleBadge({ role }: { role: string }) {
   const isViewer = role.toLowerCase() === "viewer";
   if (isViewer) {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border text-sky-400 bg-sky-400/10 border-sky-400/20">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border text-accent bg-accent/10 border-accent/20">
         <ShieldCheck className="h-3 w-3" />
         Viewer
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border text-emerald-400 bg-emerald-400/10 border-emerald-400/20">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border text-ok bg-ok/10 border-ok/20">
       <Mail className="h-3 w-3" />
       Sender
     </span>
@@ -121,14 +121,14 @@ function GrantForm({
   return (
     <form
       onSubmit={(e) => void handleSubmit(e)}
-      className="bg-[#12151D] border border-[#262A35] rounded-xl p-5 mb-5 space-y-4"
+      className="bg-surface border border-border rounded-xl p-5 mb-5 space-y-4"
     >
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-semibold text-[#E6E9F0]">Grant Access</h4>
+        <h4 className="text-sm font-semibold text-foreground">Grant Access</h4>
         <button
           type="button"
           onClick={onCancel}
-          className="p-1 text-[#8A92A6] hover:text-[#E6E9F0] rounded transition-colors"
+          className="p-1 text-muted hover:text-foreground rounded transition-colors"
         >
           <X className="h-4 w-4" />
         </button>
@@ -136,7 +136,7 @@ function GrantForm({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <label className="text-xs font-medium text-[#8A92A6] mb-1 block">
+          <label className="text-xs font-medium text-muted mb-1 block">
             User email
           </label>
           <input
@@ -150,13 +150,13 @@ function GrantForm({
           />
         </div>
         <div>
-          <label className="text-xs font-medium text-[#8A92A6] mb-1 block">
+          <label className="text-xs font-medium text-muted mb-1 block">
             Access level
           </label>
           <select
             value={role}
             onChange={(e) => setRole(e.target.value as "viewer" | "sender")}
-            className="bg-[#12151D] border border-[#262A35] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/50 px-3 py-2 w-full transition"
+            className="bg-surface border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-accent/50 px-3 py-2 w-full transition"
           >
             <option value="viewer">Viewer — read only</option>
             <option value="sender">Sender — read + send</option>
@@ -168,7 +168,7 @@ function GrantForm({
         <button
           type="submit"
           disabled={saving}
-          className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-[#00C2FF] text-[#06121A] hover:bg-[#0098E6] transition disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-accent text-accent-foreground hover:bg-accent-hover transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {saving ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -240,7 +240,7 @@ export default function DelegationPage() {
   };
 
   return (
-    <div className="bg-[#12151D] min-h-screen">
+    <div className="bg-surface min-h-full">
       <PageHeader
         eyebrow="Mailbox Settings"
         title="Delegated Mail Access"
@@ -252,8 +252,8 @@ export default function DelegationPage() {
         <section>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-base font-semibold text-[#E6E9F0]">My Delegations</h2>
-              <p className="text-xs text-[#8A92A6] mt-0.5">
+              <h2 className="text-base font-semibold text-foreground">My Delegations</h2>
+              <p className="text-xs text-muted mt-0.5">
                 Access you have granted to other users on your mailbox
               </p>
             </div>
@@ -272,16 +272,16 @@ export default function DelegationPage() {
             <GrantForm onGranted={handleGranted} onCancel={() => setShowForm(false)} />
           )}
 
-          <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
+          <div className="bg-surface border border-border rounded-xl overflow-hidden">
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-5 w-5 animate-spin text-[#00C2FF]" />
+                <Loader2 className="h-5 w-5 animate-spin text-accent" />
               </div>
             ) : !data || data.granted.length === 0 ? (
               <div className="flex flex-col items-center py-12 text-center px-6">
-                <Users className="h-10 w-10 text-[#5A6275] mb-3" />
-                <p className="text-sm text-[#8A92A6] mb-1">No delegations yet</p>
-                <p className="text-xs text-[#5A6275]">
+                <Users className="h-10 w-10 text-subtle mb-3" />
+                <p className="text-sm text-muted mb-1">No delegations yet</p>
+                <p className="text-xs text-subtle">
                   Click &ldquo;Grant Access&rdquo; to share your mailbox with a colleague.
                 </p>
               </div>
@@ -289,17 +289,17 @@ export default function DelegationPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-[#262A35]">
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-[#5A6275]">
+                    <tr className="border-b border-border">
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-subtle">
                         Name
                       </th>
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-[#5A6275]">
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-subtle">
                         Email
                       </th>
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-[#5A6275]">
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-subtle">
                         Role
                       </th>
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-[#5A6275]">
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-subtle">
                         Granted
                       </th>
                       <th className="px-5 py-3" />
@@ -309,18 +309,18 @@ export default function DelegationPage() {
                     {data.granted.map((entry, i) => (
                       <tr
                         key={entry.id}
-                        className={`border-b border-[#262A35] hover:bg-[#1B1F2A] transition-colors last:border-0 ${i % 2 === 0 ? "" : "bg-[#12151D]/50"}`}
+                        className={`border-b border-border hover:bg-surface-sunken transition-colors last:border-0 ${i % 2 === 0 ? "" : "bg-surface/50"}`}
                       >
                         <td className="px-5 py-3.5">
-                          <span className="font-medium text-[#E6E9F0]">
+                          <span className="font-medium text-foreground">
                             {entry.user.fullName}
                           </span>
                         </td>
-                        <td className="px-5 py-3.5 text-[#8A92A6]">{entry.user.email}</td>
+                        <td className="px-5 py-3.5 text-muted">{entry.user.email}</td>
                         <td className="px-5 py-3.5">
                           <RoleBadge role={entry.role} />
                         </td>
-                        <td className="px-5 py-3.5 text-[#8A92A6] whitespace-nowrap">
+                        <td className="px-5 py-3.5 text-muted whitespace-nowrap">
                           {formatDate(entry.createdAt)}
                         </td>
                         <td className="px-5 py-3.5 text-right">
@@ -328,7 +328,7 @@ export default function DelegationPage() {
                             onClick={() => void handleRevoke(entry.id, entry.user.fullName)}
                             disabled={revoking === entry.id}
                             title="Revoke access"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg text-[#8A92A6] border border-[#262A35] hover:text-[#ea4335] hover:border-[#ea4335]/30 hover:bg-[#ea4335]/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg text-muted border border-border hover:text-crit hover:border-crit/30 hover:bg-crit/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             {revoking === entry.id ? (
                               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -350,22 +350,22 @@ export default function DelegationPage() {
         {/* ── Delegated to Me (Received) ───────────────────────────────────── */}
         <section>
           <div className="mb-4">
-            <h2 className="text-base font-semibold text-[#E6E9F0]">Delegated to Me</h2>
-            <p className="text-xs text-[#8A92A6] mt-0.5">
+            <h2 className="text-base font-semibold text-foreground">Delegated to Me</h2>
+            <p className="text-xs text-muted mt-0.5">
               Mailboxes that other users have shared with you — contact the owner to revoke
             </p>
           </div>
 
-          <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
+          <div className="bg-surface border border-border rounded-xl overflow-hidden">
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-5 w-5 animate-spin text-[#00C2FF]" />
+                <Loader2 className="h-5 w-5 animate-spin text-accent" />
               </div>
             ) : !data || data.received.length === 0 ? (
               <div className="flex flex-col items-center py-12 text-center px-6">
-                <Mail className="h-10 w-10 text-[#5A6275] mb-3" />
-                <p className="text-sm text-[#8A92A6] mb-1">No shared mailboxes</p>
-                <p className="text-xs text-[#5A6275]">
+                <Mail className="h-10 w-10 text-subtle mb-3" />
+                <p className="text-sm text-muted mb-1">No shared mailboxes</p>
+                <p className="text-xs text-subtle">
                   When a colleague shares their mailbox with you, it will appear here.
                 </p>
               </div>
@@ -373,17 +373,17 @@ export default function DelegationPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-[#262A35]">
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-[#5A6275]">
+                    <tr className="border-b border-border">
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-subtle">
                         Mailbox owner
                       </th>
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-[#5A6275]">
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-subtle">
                         Email
                       </th>
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-[#5A6275]">
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-subtle">
                         My role
                       </th>
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-[#5A6275]">
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-subtle">
                         Access since
                       </th>
                     </tr>
@@ -392,20 +392,20 @@ export default function DelegationPage() {
                     {data.received.map((entry, i) => (
                       <tr
                         key={entry.id}
-                        className={`border-b border-[#262A35] hover:bg-[#1B1F2A] transition-colors last:border-0 ${i % 2 === 0 ? "" : "bg-[#12151D]/50"}`}
+                        className={`border-b border-border hover:bg-surface-sunken transition-colors last:border-0 ${i % 2 === 0 ? "" : "bg-surface/50"}`}
                       >
                         <td className="px-5 py-3.5">
-                          <span className="font-medium text-[#E6E9F0]">
+                          <span className="font-medium text-foreground">
                             {entry.mailbox.user?.fullName ?? entry.mailbox.displayName}
                           </span>
                         </td>
-                        <td className="px-5 py-3.5 text-[#8A92A6]">
+                        <td className="px-5 py-3.5 text-muted">
                           {entry.mailbox.email}
                         </td>
                         <td className="px-5 py-3.5">
                           <RoleBadge role={entry.role} />
                         </td>
-                        <td className="px-5 py-3.5 text-[#8A92A6] whitespace-nowrap">
+                        <td className="px-5 py-3.5 text-muted whitespace-nowrap">
                           {formatDate(entry.createdAt)}
                         </td>
                       </tr>

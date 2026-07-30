@@ -23,10 +23,10 @@ export default async function DashboardPage() {
   const recentLogs = await getRecentEmailLogs(currentUser!);
 
   return (
-    <div className="p-8 min-h-screen">
+    <div className="p-8 min-h-full">
       <div className="mb-8">
-        <h1 className="text-3xl font-semibold text-[#dfe1f6]">Communication Center</h1>
-        <p className="text-[#9aa3b8] mt-2">
+        <h1 className="text-3xl font-semibold text-foreground">Communication Center</h1>
+        <p className="text-muted mt-2">
           Send quick messages and track delivery status across the workspace.
         </p>
       </div>

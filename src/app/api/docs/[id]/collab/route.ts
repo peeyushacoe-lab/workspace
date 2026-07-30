@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 type Params = { params: Promise<{ id: string }> };
 
-const CURSOR_COLORS = ["#00d2ff", "#ff6b6b", "#ffd166", "#06d6a0", "#845ec2", "#ff9a00", "#4fc4cf"];
+const CURSOR_COLORS = ["#4f46e5", "#ff6b6b", "#ffd166", "#06d6a0", "#845ec2", "#ff9a00", "#4fc4cf"];
 
 /**
  * GET /api/docs/[id]/collab  — SSE stream for live cursors & presence in a document.

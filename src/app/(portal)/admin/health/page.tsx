@@ -26,17 +26,17 @@ type MetricsData = {
 };
 
 function StatusIcon({ ok }: { ok: boolean | null }) {
-  if (ok === null) return <AlertTriangle className="w-4 h-4 text-[#F59E0B]" />;
+  if (ok === null) return <AlertTriangle className="w-4 h-4 text-warn" />;
   return ok
-    ? <CheckCircle className="w-4 h-4 text-[#0f9d58]" />
-    : <XCircle className="w-4 h-4 text-[#ea4335]" />;
+    ? <CheckCircle className="w-4 h-4 text-ok" />
+    : <XCircle className="w-4 h-4 text-crit" />;
 }
 
 function Stat({ label, value }: { label: string; value: number | string }) {
   return (
-    <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-4">
-      <p className="text-[10px] text-[#5A6275] mb-1">{label}</p>
-      <p className="text-2xl font-semibold font-mono text-[#E6E9F0]">{typeof value === "number" ? value.toLocaleString() : value}</p>
+    <div className="bg-surface border border-border rounded-xl p-4">
+      <p className="text-[10px] text-subtle mb-1">{label}</p>
+      <p className="text-2xl font-semibold font-mono text-foreground">{typeof value === "number" ? value.toLocaleString() : value}</p>
     </div>
   );
 }
@@ -65,7 +65,7 @@ export default function SystemHealthPage() {
   const isOk = (s: string) => s === "ok";
 
   return (
-    <div className="min-h-screen bg-[#0B0D12] text-[#E6E9F0]">
+    <div className="min-h-full bg-surface text-foreground">
       <PageHeader
         eyebrow="Admin · Observability"
         title="System Health"
@@ -75,7 +75,7 @@ export default function SystemHealthPage() {
       <div className="px-6 pb-10 max-w-6xl space-y-6">
         <div className="flex items-center">
           <div className="flex-1" />
-          <button onClick={refresh} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1B1F2A] text-[#8A92A6] text-sm border border-[#262A35] hover:bg-[#2e3347] hover:text-[#E6E9F0] transition-colors">
+          <button onClick={refresh} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-surface-sunken text-muted text-sm border border-border hover:bg-hover hover:text-foreground transition-colors">
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
             Refresh
           </button>
@@ -87,12 +87,12 @@ export default function SystemHealthPage() {
             { label: "Database", icon: Database, ok: health ? isOk(health.services.database) : null },
             { label: "Redis", icon: Server, ok: health ? isOk(health.services.redis) : null },
           ].map(({ label, icon: Icon, ok }) => (
-            <div key={label} className="bg-[#12151D] border border-[#262A35] rounded-xl p-4 flex items-center gap-3">
-              <Icon className="w-5 h-5 text-[#5A6275]" />
+            <div key={label} className="bg-surface border border-border rounded-xl p-4 flex items-center gap-3">
+              <Icon className="w-5 h-5 text-subtle" />
               <span className="font-medium">{label}</span>
               <div className="flex-1" />
               <StatusIcon ok={ok} />
-              <span className={`text-sm font-medium ${ok === null ? "text-[#F59E0B]" : ok ? "text-[#0f9d58]" : "text-[#ea4335]"}`}>
+              <span className={`text-sm font-medium ${ok === null ? "text-warn" : ok ? "text-ok" : "text-crit"}`}>
                 {ok === null ? "checking" : ok ? "healthy" : "down"}
               </span>
             </div>
@@ -117,14 +117,14 @@ export default function SystemHealthPage() {
 
         {/* Queue health */}
         {health?.queues && (
-          <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
-            <div className="flex items-center gap-2 px-4 py-3 border-b border-[#262A35]">
-              <Zap className="w-4 h-4 text-[#00C2FF]" />
+          <div className="bg-surface border border-border rounded-xl overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
+              <Zap className="w-4 h-4 text-accent" />
               <span className="text-sm font-medium">BullMQ Queues</span>
             </div>
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-[#1C1F28] text-[#5A6275]">
+                <tr className="border-b border-border-soft text-subtle">
                   <th className="text-left px-4 py-2 font-medium">Queue</th>
                   <th className="text-right px-4 py-2 font-medium">Waiting</th>
                   <th className="text-right px-4 py-2 font-medium">Active</th>
@@ -135,18 +135,18 @@ export default function SystemHealthPage() {
               </thead>
               <tbody>
                 {Object.entries(health.queues).map(([name, q]) => (
-                  <tr key={name} className="border-b border-[#1C1F28] hover:bg-[#1B1F2A]">
-                    <td className="px-4 py-2 font-mono text-[#E6E9F0]">{name}</td>
-                    <td className="px-4 py-2 text-right font-mono text-[#8A92A6]">{q?.waiting ?? "—"}</td>
-                    <td className="px-4 py-2 text-right font-mono text-[#00C2FF]">{q?.active ?? "—"}</td>
-                    <td className={`px-4 py-2 text-right font-mono ${q && q.failed > 0 ? "text-[#ea4335]" : "text-[#8A92A6]"}`}>{q?.failed ?? "—"}</td>
-                    <td className="px-4 py-2 text-right font-mono text-[#8A92A6]">{q?.delayed ?? "—"}</td>
+                  <tr key={name} className="border-b border-border-soft hover:bg-surface-sunken">
+                    <td className="px-4 py-2 font-mono text-foreground">{name}</td>
+                    <td className="px-4 py-2 text-right font-mono text-muted">{q?.waiting ?? "—"}</td>
+                    <td className="px-4 py-2 text-right font-mono text-accent">{q?.active ?? "—"}</td>
+                    <td className={`px-4 py-2 text-right font-mono ${q && q.failed > 0 ? "text-crit" : "text-muted"}`}>{q?.failed ?? "—"}</td>
+                    <td className="px-4 py-2 text-right font-mono text-muted">{q?.delayed ?? "—"}</td>
                     <td className="px-4 py-2 text-right">
                       {q === null
-                        ? <span className="font-medium text-[#ea4335]">offline</span>
+                        ? <span className="font-medium text-crit">offline</span>
                         : q.failed > 0
-                          ? <span className="font-medium text-[#F59E0B]">warn</span>
-                          : <span className="font-medium text-[#0f9d58]">ok</span>}
+                          ? <span className="font-medium text-warn">warn</span>
+                          : <span className="font-medium text-ok">ok</span>}
                     </td>
                   </tr>
                 ))}
@@ -156,9 +156,9 @@ export default function SystemHealthPage() {
         )}
 
         {health && (
-          <p className="text-xs text-[#5A6275]">
+          <p className="text-xs text-subtle">
             <Activity className="w-3 h-3 inline mr-1" />
-            Overall: <span className={health.status === "ok" ? "text-[#0f9d58]" : "text-[#ea4335]"}>{health.status}</span>
+            Overall: <span className={health.status === "ok" ? "text-ok" : "text-crit"}>{health.status}</span>
             {" · "} Last checked: {new Date(health.timestamp).toLocaleString()}
           </p>
         )}

@@ -28,9 +28,9 @@ type ExportJob = {
   includeCalendar?: boolean;
 };
 
-const cardClass = "bg-[#12151D] border border-[#262A35] rounded-xl";
+const cardClass = "bg-surface border border-border rounded-xl";
 const primaryBtn =
-  "inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-[#00C2FF] text-[#06121A] hover:bg-[#0098E6] transition disabled:opacity-50 disabled:cursor-not-allowed";
+  "inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-accent text-accent-foreground hover:bg-accent-hover transition disabled:opacity-50 disabled:cursor-not-allowed";
 
 const CATEGORIES: { key: keyof Pick<ExportJob, "includeMail" | "includeDrive" | "includeDocs" | "includeContacts" | "includeCalendar">; label: string; hint: string; Icon: React.ElementType }[] = [
   { key: "includeMail", label: "Mail", hint: "All threads as a .mbox file", Icon: Mail },
@@ -42,10 +42,10 @@ const CATEGORIES: { key: keyof Pick<ExportJob, "includeMail" | "includeDrive" | 
 
 function statusBadge(status: ExportStatus) {
   const map: Record<ExportStatus, { label: string; cls: string }> = {
-    PENDING: { label: "Queued", cls: "text-[#8A92A6] bg-[#8A92A6]/10 border-[#8A92A6]/20" },
-    RUNNING: { label: "Running", cls: "text-[#00C2FF] bg-[#00C2FF]/10 border-[#00C2FF]/20" },
-    COMPLETED: { label: "Ready", cls: "text-emerald-400 bg-emerald-400/10 border-emerald-400/20" },
-    FAILED: { label: "Failed", cls: "text-[#ea4335] bg-[#ea4335]/10 border-[#ea4335]/20" },
+    PENDING: { label: "Queued", cls: "text-muted bg-muted/10 border-border-strong/20" },
+    RUNNING: { label: "Running", cls: "text-accent bg-accent/10 border-accent/20" },
+    COMPLETED: { label: "Ready", cls: "text-ok bg-ok/10 border-ok/20" },
+    FAILED: { label: "Failed", cls: "text-crit bg-crit/10 border-crit/20" },
   };
   const { label, cls } = map[status];
   return <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border ${cls}`}>{label}</span>;
@@ -142,7 +142,7 @@ export default function ExportPage() {
     : 0;
 
   return (
-    <div className="bg-[#0B0D13] min-h-screen">
+    <div className="bg-surface min-h-full">
       <PageHeader
         eyebrow="Mailbox Settings"
         title="Export your account"
@@ -154,27 +154,27 @@ export default function ExportPage() {
           <section className={`${cardClass} p-5`}>
             <div className="flex items-center justify-between mb-3">
               <div>
-                <h2 className="text-sm font-semibold text-[#E6E9F0]">Account export</h2>
-                <p className="text-xs text-[#8A92A6] mt-0.5">{activeJob.currentStage ?? "Preparing…"}</p>
+                <h2 className="text-sm font-semibold text-foreground">Account export</h2>
+                <p className="text-xs text-muted mt-0.5">{activeJob.currentStage ?? "Preparing…"}</p>
               </div>
               {statusBadge(activeJob.status)}
             </div>
 
-            <div className="w-full h-2 rounded-full bg-[#1B1F2A] overflow-hidden mb-3">
+            <div className="w-full h-2 rounded-full bg-surface-sunken overflow-hidden mb-3">
               <div
-                className="h-full bg-[#00C2FF] transition-all duration-500"
+                className="h-full bg-accent transition-all duration-500"
                 style={{ width: `${activeJob.totalItems > 0 ? progressPct : jobRunning ? 8 : 100}%` }}
               />
             </div>
 
-            <p className="text-xs text-[#8A92A6]">
+            <p className="text-xs text-muted">
               {activeJob.processedItems} / {activeJob.totalItems || "?"} items processed
             </p>
 
             {activeJob.status === "COMPLETED" && (
               <div className="mt-4 flex items-center gap-3">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                <p className="text-xs text-[#8A92A6] flex-1">
+                <CheckCircle2 className="w-4 h-4 text-ok flex-shrink-0" />
+                <p className="text-xs text-muted flex-1">
                   Archive ready — {formatBytes(activeJob.resultSize)}. Link expires in 1 hour.
                 </p>
                 {downloadUrl ? (
@@ -182,13 +182,13 @@ export default function ExportPage() {
                     <Download className="w-3.5 h-3.5" /> Download
                   </a>
                 ) : (
-                  <Loader2 className="w-4 h-4 animate-spin text-[#5A6275]" />
+                  <Loader2 className="w-4 h-4 animate-spin text-subtle" />
                 )}
               </div>
             )}
 
             {activeJob.status === "FAILED" && (
-              <div className="mt-4 flex items-start gap-2 text-xs text-[#ea4335]">
+              <div className="mt-4 flex items-start gap-2 text-xs text-crit">
                 <XCircle className="w-4 h-4 flex-shrink-0" />
                 <span>{activeJob.errorLog?.[activeJob.errorLog.length - 1] ?? "Export failed — try again."}</span>
               </div>
@@ -198,22 +198,22 @@ export default function ExportPage() {
 
         {!jobRunning && (
           <section className={`${cardClass} p-5`}>
-            <h2 className="text-sm font-semibold text-[#E6E9F0] mb-1">What to include</h2>
-            <p className="text-xs text-[#8A92A6] mb-4">Pick what you want in the archive. Everything is selected by default.</p>
+            <h2 className="text-sm font-semibold text-foreground mb-1">What to include</h2>
+            <p className="text-xs text-muted mb-4">Pick what you want in the archive. Everything is selected by default.</p>
 
             <div className="space-y-2 mb-5">
               {CATEGORIES.map(({ key, label, hint, Icon }) => (
-                <label key={key} className="flex items-center gap-3 p-3 rounded-lg bg-[#1B1F2A] border border-[#262A35] cursor-pointer">
+                <label key={key} className="flex items-center gap-3 p-3 rounded-lg bg-surface-sunken border border-border cursor-pointer">
                   <input
                     type="checkbox"
                     checked={!!selected[key]}
                     onChange={(e) => setSelected((prev) => ({ ...prev, [key]: e.target.checked }))}
-                    className="accent-[#00C2FF] flex-shrink-0"
+                    className="accent-accent flex-shrink-0"
                   />
-                  <Icon className="w-4 h-4 text-[#8A92A6] flex-shrink-0" />
+                  <Icon className="w-4 h-4 text-muted flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-[#E6E9F0]">{label}</p>
-                    <p className="text-[11px] text-[#5A6275]">{hint}</p>
+                    <p className="text-sm text-foreground">{label}</p>
+                    <p className="text-[11px] text-subtle">{hint}</p>
                   </div>
                 </label>
               ))}
@@ -227,24 +227,24 @@ export default function ExportPage() {
         )}
 
         <section>
-          <h2 className="text-sm font-semibold text-[#E6E9F0] mb-3">Export history</h2>
+          <h2 className="text-sm font-semibold text-foreground mb-3">Export history</h2>
           <div className={`${cardClass} overflow-hidden`}>
             {loadingHistory ? (
               <div className="flex items-center justify-center py-10">
-                <Loader2 className="h-5 w-5 animate-spin text-[#00C2FF]" />
+                <Loader2 className="h-5 w-5 animate-spin text-accent" />
               </div>
             ) : history.length === 0 ? (
               <div className="flex flex-col items-center py-10 text-center px-6">
-                <Package className="h-8 w-8 text-[#5A6275] mb-2" />
-                <p className="text-sm text-[#8A92A6]">No exports yet</p>
+                <Package className="h-8 w-8 text-subtle mb-2" />
+                <p className="text-sm text-muted">No exports yet</p>
               </div>
             ) : (
-              <div className="divide-y divide-[#262A35]">
+              <div className="divide-y divide-border">
                 {history.map((j) => (
                   <div key={j.id} className="flex items-center justify-between p-4">
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-[#E6E9F0]">{new Date(j.createdAt).toLocaleString()}</p>
-                      <p className="text-xs text-[#8A92A6]">{formatBytes(j.resultSize)} · {j.processedItems} items</p>
+                      <p className="text-sm font-medium text-foreground">{new Date(j.createdAt).toLocaleString()}</p>
+                      <p className="text-xs text-muted">{formatBytes(j.resultSize)} · {j.processedItems} items</p>
                     </div>
                     {statusBadge(j.status)}
                   </div>

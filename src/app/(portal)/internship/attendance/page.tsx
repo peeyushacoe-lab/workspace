@@ -143,7 +143,7 @@ function Avatar({ user, size = 8 }: { user: { fullName: string; avatarUrl?: stri
 function LoadingSpinner() {
   return (
     <div className="flex items-center justify-center py-16">
-      <Loader2 className="w-7 h-7 text-[#00C2FF] animate-spin" />
+      <Loader2 className="w-7 h-7 text-accent animate-spin" />
     </div>
   );
 }
@@ -151,11 +151,11 @@ function LoadingSpinner() {
 function EmptyState({ icon: Icon, title, desc }: { icon: React.ElementType; title: string; desc: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">
-      <div className="w-14 h-14 rounded-2xl bg-[#0E2532] flex items-center justify-center mb-4">
-        <Icon className="w-7 h-7 text-[#00C2FF]" />
+      <div className="w-14 h-14 rounded-2xl bg-accent-soft flex items-center justify-center mb-4">
+        <Icon className="w-7 h-7 text-accent" />
       </div>
-      <p className="font-semibold text-[#E6E9F0]">{title}</p>
-      <p className="text-sm text-[#5A6275] mt-1 max-w-xs">{desc}</p>
+      <p className="font-semibold text-foreground">{title}</p>
+      <p className="text-sm text-subtle mt-1 max-w-xs">{desc}</p>
     </div>
   );
 }
@@ -272,63 +272,63 @@ function InternAttendanceView({ userId }: { userId: string }) {
   return (
     <div className="max-w-xl mx-auto space-y-5">
       {schedule && (
-        <div className="px-4 py-3 bg-[#0E2532] border border-[#00C2FF]/20 rounded-xl space-y-1">
+        <div className="px-4 py-3 bg-accent-soft border border-accent/20 rounded-xl space-y-1">
           <div className="flex items-center gap-3">
-            <Clock className="w-4 h-4 text-[#00C2FF] shrink-0" />
-            <div className="text-sm text-[#C8CEDB]">
-              Working hours: <span className="text-[#00C2FF] font-semibold">{schedule.startTime} – {schedule.endTime}</span>
-              <span className="ml-2 text-[#5A6275] text-xs">({schedule.lateGraceMinutes}min grace)</span>
+            <Clock className="w-4 h-4 text-accent shrink-0" />
+            <div className="text-sm text-foreground">
+              Working hours: <span className="text-accent font-semibold">{schedule.startTime} – {schedule.endTime}</span>
+              <span className="ml-2 text-subtle text-xs">({schedule.lateGraceMinutes}min grace)</span>
             </div>
           </div>
           {schedule.defaultBreakFrom && schedule.defaultBreakTo && (
             <div className="flex items-center gap-3 pl-7">
-              <span className="text-xs text-[#5A6275]">
-                Break: <span className="text-[#C8CEDB] font-mono font-medium">{schedule.defaultBreakFrom} – {schedule.defaultBreakTo}</span>
-                <span className="ml-1.5 text-[#3A4150]">· automatically deducted, no punch-out needed</span>
+              <span className="text-xs text-subtle">
+                Break: <span className="text-foreground font-mono font-medium">{schedule.defaultBreakFrom} – {schedule.defaultBreakTo}</span>
+                <span className="ml-1.5 text-subtle">· automatically deducted, no punch-out needed</span>
               </span>
             </div>
           )}
         </div>
       )}
 
-      <div className="bg-[#12151D] border border-[#262A35] rounded-2xl p-6 text-center space-y-4">
+      <div className="bg-surface border border-border rounded-2xl p-6 text-center space-y-4">
         <div className="flex items-center justify-center gap-2 mb-1">
-          <div className={`w-2.5 h-2.5 rounded-full ${isPunchedIn ? "bg-[#0f9d58] animate-pulse" : "bg-[#5A6275]"}`} />
-          <span className={`text-sm font-semibold ${isPunchedIn ? "text-[#0f9d58]" : "text-[#5A6275]"}`}>
+          <div className={`w-2.5 h-2.5 rounded-full ${isPunchedIn ? "bg-ok animate-pulse" : "bg-subtle"}`} />
+          <span className={`text-sm font-semibold ${isPunchedIn ? "text-ok" : "text-subtle"}`}>
             {isPunchedIn ? "Currently clocked in" : "Not clocked in"}
           </span>
         </div>
 
         {isPunchedIn && record && (
-          <div className="text-4xl font-mono font-bold text-[#E6E9F0] tabular-nums">
+          <div className="text-4xl font-mono font-bold text-foreground tabular-nums">
             {fmtDuration(record.totalMinutes + elapsed)}
           </div>
         )}
 
         {!isPunchedIn && record?.totalMinutes != null && record.totalMinutes > 0 && (
-          <div className="text-sm text-[#8A92A6]">
-            Total today: <span className="text-[#E6E9F0] font-semibold font-mono">{fmtDuration(record.totalMinutes)}</span>
+          <div className="text-sm text-muted">
+            Total today: <span className="text-foreground font-semibold font-mono">{fmtDuration(record.totalMinutes)}</span>
           </div>
         )}
 
         {record?.firstPunchIn && (
-          <div className="flex justify-center gap-6 text-xs text-[#5A6275]">
-            <span><LogIn className="w-3 h-3 inline mr-1 text-[#0f9d58]" />In: <span className="text-[#C8CEDB] font-mono">{fmtHHMM(record.firstPunchIn)}</span></span>
+          <div className="flex justify-center gap-6 text-xs text-subtle">
+            <span><LogIn className="w-3 h-3 inline mr-1 text-ok" />In: <span className="text-foreground font-mono">{fmtHHMM(record.firstPunchIn)}</span></span>
             {record.lastPunchOut && (
-              <span><LogOut className="w-3 h-3 inline mr-1 text-[#ea4335]" />Out: <span className="text-[#C8CEDB] font-mono">{fmtHHMM(record.lastPunchOut)}</span></span>
+              <span><LogOut className="w-3 h-3 inline mr-1 text-crit" />Out: <span className="text-foreground font-mono">{fmtHHMM(record.lastPunchOut)}</span></span>
             )}
           </div>
         )}
 
         {record?.isLate && (
-          <div className="flex items-center justify-center gap-1.5 text-xs text-[#F59E0B]">
+          <div className="flex items-center justify-center gap-1.5 text-xs text-warn">
             <AlertCircle className="w-3.5 h-3.5" /> Punched in late
           </div>
         )}
 
         <div className="hidden sm:block">
           {record?.firstPunchIn && record?.lastPunchOut ? (
-            <div className="w-full py-3 rounded-xl border border-[#0f9d58]/30 bg-[#0f9d58]/10 flex items-center justify-center gap-2 text-[#0f9d58] text-sm font-semibold">
+            <div className="w-full py-3 rounded-xl border border-ok/30 bg-ok/10 flex items-center justify-center gap-2 text-ok text-sm font-semibold">
               <CheckCircle2 className="w-4 h-4" /> Attendance complete for today
             </div>
           ) : (
@@ -337,8 +337,8 @@ function InternAttendanceView({ userId }: { userId: string }) {
               disabled={punching || loadingRecord}
               className={`w-full py-3 rounded-xl text-base font-bold flex items-center justify-center gap-2 transition-all ${
                 isPunchedIn
-                  ? "bg-[#ea4335]/15 border border-[#ea4335]/40 text-[#ea4335] hover:bg-[#ea4335]/25"
-                  : "bg-[#00C2FF] text-[#06121A] hover:bg-[#0098E6]"
+                  ? "bg-crit/15 border border-crit/40 text-crit hover:bg-crit/25"
+                  : "bg-accent text-accent-foreground hover:bg-accent-hover"
               } disabled:opacity-50`}
             >
               {punching ? <Loader2 className="w-5 h-5 animate-spin" /> : isPunchedIn ? <><LogOut className="w-5 h-5" /> Punch Out</> : <><LogIn className="w-5 h-5" /> Punch In</>}
@@ -346,44 +346,44 @@ function InternAttendanceView({ userId }: { userId: string }) {
           )}
         </div>
 
-        <div className="sm:hidden flex items-center justify-center gap-2 py-2.5 rounded-xl border border-[#2E333F] bg-[#1B1F2A] text-[#5A6275] text-sm">
+        <div className="sm:hidden flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border-strong bg-surface-sunken text-subtle text-sm">
           <Monitor className="w-4 h-4" />
           Attendance can only be recorded on desktop
         </div>
       </div>
 
       {history.length > 0 && (
-        <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
-          <div className="px-4 py-3 border-b border-[#262A35]">
-            <h3 className="text-sm font-semibold text-[#E6E9F0]">Last 6 days</h3>
+        <div className="bg-surface border border-border rounded-xl overflow-hidden">
+          <div className="px-4 py-3 border-b border-border">
+            <h3 className="text-sm font-semibold text-foreground">Last 6 days</h3>
           </div>
-          <div className="divide-y divide-[#262A35]">
+          <div className="divide-y divide-border">
             {history.map(h => (
               <div key={h.date} className="flex items-center justify-between px-4 py-3">
                 <div className="flex items-center gap-3">
-                  <div className={`w-2 h-2 rounded-full ${h.firstPunchIn ? (h.isLate ? "bg-[#F59E0B]" : "bg-[#0f9d58]") : "bg-[#3A4150]"}`} />
+                  <div className={`w-2 h-2 rounded-full ${h.firstPunchIn ? (h.isLate ? "bg-warn" : "bg-ok") : "bg-border-strong"}`} />
                   <div>
-                    <p className="text-xs font-medium text-[#C8CEDB]">
+                    <p className="text-xs font-medium text-foreground">
                       {new Date(h.date + "T12:00:00").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}
                     </p>
                     {h.firstPunchIn && (
-                      <p className="text-[11px] text-[#5A6275] font-mono">
+                      <p className="text-[11px] text-subtle font-mono">
                         {fmtHHMM(h.firstPunchIn)} {h.lastPunchOut ? `→ ${fmtHHMM(h.lastPunchOut)}` : "(no punch out)"}
                       </p>
                     )}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  {h.idleFlag && <span title="No activity detected"><AlertCircle className="w-3.5 h-3.5 text-[#F59E0B]" /></span>}
-                  {h.hasOverride && <span title="Manually adjusted"><Edit2 className="w-3 h-3 text-[#5A6275]" /></span>}
+                  {h.idleFlag && <span title="No activity detected"><AlertCircle className="w-3.5 h-3.5 text-warn" /></span>}
+                  {h.hasOverride && <span title="Manually adjusted"><Edit2 className="w-3 h-3 text-subtle" /></span>}
                   {h.firstPunchIn ? (
                     <div className="text-right">
-                      <span className={`text-xs font-mono font-semibold ${h.isLate ? "text-[#F59E0B]" : "text-[#E6E9F0]"}`}>{fmtDuration(h.totalMinutes)}</span>
+                      <span className={`text-xs font-mono font-semibold ${h.isLate ? "text-warn" : "text-foreground"}`}>{fmtDuration(h.totalMinutes)}</span>
                       {h.breakMinutes > 0 && (
-                        <p className="text-[10px] text-[#5A6275]">−{fmtDuration(h.breakMinutes)} break</p>
+                        <p className="text-[10px] text-subtle">−{fmtDuration(h.breakMinutes)} break</p>
                       )}
                     </div>
-                  ) : <span className="text-xs text-[#3A4150]">—</span>}
+                  ) : <span className="text-xs text-subtle">—</span>}
                 </div>
               </div>
             ))}
@@ -508,11 +508,11 @@ function MentorAttendanceView() {
   return (
     <div className="space-y-5">
       {/* Tab toggle */}
-      <div className="flex items-center gap-1 bg-[#12151D] border border-[#262A35] rounded-xl p-1 w-fit">
+      <div className="flex items-center gap-1 bg-surface border border-border rounded-xl p-1 w-fit">
         {(["daily", "summary"] as const).map(tab => (
           <button key={tab} onClick={() => setActiveView(tab)}
             className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors capitalize
-              ${activeView === tab ? "bg-[#00C2FF] text-[#06121A]" : "text-[#8A92A6] hover:text-[#E6E9F0]"}`}>
+              ${activeView === tab ? "bg-accent text-accent-foreground" : "text-muted hover:text-foreground"}`}>
             {tab === "daily" ? "Daily Timesheet" : "Intern Summary"}
           </button>
         ))}
@@ -521,13 +521,13 @@ function MentorAttendanceView() {
       {activeView === "summary" ? <InternSummaryTab /> : <>
 
       {/* Working hours config */}
-      <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-4">
+      <div className="bg-surface border border-border rounded-xl p-4">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-[#E6E9F0] flex items-center gap-2">
-            <Clock className="w-4 h-4 text-[#00C2FF]" /> Official Working Hours
+          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <Clock className="w-4 h-4 text-accent" /> Official Working Hours
           </h3>
           <button onClick={() => setEditingSchedule(v => !v)}
-            className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-[#00C2FF] bg-[#0E2532] rounded-lg hover:bg-[#133347] transition-colors">
+            className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-accent bg-accent-soft rounded-lg hover:bg-accent-soft transition-colors">
             <Pencil className="w-3 h-3" /> {editingSchedule ? "Cancel" : "Edit"}
           </button>
         </div>
@@ -536,70 +536,70 @@ function MentorAttendanceView() {
           <div className="space-y-3">
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <label className="block text-[11px] font-medium text-[#8A92A6] mb-1">Start time</label>
+                <label className="block text-[11px] font-medium text-muted mb-1">Start time</label>
                 <input type="time"
-                  className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+                  className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground focus:outline-none focus:border-accent/60"
                   value={scheduleForm.startTime} onChange={e => setScheduleForm(p => ({ ...p, startTime: e.target.value }))} />
               </div>
               <div>
-                <label className="block text-[11px] font-medium text-[#8A92A6] mb-1">End time</label>
+                <label className="block text-[11px] font-medium text-muted mb-1">End time</label>
                 <input type="time"
-                  className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+                  className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground focus:outline-none focus:border-accent/60"
                   value={scheduleForm.endTime} onChange={e => setScheduleForm(p => ({ ...p, endTime: e.target.value }))} />
               </div>
               <div>
-                <label className="block text-[11px] font-medium text-[#8A92A6] mb-1">Grace (mins)</label>
+                <label className="block text-[11px] font-medium text-muted mb-1">Grace (mins)</label>
                 <input type="number" min={0} max={60}
-                  className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+                  className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground focus:outline-none focus:border-accent/60"
                   value={scheduleForm.lateGraceMinutes} onChange={e => setScheduleForm(p => ({ ...p, lateGraceMinutes: Number(e.target.value) }))} />
               </div>
             </div>
             <div>
-              <label className="block text-[11px] font-medium text-[#8A92A6] mb-1">Office timezone</label>
+              <label className="block text-[11px] font-medium text-muted mb-1">Office timezone</label>
               <select
-                className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+                className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground focus:outline-none focus:border-accent/60"
                 value={scheduleForm.timezone} onChange={e => setScheduleForm(p => ({ ...p, timezone: e.target.value }))}>
                 {COMMON_TIMEZONES.map(tz => <option key={tz} value={tz}>{tz}</option>)}
                 {!(COMMON_TIMEZONES as readonly string[]).includes(scheduleForm.timezone) && (
                   <option value={scheduleForm.timezone}>{scheduleForm.timezone}</option>
                 )}
               </select>
-              <p className="text-[10px] text-[#5A6275] mt-1">
+              <p className="text-[10px] text-subtle mt-1">
                 Start/end/break times above are wall-clock times in this zone — this is what makes &ldquo;late&rdquo;, break deductions, and punch displays agree with each other.
               </p>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-[11px] font-medium text-[#8A92A6] mb-1">Default break start</label>
+                <label className="block text-[11px] font-medium text-muted mb-1">Default break start</label>
                 <input type="time"
-                  className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+                  className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground focus:outline-none focus:border-accent/60"
                   value={scheduleForm.defaultBreakFrom} onChange={e => setScheduleForm(p => ({ ...p, defaultBreakFrom: e.target.value }))} />
               </div>
               <div>
-                <label className="block text-[11px] font-medium text-[#8A92A6] mb-1">Default break end</label>
+                <label className="block text-[11px] font-medium text-muted mb-1">Default break end</label>
                 <input type="time"
-                  className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+                  className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground focus:outline-none focus:border-accent/60"
                   value={scheduleForm.defaultBreakTo} onChange={e => setScheduleForm(p => ({ ...p, defaultBreakTo: e.target.value }))} />
               </div>
             </div>
-            <p className="text-[11px] text-[#5A6275]">Saving will notify all interns immediately and update their Attendance banner.</p>
+            <p className="text-[11px] text-subtle">Saving will notify all interns immediately and update their Attendance banner.</p>
             <div className="flex gap-2 justify-end">
-              <button onClick={() => setEditingSchedule(false)} className="px-3 py-1.5 text-xs text-[#8A92A6] hover:bg-[#1B1F2A] rounded-lg">Cancel</button>
+              <button onClick={() => setEditingSchedule(false)} className="px-3 py-1.5 text-xs text-muted hover:bg-surface-sunken rounded-lg">Cancel</button>
               <button onClick={saveSchedule} disabled={savingSchedule}
-                className="flex items-center gap-1.5 px-4 py-1.5 bg-[#00C2FF] text-[#06121A] text-xs font-semibold rounded-lg hover:bg-[#0098E6] disabled:opacity-50">
+                className="flex items-center gap-1.5 px-4 py-1.5 bg-accent text-accent-foreground text-xs font-semibold rounded-lg hover:bg-accent-hover disabled:opacity-50">
                 {savingSchedule ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <><Save className="w-3.5 h-3.5" /> Save & Notify All</>}
               </button>
             </div>
           </div>
         ) : schedule ? (
           <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm">
-            <span className="text-[#C8CEDB]"><span className="text-[#00C2FF] font-semibold font-mono">{schedule.startTime}</span> – <span className="text-[#00C2FF] font-semibold font-mono">{schedule.endTime}</span></span>
-            <span className="text-[#5A6275] font-mono text-xs">{schedule.timezone || "UTC"}</span>
-            <span className="text-[#5A6275]">{schedule.lateGraceMinutes} min grace</span>
+            <span className="text-foreground"><span className="text-accent font-semibold font-mono">{schedule.startTime}</span> – <span className="text-accent font-semibold font-mono">{schedule.endTime}</span></span>
+            <span className="text-subtle font-mono text-xs">{schedule.timezone || "UTC"}</span>
+            <span className="text-subtle">{schedule.lateGraceMinutes} min grace</span>
             {(schedule.defaultBreakFrom && schedule.defaultBreakTo) && (
-              <span className="text-[#5A6275]">Break: <span className="font-mono text-[#C8CEDB]">{schedule.defaultBreakFrom} – {schedule.defaultBreakTo}</span></span>
+              <span className="text-subtle">Break: <span className="font-mono text-foreground">{schedule.defaultBreakFrom} – {schedule.defaultBreakTo}</span></span>
             )}
-            {schedule.updatedAt && <span className="text-[#3A4150] text-xs">Updated {fmt(schedule.updatedAt)}</span>}
+            {schedule.updatedAt && <span className="text-subtle text-xs">Updated {fmt(schedule.updatedAt)}</span>}
           </div>
         ) : <LoadingSpinner />}
       </div>
@@ -607,24 +607,24 @@ function MentorAttendanceView() {
       {/* Date nav + stats */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <button onClick={() => shiftDate(-1)} className="p-1.5 rounded-lg text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0] transition-colors">
+          <button onClick={() => shiftDate(-1)} className="p-1.5 rounded-lg text-muted hover:bg-surface-sunken hover:text-foreground transition-colors">
             <ChevronLeft className="w-4 h-4" />
           </button>
           <input type="date"
-            className="px-3 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+            className="px-3 py-1.5 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground focus:outline-none focus:border-accent/60"
             value={date} onChange={e => setDate(e.target.value)} max={todayStr()} />
           <button onClick={() => shiftDate(1)} disabled={date >= todayStr()}
-            className="p-1.5 rounded-lg text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0] transition-colors disabled:opacity-30">
+            className="p-1.5 rounded-lg text-muted hover:bg-surface-sunken hover:text-foreground transition-colors disabled:opacity-30">
             <ChevronRight className="w-4 h-4" />
           </button>
           {date !== todayStr() && (
-            <button onClick={() => setDate(todayStr())} className="text-xs text-[#00C2FF] hover:underline ml-1">Today</button>
+            <button onClick={() => setDate(todayStr())} className="text-xs text-accent hover:underline ml-1">Today</button>
           )}
         </div>
         <div className="flex items-center gap-4 text-xs">
-          <span className="text-[#0f9d58]"><UserCheck className="w-3.5 h-3.5 inline mr-1" />{presentCount} present</span>
-          {lateCount > 0 && <span className="text-[#F59E0B]"><Clock className="w-3.5 h-3.5 inline mr-1" />{lateCount} late</span>}
-          {idleCount > 0 && <span className="text-[#ff6d00]"><AlertCircle className="w-3.5 h-3.5 inline mr-1" />{idleCount} idle flag</span>}
+          <span className="text-ok"><UserCheck className="w-3.5 h-3.5 inline mr-1" />{presentCount} present</span>
+          {lateCount > 0 && <span className="text-warn"><Clock className="w-3.5 h-3.5 inline mr-1" />{lateCount} late</span>}
+          {idleCount > 0 && <span className="text-warn"><AlertCircle className="w-3.5 h-3.5 inline mr-1" />{idleCount} idle flag</span>}
         </div>
       </div>
 
@@ -632,66 +632,66 @@ function MentorAttendanceView() {
       {loadingRecords ? <LoadingSpinner /> : records.length === 0 ? (
         <EmptyState icon={CalendarClock} title="No interns found" desc="No intern accounts exist yet." />
       ) : (
-        <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
-          <div className="grid grid-cols-[1fr_60px_60px_54px_1fr_auto_auto] text-[11px] font-semibold text-[#5A6275] px-4 py-2 border-b border-[#262A35] gap-3">
+        <div className="bg-surface border border-border rounded-xl overflow-hidden">
+          <div className="grid grid-cols-[1fr_60px_60px_54px_1fr_auto_auto] text-[11px] font-semibold text-subtle px-4 py-2 border-b border-border gap-3">
             <span>Intern</span><span>In</span><span>Out</span><span>Total</span><span>Location / Device</span><span>Status</span><span></span>
           </div>
-          <div className="divide-y divide-[#262A35]">
+          <div className="divide-y divide-border">
             {records.map(r => (
               <div key={r.intern.id}
-                className="grid grid-cols-[1fr_60px_60px_54px_1fr_auto_auto] items-center px-4 py-3 gap-3 hover:bg-[#1B1F2A]/40 transition-colors">
+                className="grid grid-cols-[1fr_60px_60px_54px_1fr_auto_auto] items-center px-4 py-3 gap-3 hover:bg-surface-sunken/40 transition-colors">
                 <div className="flex items-center gap-2 min-w-0">
                   <Avatar user={r.intern} size={7} />
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-[#E6E9F0] truncate">{r.intern.fullName}</p>
+                    <p className="text-sm font-medium text-foreground truncate">{r.intern.fullName}</p>
                     {r.hasOverride && (
-                      <p className="text-[10px] text-[#5A6275] flex items-center gap-1"><Edit2 className="w-2.5 h-2.5" /> Adjusted</p>
+                      <p className="text-[10px] text-subtle flex items-center gap-1"><Edit2 className="w-2.5 h-2.5" /> Adjusted</p>
                     )}
                   </div>
                 </div>
-                <span className="text-xs font-mono text-[#C8CEDB] whitespace-nowrap">
-                  {r.firstPunchIn ? fmtHHMM(r.firstPunchIn) : <span className="text-[#3A4150]">—</span>}
+                <span className="text-xs font-mono text-foreground whitespace-nowrap">
+                  {r.firstPunchIn ? fmtHHMM(r.firstPunchIn) : <span className="text-subtle">—</span>}
                 </span>
-                <span className="text-xs font-mono text-[#C8CEDB] whitespace-nowrap">
+                <span className="text-xs font-mono text-foreground whitespace-nowrap">
                   {r.lastPunchOut ? fmtHHMM(r.lastPunchOut) : r.isCurrentlyIn
-                    ? <span className="text-[#0f9d58] text-[11px]">● live</span>
-                    : <span className="text-[#3A4150]">—</span>}
+                    ? <span className="text-ok text-[11px]">● live</span>
+                    : <span className="text-subtle">—</span>}
                 </span>
                 <div className="flex flex-col gap-0.5">
-                  <span className={`text-xs font-mono font-semibold whitespace-nowrap ${r.totalMinutes > 0 ? "text-[#E6E9F0]" : "text-[#3A4150]"}`}>
+                  <span className={`text-xs font-mono font-semibold whitespace-nowrap ${r.totalMinutes > 0 ? "text-foreground" : "text-subtle"}`}>
                     {r.totalMinutes > 0 ? fmtDuration(r.totalMinutes) : "—"}
                   </span>
                   {r.breakMinutes > 0 && (
-                    <span className="text-[10px] text-[#5A6275] whitespace-nowrap">−{fmtDuration(r.breakMinutes)} break</span>
+                    <span className="text-[10px] text-subtle whitespace-nowrap">−{fmtDuration(r.breakMinutes)} break</span>
                   )}
                 </div>
                 <div className="flex flex-col gap-0.5 min-w-0">
                   {r.punchLocation ? (
                     <a href={`https://www.google.com/maps?q=${r.punchLocation.lat},${r.punchLocation.lng}`} target="_blank" rel="noreferrer"
-                      className="flex items-center gap-1 text-[11px] text-[#00C2FF] hover:underline truncate">
+                      className="flex items-center gap-1 text-[11px] text-accent hover:underline truncate">
                       <MapPin className="w-3 h-3 shrink-0" />
                       {r.punchLocation.lat.toFixed(4)}, {r.punchLocation.lng.toFixed(4)}
-                      <span className="text-[#5A6275] ml-0.5">±{r.punchLocation.accuracy}m</span>
+                      <span className="text-subtle ml-0.5">±{r.punchLocation.accuracy}m</span>
                     </a>
                   ) : r.firstPunchIn ? (
-                    <span className="text-[11px] text-[#3A4150] flex items-center gap-1"><MapPin className="w-3 h-3" /> No location</span>
+                    <span className="text-[11px] text-subtle flex items-center gap-1"><MapPin className="w-3 h-3" /> No location</span>
                   ) : null}
                   {r.punchDevice && (
-                    <span className="text-[11px] text-[#5A6275] flex items-center gap-1 truncate">
+                    <span className="text-[11px] text-subtle flex items-center gap-1 truncate">
                       <Monitor className="w-3 h-3 shrink-0" />{r.punchDevice}
                     </span>
                   )}
                 </div>
                 <div className="flex items-center gap-1.5">
-                  {!r.firstPunchIn && <span className="text-[11px] text-[#3A4150]">Absent</span>}
+                  {!r.firstPunchIn && <span className="text-[11px] text-subtle">Absent</span>}
                   {r.firstPunchIn && !r.isLate && !r.idleFlag && (
-                    <span className="flex items-center gap-0.5 text-[11px] text-[#0f9d58]"><CheckCircle className="w-3 h-3" /> On time</span>
+                    <span className="flex items-center gap-0.5 text-[11px] text-ok"><CheckCircle className="w-3 h-3" /> On time</span>
                   )}
-                  {r.isLate && <span className="flex items-center gap-0.5 text-[11px] text-[#F59E0B]"><AlertCircle className="w-3 h-3" /> Late</span>}
-                  {r.idleFlag && <span className="flex items-center gap-0.5 text-[11px] text-[#ff6d00]"><Timer className="w-3 h-3" /> Idle?</span>}
+                  {r.isLate && <span className="flex items-center gap-0.5 text-[11px] text-warn"><AlertCircle className="w-3 h-3" /> Late</span>}
+                  {r.idleFlag && <span className="flex items-center gap-0.5 text-[11px] text-warn"><Timer className="w-3 h-3" /> Idle?</span>}
                 </div>
                 <button onClick={() => openOverride(r)}
-                  className="flex items-center gap-1 px-2 py-1 text-[11px] text-[#8A92A6] hover:text-[#00C2FF] hover:bg-[#0E2532] rounded-lg transition-colors whitespace-nowrap">
+                  className="flex items-center gap-1 px-2 py-1 text-[11px] text-muted hover:text-accent hover:bg-accent-soft rounded-lg transition-colors whitespace-nowrap">
                   <Edit2 className="w-3 h-3" /> Adjust
                 </button>
               </div>
@@ -704,63 +704,63 @@ function MentorAttendanceView() {
       {overrideFor && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60" onClick={() => { setOverrideFor(null); setOverrideBreaks([]); }} />
-          <div className="relative bg-[#12151D] border border-[#262A35] rounded-2xl p-6 w-full max-w-sm space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <h3 className="font-semibold text-[#E6E9F0] flex items-center gap-2">
-              <Edit2 className="w-4 h-4 text-[#00C2FF]" /> Adjust Attendance
+          <div className="relative bg-surface border border-border rounded-2xl p-6 w-full max-w-sm space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <h3 className="font-semibold text-foreground flex items-center gap-2">
+              <Edit2 className="w-4 h-4 text-accent" /> Adjust Attendance
             </h3>
-            <p className="text-xs text-[#8A92A6]">
-              Manually set punch times for <span className="text-[#E6E9F0] font-medium">{overrideFor.intern.fullName}</span> on {date}.
+            <p className="text-xs text-muted">
+              Manually set punch times for <span className="text-foreground font-medium">{overrideFor.intern.fullName}</span> on {date}.
             </p>
             <div className="space-y-3">
               <div>
-                <label className="block text-[11px] font-medium text-[#8A92A6] mb-1">Punch In</label>
+                <label className="block text-[11px] font-medium text-muted mb-1">Punch In</label>
                 <input type="datetime-local"
-                  className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+                  className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground focus:outline-none focus:border-accent/60"
                   value={overrideForm.punchIn} onChange={e => setOverrideForm(p => ({ ...p, punchIn: e.target.value }))} />
               </div>
               <div>
-                <label className="block text-[11px] font-medium text-[#8A92A6] mb-1">Punch Out</label>
+                <label className="block text-[11px] font-medium text-muted mb-1">Punch Out</label>
                 <input type="datetime-local"
-                  className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+                  className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground focus:outline-none focus:border-accent/60"
                   value={overrideForm.punchOut} onChange={e => setOverrideForm(p => ({ ...p, punchOut: e.target.value }))} />
               </div>
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-[11px] font-medium text-[#8A92A6]">Breaks</label>
+                  <label className="text-[11px] font-medium text-muted">Breaks</label>
                   <button type="button"
                     onClick={() => setOverrideBreaks(p => [...p, { from: `${date}T${scheduleForm.defaultBreakFrom}`, to: `${date}T${scheduleForm.defaultBreakTo}`, label: "" }])}
-                    className="flex items-center gap-1 text-[11px] text-[#00C2FF] hover:underline">
+                    className="flex items-center gap-1 text-[11px] text-accent hover:underline">
                     <Plus className="w-3 h-3" /> Add break
                   </button>
                 </div>
                 {overrideBreaks.length === 0 && (
-                  <p className="text-[11px] text-[#3A4150]">No breaks set — click &ldquo;Add break&rdquo; to record one.</p>
+                  <p className="text-[11px] text-subtle">No breaks set — click &ldquo;Add break&rdquo; to record one.</p>
                 )}
                 <div className="space-y-2">
                   {overrideBreaks.map((b, i) => (
                     <div key={i} className="flex items-end gap-2">
                       <div className="flex-1">
-                        <p className="text-[10px] text-[#5A6275] mb-0.5">From</p>
+                        <p className="text-[10px] text-subtle mb-0.5">From</p>
                         <input type="datetime-local"
-                          className="w-full px-2 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-xs text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+                          className="w-full px-2 py-1.5 bg-surface-sunken border border-border-strong rounded-lg text-xs text-foreground focus:outline-none focus:border-accent/60"
                           value={b.from} onChange={e => setOverrideBreaks(p => p.map((x, j) => j === i ? { ...x, from: e.target.value } : x))} />
                       </div>
                       <div className="flex-1">
-                        <p className="text-[10px] text-[#5A6275] mb-0.5">To</p>
+                        <p className="text-[10px] text-subtle mb-0.5">To</p>
                         <input type="datetime-local"
-                          className="w-full px-2 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-xs text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+                          className="w-full px-2 py-1.5 bg-surface-sunken border border-border-strong rounded-lg text-xs text-foreground focus:outline-none focus:border-accent/60"
                           value={b.to} onChange={e => setOverrideBreaks(p => p.map((x, j) => j === i ? { ...x, to: e.target.value } : x))} />
                       </div>
                       <div className="w-24">
-                        <p className="text-[10px] text-[#5A6275] mb-0.5">Label</p>
+                        <p className="text-[10px] text-subtle mb-0.5">Label</p>
                         <input type="text"
-                          className="w-full px-2 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-xs text-[#E6E9F0] placeholder:text-[#3A4150] focus:outline-none focus:border-[#00C2FF]/60"
+                          className="w-full px-2 py-1.5 bg-surface-sunken border border-border-strong rounded-lg text-xs text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60"
                           placeholder="Lunch…" value={b.label}
                           onChange={e => setOverrideBreaks(p => p.map((x, j) => j === i ? { ...x, label: e.target.value } : x))} />
                       </div>
                       <button type="button"
                         onClick={() => setOverrideBreaks(p => p.filter((_, j) => j !== i))}
-                        className="mb-0.5 p-1.5 text-[#5A6275] hover:text-[#ea4335] hover:bg-[#ea4335]/10 rounded-lg transition-colors">
+                        className="mb-0.5 p-1.5 text-subtle hover:text-crit hover:bg-crit/10 rounded-lg transition-colors">
                         <X className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -768,17 +768,17 @@ function MentorAttendanceView() {
                 </div>
               </div>
               <div>
-                <label className="block text-[11px] font-medium text-[#8A92A6] mb-1">Reason (optional)</label>
+                <label className="block text-[11px] font-medium text-muted mb-1">Reason (optional)</label>
                 <input type="text"
-                  className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] placeholder:text-[#5A6275] focus:outline-none focus:border-[#00C2FF]/60"
+                  className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60"
                   placeholder="e.g. Forgot to punch in"
                   value={overrideForm.reason} onChange={e => setOverrideForm(p => ({ ...p, reason: e.target.value }))} />
               </div>
             </div>
             <div className="flex gap-2 justify-end pt-1">
-              <button onClick={() => { setOverrideFor(null); setOverrideBreaks([]); }} className="px-3 py-1.5 text-sm text-[#8A92A6] hover:bg-[#1B1F2A] rounded-lg">Cancel</button>
+              <button onClick={() => { setOverrideFor(null); setOverrideBreaks([]); }} className="px-3 py-1.5 text-sm text-muted hover:bg-surface-sunken rounded-lg">Cancel</button>
               <button onClick={saveOverride} disabled={savingOverride}
-                className="flex items-center gap-1.5 px-4 py-1.5 bg-[#00C2FF] text-[#06121A] text-sm font-semibold rounded-lg hover:bg-[#0098E6] disabled:opacity-50">
+                className="flex items-center gap-1.5 px-4 py-1.5 bg-accent text-accent-foreground text-sm font-semibold rounded-lg hover:bg-accent-hover disabled:opacity-50">
                 {savingOverride ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-4 h-4" /> Save</>}
               </button>
             </div>
@@ -860,19 +860,19 @@ function InternSummaryTab() {
   return (
     <div className="space-y-4">
       {/* Date range */}
-      <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-4 flex flex-wrap items-center gap-3">
+      <div className="bg-surface border border-border rounded-xl p-4 flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2 text-sm">
-          <label className="text-[#8A92A6]">From</label>
+          <label className="text-muted">From</label>
           <input type="date" value={from} max={to} onChange={e => setFrom(e.target.value)}
-            className="px-2 py-1 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-[#E6E9F0] text-sm focus:outline-none focus:border-[#00C2FF]/60" />
-          <label className="text-[#8A92A6]">To</label>
+            className="px-2 py-1 bg-surface-sunken border border-border-strong rounded-lg text-foreground text-sm focus:outline-none focus:border-accent/60" />
+          <label className="text-muted">To</label>
           <input type="date" value={to} min={from} max={today} onChange={e => setTo(e.target.value)}
-            className="px-2 py-1 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-[#E6E9F0] text-sm focus:outline-none focus:border-[#00C2FF]/60" />
+            className="px-2 py-1 bg-surface-sunken border border-border-strong rounded-lg text-foreground text-sm focus:outline-none focus:border-accent/60" />
         </div>
         <div className="flex items-center gap-2 ml-auto">
           {presets.map(p => (
             <button key={p.label} onClick={() => { setFrom(p.from); setTo(p.to); }}
-              className="px-2.5 py-1 text-xs rounded-lg bg-[#1B1F2A] text-[#8A92A6] hover:text-[#00C2FF] hover:bg-[#0E2532] transition-colors">
+              className="px-2.5 py-1 text-xs rounded-lg bg-surface-sunken text-muted hover:text-accent hover:bg-accent-soft transition-colors">
               {p.label}
             </button>
           ))}
@@ -882,21 +882,21 @@ function InternSummaryTab() {
       {/* Summary stats banner */}
       {summary && (
         <div className="grid grid-cols-3 gap-3">
-          <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-3 text-center">
-            <p className="text-2xl font-bold text-[#E6E9F0]">{summary.interns.length}</p>
-            <p className="text-xs text-[#5A6275] mt-0.5">Active Interns</p>
+          <div className="bg-surface border border-border rounded-xl p-3 text-center">
+            <p className="text-2xl font-bold text-foreground">{summary.interns.length}</p>
+            <p className="text-xs text-subtle mt-0.5">Active Interns</p>
           </div>
-          <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-3 text-center">
-            <p className="text-2xl font-bold text-[#E6E9F0]">{summary.totalWorkingDays}</p>
-            <p className="text-xs text-[#5A6275] mt-0.5">Working Days</p>
+          <div className="bg-surface border border-border rounded-xl p-3 text-center">
+            <p className="text-2xl font-bold text-foreground">{summary.totalWorkingDays}</p>
+            <p className="text-xs text-subtle mt-0.5">Working Days</p>
           </div>
-          <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-3 text-center">
-            <p className="text-2xl font-bold text-[#0f9d58]">
+          <div className="bg-surface border border-border rounded-xl p-3 text-center">
+            <p className="text-2xl font-bold text-ok">
               {summary.interns.length > 0
                 ? Math.round(summary.interns.reduce((a, i) => a + i.attendanceRate, 0) / summary.interns.length)
                 : 0}%
             </p>
-            <p className="text-xs text-[#5A6275] mt-0.5">Avg Attendance</p>
+            <p className="text-xs text-subtle mt-0.5">Avg Attendance</p>
           </div>
         </div>
       )}
@@ -909,14 +909,14 @@ function InternSummaryTab() {
           {summary.interns.map(item => {
             const isOpen = expanded === item.intern.id;
             const rate = item.attendanceRate;
-            const rateColor = rate >= 80 ? "#0f9d58" : rate >= 60 ? "#F59E0B" : "#ea4335";
+            const rateColor = rate >= 80 ? "var(--ok)" : rate >= 60 ? "var(--warn)" : "var(--crit)";
 
             return (
-              <div key={item.intern.id} className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
+              <div key={item.intern.id} className="bg-surface border border-border rounded-xl overflow-hidden">
                 {/* Row */}
                 <button
                   onClick={() => openProfile(item)}
-                  className="w-full flex items-center gap-4 px-4 py-3 hover:bg-[#1B1F2A] transition-colors text-left"
+                  className="w-full flex items-center gap-4 px-4 py-3 hover:bg-surface-sunken transition-colors text-left"
                 >
                   {/* Avatar */}
                   {item.intern.avatarUrl
@@ -927,33 +927,33 @@ function InternSummaryTab() {
                       </div>
                   }
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-[#E6E9F0] truncate">{item.intern.fullName}</p>
-                    <p className="text-xs text-[#5A6275]">{item.daysPresent} present · {item.daysAbsent} absent</p>
+                    <p className="text-sm font-semibold text-foreground truncate">{item.intern.fullName}</p>
+                    <p className="text-xs text-subtle">{item.daysPresent} present · {item.daysAbsent} absent</p>
                   </div>
                   {/* Attendance bar */}
                   <div className="hidden sm:flex items-center gap-2 w-32">
-                    <div className="flex-1 h-1.5 bg-[#262A35] rounded-full overflow-hidden">
+                    <div className="flex-1 h-1.5 bg-border rounded-full overflow-hidden">
                       <div className="h-full rounded-full transition-all" style={{ width: `${rate}%`, background: rateColor }} />
                     </div>
                     <span className="text-xs font-semibold w-8 text-right" style={{ color: rateColor }}>{rate}%</span>
                   </div>
                   {/* Trend icon */}
                   {rate >= 80
-                    ? <TrendingUp className="w-4 h-4 text-[#0f9d58] flex-shrink-0" />
-                    : <TrendingDown className="w-4 h-4 text-[#ea4335] flex-shrink-0" />
+                    ? <TrendingUp className="w-4 h-4 text-ok flex-shrink-0" />
+                    : <TrendingDown className="w-4 h-4 text-crit flex-shrink-0" />
                   }
-                  <ChevronDown className={`w-4 h-4 text-[#5A6275] flex-shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                  <ChevronDown className={`w-4 h-4 text-subtle flex-shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`} />
                 </button>
 
                 {/* Expanded profile */}
                 {isOpen && profile && profile.intern.intern.id === item.intern.id && (
-                  <div className="border-t border-[#262A35] px-4 pb-4 pt-3 space-y-4">
+                  <div className="border-t border-border px-4 pb-4 pt-3 space-y-4">
                     {profile.loadingProfile ? <LoadingSpinner /> : (
                       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
                         {/* Attendance calendar */}
                         <div className="lg:col-span-1 space-y-2">
-                          <h4 className="text-xs font-semibold text-[#8A92A6] flex items-center gap-1.5">
+                          <h4 className="text-xs font-semibold text-muted flex items-center gap-1.5">
                             <CalendarClock className="w-3.5 h-3.5" /> Attendance ({summary.from} → {summary.to})
                           </h4>
                           <div className="flex flex-wrap gap-1">
@@ -963,22 +963,22 @@ function InternSummaryTab() {
                               .map(({ d, present }) => (
                                 <div key={d} title={d}
                                   className={`w-6 h-6 rounded text-[9px] flex items-center justify-center font-medium cursor-default
-                                    ${present ? "bg-[#0f9d58]/20 text-[#0f9d58]" : "bg-[#ea4335]/20 text-[#ea4335]"}`}>
+                                    ${present ? "bg-ok/20 text-ok" : "bg-crit/20 text-crit"}`}>
                                   {new Date(d + "T12:00:00").getDate()}
                                 </div>
                               ))
                             }
                           </div>
-                          <div className="flex items-center gap-3 text-[10px] text-[#5A6275]">
-                            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[#0f9d58]/40" />Present</span>
-                            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[#ea4335]/40" />Absent</span>
+                          <div className="flex items-center gap-3 text-[10px] text-subtle">
+                            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-ok/40" />Present</span>
+                            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-crit/40" />Absent</span>
                           </div>
                           {profile.intern.absentDates.length > 0 && (
                             <div className="mt-2">
-                              <p className="text-[10px] font-semibold text-[#5A6275] mb-1">Missed days:</p>
+                              <p className="text-[10px] font-semibold text-subtle mb-1">Missed days:</p>
                               <div className="space-y-0.5 max-h-28 overflow-y-auto">
                                 {profile.intern.absentDates.map(d => (
-                                  <p key={d} className="text-[11px] text-[#ea4335]">
+                                  <p key={d} className="text-[11px] text-crit">
                                     {new Date(d + "T12:00:00").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}
                                   </p>
                                 ))}
@@ -989,24 +989,24 @@ function InternSummaryTab() {
 
                         {/* Submissions */}
                         <div className="space-y-2">
-                          <h4 className="text-xs font-semibold text-[#8A92A6] flex items-center gap-1.5">
+                          <h4 className="text-xs font-semibold text-muted flex items-center gap-1.5">
                             <FileText className="w-3.5 h-3.5" /> Task Submissions ({profile.submissions.length})
                           </h4>
                           {profile.submissions.length === 0 ? (
-                            <p className="text-xs text-[#3A4150]">No submissions yet.</p>
+                            <p className="text-xs text-subtle">No submissions yet.</p>
                           ) : (
                             <div className="space-y-1.5 max-h-48 overflow-y-auto">
                               {profile.submissions.slice(0, 20).map((s) => (
-                                <div key={s.id} className="bg-[#1B1F2A] rounded-lg px-3 py-2">
-                                  <p className="text-xs font-medium text-[#C8CEDB] truncate">{s.task?.title ?? "Task"}</p>
+                                <div key={s.id} className="bg-surface-sunken rounded-lg px-3 py-2">
+                                  <p className="text-xs font-medium text-foreground truncate">{s.task?.title ?? "Task"}</p>
                                   <div className="flex items-center gap-2 mt-0.5">
                                     <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded
-                                      ${s.status === "APPROVED" ? "bg-[#0f9d58]/20 text-[#0f9d58]"
-                                        : s.status === "REJECTED" ? "bg-[#ea4335]/20 text-[#ea4335]"
-                                        : "bg-[#F59E0B]/20 text-[#F59E0B]"}`}>
+                                      ${s.status === "APPROVED" ? "bg-ok/20 text-ok"
+                                        : s.status === "REJECTED" ? "bg-crit/20 text-crit"
+                                        : "bg-warn/20 text-warn"}`}>
                                       {s.status}
                                     </span>
-                                    <span className="text-[10px] text-[#5A6275]">{fmt(s.submittedAt)}</span>
+                                    <span className="text-[10px] text-subtle">{fmt(s.submittedAt)}</span>
                                   </div>
                                 </div>
                               ))}
@@ -1016,17 +1016,17 @@ function InternSummaryTab() {
 
                         {/* Discussions */}
                         <div className="space-y-2">
-                          <h4 className="text-xs font-semibold text-[#8A92A6] flex items-center gap-1.5">
+                          <h4 className="text-xs font-semibold text-muted flex items-center gap-1.5">
                             <MessageSquare className="w-3.5 h-3.5" /> Discussions ({profile.discussions.length})
                           </h4>
                           {profile.discussions.length === 0 ? (
-                            <p className="text-xs text-[#3A4150]">No discussion activity yet.</p>
+                            <p className="text-xs text-subtle">No discussion activity yet.</p>
                           ) : (
                             <div className="space-y-1.5 max-h-48 overflow-y-auto">
                               {profile.discussions.slice(0, 20).map((d) => (
-                                <div key={d.id} className="bg-[#1B1F2A] rounded-lg px-3 py-2">
-                                  <p className="text-xs text-[#C8CEDB] line-clamp-2">{d.body}</p>
-                                  <p className="text-[10px] text-[#5A6275] mt-0.5">{fmt(d.createdAt)}</p>
+                                <div key={d.id} className="bg-surface-sunken rounded-lg px-3 py-2">
+                                  <p className="text-xs text-foreground line-clamp-2">{d.body}</p>
+                                  <p className="text-[10px] text-subtle mt-0.5">{fmt(d.createdAt)}</p>
                                 </div>
                               ))}
                             </div>
@@ -1064,7 +1064,7 @@ export default function AttendancePage() {
         title="Attendance"
         description={isMentor ? "View and manage intern timesheets." : "Track your daily punch-in and punch-out."}
       />
-      <div className="flex-1 overflow-auto bg-[#0B0D12] p-6">
+      <div className="flex-1 overflow-auto bg-surface p-6">
         {!currentUser ? (
           <LoadingSpinner />
         ) : isMentor ? (

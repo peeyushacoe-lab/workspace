@@ -132,7 +132,7 @@ export function PushNotificationSetup() {
     <>
       {/* Backdrop on mobile */}
       <div
-        className="fixed inset-0 z-[998] bg-black/40 backdrop-blur-sm sm:hidden"
+        className="fixed inset-0 z-[998] bg-overlay backdrop-blur-sm sm:hidden"
         onClick={handleDismiss}
       />
 
@@ -145,11 +145,11 @@ export function PushNotificationSetup() {
           // Desktop: small card top-right
           "sm:bottom-auto sm:top-4 sm:right-4 sm:left-auto sm:rounded-xl sm:w-80",
         ].join(" ")}
-        style={{ background: "#16191F", border: "1px solid #262A35" }}
+        style={{ background: "#16191F", border: "1px solid var(--border)" }}
       >
         {/* Handle bar (mobile only) */}
         <div className="flex justify-center pt-3 pb-1 sm:hidden">
-          <div className="w-10 h-1 rounded-full bg-[#3A3F4B]" />
+          <div className="w-10 h-1 rounded-full bg-border-strong" />
         </div>
 
         <div className="p-5">
@@ -157,17 +157,17 @@ export function PushNotificationSetup() {
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                style={{ background: "#1a56db22" }}>
-                <Bell className="w-5 h-5" style={{ color: "#1a56db" }} />
+                style={{ background: "color-mix(in srgb, var(--accent) 13%, transparent)" }}>
+                <Bell className="w-5 h-5" style={{ color: "var(--accent)" }} />
               </div>
               <div>
-                <p className="text-sm font-semibold text-[#E6E9F0]">Stay in the loop</p>
-                <p className="text-xs text-[#5A6275] mt-0.5">Get notified for emails &amp; messages</p>
+                <p className="text-sm font-semibold text-foreground">Stay in the loop</p>
+                <p className="text-xs text-subtle mt-0.5">Get notified for emails &amp; messages</p>
               </div>
             </div>
             <button
               onClick={handleDismiss}
-              className="p-1 rounded-lg text-[#5A6275] hover:text-[#E6E9F0] hover:bg-[#1B1F2A] transition-colors"
+              className="p-1 rounded-lg text-subtle hover:text-foreground hover:bg-surface-sunken transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -176,7 +176,7 @@ export function PushNotificationSetup() {
           {/* Body */}
           {state === "idle" && (
             <>
-              <p className="text-xs text-[#8A92A6] mb-4 leading-relaxed">
+              <p className="text-xs text-muted mb-4 leading-relaxed">
                 Nexus will send you push notifications when you receive a new email or a chat message —
                 even when the app is in the background.
               </p>
@@ -184,13 +184,13 @@ export function PushNotificationSetup() {
                 <button
                   onClick={handleAllow}
                   className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white transition-colors"
-                  style={{ background: "#1a56db" }}
+                  style={{ background: "var(--accent)" }}
                 >
                   Enable notifications
                 </button>
                 <button
                   onClick={handleDismiss}
-                  className="px-3 py-2.5 rounded-lg text-sm font-medium text-[#5A6275] hover:text-[#E6E9F0] hover:bg-[#1B1F2A] transition-colors"
+                  className="px-3 py-2.5 rounded-lg text-sm font-medium text-subtle hover:text-foreground hover:bg-surface-sunken transition-colors"
                 >
                   Not now
                 </button>
@@ -199,22 +199,22 @@ export function PushNotificationSetup() {
           )}
 
           {state === "loading" && (
-            <p className="text-xs text-[#5A6275] text-center py-3">
+            <p className="text-xs text-subtle text-center py-3">
               Requesting permission…
             </p>
           )}
 
           {state === "done" && (
             <div className="flex items-center gap-2 py-2">
-              <Bell className="w-4 h-4 text-[#0f9d58]" />
-              <p className="text-sm text-[#0f9d58] font-medium">Notifications enabled!</p>
+              <Bell className="w-4 h-4 text-ok" />
+              <p className="text-sm text-ok font-medium">Notifications enabled!</p>
             </div>
           )}
 
           {state === "denied" && (
             <div className="flex items-center gap-2 py-2">
-              <BellOff className="w-4 h-4 text-[#5A6275]" />
-              <p className="text-sm text-[#5A6275]">
+              <BellOff className="w-4 h-4 text-subtle" />
+              <p className="text-sm text-subtle">
                 Permission denied. You can enable it in your browser settings.
               </p>
             </div>

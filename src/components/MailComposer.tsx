@@ -90,9 +90,9 @@ const defaultMailTheme: MailComposerTheme = {
     "rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 sm:p-6 shadow-[0_1px_0_rgba(0,0,0,0.02)]",
   innerPanelClass: "rounded-lg border border-[var(--border)] bg-[var(--surface-sunken)] p-5",
   uploadZoneClass:
-    "relative flex h-11 cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed border-[var(--accent)]/45 bg-[var(--accent-soft)] text-[14px] font-medium text-[var(--accent)] transition hover:bg-[#00C2FF]/20",
+    "relative flex h-11 cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed border-[var(--accent)]/45 bg-[var(--accent-soft)] text-[14px] font-medium text-[var(--accent)] transition hover:bg-accent/20",
   pasteButtonClass:
-    "mt-3 inline-flex h-10 items-center justify-center gap-2 rounded-md border border-[var(--accent)]/40 bg-[var(--accent-soft)] px-4 text-[13px] font-semibold text-[var(--accent)] transition hover:bg-[#00C2FF]/20",
+    "mt-3 inline-flex h-10 items-center justify-center gap-2 rounded-md border border-[var(--accent)]/40 bg-[var(--accent-soft)] px-4 text-[13px] font-semibold text-[var(--accent)] transition hover:bg-accent/20",
   previewTitleClass: "font-serif text-[22px] leading-tight tracking-tight text-[var(--foreground)]",
   previewDescriptionClass: "mt-1 text-[14px] text-[var(--muted)]",
   recipientBadgeClass:
@@ -102,38 +102,38 @@ const defaultMailTheme: MailComposerTheme = {
     "rounded-lg border border-dashed border-[var(--border-strong)] bg-[var(--surface-sunken)] p-8 text-center text-[14px] text-[var(--muted)]",
   placeholderHintClass: "text-[12px] text-[var(--subtle)]",
   iconAccentClass: "text-[var(--accent)]",
-  resultNestedClass: "mt-4 rounded-md border border-[var(--border)] bg-[#12151D]/60 p-3 text-[var(--foreground)]",
+  resultNestedClass: "mt-4 rounded-md border border-[var(--border)] bg-surface/60 p-3 text-[var(--foreground)]",
 };
 
 const stitchMailTheme: MailComposerTheme = {
   inputClass:
-    "h-11 rounded-lg border border-[#262A35] bg-[#12151D] px-3 text-sm text-[#E6E9F0] outline-none transition focus:border-[#00C2FF] focus:ring-2 focus:ring-[#00C2FF]/15",
+    "h-11 rounded-lg border border-border bg-surface px-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15",
   compactInputClass:
-    "h-9 w-32 rounded-lg border border-[#262A35] bg-[#12151D] px-3 text-sm text-[#E6E9F0] outline-none transition focus:border-[#00C2FF] focus:ring-2 focus:ring-[#00C2FF]/15",
+    "h-9 w-32 rounded-lg border border-border bg-surface px-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15",
   textareaClass:
-    "rounded-lg border border-[#262A35] bg-[#12151D] px-3 py-3 text-sm text-[#E6E9F0] outline-none transition focus:border-[#00C2FF] focus:ring-2 focus:ring-[#00C2FF]/15",
-  labelTextClass: "text-sm font-medium text-[#8A92A6]",
+    "rounded-lg border border-border bg-surface px-3 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15",
+  labelTextClass: "text-sm font-medium text-muted",
   primaryButtonClass:
-    "inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#00C2FF] px-5 text-sm font-semibold text-[#06121A] transition hover:bg-[#0098E6] disabled:cursor-not-allowed disabled:opacity-60",
+    "inline-flex h-10 items-center justify-center gap-2 rounded-md bg-accent px-5 text-sm font-semibold text-accent-foreground transition hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60",
   secondaryButtonClass:
-    "inline-flex h-11 items-center justify-center gap-2 rounded-md border border-[#262A35] bg-[#12151D] px-4 text-sm font-medium text-[#8A92A6] transition hover:bg-[#1B1F2A] disabled:cursor-not-allowed disabled:opacity-50",
+    "inline-flex h-11 items-center justify-center gap-2 rounded-md border border-border bg-surface px-4 text-sm font-medium text-muted transition hover:bg-surface-sunken disabled:cursor-not-allowed disabled:opacity-50",
   mainSectionClass:
-    "rounded-xl border border-[#262A35] bg-[#12151D] p-4 sm:p-6",
-  innerPanelClass: "rounded-xl border border-[#262A35] bg-[#12151D] p-5",
+    "rounded-xl border border-border bg-surface p-4 sm:p-6",
+  innerPanelClass: "rounded-xl border border-border bg-surface p-5",
   uploadZoneClass:
-    "relative flex h-11 cursor-pointer items-center justify-center gap-2 rounded-md border-2 border-dashed border-[#262A35] bg-[#12151D] text-sm font-medium text-[#00C2FF] transition hover:border-[#00C2FF] hover:bg-[#00C2FF]/10",
+    "relative flex h-11 cursor-pointer items-center justify-center gap-2 rounded-md border-2 border-dashed border-border bg-surface text-sm font-medium text-accent transition hover:border-accent hover:bg-accent/10",
   pasteButtonClass:
-    "mt-3 inline-flex h-10 items-center justify-center gap-2 rounded-md border border-[#262A35] bg-[#12151D] px-4 text-sm font-semibold text-[#00C2FF] transition hover:bg-[#00C2FF]/10",
-  previewTitleClass: "text-lg font-semibold tracking-tight text-[#E6E9F0]",
-  previewDescriptionClass: "mt-1 text-sm text-[#8A92A6]",
+    "mt-3 inline-flex h-10 items-center justify-center gap-2 rounded-md border border-border bg-surface px-4 text-sm font-semibold text-accent transition hover:bg-accent/10",
+  previewTitleClass: "text-lg font-semibold tracking-tight text-foreground",
+  previewDescriptionClass: "mt-1 text-sm text-muted",
   recipientBadgeClass:
-    "rounded-full bg-[#00C2FF]/10 px-3 py-1 text-[11px] font-semibold text-[#00C2FF]",
-  previewCardClass: "rounded-xl border border-[#262A35] bg-[#12151D] p-4",
+    "rounded-full bg-accent/10 px-3 py-1 text-[11px] font-semibold text-accent",
+  previewCardClass: "rounded-xl border border-border bg-surface p-4",
   emptyPreviewClass:
-    "rounded-xl border-2 border-dashed border-[#262A35] bg-[#12151D] p-8 text-center text-sm text-[#8A92A6]",
-  placeholderHintClass: "text-xs text-[#5A6275]",
-  iconAccentClass: "text-[#00C2FF]",
-  resultNestedClass: "mt-4 rounded-lg border border-[#262A35] bg-[#12151D] p-3 text-sm text-[#E6E9F0]",
+    "rounded-xl border-2 border-dashed border-border bg-surface p-8 text-center text-sm text-muted",
+  placeholderHintClass: "text-xs text-subtle",
+  iconAccentClass: "text-accent",
+  resultNestedClass: "mt-4 rounded-lg border border-border bg-surface p-3 text-sm text-foreground",
 };
 
 function splitName(name: string, email: string) {
@@ -309,7 +309,7 @@ export function MailComposer({
         <div className="whitespace-pre-wrap">{interpolated}</div>
         {signatureHtml && (
           <div 
-            className="mt-6 pt-4 border-t border-[#262A35]"
+            className="mt-6 pt-4 border-t border-border"
             dangerouslySetInnerHTML={{ __html: sanitizeHtml(signatureHtml) }}
           />
         )}
@@ -444,29 +444,29 @@ export function MailComposer({
       >
         <Toaster richColors theme="light" />
 
-        <section className="space-y-6 rounded-xl bg-[#12151D] p-4 sm:p-6 border border-[#262A35]">
+        <section className="space-y-6 rounded-xl bg-surface p-4 sm:p-6 border border-border">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <p className="text-sm font-semibold text-[#8A92A6]">Compose & send</p>
-              <h1 className="mt-2 text-3xl font-semibold text-[#E6E9F0]">New Security Campaign</h1>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-[#8A92A6]">
+              <p className="text-sm font-semibold text-muted">Compose & send</p>
+              <h1 className="mt-2 text-3xl font-semibold text-foreground">New Security Campaign</h1>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
                 Upload recipients, edit templates, and send — same flow as the Stitch composer screen.
               </p>
             </div>
-            <div className="inline-flex items-center gap-2 rounded-lg border border-[#262A35] bg-[#1B1F2A] px-4 py-2 text-sm font-semibold text-[#8A92A6]">
+            <div className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface-sunken px-4 py-2 text-sm font-semibold text-muted">
               Admin Access
             </div>
           </div>
 
           <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
             <div className="space-y-6">
-              <div className="rounded-xl border border-red-100 bg-red-500/10 p-4 flex items-start gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-500/15 text-red-400">
+              <div className="rounded-xl border border-crit bg-crit/10 p-4 flex items-start gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-crit/15 text-crit">
                   <ShieldCheck className="h-5 w-5" />
                 </span>
                 <div>
-                  <p className="font-semibold text-[#E6E9F0]">Campaign Protection Active</p>
-                  <p className="mt-1 text-sm text-[#8A92A6]">
+                  <p className="font-semibold text-foreground">Campaign Protection Active</p>
+                  <p className="mt-1 text-sm text-muted">
                     All outgoing links will be automatically wrapped with CyberSage secure tracking and encryption.
                   </p>
                 </div>
@@ -474,19 +474,19 @@ export function MailComposer({
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="grid gap-2">
-                  <span className="text-sm font-medium text-[#8A92A6]">Campaign title</span>
+                  <span className="text-sm font-medium text-muted">Campaign title</span>
                   <input
                     value={title}
                     onChange={(event) => setTitle(event.target.value)}
-                    className="h-12 rounded-lg border border-[#262A35] bg-[#1B1F2A] px-4 text-sm text-[#E6E9F0] outline-none transition focus:border-[#00C2FF]/50 focus:ring-2 focus:ring-[#00C2FF]/15"
+                    className="h-12 rounded-lg border border-border bg-surface-sunken px-4 text-sm text-foreground outline-none transition focus:border-accent/50 focus:ring-2 focus:ring-accent/15"
                   />
                 </label>
                 <label className="grid gap-2">
-                  <span className="text-sm font-medium text-[#8A92A6]">Template</span>
+                  <span className="text-sm font-medium text-muted">Template</span>
                   <select
                     value={selectedTemplateId}
                     onChange={(event) => setSelectedTemplateId(event.target.value)}
-                    className="h-12 rounded-lg border border-[#262A35] bg-[#1B1F2A] px-4 text-sm text-[#E6E9F0] outline-none transition focus:border-[#00C2FF]/50 focus:ring-2 focus:ring-[#00C2FF]/15"
+                    className="h-12 rounded-lg border border-border bg-surface-sunken px-4 text-sm text-foreground outline-none transition focus:border-accent/50 focus:ring-2 focus:ring-accent/15"
                   >
                     {templates.map((templateOption) => (
                       <option key={templateOption.id} value={templateOption.id}>
@@ -496,11 +496,11 @@ export function MailComposer({
                   </select>
                 </label>
                 <label className="grid gap-2">
-                  <span className="text-sm font-medium text-[#8A92A6]">Signature</span>
+                  <span className="text-sm font-medium text-muted">Signature</span>
                   <select
                     value={selectedSignatureId}
                     onChange={(event) => setSelectedSignatureId(event.target.value)}
-                    className="h-12 rounded-lg border border-[#262A35] bg-[#1B1F2A] px-4 text-sm text-[#E6E9F0] outline-none transition focus:border-[#00C2FF]/50 focus:ring-2 focus:ring-[#00C2FF]/15"
+                    className="h-12 rounded-lg border border-border bg-surface-sunken px-4 text-sm text-foreground outline-none transition focus:border-accent/50 focus:ring-2 focus:ring-accent/15"
                   >
                     <option value="">No signature</option>
                     {signatures.map((signature) => (
@@ -511,11 +511,11 @@ export function MailComposer({
                   </select>
                 </label>
                 <label className="grid gap-2">
-                  <span className="text-sm font-medium text-[#8A92A6]">From Address</span>
+                  <span className="text-sm font-medium text-muted">From Address</span>
                   <select
                     value={selectedSenderEmail}
                     onChange={(event) => setSelectedSenderEmail(event.target.value)}
-                    className="h-12 rounded-lg border border-[#262A35] bg-[#1B1F2A] px-4 text-sm text-[#E6E9F0] outline-none transition focus:border-[#00C2FF]/50 focus:ring-2 focus:ring-[#00C2FF]/15"
+                    className="h-12 rounded-lg border border-border bg-surface-sunken px-4 text-sm text-foreground outline-none transition focus:border-accent/50 focus:ring-2 focus:ring-accent/15"
                     required
                   >
                     {allowedSenders.map((sender) => (
@@ -529,24 +529,24 @@ export function MailComposer({
 
               <div className="grid gap-4 sm:grid-cols-3">
                 <label className="grid gap-2">
-                  <span className="text-sm font-medium text-[#8A92A6]">Template name</span>
+                  <span className="text-sm font-medium text-muted">Template name</span>
                   <input
                     value={templateLabel}
                     onChange={(event) => setTemplateLabel(event.target.value)}
-                    className="h-12 rounded-lg border border-[#262A35] bg-[#1B1F2A] px-4 text-sm text-[#E6E9F0] outline-none transition focus:border-[#00C2FF]/50 focus:ring-2 focus:ring-[#00C2FF]/15"
+                    className="h-12 rounded-lg border border-border bg-surface-sunken px-4 text-sm text-foreground outline-none transition focus:border-accent/50 focus:ring-2 focus:ring-accent/15"
                   />
                 </label>
                 <label className="grid gap-2">
-                  <span className="text-sm font-medium text-[#8A92A6]">Template subject</span>
+                  <span className="text-sm font-medium text-muted">Template subject</span>
                   <input
                     value={subject}
                     onChange={(event) => setSubject(event.target.value)}
-                    className="h-12 rounded-lg border border-[#262A35] bg-[#1B1F2A] px-4 text-sm text-[#E6E9F0] outline-none transition focus:border-[#00C2FF]/50 focus:ring-2 focus:ring-[#00C2FF]/15"
+                    className="h-12 rounded-lg border border-border bg-surface-sunken px-4 text-sm text-foreground outline-none transition focus:border-accent/50 focus:ring-2 focus:ring-accent/15"
                   />
                 </label>
                 <label className="grid gap-2">
-                  <span className="text-sm font-medium text-[#8A92A6]">CSV upload</span>
-                  <span className="relative flex h-12 items-center justify-center gap-2 rounded-md border-2 border-dashed border-[#262A35] bg-[#1B1F2A] px-4 text-sm font-semibold text-[#00C2FF] transition hover:border-[#00C2FF] hover:bg-[#00C2FF]/10">
+                  <span className="text-sm font-medium text-muted">CSV upload</span>
+                  <span className="relative flex h-12 items-center justify-center gap-2 rounded-md border-2 border-dashed border-border bg-surface-sunken px-4 text-sm font-semibold text-accent transition hover:border-accent hover:bg-accent/10">
                     <FileUp className="h-4 w-4" />
                     Upload contacts
                     <input
@@ -564,14 +564,14 @@ export function MailComposer({
 
               <label className="grid gap-3">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm font-medium text-[#8A92A6]">Template body</span>
-                  <span className="text-xs text-[#94a3b8]">Fully editable — rewrite any line, keep or remove any placeholder.</span>
+                  <span className="text-sm font-medium text-muted">Template body</span>
+                  <span className="text-xs text-muted">Fully editable — rewrite any line, keep or remove any placeholder.</span>
                 </div>
                 <textarea
                   value={body}
                   onChange={(event) => setBody(event.target.value)}
                   rows={10}
-                  className="min-h-[280px] rounded-xl border border-[#262A35] bg-[#1B1F2A] px-4 py-4 text-sm leading-6 text-[#E6E9F0] outline-none transition focus:border-[#00C2FF]/50 focus:ring-2 focus:ring-[#00C2FF]/15"
+                  className="min-h-[280px] rounded-xl border border-border bg-surface-sunken px-4 py-4 text-sm leading-6 text-foreground outline-none transition focus:border-accent/50 focus:ring-2 focus:ring-accent/15"
                   placeholder="Hi {{firstName}},\n\nCongratulations. Your application has been accepted, and we are excited to move you into the next stage of the CyberSage internship workflow.\n\n{{customMessage}}\n\nThank you for choosing to build with CyberSage."
                 />
               </label>
@@ -580,57 +580,57 @@ export function MailComposer({
                 <button
                   type="button"
                   onClick={saveTemplate}
-                  className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-[#00C2FF] px-5 text-sm font-semibold text-[#06121A] transition hover:bg-[#12151D]"
+                  className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-accent px-5 text-sm font-semibold text-accent-foreground transition hover:bg-surface"
                 >
                   Save template
                 </button>
                 <button
                   type="button"
                   onClick={createNewTemplate}
-                  className="inline-flex h-12 items-center justify-center gap-2 rounded-md border border-[#262A35] bg-[#1B1F2A] px-5 text-sm font-semibold text-[#8A92A6] transition hover:bg-[#303444]"
+                  className="inline-flex h-12 items-center justify-center gap-2 rounded-md border border-border bg-surface-sunken px-5 text-sm font-semibold text-muted transition hover:bg-hover"
                 >
                   New custom template
                 </button>
                 <button
                   type="button"
                   onClick={resetTemplate}
-                  className="inline-flex h-12 items-center justify-center gap-2 rounded-md border border-[#262A35] bg-[#1B1F2A] px-5 text-sm font-semibold text-[#8A92A6] transition hover:bg-[#303444]"
+                  className="inline-flex h-12 items-center justify-center gap-2 rounded-md border border-border bg-surface-sunken px-5 text-sm font-semibold text-muted transition hover:bg-hover"
                 >
                   Reset built-in
                 </button>
               </div>
 
               <label className="grid gap-2">
-                <span className="text-sm font-medium text-[#8A92A6]">Template description</span>
+                <span className="text-sm font-medium text-muted">Template description</span>
                 <input
                   value={templateDescription}
                   onChange={(event) => setTemplateDescription(event.target.value)}
-                  className="h-12 rounded-lg border border-[#262A35] bg-[#1B1F2A] px-4 text-sm text-[#E6E9F0] outline-none transition focus:border-[#00C2FF]/50 focus:ring-2 focus:ring-[#00C2FF]/15"
+                  className="h-12 rounded-lg border border-border bg-surface-sunken px-4 text-sm text-foreground outline-none transition focus:border-accent/50 focus:ring-2 focus:ring-accent/15"
                 />
               </label>
 
-              <div className="rounded-xl border border-[#262A35] bg-[#12151D] p-5">
-                <h2 className="text-sm font-semibold text-[#E6E9F0]">Personalize the recipient</h2>
-                <p className="mt-2 text-sm leading-6 text-[#8A92A6]">
+              <div className="rounded-xl border border-border bg-surface p-5">
+                <h2 className="text-sm font-semibold text-foreground">Personalize the recipient</h2>
+                <p className="mt-2 text-sm leading-6 text-muted">
                   Overrides apply when the contact row leaves the field blank. Single recipient? Just fill these — no CSV needed.
                 </p>
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
                   <label className="grid gap-2">
-                    <span className="text-sm font-medium text-[#8A92A6]">First name</span>
+                    <span className="text-sm font-medium text-muted">First name</span>
                     <input
                       value={firstName}
                       onChange={(event) => setFirstName(event.target.value)}
                       placeholder="Peeyush"
-                      className="h-12 rounded-lg border border-[#262A35] bg-[#12151D] px-4 text-sm text-[#E6E9F0] outline-none transition focus:border-[#00C2FF]/50 focus:ring-2 focus:ring-[#00C2FF]/15"
+                      className="h-12 rounded-lg border border-border bg-surface px-4 text-sm text-foreground outline-none transition focus:border-accent/50 focus:ring-2 focus:ring-accent/15"
                     />
                   </label>
                   <label className="grid gap-2">
-                    <span className="text-sm font-medium text-[#8A92A6]">Last name</span>
+                    <span className="text-sm font-medium text-muted">Last name</span>
                     <input
                       value={lastName}
                       onChange={(event) => setLastName(event.target.value)}
                       placeholder="Kumar"
-                      className="h-12 rounded-lg border border-[#262A35] bg-[#12151D] px-4 text-sm text-[#E6E9F0] outline-none transition focus:border-[#00C2FF]/50 focus:ring-2 focus:ring-[#00C2FF]/15"
+                      className="h-12 rounded-lg border border-border bg-surface px-4 text-sm text-foreground outline-none transition focus:border-accent/50 focus:ring-2 focus:ring-accent/15"
                     />
                   </label>
                 </div>
@@ -638,21 +638,21 @@ export function MailComposer({
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="grid gap-2">
-                  <span className="text-sm font-medium text-[#8A92A6]">Interview date</span>
+                  <span className="text-sm font-medium text-muted">Interview date</span>
                   <input
                     value={interviewDate}
                     onChange={(event) => setInterviewDate(event.target.value)}
                     placeholder="12 May 2026, 10:00"
-                    className="h-12 rounded-lg border border-[#262A35] bg-[#1B1F2A] px-4 text-sm text-[#E6E9F0] outline-none transition focus:border-[#00C2FF]/50 focus:ring-2 focus:ring-[#00C2FF]/15"
+                    className="h-12 rounded-lg border border-border bg-surface-sunken px-4 text-sm text-foreground outline-none transition focus:border-accent/50 focus:ring-2 focus:ring-accent/15"
                   />
                 </label>
                 <label className="grid gap-2">
-                  <span className="text-sm font-medium text-[#8A92A6]">Custom message</span>
+                  <span className="text-sm font-medium text-muted">Custom message</span>
                   <textarea
                     value={customMessage}
                     onChange={(event) => setCustomMessage(event.target.value)}
                     rows={4}
-                    className="min-h-[120px] rounded-xl border border-[#262A35] bg-[#1B1F2A] px-4 py-3 text-sm text-[#E6E9F0] outline-none transition focus:border-[#00C2FF]/50 focus:ring-2 focus:ring-[#00C2FF]/15"
+                    className="min-h-[120px] rounded-xl border border-border bg-surface-sunken px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent/50 focus:ring-2 focus:ring-accent/15"
                     placeholder="Optional message added into every personalized email."
                   />
                 </label>
@@ -662,7 +662,7 @@ export function MailComposer({
                 <button
                   disabled={contacts.length === 0 || isPending}
                   onClick={sendCampaign}
-                  className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#00C2FF] px-5 text-sm font-semibold text-[#06121A] transition hover:bg-[#12151D] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-accent px-5 text-sm font-semibold text-accent-foreground transition hover:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                   Send campaign
@@ -675,28 +675,28 @@ export function MailComposer({
                     setResult(null);
                     toast.info("Recipient list cleared");
                   }}
-                  className="inline-flex h-12 items-center justify-center gap-2 rounded-md border border-[#262A35] bg-[#1B1F2A] px-6 text-sm font-semibold text-[#8A92A6] transition hover:bg-[#303444] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex h-12 items-center justify-center gap-2 rounded-md border border-border bg-surface-sunken px-6 text-sm font-semibold text-muted transition hover:bg-hover disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <Trash2 className="h-4 w-4" />
                   Clear
                 </button>
-                <p className="text-sm text-[#8A92A6]">{recipientCountLabel}</p>
+                <p className="text-sm text-muted">{recipientCountLabel}</p>
               </div>
 
-              <div className="rounded-xl border border-[#262A35] bg-[#12151D] p-5">
+              <div className="rounded-xl border border-border bg-surface p-5">
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <h2 className="text-sm font-semibold text-[#E6E9F0]">Direct email paste</h2>
-                    <p className="mt-2 text-sm leading-6 text-[#8A92A6]">
+                    <h2 className="text-sm font-semibold text-foreground">Direct email paste</h2>
+                    <p className="mt-2 text-sm leading-6 text-muted">
                       Supports bare emails, comma-separated rows, or Name &lt;email&gt; format.
                     </p>
                   </div>
-                  <label className="flex items-center gap-2 text-sm text-[#8A92A6]">
+                  <label className="flex items-center gap-2 text-sm text-muted">
                     Default status
                     <input
                       value={pasteStatus}
                       onChange={(event) => setPasteStatus(event.target.value)}
-                      className="h-10 rounded-lg border border-[#262A35] bg-[#12151D] px-3 text-sm text-[#E6E9F0] outline-none transition focus:border-[#00C2FF]/50 focus:ring-2 focus:ring-[#00C2FF]/15"
+                      className="h-10 rounded-lg border border-border bg-surface px-3 text-sm text-foreground outline-none transition focus:border-accent/50 focus:ring-2 focus:ring-accent/15"
                     />
                   </label>
                 </div>
@@ -704,22 +704,22 @@ export function MailComposer({
                   value={pasteText}
                   onChange={(event) => setPasteText(event.target.value)}
                   rows={6}
-                  className="mt-4 w-full rounded-xl border border-[#262A35] bg-[#12151D] px-4 py-3 text-sm text-[#E6E9F0] outline-none transition focus:border-[#00C2FF]/50 focus:ring-2 focus:ring-[#00C2FF]/15"
+                  className="mt-4 w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent/50 focus:ring-2 focus:ring-accent/15"
                   placeholder={`peeyush@example.com\nRahul, rahul@example.com, Accepted\nCyberSage Client <client@example.com>`}
                 />
                 <button
                   type="button"
                   onClick={addPastedContacts}
-                  className="mt-4 inline-flex h-12 items-center justify-center gap-2 rounded-md border border-[#262A35] bg-[#1B1F2A] px-5 text-sm font-semibold text-[#00C2FF] transition hover:bg-[#00C2FF]/10"
+                  className="mt-4 inline-flex h-12 items-center justify-center gap-2 rounded-md border border-border bg-surface-sunken px-5 text-sm font-semibold text-accent transition hover:bg-accent/10"
                 >
                   <ClipboardPaste className="h-4 w-4" />
                   Add pasted emails
                 </button>
               </div>
 
-              <div className="rounded-xl border border-[#262A35] bg-[#12151D] p-5">
-                <div className="flex items-center gap-2 text-sm font-semibold text-[#E6E9F0]">
-                  <ShieldCheck className="h-4 w-4 text-[#E6E9F0]" />
+              <div className="rounded-xl border border-border bg-surface p-5">
+                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <ShieldCheck className="h-4 w-4 text-foreground" />
                   Phase 2 safety check
                 </div>
                 <div className="mt-3 grid gap-2">
@@ -728,10 +728,10 @@ export function MailComposer({
                       key={risk.label}
                       className={`rounded-lg border px-3 py-2 text-sm ${
                         risk.level === "danger"
-                          ? "border-[#ea4335]/30 bg-[#ea4335]/10 text-[#f0997b]"
+                          ? "border-crit/30 bg-crit/10 text-warn"
                           : risk.level === "warn"
-                            ? "border-[#F59E0B]/30 bg-[#F59E0B]/10 text-[#F59E0B]"
-                            : "border-[#0f9d58]/30 bg-[#0f9d58]/10 text-[#5DCAA5]"
+                            ? "border-warn/30 bg-warn/10 text-warn"
+                            : "border-ok/30 bg-ok/10 text-ok"
                       }`}
                     >
                       {risk.label}
@@ -742,8 +742,8 @@ export function MailComposer({
             </div>
 
             <div className="space-y-5">
-              <div className="rounded-xl border border-[#262A35] bg-[#12151D] p-5">
-                <h2 className="text-sm font-semibold text-[#E6E9F0]">Select Template</h2>
+              <div className="rounded-xl border border-border bg-surface p-5">
+                <h2 className="text-sm font-semibold text-foreground">Select Template</h2>
                 <div className="mt-4 space-y-3">
                   {templates.slice(0, 4).map((templateOption) => (
                     <button
@@ -752,28 +752,28 @@ export function MailComposer({
                       onClick={() => setSelectedTemplateId(templateOption.id)}
                       className={`w-full rounded-xl border px-4 py-4 text-left transition ${
                         selectedTemplateId === templateOption.id
-                          ? "border-[#00C2FF] bg-[#00C2FF]/10 text-[#E6E9F0]"
-                          : "border-[#262A35] bg-[#1B1F2A] text-[#8A92A6] hover:border-[#00C2FF]/40 hover:bg-[#12151D]"
+                          ? "border-accent bg-accent/10 text-foreground"
+                          : "border-border bg-surface-sunken text-muted hover:border-accent/40 hover:bg-surface"
                       }`}
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span className="font-semibold">{templateOption.label}</span>
-                        <span className="text-xs text-[#94a3b8]">{templateOption.defaultKey ? "Built-in" : "Custom"}</span>
+                        <span className="text-xs text-muted">{templateOption.defaultKey ? "Built-in" : "Custom"}</span>
                       </div>
-                      <p className="mt-2 text-sm text-[#8A92A6]">{templateOption.description}</p>
+                      <p className="mt-2 text-sm text-muted">{templateOption.description}</p>
                     </button>
                   ))}
                 </div>
               </div>
 
-              <div className="rounded-xl border border-[#262A35] bg-[#12151D] p-5">
-                <h2 className="text-sm font-semibold text-[#E6E9F0]">Visual Preview</h2>
-                <div className="mt-4 overflow-hidden rounded-xl border border-[#262A35] bg-[#12151D]">
-                  <div className="h-40 bg-[#262A35]" />
+              <div className="rounded-xl border border-border bg-surface p-5">
+                <h2 className="text-sm font-semibold text-foreground">Visual Preview</h2>
+                <div className="mt-4 overflow-hidden rounded-xl border border-border bg-surface">
+                  <div className="h-40 bg-border" />
                   <div className="p-4">
-                    <p className="text-base font-semibold text-[#E6E9F0]">{templateLabel}</p>
-                    <p className="mt-2 text-sm text-[#8A92A6]">{templateDescription}</p>
-                    <div className="mt-4 h-2 rounded-full bg-[#262A35]" />
+                    <p className="text-base font-semibold text-foreground">{templateLabel}</p>
+                    <p className="mt-2 text-sm text-muted">{templateDescription}</p>
+                    <div className="mt-4 h-2 rounded-full bg-border" />
                   </div>
                 </div>
               </div>
@@ -789,11 +789,11 @@ export function MailComposer({
               preview.map((contact) => (
                 <div key={contact.email} className={t.previewCardClass}>
                   <div className="flex items-center justify-between gap-3">
-                    <p className="text-[15px] font-medium text-[#E6E9F0]">{contact.name || contact.email}</p>
+                    <p className="text-[15px] font-medium text-foreground">{contact.name || contact.email}</p>
                     <span className={t.recipientBadgeClass}>{contact.status}</span>
                   </div>
-                  <p className="mt-1 text-sm text-[#8A92A6]">{contact.email}</p>
-                  <p className="mt-3 text-sm leading-6 text-[#E6E9F0]">{previewContent}</p>
+                  <p className="mt-1 text-sm text-muted">{contact.email}</p>
+                  <p className="mt-3 text-sm leading-6 text-foreground">{previewContent}</p>
                 </div>
               ))
             ) : (
@@ -802,9 +802,9 @@ export function MailComposer({
               </div>
             )}
           </div>
-          <div className={`mt-5 ${t.innerPanelClass} text-sm text-[#E6E9F0]`}>
+          <div className={`mt-5 ${t.innerPanelClass} text-sm text-foreground`}>
             <p className="font-semibold">Placeholders available</p>
-            <ul className="mt-2 list-inside list-disc space-y-1 text-[#8A92A6]">
+            <ul className="mt-2 list-inside list-disc space-y-1 text-muted">
               <li>{"{{firstName}}"} — first name (override or derived from contact)</li>
               <li>{"{{lastName}}"} — last name (override or derived from contact)</li>
               <li>{"{{fullName}}"} — first + last combined</li>
@@ -816,7 +816,7 @@ export function MailComposer({
             </ul>
           </div>
           {errors.length ? (
-            <div className="mt-5 rounded-xl border border-[#F59E0B]/30 bg-[#F59E0B]/10 p-4 text-sm text-[#F59E0B]">
+            <div className="mt-5 rounded-xl border border-warn/30 bg-warn/10 p-4 text-sm text-warn">
               <div className="flex items-center gap-2 font-semibold">
                 <AlertCircle className="h-4 w-4" />
                 CSV warnings
@@ -832,8 +832,8 @@ export function MailComposer({
             <div
               className={`mt-5 rounded-xl border p-4 text-sm ${
                 result.failed > 0
-                  ? "border-[#ea4335]/30 bg-[#ea4335]/10 text-[#f0997b]"
-                  : "border-[#0f9d58]/30 bg-[#0f9d58]/10 text-[#5DCAA5]"
+                  ? "border-crit/30 bg-crit/10 text-warn"
+                  : "border-ok/30 bg-ok/10 text-ok"
               }`}
             >
               <div className="flex items-center gap-2 font-semibold">
@@ -1018,10 +1018,10 @@ export function MailComposer({
         </label>
 
         <div className={`mt-5 ${t.innerPanelClass}`}>
-          <p className={`text-sm font-semibold ${isStitch ? "text-[#E6E9F0]" : "text-[var(--foreground)]"}`}>
+          <p className={`text-sm font-semibold ${isStitch ? "text-foreground" : "text-[var(--foreground)]"}`}>
             Personalize the recipient
           </p>
-          <p className={`mt-1 text-xs leading-5 ${isStitch ? "text-[#8A92A6]" : "text-[var(--subtle)]"}`}>
+          <p className={`mt-1 text-xs leading-5 ${isStitch ? "text-muted" : "text-[var(--subtle)]"}`}>
             Overrides apply when the contact row leaves the field blank. Single recipient? Just fill these — no CSV needed.
           </p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -1087,7 +1087,7 @@ export function MailComposer({
             <Trash2 className="h-4 w-4" />
             Clear
           </button>
-          <p className={`flex items-center gap-2 text-sm ${isStitch ? "text-[#8A92A6]" : "text-[var(--muted)]"}`}>
+          <p className={`flex items-center gap-2 text-sm ${isStitch ? "text-muted" : "text-[var(--muted)]"}`}>
             <Users className="h-4 w-4" />
             {contacts.length} recipients loaded
           </p>
@@ -1096,15 +1096,15 @@ export function MailComposer({
         <div className={`mt-6 ${t.innerPanelClass}`}>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className={`flex items-center gap-2 text-sm font-semibold ${isStitch ? "text-[#E6E9F0]" : "text-[var(--foreground)]"}`}>
+              <h2 className={`flex items-center gap-2 text-sm font-semibold ${isStitch ? "text-foreground" : "text-[var(--foreground)]"}`}>
                 <ClipboardPaste className={`h-4 w-4 ${t.iconAccentClass}`} />
                 Direct email paste
               </h2>
-              <p className={`mt-1 text-xs leading-5 ${isStitch ? "text-[#8A92A6]" : "text-[var(--subtle)]"}`}>
+              <p className={`mt-1 text-xs leading-5 ${isStitch ? "text-muted" : "text-[var(--subtle)]"}`}>
                 Supports bare emails, comma-separated rows, or Name &lt;email&gt; format.
               </p>
             </div>
-            <label className={`flex items-center gap-2 text-xs ${isStitch ? "text-[#8A92A6]" : "text-[var(--muted)]"}`}>
+            <label className={`flex items-center gap-2 text-xs ${isStitch ? "text-muted" : "text-[var(--muted)]"}`}>
               Default status
               <input
                 value={pasteStatus}
@@ -1131,7 +1131,7 @@ export function MailComposer({
         </div>
 
         <div className={`mt-5 ${t.innerPanelClass}`}>
-          <h2 className={`flex items-center gap-2 text-sm font-semibold ${isStitch ? "text-[#E6E9F0]" : "text-[var(--foreground)]"}`}>
+          <h2 className={`flex items-center gap-2 text-sm font-semibold ${isStitch ? "text-foreground" : "text-[var(--foreground)]"}`}>
             <ShieldCheck className={`h-4 w-4 ${t.iconAccentClass}`} />
             Phase 2 safety check
           </h2>
@@ -1141,10 +1141,10 @@ export function MailComposer({
                 key={risk.label}
                 className={`rounded-md border px-3 py-2 text-[12px] ${
                   risk.level === "danger"
-                    ? "border-[#ea4335]/30 bg-[#ea4335]/10 text-[#f0997b]"
+                    ? "border-crit/30 bg-crit/10 text-warn"
                     : risk.level === "warn"
-                      ? "border-[#F59E0B]/30 bg-[#F59E0B]/10 text-[#F59E0B]"
-                      : "border-[#0f9d58]/30 bg-[#0f9d58]/10 text-[#5DCAA5]"
+                      ? "border-warn/30 bg-warn/10 text-warn"
+                      : "border-ok/30 bg-ok/10 text-ok"
                 }`}
               >
                 {risk.label}
@@ -1162,11 +1162,11 @@ export function MailComposer({
             preview.map((contact) => (
               <div key={contact.email} className={t.previewCardClass}>
                 <div className="flex items-center justify-between gap-3">
-                  <p className={`text-[15px] font-medium ${isStitch ? "text-[#E6E9F0]" : "text-[var(--foreground)]"}`}>{contact.name}</p>
+                  <p className={`text-[15px] font-medium ${isStitch ? "text-foreground" : "text-[var(--foreground)]"}`}>{contact.name}</p>
                   <span className={t.recipientBadgeClass}>{contact.status}</span>
                 </div>
-                <p className={`mt-1 text-sm ${isStitch ? "text-[#8A92A6]" : "text-[var(--muted)]"}`}>{contact.email}</p>
-                <div className={`mt-3 text-sm leading-6 ${isStitch ? "text-[#E6E9F0]" : "text-[var(--foreground)]"}`}>{previewContent}</div>
+                <p className={`mt-1 text-sm ${isStitch ? "text-muted" : "text-[var(--muted)]"}`}>{contact.email}</p>
+                <div className={`mt-3 text-sm leading-6 ${isStitch ? "text-foreground" : "text-[var(--foreground)]"}`}>{previewContent}</div>
               </div>
             ))
           ) : (
@@ -1175,9 +1175,9 @@ export function MailComposer({
             </div>
           )}
         </div>
-        <div className={`mt-5 ${t.innerPanelClass} ${isStitch ? "text-sm text-[#E6E9F0]" : "text-[14px] text-[var(--foreground)]"}`}>
+        <div className={`mt-5 ${t.innerPanelClass} ${isStitch ? "text-sm text-foreground" : "text-[14px] text-[var(--foreground)]"}`}>
           <p className="font-semibold">Placeholders available</p>
-          <ul className={`mt-2 list-inside list-disc space-y-1 ${isStitch ? "text-[#8A92A6]" : "text-[var(--muted)]"}`}>
+          <ul className={`mt-2 list-inside list-disc space-y-1 ${isStitch ? "text-muted" : "text-[var(--muted)]"}`}>
             <li>{"{{firstName}}"} — first name (override or derived from contact)</li>
             <li>{"{{lastName}}"} — last name (override or derived from contact)</li>
             <li>{"{{fullName}}"} — first + last combined</li>
@@ -1189,7 +1189,7 @@ export function MailComposer({
           </ul>
         </div>
         {errors.length ? (
-          <div className="mt-5 rounded-lg border border-[#F59E0B]/30 bg-[#F59E0B]/10 p-4 text-[13px] text-[#F59E0B]">
+          <div className="mt-5 rounded-lg border border-warn/30 bg-warn/10 p-4 text-[13px] text-warn">
             <div className="flex items-center gap-2 font-semibold">
               <AlertCircle className="h-4 w-4" />
               CSV warnings
@@ -1202,7 +1202,7 @@ export function MailComposer({
           </div>
         ) : null}
         {result ? (
-          <div className={`mt-5 rounded-lg border p-4 text-[13px] ${result.failed > 0 ? "border-[#ea4335]/30 bg-[#ea4335]/10 text-[#f0997b]" : "border-[#0f9d58]/30 bg-[#0f9d58]/10 text-[#5DCAA5]"}`}>
+          <div className={`mt-5 rounded-lg border p-4 text-[13px] ${result.failed > 0 ? "border-crit/30 bg-crit/10 text-warn" : "border-ok/30 bg-ok/10 text-ok"}`}>
             <div className="flex items-center gap-2 font-semibold">
               {result.failed > 0 ? (
                 <AlertCircle className="h-4 w-4" />

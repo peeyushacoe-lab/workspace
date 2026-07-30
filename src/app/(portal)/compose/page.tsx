@@ -14,7 +14,7 @@ function ComposePageContent() {
   const body = searchParams.get("body") ?? "";
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-full bg-surface flex flex-col">
       {/* Page header */}
       <div className="flex items-center gap-3 px-6 py-4 border-b border-border bg-surface">
         <button

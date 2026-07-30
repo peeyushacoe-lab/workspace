@@ -40,9 +40,9 @@ export function OfflineIndicator() {
       <div
         role="status"
         aria-live="polite"
-        className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-[#12151D] text-white text-sm px-4 py-2 rounded-full shadow-lg"
+        className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-foreground text-surface text-sm px-4 py-2 rounded-full shadow-lg"
       >
-        <span className="w-2 h-2 rounded-full bg-amber-400" />
+        <span className="w-2 h-2 rounded-full bg-warn" />
         You are offline — some features may be unavailable
       </div>
     );
@@ -53,7 +53,7 @@ export function OfflineIndicator() {
     <div
       role="status"
       aria-live="polite"
-      className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-[#12151D] text-white text-sm px-4 py-2 rounded-full shadow-lg"
+      className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-foreground text-surface text-sm px-4 py-2 rounded-full shadow-lg"
     >
       <Check className="w-4 h-4 flex-shrink-0" />
       Back online

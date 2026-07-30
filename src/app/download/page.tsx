@@ -68,57 +68,57 @@ export default async function DownloadPage() {
   const hasRelease = assets.length > 0;
 
   return (
-    <div className="min-h-screen bg-[#f8fafd] text-[#202124]">
+    <div className="min-h-screen bg-surface-sunken text-foreground">
       {/* Nav */}
-      <nav className="border-b border-[#e8eaed]">
+      <nav className="border-b border-border">
         <div className="max-w-4xl mx-auto flex items-center justify-between px-6 py-4">
-          <Link href="/" className="text-xl font-semibold text-[#1a56db]">CyberSage</Link>
-          <Link href="/login" className="text-sm text-[#9aa0a6] hover:text-[#5f6368] transition-colors">Sign in →</Link>
+          <Link href="/" className="text-xl font-semibold text-accent">CyberSage</Link>
+          <Link href="/login" className="text-sm text-subtle hover:text-muted transition-colors">Sign in →</Link>
         </div>
       </nav>
 
       <div className="max-w-4xl mx-auto px-6 py-16">
         {/* Hero */}
         <div className="text-center mb-14">
-          <div className="inline-flex items-center gap-2 bg-[#1a56db]/10 border border-[#1a56db]/20 rounded-full px-4 py-1.5 text-xs text-[#1a56db] mb-6">
+          <div className="inline-flex items-center gap-2 bg-accent/10 border border-accent/20 rounded-full px-4 py-1.5 text-xs text-accent mb-6">
             Desktop app · Free for all plans
           </div>
-          <h1 className="text-4xl font-semibold text-white mb-4 tracking-tight">
+          <h1 className="text-4xl font-semibold text-foreground mb-4 tracking-tight">
             CyberSage Desktop
           </h1>
-          <p className="text-[#8899a6] text-lg max-w-xl mx-auto">
+          <p className="text-muted text-lg max-w-xl mx-auto">
             Your full workspace in a native app — system tray, notifications, offline
             access, and auto-updates. No browser required.
           </p>
           {version && (
-            <p className="mt-3 text-xs text-[#9aa0a6]">Latest version: <span className="text-[#1a56db]">{version}</span></p>
+            <p className="mt-3 text-xs text-subtle">Latest version: <span className="text-accent">{version}</span></p>
           )}
         </div>
 
         {/* How it works */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-12">
           {STEPS.map((s) => (
-            <div key={s.n} className="bg-white border border-[#e8eaed] rounded-xl p-5">
-              <div className="w-8 h-8 rounded-lg bg-[#1a56db]/15 text-[#1a56db] font-semibold text-sm flex items-center justify-center mb-3">{s.n}</div>
-              <p className="font-semibold text-white text-sm mb-1">{s.title}</p>
-              <p className="text-xs text-[#8899a6] leading-relaxed">{s.desc}</p>
+            <div key={s.n} className="bg-surface border border-border rounded-xl p-5">
+              <div className="w-8 h-8 rounded-lg bg-accent/15 text-accent font-semibold text-sm flex items-center justify-center mb-3">{s.n}</div>
+              <p className="font-semibold text-foreground text-sm mb-1">{s.title}</p>
+              <p className="text-xs text-muted leading-relaxed">{s.desc}</p>
             </div>
           ))}
         </div>
 
         {/* Download cards */}
         {!hasRelease ? (
-          <div className="bg-white border border-[#e8eaed] rounded-2xl p-10 text-center">
-            <Construction className="w-8 h-8 mx-auto mb-3 text-[#8899a6]" />
-            <p className="font-semibold text-white mb-2">Desktop app coming soon</p>
-            <p className="text-sm text-[#8899a6] mb-6">
+          <div className="bg-surface border border-border rounded-2xl p-10 text-center">
+            <Construction className="w-8 h-8 mx-auto mb-3 text-muted" />
+            <p className="font-semibold text-foreground mb-2">Desktop app coming soon</p>
+            <p className="text-sm text-muted mb-6">
               We&apos;re finishing the first release. In the meantime,{" "}
-              <Link href="/login" className="text-[#1a56db] hover:underline">use the web app</Link>{" "}
+              <Link href="/login" className="text-accent hover:underline">use the web app</Link>{" "}
               — it works great in your browser.
             </p>
             <Link
               href="/login"
-              className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#1a56db] text-white font-semibold rounded-xl hover:opacity-90 transition-opacity text-sm"
+              className="inline-flex items-center gap-2 px-6 py-2.5 bg-accent text-accent-foreground font-semibold rounded-xl hover:opacity-90 transition-opacity text-sm"
             >
               Open web app →
             </Link>
@@ -130,18 +130,18 @@ export default async function DownloadPage() {
               return (
                 <div
                   key={p.key}
-                  className="bg-white border border-[#e8eaed] rounded-xl p-6 hover:border-[#1a56db]/20 transition-colors"
+                  className="bg-surface border border-border rounded-xl p-6 hover:border-accent/20 transition-colors"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <p.icon className="w-8 h-8 text-[#5A6275]" />
+                      <p.icon className="w-8 h-8 text-subtle" />
                       <div>
-                        <p className="font-semibold text-white">{p.label}</p>
-                        <p className="text-xs text-[#9aa0a6]">{p.hint}</p>
+                        <p className="font-semibold text-foreground">{p.label}</p>
+                        <p className="text-xs text-subtle">{p.hint}</p>
                       </div>
                     </div>
                     {p.badge && (
-                      <span className="text-[10px] text-[#1a56db] bg-[#1a56db]/10 px-2 py-0.5 rounded-full font-medium">
+                      <span className="text-[10px] text-accent bg-accent/10 px-2 py-0.5 rounded-full font-medium">
                         {p.badge}
                       </span>
                     )}
@@ -149,12 +149,12 @@ export default async function DownloadPage() {
                   {asset ? (
                     <a
                       href={asset.browser_download_url}
-                      className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#1a56db] text-white font-semibold text-sm rounded-lg hover:opacity-90 transition-opacity"
+                      className="flex items-center justify-center gap-2 w-full py-2.5 bg-accent text-accent-foreground font-semibold text-sm rounded-lg hover:opacity-90 transition-opacity"
                     >
                       ↓ Download · {formatSize(asset.size)}
                     </a>
                   ) : (
-                    <div className="flex items-center justify-center w-full py-2.5 bg-[#f1f3f4] text-[#9aa0a6] text-sm rounded-lg">
+                    <div className="flex items-center justify-center w-full py-2.5 bg-surface-sunken text-subtle text-sm rounded-lg">
                       Not available in this release
                     </div>
                   )}
@@ -165,25 +165,25 @@ export default async function DownloadPage() {
         )}
 
         {/* All releases link */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white border border-[#e8eaed] rounded-xl px-5 py-4 text-sm">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-surface border border-border rounded-xl px-5 py-4 text-sm">
           <div>
-            <p className="font-medium text-white">Need an older version?</p>
-            <p className="text-[#9aa0a6] text-xs mt-0.5">All releases with changelogs are on GitHub.</p>
+            <p className="font-medium text-foreground">Need an older version?</p>
+            <p className="text-subtle text-xs mt-0.5">All releases with changelogs are on GitHub.</p>
           </div>
           <a
             href={`https://github.com/${REPO}/releases`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[#1a56db] hover:underline flex-shrink-0"
+            className="text-accent hover:underline flex-shrink-0"
           >
             View all releases →
           </a>
         </div>
 
         {/* Already have account */}
-        <p className="text-center text-sm text-[#9aa0a6] mt-10">
+        <p className="text-center text-sm text-subtle mt-10">
           Don&apos;t have an account yet?{" "}
-          <Link href="/register" className="text-[#1a56db] hover:underline">Create one free</Link>
+          <Link href="/register" className="text-accent hover:underline">Create one free</Link>
           {" "}— it takes 30 seconds.
         </p>
       </div>

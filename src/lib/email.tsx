@@ -29,7 +29,7 @@ function getSignatureHtml(signature: SignatureTemplate): string {
   const initial = signature.fullName.charAt(0).toUpperCase();
   const avatarBlock = signature.avatarUrl
     ? `<img src="${signature.avatarUrl}" alt="${signature.fullName}" width="52" height="52"
-         style="width:52px;height:52px;border-radius:50%;object-fit:cover;display:block;border:2px solid #e2e8f0;" />`
+         style="width:52px;height:52px;border-radius:50%;object-fit:cover;display:block;border:2px solid #e7e6e1;" />`
     : `<table cellpadding="0" cellspacing="0" border="0" width="52" height="52"
          style="width:52px;height:52px;border-radius:50%;background:#0f766e;border-collapse:collapse;">
         <tr>
@@ -63,12 +63,12 @@ function getSignatureHtml(signature: SignatureTemplate): string {
     : "";
 
   return `
-<div style="margin-top:32px;padding-top:20px;border-top:2px solid #e2e8f0;">
+<div style="margin-top:32px;padding-top:20px;border-top:2px solid #e7e6e1;">
   <table cellpadding="0" cellspacing="0" border="0" style="font-family:system-ui,-apple-system,sans-serif;">
     <tr>
       <td style="vertical-align:middle;padding-right:14px;">${avatarBlock}</td>
       <td style="vertical-align:middle;">
-        <div style="font-weight:700;color:#0f172a;font-size:15px;margin-bottom:3px;">${signature.fullName}</div>
+        <div style="font-weight:700;color:#1a1a18;font-size:15px;margin-bottom:3px;">${signature.fullName}</div>
         ${subtitleLine}
         ${contactLine}
       </td>
@@ -126,7 +126,7 @@ export function renderEmailHtml(subject: string, body: string, contact: ContactI
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>${subject}</title>
     <style>
-      body { margin:0; padding:0; background:#f8fafc; color:#0f172a; font-family:system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      body { margin:0; padding:0; background:#f8fafc; color:#1a1a18; font-family:system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
       .container { max-width:680px; margin:0 auto; padding:32px; }
       .card { background:#ffffff; border-radius:24px; box-shadow:0 24px 80px rgba(15,23,42,.08); padding:32px; }
       .brand { color:#0f766e; font-size:.75rem; letter-spacing:.2em; text-transform:uppercase; font-weight:700; margin-bottom:16px; }
@@ -173,7 +173,7 @@ export async function sendInviteEmail({
   <div style="max-width:560px;margin:0 auto;padding:32px 16px;">
     <div style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
       <div style="background:#111113;padding:24px 32px;">
-        <div style="color:#2563eb;font-size:12px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;">Nexus</div>
+        <div style="color:#4f46e5;font-size:12px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;">Nexus</div>
       </div>
       <div style="padding:32px;">
         <h1 style="font-size:22px;font-weight:700;color:#18181b;margin:0 0 12px;">You've been invited</h1>
@@ -187,12 +187,12 @@ export async function sendInviteEmail({
           </div>
           <div>
             <div style="font-size:11px;color:#71717a;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;">Temporary Password</div>
-            <div style="font-family:monospace;font-weight:700;color:#2563eb;font-size:20px;letter-spacing:.05em;">${tempPassword}</div>
+            <div style="font-family:monospace;font-weight:700;color:#4f46e5;font-size:20px;letter-spacing:.05em;">${tempPassword}</div>
           </div>
         </div>
-        <a href="${appUrl}/login" style="display:inline-block;background:#2563eb;color:#fff;font-weight:600;font-size:14px;padding:12px 28px;border-radius:8px;text-decoration:none;margin-bottom:16px;">Sign in to Nexus →</a>
+        <a href="${appUrl}/login" style="display:inline-block;background:#4f46e5;color:#fff;font-weight:600;font-size:14px;padding:12px 28px;border-radius:8px;text-decoration:none;margin-bottom:16px;">Sign in to Nexus →</a>
         <p style="color:#3f3f46;font-size:13px;margin:0 0 16px;">Or copy this link into your browser:</p>
-        <p style="font-family:monospace;font-size:13px;color:#2563eb;word-break:break-all;margin:0 0 20px;">${appUrl}/login</p>
+        <p style="font-family:monospace;font-size:13px;color:#4f46e5;word-break:break-all;margin:0 0 20px;">${appUrl}/login</p>
         <p style="color:#71717a;font-size:13px;line-height:1.6;margin:0;">
           You will be asked to set a new password on first sign-in. Do not share your temporary password.
         </p>
@@ -235,36 +235,36 @@ export async function sendInternWelcomeEmail({
 <body style="margin:0;padding:0;background:#f0f4ff;font-family:system-ui,sans-serif;">
   <div style="max-width:580px;margin:0 auto;padding:32px 16px;">
     <!-- Header -->
-    <div style="background:linear-gradient(135deg,#1a56db 0%,#1648c7 100%);border-radius:16px 16px 0 0;padding:32px;text-align:center;">
-      <div style="display:inline-block;background:rgba(255,255,255,.15);border-radius:12px;padding:10px 20px;margin-bottom:16px;">
+    <div style="background:linear-gradient(135deg,#4f46e5 0%,#4338ca 100%);border-radius:16px 16px 0 0;padding:32px;text-align:center;">
+      <div style="display:inline-block;background:var(--border);border-radius:12px;padding:10px 20px;margin-bottom:16px;">
         <span style="color:#fff;font-size:13px;font-weight:700;letter-spacing:.1em;">NEXUS INTERNSHIP PROGRAM</span>
       </div>
       <h1 style="color:#fff;font-size:28px;font-weight:800;margin:0 0 8px;letter-spacing:-0.5px;">Welcome aboard, ${fullName}!</h1>
       <p style="color:rgba(255,255,255,.8);font-size:15px;margin:0;">You&apos;ve been accepted into the CyberSage internship program.</p>
     </div>
     <!-- Body -->
-    <div style="background:#fff;padding:32px;border-radius:0 0 16px 16px;box-shadow:0 4px 24px rgba(26,86,219,.12);">
+    <div style="background:#fff;padding:32px;border-radius:0 0 16px 16px;box-shadow:0 4px 24px color-mix(in srgb, var(--accent) 12%, transparent);">
       <p style="color:#3c4257;line-height:1.7;margin:0 0 20px;font-size:15px;">
         Hi <strong>${fullName}</strong>, <strong>${invitedByName}</strong> has set up your intern account on Nexus &mdash; the CyberSage team workspace.
         You now have access to the <strong>Internship Hub</strong> where you&apos;ll receive tasks, submit your work, and collaborate with mentors.
       </p>
       <!-- Credentials card -->
       <div style="background:#f0f4ff;border:1.5px solid #c7d7f8;border-radius:12px;padding:24px;margin-bottom:28px;">
-        <div style="font-size:12px;font-weight:700;color:#1a56db;letter-spacing:.08em;text-transform:uppercase;margin-bottom:16px;">Your Login Credentials</div>
+        <div style="font-size:12px;font-weight:700;color:#4f46e5;letter-spacing:.08em;text-transform:uppercase;margin-bottom:16px;">Your Login Credentials</div>
         <table style="width:100%;border-collapse:collapse;">
           <tr>
-            <td style="padding:8px 0;font-size:13px;color:#6b7280;width:44%;">Work Email</td>
+            <td style="padding:8px 0;font-size:13px;color:#6b6a65;width:44%;">Work Email</td>
             <td style="padding:8px 0;font-weight:600;color:#1e293b;font-size:14px;">${workEmail}</td>
           </tr>
           <tr>
-            <td style="padding:8px 0;font-size:13px;color:#6b7280;">Temp Password</td>
-            <td style="padding:8px 0;font-family:monospace;font-weight:700;color:#1a56db;font-size:18px;letter-spacing:.04em;">${tempPassword}</td>
+            <td style="padding:8px 0;font-size:13px;color:#6b6a65;">Temp Password</td>
+            <td style="padding:8px 0;font-family:monospace;font-weight:700;color:#4f46e5;font-size:18px;letter-spacing:.04em;">${tempPassword}</td>
           </tr>
         </table>
       </div>
       <!-- CTA -->
       <div style="text-align:center;margin-bottom:28px;">
-        <a href="${appUrl}/login" style="display:inline-block;background:#1a56db;color:#fff;font-weight:700;font-size:15px;padding:14px 36px;border-radius:10px;text-decoration:none;">
+        <a href="${appUrl}/login" style="display:inline-block;background:#4f46e5;color:#fff;font-weight:700;font-size:15px;padding:14px 36px;border-radius:10px;text-decoration:none;">
           Sign in to Nexus &rarr;
         </a>
         <p style="color:#9ca3af;font-size:12px;margin:12px 0 0;">You will be prompted to set a new password on first sign-in.</p>
@@ -284,7 +284,7 @@ export async function sendInternWelcomeEmail({
         Do not share your temporary password. If you have questions, reply to this email or message your mentor on Nexus.
       </p>
     </div>
-    <p style="text-align:center;color:#9ca3af;font-size:11px;margin:16px 0 0;">CyberSage &mdash; Nexus Workspace &bull; <a href="${appUrl}" style="color:#1a56db;text-decoration:none;">${appUrl}</a></p>
+    <p style="text-align:center;color:#9ca3af;font-size:11px;margin:16px 0 0;">CyberSage &mdash; Nexus Workspace &bull; <a href="${appUrl}" style="color:#4f46e5;text-decoration:none;">${appUrl}</a></p>
   </div>
 </body>
 </html>`;
@@ -374,27 +374,27 @@ export async function sendRoleGrantEmail({
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="utf-8" /></head>
-<body style="margin:0;padding:0;background:#0f1321;font-family:system-ui,sans-serif;">
+<body style="margin:0;padding:0;background:#f0efec;font-family:system-ui,sans-serif;">
   <div style="max-width:560px;margin:0 auto;padding:32px 16px;">
-    <div style="background:#1b1f2e;border-radius:16px;overflow:hidden;border:1px solid rgba(0,210,255,0.12);">
-      <div style="background:linear-gradient(135deg,#0f1321,#1b1f2e);padding:24px 32px;border-bottom:1px solid rgba(0,210,255,0.1);">
-        <div style="color:#00d2ff;font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;">CyberSage Workspace</div>
+    <div style="background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid color-mix(in srgb, var(--accent) 12%, transparent);">
+      <div style="background:linear-gradient(135deg,#f0efec,#ffffff);padding:24px 32px;border-bottom:1px solid color-mix(in srgb, var(--accent) 10%, transparent);">
+        <div style="color:#4f46e5;font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;">CyberSage Workspace</div>
       </div>
       <div style="padding:32px;">
-        <h1 style="font-size:22px;font-weight:700;color:#dfe1f6;margin:0 0 8px;">${accessRole} Access Granted</h1>
-        <p style="color:#9aa3b8;line-height:1.7;margin:0 0 24px;">
-          Hi <strong style="color:#dfe1f6;">${firstName}</strong>,
+        <h1 style="font-size:22px;font-weight:700;color:#1a1a18;margin:0 0 8px;">${accessRole} Access Granted</h1>
+        <p style="color:#6b6a65;line-height:1.7;margin:0 0 24px;">
+          Hi <strong style="color:#1a1a18;">${firstName}</strong>,
         </p>
-        <p style="color:#9aa3b8;line-height:1.7;margin:0 0 24px;">
+        <p style="color:#6b6a65;line-height:1.7;margin:0 0 24px;">
           You have been granted <strong style="color:#7dd8f5;">${accessRole}</strong> access in CyberSage Workspace.
           Welcome to the <strong style="color:#7dd8f5;">${accessRole} team</strong>!
         </p>
-        <div style="background:rgba(0,210,255,0.06);border:1px solid rgba(0,210,255,0.15);border-radius:12px;padding:20px;margin:0 0 24px;">
-          <div style="font-size:12px;color:#5d6579;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;">Access Level</div>
-          <div style="color:#00d2ff;font-weight:700;font-size:18px;">${accessRole}</div>
-          <div style="font-size:12px;color:#9aa3b8;margin-top:4px;">Granted by ${grantedByName} · CISO</div>
+        <div style="background:color-mix(in srgb, var(--accent) 6%, transparent);border:1px solid color-mix(in srgb, var(--accent) 15%, transparent);border-radius:12px;padding:20px;margin:0 0 24px;">
+          <div style="font-size:12px;color:#d9d8d2;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;">Access Level</div>
+          <div style="color:#4f46e5;font-weight:700;font-size:18px;">${accessRole}</div>
+          <div style="font-size:12px;color:#6b6a65;margin-top:4px;">Granted by ${grantedByName} · CISO</div>
         </div>
-        <p style="color:#5d6579;font-size:13px;line-height:1.6;margin:0;">
+        <p style="color:#d9d8d2;font-size:13px;line-height:1.6;margin:0;">
           You now have access to ${accessRole}-related features and resources in the workspace.
           If you have any questions about your new access, reach out to the CISO.
         </p>
@@ -444,20 +444,20 @@ function buildWelcomeHtml(opts: {
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/></head>
-<body style="margin:0;padding:0;background:#f1f3f4;font-family:system-ui,-apple-system,sans-serif;">
+<body style="margin:0;padding:0;background:#f5f4f1;font-family:system-ui,-apple-system,sans-serif;">
   <div style="max-width:640px;margin:0 auto;padding:32px 16px;">
 
     <!-- Header -->
-    <div style="background:#1a56db;border-radius:12px 12px 0 0;padding:28px 36px;">
+    <div style="background:#4f46e5;border-radius:12px 12px 0 0;padding:28px 36px;">
       <div style="font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.7);margin-bottom:6px;">Nexus · CyberSage</div>
       <div style="font-size:22px;font-weight:700;color:#fff;">Welcome to Cyber Sage</div>
     </div>
 
     <!-- Body -->
-    <div style="background:#fff;padding:36px;border-radius:0 0 12px 12px;border:1px solid #e8eaed;border-top:none;">
+    <div style="background:#fff;padding:36px;border-radius:0 0 12px 12px;border:1px solid #e7e6e1;border-top:none;">
 
-      <p style="font-size:15px;color:#202124;margin:0 0 6px;">Dear <strong>${firstName}</strong>,</p>
-      <p style="font-size:15px;color:#202124;margin:0 0 28px;line-height:1.7;">Welcome to Cyber Sage.</p>
+      <p style="font-size:15px;color:#1a1a18;margin:0 0 6px;">Dear <strong>${firstName}</strong>,</p>
+      <p style="font-size:15px;color:#1a1a18;margin:0 0 28px;line-height:1.7;">Welcome to Cyber Sage.</p>
 
       <p style="font-size:14px;color:#3c4043;line-height:1.8;margin:0 0 28px;">
         You are joining a cybersecurity learning and operations environment designed to develop real-world security thinking,
@@ -468,11 +468,11 @@ function buildWelcomeHtml(opts: {
         and respond like a security practitioner in a real operational setting.
       </p>
 
-      <hr style="border:none;border-top:1px solid #e8eaed;margin:0 0 28px;"/>
+      <hr style="border:none;border-top:1px solid #e7e6e1;margin:0 0 28px;"/>
 
       <!-- Section 1 -->
       <div style="margin-bottom:28px;">
-        <div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#1a56db;margin-bottom:10px;">1 · CISO Vision</div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#4f46e5;margin-bottom:10px;">1 · CISO Vision</div>
         <p style="font-size:14px;color:#3c4043;line-height:1.8;margin:0 0 12px;">Cyber Sage exists to build cybersecurity professionals who go beyond tools and alerts. The core vision is simple:</p>
         <ul style="margin:0;padding-left:20px;color:#3c4043;font-size:14px;line-height:2;">
           <li>Understand systems, not just interfaces</li>
@@ -485,7 +485,7 @@ function buildWelcomeHtml(opts: {
 
       <!-- Section 2 -->
       <div style="margin-bottom:28px;">
-        <div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#1a56db;margin-bottom:10px;">2 · Your Role as an Intern</div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#4f46e5;margin-bottom:10px;">2 · Your Role as an Intern</div>
         <p style="font-size:14px;color:#3c4043;line-height:1.8;margin:0 0 12px;">As part of Cyber Sage, you are considered a developing security analyst in training. You will be expected to:</p>
         <ul style="margin:0;padding-left:20px;color:#3c4043;font-size:14px;line-height:2;">
           <li>Learn structured cybersecurity fundamentals and advanced concepts</li>
@@ -499,28 +499,28 @@ function buildWelcomeHtml(opts: {
 
       <!-- Section 3 -->
       <div style="margin-bottom:28px;">
-        <div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#1a56db;margin-bottom:10px;">3 · The Cyber Sage Ecosystem</div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#4f46e5;margin-bottom:10px;">3 · The Cyber Sage Ecosystem</div>
         <p style="font-size:14px;color:#3c4043;line-height:1.8;margin:0 0 16px;">You will operate across a structured internal ecosystem:</p>
-        <div style="background:#f8f9fa;border-radius:8px;padding:20px 24px;margin-bottom:10px;">
-          <div style="font-weight:700;color:#202124;font-size:14px;margin-bottom:4px;">Nexus</div>
-          <div style="font-size:13px;color:#5f6368;line-height:1.6;">Your workspace for collaboration, learning modules, task execution, submissions, and communication.</div>
+        <div style="background:#f5f4f1;border-radius:8px;padding:20px 24px;margin-bottom:10px;">
+          <div style="font-weight:700;color:#1a1a18;font-size:14px;margin-bottom:4px;">Nexus</div>
+          <div style="font-size:13px;color:#6b6a65;line-height:1.6;">Your workspace for collaboration, learning modules, task execution, submissions, and communication.</div>
         </div>
-        <div style="background:#f8f9fa;border-radius:8px;padding:20px 24px;margin-bottom:10px;">
-          <div style="font-weight:700;color:#202124;font-size:14px;margin-bottom:4px;">Sentinel</div>
-          <div style="font-size:13px;color:#5f6368;line-height:1.6;">The security intelligence and detection layer used to study alerts, incidents, and attack behavior.</div>
+        <div style="background:#f5f4f1;border-radius:8px;padding:20px 24px;margin-bottom:10px;">
+          <div style="font-weight:700;color:#1a1a18;font-size:14px;margin-bottom:4px;">Sentinel</div>
+          <div style="font-size:13px;color:#6b6a65;line-height:1.6;">The security intelligence and detection layer used to study alerts, incidents, and attack behavior.</div>
         </div>
-        <div style="background:#f8f9fa;border-radius:8px;padding:20px 24px;">
-          <div style="font-weight:700;color:#202124;font-size:14px;margin-bottom:4px;">Brain</div>
-          <div style="font-size:13px;color:#5f6368;line-height:1.6;">The analytical layer that supports reasoning, interpretation of security data, and insight generation.</div>
+        <div style="background:#f5f4f1;border-radius:8px;padding:20px 24px;">
+          <div style="font-weight:700;color:#1a1a18;font-size:14px;margin-bottom:4px;">Brain</div>
+          <div style="font-size:13px;color:#6b6a65;line-height:1.6;">The analytical layer that supports reasoning, interpretation of security data, and insight generation.</div>
         </div>
       </div>
 
       <!-- Section 4 -->
       <div style="margin-bottom:28px;">
-        <div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#1a56db;margin-bottom:10px;">4 · Learning Philosophy</div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#4f46e5;margin-bottom:10px;">4 · Learning Philosophy</div>
         <p style="font-size:14px;color:#3c4043;line-height:1.8;margin:0 0 12px;">Cyber Sage follows a practical progression model:</p>
-        <div style="background:#e8f0fe;border-radius:8px;padding:14px 20px;margin-bottom:14px;text-align:center;">
-          <span style="font-size:13px;font-weight:700;color:#1a56db;letter-spacing:.05em;">Learn → Analyze → Apply → Defend → Improve</span>
+        <div style="background:#eeecff;border-radius:8px;padding:14px 20px;margin-bottom:14px;text-align:center;">
+          <span style="font-size:13px;font-weight:700;color:#4f46e5;letter-spacing:.05em;">Learn → Analyze → Apply → Defend → Improve</span>
         </div>
         <ul style="margin:0;padding-left:20px;color:#3c4043;font-size:14px;line-height:2;">
           <li>Attempt solutions before seeking answers</li>
@@ -532,7 +532,7 @@ function buildWelcomeHtml(opts: {
 
       <!-- Section 5 -->
       <div style="margin-bottom:28px;">
-        <div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#1a56db;margin-bottom:10px;">5 · Professional Standards</div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#4f46e5;margin-bottom:10px;">5 · Professional Standards</div>
         <ul style="margin:0;padding-left:20px;color:#3c4043;font-size:14px;line-height:2;">
           <li>Maintain honesty in all work and submissions</li>
           <li>No plagiarism or copied analysis</li>
@@ -545,7 +545,7 @@ function buildWelcomeHtml(opts: {
 
       <!-- Section 6 -->
       <div style="margin-bottom:28px;">
-        <div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#1a56db;margin-bottom:10px;">6 · What Success Looks Like</div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#4f46e5;margin-bottom:10px;">6 · What Success Looks Like</div>
         <p style="font-size:14px;color:#3c4043;line-height:1.8;margin:0 0 12px;">By the end of your internship, you should be able to:</p>
         <ul style="margin:0;padding-left:20px;color:#3c4043;font-size:14px;line-height:2;">
           <li>Identify and analyze common and advanced attack patterns</li>
@@ -558,7 +558,7 @@ function buildWelcomeHtml(opts: {
 
       <!-- Section 7 -->
       <div style="margin-bottom:32px;">
-        <div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#1a56db;margin-bottom:10px;">7 · Final Message</div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#4f46e5;margin-bottom:10px;">7 · Final Message</div>
         <p style="font-size:14px;color:#3c4043;line-height:1.8;margin:0 0 12px;">Cyber Sage will challenge how you think.</p>
         <p style="font-size:14px;color:#3c4043;line-height:1.8;margin:0 0 12px;">
           You will not always be given direct answers. You will be given context, signals, and systems — and expected to reason through them.
@@ -568,17 +568,17 @@ function buildWelcomeHtml(opts: {
         </p>
       </div>
 
-      <hr style="border:none;border-top:1px solid #e8eaed;margin:0 0 24px;"/>
+      <hr style="border:none;border-top:1px solid #e7e6e1;margin:0 0 24px;"/>
 
       <!-- Signature -->
       <div>
-        <p style="font-size:14px;font-weight:600;color:#202124;margin:0 0 2px;">Peeyush Kumar</p>
-        <p style="font-size:13px;color:#5f6368;margin:0 0 2px;">Chief Information Security Officer</p>
-        <p style="font-size:13px;color:#5f6368;margin:0;">Cyber Sage</p>
+        <p style="font-size:14px;font-weight:600;color:#1a1a18;margin:0 0 2px;">Peeyush Kumar</p>
+        <p style="font-size:13px;color:#6b6a65;margin:0 0 2px;">Chief Information Security Officer</p>
+        <p style="font-size:13px;color:#6b6a65;margin:0;">Cyber Sage</p>
       </div>
     </div>
 
-    <p style="text-align:center;font-size:11px;color:#80868b;margin:16px 0 0;">Nexus · CyberSage Internal Platform</p>
+    <p style="text-align:center;font-size:11px;color:#9b9a93;margin:16px 0 0;">Nexus · CyberSage Internal Platform</p>
   </div>
 </body>
 </html>`;
@@ -590,28 +590,28 @@ function buildWelcomeHtml(opts: {
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /></head>
-<body style="margin:0;padding:0;background:#0f172a;font-family:system-ui,sans-serif;">
+<body style="margin:0;padding:0;background:#1a1a18;font-family:system-ui,sans-serif;">
   <div style="max-width:600px;margin:0 auto;padding:32px 16px;">
-    <div style="background:#111827;border-radius:20px;overflow:hidden;border:1px solid rgba(0,210,255,0.15);">
+    <div style="background:#111827;border-radius:20px;overflow:hidden;border:1px solid color-mix(in srgb, var(--accent) 15%, transparent);">
       <div style="background:linear-gradient(135deg,#0f1a2e,#0c2340);padding:40px 40px 32px;">
-        <div style="font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#00d2ff;margin-bottom:20px;">Nexus by CyberSage</div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#4f46e5;margin-bottom:20px;">Nexus by CyberSage</div>
         <h1 style="font-size:30px;font-weight:800;color:#ffffff;margin:0 0 12px;line-height:1.2;">Welcome, ${firstName}.</h1>
-        <p style="color:#94a3b8;font-size:16px;margin:0;line-height:1.6;">Your unified workspace is ready.</p>
+        <p style="color:#6b6a65;font-size:16px;margin:0;line-height:1.6;">Your unified workspace is ready.</p>
       </div>
       <div style="padding:36px 40px;">
-        <p style="color:#cbd5e1;font-size:15px;line-height:1.8;margin:0 0 24px;">
+        <p style="color:#d9d8d2;font-size:15px;line-height:1.8;margin:0 0 24px;">
           You've been added to <strong style="color:#f1f5f9;">Nexus</strong> by ${invitedByName}.
-          As <strong style="color:#00d2ff;">${role.replace(/_/g, " ")}</strong>, this is your personal and professional workspace —
+          As <strong style="color:#4f46e5;">${role.replace(/_/g, " ")}</strong>, this is your personal and professional workspace —
           your organisation's email, chat, drive, calendar, and AI assistant, all in one place.
         </p>
 
-        <div style="background:#0f172a;border-radius:14px;padding:22px 24px;margin:0 0 28px;border:1px solid rgba(0,210,255,0.1);">
+        <div style="background:#1a1a18;border-radius:14px;padding:22px 24px;margin:0 0 28px;border:1px solid color-mix(in srgb, var(--accent) 10%, transparent);">
           <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;">Your work email</div>
-          <div style="font-size:18px;font-weight:700;color:#00d2ff;">${workEmail}</div>
+          <div style="font-size:18px;font-weight:700;color:#4f46e5;">${workEmail}</div>
         </div>
 
         <div style="margin:0 0 28px;">
-          <div style="font-size:13px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px;">What's included</div>
+          <div style="font-size:13px;font-weight:700;color:#6b6a65;text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px;">What's included</div>
           ${[
             ["✉️", "Unified Inbox", "All your team email with AI summaries and smart replies"],
             ["💬", "Team Chat", "Real-time channels for every project and team"],
@@ -628,9 +628,9 @@ function buildWelcomeHtml(opts: {
             </div>`).join("")}
         </div>
 
-        <a href="${appUrl}/login" style="display:inline-block;background:#00d2ff;color:#003543;font-weight:800;font-size:15px;padding:14px 32px;border-radius:10px;text-decoration:none;margin-bottom:28px;">Open Nexus →</a>
+        <a href="${appUrl}/login" style="display:inline-block;background:#4f46e5;color:#ffffff;font-weight:800;font-size:15px;padding:14px 32px;border-radius:10px;text-decoration:none;margin-bottom:28px;">Open Nexus →</a>
 
-        <p style="color:#475569;font-size:13px;line-height:1.7;margin:0;border-top:1px solid rgba(255,255,255,0.06);padding-top:20px;">
+        <p style="color:#6b6a65;font-size:13px;line-height:1.7;margin:0;border-top:1px solid var(--border);padding-top:20px;">
           This email was automatically sent to your Nexus inbox. For any questions, contact your workspace administrator or reply to this message.
         </p>
       </div>
@@ -646,23 +646,23 @@ function buildWelcomeHtml(opts: {
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/></head>
-<body style="margin:0;padding:0;background:#f1f3f4;font-family:system-ui,-apple-system,sans-serif;">
+<body style="margin:0;padding:0;background:#f5f4f1;font-family:system-ui,-apple-system,sans-serif;">
   <div style="max-width:600px;margin:0 auto;padding:32px 16px;">
-    <div style="background:#1a56db;border-radius:12px 12px 0 0;padding:28px 36px;">
+    <div style="background:#4f46e5;border-radius:12px 12px 0 0;padding:28px 36px;">
       <div style="font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.7);margin-bottom:6px;">Nexus · CyberSage</div>
       <div style="font-size:22px;font-weight:700;color:#fff;">Welcome to the team, ${firstName}.</div>
     </div>
-    <div style="background:#fff;padding:36px;border-radius:0 0 12px 12px;border:1px solid #e8eaed;border-top:none;">
-      <p style="font-size:15px;color:#202124;line-height:1.7;margin:0 0 24px;">
+    <div style="background:#fff;padding:36px;border-radius:0 0 12px 12px;border:1px solid #e7e6e1;border-top:none;">
+      <p style="font-size:15px;color:#1a1a18;line-height:1.7;margin:0 0 24px;">
         Hi <strong>${firstName}</strong> — ${invitedByName} has set up your Nexus workspace.
         You are now part of the <strong>${teamName}</strong> team at CyberSage.
       </p>
-      <div style="background:#f8f9fa;border-radius:8px;padding:20px 24px;margin:0 0 28px;">
-        <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#5f6368;margin-bottom:6px;">Your work email</div>
-        <div style="font-size:17px;font-weight:700;color:#1a56db;">${workEmail}</div>
+      <div style="background:#f5f4f1;border-radius:8px;padding:20px 24px;margin:0 0 28px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6b6a65;margin-bottom:6px;">Your work email</div>
+        <div style="font-size:17px;font-weight:700;color:#4f46e5;">${workEmail}</div>
       </div>
       <div style="margin:0 0 28px;">
-        <div style="font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#5f6368;margin-bottom:16px;">Your workspace includes</div>
+        <div style="font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6b6a65;margin-bottom:16px;">Your workspace includes</div>
         ${[
           ["Inbox",     "Team email with AI summaries and smart replies"],
           ["Chat",      "Real-time messaging across all channels"],
@@ -671,17 +671,17 @@ function buildWelcomeHtml(opts: {
           ["AI",        "Draft replies, summarise threads, automate tasks"],
         ].map(([name, desc]) => `
           <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:12px;">
-            <div style="width:6px;height:6px;border-radius:50%;background:#1a56db;margin-top:6px;flex-shrink:0;"></div>
-            <div style="font-size:14px;color:#3c4043;line-height:1.5;"><strong style="color:#202124;">${name}</strong> — ${desc}</div>
+            <div style="width:6px;height:6px;border-radius:50%;background:#4f46e5;margin-top:6px;flex-shrink:0;"></div>
+            <div style="font-size:14px;color:#3c4043;line-height:1.5;"><strong style="color:#1a1a18;">${name}</strong> — ${desc}</div>
           </div>`).join("")}
       </div>
-      <hr style="border:none;border-top:1px solid #e8eaed;margin:0 0 24px;"/>
-      <p style="font-size:13px;color:#5f6368;line-height:1.7;margin:0;">
+      <hr style="border:none;border-top:1px solid #e7e6e1;margin:0 0 24px;"/>
+      <p style="font-size:13px;color:#6b6a65;line-height:1.7;margin:0;">
         Need help getting started? Reach out to ${invitedByName} or your team admin directly in Nexus Chat.
         Welcome aboard.
       </p>
     </div>
-    <p style="text-align:center;font-size:11px;color:#80868b;margin:16px 0 0;">Nexus · CyberSage Internal Platform</p>
+    <p style="text-align:center;font-size:11px;color:#9b9a93;margin:16px 0 0;">Nexus · CyberSage Internal Platform</p>
   </div>
 </body>
 </html>`;

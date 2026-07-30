@@ -491,7 +491,7 @@ async function handleInboundEmail(data: InboundEmailPayload) {
         to: dest,
         subject: `[Fwd] ${data.subject ?? "(no subject)"}`,
         html: `
-          <div style="background:#f1f3f4;padding:12px 16px;border-left:4px solid #1a56db;margin-bottom:20px;border-radius:4px;font-family:sans-serif;font-size:13px;color:#5f6368;">
+          <div style="background:#f5f4f1;padding:12px 16px;border-left:4px solid #4f46e5;margin-bottom:20px;border-radius:4px;font-family:sans-serif;font-size:13px;color:#6b6a65;">
             <strong>Forwarded from your Nexus inbox</strong><br/>
             From: ${fromLabel}<br/>
             To: ${data.to ?? mailbox.email}<br/>

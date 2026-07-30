@@ -55,24 +55,24 @@ const PROVIDER_PRESETS: Record<Provider, { host: string; port: number; secure: b
 };
 
 const inputClass =
-  "bg-[#12151D] border border-[#262A35] rounded-lg text-sm text-[#E6E9F0] placeholder-[#454e63] focus:outline-none focus:border-[#00C2FF]/50 px-3 py-2 w-full transition";
+  "bg-surface border border-border rounded-lg text-sm text-foreground placeholder-subtle focus:outline-none focus:border-accent/50 px-3 py-2 w-full transition";
 
-const cardClass = "bg-[#12151D] border border-[#262A35] rounded-xl";
+const cardClass = "bg-surface border border-border rounded-xl";
 
 const primaryBtn =
-  "inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-[#00C2FF] text-[#06121A] hover:bg-[#0098E6] transition disabled:opacity-50 disabled:cursor-not-allowed";
+  "inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-accent text-accent-foreground hover:bg-accent-hover transition disabled:opacity-50 disabled:cursor-not-allowed";
 
 const ghostBtn =
-  "inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg text-[#8A92A6] border border-[#262A35] hover:text-[#E6E9F0] hover:bg-[#1B1F2A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed";
+  "inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg text-muted border border-border hover:text-foreground hover:bg-surface-sunken transition-colors disabled:opacity-50 disabled:cursor-not-allowed";
 
 function statusBadge(status: ImportJob["status"]) {
   const map: Record<ImportJob["status"], { label: string; cls: string }> = {
-    PENDING: { label: "Queued", cls: "text-[#8A92A6] bg-[#8A92A6]/10 border-[#8A92A6]/20" },
-    CONNECTING: { label: "Connecting", cls: "text-amber-400 bg-amber-400/10 border-amber-400/20" },
-    IMPORTING: { label: "Importing", cls: "text-[#00C2FF] bg-[#00C2FF]/10 border-[#00C2FF]/20" },
-    COMPLETED: { label: "Completed", cls: "text-emerald-400 bg-emerald-400/10 border-emerald-400/20" },
-    FAILED: { label: "Failed", cls: "text-[#ea4335] bg-[#ea4335]/10 border-[#ea4335]/20" },
-    CANCELLED: { label: "Cancelled", cls: "text-[#8A92A6] bg-[#8A92A6]/10 border-[#8A92A6]/20" },
+    PENDING: { label: "Queued", cls: "text-muted bg-muted/10 border-border-strong/20" },
+    CONNECTING: { label: "Connecting", cls: "text-warn bg-warn/10 border-warn/20" },
+    IMPORTING: { label: "Importing", cls: "text-accent bg-accent/10 border-accent/20" },
+    COMPLETED: { label: "Completed", cls: "text-ok bg-ok/10 border-ok/20" },
+    FAILED: { label: "Failed", cls: "text-crit bg-crit/10 border-crit/20" },
+    CANCELLED: { label: "Cancelled", cls: "text-muted bg-muted/10 border-border-strong/20" },
   };
   const { label, cls } = map[status];
   return <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border ${cls}`}>{label}</span>;
@@ -290,7 +290,7 @@ export default function ImportPage() {
       : 0;
 
   return (
-    <div className="bg-[#0B0D13] min-h-screen">
+    <div className="bg-surface min-h-full">
       <PageHeader
         eyebrow="Mailbox Settings"
         title="Import from Gmail or IMAP"
@@ -303,42 +303,42 @@ export default function ImportPage() {
           <section className={`${cardClass} p-5`}>
             <div className="flex items-center justify-between mb-3">
               <div>
-                <h2 className="text-sm font-semibold text-[#E6E9F0]">
-                  Import from {activeJob.host} <span className="text-[#5A6275]">({activeJob.username})</span>
+                <h2 className="text-sm font-semibold text-foreground">
+                  Import from {activeJob.host} <span className="text-subtle">({activeJob.username})</span>
                 </h2>
-                <p className="text-xs text-[#8A92A6] mt-0.5">
+                <p className="text-xs text-muted mt-0.5">
                   {activeJob.currentFolder ? `Currently importing "${activeJob.currentFolder}"` : "Import status"}
                 </p>
               </div>
               {statusBadge(activeJob.status)}
             </div>
 
-            <div className="w-full h-2 rounded-full bg-[#1B1F2A] overflow-hidden mb-3">
+            <div className="w-full h-2 rounded-full bg-surface-sunken overflow-hidden mb-3">
               <div
-                className="h-full bg-[#00C2FF] transition-all duration-500"
+                className="h-full bg-accent transition-all duration-500"
                 style={{ width: `${activeJob.totalMessages > 0 ? progressPct : jobRunning ? 8 : 0}%` }}
               />
             </div>
 
             <div className="grid grid-cols-3 gap-3 text-center mb-3">
               <div>
-                <p className="text-lg font-semibold text-[#E6E9F0]">{activeJob.importedMessages}</p>
-                <p className="text-[11px] text-[#8A92A6]">Imported</p>
+                <p className="text-lg font-semibold text-foreground">{activeJob.importedMessages}</p>
+                <p className="text-[11px] text-muted">Imported</p>
               </div>
               <div>
-                <p className="text-lg font-semibold text-[#8A92A6]">{activeJob.skippedMessages}</p>
-                <p className="text-[11px] text-[#8A92A6]">Skipped / dupes</p>
+                <p className="text-lg font-semibold text-muted">{activeJob.skippedMessages}</p>
+                <p className="text-[11px] text-muted">Skipped / dupes</p>
               </div>
               <div>
-                <p className="text-lg font-semibold text-[#ea4335]">{activeJob.failedMessages}</p>
-                <p className="text-[11px] text-[#8A92A6]">Failed</p>
+                <p className="text-lg font-semibold text-crit">{activeJob.failedMessages}</p>
+                <p className="text-[11px] text-muted">Failed</p>
               </div>
             </div>
 
             {activeJob.errorLog && activeJob.errorLog.length > 0 && (
-              <div className="mt-2 max-h-32 overflow-y-auto bg-[#1B1F2A] border border-[#262A35] rounded-lg p-2 space-y-1">
+              <div className="mt-2 max-h-32 overflow-y-auto bg-surface-sunken border border-border rounded-lg p-2 space-y-1">
                 {activeJob.errorLog.slice(-8).map((e, i) => (
-                  <p key={i} className="text-[11px] text-[#ea4335] font-mono truncate">{e}</p>
+                  <p key={i} className="text-[11px] text-crit font-mono truncate">{e}</p>
                 ))}
               </div>
             )}
@@ -357,8 +357,8 @@ export default function ImportPage() {
         {/* ── Connect form ─────────────────────────────────────────────── */}
         {!jobRunning && (
           <section className={`${cardClass} p-5`}>
-            <h2 className="text-sm font-semibold text-[#E6E9F0] mb-1">Connect a mailbox</h2>
-            <p className="text-xs text-[#8A92A6] mb-4">
+            <h2 className="text-sm font-semibold text-foreground mb-1">Connect a mailbox</h2>
+            <p className="text-xs text-muted mb-4">
               We connect over IMAP with an app password — your existing provider&apos;s password is never stored, and you can revoke the app password any time.
             </p>
 
@@ -369,23 +369,23 @@ export default function ImportPage() {
                   onClick={() => applyPreset(p)}
                   className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
                     provider === p
-                      ? "bg-[#00C2FF]/10 border-[#00C2FF]/30 text-[#00C2FF]"
-                      : "border-[#262A35] text-[#8A92A6] hover:text-[#E6E9F0] hover:bg-[#1B1F2A]"
+                      ? "bg-accent/10 border-accent/30 text-accent"
+                      : "border-border text-muted hover:text-foreground hover:bg-surface-sunken"
                   }`}
                 >
                   {PROVIDER_PRESETS[p].label}
                 </button>
               ))}
             </div>
-            <p className="text-[11px] text-[#5A6275] mb-4">{PROVIDER_PRESETS[provider].hint}</p>
+            <p className="text-[11px] text-subtle mb-4">{PROVIDER_PRESETS[provider].hint}</p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
               <div>
-                <label className="text-xs font-medium text-[#8A92A6] mb-1 block">IMAP host</label>
+                <label className="text-xs font-medium text-muted mb-1 block">IMAP host</label>
                 <input value={host} onChange={(e) => setHost(e.target.value)} placeholder="imap.example.com" className={inputClass} />
               </div>
               <div>
-                <label className="text-xs font-medium text-[#8A92A6] mb-1 block">Port</label>
+                <label className="text-xs font-medium text-muted mb-1 block">Port</label>
                 <input
                   type="number"
                   value={port}
@@ -394,17 +394,17 @@ export default function ImportPage() {
                 />
               </div>
               <div>
-                <label className="text-xs font-medium text-[#8A92A6] mb-1 block">Username / email</label>
+                <label className="text-xs font-medium text-muted mb-1 block">Username / email</label>
                 <input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="you@gmail.com" className={inputClass} />
               </div>
               <div>
-                <label className="text-xs font-medium text-[#8A92A6] mb-1 block">App password</label>
+                <label className="text-xs font-medium text-muted mb-1 block">App password</label>
                 <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••••••••••" className={inputClass} />
               </div>
             </div>
 
-            <label className="flex items-center gap-2 mb-4 text-xs text-[#8A92A6]">
-              <input type="checkbox" checked={secure} onChange={(e) => setSecure(e.target.checked)} className="accent-[#00C2FF]" />
+            <label className="flex items-center gap-2 mb-4 text-xs text-muted">
+              <input type="checkbox" checked={secure} onChange={(e) => setSecure(e.target.checked)} className="accent-accent" />
               Use TLS (recommended — leave checked unless your provider says otherwise)
             </label>
 
@@ -415,31 +415,31 @@ export default function ImportPage() {
 
             {/* ── Folder mapping ───────────────────────────────────────── */}
             {folders && (
-              <div className="mt-6 pt-5 border-t border-[#262A35]">
-                <h3 className="text-sm font-semibold text-[#E6E9F0] mb-1 flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+              <div className="mt-6 pt-5 border-t border-border">
+                <h3 className="text-sm font-semibold text-foreground mb-1 flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-ok" />
                   Connected — choose what to import
                 </h3>
-                <p className="text-xs text-[#8A92A6] mb-3">
+                <p className="text-xs text-muted mb-3">
                   Map each source folder to where it should land in Nexus. Sent mail is detected automatically by sender address.
                 </p>
 
                 <div className="space-y-1.5 max-h-80 overflow-y-auto pr-1">
                   {folders.map((f) => (
-                    <div key={f.source} className="flex items-center gap-3 p-2.5 rounded-lg bg-[#1B1F2A] border border-[#262A35]">
+                    <div key={f.source} className="flex items-center gap-3 p-2.5 rounded-lg bg-surface-sunken border border-border">
                       <input
                         type="checkbox"
                         checked={f.include}
                         onChange={(e) => updateFolder(f.source, { include: e.target.checked })}
-                        className="accent-[#00C2FF] flex-shrink-0"
+                        className="accent-accent flex-shrink-0"
                       />
-                      <span className="text-sm text-[#E6E9F0] flex-1 min-w-0 truncate">{f.source}</span>
-                      <ChevronRight className="h-3.5 w-3.5 text-[#5A6275] flex-shrink-0" />
+                      <span className="text-sm text-foreground flex-1 min-w-0 truncate">{f.source}</span>
+                      <ChevronRight className="h-3.5 w-3.5 text-subtle flex-shrink-0" />
                       <select
                         value={f.target}
                         onChange={(e) => updateFolder(f.source, { target: e.target.value as FolderTarget })}
                         disabled={!f.include}
-                        className="bg-[#12151D] border border-[#262A35] rounded-md text-xs text-[#E6E9F0] px-2 py-1.5 disabled:opacity-40"
+                        className="bg-surface border border-border rounded-md text-xs text-foreground px-2 py-1.5 disabled:opacity-40"
                       >
                         <option value="inbox">Inbox</option>
                         <option value="archive">Archive</option>
@@ -452,13 +452,13 @@ export default function ImportPage() {
                           onChange={(e) => updateFolder(f.source, { label: e.target.value })}
                           disabled={!f.include}
                           placeholder="Folder name"
-                          className="bg-[#12151D] border border-[#262A35] rounded-md text-xs text-[#E6E9F0] px-2 py-1.5 w-28 disabled:opacity-40"
+                          className="bg-surface border border-border rounded-md text-xs text-foreground px-2 py-1.5 w-28 disabled:opacity-40"
                         />
                       )}
-                      {f.target === "inbox" && <Inbox className="h-3.5 w-3.5 text-[#5A6275] flex-shrink-0" />}
-                      {f.target === "archive" && <Archive className="h-3.5 w-3.5 text-[#5A6275] flex-shrink-0" />}
-                      {f.target === "trash" && <Trash2 className="h-3.5 w-3.5 text-[#5A6275] flex-shrink-0" />}
-                      {f.target === "custom" && <FolderPlus className="h-3.5 w-3.5 text-[#5A6275] flex-shrink-0" />}
+                      {f.target === "inbox" && <Inbox className="h-3.5 w-3.5 text-subtle flex-shrink-0" />}
+                      {f.target === "archive" && <Archive className="h-3.5 w-3.5 text-subtle flex-shrink-0" />}
+                      {f.target === "trash" && <Trash2 className="h-3.5 w-3.5 text-subtle flex-shrink-0" />}
+                      {f.target === "custom" && <FolderPlus className="h-3.5 w-3.5 text-subtle flex-shrink-0" />}
                     </div>
                   ))}
                 </div>
@@ -475,11 +475,11 @@ export default function ImportPage() {
         {/* ── Contacts + calendar upload ──────────────────────────────── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <section className={`${cardClass} p-5`}>
-            <h2 className="text-sm font-semibold text-[#E6E9F0] mb-1 flex items-center gap-2">
-              <Users className="h-4 w-4 text-[#00C2FF]" />
+            <h2 className="text-sm font-semibold text-foreground mb-1 flex items-center gap-2">
+              <Users className="h-4 w-4 text-accent" />
               Import contacts
             </h2>
-            <p className="text-xs text-[#8A92A6] mb-3">
+            <p className="text-xs text-muted mb-3">
               Upload a Google Takeout contacts CSV (or similar export). We match by email — existing contacts are updated, not duplicated.
             </p>
             <input
@@ -487,7 +487,7 @@ export default function ImportPage() {
               type="file"
               accept=".csv"
               onChange={(e) => setContactsFile(e.target.files?.[0] ?? null)}
-              className="text-xs text-[#8A92A6] mb-3 w-full"
+              className="text-xs text-muted mb-3 w-full"
             />
             <button onClick={() => void handleUpload("contacts")} disabled={!contactsFile || uploadingContacts} className={primaryBtn}>
               {uploadingContacts ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
@@ -496,11 +496,11 @@ export default function ImportPage() {
           </section>
 
           <section className={`${cardClass} p-5`}>
-            <h2 className="text-sm font-semibold text-[#E6E9F0] mb-1 flex items-center gap-2">
-              <CalendarDays className="h-4 w-4 text-[#00C2FF]" />
+            <h2 className="text-sm font-semibold text-foreground mb-1 flex items-center gap-2">
+              <CalendarDays className="h-4 w-4 text-accent" />
               Import calendar
             </h2>
-            <p className="text-xs text-[#8A92A6] mb-3">
+            <p className="text-xs text-muted mb-3">
               Upload a Google Takeout calendar export (.ics). Recurring events import as their first occurrence.
             </p>
             <input
@@ -508,7 +508,7 @@ export default function ImportPage() {
               type="file"
               accept=".ics"
               onChange={(e) => setCalendarFile(e.target.files?.[0] ?? null)}
-              className="text-xs text-[#8A92A6] mb-3 w-full"
+              className="text-xs text-muted mb-3 w-full"
             />
             <button onClick={() => void handleUpload("calendar")} disabled={!calendarFile || uploadingCalendar} className={primaryBtn}>
               {uploadingCalendar ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
@@ -519,24 +519,24 @@ export default function ImportPage() {
 
         {/* ── History ──────────────────────────────────────────────────── */}
         <section>
-          <h2 className="text-sm font-semibold text-[#E6E9F0] mb-3">Import history</h2>
+          <h2 className="text-sm font-semibold text-foreground mb-3">Import history</h2>
           <div className={`${cardClass} overflow-hidden`}>
             {loadingHistory ? (
               <div className="flex items-center justify-center py-10">
-                <Loader2 className="h-5 w-5 animate-spin text-[#00C2FF]" />
+                <Loader2 className="h-5 w-5 animate-spin text-accent" />
               </div>
             ) : history.length === 0 ? (
               <div className="flex flex-col items-center py-10 text-center px-6">
-                <XCircle className="h-8 w-8 text-[#5A6275] mb-2" />
-                <p className="text-sm text-[#8A92A6]">No imports yet</p>
+                <XCircle className="h-8 w-8 text-subtle mb-2" />
+                <p className="text-sm text-muted">No imports yet</p>
               </div>
             ) : (
-              <div className="divide-y divide-[#262A35]">
+              <div className="divide-y divide-border">
                 {history.map((j) => (
                   <div key={j.id} className="flex items-center justify-between p-4">
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-[#E6E9F0] truncate">{j.host} · {j.username}</p>
-                      <p className="text-xs text-[#8A92A6]">
+                      <p className="text-sm font-medium text-foreground truncate">{j.host} · {j.username}</p>
+                      <p className="text-xs text-muted">
                         {j.importedMessages} imported, {j.skippedMessages} skipped, {j.failedMessages} failed
                       </p>
                     </div>

@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 export function Skeleton({ className }: { className?: string }) {
   return (
     <div
-      className={cn("animate-pulse rounded-md bg-[#1B1F2A]", className)}
+      className={cn("animate-pulse rounded-md bg-surface-sunken", className)}
       aria-hidden
     />
   );
@@ -29,7 +29,7 @@ export function SkeletonCard({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "rounded-xl border border-white/[0.07] bg-[#12151D] p-4 space-y-3",
+        "rounded-xl border border-border/[0.07] bg-surface p-4 space-y-3",
         className,
       )}
     >
@@ -47,7 +47,7 @@ export function SkeletonCard({ className }: { className?: string }) {
 
 export function SkeletonRow({ columns = 4, className }: { columns?: number; className?: string }) {
   return (
-    <div className={cn("flex items-center gap-4 py-3 px-4 border-b border-white/[0.04]", className)}>
+    <div className={cn("flex items-center gap-4 py-3 px-4 border-b border-border/[0.04]", className)}>
       {Array.from({ length: columns }).map((_, i) => (
         <Skeleton key={i} className="h-3.5 flex-1" />
       ))}
@@ -57,9 +57,9 @@ export function SkeletonRow({ columns = 4, className }: { columns?: number; clas
 
 export function SkeletonTable({ rows = 5, columns = 4 }: { rows?: number; columns?: number }) {
   return (
-    <div className="rounded-xl border border-white/[0.07] overflow-hidden">
+    <div className="rounded-xl border border-border/[0.07] overflow-hidden">
       {/* Header */}
-      <div className="flex items-center gap-4 py-3 px-4 bg-[#1B1F2A]/60 border-b border-white/[0.07]">
+      <div className="flex items-center gap-4 py-3 px-4 bg-surface-sunken/60 border-b border-border/[0.07]">
         {Array.from({ length: columns }).map((_, i) => (
           <Skeleton key={i} className="h-2.5 flex-1" />
         ))}
@@ -74,7 +74,7 @@ export function SkeletonTable({ rows = 5, columns = 4 }: { rows?: number; column
 
 export function SkeletonInboxItem({ className }: { className?: string }) {
   return (
-    <div className={cn("flex items-start gap-3 px-4 py-3 border-b border-white/[0.04]", className)}>
+    <div className={cn("flex items-start gap-3 px-4 py-3 border-b border-border/[0.04]", className)}>
       <Skeleton className="h-8 w-8 rounded-full flex-shrink-0 mt-0.5" />
       <div className="flex-1 min-w-0 space-y-2">
         <div className="flex items-center justify-between gap-2">

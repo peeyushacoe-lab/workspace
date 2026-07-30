@@ -10,14 +10,14 @@ import { PageHeader } from "@/components/Shell";
 import { avatarGradient } from "@/lib/avatar";
 
 // ─── Shared style tokens (dark Nexus theme) ───────────────────────────────────
-const CARD = "bg-[#12151D] border border-[#262A35] rounded-xl";
+const CARD = "bg-surface border border-border rounded-xl";
 const INPUT =
-  "w-full bg-[#0D1017] border border-[#2E333F] rounded-lg px-3 py-2 text-sm text-[#E6E9F0] outline-none focus:border-[#00C2FF]/40 placeholder-[#5A6275]";
+  "w-full bg-surface-sunken border border-border-strong rounded-lg px-3 py-2 text-sm text-foreground outline-none focus:border-accent/40 placeholder-subtle";
 const BTN =
-  "flex items-center gap-2 bg-[#00C2FF] hover:bg-[#0098E6] text-[#06121A] text-sm font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed";
+  "flex items-center gap-2 bg-accent hover:bg-accent-hover text-accent-foreground text-sm font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed";
 const GHOST =
-  "flex items-center gap-1.5 text-[13px] font-medium text-[#8A92A6] hover:text-[#E6E9F0] hover:bg-[#1B1F2A] px-2.5 py-1.5 rounded-md transition-colors";
-const LABEL = "text-xs text-[#5A6275] mb-1 block";
+  "flex items-center gap-1.5 text-[13px] font-medium text-muted hover:text-foreground hover:bg-surface-sunken px-2.5 py-1.5 rounded-md transition-colors";
+const LABEL = "text-xs text-subtle mb-1 block";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 type OrgData = {
@@ -92,7 +92,7 @@ function OverviewTab() {
   }, []);
 
   if (loading) return <PanelLoader />;
-  if (!data) return <p className="text-sm text-[#5A6275]">No analytics available.</p>;
+  if (!data) return <p className="text-sm text-subtle">No analytics available.</p>;
 
   const kpis = [
     { label: "Total headcount", value: data.headcount },
@@ -107,24 +107,24 @@ function OverviewTab() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {kpis.map((k) => (
           <div key={k.label} className={`${CARD} p-4`}>
-            <p className="text-xs text-[#5A6275]">{k.label}</p>
-            <p className="text-2xl font-semibold text-[#E6E9F0] mt-1">{k.value}</p>
+            <p className="text-xs text-subtle">{k.label}</p>
+            <p className="text-2xl font-semibold text-foreground mt-1">{k.value}</p>
           </div>
         ))}
       </div>
       <div className={`${CARD} p-5`}>
-        <p className="text-xs font-semibold text-[#5A6275] mb-4">Headcount by role</p>
+        <p className="text-xs font-semibold text-subtle mb-4">Headcount by role</p>
         <div className="space-y-2">
           {data.byRole.map((r) => (
             <div key={r.role} className="flex items-center gap-3">
-              <span className="text-xs text-[#8A92A6] w-32 font-mono truncate">{r.role}</span>
-              <div className="flex-1 h-2 bg-[#0D1017] rounded-full overflow-hidden">
-                <div className="h-full bg-[#00C2FF] rounded-full" style={{ width: `${(r.count / maxRole) * 100}%` }} />
+              <span className="text-xs text-muted w-32 font-mono truncate">{r.role}</span>
+              <div className="flex-1 h-2 bg-surface-sunken rounded-full overflow-hidden">
+                <div className="h-full bg-accent rounded-full" style={{ width: `${(r.count / maxRole) * 100}%` }} />
               </div>
-              <span className="text-xs text-[#5A6275] w-8 text-right">{r.count}</span>
+              <span className="text-xs text-subtle w-8 text-right">{r.count}</span>
             </div>
           ))}
-          {data.byRole.length === 0 && <p className="text-xs text-[#5A6275] italic">No users yet.</p>}
+          {data.byRole.length === 0 && <p className="text-xs text-subtle italic">No users yet.</p>}
         </div>
       </div>
     </div>
@@ -236,13 +236,13 @@ function RolesTab({ members }: { members: Member[] }) {
               key={r.id}
               onClick={() => setSelectedId(r.id)}
               className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-colors ${
-                selectedId === r.id ? "bg-[#00C2FF]/10 text-[#00C2FF]" : "text-[#E6E9F0] hover:bg-[#1B1F2A]"
+                selectedId === r.id ? "bg-accent/10 text-accent" : "text-foreground hover:bg-surface-sunken"
               }`}
             >
-              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: r.color ?? "#5A6275" }} />
+              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: r.color ?? "var(--subtle)" }} />
               <span className="flex-1 text-sm truncate">{r.name}</span>
-              {r.isSystem && <Shield className="w-3 h-3 text-[#5A6275]" />}
-              <span className="text-[10px] text-[#5A6275]">{r.holders}</span>
+              {r.isSystem && <Shield className="w-3 h-3 text-subtle" />}
+              <span className="text-[10px] text-subtle">{r.holders}</span>
             </button>
           ))}
         </div>
@@ -259,20 +259,20 @@ function RolesTab({ members }: { members: Member[] }) {
       {/* Permission editor */}
       <div className={`${CARD} p-5`}>
         {!selected ? (
-          <p className="text-sm text-[#5A6275]">Select a role to view its permissions.</p>
+          <p className="text-sm text-subtle">Select a role to view its permissions.</p>
         ) : (
           <>
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-base font-semibold text-[#E6E9F0] flex items-center gap-2">
+                <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
                   {selected.name}
                   {selected.isSystem && (
-                    <span className="text-[10px] text-[#8A92A6] bg-[#1B1F2A] border border-[#262A35] px-1.5 py-0.5 rounded-full flex items-center gap-1">
+                    <span className="text-[10px] text-muted bg-surface-sunken border border-border px-1.5 py-0.5 rounded-full flex items-center gap-1">
                       <Shield className="w-3 h-3" /> System
                     </span>
                   )}
                 </h3>
-                <p className="text-xs text-[#5A6275] mt-0.5">
+                <p className="text-xs text-subtle mt-0.5">
                   {selected.isSystem ? "Managed in code — read only." : `${draft.size} permission(s) selected`}
                 </p>
               </div>
@@ -293,7 +293,7 @@ function RolesTab({ members }: { members: Member[] }) {
             <div className="space-y-5">
               {Object.entries(catalog).map(([category, perms]) => (
                 <div key={category}>
-                  <p className="text-xs font-semibold text-[#5A6275] mb-2">{category}</p>
+                  <p className="text-xs font-semibold text-subtle mb-2">{category}</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     {perms.map((p) => {
                       const on = draft.has(p.key);
@@ -304,20 +304,20 @@ function RolesTab({ members }: { members: Member[] }) {
                           disabled={disabled}
                           onClick={() => toggle(p.key)}
                           className={`flex items-start gap-2.5 px-3 py-2 rounded-lg border text-left transition-colors ${
-                            on ? "border-[#00C2FF]/40 bg-[#00C2FF]/5" : "border-[#262A35] hover:border-[#2E333F]"
+                            on ? "border-accent/40 bg-accent/5" : "border-border hover:border-border-strong"
                           } ${disabled ? "opacity-70 cursor-default" : ""}`}
                         >
                           <span className={`mt-0.5 w-4 h-4 rounded flex items-center justify-center flex-shrink-0 ${
-                            on ? "bg-[#00C2FF] text-[#06121A]" : "border border-[#2E333F]"
+                            on ? "bg-accent text-accent-foreground" : "border border-border-strong"
                           }`}>
                             {on && <Check className="w-3 h-3" />}
                           </span>
                           <span className="min-w-0">
-                            <span className="text-[13px] text-[#E6E9F0] flex items-center gap-1.5">
+                            <span className="text-[13px] text-foreground flex items-center gap-1.5">
                               {p.label}
-                              {p.isDangerous && <span className="text-[9px] text-[#FF6D3D] uppercase">danger</span>}
+                              {p.isDangerous && <span className="text-[9px] text-warn uppercase">danger</span>}
                             </span>
-                            <span className="block text-[11px] text-[#5A6275] font-mono">{p.key}</span>
+                            <span className="block text-[11px] text-subtle font-mono">{p.key}</span>
                           </span>
                         </button>
                       );
@@ -386,22 +386,22 @@ function AssignRolesPanel({ members, roles }: { members: Member[]; roles: Role[]
 
   return (
     <div className={`${CARD} p-5`}>
-      <p className="text-xs font-semibold text-[#5A6275] mb-3 flex items-center gap-2">
+      <p className="text-xs font-semibold text-subtle mb-3 flex items-center gap-2">
         <UserCog className="w-3.5 h-3.5" /> Assign roles to people
       </p>
       <div className="space-y-1">
         {members.map((m) => (
           <div key={m.id} className="rounded-lg overflow-hidden">
-            <button onClick={() => openMember(m.id)} className="w-full flex items-center gap-3 px-3 py-2 hover:bg-[#1B1F2A] rounded-lg transition-colors">
+            <button onClick={() => openMember(m.id)} className="w-full flex items-center gap-3 px-3 py-2 hover:bg-surface-sunken rounded-lg transition-colors">
               <Avatar name={m.fullName} size={28} />
-              <span className="flex-1 text-left text-sm text-[#E6E9F0] truncate">{m.fullName}</span>
-              <span className="text-[10px] text-[#8A92A6] font-mono">{m.role}</span>
-              <ChevronRight className={`w-4 h-4 text-[#5A6275] transition-transform ${openId === m.id ? "rotate-90" : ""}`} />
+              <span className="flex-1 text-left text-sm text-foreground truncate">{m.fullName}</span>
+              <span className="text-[10px] text-muted font-mono">{m.role}</span>
+              <ChevronRight className={`w-4 h-4 text-subtle transition-transform ${openId === m.id ? "rotate-90" : ""}`} />
             </button>
             {openId === m.id && (
-              <div className="px-3 py-3 bg-[#0D1017] rounded-lg mt-1">
+              <div className="px-3 py-3 bg-surface-sunken rounded-lg mt-1">
                 {loading ? (
-                  <Loader2 className="w-4 h-4 animate-spin text-[#5A6275]" />
+                  <Loader2 className="w-4 h-4 animate-spin text-subtle" />
                 ) : (
                   <>
                     <div className="flex flex-wrap gap-2 mb-3">
@@ -410,7 +410,7 @@ function AssignRolesPanel({ members, roles }: { members: Member[]; roles: Role[]
                         return (
                           <button key={r.id} onClick={() => toggle(r.id)}
                             className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
-                              on ? "border-[#00C2FF]/50 bg-[#00C2FF]/10 text-[#00C2FF]" : "border-[#262A35] text-[#8A92A6] hover:text-[#E6E9F0]"
+                              on ? "border-accent/50 bg-accent/10 text-accent" : "border-border text-muted hover:text-foreground"
                             }`}>
                             {r.name}
                           </button>
@@ -467,22 +467,22 @@ function DepartmentsTab({ members }: { members: Member[] }) {
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
       <div className={`${CARD} p-2`}>
         {loading ? <PanelLoader /> : depts.length === 0 ? (
-          <p className="text-sm text-[#5A6275] p-4">No departments yet.</p>
+          <p className="text-sm text-subtle p-4">No departments yet.</p>
         ) : depts.map((d) => (
-          <div key={d.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#1B1F2A] transition-colors">
-            <Network className="w-4 h-4 text-[#00C2FF] flex-shrink-0" />
+          <div key={d.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-sunken transition-colors">
+            <Network className="w-4 h-4 text-accent flex-shrink-0" />
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-[#E6E9F0] truncate">{d.name}</p>
-              <p className="text-xs text-[#5A6275]">
+              <p className="text-sm text-foreground truncate">{d.name}</p>
+              <p className="text-xs text-subtle">
                 {d.teamCount} team(s){d.managerName ? ` · led by ${d.managerName}` : ""}
               </p>
             </div>
-            <button onClick={() => remove(d)} className="text-[#5A6275] hover:text-[#FF6D3D]"><Trash2 className="w-4 h-4" /></button>
+            <button onClick={() => remove(d)} className="text-subtle hover:text-warn"><Trash2 className="w-4 h-4" /></button>
           </div>
         ))}
       </div>
       <div className={`${CARD} p-4 space-y-3 h-fit`}>
-        <p className="text-xs font-semibold text-[#5A6275]">New department</p>
+        <p className="text-xs font-semibold text-subtle">New department</p>
         <div><label className={LABEL}>Name</label><input value={name} onChange={(e) => setName(e.target.value)} className={INPUT} placeholder="e.g. Security" /></div>
         <div>
           <label className={LABEL}>Manager (optional)</label>
@@ -563,30 +563,30 @@ function TeamsTab({ members }: { members: Member[] }) {
         {loading ? <PanelLoader /> : teams.map((t) => (
           <div key={t.id} className={`${CARD} p-3`}>
             <div className="flex items-center gap-3">
-              <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: t.color ?? "#00C2FF" }} />
+              <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: t.color ?? "var(--accent)" }} />
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-[#E6E9F0] truncate flex items-center gap-2">
-                  {t.name}{t.isSystem && <Shield className="w-3 h-3 text-[#5A6275]" />}
+                <p className="text-sm text-foreground truncate flex items-center gap-2">
+                  {t.name}{t.isSystem && <Shield className="w-3 h-3 text-subtle" />}
                 </p>
-                <p className="text-xs text-[#5A6275]">
+                <p className="text-xs text-subtle">
                   {t.memberCount} member(s){t.department ? ` · ${t.department.name}` : ""}
                 </p>
               </div>
               <button onClick={() => openMembers(t.id)} className={GHOST}>Members</button>
-              {!t.isSystem && <button onClick={() => remove(t)} className="text-[#5A6275] hover:text-[#FF6D3D]"><Trash2 className="w-4 h-4" /></button>}
+              {!t.isSystem && <button onClick={() => remove(t)} className="text-subtle hover:text-warn"><Trash2 className="w-4 h-4" /></button>}
             </div>
             {manageId === t.id && (
-              <div className="mt-3 pt-3 border-t border-[#262A35] space-y-1 max-h-64 overflow-y-auto">
+              <div className="mt-3 pt-3 border-t border-border space-y-1 max-h-64 overflow-y-auto">
                 {members.map((m) => {
                   const on = memberIds.has(m.id);
                   return (
                     <button key={m.id} onClick={() => toggleMember(t.id, m.id, on)}
-                      className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-[#1B1F2A] transition-colors">
-                      <span className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 ${on ? "bg-[#00C2FF] text-[#06121A]" : "border border-[#2E333F]"}`}>
+                      className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-surface-sunken transition-colors">
+                      <span className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 ${on ? "bg-accent text-accent-foreground" : "border border-border-strong"}`}>
                         {on && <Check className="w-3 h-3" />}
                       </span>
                       <Avatar name={m.fullName} size={24} />
-                      <span className="text-[13px] text-[#E6E9F0] truncate">{m.fullName}</span>
+                      <span className="text-[13px] text-foreground truncate">{m.fullName}</span>
                     </button>
                   );
                 })}
@@ -594,10 +594,10 @@ function TeamsTab({ members }: { members: Member[] }) {
             )}
           </div>
         ))}
-        {!loading && teams.length === 0 && <p className="text-sm text-[#5A6275]">No teams yet.</p>}
+        {!loading && teams.length === 0 && <p className="text-sm text-subtle">No teams yet.</p>}
       </div>
       <div className={`${CARD} p-4 space-y-3 h-fit`}>
-        <p className="text-xs font-semibold text-[#5A6275]">New team</p>
+        <p className="text-xs font-semibold text-subtle">New team</p>
         <div><label className={LABEL}>Name</label><input value={name} onChange={(e) => setName(e.target.value)} className={INPUT} placeholder="e.g. SOC Team" /></div>
         <div>
           <label className={LABEL}>Department (optional)</label>
@@ -633,7 +633,7 @@ function MembersTab({ members }: { members: Member[] }) {
   return (
     <div className="space-y-6">
       <div className={`${CARD} p-4`}>
-        <p className="text-xs font-semibold text-[#5A6275] mb-3">Invite member</p>
+        <p className="text-xs font-semibold text-subtle mb-3">Invite member</p>
         <div className="flex gap-2">
           <input type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") void invite(); }}
@@ -644,16 +644,16 @@ function MembersTab({ members }: { members: Member[] }) {
         </div>
       </div>
       <div className={`${CARD} p-4`}>
-        <p className="text-xs font-semibold text-[#5A6275] mb-3">Members ({members.length})</p>
+        <p className="text-xs font-semibold text-subtle mb-3">Members ({members.length})</p>
         <div className="space-y-1">
           {members.map((m) => (
-            <div key={m.id} className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[#1B1F2A] transition-colors">
+            <div key={m.id} className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-surface-sunken transition-colors">
               <Avatar name={m.fullName} size={32} />
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-[#E6E9F0] truncate">{m.fullName}</p>
-                <p className="text-xs text-[#5A6275] font-mono truncate">{m.email}</p>
+                <p className="text-sm text-foreground truncate">{m.fullName}</p>
+                <p className="text-xs text-subtle font-mono truncate">{m.email}</p>
               </div>
-              <span className="text-[10px] text-[#8A92A6] bg-[#1B1F2A] border border-[#262A35] px-1.5 py-0.5 rounded-full font-mono">{m.role}</span>
+              <span className="text-[10px] text-muted bg-surface-sunken border border-border px-1.5 py-0.5 rounded-full font-mono">{m.role}</span>
             </div>
           ))}
         </div>
@@ -665,7 +665,7 @@ function MembersTab({ members }: { members: Member[] }) {
 // ─── General tab ──────────────────────────────────────────────────────────────
 function GeneralTab({ org, onSaved }: { org: OrgData; onSaved: (o: OrgData) => void }) {
   const [name, setName] = useState(org.name);
-  const [brandColor, setBrandColor] = useState(org.brandColor ?? "#00C2FF");
+  const [brandColor, setBrandColor] = useState(org.brandColor ?? "#4f46e5");
   const [billingEmail, setBillingEmail] = useState(org.billingEmail ?? "");
   const [logoUrl, setLogoUrl] = useState(org.logoUrl ?? "");
   const [saving, setSaving] = useState(false);
@@ -706,7 +706,7 @@ function GeneralTab({ org, onSaved }: { org: OrgData; onSaved: (o: OrgData) => v
 function PanelLoader() {
   return (
     <div className="flex items-center justify-center py-16">
-      <Loader2 className="w-6 h-6 animate-spin text-[#5A6275]" />
+      <Loader2 className="w-6 h-6 animate-spin text-subtle" />
     </div>
   );
 }
@@ -729,7 +729,7 @@ export default function OrgPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#0D1017] text-[#E6E9F0]">
+    <div className="min-h-full bg-surface-sunken text-foreground">
       <PageHeader
         eyebrow="Admin · Organization"
         title="Organization"
@@ -738,19 +738,19 @@ export default function OrgPage() {
 
       <div className="max-w-6xl mx-auto px-6 py-6 space-y-6">
         {org && (
-          <div className="flex items-center gap-3 bg-[#00C2FF]/5 border border-[#00C2FF]/15 rounded-xl px-4 py-3">
-            <Building2 className="w-4 h-4 text-[#00C2FF] flex-shrink-0" />
-            <div className="flex-1 text-xs text-[#8A92A6]">
-              <span className="font-semibold text-[#E6E9F0]">{org.name}</span>
-              {" · "}<span className="text-[#00C2FF] font-semibold">{org.plan}</span>
+          <div className="flex items-center gap-3 bg-accent/5 border border-accent/15 rounded-xl px-4 py-3">
+            <Building2 className="w-4 h-4 text-accent flex-shrink-0" />
+            <div className="flex-1 text-xs text-muted">
+              <span className="font-semibold text-foreground">{org.name}</span>
+              {" · "}<span className="text-accent font-semibold">{org.plan}</span>
               {" plan · "}{org._count.users} / {org.maxUsers} users
-              {" · "}<code className="text-[#00C2FF] font-mono">{org.slug}</code>
+              {" · "}<code className="text-accent font-mono">{org.slug}</code>
             </div>
           </div>
         )}
 
         {/* Tab nav */}
-        <div className="flex items-center gap-1 border-b border-[#262A35] overflow-x-auto">
+        <div className="flex items-center gap-1 border-b border-border overflow-x-auto">
           {TABS.map((t) => {
             const Icon = t.icon;
             return (
@@ -758,7 +758,7 @@ export default function OrgPage() {
                 key={t.key}
                 onClick={() => setTab(t.key)}
                 className={`flex items-center gap-2 px-3.5 py-2.5 text-sm border-b-2 -mb-px whitespace-nowrap transition-colors ${
-                  tab === t.key ? "border-[#00C2FF] text-[#00C2FF]" : "border-transparent text-[#8A92A6] hover:text-[#E6E9F0]"
+                  tab === t.key ? "border-accent text-accent" : "border-transparent text-muted hover:text-foreground"
                 }`}
               >
                 <Icon className="w-4 h-4" /> {t.label}
@@ -770,7 +770,7 @@ export default function OrgPage() {
         {loading ? (
           <PanelLoader />
         ) : !org ? (
-          <p className="text-sm text-[#5A6275]">No organization found for this account.</p>
+          <p className="text-sm text-subtle">No organization found for this account.</p>
         ) : (
           <div>
             {tab === "overview" && <OverviewTab />}

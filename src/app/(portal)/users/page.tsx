@@ -67,22 +67,22 @@ function buildUserSections<T extends { role: string }>(list: T[]): { label: stri
 }
 
 const ROLE_COLORS: Record<string, string> = {
-  ADMIN: "bg-[#ea4335]/10 text-[#ea4335]",
-  CEO: "bg-purple-500/10 text-purple-300",
-  CISO: "bg-[#00C2FF]/10 text-[#00C2FF]",
-  R_AND_D: "bg-indigo-500/10 text-indigo-300",
-  COO: "bg-violet-500/10 text-violet-300",
-  OPS_MANAGER: "bg-orange-500/10 text-orange-300",
-  DEVELOPER: "bg-[#00C2FF]/10 text-[#00C2FF]",
-  CYBER_SECURITY: "bg-[#ea4335]/10 text-[#ea4335]",
-  QA: "bg-yellow-500/10 text-yellow-300",
-  MARKETING: "bg-[#0f9d58]/10 text-[#0f9d58]",
-  RESEARCH: "bg-teal-500/10 text-teal-300",
-  FINANCE: "bg-[#0f9d58]/10 text-[#0f9d58]",
-  OPERATIONS: "bg-amber-500/10 text-amber-300",
-  SUPPORT: "bg-sky-500/10 text-sky-300",
+  ADMIN: "bg-crit/10 text-crit",
+  CEO: "bg-violet/10 text-violet",
+  CISO: "bg-accent/10 text-accent",
+  R_AND_D: "bg-violet/10 text-violet",
+  COO: "bg-violet/10 text-violet",
+  OPS_MANAGER: "bg-warn/10 text-warn",
+  DEVELOPER: "bg-accent/10 text-accent",
+  CYBER_SECURITY: "bg-crit/10 text-crit",
+  QA: "bg-warn/10 text-warn",
+  MARKETING: "bg-ok/10 text-ok",
+  RESEARCH: "bg-ok/10 text-ok",
+  FINANCE: "bg-ok/10 text-ok",
+  OPERATIONS: "bg-warn/10 text-warn",
+  SUPPORT: "bg-accent/10 text-accent",
   HR: "bg-pink-500/10 text-pink-300",
-  INTERNSHIP: "bg-[#00C2FF]/10 text-[#00C2FF]",
+  INTERNSHIP: "bg-accent/10 text-accent",
 };
 
 interface UserRow {
@@ -123,7 +123,7 @@ function GrantDropdown({
       <button
         onClick={() => setOpen((v) => !v)}
         disabled={disabled}
-        className="flex items-center gap-1 text-[10px] text-[#5A6275] hover:text-[#00C2FF] border border-dashed border-[rgba(255,255,255,0.11)] hover:border-[#00C2FF]/40 px-1.5 py-0.5 rounded-full transition-colors disabled:opacity-40"
+        className="flex items-center gap-1 text-[10px] text-subtle hover:text-accent border border-dashed border-border hover:border-accent/40 px-1.5 py-0.5 rounded-full transition-colors disabled:opacity-40"
       >
         <Plus className="w-2.5 h-2.5" /> Grant
         <ChevronDown className="w-2.5 h-2.5" />
@@ -131,12 +131,12 @@ function GrantDropdown({
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 top-full mt-1 z-20 w-44 bg-[#12151D] border border-[#262A35] rounded-xl shadow-xl overflow-hidden">
+          <div className="absolute left-0 top-full mt-1 z-20 w-44 bg-surface border border-border rounded-xl shadow-xl overflow-hidden">
             {available.map((role) => (
               <button
                 key={role}
                 onClick={() => { onGrant(role); setOpen(false); }}
-                className="w-full text-left px-3 py-2 text-xs text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0] transition-colors"
+                className="w-full text-left px-3 py-2 text-xs text-muted hover:bg-surface-sunken hover:text-foreground transition-colors"
               >
                 {role}
               </button>
@@ -322,7 +322,7 @@ export default function UsersPage() {
                 <form onSubmit={handleCreate}>
                   <div className="space-y-4 py-4">
                     {formError && (
-                      <div className="p-3 bg-[#ea4335]/10 border border-[#ea4335]/30 rounded-lg text-sm text-[#ea4335]">
+                      <div className="p-3 bg-crit/10 border border-crit/30 rounded-lg text-sm text-crit">
                         {formError}
                       </div>
                     )}
@@ -390,7 +390,7 @@ export default function UsersPage() {
                         </SelectContent>
                       </Select>
                       {form.role && KEY_ROLES.has(form.role) && (
-                        <p className="text-xs text-[#F59E0B] mt-1">
+                        <p className="text-xs text-warn mt-1">
                           This is a key role — only one {ROLE_LABELS[form.role]} can exist at a time.
                         </p>
                       )}
@@ -452,7 +452,7 @@ export default function UsersPage() {
                   {isCisoOrAdmin && (
                     <TableHead>
                       <div className="flex items-center gap-1.5">
-                        <Shield className="w-3 h-3 text-[#00C2FF]" />
+                        <Shield className="w-3 h-3 text-accent" />
                         Access Roles
                       </div>
                     </TableHead>
@@ -464,7 +464,7 @@ export default function UsersPage() {
                 {buildUserSections(users).map(section => (
                   <Fragment key={section.label}>
                     <TableRow className="hover:bg-transparent">
-                      <TableCell colSpan={isCisoOrAdmin ? 7 : 6} className="bg-[#0D1017] py-2 text-[11px] font-semibold uppercase tracking-wide text-[#5A6275]">
+                      <TableCell colSpan={isCisoOrAdmin ? 7 : 6} className="bg-surface-sunken py-2 text-[11px] font-semibold uppercase tracking-wide text-subtle">
                         {section.label} · {section.users.length}
                       </TableCell>
                     </TableRow>
@@ -475,27 +475,27 @@ export default function UsersPage() {
                         <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-semibold text-white flex-shrink-0" style={{ background: avatarGradient(user.email) }}>
                           {user.fullName.charAt(0).toUpperCase()}
                         </div>
-                        <span className="text-[#E6E9F0]">{user.fullName}</span>
+                        <span className="text-foreground">{user.fullName}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-[#8A92A6] text-sm font-mono">{user.email}</TableCell>
+                    <TableCell className="text-muted text-sm font-mono">{user.email}</TableCell>
                     <TableCell>
-                      <Badge className={ROLE_COLORS[user.role] ?? "bg-[#1B1F2A] text-[#8A92A6]"}>
+                      <Badge className={ROLE_COLORS[user.role] ?? "bg-surface-sunken text-muted"}>
                         {ROLE_LABELS[user.role] ?? user.role}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       {user.mustResetPassword ? (
-                        <Badge variant="outline" className="text-[#F59E0B] border-[#F59E0B]/30 bg-[#F59E0B]/10">
+                        <Badge variant="outline" className="text-warn border-warn/30 bg-warn/10">
                           Invite pending
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="text-[#0f9d58] border-[#0f9d58]/30 bg-[#0f9d58]/10">
+                        <Badge variant="outline" className="text-ok border-ok/30 bg-ok/10">
                           Active
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell className="text-[#8A92A6] text-sm font-mono">
+                    <TableCell className="text-muted text-sm font-mono">
                       {new Date(user.createdAt).toLocaleDateString()}
                     </TableCell>
 
@@ -509,14 +509,14 @@ export default function UsersPage() {
                               onClick={() => void applyAccess(user.id, role, "revoke")}
                               disabled={savingAccess === user.id}
                               title={`Click to revoke ${role}`}
-                              className="group flex items-center gap-0.5 bg-[#00C2FF]/10 text-[#00C2FF] border border-[#00C2FF]/20 px-1.5 py-0.5 rounded-full text-[10px] font-semibold hover:bg-[#ea4335]/10 hover:text-[#ea4335] hover:border-[#ea4335]/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                              className="group flex items-center gap-0.5 bg-accent/10 text-accent border border-accent/20 px-1.5 py-0.5 rounded-full text-[10px] font-semibold hover:bg-crit/10 hover:text-crit hover:border-crit/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                             >
                               {role}
                               <X className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
                             </button>
                           ))}
                           {savingAccess === user.id ? (
-                            <Loader2 className="w-3 h-3 animate-spin text-[#8A92A6]" />
+                            <Loader2 className="w-3 h-3 animate-spin text-muted" />
                           ) : (
                             <GrantDropdown
                               currentRoles={user.grantedRoles}
@@ -554,7 +554,7 @@ export default function UsersPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => handleDelete(user.id, user.fullName)}
-                            className="text-red-400 hover:text-red-400 hover:border-red-500/30"
+                            className="text-crit hover:text-crit hover:border-crit/30"
                             title="Delete user"
                           >
                             <Trash2 className="w-3.5 h-3.5" />

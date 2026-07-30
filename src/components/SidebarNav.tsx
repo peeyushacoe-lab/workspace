@@ -101,13 +101,13 @@ export function SidebarNav({
               title={item.label}
               className={`relative flex h-9 w-9 mx-auto items-center justify-center rounded-xl transition-colors ${
                 active
-                  ? "bg-[#0E2532] text-[#00C2FF]"
-                  : "text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0]"
+                  ? "bg-accent-soft text-accent"
+                  : "text-muted hover:bg-surface-sunken hover:text-foreground"
               }`}
             >
               <Icon className={iconSize("lg")} />
               {showBadge && (
-                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#00C2FF] text-[9px] font-semibold text-[#06121A] px-0.5">
+                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent text-[9px] font-semibold text-accent-foreground px-0.5">
                   {unreadCount > 99 ? "99+" : unreadCount}
                 </span>
               )}
@@ -131,15 +131,15 @@ export function SidebarNav({
             href={item.href}
             className={`group flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-colors duration-150 ${
               active
-                ? "bg-[#0E2532] text-[#00C2FF] font-medium"
-                : "text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0]"
+                ? "bg-accent-soft text-accent font-medium"
+                : "text-muted hover:bg-surface-sunken hover:text-foreground"
             }`}
           >
             <Icon className={`${iconSize("lg")} flex-shrink-0`} />
             <div className="flex flex-1 min-w-0 items-center justify-between">
               <span className="truncate text-[13.5px]">{item.label}</span>
               {showBadge && (
-                <span className="ml-1.5 rounded-full bg-[#00C2FF] px-1.5 py-0.5 text-[10px] font-semibold leading-none text-[#06121A] tabular-nums">
+                <span className="ml-1.5 rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-semibold leading-none text-accent-foreground tabular-nums">
                   {unreadCount > 99 ? "99+" : unreadCount}
                 </span>
               )}

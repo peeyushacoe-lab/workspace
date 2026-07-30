@@ -25,18 +25,18 @@ export type TeamWithMembers = TeamDef & {
 };
 
 const DEFAULT_TEAMS: TeamDef[] = [
-  { id: "leadership",   name: "Leadership",   icon: "crown",        color: "#ef4444", roles: ["CEO", "ADMIN", "CISO", "COO"] },
+  { id: "leadership",   name: "Leadership",   icon: "crown",        color: "#c0362c", roles: ["CEO", "ADMIN", "CISO", "COO"] },
   { id: "engineering",  name: "Engineering",  icon: "code",         color: "#3b82f6", roles: ["DEVELOPER", "R_AND_D"] },
-  { id: "security",     name: "Security",     icon: "shield",       color: "#00d2ff", roles: ["CYBER_SECURITY", "CISO"] },
+  { id: "security",     name: "Security",     icon: "shield",       color: "#4f46e5", roles: ["CYBER_SECURITY", "CISO"] },
   { id: "operations",   name: "Operations",   icon: "settings",     color: "#8b5cf6", roles: ["OPS_MANAGER", "OPERATIONS", "COO"] },
-  { id: "finance",      name: "Finance",      icon: "dollar-sign",  color: "#f59e0b", roles: ["FINANCE"] },
+  { id: "finance",      name: "Finance",      icon: "dollar-sign",  color: "#b45309", roles: ["FINANCE"] },
   { id: "marketing",    name: "Marketing",    icon: "megaphone",    color: "#f97316", roles: ["MARKETING"] },
-  { id: "research",     name: "Research",     icon: "flask",        color: "#a855f7", roles: ["RESEARCH"] },
+  { id: "research",     name: "Research",     icon: "flask",        color: "#7c5cd6", roles: ["RESEARCH"] },
   { id: "qa",           name: "QA & Testing", icon: "clipboard",    color: "#22c55e", roles: ["QA"] },
   { id: "support",      name: "Support",      icon: "headphones",   color: "#06b6d4", roles: ["SUPPORT"] },
   { id: "hr",           name: "HR",           icon: "users",        color: "#f472b6", roles: ["HR"] },
   { id: "interns",      name: "Interns",      icon: "graduation",   color: "#ec4899", roles: ["INTERNSHIP"] },
-  { id: "all-hands",    name: "All Hands",    icon: "users",        color: "#6b7280", roles: [] },
+  { id: "all-hands",    name: "All Hands",    icon: "users",        color: "#6b6a65", roles: [] },
 ];
 
 /**

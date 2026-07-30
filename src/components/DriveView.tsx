@@ -143,21 +143,21 @@ function getMimeIcon(mimeType: string) {
 
 // Google-style type-coloured icon tint
 function _getMimeColor(mimeType: string): string {
-  if (mimeType === "application/pdf") return "#ea4335"; // red
+  if (mimeType === "application/pdf") return "var(--crit)"; // red
   if (mimeType.includes("sheet") || mimeType.includes("excel") || mimeType === "text/csv")
-    return "#0f9d58"; // green
+    return "var(--ok)"; // green
   if (mimeType.includes("presentation") || mimeType.includes("powerpoint"))
-    return "#f4b400"; // amber
+    return "var(--warn)"; // amber
   if (mimeType.startsWith("image/")) return "#a142f4"; // purple
-  if (mimeType.startsWith("video/")) return "#ff6d00"; // orange
+  if (mimeType.startsWith("video/")) return "var(--warn)"; // orange
   if (mimeType.startsWith("audio/")) return "#1a73e8"; // blue
   if (
     mimeType.includes("word") ||
     mimeType.includes("document") ||
     mimeType === "text/plain"
   )
-    return "#00C2FF"; // blue
-  return "#8A92A6"; // grey
+    return "var(--accent)"; // blue
+  return "var(--muted)"; // grey
 }
 
 // Nexus file-type badge: short label + gradient (matches the dark design)
@@ -169,32 +169,32 @@ function getFileBadge(name: string, mimeType: string): { ext: string; badgeBg: s
   if (raw === "fig" || raw === "figma")
     return norm("FIG", "linear-gradient(135deg,#F24E1E,#FF7262)", "linear-gradient(135deg,#1A1320,#22141C)");
   if (raw === "pdf" || mimeType === "application/pdf")
-    return norm("PDF", "linear-gradient(135deg,#EF4444,#B91C1C)", "linear-gradient(135deg,#1C1518,#221518)");
+    return norm("PDF", "linear-gradient(135deg,#c0362c,#B91C1C)", "linear-gradient(135deg,#1C1518,#221518)");
   if (raw === "svg")
-    return norm("SVG", "linear-gradient(135deg,#F59E0B,#D97706)", "linear-gradient(135deg,#1E1A13,#241F14)");
+    return norm("SVG", "linear-gradient(135deg,#b45309,#b45309)", "linear-gradient(135deg,#1E1A13,#241F14)");
   if (raw === "md" || raw === "markdown")
-    return norm("MD", "linear-gradient(135deg,#5A6275,#3A4150)", "linear-gradient(135deg,#15181F,#181C24)");
+    return norm("MD", "linear-gradient(135deg,#9b9a93,#d9d8d2)", "linear-gradient(135deg,#15181F,#181C24)");
   if (mimeType.startsWith("video/") || ["mp4", "mov", "webm", "avi", "mkv"].includes(raw))
     return norm("MP4", "linear-gradient(135deg,#7C5CFF,#5B21B6)", "linear-gradient(135deg,#181423,#1C1530)");
   if (mimeType.includes("sheet") || mimeType.includes("excel") || mimeType === "text/csv" || ["xls", "xlsx", "csv"].includes(raw))
-    return norm("XLS", "linear-gradient(135deg,#10B981,#059669)", "linear-gradient(135deg,#131E1A,#142420)");
+    return norm("XLS", "linear-gradient(135deg,#0e7c5a,#0e7c5a)", "linear-gradient(135deg,#131E1A,#142420)");
   if (mimeType.includes("presentation") || mimeType.includes("powerpoint") || ["ppt", "pptx"].includes(raw))
-    return norm("PPT", "linear-gradient(135deg,#F4B400,#D97706)", "linear-gradient(135deg,#1E1A13,#241F14)");
+    return norm("PPT", "linear-gradient(135deg,#b45309,#b45309)", "linear-gradient(135deg,#1E1A13,#241F14)");
   if (mimeType.startsWith("image/") || ["png", "jpg", "jpeg", "gif", "webp"].includes(raw))
     return norm("IMG", "linear-gradient(135deg,#A142F4,#6D28D9)", "linear-gradient(135deg,#1A1423,#1F1730)");
   if (mimeType.startsWith("audio/") || ["mp3", "wav", "flac"].includes(raw))
-    return norm("AUD", "linear-gradient(135deg,#1a73e8,#1D4ED8)", "linear-gradient(135deg,#131820,#141C26)");
+    return norm("AUD", "linear-gradient(135deg,#1a73e8,#4338ca)", "linear-gradient(135deg,#131820,#141C26)");
   if (mimeType.includes("word") || mimeType.includes("document") || mimeType === "text/plain" || ["doc", "docx", "txt"].includes(raw))
-    return norm("DOC", "linear-gradient(135deg,#3B82F6,#1D4ED8)", "linear-gradient(135deg,#131820,#141C26)");
-  return norm((raw || "FILE").slice(0, 3).toUpperCase(), "linear-gradient(135deg,#5A6275,#3A4150)", "linear-gradient(135deg,#15181F,#181C24)");
+    return norm("DOC", "linear-gradient(135deg,#3B82F6,#4338ca)", "linear-gradient(135deg,#131820,#141C26)");
+  return norm((raw || "FILE").slice(0, 3).toUpperCase(), "linear-gradient(135deg,#9b9a93,#d9d8d2)", "linear-gradient(135deg,#15181F,#181C24)");
 }
 
 // Tinted folder icon palette (cycles by index, mirrors the design's per-folder tints)
 const FOLDER_TINTS = [
-  { iconBg: "rgba(0,194,255,0.14)", iconColor: "#00C2FF" },
-  { iconBg: "rgba(124,92,255,0.14)", iconColor: "#9B7DFF" },
-  { iconBg: "rgba(16,185,129,0.14)", iconColor: "#10B981" },
-  { iconBg: "rgba(245,158,11,0.14)", iconColor: "#F59E0B" },
+  { iconBg: "color-mix(in srgb, var(--accent) 14%, transparent)", iconColor: "var(--accent)" },
+  { iconBg: "color-mix(in srgb, var(--violet) 14%, transparent)", iconColor: "#9B7DFF" },
+  { iconBg: "color-mix(in srgb, var(--ok) 14%, transparent)", iconColor: "var(--ok)" },
+  { iconBg: "color-mix(in srgb, var(--warn) 14%, transparent)", iconColor: "var(--warn)" },
 ];
 
 function FolderTreeItem({
@@ -220,24 +220,24 @@ function FolderTreeItem({
         }}
         className={`flex w-full items-center gap-1 rounded-r-full px-2 py-1.5 text-sm transition-colors ${
           currentFolderId === folder.id
-            ? "bg-[#0E2532] text-[#00C2FF] font-medium"
-            : "text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0]"
+            ? "bg-accent-soft text-accent font-medium"
+            : "text-muted hover:bg-surface-sunken hover:text-foreground"
         }`}
         style={{ paddingLeft: `${8 + depth * 16}px` }}
       >
         {hasChildren ? (
           expanded ? (
-            <ChevronDown className="h-3.5 w-3.5 shrink-0 text-[#8A92A6]" />
+            <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted" />
           ) : (
-            <ChevronRight className="h-3.5 w-3.5 shrink-0 text-[#8A92A6]" />
+            <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted" />
           )
         ) : (
           <span className="w-3.5 shrink-0" />
         )}
         {expanded ? (
-          <FolderOpen className="h-4 w-4 shrink-0 text-yellow-500" />
+          <FolderOpen className="h-4 w-4 shrink-0 text-warn" />
         ) : (
-          <Folder className="h-4 w-4 shrink-0 text-yellow-500" />
+          <Folder className="h-4 w-4 shrink-0 text-warn" />
         )}
         <span className="truncate">{folder.name}</span>
       </button>
@@ -361,22 +361,22 @@ function ShareModalDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 ">
-      <div className="w-full max-w-md rounded-2xl bg-[#12151D] p-6 shadow-2xl border border-[#262A35]">
+      <div className="w-full max-w-md rounded-2xl bg-surface p-6 shadow-2xl border border-border">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-base font-semibold text-[#E6E9F0]">Share &ldquo;{fileName}&rdquo;</h2>
-          <button onClick={onClose} className="rounded-lg p-1 hover:bg-[#1B1F2A] transition-colors">
-            <X className="h-4 w-4 text-[#8A92A6]" />
+          <h2 className="text-base font-semibold text-foreground">Share &ldquo;{fileName}&rdquo;</h2>
+          <button onClick={onClose} className="rounded-lg p-1 hover:bg-surface-sunken transition-colors">
+            <X className="h-4 w-4 text-muted" />
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 rounded-xl bg-[#12151D] p-1 mb-5 border border-[#262A35]">
+        <div className="flex gap-1 rounded-xl bg-surface p-1 mb-5 border border-border">
           {(["link", "email"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
               className={`flex-1 rounded-lg py-1.5 text-sm font-medium transition-colors ${
-                tab === t ? "bg-[#1B1F2A] text-[#E6E9F0] shadow-sm" : "text-[#8A92A6] hover:text-[#E6E9F0]"
+                tab === t ? "bg-surface-sunken text-foreground shadow-sm" : "text-muted hover:text-foreground"
               }`}
             >
               {t === "link" ? "Create link" : "Share by email"}
@@ -386,7 +386,7 @@ function ShareModalDialog({
 
         {/* Role */}
         <div className="mb-4">
-          <p className="text-xs font-medium text-[#8A92A6] mb-2">Permission</p>
+          <p className="text-xs font-medium text-muted mb-2">Permission</p>
           <div className="flex gap-2">
             {(["VIEWER", "EDITOR"] as const).map((r) => (
               <button
@@ -394,8 +394,8 @@ function ShareModalDialog({
                 onClick={() => setRole(r)}
                 className={`flex-1 rounded-xl border py-2 text-sm font-medium transition-colors ${
                   role === r
-                    ? "border-[#00C2FF] bg-[#0E2532] text-[#00C2FF]"
-                    : "border-[#262A35] text-[#8A92A6] hover:border-[#00C2FF]/40"
+                    ? "border-accent bg-accent-soft text-accent"
+                    : "border-border text-muted hover:border-accent/40"
                 }`}
               >
                 {r === "VIEWER" ? "View only" : "Can edit"}
@@ -406,7 +406,7 @@ function ShareModalDialog({
 
         {/* Expiry */}
         <div className="mb-5">
-          <p className="text-xs font-medium text-[#8A92A6] mb-2">Expiry</p>
+          <p className="text-xs font-medium text-muted mb-2">Expiry</p>
           <div className="flex gap-2 flex-wrap">
             {(["never", "7", "30", "custom"] as const).map((e) => (
               <button
@@ -414,8 +414,8 @@ function ShareModalDialog({
                 onClick={() => setExpiry(e)}
                 className={`rounded-xl border px-3 py-1.5 text-xs font-medium transition-colors ${
                   expiry === e
-                    ? "border-[#00C2FF] bg-[#0E2532] text-[#00C2FF]"
-                    : "border-[#262A35] text-[#8A92A6] hover:border-[#00C2FF]/40"
+                    ? "border-accent bg-accent-soft text-accent"
+                    : "border-border text-muted hover:border-accent/40"
                 }`}
               >
                 {e === "never" ? "Never" : e === "7" ? "7 days" : e === "30" ? "30 days" : "Custom"}
@@ -428,7 +428,7 @@ function ShareModalDialog({
               value={customDate}
               onChange={(e) => setCustomDate(e.target.value)}
               min={new Date().toISOString().split("T")[0]}
-              className="mt-2 w-full rounded-xl border border-[#262A35] px-3 py-2 text-sm outline-none focus:border-[#00C2FF] focus:ring-2 focus:ring-[#00C2FF]/15 bg-[#12151D] text-[#E6E9F0]"
+              className="mt-2 w-full rounded-xl border border-border px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/15 bg-surface text-foreground"
             />
           )}
         </div>
@@ -438,33 +438,33 @@ function ShareModalDialog({
           <div>
             {linkUrl ? (
               <div className="space-y-3">
-                <div className="flex items-center gap-2 rounded-xl border border-[#262A35] bg-[#12151D] p-3">
-                  <span className="flex-1 truncate text-sm text-[#E6E9F0]">{linkUrl}</span>
+                <div className="flex items-center gap-2 rounded-xl border border-border bg-surface p-3">
+                  <span className="flex-1 truncate text-sm text-foreground">{linkUrl}</span>
                   <button
                     onClick={handleCopy}
-                    className="shrink-0 rounded-lg p-1.5 hover:bg-[#1B1F2A] transition-colors"
+                    className="shrink-0 rounded-lg p-1.5 hover:bg-surface-sunken transition-colors"
                   >
                     {copied ? (
-                      <Check className="h-4 w-4 text-green-400" />
+                      <Check className="h-4 w-4 text-ok" />
                     ) : (
-                      <Copy className="h-4 w-4 text-[#8A92A6]" />
+                      <Copy className="h-4 w-4 text-muted" />
                     )}
                   </button>
                 </div>
                 {linkExpiry && (
-                  <p className="text-xs text-[#8A92A6]">
+                  <p className="text-xs text-muted">
                     Expires {formatDistanceToNow(new Date(linkExpiry), { addSuffix: true })}
                   </p>
                 )}
                 {!linkExpiry && expiry === "never" && (
-                  <p className="text-xs text-[#8A92A6]">This link never expires.</p>
+                  <p className="text-xs text-muted">This link never expires.</p>
                 )}
               </div>
             ) : (
               <button
                 onClick={handleCreateLink}
                 disabled={loading}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#00C2FF] py-2.5 text-sm font-medium text-[#06121A] hover:opacity-90 disabled:opacity-60 transition-colors"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-2.5 text-sm font-medium text-accent-foreground hover:opacity-90 disabled:opacity-60 transition-colors"
               >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
                 Create link
@@ -479,12 +479,12 @@ function ShareModalDialog({
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Email address"
               onKeyDown={(e) => { if (e.key === "Enter") handleShareWithEmail(); }}
-              className="flex-1 rounded-xl border border-[#262A35] px-3 py-2 text-sm outline-none focus:border-[#00C2FF] focus:ring-2 focus:ring-[#00C2FF]/15 bg-[#12151D] text-[#E6E9F0]"
+              className="flex-1 rounded-xl border border-border px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/15 bg-surface text-foreground"
             />
             <button
               onClick={handleShareWithEmail}
               disabled={loading || !email.trim()}
-              className="flex items-center gap-1.5 rounded-xl bg-[#00C2FF] px-4 py-2 text-sm font-medium text-[#06121A] hover:opacity-90 disabled:opacity-60 transition-colors"
+              className="flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90 disabled:opacity-60 transition-colors"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send"}
             </button>
@@ -519,12 +519,12 @@ function MoveModalDialog({
           onClick={() => setTarget(f.id)}
           className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors ${
             target === f.id
-              ? "bg-[#0E2532] text-[#00C2FF] font-medium"
-              : "text-[#8A92A6] hover:bg-[#1B1F2A]"
+              ? "bg-accent-soft text-accent font-medium"
+              : "text-muted hover:bg-surface-sunken"
           }`}
           style={{ paddingLeft: 8 + depth * 16 + "px" }}
         >
-          <Folder className="h-4 w-4 shrink-0 text-yellow-500" />
+          <Folder className="h-4 w-4 shrink-0 text-warn" />
           <span className="truncate">{f.name}</span>
         </button>
         {f.children && f.children.length > 0 && renderTree(f.children, depth + 1)}
@@ -533,20 +533,20 @@ function MoveModalDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="w-full max-w-md rounded-2xl bg-[#12151D] p-6 shadow-2xl border border-[#262A35]">
+      <div className="w-full max-w-md rounded-2xl bg-surface p-6 shadow-2xl border border-border">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-base font-semibold text-[#E6E9F0]">Move &ldquo;{name}&rdquo;</h2>
-          <button onClick={onClose} className="rounded-lg p-1 hover:bg-[#1B1F2A] transition-colors">
-            <X className="h-4 w-4 text-[#8A92A6]" />
+          <h2 className="text-base font-semibold text-foreground">Move &ldquo;{name}&rdquo;</h2>
+          <button onClick={onClose} className="rounded-lg p-1 hover:bg-surface-sunken transition-colors">
+            <X className="h-4 w-4 text-muted" />
           </button>
         </div>
-        <div className="max-h-72 overflow-y-auto rounded-xl border border-[#262A35] p-1.5 mb-4">
+        <div className="max-h-72 overflow-y-auto rounded-xl border border-border p-1.5 mb-4">
           <button
             onClick={() => setTarget(null)}
             className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors ${
               target === null
-                ? "bg-[#0E2532] text-[#00C2FF] font-medium"
-                : "text-[#8A92A6] hover:bg-[#1B1F2A]"
+                ? "bg-accent-soft text-accent font-medium"
+                : "text-muted hover:bg-surface-sunken"
             }`}
           >
             <HardDrive className="h-4 w-4 shrink-0" />
@@ -557,14 +557,14 @@ function MoveModalDialog({
         <div className="flex justify-end gap-2">
           <button
             onClick={onClose}
-            className="rounded-lg border border-[#262A35] px-4 py-2 text-sm font-medium text-[#8A92A6] hover:bg-[#1B1F2A] transition-colors"
+            className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted hover:bg-surface-sunken transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={() => onMove(target)}
             disabled={target === currentFolderId}
-            className="rounded-lg bg-[#00C2FF] px-4 py-2 text-sm font-semibold text-[#06121A] hover:bg-[#0098E6] disabled:opacity-50 transition-colors"
+            className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground hover:bg-accent-hover disabled:opacity-50 transition-colors"
           >
             Move here
           </button>
@@ -599,27 +599,27 @@ function FileDetailPanel({
   };
 
   const sensitivityColors: Record<string, string> = {
-    PUBLIC:       "text-green-400 bg-green-400/10",
-    INTERNAL:     "text-blue-400 bg-blue-400/10",
-    CONFIDENTIAL: "text-amber-400 bg-amber-400/10",
-    RESTRICTED:   "text-rose-400 bg-rose-400/10",
+    PUBLIC:       "text-ok bg-ok/10",
+    INTERNAL:     "text-accent bg-accent/10",
+    CONFIDENTIAL: "text-warn bg-warn/10",
+    RESTRICTED:   "text-crit bg-crit/10",
   };
 
   return (
-    <div className="hidden lg:flex bg-[#12151D] border-l border-[#262A35] w-80 flex-col shrink-0">
-      <div className="px-4 py-3 border-b border-[#262A35] flex items-center justify-between font-semibold text-[#E6E9F0] text-sm">
+    <div className="hidden lg:flex bg-surface border-l border-border w-80 flex-col shrink-0">
+      <div className="px-4 py-3 border-b border-border flex items-center justify-between font-semibold text-foreground text-sm">
         <span className="truncate">{file.name}</span>
-        <button onClick={onClose} className="rounded-lg p-1 hover:bg-[#1B1F2A] transition-colors ml-2">
-          <X className="h-4 w-4 text-[#8A92A6]" />
+        <button onClick={onClose} className="rounded-lg p-1 hover:bg-surface-sunken transition-colors ml-2">
+          <X className="h-4 w-4 text-muted" />
         </button>
       </div>
-      <div className="flex border-b border-[#262A35]">
+      <div className="flex border-b border-border">
         <button
           onClick={() => setActiveTab("activity")}
           className={`flex flex-1 items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors ${
             activeTab === "activity"
-              ? "border-b-2 border-[#00C2FF] text-[#00C2FF]"
-              : "text-[#8A92A6] hover:text-[#E6E9F0]"
+              ? "border-b-2 border-accent text-accent"
+              : "text-muted hover:text-foreground"
           }`}
         >
           <Activity className="h-3.5 w-3.5" />
@@ -629,8 +629,8 @@ function FileDetailPanel({
           onClick={() => { setActiveTab("intelligence"); void loadIntelligence(); }}
           className={`flex flex-1 items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors ${
             activeTab === "intelligence"
-              ? "border-b-2 border-[#00C2FF] text-[#00C2FF]"
-              : "text-[#8A92A6] hover:text-[#E6E9F0]"
+              ? "border-b-2 border-accent text-accent"
+              : "text-muted hover:text-foreground"
           }`}
         >
           <Sparkles className="h-3.5 w-3.5" />
@@ -643,38 +643,38 @@ function FileDetailPanel({
           <div className="p-3 space-y-3">
             {loadingIntel ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-5 h-5 animate-spin text-[#00C2FF]" />
+                <Loader2 className="w-5 h-5 animate-spin text-accent" />
               </div>
             ) : intelligence ? (
               <>
                 {intelligence.classification && (
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-[#7a8899]">Type</span>
-                    <span className="text-xs px-2 py-0.5 rounded bg-[#1B1F2A] text-[#8A92A6]">{intelligence.classification}</span>
+                    <span className="text-xs text-muted">Type</span>
+                    <span className="text-xs px-2 py-0.5 rounded bg-surface-sunken text-muted">{intelligence.classification}</span>
                   </div>
                 )}
                 {intelligence.sensitivityLevel && (
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-[#7a8899]">Sensitivity</span>
-                    <span className={`text-xs px-2 py-0.5 rounded font-medium ${sensitivityColors[intelligence.sensitivityLevel] ?? "text-[#8A92A6] bg-[#1B1F2A]"}`}>
+                    <span className="text-xs text-muted">Sensitivity</span>
+                    <span className={`text-xs px-2 py-0.5 rounded font-medium ${sensitivityColors[intelligence.sensitivityLevel] ?? "text-muted bg-surface-sunken"}`}>
                       {intelligence.sensitivityLevel}
                     </span>
                   </div>
                 )}
                 {intelligence.summary && (
                   <div>
-                    <p className="text-xs text-[#7a8899] mb-1 font-medium">AI Summary</p>
-                    <p className="text-xs text-[#8A92A6] leading-relaxed">{intelligence.summary}</p>
+                    <p className="text-xs text-muted mb-1 font-medium">AI Summary</p>
+                    <p className="text-xs text-muted leading-relaxed">{intelligence.summary}</p>
                   </div>
                 )}
                 {intelligence.cached && (
-                  <p className="text-xs text-[#4a5568] italic">Cached analysis</p>
+                  <p className="text-xs text-subtle italic">Cached analysis</p>
                 )}
               </>
             ) : (
               <div className="text-center py-6">
-                <Sparkles className="w-6 h-6 text-[#4a5568] mx-auto mb-2" />
-                <p className="text-xs text-[#7a8899]">Click AI Intel to analyze this file</p>
+                <Sparkles className="w-6 h-6 text-subtle mx-auto mb-2" />
+                <p className="text-xs text-muted">Click AI Intel to analyze this file</p>
               </div>
             )}
           </div>
@@ -1203,18 +1203,18 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
 
   return (
     <div
-      className="flex h-full bg-[#12151D] relative"
+      className="flex h-full bg-surface lg:bg-transparent lg:gap-2 relative"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
       {/* Drag overlay */}
       {isDragOver && (
-        <div className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center bg-[#00C2FF]/5 backdrop-blur-[1px]">
-          <div className="flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-[#00C2FF] bg-[#12151D] px-12 py-10 shadow-sm">
-            <Upload className="h-10 w-10 text-[#00C2FF]" />
-            <p className="text-base font-semibold text-[#E6E9F0]">Drop files here to upload</p>
-            <p className="text-xs text-[#5A6275]">to {section === "my-drive" && breadcrumb.length > 0 ? breadcrumb[breadcrumb.length - 1].name : "My Drive"}</p>
+        <div className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center bg-accent/5 backdrop-blur-[1px]">
+          <div className="flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-accent bg-surface px-12 py-10 shadow-sm">
+            <Upload className="h-10 w-10 text-accent" />
+            <p className="text-base font-semibold text-foreground">Drop files here to upload</p>
+            <p className="text-xs text-subtle">to {section === "my-drive" && breadcrumb.length > 0 ? breadcrumb[breadcrumb.length - 1].name : "My Drive"}</p>
           </div>
         </div>
       )}
@@ -1231,25 +1231,25 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
       />
 
       {/* Left sidebar */}
-      <aside className={`${showSidebar ? "flex" : "hidden"} lg:flex bg-[#12151D] border-r border-[#262A35] w-60 flex-shrink-0 flex-col py-3 absolute lg:relative inset-y-0 left-0 z-20 shadow-xl lg:shadow-none`}>
+      <aside className={`${showSidebar ? "flex" : "hidden"} lg:flex bg-surface w-60 flex-shrink-0 flex-col py-3 absolute lg:relative inset-y-0 left-0 z-20 shadow-xl lg:shadow-sm lg:rounded-panel lg:border lg:border-border overflow-y-auto`}>
         <div className="px-3 pb-2 relative" ref={newMenuRef}>
           <div className="flex items-center gap-2 mb-2 lg:hidden">
             <button
               onClick={() => setShowSidebar(false)}
-              className="p-1.5 rounded-lg text-[#8A92A6] hover:bg-[#1B1F2A] transition-colors"
+              className="p-1.5 rounded-lg text-muted hover:bg-surface-sunken transition-colors"
             >
               <X className="h-4 w-4" />
             </button>
           </div>
           <button
             onClick={() => setShowNewMenu((v) => !v)}
-            className="flex items-center gap-3 rounded-2xl bg-[#12151D] border border-[#262A35] pl-4 pr-6 py-3 text-sm font-medium text-[#E6E9F0] shadow-sm hover:shadow transition-shadow"
+            className="flex items-center gap-3 rounded-2xl bg-surface border border-border pl-4 pr-6 py-3 text-sm font-medium text-foreground shadow-sm hover:shadow transition-shadow"
           >
-            <Plus className="h-5 w-5 text-[#00C2FF]" />
+            <Plus className="h-5 w-5 text-accent" />
             New
           </button>
           {showNewMenu && (
-            <div className="absolute left-3 top-full z-30 mt-1 w-56 rounded-lg border border-[#262A35] bg-[#12151D] py-1.5 shadow-lg">
+            <div className="absolute left-3 top-full z-30 mt-1 w-56 rounded-lg border border-border bg-surface py-1.5 shadow-lg">
               <NewMenuItem
                 icon={FolderPlus}
                 label="New folder"
@@ -1259,11 +1259,11 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                   setShowNewMenu(false);
                 }}
               />
-              <div className="my-1 border-t border-[#262A35]" />
+              <div className="my-1 border-t border-border" />
               <NewMenuItem icon={FileText} label="New document" onClick={() => createNativeFile("doc")} />
               <NewMenuItem icon={FileSpreadsheet} label="New spreadsheet" onClick={() => createNativeFile("sheet")} />
               <NewMenuItem icon={Presentation} label="New presentation" onClick={() => createNativeFile("slide")} />
-              <div className="my-1 border-t border-[#262A35]" />
+              <div className="my-1 border-t border-border" />
               <NewMenuItem
                 icon={Upload}
                 label="File upload"
@@ -1305,8 +1305,8 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
               }}
               className={`flex w-full items-center gap-3 rounded-r-full pl-6 pr-3 py-2 text-sm transition-colors ${
                 section === key
-                  ? "bg-[#0E2532] text-[#00C2FF] font-medium"
-                  : "text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0]"
+                  ? "bg-accent-soft text-accent font-medium"
+                  : "text-muted hover:bg-surface-sunken hover:text-foreground"
               }`}
             >
               <Icon className="h-[18px] w-[18px]" />
@@ -1317,7 +1317,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
 
         {section === "my-drive" && sidebarFolders.length > 0 && (
           <div className="mt-4 pr-2">
-            <p className="text-xs font-medium text-[#5A6275] px-6 py-1.5">
+            <p className="text-xs font-medium text-subtle px-6 py-1.5">
               Folders
             </p>
             <div className="space-y-0.5">
@@ -1338,20 +1338,20 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
           </div>
         )}
 
-        <div className="px-5 py-3 border-t border-[#262A35] mt-auto">
+        <div className="px-5 py-3 border-t border-border mt-auto">
           {storage && (
             <div>
-              <div className="flex items-center gap-2 mb-2 text-[#8A92A6]">
+              <div className="flex items-center gap-2 mb-2 text-muted">
                 <HardDrive className="h-4 w-4" />
                 <span className="text-xs font-medium">Storage</span>
               </div>
-              <div className="bg-[#262A35] rounded-full h-1.5">
+              <div className="bg-border rounded-full h-1.5">
                 <div
-                  className="bg-[#00C2FF] h-1.5 rounded-full transition-all"
+                  className="bg-accent h-1.5 rounded-full transition-all"
                   style={{ width: storagePercent + "%" }}
                 />
               </div>
-              <p className="mt-2 text-xs text-[#5A6275]">
+              <p className="mt-2 text-xs text-subtle">
                 {formatFileSize(storage.usedMB * 1024 * 1024)} of {(storage.totalMB / 1024).toFixed(0)} GB used
               </p>
             </div>
@@ -1360,30 +1360,30 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 flex flex-col bg-[#12151D] min-w-0 overflow-hidden">
+      <main className="flex-1 flex flex-col bg-surface min-w-0 overflow-hidden lg:rounded-panel lg:border lg:border-border lg:shadow-sm">
         {storage && !storage.configured && (
-          <div className="flex items-center gap-2 bg-yellow-950/30 border-b border-yellow-700/30 px-6 py-2.5 text-sm text-yellow-400">
-            <AlertTriangle className="h-4 w-4 text-yellow-500 shrink-0" />
+          <div className="flex items-center gap-2 bg-warn/30 border-b border-warn/30 px-6 py-2.5 text-sm text-warn">
+            <AlertTriangle className="h-4 w-4 text-warn shrink-0" />
             File storage not configured. Set R2_ENDPOINT in .env
           </div>
         )}
 
         {/* Top search bar */}
-        <div className="px-3 sm:px-6 pt-4 pb-2 bg-[#12151D] flex items-center gap-3">
+        <div className="px-3 sm:px-6 pt-4 pb-2 bg-surface flex items-center gap-3">
           <button
             onClick={() => setShowSidebar(true)}
-            className="lg:hidden p-2 rounded-lg text-[#8A92A6] hover:bg-[#1B1F2A] transition-colors flex-shrink-0"
+            className="lg:hidden p-2 rounded-lg text-muted hover:bg-surface-sunken transition-colors flex-shrink-0"
             aria-label="Open navigation"
           >
             <Menu className="h-5 w-5" />
           </button>
           <div className="relative flex-1 max-w-2xl">
-            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8A92A6]" />
+            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search in Drive"
-              className="w-full bg-[#1B1F2A] rounded-full pl-11 py-2.5 text-sm focus:bg-[#12151D] focus:ring-1 focus:ring-[#00C2FF]/40 focus:shadow-sm outline-none pr-4 text-[#E6E9F0] placeholder:text-[#8A92A6] transition-colors"
+              className="w-full bg-surface-sunken rounded-full pl-11 py-2.5 text-sm focus:bg-surface focus:ring-1 focus:ring-accent/40 focus:shadow-sm outline-none pr-4 text-foreground placeholder:text-muted transition-colors"
             />
           </div>
 
@@ -1393,17 +1393,17 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
               onClick={() => setShowFilterMenu((v) => !v)}
               className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[13px] font-medium transition-colors ${
                 filtersActive
-                  ? "border-[#00C2FF] bg-[#0E2532] text-[#00C2FF]"
-                  : "border-[#262A35] text-[#8A92A6] hover:bg-[#1B1F2A]"
+                  ? "border-accent bg-accent-soft text-accent"
+                  : "border-border text-muted hover:bg-surface-sunken"
               }`}
             >
               <SortAsc className="h-4 w-4" />
               Filters
-              {filtersActive && <span className="ml-0.5 h-1.5 w-1.5 rounded-full bg-[#00C2FF]" />}
+              {filtersActive && <span className="ml-0.5 h-1.5 w-1.5 rounded-full bg-accent" />}
             </button>
             {showFilterMenu && (
-              <div className="absolute right-0 top-full mt-1 z-30 w-56 rounded-lg border border-[#262A35] bg-[#12151D] py-2 shadow-lg">
-                <p className="px-4 pb-1 text-xs font-medium text-[#5A6275]">File type</p>
+              <div className="absolute right-0 top-full mt-1 z-30 w-56 rounded-lg border border-border bg-surface py-2 shadow-lg">
+                <p className="px-4 pb-1 text-xs font-medium text-subtle">File type</p>
                 {(
                   [
                     { key: "all", label: "All items" },
@@ -1416,33 +1416,33 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                   <button
                     key={key}
                     onClick={() => setTypeFilter(key)}
-                    className={`flex w-full items-center justify-between px-4 py-1.5 text-sm transition-colors hover:bg-[#1B1F2A] ${
-                      typeFilter === key ? "text-[#00C2FF] font-medium" : "text-[#8A92A6]"
+                    className={`flex w-full items-center justify-between px-4 py-1.5 text-sm transition-colors hover:bg-surface-sunken ${
+                      typeFilter === key ? "text-accent font-medium" : "text-muted"
                     }`}
                   >
                     {label}
-                    {typeFilter === key && <Check className="h-4 w-4 text-[#00C2FF]" />}
+                    {typeFilter === key && <Check className="h-4 w-4 text-accent" />}
                   </button>
                 ))}
-                <div className="my-1.5 border-t border-[#262A35]" />
+                <div className="my-1.5 border-t border-border" />
                 <button
                   onClick={() => setStarredOnly((v) => !v)}
-                  className={`flex w-full items-center justify-between px-4 py-1.5 text-sm transition-colors hover:bg-[#1B1F2A] ${
-                    starredOnly ? "text-[#00C2FF] font-medium" : "text-[#8A92A6]"
+                  className={`flex w-full items-center justify-between px-4 py-1.5 text-sm transition-colors hover:bg-surface-sunken ${
+                    starredOnly ? "text-accent font-medium" : "text-muted"
                   }`}
                 >
                   <span className="flex items-center gap-2">
-                    <Star className={`h-4 w-4 ${starredOnly ? "fill-yellow-400 text-yellow-400" : ""}`} />
+                    <Star className={`h-4 w-4 ${starredOnly ? "fill-yellow-400 text-warn" : ""}`} />
                     Starred only
                   </span>
-                  {starredOnly && <Check className="h-4 w-4 text-[#00C2FF]" />}
+                  {starredOnly && <Check className="h-4 w-4 text-accent" />}
                 </button>
                 {filtersActive && (
                   <>
-                    <div className="my-1.5 border-t border-[#262A35]" />
+                    <div className="my-1.5 border-t border-border" />
                     <button
                       onClick={() => { setTypeFilter("all"); setStarredOnly(false); }}
-                      className="flex w-full items-center gap-2 px-4 py-1.5 text-sm text-[#8A92A6] hover:bg-[#1B1F2A] transition-colors"
+                      className="flex w-full items-center gap-2 px-4 py-1.5 text-sm text-muted hover:bg-surface-sunken transition-colors"
                     >
                       <X className="h-4 w-4" />
                       Clear filters
@@ -1458,20 +1458,20 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
         {filtersActive && (
           <div className="px-6 pb-1 flex items-center gap-2 flex-wrap">
             {typeFilter !== "all" && (
-              <span className="flex items-center gap-1.5 rounded-full bg-[#0E2532] px-3 py-1 text-xs font-medium text-[#00C2FF]">
+              <span className="flex items-center gap-1.5 rounded-full bg-accent-soft px-3 py-1 text-xs font-medium text-accent">
                 {typeFilter === "folders" ? "Folders"
                   : typeFilter === "images" ? "Images"
                   : typeFilter === "docs" ? "Documents"
                   : "PDFs"}
-                <button onClick={() => setTypeFilter("all")} className="hover:text-[#0098E6]">
+                <button onClick={() => setTypeFilter("all")} className="hover:text-accent-hover">
                   <X className="h-3 w-3" />
                 </button>
               </span>
             )}
             {starredOnly && (
-              <span className="flex items-center gap-1.5 rounded-full bg-[#0E2532] px-3 py-1 text-xs font-medium text-[#00C2FF]">
+              <span className="flex items-center gap-1.5 rounded-full bg-accent-soft px-3 py-1 text-xs font-medium text-accent">
                 Starred
-                <button onClick={() => setStarredOnly(false)} className="hover:text-[#0098E6]">
+                <button onClick={() => setStarredOnly(false)} className="hover:text-accent-hover">
                   <X className="h-3 w-3" />
                 </button>
               </span>
@@ -1481,30 +1481,30 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
 
         {/* Bulk action bar */}
         {selectedIds.size > 0 && (
-          <div className="mx-6 mt-1 mb-1 flex items-center gap-2 rounded-xl border border-[#00C2FF]/30 bg-[#0E2532] px-4 py-2">
-            <span className="text-sm font-medium text-[#00C2FF]">{selectedIds.size} selected</span>
+          <div className="mx-6 mt-1 mb-1 flex items-center gap-2 rounded-xl border border-accent/30 bg-accent-soft px-4 py-2">
+            <span className="text-sm font-medium text-accent">{selectedIds.size} selected</span>
             <div className="flex-1" />
             <button
               onClick={bulkStar}
-              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[13px] font-medium text-[#00C2FF] hover:bg-[#12151D]/60 transition-colors"
+              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[13px] font-medium text-accent hover:bg-surface/60 transition-colors"
             >
               <Star className="h-4 w-4" /> Star all
             </button>
             <button
               onClick={() => { setMoveModal({ id: "__bulk__", name: selectedIds.size + " items", isFolder: false }); }}
-              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[13px] font-medium text-[#00C2FF] hover:bg-[#12151D]/60 transition-colors"
+              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[13px] font-medium text-accent hover:bg-surface/60 transition-colors"
             >
               <Move className="h-4 w-4" /> Move all
             </button>
             <button
               onClick={bulkTrash}
-              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[13px] font-medium text-[#ea4335] hover:bg-[#12151D]/60 transition-colors"
+              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[13px] font-medium text-crit hover:bg-surface/60 transition-colors"
             >
               <Trash2 className="h-4 w-4" /> Trash all
             </button>
             <button
               onClick={clearSelection}
-              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[13px] font-medium text-[#8A92A6] hover:bg-[#12151D]/60 transition-colors"
+              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[13px] font-medium text-muted hover:bg-surface/60 transition-colors"
             >
               <X className="h-4 w-4" /> Clear
             </button>
@@ -1512,11 +1512,11 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
         )}
 
         {/* Toolbar: breadcrumb + controls */}
-        <div className="h-14 shrink-0 px-[22px] bg-[#12151D] flex items-center gap-3.5 border-b border-white/[0.06]">
+        <div className="h-14 shrink-0 px-[22px] bg-surface flex items-center gap-3.5 border-b border-border/[0.06]">
           <nav className="flex items-center gap-1 flex-1 min-w-0 overflow-hidden">
             <button
               onClick={() => navigateToBreadcrumb(-1)}
-              className={`rounded-lg px-2 py-1 text-lg text-[#E6E9F0] hover:bg-[#1B1F2A] transition-colors font-normal whitespace-nowrap ${
+              className={`rounded-lg px-2 py-1 text-lg text-foreground hover:bg-surface-sunken transition-colors font-normal whitespace-nowrap ${
                 breadcrumb.length === 0 ? "font-medium" : ""
               }`}
             >
@@ -1528,10 +1528,10 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
             </button>
             {breadcrumb.map((crumb, idx) => (
               <span key={crumb.id} className="flex items-center gap-1 min-w-0">
-                <ChevronRight className="h-4 w-4 text-[#444C5E] shrink-0" />
+                <ChevronRight className="h-4 w-4 text-subtle shrink-0" />
                 <button
                   onClick={() => navigateToBreadcrumb(idx)}
-                  className={`rounded-lg px-2 py-1 text-lg text-[#E6E9F0] hover:bg-[#1B1F2A] transition-colors truncate ${
+                  className={`rounded-lg px-2 py-1 text-lg text-foreground hover:bg-surface-sunken transition-colors truncate ${
                     idx === breadcrumb.length - 1 ? "font-medium" : "font-normal"
                   }`}
                 >
@@ -1546,12 +1546,12 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
             <button
               onClick={() => setShowSortMenu((v) => !v)}
               title="Sort"
-              className="text-[#8A92A6] hover:bg-[#1B1F2A] rounded-full p-2 flex items-center gap-2 transition-colors"
+              className="text-muted hover:bg-surface-sunken rounded-full p-2 flex items-center gap-2 transition-colors"
             >
               <SortAsc className="h-[18px] w-[18px]" />
             </button>
             {showSortMenu && (
-              <div className="absolute right-0 top-full mt-1 z-30 bg-[#12151D] border border-[#262A35] rounded-lg shadow-lg py-1 min-w-[180px]">
+              <div className="absolute right-0 top-full mt-1 z-30 bg-surface border border-border rounded-lg shadow-lg py-1 min-w-[180px]">
                 {(
                   [
                     { key: "name", label: "Name" },
@@ -1566,15 +1566,15 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                       else { setSortKey(key); setSortDir("asc"); }
                       setShowSortMenu(false);
                     }}
-                    className={`px-4 py-2 text-sm text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0] flex items-center gap-2 cursor-pointer w-full justify-between ${
-                      sortKey === key ? "text-[#00C2FF] font-medium" : ""
+                    className={`px-4 py-2 text-sm text-muted hover:bg-surface-sunken hover:text-foreground flex items-center gap-2 cursor-pointer w-full justify-between ${
+                      sortKey === key ? "text-accent font-medium" : ""
                     }`}
                   >
                     {label}
                     {sortKey === key && (
                       sortDir === "asc"
-                        ? <ChevronUp className="h-4 w-4 text-[#00C2FF]" />
-                        : <ChevronDown className="h-4 w-4 text-[#00C2FF]" />
+                        ? <ChevronUp className="h-4 w-4 text-accent" />
+                        : <ChevronDown className="h-4 w-4 text-accent" />
                     )}
                   </button>
                 ))}
@@ -1583,12 +1583,12 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
           </div>
 
           {/* View toggle */}
-          <div className="flex items-center gap-0.5 rounded-[9px] border border-white/[0.07] bg-[#12151D] p-[3px]">
+          <div className="flex items-center gap-0.5 rounded-[9px] border border-border/[0.07] bg-surface p-[3px]">
             <button
               onClick={() => setView("grid")}
               title="Grid view"
               className={`flex h-7 w-8 items-center justify-center rounded-md transition-colors ${
-                view === "grid" ? "bg-[#0E2532] text-[#00C2FF]" : "text-[#8A92A6] hover:bg-[#1B1F2A]"
+                view === "grid" ? "bg-accent-soft text-accent" : "text-muted hover:bg-surface-sunken"
               }`}
             >
               <Grid3x3 className="h-4 w-4" />
@@ -1597,7 +1597,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
               onClick={() => setView("list")}
               title="List view"
               className={`flex h-7 w-8 items-center justify-center rounded-md transition-colors ${
-                view === "list" ? "bg-[#0E2532] text-[#00C2FF]" : "text-[#8A92A6] hover:bg-[#1B1F2A]"
+                view === "list" ? "bg-accent-soft text-accent" : "text-muted hover:bg-surface-sunken"
               }`}
             >
               <List className="h-4 w-4" />
@@ -1612,7 +1612,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
             }}
             title="View details"
             className={`rounded-full p-2 transition-colors ${
-              detailFile ? "bg-[#0E2532] text-[#00C2FF]" : "text-[#8A92A6] hover:bg-[#1B1F2A]"
+              detailFile ? "bg-accent-soft text-accent" : "text-muted hover:bg-surface-sunken"
             }`}
           >
             <Info className="h-[18px] w-[18px]" />
@@ -1621,8 +1621,8 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
           {/* Upload primary */}
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="flex h-[34px] items-center gap-[7px] rounded-lg px-4 text-[12.5px] font-bold text-[#06121A] hover:opacity-90 transition-opacity"
-            style={{ background: "linear-gradient(135deg,#00C2FF,#0098E6)" }}
+            className="flex h-[34px] items-center gap-[7px] rounded-lg px-4 text-[12.5px] font-bold text-accent-foreground hover:opacity-90 transition-opacity"
+            style={{ background: "linear-gradient(135deg,var(--accent),var(--accent-hover))" }}
           >
             <Upload className="h-4 w-4" />
             Upload
@@ -1631,25 +1631,25 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
 
         {/* Upload progress bar area */}
         {uploadTasks.length > 0 && (
-          <div className="border-b border-[#262A35] bg-[#12151D] px-6 py-2 space-y-1.5">
+          <div className="border-b border-border bg-surface px-6 py-2 space-y-1.5">
             {uploadTasks.map((task) => (
               <div key={task.id} className="flex items-center gap-3">
-                <span className="text-xs text-[#8A92A6] truncate flex-1 max-w-xs">{task.name}</span>
+                <span className="text-xs text-muted truncate flex-1 max-w-xs">{task.name}</span>
                 {task.error ? (
-                  <span className="text-xs text-red-400">{task.error}</span>
+                  <span className="text-xs text-crit">{task.error}</span>
                 ) : task.done ? (
-                  <span className="text-xs text-green-400 flex items-center gap-1">
+                  <span className="text-xs text-ok flex items-center gap-1">
                     <Check className="h-3.5 w-3.5" /> Done
                   </span>
                 ) : (
                   <div className="flex items-center gap-2 flex-1 max-w-xs">
-                    <div className="bg-[#1B1F2A] rounded-full h-1.5 flex-1">
+                    <div className="bg-surface-sunken rounded-full h-1.5 flex-1">
                       <div
-                        className="bg-[#00C2FF] text-[#06121A] h-1.5 rounded-full transition-all"
+                        className="bg-accent text-accent-foreground h-1.5 rounded-full transition-all"
                         style={{ width: `${task.progress}%` }}
                       />
                     </div>
-                    <span className="text-xs text-[#8A92A6] w-8 text-right">{task.progress}%</span>
+                    <span className="text-xs text-muted w-8 text-right">{task.progress}%</span>
                   </div>
                 )}
               </div>
@@ -1674,11 +1674,11 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                     }
                   }}
                   placeholder="Folder name"
-                  className="rounded-lg border border-[#00C2FF] px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#00C2FF]/15 w-48 bg-[#12151D] text-[#E6E9F0]"
+                  className="rounded-lg border border-accent px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-accent/15 w-48 bg-surface text-foreground"
                 />
                 <button
                   onClick={handleCreateFolder}
-                  className="bg-[#00C2FF] text-[#06121A] hover:opacity-90 rounded-md px-3 py-2 text-sm font-medium flex items-center gap-2 transition-colors"
+                  className="bg-accent text-accent-foreground hover:opacity-90 rounded-md px-3 py-2 text-sm font-medium flex items-center gap-2 transition-colors"
                 >
                   Create
                 </button>
@@ -1687,7 +1687,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                     setCreatingFolder(false);
                     setNewFolderName("");
                   }}
-                  className="bg-[#12151D] text-[#8A92A6] hover:bg-[#12151D] border border-[#262A35] rounded-md px-3 py-2 text-sm font-medium flex items-center gap-2 transition-colors"
+                  className="bg-surface text-muted hover:bg-surface border border-border rounded-md px-3 py-2 text-sm font-medium flex items-center gap-2 transition-colors"
                 >
                   Cancel
                 </button>
@@ -1696,16 +1696,16 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
 
             {loadingContent ? (
               <div className="flex h-48 items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-[#00C2FF]" />
+                <Loader2 className="h-8 w-8 animate-spin text-accent" />
               </div>
             ) : filteredFolders.length === 0 && filteredFiles.length === 0 ? (
-              <div className="flex h-48 flex-col items-center justify-center gap-2 text-[#8A92A6]">
-                <HardDrive className="h-12 w-12 text-[#262b3a]" />
+              <div className="flex h-48 flex-col items-center justify-center gap-2 text-muted">
+                <HardDrive className="h-12 w-12 text-subtle" />
                 <p className="text-sm">
                   {searchQuery ? "No results found" : "This folder is empty"}
                 </p>
                 {!searchQuery && (
-                  <p className="text-xs text-[#262b3a]">
+                  <p className="text-xs text-subtle">
                     Drag & drop files here to upload
                   </p>
                 )}
@@ -1714,7 +1714,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
               <>
                 {filteredFolders.length > 0 && (
                   <>
-                    <p className="mb-3.5 text-[11px] font-bold uppercase tracking-[0.5px] text-[#5A6275]">Folders</p>
+                    <p className="mb-3.5 text-[11px] font-bold uppercase tracking-[0.5px] text-subtle">Folders</p>
                     <div
                       className="mb-7 grid gap-3.5"
                       style={{ gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))" }}
@@ -1752,7 +1752,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                 )}
                 {filteredFiles.length > 0 && (
                   <>
-                    <p className="mb-3.5 text-[11px] font-bold uppercase tracking-[0.5px] text-[#5A6275]">Files</p>
+                    <p className="mb-3.5 text-[11px] font-bold uppercase tracking-[0.5px] text-subtle">Files</p>
                     <div
                       className="grid gap-4"
                       style={{ gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))" }}
@@ -1791,12 +1791,12 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                 )}
               </>
             ) : (
-              <div className="rounded-xl border border-[#262A35] bg-[#12151D] overflow-hidden">
+              <div className="rounded-xl border border-border bg-surface overflow-hidden">
                 <table className="w-full">
                   <thead>
-                    <tr className="bg-[#12151D] border-b border-[#262A35]">
+                    <tr className="bg-surface border-b border-border">
                       <th
-                        className="text-xs font-semibold text-[#8A92A6] px-4 py-3 text-left cursor-pointer hover:text-[#E6E9F0] select-none"
+                        className="text-xs font-semibold text-muted px-4 py-3 text-left cursor-pointer hover:text-foreground select-none"
                         onClick={() => {
                           if (sortKey === "name") setSortDir((d) => (d === "asc" ? "desc" : "asc"));
                           else { setSortKey("name"); setSortDir("asc"); }
@@ -1807,7 +1807,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                         </span>
                       </th>
                       <th
-                        className="text-xs font-semibold text-[#8A92A6] px-4 py-3 text-left cursor-pointer hover:text-[#E6E9F0] select-none"
+                        className="text-xs font-semibold text-muted px-4 py-3 text-left cursor-pointer hover:text-foreground select-none"
                         onClick={() => {
                           if (sortKey === "updatedAt") setSortDir((d) => (d === "asc" ? "desc" : "asc"));
                           else { setSortKey("updatedAt"); setSortDir("desc"); }
@@ -1818,7 +1818,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                         </span>
                       </th>
                       <th
-                        className="text-xs font-semibold text-[#8A92A6] px-4 py-3 text-left cursor-pointer hover:text-[#E6E9F0] select-none"
+                        className="text-xs font-semibold text-muted px-4 py-3 text-left cursor-pointer hover:text-foreground select-none"
                         onClick={() => {
                           if (sortKey === "size") setSortDir((d) => (d === "asc" ? "desc" : "asc"));
                           else { setSortKey("size"); setSortDir("asc"); }
@@ -1828,7 +1828,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                           Size {sortKey === "size" && <span className="text-xs">{sortDir === "asc" ? "↑" : "↓"}</span>}
                         </span>
                       </th>
-                      <th className="text-xs font-semibold text-[#8A92A6] px-4 py-3 text-right">Actions</th>
+                      <th className="text-xs font-semibold text-muted px-4 py-3 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1907,7 +1907,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
       {/* Right-click context menu */}
       {contextMenu && (
         <div
-          className="fixed z-50 bg-[#12151D] border border-[#262A35] rounded-lg shadow-lg py-1 min-w-[160px] text-sm"
+          className="fixed z-50 bg-surface border border-border rounded-lg shadow-lg py-1 min-w-[160px] text-sm"
           style={{ top: contextMenu.y, left: contextMenu.x }}
         >
           {!contextMenu.isFolder && (() => {
@@ -1918,7 +1918,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                 <CtxItem icon={Eye} label="Preview" onClick={() => { handlePreview(file); setContextMenu(null); }} />
                 <CtxItem icon={Download} label="Download" onClick={() => { handleDownload(file); setContextMenu(null); }} />
                 <CtxItem icon={Share2} label="Share" onClick={() => { handleShare(file); setContextMenu(null); }} />
-                <div className="my-1 border-t border-[#262A35]" />
+                <div className="my-1 border-t border-border" />
                 <CtxItem
                   icon={Star}
                   label={file.isStarred ? "Unstar" : "Star"}
@@ -1933,7 +1933,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                     setContextMenu(null);
                   }}
                 />
-                <div className="my-1 border-t border-[#262A35]" />
+                <div className="my-1 border-t border-border" />
                 <CtxItem
                   icon={Trash2}
                   label="Move to Trash"
@@ -1958,7 +1958,7 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
                     setContextMenu(null);
                   }}
                 />
-                <div className="my-1 border-t border-[#262A35]" />
+                <div className="my-1 border-t border-border" />
                 <CtxItem
                   icon={Trash2}
                   label="Move to Trash"
@@ -2056,8 +2056,8 @@ function CtxItem({
   return (
     <button
       onClick={onClick}
-      className={`px-4 py-2 text-sm flex items-center gap-2 cursor-pointer w-full hover:bg-[#1B1F2A] hover:text-[#E6E9F0] transition-colors ${
-        danger ? "text-red-400" : "text-[#8A92A6]"
+      className={`px-4 py-2 text-sm flex items-center gap-2 cursor-pointer w-full hover:bg-surface-sunken hover:text-foreground transition-colors ${
+        danger ? "text-crit" : "text-muted"
       }`}
     >
       <Icon className="h-4 w-4 shrink-0" />
@@ -2116,10 +2116,10 @@ function GridFolderCard({
     <div
       className={`group relative flex cursor-pointer items-center gap-3 rounded-[11px] border p-3.5 transition-all ${
         dragOver
-          ? "border-[#00C2FF] bg-[#0E2532] ring-2 ring-[#00C2FF]/30"
+          ? "border-accent bg-accent-soft ring-2 ring-accent/30"
           : selected || checked
-          ? "border-[#00C2FF] bg-[#00C2FF]/10"
-          : "bg-[#12151D] border-white/[0.06] hover:border-[#00C2FF]/40"
+          ? "border-accent bg-accent/10"
+          : "bg-surface border-border/[0.06] hover:border-accent/40"
       }`}
       onClick={onSelect}
       onDoubleClick={onOpen}
@@ -2150,12 +2150,12 @@ function GridFolderCard({
               if (e.key === "Escape") onRenameCancel();
             }}
             onClick={(e) => e.stopPropagation()}
-            className="w-full rounded-lg border border-[#00C2FF] px-2 py-1 text-xs outline-none bg-[#12151D] text-[#E6E9F0]"
+            className="w-full rounded-lg border border-accent px-2 py-1 text-xs outline-none bg-surface text-foreground"
           />
         ) : (
           <>
-            <p className="truncate text-[13.5px] font-semibold text-[#E6E9F0]">{folder.name}</p>
-            <p className="text-[11.5px] text-[#5A6275]">
+            <p className="truncate text-[13.5px] font-semibold text-foreground">{folder.name}</p>
+            <p className="text-[11.5px] text-subtle">
               {folder.children?.length ? `${folder.children.length} items` : "Folder"}
             </p>
           </>
@@ -2221,8 +2221,8 @@ function GridFileCard({
       }}
       className={`group relative cursor-pointer overflow-hidden rounded-xl border transition-all ${
         selected || checked
-          ? "border-[#00C2FF] bg-[#00C2FF]/[0.06]"
-          : "bg-[#12151D] border-white/[0.06] hover:border-[#00C2FF]/40"
+          ? "border-accent bg-accent/[0.06]"
+          : "bg-surface border-border/[0.06] hover:border-accent/40"
       }`}
       onClick={onSelect}
       onDoubleClick={onPreview}
@@ -2251,7 +2251,7 @@ function GridFileCard({
           </div>
         )}
         {file.isStarred && (
-          <Star className="absolute right-2.5 bottom-2.5 h-4 w-4 text-[#FFB020] drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)] opacity-100 group-hover:opacity-0 transition-opacity" />
+          <Star className="absolute right-2.5 bottom-2.5 h-4 w-4 text-warn drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)] opacity-100 group-hover:opacity-0 transition-opacity" />
         )}
         <div className="absolute right-1 top-1 hidden flex-wrap gap-1 group-hover:flex">
           <ActionBtn
@@ -2264,7 +2264,7 @@ function GridFileCard({
             onClick={(e) => { e.stopPropagation(); onStar(); }}
             title={file.isStarred ? "Unstar" : "Star"}
             active={file.isStarred}
-            activeClass="text-[#FFB020]"
+            activeClass="text-warn"
           />
           <ActionBtn icon={Share2} onClick={(e) => { e.stopPropagation(); onShare(); }} title="Share" />
           <ActionBtn icon={Move} onClick={(e) => { e.stopPropagation(); onMoveStart(); }} title="Move" />
@@ -2284,14 +2284,14 @@ function GridFileCard({
               if (e.key === "Escape") onRenameCancel();
             }}
             onClick={(e) => e.stopPropagation()}
-            className="w-full rounded-lg border border-[#00C2FF] px-2 py-1 text-xs outline-none bg-[#12151D] text-[#E6E9F0]"
+            className="w-full rounded-lg border border-accent px-2 py-1 text-xs outline-none bg-surface text-foreground"
           />
         ) : (
-          <p className="mb-1 truncate text-[13px] font-semibold text-[#E6E9F0]">{file.name}</p>
+          <p className="mb-1 truncate text-[13px] font-semibold text-foreground">{file.name}</p>
         )}
-        <div className="flex items-center gap-[7px] font-mono text-[11px] text-[#5A6275]">
+        <div className="flex items-center gap-[7px] font-mono text-[11px] text-subtle">
           <span>{formatFileSize(file.size)}</span>
-          <span className="h-[3px] w-[3px] rounded-full bg-[#444C5E]" />
+          <span className="h-[3px] w-[3px] rounded-full bg-border-strong" />
           <span className="truncate">{formatDistanceToNow(new Date(file.updatedAt), { addSuffix: true })}</span>
         </div>
       </div>
@@ -2340,8 +2340,8 @@ function ListFolderRow({
 }) {
   return (
     <tr
-      className={`border-b border-[#262A35] transition-colors group cursor-pointer ${
-        dragOver ? "bg-[#0E2532]" : checked ? "bg-[#00C2FF]/10" : "hover:bg-[#12151D]"
+      className={`border-b border-border transition-colors group cursor-pointer ${
+        dragOver ? "bg-accent-soft" : checked ? "bg-accent/10" : "hover:bg-surface"
       }`}
       onContextMenu={onContextMenu}
       onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }}
@@ -2352,10 +2352,10 @@ function ListFolderRow({
         if (id) { e.preventDefault(); e.stopPropagation(); onDropItem(id); }
       }}
     >
-      <td className="px-4 py-3 text-sm text-[#E6E9F0]">
+      <td className="px-4 py-3 text-sm text-foreground">
         <div className="flex items-center gap-2.5 cursor-pointer" onDoubleClick={onOpen}>
           <RowCheckbox checked={checked} onToggle={onToggleCheck} />
-          <Folder className="h-5 w-5 text-yellow-500 shrink-0" />
+          <Folder className="h-5 w-5 text-warn shrink-0" />
           {renamingId === folder.id ? (
             <input
               autoFocus
@@ -2365,20 +2365,20 @@ function ListFolderRow({
                 if (e.key === "Enter") onRenameSubmit();
                 if (e.key === "Escape") onRenameCancel();
               }}
-              className="rounded border border-[#00C2FF] px-2 py-0.5 text-sm outline-none bg-[#12151D] text-[#E6E9F0]"
+              className="rounded border border-accent px-2 py-0.5 text-sm outline-none bg-surface text-foreground"
             />
           ) : (
-            <span className="text-sm font-medium text-[#E6E9F0]">{folder.name}</span>
+            <span className="text-sm font-medium text-foreground">{folder.name}</span>
           )}
         </div>
       </td>
-      <td className="px-4 py-3 text-sm text-[#E6E9F0]">
-        <span className="flex items-center gap-1.5 text-[#8A92A6]">
-          <Calendar className="h-3.5 w-3.5 text-[#8A92A6]" />
+      <td className="px-4 py-3 text-sm text-foreground">
+        <span className="flex items-center gap-1.5 text-muted">
+          <Calendar className="h-3.5 w-3.5 text-muted" />
           {formatDistanceToNow(new Date(folder.createdAt), { addSuffix: true })}
         </span>
       </td>
-      <td className="px-4 py-3 text-sm text-[#8A92A6]">—</td>
+      <td className="px-4 py-3 text-sm text-muted">—</td>
       <td className="px-4 py-3 text-right">
         <div className="hidden gap-1 justify-end group-hover:flex">
           <ActionBtn icon={Move} onClick={onMoveStart} title="Move" />
@@ -2435,16 +2435,16 @@ function ListFileRow({
         e.dataTransfer.setData("application/x-drive-item", file.id);
         e.dataTransfer.effectAllowed = "move";
       }}
-      className={`border-b border-[#262A35] transition-colors group cursor-pointer ${
-        checked ? "bg-[#00C2FF]/10" : "hover:bg-[#12151D]"
+      className={`border-b border-border transition-colors group cursor-pointer ${
+        checked ? "bg-accent/10" : "hover:bg-surface"
       }`}
       onContextMenu={onContextMenu}
       onClick={onSelect}
     >
-      <td className="px-4 py-3 text-sm text-[#E6E9F0]">
+      <td className="px-4 py-3 text-sm text-foreground">
         <div className="flex items-center gap-2.5 cursor-pointer" onDoubleClick={onPreview}>
           <RowCheckbox checked={checked} onToggle={onToggleCheck} />
-          <Icon className="h-5 w-5 text-[#00C2FF] shrink-0" />
+          <Icon className="h-5 w-5 text-accent shrink-0" />
           {renamingId === file.id ? (
             <input
               autoFocus
@@ -2454,21 +2454,21 @@ function ListFileRow({
                 if (e.key === "Enter") onRenameSubmit();
                 if (e.key === "Escape") onRenameCancel();
               }}
-              className="rounded border border-[#00C2FF] px-2 py-0.5 text-sm outline-none bg-[#12151D] text-[#E6E9F0]"
+              className="rounded border border-accent px-2 py-0.5 text-sm outline-none bg-surface text-foreground"
             />
           ) : (
-            <span className="text-sm font-medium text-[#E6E9F0]">{file.name}</span>
+            <span className="text-sm font-medium text-foreground">{file.name}</span>
           )}
-          {file.isStarred && <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400 shrink-0" />}
+          {file.isStarred && <Star className="h-3.5 w-3.5 fill-yellow-400 text-warn shrink-0" />}
         </div>
       </td>
-      <td className="px-4 py-3 text-sm text-[#E6E9F0]">
-        <span className="flex items-center gap-1.5 text-[#8A92A6]">
-          <Calendar className="h-3.5 w-3.5 text-[#8A92A6]" />
+      <td className="px-4 py-3 text-sm text-foreground">
+        <span className="flex items-center gap-1.5 text-muted">
+          <Calendar className="h-3.5 w-3.5 text-muted" />
           {formatDistanceToNow(new Date(file.updatedAt), { addSuffix: true })}
         </span>
       </td>
-      <td className="px-4 py-3 text-sm text-[#8A92A6]">{formatFileSize(file.size)}</td>
+      <td className="px-4 py-3 text-sm text-muted">{formatFileSize(file.size)}</td>
       <td className="px-4 py-3 text-right">
         <div className="hidden gap-1 justify-end group-hover:flex">
           <ActionBtn icon={Eye} onClick={onPreview} title="Preview" />
@@ -2477,7 +2477,7 @@ function ListFileRow({
             onClick={onStar}
             title={file.isStarred ? "Unstar" : "Star"}
             active={file.isStarred}
-            activeClass="text-yellow-500"
+            activeClass="text-warn"
           />
           <ActionBtn icon={Share2} onClick={onShare} title="Share" />
           <ActionBtn icon={Move} onClick={onMoveStart} title="Move" />
@@ -2508,8 +2508,8 @@ function ActionBtn({
     <button
       onClick={onClick}
       title={title}
-      className={`p-1 hover:bg-[#12151D] rounded-md opacity-0 group-hover:opacity-100 transition-opacity ${
-        active && activeClass ? activeClass : "text-[#8A92A6]"
+      className={`p-1 hover:bg-surface rounded-md opacity-0 group-hover:opacity-100 transition-opacity ${
+        active && activeClass ? activeClass : "text-muted"
       }`}
     >
       <Icon className="h-3.5 w-3.5" />
@@ -2526,8 +2526,8 @@ function CardCheckbox({ checked, onToggle }: { checked: boolean; onToggle: () =>
       title={checked ? "Deselect" : "Select"}
       className={`absolute left-2 top-2 z-10 flex h-5 w-5 items-center justify-center rounded border transition-all ${
         checked
-          ? "border-[#00C2FF] bg-[#00C2FF] text-[#06121A] opacity-100"
-          : "border-[#2E333F] bg-[#12151D] text-transparent opacity-0 group-hover:opacity-100"
+          ? "border-accent bg-accent text-accent-foreground opacity-100"
+          : "border-border-strong bg-surface text-transparent opacity-0 group-hover:opacity-100"
       }`}
     >
       <Check className="h-3.5 w-3.5" />
@@ -2542,8 +2542,8 @@ function RowCheckbox({ checked, onToggle }: { checked: boolean; onToggle: () => 
       title={checked ? "Deselect" : "Select"}
       className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-all ${
         checked
-          ? "border-[#00C2FF] bg-[#00C2FF] text-[#06121A] opacity-100"
-          : "border-[#2E333F] bg-[#12151D] text-transparent opacity-0 group-hover:opacity-100"
+          ? "border-accent bg-accent text-accent-foreground opacity-100"
+          : "border-border-strong bg-surface text-transparent opacity-0 group-hover:opacity-100"
       }`}
     >
       <Check className="h-3 w-3" />
@@ -2555,9 +2555,9 @@ function NewMenuItem({ icon: Icon, label, onClick }: { icon: React.ElementType; 
   return (
     <button
       onClick={onClick}
-      className="flex w-full items-center gap-3 px-4 py-2 text-sm text-[#E6E9F0] hover:bg-[#1B1F2A] transition-colors"
+      className="flex w-full items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-surface-sunken transition-colors"
     >
-      <Icon className="h-4 w-4 text-[#8A92A6]" />
+      <Icon className="h-4 w-4 text-muted" />
       {label}
     </button>
   );

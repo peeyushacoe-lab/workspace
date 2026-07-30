@@ -25,23 +25,23 @@ function renderMarkdown(md: string): string {
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
     // Fenced code blocks ```lang\n...\n```
     .replace(/```[\w]*\n?([\s\S]*?)```/g, (_m, code) =>
-      `<pre style="background:#1B1F2A;border-radius:6px;padding:12px 16px;overflow-x:auto;margin:12px 0;font-size:13px;line-height:1.6;"><code style="font-family:monospace;color:#E6E9F0;">${code.trim()}</code></pre>`)
+      `<pre style="background:#f5f4f1;border-radius:6px;padding:12px 16px;overflow-x:auto;margin:12px 0;font-size:13px;line-height:1.6;"><code style="font-family:monospace;color:#1a1a18;">${code.trim()}</code></pre>`)
     // Headings
-    .replace(/^### (.+)$/gm, '<h3 style="font-size:14px;font-weight:700;color:#E6E9F0;margin:20px 0 6px;">$1</h3>')
-    .replace(/^## (.+)$/gm,  '<h2 style="font-size:15px;font-weight:700;color:#E6E9F0;margin:24px 0 8px;padding-bottom:4px;border-bottom:1px solid #262A35;">$1</h2>')
-    .replace(/^# (.+)$/gm,   '<h1 style="font-size:17px;font-weight:700;color:#E6E9F0;margin:28px 0 10px;">$1</h1>')
+    .replace(/^### (.+)$/gm, '<h3 style="font-size:14px;font-weight:700;color:#1a1a18;margin:20px 0 6px;">$1</h3>')
+    .replace(/^## (.+)$/gm,  '<h2 style="font-size:15px;font-weight:700;color:#1a1a18;margin:24px 0 8px;padding-bottom:4px;border-bottom:1px solid #e7e6e1;">$1</h2>')
+    .replace(/^# (.+)$/gm,   '<h1 style="font-size:17px;font-weight:700;color:#1a1a18;margin:28px 0 10px;">$1</h1>')
     // Bold + italic
     .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#E6E9F0;font-weight:600;">$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em style="color:#C8CEDB;">$1</em>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#1a1a18;font-weight:600;">$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em style="color:#1a1a18;">$1</em>')
     // Inline code
-    .replace(/`([^`]+)`/g, '<code style="background:#1B1F2A;border-radius:4px;padding:1px 6px;font-size:12px;font-family:monospace;color:#00C2FF;">$1</code>')
+    .replace(/`([^`]+)`/g, '<code style="background:#f5f4f1;border-radius:4px;padding:1px 6px;font-size:12px;font-family:monospace;color:#4f46e5;">$1</code>')
     // Horizontal rule
-    .replace(/^---$/gm, '<hr style="border:none;border-top:1px solid #262A35;margin:20px 0;"/>')
+    .replace(/^---$/gm, '<hr style="border:none;border-top:1px solid #e7e6e1;margin:20px 0;"/>')
     // Unordered lists (- item or * item)
-    .replace(/^[\-\*] (.+)$/gm, '<li style="margin:4px 0;color:#C8CEDB;font-size:14px;line-height:1.6;">$1</li>')
+    .replace(/^[\-\*] (.+)$/gm, '<li style="margin:4px 0;color:#1a1a18;font-size:14px;line-height:1.6;">$1</li>')
     // Ordered lists (1. item)
-    .replace(/^\d+\. (.+)$/gm, '<li style="margin:4px 0;color:#C8CEDB;font-size:14px;line-height:1.6;list-style-type:decimal;">$1</li>')
+    .replace(/^\d+\. (.+)$/gm, '<li style="margin:4px 0;color:#1a1a18;font-size:14px;line-height:1.6;list-style-type:decimal;">$1</li>')
     // Wrap consecutive <li> in <ul>/<ol>
     .replace(/(<li[^>]*>.*?<\/li>\n?)+/g, m => `<ul style="padding-left:20px;margin:8px 0;">${m}</ul>`)
     // Paragraphs — blank line separated blocks not already wrapped in HTML tags
@@ -51,7 +51,7 @@ function renderMarkdown(md: string): string {
 
   // Wrap bare text lines in <p>
   html = html.replace(/^(?!<[a-z])(.*?)(<br\/>|$)/gm, (m, text) =>
-    text.trim() ? `<p style="margin:6px 0;color:#C8CEDB;font-size:14px;line-height:1.7;">${text}</p>` : m
+    text.trim() ? `<p style="margin:6px 0;color:#1a1a18;font-size:14px;line-height:1.7;">${text}</p>` : m
   );
 
   return html;
@@ -159,31 +159,31 @@ function isPast(d?: string | null) {
 }
 
 const PRIORITY_CFG: Record<string, { label: string; color: string; bg: string; dot: string }> = {
-  low:    { label: "Low",    color: "text-[#8A92A6]",  bg: "bg-[#1B1F2A]",                dot: "bg-[#5A6275]" },
-  medium: { label: "Medium", color: "text-[#00C2FF]",  bg: "bg-[#0E2532]",                dot: "bg-[#00C2FF]" },
-  high:   { label: "High",   color: "text-[#F59E0B]",  bg: "bg-[#F59E0B]/12",             dot: "bg-[#F59E0B]" },
-  urgent: { label: "Urgent", color: "text-[#ea4335]",  bg: "bg-[#ea4335]/12",             dot: "bg-[#ea4335]" },
+  low:    { label: "Low",    color: "text-muted",  bg: "bg-surface-sunken",                dot: "bg-subtle" },
+  medium: { label: "Medium", color: "text-accent",  bg: "bg-accent-soft",                dot: "bg-accent" },
+  high:   { label: "High",   color: "text-warn",  bg: "bg-warn/12",             dot: "bg-warn" },
+  urgent: { label: "Urgent", color: "text-crit",  bg: "bg-crit/12",             dot: "bg-crit" },
 };
 
 const STATUS_CFG: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
-  submitted:          { label: "Submitted",         color: "text-[#00C2FF]",  bg: "bg-[#0E2532]",       icon: Upload },
-  under_review:       { label: "Under Review",      color: "text-[#F59E0B]",  bg: "bg-[#F59E0B]/12",    icon: Clock },
-  approved:           { label: "Approved",          color: "text-[#0f9d58]",  bg: "bg-[#0f9d58]/12",    icon: CheckCircle2 },
-  rejected:           { label: "Rejected",          color: "text-[#ea4335]",  bg: "bg-[#ea4335]/12",    icon: X },
-  revision_requested: { label: "Revision Needed",   color: "text-[#ff6d00]",  bg: "bg-[#ff6d00]/12",    icon: RefreshCw },
+  submitted:          { label: "Submitted",         color: "text-accent",  bg: "bg-accent-soft",       icon: Upload },
+  under_review:       { label: "Under Review",      color: "text-warn",  bg: "bg-warn/12",    icon: Clock },
+  approved:           { label: "Approved",          color: "text-ok",  bg: "bg-ok/12",    icon: CheckCircle2 },
+  rejected:           { label: "Rejected",          color: "text-crit",  bg: "bg-crit/12",    icon: X },
+  revision_requested: { label: "Revision Needed",   color: "text-warn",  bg: "bg-warn/12",    icon: RefreshCw },
 };
 
 const FINDING_SEVERITY: Record<string, { label: string; color: string; bg: string }> = {
-  low:      { label: "Low",      color: "text-[#8A92A6]", bg: "bg-[#1B1F2A]" },
-  medium:   { label: "Medium",   color: "text-[#00C2FF]", bg: "bg-[#0E2532]" },
-  high:     { label: "High",     color: "text-[#F59E0B]", bg: "bg-[#F59E0B]/12" },
-  critical: { label: "Critical", color: "text-[#ea4335]", bg: "bg-[#ea4335]/12" },
+  low:      { label: "Low",      color: "text-muted", bg: "bg-surface-sunken" },
+  medium:   { label: "Medium",   color: "text-accent", bg: "bg-accent-soft" },
+  high:     { label: "High",     color: "text-warn", bg: "bg-warn/12" },
+  critical: { label: "Critical", color: "text-crit", bg: "bg-crit/12" },
 };
 
 const FINDING_TYPE: Record<string, { label: string; icon: React.ElementType; color: string }> = {
-  bug_report:      { label: "Bug Report",      icon: Bug,       color: "text-[#ea4335]" },
-  feature_request: { label: "Feature Request", icon: Lightbulb, color: "text-[#f4b400]" },
-  finding:         { label: "Security Finding",icon: Shield,    color: "text-[#00C2FF]" },
+  bug_report:      { label: "Bug Report",      icon: Bug,       color: "text-crit" },
+  feature_request: { label: "Feature Request", icon: Lightbulb, color: "text-warn" },
+  finding:         { label: "Security Finding",icon: Shield,    color: "text-accent" },
 };
 
 function Avatar({ user, size = 8 }: { user: User; size?: number }) {
@@ -255,7 +255,7 @@ export default function InternshipHubPage() {
       />
 
       {/* Tab bar */}
-      <div className="border-b border-[#262A35] bg-[#0B0D12] sticky top-0 z-10">
+      <div className="border-b border-border bg-surface sticky top-0 z-10">
         <div className="flex gap-1 px-6 py-2 overflow-x-auto">
           {TABS.filter(t => !t.mentorOnly || isMentor).map(t => (
             <button
@@ -263,8 +263,8 @@ export default function InternshipHubPage() {
               onClick={() => setTab(t.id)}
               className={`flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium whitespace-nowrap rounded-lg transition-colors ${
                 tab === t.id
-                  ? "bg-[#00C2FF]/10 text-[#00C2FF]"
-                  : "text-[#8A92A6] hover:text-[#E6E9F0] hover:bg-[#1B1F2A]"
+                  ? "bg-accent/10 text-accent"
+                  : "text-muted hover:text-foreground hover:bg-surface-sunken"
               }`}
             >
               <t.icon className="w-4 h-4" />
@@ -274,7 +274,7 @@ export default function InternshipHubPage() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto bg-[#0B0D12] p-6">
+      <div className="flex-1 overflow-auto bg-surface p-6">
         {currentUser && (
           <>
             {tab === "overview"      && <OverviewTab isMentor={isMentor} userId={currentUser.id} onNavigate={setTab} />}
@@ -286,8 +286,8 @@ export default function InternshipHubPage() {
               <div className="space-y-8">
                 <ProgressTab isMentor={isMentor} userId={currentUser.id} />
                 <div>
-                  <h2 className="text-sm font-semibold text-[#E6E9F0] mb-4 flex items-center gap-2">
-                    <Upload className="w-4 h-4 text-[#00C2FF]" /> Submissions
+                  <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+                    <Upload className="w-4 h-4 text-accent" /> Submissions
                   </h2>
                   <SubmissionsTab isMentor={isMentor} userId={currentUser.id} />
                 </div>
@@ -315,13 +315,13 @@ function fmtCountdown(iso: string): { label: string; overdue: boolean } {
 function QuickLink({ href, icon: Icon, title, sub }: { href: string; icon: React.ElementType; title: string; sub: string }) {
   return (
     <Link href={href}
-      className="flex items-center gap-3 bg-[#12151D] border border-[#262A35] rounded-xl px-4 py-3 hover:border-[#00C2FF]/40 hover:shadow-sm transition-all group">
-      <span className="w-9 h-9 rounded-lg bg-[#0E2532] text-[#00C2FF] flex items-center justify-center shrink-0"><Icon className="w-4 h-4" /></span>
+      className="flex items-center gap-3 bg-surface border border-border rounded-xl px-4 py-3 hover:border-accent/40 hover:shadow-sm transition-all group">
+      <span className="w-9 h-9 rounded-lg bg-accent-soft text-accent flex items-center justify-center shrink-0"><Icon className="w-4 h-4" /></span>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-[#E6E9F0] group-hover:text-[#00C2FF] transition-colors truncate">{title}</p>
-        <p className="text-xs text-[#5A6275] truncate">{sub}</p>
+        <p className="text-sm font-semibold text-foreground group-hover:text-accent transition-colors truncate">{title}</p>
+        <p className="text-xs text-subtle truncate">{sub}</p>
       </div>
-      <ArrowRight className="w-4 h-4 text-[#3A4150] group-hover:text-[#00C2FF] transition-colors shrink-0" />
+      <ArrowRight className="w-4 h-4 text-subtle group-hover:text-accent transition-colors shrink-0" />
     </Link>
   );
 }
@@ -367,16 +367,16 @@ function OverviewTab({ isMentor, userId, onNavigate }: { isMentor: boolean; user
 
   const metricCards = isMentor
     ? [
-        { label: "Active interns", value: mStats?.internCount ?? 0, color: "text-[#00C2FF]", bg: "bg-[#0E2532]", icon: Sparkles, tab: "growth" as Tab },
-        { label: "Awaiting review", value: mStats?.pendingReviews ?? 0, color: "text-[#F59E0B]", bg: "bg-[#F59E0B]/12", icon: Clock, tab: "growth" as Tab },
-        { label: "Open findings", value: mStats?.openFindings ?? 0, color: "text-[#ea4335]", bg: "bg-[#ea4335]/12", icon: Bug, tab: "findings" as Tab },
-        { label: "Total tasks", value: mStats?.taskCount ?? 0, color: "text-[#0f9d58]", bg: "bg-[#0f9d58]/12", icon: ClipboardList, tab: "tasks" as Tab },
+        { label: "Active interns", value: mStats?.internCount ?? 0, color: "text-accent", bg: "bg-accent-soft", icon: Sparkles, tab: "growth" as Tab },
+        { label: "Awaiting review", value: mStats?.pendingReviews ?? 0, color: "text-warn", bg: "bg-warn/12", icon: Clock, tab: "growth" as Tab },
+        { label: "Open findings", value: mStats?.openFindings ?? 0, color: "text-crit", bg: "bg-crit/12", icon: Bug, tab: "findings" as Tab },
+        { label: "Total tasks", value: mStats?.taskCount ?? 0, color: "text-ok", bg: "bg-ok/12", icon: ClipboardList, tab: "tasks" as Tab },
       ]
     : [
-        { label: "To do", value: Math.max(0, (iStats?.assigned ?? 0) - (iStats?.approved ?? 0)), color: "text-[#00C2FF]", bg: "bg-[#0E2532]", icon: ClipboardList, tab: "tasks" as Tab },
-        { label: "In review", value: iStats?.pendingReview ?? 0, color: "text-[#F59E0B]", bg: "bg-[#F59E0B]/12", icon: Clock, tab: "growth" as Tab },
-        { label: "Approved", value: iStats?.approved ?? 0, color: "text-[#0f9d58]", bg: "bg-[#0f9d58]/12", icon: CheckCircle2, tab: "growth" as Tab },
-        { label: "Findings filed", value: iStats?.findings ?? 0, color: "text-[#ea4335]", bg: "bg-[#ea4335]/12", icon: Bug, tab: "findings" as Tab },
+        { label: "To do", value: Math.max(0, (iStats?.assigned ?? 0) - (iStats?.approved ?? 0)), color: "text-accent", bg: "bg-accent-soft", icon: ClipboardList, tab: "tasks" as Tab },
+        { label: "In review", value: iStats?.pendingReview ?? 0, color: "text-warn", bg: "bg-warn/12", icon: Clock, tab: "growth" as Tab },
+        { label: "Approved", value: iStats?.approved ?? 0, color: "text-ok", bg: "bg-ok/12", icon: CheckCircle2, tab: "growth" as Tab },
+        { label: "Findings filed", value: iStats?.findings ?? 0, color: "text-crit", bg: "bg-crit/12", icon: Bug, tab: "findings" as Tab },
       ];
 
   return (
@@ -391,10 +391,10 @@ function OverviewTab({ isMentor, userId, onNavigate }: { isMentor: boolean; user
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {metricCards.map(m => (
           <button key={m.label} onClick={() => onNavigate(m.tab)}
-            className="text-left bg-[#12151D] border border-[#262A35] rounded-xl p-4 hover:border-[#00C2FF]/40 transition-all">
+            className="text-left bg-surface border border-border rounded-xl p-4 hover:border-accent/40 transition-all">
             <div className={`inline-flex p-2 rounded-lg ${m.bg} mb-3`}><m.icon className={`w-4 h-4 ${m.color}`} /></div>
             <div className={`text-2xl font-bold font-mono ${m.color}`}>{m.value}</div>
-            <div className="text-xs text-[#8A92A6] mt-0.5">{m.label}</div>
+            <div className="text-xs text-muted mt-0.5">{m.label}</div>
           </button>
         ))}
       </div>
@@ -402,85 +402,85 @@ function OverviewTab({ isMentor, userId, onNavigate }: { isMentor: boolean; user
       {/* Two-column widgets */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Next deadline */}
-        <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-5">
-          <h3 className="text-xs font-semibold text-[#8A92A6] mb-3 flex items-center gap-1.5"><CalendarDays className="w-3.5 h-3.5" /> Next deadline</h3>
+        <div className="bg-surface border border-border rounded-xl p-5">
+          <h3 className="text-xs font-semibold text-muted mb-3 flex items-center gap-1.5"><CalendarDays className="w-3.5 h-3.5" /> Next deadline</h3>
           {nextDeadline ? (() => {
             const cd = fmtCountdown(nextDeadline.deadline!);
             return (
               <button onClick={() => onNavigate("tasks")} className="text-left w-full group">
-                <p className="text-sm font-semibold text-[#E6E9F0] group-hover:text-[#00C2FF] transition-colors">{nextDeadline.title}</p>
+                <p className="text-sm font-semibold text-foreground group-hover:text-accent transition-colors">{nextDeadline.title}</p>
                 <div className="flex items-center gap-2 mt-1.5">
                   <PriorityBadge p={nextDeadline.priority} />
-                  <span className={`text-xs font-mono flex items-center gap-1 ${cd.overdue ? "text-[#ea4335]" : "text-[#F59E0B]"}`}>
+                  <span className={`text-xs font-mono flex items-center gap-1 ${cd.overdue ? "text-crit" : "text-warn"}`}>
                     <Clock className="w-3 h-3" /> {cd.label}
                   </span>
                 </div>
               </button>
             );
-          })() : <p className="text-sm text-[#5A6275]">Nothing due right now. Nice and clear.</p>}
+          })() : <p className="text-sm text-subtle">Nothing due right now. Nice and clear.</p>}
         </div>
 
         {/* Continue learning / curriculum status */}
-        <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-5">
-          <h3 className="text-xs font-semibold text-[#8A92A6] mb-3 flex items-center gap-1.5"><BookOpen className="w-3.5 h-3.5" /> {isMentor ? "Curriculum" : "Continue learning"}</h3>
+        <div className="bg-surface border border-border rounded-xl p-5">
+          <h3 className="text-xs font-semibold text-muted mb-3 flex items-center gap-1.5"><BookOpen className="w-3.5 h-3.5" /> {isMentor ? "Curriculum" : "Continue learning"}</h3>
           {isMentor ? (
             <button onClick={() => onNavigate("learning")} className="text-left w-full group">
-              <p className="text-sm font-semibold text-[#E6E9F0] group-hover:text-[#00C2FF] transition-colors">
+              <p className="text-sm font-semibold text-foreground group-hover:text-accent transition-colors">
                 {weeks.filter(w => w.isUnlocked).length} of {weeks.length} weeks unlocked
               </p>
-              <p className="text-xs text-[#5A6275] mt-1">Manage weeks and quiz responses →</p>
+              <p className="text-xs text-subtle mt-1">Manage weeks and quiz responses →</p>
             </button>
           ) : activeWeek ? (
             <button onClick={() => onNavigate("learning")} className="text-left w-full group">
-              <p className="text-sm font-semibold text-[#E6E9F0] group-hover:text-[#00C2FF] transition-colors">
+              <p className="text-sm font-semibold text-foreground group-hover:text-accent transition-colors">
                 {activeWeek.weekNumber === 0 ? "Prerequisites" : `Week ${activeWeek.weekNumber}`} · {activeWeek.title}
               </p>
               <div className="flex items-center gap-2 mt-2">
-                <div className="flex-1 h-1.5 bg-[#262A35] rounded-full overflow-hidden max-w-40">
-                  <div className="h-full bg-[#00C2FF] rounded-full transition-all" style={{ width: `${activeWeekProgress}%` }} />
+                <div className="flex-1 h-1.5 bg-border rounded-full overflow-hidden max-w-40">
+                  <div className="h-full bg-accent rounded-full transition-all" style={{ width: `${activeWeekProgress}%` }} />
                 </div>
-                <span className="text-[10px] text-[#5A6275] font-mono">{activeWeekProgress}% · resume →</span>
+                <span className="text-[10px] text-subtle font-mono">{activeWeekProgress}% · resume →</span>
               </div>
             </button>
-          ) : <p className="text-sm text-[#5A6275]">{weeks.length ? "All open weeks complete — nice work." : "Curriculum not loaded yet."}</p>}
+          ) : <p className="text-sm text-subtle">{weeks.length ? "All open weeks complete — nice work." : "Curriculum not loaded yet."}</p>}
         </div>
       </div>
 
       {/* Latest feedback (intern) / review nudge (mentor) */}
       {!isMentor && latestReview && (
-        <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-5">
-          <h3 className="text-xs font-semibold text-[#8A92A6] mb-3 flex items-center gap-1.5"><Star className="w-3.5 h-3.5" /> Latest feedback</h3>
+        <div className="bg-surface border border-border rounded-xl p-5">
+          <h3 className="text-xs font-semibold text-muted mb-3 flex items-center gap-1.5"><Star className="w-3.5 h-3.5" /> Latest feedback</h3>
           <div className="flex items-start gap-3">
             <Avatar user={latestReview.reviewer} size={8} />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1 flex-wrap">
-                <span className="text-sm font-medium text-[#E6E9F0]">{latestReview.reviewer.fullName}</span>
+                <span className="text-sm font-medium text-foreground">{latestReview.reviewer.fullName}</span>
                 <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
-                  latestReview.verdict === "approved" ? "bg-[#0f9d58]/12 text-[#0f9d58]" :
-                  latestReview.verdict === "rejected" ? "bg-[#ea4335]/12 text-[#ea4335]" : "bg-[#ff6d00]/12 text-[#ff6d00]"
+                  latestReview.verdict === "approved" ? "bg-ok/12 text-ok" :
+                  latestReview.verdict === "rejected" ? "bg-crit/12 text-crit" : "bg-warn/12 text-warn"
                 }`}>{latestReview.verdict.replace("_", " ")}</span>
               </div>
-              <p className="text-xs text-[#5A6275]">on &ldquo;{latestReview.submission.task.title}&rdquo;</p>
+              <p className="text-xs text-subtle">on &ldquo;{latestReview.submission.task.title}&rdquo;</p>
             </div>
-            <button onClick={() => onNavigate("growth")} className="text-xs text-[#00C2FF] hover:underline font-medium shrink-0">View all →</button>
+            <button onClick={() => onNavigate("growth")} className="text-xs text-accent hover:underline font-medium shrink-0">View all →</button>
           </div>
         </div>
       )}
       {isMentor && (mStats?.pendingReviews ?? 0) > 0 && (
         <button onClick={() => onNavigate("growth")}
-          className="w-full flex items-center gap-3 bg-[#F59E0B]/10 border border-[#F59E0B]/30 rounded-xl px-5 py-4 hover:bg-[#F59E0B]/15 transition-colors text-left">
-          <Clock className="w-5 h-5 text-[#F59E0B] shrink-0" />
+          className="w-full flex items-center gap-3 bg-warn/10 border border-warn/30 rounded-xl px-5 py-4 hover:bg-warn/15 transition-colors text-left">
+          <Clock className="w-5 h-5 text-warn shrink-0" />
           <div className="flex-1">
-            <p className="text-sm font-semibold text-[#E6E9F0]">{mStats?.pendingReviews} submission{mStats?.pendingReviews !== 1 ? "s" : ""} awaiting your review</p>
-            <p className="text-xs text-[#8A92A6]">Open the Growth tab to score them.</p>
+            <p className="text-sm font-semibold text-foreground">{mStats?.pendingReviews} submission{mStats?.pendingReviews !== 1 ? "s" : ""} awaiting your review</p>
+            <p className="text-xs text-muted">Open the Growth tab to score them.</p>
           </div>
-          <ArrowRight className="w-4 h-4 text-[#F59E0B]" />
+          <ArrowRight className="w-4 h-4 text-warn" />
         </button>
       )}
 
       {/* Announcements feed */}
       <div>
-        <h2 className="text-sm font-semibold text-[#E6E9F0] mb-3 flex items-center gap-2"><Megaphone className="w-4 h-4 text-[#00C2FF]" /> Announcements</h2>
+        <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2"><Megaphone className="w-4 h-4 text-accent" /> Announcements</h2>
         <AnnouncementsTab isMentor={isMentor} userId={userId} />
       </div>
     </div>
@@ -561,33 +561,33 @@ function AnnouncementsTab({ isMentor, userId }: { isMentor: boolean; userId: str
       {isMentor && (
         <div className="flex justify-end">
           <button onClick={() => setShowForm(v => !v)}
-            className="flex items-center gap-1.5 px-4 py-2 bg-[#00C2FF] text-[#06121A] text-sm font-semibold rounded-lg hover:bg-[#0098E6] transition-colors">
+            className="flex items-center gap-1.5 px-4 py-2 bg-accent text-accent-foreground text-sm font-semibold rounded-lg hover:bg-accent-hover transition-colors">
             <Plus className="w-4 h-4" /> Post Announcement
           </button>
         </div>
       )}
 
       {showForm && (
-        <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-5 space-y-3">
+        <div className="bg-surface border border-border rounded-xl p-5 space-y-3">
           <input
-            className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] placeholder:text-[#5A6275] focus:outline-none focus:border-[#00C2FF]/60 focus:ring-2 focus:ring-[#00C2FF]/20"
+            className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20"
             placeholder="Announcement title…"
             value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
           />
           <textarea
             rows={4}
-            className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] placeholder:text-[#5A6275] focus:outline-none focus:border-[#00C2FF]/60 focus:ring-2 focus:ring-[#00C2FF]/20 resize-none"
+            className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20 resize-none"
             placeholder="Write your announcement…"
             value={form.body} onChange={e => setForm(p => ({ ...p, body: e.target.value }))}
           />
           <div className="flex items-center justify-between">
-            <label className="flex items-center gap-2 text-sm text-[#8A92A6] cursor-pointer">
+            <label className="flex items-center gap-2 text-sm text-muted cursor-pointer">
               <input type="checkbox" checked={form.isPinned} onChange={e => setForm(p => ({ ...p, isPinned: e.target.checked }))} className="rounded" />
               <Pin className="w-3.5 h-3.5" /> Pin this announcement
             </label>
             <div className="flex gap-2">
-              <button onClick={() => setShowForm(false)} className="px-3 py-1.5 text-sm text-[#8A92A6] hover:bg-[#1B1F2A] rounded-lg">Cancel</button>
-              <button onClick={post} disabled={posting} className="px-4 py-1.5 bg-[#00C2FF] text-[#06121A] text-sm font-semibold rounded-lg hover:bg-[#0098E6] disabled:opacity-50">
+              <button onClick={() => setShowForm(false)} className="px-3 py-1.5 text-sm text-muted hover:bg-surface-sunken rounded-lg">Cancel</button>
+              <button onClick={post} disabled={posting} className="px-4 py-1.5 bg-accent text-accent-foreground text-sm font-semibold rounded-lg hover:bg-accent-hover disabled:opacity-50">
                 {posting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Post"}
               </button>
             </div>
@@ -598,19 +598,19 @@ function AnnouncementsTab({ isMentor, userId }: { isMentor: boolean; userId: str
       {items.length === 0 && <EmptyState icon={Megaphone} title="No announcements yet" desc="Your mentor will post updates, tasks and notices here." />}
 
       {items.map(ann => (
-        <div key={ann.id} className={`bg-[#12151D] border rounded-xl overflow-hidden ${ann.isPinned ? "border-[#00C2FF]/30 shadow-sm" : "border-[#262A35]"}`}>
+        <div key={ann.id} className={`bg-surface border rounded-xl overflow-hidden ${ann.isPinned ? "border-accent/30 shadow-sm" : "border-border"}`}>
           {ann.isPinned && (
-            <div className="flex items-center gap-1.5 px-4 py-1.5 bg-[#0E2532] text-[#00C2FF] text-xs font-semibold">
+            <div className="flex items-center gap-1.5 px-4 py-1.5 bg-accent-soft text-accent text-xs font-semibold">
               <Pin className="w-3 h-3" /> Pinned
             </div>
           )}
           <div className="p-5">
             <div className="flex items-start justify-between gap-3 mb-2">
-              <h3 className="font-semibold text-[#E6E9F0]">{ann.title}</h3>
+              <h3 className="font-semibold text-foreground">{ann.title}</h3>
               <div className="flex items-center gap-2 shrink-0">
-                <span className="text-xs text-[#5A6275] font-mono">{fmt(ann.createdAt)}</span>
+                <span className="text-xs text-subtle font-mono">{fmt(ann.createdAt)}</span>
                 {isMentor && (
-                  <button onClick={() => void deleteAnn(ann.id)} className="p-1 rounded text-[#5A6275] hover:text-[#ea4335] hover:bg-[#ea4335]/12 transition-colors" title="Delete announcement">
+                  <button onClick={() => void deleteAnn(ann.id)} className="p-1 rounded text-subtle hover:text-crit hover:bg-crit/12 transition-colors" title="Delete announcement">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 )}
@@ -618,7 +618,7 @@ function AnnouncementsTab({ isMentor, userId }: { isMentor: boolean; userId: str
             </div>
             <div className="flex items-center gap-2 mb-3">
               <Avatar user={ann.author} size={6} />
-              <span className="text-xs text-[#8A92A6]">{ann.author.fullName}</span>
+              <span className="text-xs text-muted">{ann.author.fullName}</span>
             </div>
             <MarkdownBody content={ann.body} />
 
@@ -629,13 +629,13 @@ function AnnouncementsTab({ isMentor, userId }: { isMentor: boolean; userId: str
                 const mine = ann.reactions.some(r => r.emoji === emoji && r.userId === userId);
                 return (
                   <button key={emoji} onClick={() => void toggleReaction(ann.id, emoji)}
-                    className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-sm border transition-colors ${mine ? "border-[#00C2FF] bg-[#0E2532]" : "border-[#262A35] hover:bg-[#1B1F2A]"}`}>
-                    {emoji} {count > 0 && <span className="text-xs text-[#8A92A6]">{count}</span>}
+                    className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-sm border transition-colors ${mine ? "border-accent bg-accent-soft" : "border-border hover:bg-surface-sunken"}`}>
+                    {emoji} {count > 0 && <span className="text-xs text-muted">{count}</span>}
                   </button>
                 );
               })}
               <button onClick={() => setExpanded(p => ({ ...p, [ann.id]: !p[ann.id] }))}
-                className="ml-auto text-xs text-[#8A92A6] hover:text-[#E6E9F0] flex items-center gap-1">
+                className="ml-auto text-xs text-muted hover:text-foreground flex items-center gap-1">
                 <MessageSquare className="w-3.5 h-3.5" />
                 {ann.comments.length} comment{ann.comments.length !== 1 ? "s" : ""}
                 {expanded[ann.id] ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
@@ -643,28 +643,28 @@ function AnnouncementsTab({ isMentor, userId }: { isMentor: boolean; userId: str
             </div>
 
             {expanded[ann.id] && (
-              <div className="mt-4 space-y-3 border-t border-[#1B1F2A] pt-4">
+              <div className="mt-4 space-y-3 border-t border-border pt-4">
                 {ann.comments.map(c => (
                   <div key={c.id} className="flex gap-2">
                     <Avatar user={c.author} size={6} />
-                    <div className="flex-1 bg-[#1B1F2A] rounded-lg px-3 py-2">
+                    <div className="flex-1 bg-surface-sunken rounded-lg px-3 py-2">
                       <div className="flex items-baseline gap-2 mb-1">
-                        <span className="text-xs font-semibold text-[#E6E9F0]">{c.author.fullName}</span>
-                        <span className="text-[10px] text-[#5A6275] font-mono">{fmtTime(c.createdAt)}</span>
+                        <span className="text-xs font-semibold text-foreground">{c.author.fullName}</span>
+                        <span className="text-[10px] text-subtle font-mono">{fmtTime(c.createdAt)}</span>
                       </div>
-                      <p className="text-sm text-[#C8CEDB]">{c.body}</p>
+                      <p className="text-sm text-foreground">{c.body}</p>
                     </div>
                   </div>
                 ))}
                 <div className="flex gap-2">
                   <input
-                    className="flex-1 px-3 py-1.5 bg-[#1B1F2A] border border-[#262A35] rounded-lg text-sm placeholder:text-[#5A6275] focus:outline-none focus:border-[#00C2FF]/60"
+                    className="flex-1 px-3 py-1.5 bg-surface-sunken border border-border rounded-lg text-sm placeholder:text-subtle focus:outline-none focus:border-accent/60"
                     placeholder="Add a comment…"
                     value={commentText[ann.id] ?? ""}
                     onChange={e => setCommentText(p => ({ ...p, [ann.id]: e.target.value }))}
                     onKeyDown={e => e.key === "Enter" && addComment(ann.id)}
                   />
-                  <button onClick={() => addComment(ann.id)} className="px-3 py-1.5 bg-[#00C2FF] text-[#06121A] rounded-lg hover:bg-[#0098E6]">
+                  <button onClick={() => addComment(ann.id)} className="px-3 py-1.5 bg-accent text-accent-foreground rounded-lg hover:bg-accent-hover">
                     <Send className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -762,44 +762,44 @@ function TasksTab({ isMentor, userId }: { isMentor: boolean; userId: string }) {
       {isMentor && (
         <div className="flex justify-end">
           <button onClick={() => setShowForm(v => !v)}
-            className="flex items-center gap-1.5 px-4 py-2 bg-[#00C2FF] text-[#06121A] text-sm font-semibold rounded-lg hover:bg-[#0098E6] transition-colors">
+            className="flex items-center gap-1.5 px-4 py-2 bg-accent text-accent-foreground text-sm font-semibold rounded-lg hover:bg-accent-hover transition-colors">
             <Plus className="w-4 h-4" /> New Task
           </button>
         </div>
       )}
 
       {showForm && (
-        <div className="max-w-2xl bg-[#12151D] border border-[#262A35] rounded-xl p-5 space-y-3">
-          <h3 className="font-semibold text-[#E6E9F0]">Create Task</h3>
-          <input className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] placeholder:text-[#5A6275] focus:outline-none focus:border-[#00C2FF]/60 focus:ring-2 focus:ring-[#00C2FF]/20"
+        <div className="max-w-2xl bg-surface border border-border rounded-xl p-5 space-y-3">
+          <h3 className="font-semibold text-foreground">Create Task</h3>
+          <input className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20"
             placeholder="Task title…" value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} />
           <textarea rows={3}
-            className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] placeholder:text-[#5A6275] focus:outline-none focus:border-[#00C2FF]/60 focus:ring-2 focus:ring-[#00C2FF]/20 resize-none"
+            className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20 resize-none"
             placeholder="Description…" value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} />
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-[#8A92A6] mb-1">Priority</label>
-              <select className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+              <label className="block text-xs font-medium text-muted mb-1">Priority</label>
+              <select className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground focus:outline-none focus:border-accent/60"
                 value={form.priority} onChange={e => setForm(p => ({ ...p, priority: e.target.value }))}>
                 <option value="low">Low</option><option value="medium">Medium</option>
                 <option value="high">High</option><option value="urgent">Urgent</option>
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-[#8A92A6] mb-1">Deadline</label>
-              <input type="datetime-local" className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+              <label className="block text-xs font-medium text-muted mb-1">Deadline</label>
+              <input type="datetime-local" className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground focus:outline-none focus:border-accent/60"
                 value={form.deadline} onChange={e => setForm(p => ({ ...p, deadline: e.target.value }))} />
             </div>
           </div>
           {interns.length > 0 && (
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-medium text-[#8A92A6]">Assign to interns</label>
+                <label className="text-xs font-medium text-muted">Assign to interns</label>
                 <button
                   type="button"
                   onClick={() => setForm(p => ({ ...p, assignAll: !p.assignAll, assigneeIds: [] }))}
                   className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border transition-colors ${
-                    form.assignAll ? "border-[#00C2FF] bg-[#0E2532] text-[#00C2FF]" : "border-[#262A35] text-[#8A92A6] hover:bg-[#1B1F2A]"
+                    form.assignAll ? "border-accent bg-accent-soft text-accent" : "border-border text-muted hover:bg-surface-sunken"
                   }`}>
                   {form.assignAll ? <><CheckCircle2 className="w-3 h-3" /> All interns</> : "Assign all"}
                 </button>
@@ -815,8 +815,8 @@ function TasksTab({ isMentor, userId }: { isMentor: boolean; userId: string }) {
                       }))}
                       className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
                         form.assigneeIds.includes(intern.id)
-                          ? "border-[#00C2FF] bg-[#0E2532] text-[#00C2FF]"
-                          : "border-[#262A35] text-[#8A92A6] hover:bg-[#1B1F2A]"
+                          ? "border-accent bg-accent-soft text-accent"
+                          : "border-border text-muted hover:bg-surface-sunken"
                       }`}>
                       {intern.fullName}
                     </button>
@@ -824,13 +824,13 @@ function TasksTab({ isMentor, userId }: { isMentor: boolean; userId: string }) {
                 </div>
               )}
               {form.assignAll && (
-                <p className="text-xs text-[#8A92A6]">Task will be assigned to all {interns.length} intern{interns.length !== 1 ? "s" : ""}.</p>
+                <p className="text-xs text-muted">Task will be assigned to all {interns.length} intern{interns.length !== 1 ? "s" : ""}.</p>
               )}
             </div>
           )}
           <div className="flex justify-end gap-2">
-            <button onClick={() => setShowForm(false)} className="px-3 py-1.5 text-sm text-[#8A92A6] hover:bg-[#1B1F2A] rounded-lg">Cancel</button>
-            <button onClick={createTask} disabled={creating} className="px-4 py-1.5 bg-[#00C2FF] text-[#06121A] text-sm font-semibold rounded-lg hover:bg-[#0098E6] disabled:opacity-50">
+            <button onClick={() => setShowForm(false)} className="px-3 py-1.5 text-sm text-muted hover:bg-surface-sunken rounded-lg">Cancel</button>
+            <button onClick={createTask} disabled={creating} className="px-4 py-1.5 bg-accent text-accent-foreground text-sm font-semibold rounded-lg hover:bg-accent-hover disabled:opacity-50">
               {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create"}
             </button>
           </div>
@@ -847,7 +847,7 @@ function TasksTab({ isMentor, userId }: { isMentor: boolean; userId: string }) {
               <div key={priority}>
                 <div className="flex items-center gap-2 mb-2">
                   <PriorityBadge p={priority} />
-                  <span className="text-xs text-[#5A6275]">{group.length} task{group.length !== 1 ? "s" : ""}</span>
+                  <span className="text-xs text-subtle">{group.length} task{group.length !== 1 ? "s" : ""}</span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
                   {group.map(task => (
@@ -864,8 +864,8 @@ function TasksTab({ isMentor, userId }: { isMentor: boolean; userId: string }) {
       {isMentor && closedTasks.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-2 mt-2">
-            <span className="text-xs font-semibold text-[#5A6275]">Closed</span>
-            <span className="text-xs text-[#5A6275]">{closedTasks.length} task{closedTasks.length !== 1 ? "s" : ""}</span>
+            <span className="text-xs font-semibold text-subtle">Closed</span>
+            <span className="text-xs text-subtle">{closedTasks.length} task{closedTasks.length !== 1 ? "s" : ""}</span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 opacity-70">
             {closedTasks.map(task => (
@@ -882,10 +882,10 @@ function TasksTab({ isMentor, userId }: { isMentor: boolean; userId: string }) {
 // ─── KANBAN BOARD (intern task view) ──────────────────────────────────────────
 
 const KANBAN_COLS: { id: string; label: string; color: string }[] = [
-  { id: "todo",     label: "To do",     color: "#00C2FF" },
-  { id: "review",   label: "In review", color: "#F59E0B" },
-  { id: "revision", label: "Revision",  color: "#ff6d00" },
-  { id: "approved", label: "Approved",  color: "#0f9d58" },
+  { id: "todo",     label: "To do",     color: "#4f46e5" },
+  { id: "review",   label: "In review", color: "#b45309" },
+  { id: "revision", label: "Revision",  color: "#b45309" },
+  { id: "approved", label: "Approved",  color: "#0e7c5a" },
 ];
 
 function internTaskStatus(task: InternTask, userId: string): string {
@@ -907,18 +907,18 @@ function KanbanBoard({ tasks, userId, onOpen }: { tasks: InternTask[]; userId: s
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
       {byCol.map(col => (
-        <div key={col.id} className="bg-[#0E1018] border border-[#262A35] rounded-xl p-2.5 min-h-24">
+        <div key={col.id} className="bg-surface border border-border rounded-xl p-2.5 min-h-24">
           <div className="flex items-center gap-2 px-1 pb-2.5 mb-0.5">
             <span className="w-2 h-2 rounded-full" style={{ background: col.color }} />
             <span className="text-xs font-semibold" style={{ color: col.color }}>{col.label}</span>
-            <span className="text-xs text-[#5A6275] font-mono ml-auto">{col.items.length}</span>
+            <span className="text-xs text-subtle font-mono ml-auto">{col.items.length}</span>
           </div>
           <div className="space-y-2">
             {col.items.map(task => (
               <TaskCard key={task.id} task={task} isMentor={false} compact onOpen={() => onOpen(task)} />
             ))}
             {col.items.length === 0 && (
-              <p className="text-[11px] text-[#3A4150] text-center py-4">Nothing here</p>
+              <p className="text-[11px] text-subtle text-center py-4">Nothing here</p>
             )}
           </div>
         </div>
@@ -934,36 +934,36 @@ function TaskCard({ task, isMentor, compact, onOpen, onDelete, deleting }: {
   const cd = task.deadline ? fmtCountdown(task.deadline) : null;
   return (
     <div onClick={onOpen}
-      className="bg-[#12151D] border border-[#262A35] rounded-xl p-3.5 hover:border-[#00C2FF]/40 hover:shadow-sm transition-all cursor-pointer group">
+      className="bg-surface border border-border rounded-xl p-3.5 hover:border-accent/40 hover:shadow-sm transition-all cursor-pointer group">
       <div className="flex items-start justify-between gap-2">
-        <h4 className="font-semibold text-sm text-[#E6E9F0] group-hover:text-[#00C2FF] transition-colors line-clamp-2 flex-1 min-w-0">{task.title}</h4>
+        <h4 className="font-semibold text-sm text-foreground group-hover:text-accent transition-colors line-clamp-2 flex-1 min-w-0">{task.title}</h4>
         {isMentor && onDelete && (
           <button onClick={e => { e.stopPropagation(); onDelete(); }} disabled={deleting}
-            className="p-1 -mr-1 text-[#5A6275] hover:text-[#ea4335] hover:bg-[#ea4335]/12 rounded transition-colors shrink-0">
+            className="p-1 -mr-1 text-subtle hover:text-crit hover:bg-crit/12 rounded transition-colors shrink-0">
             {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
           </button>
         )}
       </div>
-      {!compact && <p className="text-sm text-[#8A92A6] mt-0.5 line-clamp-2">{task.description}</p>}
+      {!compact && <p className="text-sm text-muted mt-0.5 line-clamp-2">{task.description}</p>}
       <div className="flex items-center gap-2 mt-2.5 flex-wrap">
         {!compact && <PriorityBadge p={task.priority} />}
         {task.isClosed && (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold text-[#8A92A6] bg-[#1B1F2A]">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold text-muted bg-surface-sunken">
             <Lock className="w-3 h-3" /> Closed
           </span>
         )}
         {cd && (
-          <span className={`flex items-center gap-1 text-[11px] font-mono ${cd.overdue ? "text-[#ea4335]" : "text-[#5A6275]"}`}>
+          <span className={`flex items-center gap-1 text-[11px] font-mono ${cd.overdue ? "text-crit" : "text-subtle"}`}>
             <Clock className="w-3 h-3" /> {cd.label}
           </span>
         )}
         {task._count.discussions > 0 && (
-          <span className="flex items-center gap-1 text-[11px] text-[#5A6275]">
+          <span className="flex items-center gap-1 text-[11px] text-subtle">
             <MessageSquare className="w-3 h-3" /> <span className="font-mono">{task._count.discussions}</span>
           </span>
         )}
         {isMentor && task.assigneeIds.length > 0 && (
-          <span className="text-[11px] text-[#5A6275]"><span className="font-mono">{task.assigneeIds.length}</span> assigned</span>
+          <span className="text-[11px] text-subtle"><span className="font-mono">{task.assigneeIds.length}</span> assigned</span>
         )}
       </div>
     </div>
@@ -1059,38 +1059,38 @@ function TaskDetail({ task: initialTask, isMentor, userId, onBack }: { task: Int
 
   return (
     <div className="w-full">
-      <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-[#8A92A6] hover:text-[#E6E9F0] mb-4 transition-colors">
+      <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-muted hover:text-foreground mb-4 transition-colors">
         ← Back to tasks
       </button>
 
-      <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-6 mb-4">
+      <div className="bg-surface border border-border rounded-xl p-6 mb-4">
         <div className="flex items-start gap-3 mb-4">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
               <PriorityBadge p={task.priority} />
               {task.isClosed && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold text-[#8A92A6] bg-[#1B1F2A]">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold text-muted bg-surface-sunken">
                   <Lock className="w-3 h-3" /> Closed
                 </span>
               )}
-              {task.deadline && <span className={`text-xs font-mono ${isPast(task.deadline) ? "text-[#ea4335]" : "text-[#5A6275]"}`}><Clock className="w-3 h-3 inline mr-0.5" />{fmt(task.deadline)}</span>}
+              {task.deadline && <span className={`text-xs font-mono ${isPast(task.deadline) ? "text-crit" : "text-subtle"}`}><Clock className="w-3 h-3 inline mr-0.5" />{fmt(task.deadline)}</span>}
             </div>
-            <h2 className="text-lg font-semibold text-[#E6E9F0]">{task.title}</h2>
+            <h2 className="text-lg font-semibold text-foreground">{task.title}</h2>
             <div className="mt-2"><MarkdownBody content={task.description} /></div>
           </div>
           {isMentor && (
             <button onClick={toggleClosed} disabled={togglingClosed}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors shrink-0 disabled:opacity-50 ${
                 task.isClosed
-                  ? "border-[#00C2FF]/40 text-[#00C2FF] hover:bg-[#0E2532]"
-                  : "border-[#262A35] text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0]"
+                  ? "border-accent/40 text-accent hover:bg-accent-soft"
+                  : "border-border text-muted hover:bg-surface-sunken hover:text-foreground"
               }`}>
               {togglingClosed ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Lock className="w-3.5 h-3.5" />}
               {task.isClosed ? "Reopen task" : "Close task"}
             </button>
           )}
         </div>
-        <div className="flex items-center gap-2 text-xs text-[#5A6275]">
+        <div className="flex items-center gap-2 text-xs text-subtle">
           <Avatar user={task.createdBy} size={5} />
           Posted by {task.createdBy.fullName} · <span className="font-mono">{fmt(task.createdAt)}</span>
         </div>
@@ -1100,20 +1100,20 @@ function TaskDetail({ task: initialTask, isMentor, userId, onBack }: { task: Int
         {/* Submit / Submissions */}
         <div className="xl:col-span-3 space-y-4">
           {!isMentor && (
-            <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-5 max-w-xl">
-              <h3 className="font-semibold text-[#E6E9F0] mb-3 flex items-center gap-2"><Upload className="w-4 h-4 text-[#00C2FF]" /> Submit Work</h3>
+            <div className="bg-surface border border-border rounded-xl p-5 max-w-xl">
+              <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2"><Upload className="w-4 h-4 text-accent" /> Submit Work</h3>
               <textarea rows={3}
-                className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] placeholder:text-[#5A6275] focus:outline-none focus:border-[#00C2FF]/60 resize-none mb-2"
+                className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60 resize-none mb-2"
                 placeholder="Notes about your submission…"
                 value={subForm.notes} onChange={e => setSubForm(p => ({ ...p, notes: e.target.value }))} />
               <textarea rows={2}
-                className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] placeholder:text-[#5A6275] focus:outline-none focus:border-[#00C2FF]/60 resize-none mb-2"
+                className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60 resize-none mb-2"
                 placeholder="GitHub / links (one per line)…"
                 value={subForm.links} onChange={e => setSubForm(p => ({ ...p, links: e.target.value }))} />
               {/* File upload */}
               <div className="mb-3">
-                <label className={`flex items-center gap-2 px-3 py-2 border border-dashed border-[#2E333F] rounded-lg text-sm text-[#8A92A6] cursor-pointer hover:border-[#00C2FF]/60 hover:bg-[#1B1F2A] transition-colors ${uploadingFile ? "opacity-50 pointer-events-none" : ""}`}>
-                  {uploadingFile ? <Loader2 className="w-4 h-4 animate-spin text-[#00C2FF]" /> : <FileText className="w-4 h-4 text-[#8A92A6]" />}
+                <label className={`flex items-center gap-2 px-3 py-2 border border-dashed border-border-strong rounded-lg text-sm text-muted cursor-pointer hover:border-accent/60 hover:bg-surface-sunken transition-colors ${uploadingFile ? "opacity-50 pointer-events-none" : ""}`}>
+                  {uploadingFile ? <Loader2 className="w-4 h-4 animate-spin text-accent" /> : <FileText className="w-4 h-4 text-muted" />}
                   {uploadingFile ? "Uploading…" : "Attach PDF or Word document"}
                   <input type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                     className="hidden" onChange={async e => {
@@ -1134,16 +1134,16 @@ function TaskDetail({ task: initialTask, isMentor, userId, onBack }: { task: Int
                 {subFiles.length > 0 && (
                   <div className="mt-2 space-y-1">
                     {subFiles.map((f, i) => (
-                      <div key={i} className="flex items-center justify-between bg-[#1B1F2A] rounded px-3 py-1.5 text-xs text-[#C8CEDB]">
-                        <span className="flex items-center gap-1.5"><FileText className="w-3.5 h-3.5 text-[#00C2FF]" />{f.name}</span>
-                        <button onClick={() => setSubFiles(p => p.filter((_, j) => j !== i))} className="text-[#5A6275] hover:text-[#ea4335]"><X className="w-3.5 h-3.5" /></button>
+                      <div key={i} className="flex items-center justify-between bg-surface-sunken rounded px-3 py-1.5 text-xs text-foreground">
+                        <span className="flex items-center gap-1.5"><FileText className="w-3.5 h-3.5 text-accent" />{f.name}</span>
+                        <button onClick={() => setSubFiles(p => p.filter((_, j) => j !== i))} className="text-subtle hover:text-crit"><X className="w-3.5 h-3.5" /></button>
                       </div>
                     ))}
                   </div>
                 )}
               </div>
               <button onClick={submit} disabled={submitting}
-                className="w-full px-4 py-2 bg-[#00C2FF] text-[#06121A] text-sm font-semibold rounded-lg hover:bg-[#0098E6] disabled:opacity-50 flex items-center justify-center gap-2">
+                className="w-full px-4 py-2 bg-accent text-accent-foreground text-sm font-semibold rounded-lg hover:bg-accent-hover disabled:opacity-50 flex items-center justify-center gap-2">
                 {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Upload className="w-4 h-4" /> Submit</>}
               </button>
             </div>
@@ -1151,14 +1151,14 @@ function TaskDetail({ task: initialTask, isMentor, userId, onBack }: { task: Int
 
           {/* Submissions list */}
           {mySubmissions.length > 0 && (
-            <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-5">
+            <div className="bg-surface border border-border rounded-xl p-5">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-[#E6E9F0]">Submissions</h3>
+                <h3 className="font-semibold text-foreground">Submissions</h3>
                 {isMentor && (
                   <a
                     href={`/api/internship/tasks/${task.id}/submissions/download`}
                     download
-                    className="flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg bg-[#1a56db] text-white hover:bg-[#1648c7] transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg bg-accent text-accent-foreground hover:bg-accent-hover transition-colors"
                   >
                     <Download className="w-3.5 h-3.5" /> Download all files
                   </a>
@@ -1174,31 +1174,31 @@ function TaskDetail({ task: initialTask, isMentor, userId, onBack }: { task: Int
         </div>
 
         {/* Discussion */}
-        <div className="xl:col-span-2 bg-[#12151D] border border-[#262A35] rounded-xl p-5 flex flex-col">
-          <h3 className="font-semibold text-[#E6E9F0] mb-3 flex items-center gap-2"><MessageSquare className="w-4 h-4 text-[#00C2FF]" /> Discussion</h3>
+        <div className="xl:col-span-2 bg-surface border border-border rounded-xl p-5 flex flex-col">
+          <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2"><MessageSquare className="w-4 h-4 text-accent" /> Discussion</h3>
           {detailLoading ? <LoadingSpinner /> : (
             <>
               <div className="flex-1 space-y-3 max-h-[32rem] overflow-y-auto mb-3">
-                {discussions.length === 0 && <p className="text-sm text-[#5A6275] text-center py-4">No messages yet — start the conversation!</p>}
+                {discussions.length === 0 && <p className="text-sm text-subtle text-center py-4">No messages yet — start the conversation!</p>}
                 {discussions.map(d => (
                   <div key={d.id} className="flex gap-2">
                     <Avatar user={d.author} size={7} />
                     <div className="flex-1">
                       <div className="flex items-baseline gap-2 mb-0.5">
-                        <span className="text-xs font-semibold text-[#E6E9F0]">{d.author.fullName}</span>
+                        <span className="text-xs font-semibold text-foreground">{d.author.fullName}</span>
                         {d.author.role && ["ADMIN","CEO","CISO","R_AND_D","COO","OPS_MANAGER"].includes(d.author.role) && (
-                          <span className="text-[10px] bg-[#0E2532] text-[#00C2FF] px-1.5 rounded font-medium">Mentor</span>
+                          <span className="text-[10px] bg-accent-soft text-accent px-1.5 rounded font-medium">Mentor</span>
                         )}
-                        <span className="text-[10px] text-[#5A6275] font-mono">{fmtTime(d.createdAt)}</span>
-                        {d.isPinned && <Pin className="w-3 h-3 text-[#00C2FF]" />}
+                        <span className="text-[10px] text-subtle font-mono">{fmtTime(d.createdAt)}</span>
+                        {d.isPinned && <Pin className="w-3 h-3 text-accent" />}
                       </div>
-                      <div className="bg-[#1B1F2A] rounded-lg px-3 py-2 text-sm text-[#C8CEDB]">{d.body}</div>
+                      <div className="bg-surface-sunken rounded-lg px-3 py-2 text-sm text-foreground">{d.body}</div>
                       {d.replies.length > 0 && (
-                        <div className="mt-2 ml-4 space-y-2 border-l-2 border-[#262A35] pl-3">
+                        <div className="mt-2 ml-4 space-y-2 border-l-2 border-border pl-3">
                           {d.replies.map(r => (
                             <div key={r.id} className="flex gap-1.5">
                               <Avatar user={r.author} size={5} />
-                              <div className="flex-1 bg-[#1B1F2A] rounded-lg px-2 py-1.5 text-xs text-[#C8CEDB]">{r.body}</div>
+                              <div className="flex-1 bg-surface-sunken rounded-lg px-2 py-1.5 text-xs text-foreground">{r.body}</div>
                             </div>
                           ))}
                         </div>
@@ -1209,13 +1209,13 @@ function TaskDetail({ task: initialTask, isMentor, userId, onBack }: { task: Int
               </div>
               <div className="flex gap-2 mt-auto">
                 <input
-                  className="flex-1 px-3 py-2 bg-[#1B1F2A] border border-[#262A35] rounded-lg text-sm placeholder:text-[#5A6275] focus:outline-none focus:border-[#00C2FF]/60"
+                  className="flex-1 px-3 py-2 bg-surface-sunken border border-border rounded-lg text-sm placeholder:text-subtle focus:outline-none focus:border-accent/60"
                   placeholder="Message…"
                   value={msgForm} onChange={e => setMsgForm(e.target.value)}
                   onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMsg()}
                 />
                 <button onClick={sendMsg} disabled={sending}
-                  className="px-3 py-2 bg-[#00C2FF] text-[#06121A] rounded-lg hover:bg-[#0098E6] disabled:opacity-50">
+                  className="px-3 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent-hover disabled:opacity-50">
                   {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                 </button>
               </div>
@@ -1245,9 +1245,9 @@ function parseScoreBreakdown(comment: string | null | undefined): { research?: n
 
 function ReviewScoreDisplay({ review }: { review: Review }) {
   const bd = parseScoreBreakdown(review.comment);
-  const verdictColor = review.verdict === "approved" ? "bg-[#0f9d58]/12 text-[#0f9d58] border-[#0f9d58]/20"
-    : review.verdict === "rejected" ? "bg-[#ea4335]/12 text-[#ea4335] border-[#ea4335]/20"
-    : "bg-[#ff6d00]/12 text-[#ff6d00] border-[#ff6d00]/20";
+  const verdictColor = review.verdict === "approved" ? "bg-ok/12 text-ok border-ok/20"
+    : review.verdict === "rejected" ? "bg-crit/12 text-crit border-crit/20"
+    : "bg-warn/12 text-warn border-warn/20";
   return (
     <div className={`rounded-lg p-3 border text-xs mt-2 ${verdictColor}`}>
       <div className="flex items-center justify-between mb-1.5">
@@ -1289,12 +1289,12 @@ function ReviewScoreDisplay({ review }: { review: Review }) {
 function ScoreInput({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
   return (
     <div className="flex items-center justify-between gap-2">
-      <span className="text-[11px] text-[#8A92A6] flex-1">{label}</span>
+      <span className="text-[11px] text-muted flex-1">{label}</span>
       <div className="flex items-center gap-1">
         {[0,1,2,3,4,5].map(i => (
           <button key={i} type="button" onClick={() => onChange(i)}
             className={`w-6 h-6 rounded text-[10px] font-semibold transition-colors
-              ${value === i ? "bg-[#00C2FF] text-[#06121A]" : "bg-[#1B1F2A] text-[#5A6275] hover:text-[#E6E9F0]"}`}>
+              ${value === i ? "bg-accent text-accent-foreground" : "bg-surface-sunken text-subtle hover:text-foreground"}`}>
             {i}
           </button>
         ))}
@@ -1317,23 +1317,23 @@ function SubmissionCard({ sub, isMentor, onReview }: { sub: Submission; isMentor
   };
 
   return (
-    <div className="border border-[#262A35] rounded-lg p-3">
+    <div className="border border-border rounded-lg p-3">
       <div className="flex items-center justify-between mb-2 gap-2">
         <div className="flex items-center gap-2 min-w-0">
           {sub.submitter && <Avatar user={sub.submitter} size={6} />}
-          {sub.submitter && <span className="text-sm font-semibold text-[#E6E9F0] truncate">{sub.submitter.fullName}</span>}
-          <span className="text-xs font-medium text-[#5A6275] font-mono shrink-0">v{sub.version}</span>
+          {sub.submitter && <span className="text-sm font-semibold text-foreground truncate">{sub.submitter.fullName}</span>}
+          <span className="text-xs font-medium text-subtle font-mono shrink-0">v{sub.version}</span>
           <StatusBadge s={sub.status} />
         </div>
-        <span className="text-[10px] text-[#5A6275] font-mono shrink-0">{fmt(sub.createdAt)}</span>
+        <span className="text-[10px] text-subtle font-mono shrink-0">{fmt(sub.createdAt)}</span>
       </div>
-      {sub.notes && <p className="text-xs text-[#8A92A6] mb-2">{sub.notes}</p>}
+      {sub.notes && <p className="text-xs text-muted mb-2">{sub.notes}</p>}
       <SubmissionFiles files={sub.files} />
       {(sub.links?.length ?? 0) > 0 && (
         <div className="flex flex-wrap gap-1 mb-2">
           {(sub.links ?? []).map((l, i) => (
             <a key={i} href={l} target="_blank" rel="noreferrer"
-              className="flex items-center gap-1 text-xs text-[#00C2FF] hover:underline">
+              className="flex items-center gap-1 text-xs text-accent hover:underline">
               <ExternalLink className="w-3 h-3" /> {l.replace(/^https?:\/\//, "").slice(0, 30)}…
             </a>
           ))}
@@ -1342,34 +1342,34 @@ function SubmissionCard({ sub, isMentor, onReview }: { sub: Submission; isMentor
       {latestReview && <ReviewScoreDisplay review={latestReview} />}
       {isMentor && sub.status === "submitted" && (
         reviewOpen ? (
-          <div className="space-y-2.5 mt-3 pt-3 border-t border-[#262A35]">
-            <select className="w-full px-2 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded text-xs"
+          <div className="space-y-2.5 mt-3 pt-3 border-t border-border">
+            <select className="w-full px-2 py-1.5 bg-surface-sunken border border-border-strong rounded text-xs"
               value={verdict} onChange={e => setVerdict(e.target.value)}>
               <option value="approved">Approve</option>
               <option value="revision_requested">Request Revision</option>
               <option value="rejected">Reject</option>
             </select>
             {/* 3-field scoring */}
-            <div className="bg-[#0E1018] rounded-lg p-3 space-y-2">
-              <p className="text-[10px] font-semibold text-[#5A6275] mb-1">Score (each field 0–5)</p>
+            <div className="bg-surface rounded-lg p-3 space-y-2">
+              <p className="text-[10px] font-semibold text-subtle mb-1">Score (each field 0–5)</p>
               <ScoreInput label="Research Quality" value={scores.research} onChange={v => setScores(p => ({ ...p, research: v }))} />
               <ScoreInput label="Format & Clarity" value={scores.format} onChange={v => setScores(p => ({ ...p, format: v }))} />
               <ScoreInput label="Depth of Understanding" value={scores.understanding} onChange={v => setScores(p => ({ ...p, understanding: v }))} />
-              <div className="flex justify-between items-center pt-1.5 mt-0.5 border-t border-[#262A35] text-xs font-semibold text-[#E6E9F0]">
-                <span>Total</span><span className="font-mono text-[#00C2FF]">{total}/15</span>
+              <div className="flex justify-between items-center pt-1.5 mt-0.5 border-t border-border text-xs font-semibold text-foreground">
+                <span>Total</span><span className="font-mono text-accent">{total}/15</span>
               </div>
             </div>
-            <input className="w-full px-2 py-1 bg-[#1B1F2A] border border-[#2E333F] rounded text-xs placeholder:text-[#5A6275]"
+            <input className="w-full px-2 py-1 bg-surface-sunken border border-border-strong rounded text-xs placeholder:text-subtle"
               placeholder="Additional notes (optional)…" value={notes} onChange={e => setNotes(e.target.value)} />
             <div className="flex gap-1.5">
               <button onClick={submit}
-                className="flex-1 px-2 py-1 bg-[#00C2FF] text-[#06121A] text-xs font-semibold rounded">Submit Review</button>
-              <button onClick={() => setReviewOpen(false)} className="px-2 py-1 text-xs text-[#8A92A6] hover:bg-[#1B1F2A] rounded">Cancel</button>
+                className="flex-1 px-2 py-1 bg-accent text-accent-foreground text-xs font-semibold rounded">Submit Review</button>
+              <button onClick={() => setReviewOpen(false)} className="px-2 py-1 text-xs text-muted hover:bg-surface-sunken rounded">Cancel</button>
             </div>
           </div>
         ) : (
           <button onClick={() => setReviewOpen(true)}
-            className="text-xs text-[#00C2FF] hover:underline font-medium mt-2">Review &amp; score this submission →</button>
+            className="text-xs text-accent hover:underline font-medium mt-2">Review &amp; score this submission →</button>
         )
       )}
     </div>
@@ -1416,8 +1416,8 @@ function SubmissionsTab({ isMentor }: { isMentor: boolean; userId: string }) {
     <div className="w-full space-y-6">
       {pending.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold text-[#E6E9F0] mb-3 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#00C2FF]" /> Awaiting Review ({pending.length})
+          <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-accent" /> Awaiting Review ({pending.length})
           </h3>
           <div className={rowGrid}>
             {pending.map(s => <SubmissionRow key={s.id} sub={s} isMentor={isMentor} onReview={reviewSub} />)}
@@ -1426,8 +1426,8 @@ function SubmissionsTab({ isMentor }: { isMentor: boolean; userId: string }) {
       )}
       {reviewed.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold text-[#E6E9F0] mb-3 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#5A6275]" /> Reviewed ({reviewed.length})
+          <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-subtle" /> Reviewed ({reviewed.length})
           </h3>
           <div className={rowGrid}>
             {reviewed.map(s => <SubmissionRow key={s.id} sub={s} isMentor={isMentor} onReview={reviewSub} />)}
@@ -1449,24 +1449,24 @@ function SubmissionRow({ sub, isMentor, onReview }: { sub: Submission; isMentor:
   const submit = () => { onReview(sub.id, verdict, JSON.stringify({ ...scores, notes }), total); setReviewOpen(false); };
 
   return (
-    <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-4">
+    <div className="bg-surface border border-border rounded-xl p-4">
       <div className="flex items-start justify-between mb-2">
         <div>
-          <p className="font-medium text-[#E6E9F0] text-sm">{sub.task?.title ?? "—"}</p>
+          <p className="font-medium text-foreground text-sm">{sub.task?.title ?? "—"}</p>
           <div className="flex items-center gap-2 mt-1">
-            {sub.submitter && <><Avatar user={sub.submitter} size={5} /><span className="text-xs text-[#8A92A6]">{sub.submitter.fullName}</span></>}
-            <span className="text-xs text-[#5A6275] font-mono">v{sub.version}</span>
+            {sub.submitter && <><Avatar user={sub.submitter} size={5} /><span className="text-xs text-muted">{sub.submitter.fullName}</span></>}
+            <span className="text-xs text-subtle font-mono">v{sub.version}</span>
           </div>
         </div>
         <StatusBadge s={sub.status} />
       </div>
-      {sub.notes && <p className="text-xs text-[#8A92A6] mt-1 mb-2">{sub.notes}</p>}
+      {sub.notes && <p className="text-xs text-muted mt-1 mb-2">{sub.notes}</p>}
       <SubmissionFiles files={sub.files} />
       {sub.links?.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-2">
           {sub.links.map((l, i) => (
             <a key={i} href={l} target="_blank" rel="noreferrer"
-              className="flex items-center gap-1 text-xs text-[#00C2FF] hover:underline">
+              className="flex items-center gap-1 text-xs text-accent hover:underline">
               <ExternalLink className="w-3 h-3" /> {l.replace(/^https?:\/\//, "").slice(0, 30)}…
             </a>
           ))}
@@ -1475,36 +1475,36 @@ function SubmissionRow({ sub, isMentor, onReview }: { sub: Submission; isMentor:
       {latestReview && <ReviewScoreDisplay review={latestReview} />}
       {isMentor && sub.status === "submitted" && (
         reviewOpen ? (
-          <div className="space-y-2.5 mt-3 border-t border-[#262A35] pt-3">
-            <select className="w-full px-2 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded text-xs"
+          <div className="space-y-2.5 mt-3 border-t border-border pt-3">
+            <select className="w-full px-2 py-1.5 bg-surface-sunken border border-border-strong rounded text-xs"
               value={verdict} onChange={e => setVerdict(e.target.value)}>
               <option value="approved">Approve</option>
               <option value="revision_requested">Request Revision</option>
               <option value="rejected">Reject</option>
             </select>
-            <div className="bg-[#0E1018] rounded-lg p-3 space-y-2">
-              <p className="text-[10px] font-semibold text-[#5A6275] mb-1">Score (each field 0–5)</p>
+            <div className="bg-surface rounded-lg p-3 space-y-2">
+              <p className="text-[10px] font-semibold text-subtle mb-1">Score (each field 0–5)</p>
               <ScoreInput label="Research Quality" value={scores.research} onChange={v => setScores(p => ({ ...p, research: v }))} />
               <ScoreInput label="Format & Clarity" value={scores.format} onChange={v => setScores(p => ({ ...p, format: v }))} />
               <ScoreInput label="Depth of Understanding" value={scores.understanding} onChange={v => setScores(p => ({ ...p, understanding: v }))} />
-              <div className="flex justify-between items-center pt-1.5 mt-0.5 border-t border-[#262A35] text-xs font-semibold text-[#E6E9F0]">
-                <span>Total</span><span className="font-mono text-[#00C2FF]">{total}/15</span>
+              <div className="flex justify-between items-center pt-1.5 mt-0.5 border-t border-border text-xs font-semibold text-foreground">
+                <span>Total</span><span className="font-mono text-accent">{total}/15</span>
               </div>
             </div>
-            <input className="w-full px-2 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded text-xs placeholder:text-[#5A6275]"
+            <input className="w-full px-2 py-1.5 bg-surface-sunken border border-border-strong rounded text-xs placeholder:text-subtle"
               placeholder="Additional notes (optional)…" value={notes} onChange={e => setNotes(e.target.value)} />
             <div className="flex gap-1.5">
               <button onClick={submit}
-                className="flex-1 px-2 py-1.5 bg-[#00C2FF] text-[#06121A] text-xs font-semibold rounded">Submit Review</button>
-              <button onClick={() => setReviewOpen(false)} className="px-2 py-1.5 text-xs text-[#8A92A6] hover:bg-[#1B1F2A] rounded">Cancel</button>
+                className="flex-1 px-2 py-1.5 bg-accent text-accent-foreground text-xs font-semibold rounded">Submit Review</button>
+              <button onClick={() => setReviewOpen(false)} className="px-2 py-1.5 text-xs text-muted hover:bg-surface-sunken rounded">Cancel</button>
             </div>
           </div>
         ) : (
           <button onClick={() => setReviewOpen(true)}
-            className="text-xs text-[#00C2FF] hover:underline font-medium mt-2">Review &amp; score this submission →</button>
+            className="text-xs text-accent hover:underline font-medium mt-2">Review &amp; score this submission →</button>
         )
       )}
-      <div className="text-[10px] text-[#5A6275] mt-2 font-mono">{fmt(sub.createdAt)}</div>
+      <div className="text-[10px] text-subtle mt-2 font-mono">{fmt(sub.createdAt)}</div>
     </div>
   );
 }
@@ -1591,7 +1591,7 @@ function FindingsTab({ isMentor, userId: _userId, currentUser: _currentUser }: {
         <div className="flex gap-1">
           {TYPE_TABS.map(t => (
             <button key={t.id} onClick={() => setTypeFilter(t.id)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${typeFilter === t.id ? "bg-[#0E2532] text-[#00C2FF]" : "text-[#8A92A6] hover:bg-[#1B1F2A]"}`}>
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${typeFilter === t.id ? "bg-accent-soft text-accent" : "text-muted hover:bg-surface-sunken"}`}>
               {t.label}
             </button>
           ))}
@@ -1600,17 +1600,17 @@ function FindingsTab({ isMentor, userId: _userId, currentUser: _currentUser }: {
             if (!showForm && typeFilter !== "all") setForm(p => ({ ...p, type: typeFilter }));
             setShowForm(v => !v);
           }}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-[#00C2FF] text-[#06121A] text-xs font-semibold rounded-lg hover:bg-[#0098E6] transition-colors">
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-accent text-accent-foreground text-xs font-semibold rounded-lg hover:bg-accent-hover transition-colors">
           <Plus className="w-3.5 h-3.5" /> Report
         </button>
       </div>
 
       {showForm && (
-        <div className="max-w-2xl bg-[#12151D] border border-[#262A35] rounded-xl p-5 space-y-3">
+        <div className="max-w-2xl bg-surface border border-border rounded-xl p-5 space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-[#8A92A6] mb-1">Type</label>
-              <select className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+              <label className="block text-xs font-medium text-muted mb-1">Type</label>
+              <select className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground focus:outline-none focus:border-accent/60"
                 value={form.type} onChange={e => setForm(p => ({ ...p, type: e.target.value }))}>
                 <option value="bug_report">Bug Report</option>
                 <option value="feature_request">Feature Request</option>
@@ -1619,8 +1619,8 @@ function FindingsTab({ isMentor, userId: _userId, currentUser: _currentUser }: {
             </div>
             {form.type !== "feature_request" && (
               <div>
-                <label className="block text-xs font-medium text-[#8A92A6] mb-1">Severity</label>
-                <select className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+                <label className="block text-xs font-medium text-muted mb-1">Severity</label>
+                <select className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground focus:outline-none focus:border-accent/60"
                   value={form.severity} onChange={e => setForm(p => ({ ...p, severity: e.target.value }))}>
                   <option value="low">Low</option><option value="medium">Medium</option>
                   <option value="high">High</option><option value="critical">Critical</option>
@@ -1628,29 +1628,29 @@ function FindingsTab({ isMentor, userId: _userId, currentUser: _currentUser }: {
               </div>
             )}
           </div>
-          <input className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] placeholder:text-[#5A6275] focus:outline-none focus:border-[#00C2FF]/60 focus:ring-2 focus:ring-[#00C2FF]/20"
+          <input className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20"
             placeholder="Title…" value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} />
           <textarea rows={3}
-            className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] placeholder:text-[#5A6275] focus:outline-none focus:border-[#00C2FF]/60 resize-none"
+            className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60 resize-none"
             placeholder="Description…" value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} />
           {form.type === "bug_report" && (
             <textarea rows={2}
-              className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] placeholder:text-[#5A6275] focus:outline-none focus:border-[#00C2FF]/60 resize-none"
+              className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60 resize-none"
               placeholder="Steps to reproduce…" value={form.steps} onChange={e => setForm(p => ({ ...p, steps: e.target.value }))} />
           )}
           {form.type === "feature_request" && (
             <textarea rows={2}
-              className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] placeholder:text-[#5A6275] focus:outline-none focus:border-[#00C2FF]/60 resize-none"
+              className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60 resize-none"
               placeholder="Use case / expected benefit…" value={form.useCase} onChange={e => setForm(p => ({ ...p, useCase: e.target.value }))} />
           )}
 
           {/* File attachment */}
           <div>
-            <label className="block text-xs font-medium text-[#8A92A6] mb-1.5">Attach PDF or Word file (optional)</label>
-            <label className={`flex items-center gap-2 px-3 py-2 border border-dashed rounded-lg cursor-pointer text-sm transition-colors ${uploading ? "opacity-50 pointer-events-none" : "border-[#2E333F] hover:border-[#00C2FF] hover:bg-[#1B1F2A]"}`}>
+            <label className="block text-xs font-medium text-muted mb-1.5">Attach PDF or Word file (optional)</label>
+            <label className={`flex items-center gap-2 px-3 py-2 border border-dashed rounded-lg cursor-pointer text-sm transition-colors ${uploading ? "opacity-50 pointer-events-none" : "border-border-strong hover:border-accent hover:bg-surface-sunken"}`}>
               {uploading
-                ? <><Loader2 className="w-4 h-4 animate-spin text-[#00C2FF]" /><span className="text-[#8A92A6]">Uploading…</span></>
-                : <><Upload className="w-4 h-4 text-[#5A6275]" /><span className="text-[#5A6275]">Click to attach PDF or Word doc</span></>}
+                ? <><Loader2 className="w-4 h-4 animate-spin text-accent" /><span className="text-muted">Uploading…</span></>
+                : <><Upload className="w-4 h-4 text-subtle" /><span className="text-subtle">Click to attach PDF or Word doc</span></>}
               <input type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 className="hidden" onChange={async e => {
                   const file = e.target.files?.[0];
@@ -1671,12 +1671,12 @@ function FindingsTab({ isMentor, userId: _userId, currentUser: _currentUser }: {
             {pendingFiles.length > 0 && (
               <div className="mt-2 space-y-1.5">
                 {pendingFiles.map((f, i) => (
-                  <div key={i} className="flex items-center gap-2 px-3 py-1.5 bg-[#12151D] border border-[#262A35] rounded-lg">
-                    <FileText className="w-3.5 h-3.5 text-[#00C2FF] shrink-0" />
-                    <span className="text-xs text-[#E6E9F0] flex-1 truncate">{f.name}</span>
-                    <span className="text-[10px] text-[#5A6275]">{f.ext?.toUpperCase()}</span>
+                  <div key={i} className="flex items-center gap-2 px-3 py-1.5 bg-surface border border-border rounded-lg">
+                    <FileText className="w-3.5 h-3.5 text-accent shrink-0" />
+                    <span className="text-xs text-foreground flex-1 truncate">{f.name}</span>
+                    <span className="text-[10px] text-subtle">{f.ext?.toUpperCase()}</span>
                     <button onClick={() => setPendingFiles(p => p.filter((_, j) => j !== i))}
-                      className="text-[#5A6275] hover:text-[#ea4335]"><X className="w-3.5 h-3.5" /></button>
+                      className="text-subtle hover:text-crit"><X className="w-3.5 h-3.5" /></button>
                   </div>
                 ))}
               </div>
@@ -1684,8 +1684,8 @@ function FindingsTab({ isMentor, userId: _userId, currentUser: _currentUser }: {
           </div>
 
           <div className="flex justify-end gap-2">
-            <button onClick={() => { setShowForm(false); setPendingFiles([]); }} className="px-3 py-1.5 text-sm text-[#8A92A6] hover:bg-[#1B1F2A] rounded-lg">Cancel</button>
-            <button onClick={post} disabled={posting || uploading} className="px-4 py-1.5 bg-[#00C2FF] text-[#06121A] text-sm font-semibold rounded-lg hover:bg-[#0098E6] disabled:opacity-50">
+            <button onClick={() => { setShowForm(false); setPendingFiles([]); }} className="px-3 py-1.5 text-sm text-muted hover:bg-surface-sunken rounded-lg">Cancel</button>
+            <button onClick={post} disabled={posting || uploading} className="px-4 py-1.5 bg-accent text-accent-foreground text-sm font-semibold rounded-lg hover:bg-accent-hover disabled:opacity-50">
               {posting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Submit"}
             </button>
           </div>
@@ -1697,10 +1697,10 @@ function FindingsTab({ isMentor, userId: _userId, currentUser: _currentUser }: {
       <div className="space-y-3">
         {findings.map(f => {
           const TypeIcon = FINDING_TYPE[f.type]?.icon ?? Bug;
-          const typeColor = FINDING_TYPE[f.type]?.color ?? "text-[#8A92A6]";
+          const typeColor = FINDING_TYPE[f.type]?.color ?? "text-muted";
           const isExpanded = expanded === f.id;
           return (
-            <div key={f.id} className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
+            <div key={f.id} className="bg-surface border border-border rounded-xl overflow-hidden">
               <div className="p-4 cursor-pointer" onClick={() => setExpanded(isExpanded ? null : f.id)}>
                 <div className="flex items-start gap-3">
                   <TypeIcon className={`w-4 h-4 mt-0.5 shrink-0 ${typeColor}`} />
@@ -1709,35 +1709,35 @@ function FindingsTab({ isMentor, userId: _userId, currentUser: _currentUser }: {
                       <span className={`text-xs font-semibold ${typeColor}`}>{FINDING_TYPE[f.type]?.label}</span>
                       <SeverityBadge s={f.severity} />
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                        f.status === "open" ? "bg-[#0E2532] text-[#00C2FF]" :
-                        f.status === "resolved" ? "bg-[#0f9d58]/12 text-[#0f9d58]" :
-                        "bg-[#1B1F2A] text-[#8A92A6]"
+                        f.status === "open" ? "bg-accent-soft text-accent" :
+                        f.status === "resolved" ? "bg-ok/12 text-ok" :
+                        "bg-surface-sunken text-muted"
                       }`}>{f.status}</span>
                     </div>
-                    <h4 className="font-semibold text-[#E6E9F0] text-sm">{f.title}</h4>
-                    <p className="text-xs text-[#8A92A6] mt-0.5 line-clamp-2">{f.description}</p>
+                    <h4 className="font-semibold text-foreground text-sm">{f.title}</h4>
+                    <p className="text-xs text-muted mt-0.5 line-clamp-2">{f.description}</p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <div className="flex items-center gap-1">
                       <Avatar user={f.submitter} size={5} />
-                      <span className="text-xs text-[#5A6275] hidden sm:block">{f.submitter.fullName}</span>
+                      <span className="text-xs text-subtle hidden sm:block">{f.submitter.fullName}</span>
                     </div>
-                    {isExpanded ? <ChevronDown className="w-4 h-4 text-[#5A6275]" /> : <ChevronRight className="w-4 h-4 text-[#5A6275]" />}
+                    {isExpanded ? <ChevronDown className="w-4 h-4 text-subtle" /> : <ChevronRight className="w-4 h-4 text-subtle" />}
                   </div>
                 </div>
               </div>
 
               {isExpanded && (
-                <div className="border-t border-[#262A35] p-4 space-y-4 bg-[#1B1F2A]">
-                  <p className="text-sm text-[#C8CEDB] whitespace-pre-wrap">{f.description}</p>
-                  {f.steps && <div><span className="text-xs font-semibold text-[#8A92A6]">Steps to reproduce:</span><p className="text-sm text-[#C8CEDB] mt-1 whitespace-pre-wrap">{f.steps}</p></div>}
-                  {f.useCase && <div><span className="text-xs font-semibold text-[#8A92A6]">Use case:</span><p className="text-sm text-[#C8CEDB] mt-1">{f.useCase}</p></div>}
+                <div className="border-t border-border p-4 space-y-4 bg-surface-sunken">
+                  <p className="text-sm text-foreground whitespace-pre-wrap">{f.description}</p>
+                  {f.steps && <div><span className="text-xs font-semibold text-muted">Steps to reproduce:</span><p className="text-sm text-foreground mt-1 whitespace-pre-wrap">{f.steps}</p></div>}
+                  {f.useCase && <div><span className="text-xs font-semibold text-muted">Use case:</span><p className="text-sm text-foreground mt-1">{f.useCase}</p></div>}
 
                   {/* Attachments with in-Nexus preview */}
                   {Array.isArray((f as Finding & { attachments?: { name: string; url: string | null; key?: string; type?: string; ext?: string }[] }).attachments) &&
                     ((f as Finding & { attachments?: { name: string; url: string | null; key?: string; type?: string; ext?: string }[] }).attachments ?? []).length > 0 && (
                     <div>
-                      <span className="text-xs font-semibold text-[#8A92A6]">Attachments</span>
+                      <span className="text-xs font-semibold text-muted">Attachments</span>
                       <div className="mt-2 space-y-2">
                         {((f as Finding & { attachments?: { name: string; url: string | null; key?: string; type?: string; ext?: string }[] }).attachments ?? []).map((att, ai) => (
                           <FindingAttachment key={ai} att={att} />
@@ -1752,12 +1752,12 @@ function FindingsTab({ isMentor, userId: _userId, currentUser: _currentUser }: {
                       {f.comments.map(c => (
                         <div key={c.id} className="flex gap-2">
                           <Avatar user={c.author} size={6} />
-                          <div className="flex-1 bg-[#12151D] border border-[#262A35] rounded-lg px-3 py-2">
+                          <div className="flex-1 bg-surface border border-border rounded-lg px-3 py-2">
                             <div className="flex items-baseline gap-2 mb-0.5">
-                              <span className="text-xs font-semibold text-[#E6E9F0]">{c.author.fullName}</span>
-                              <span className="text-[10px] text-[#5A6275] font-mono">{fmt(c.createdAt)}</span>
+                              <span className="text-xs font-semibold text-foreground">{c.author.fullName}</span>
+                              <span className="text-[10px] text-subtle font-mono">{fmt(c.createdAt)}</span>
                             </div>
-                            <p className="text-sm text-[#C8CEDB]">{c.body}</p>
+                            <p className="text-sm text-foreground">{c.body}</p>
                           </div>
                         </div>
                       ))}
@@ -1767,24 +1767,24 @@ function FindingsTab({ isMentor, userId: _userId, currentUser: _currentUser }: {
                   {/* Mentor controls */}
                   {isMentor && (
                     <div className="flex gap-2 items-center flex-wrap">
-                      <select className="px-2 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-xs text-[#E6E9F0]"
+                      <select className="px-2 py-1.5 bg-surface-sunken border border-border-strong rounded-lg text-xs text-foreground"
                         value={statusUpdate[f.id] ?? f.status}
                         onChange={e => setStatusUpdate(p => ({ ...p, [f.id]: e.target.value }))}>
                         <option value="open">Open</option><option value="in_review">In Review</option>
                         <option value="resolved">Resolved</option><option value="closed">Closed</option>
                       </select>
-                      <input className="flex-1 min-w-32 px-2 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-xs placeholder:text-[#5A6275]"
+                      <input className="flex-1 min-w-32 px-2 py-1.5 bg-surface-sunken border border-border-strong rounded-lg text-xs placeholder:text-subtle"
                         placeholder="Add comment…"
                         value={commentText[f.id] ?? ""} onChange={e => setCommentText(p => ({ ...p, [f.id]: e.target.value }))} />
                       <button onClick={() => updateFinding(f.id)}
-                        className="px-3 py-1.5 bg-[#00C2FF] text-[#06121A] text-xs font-semibold rounded-lg">Update</button>
+                        className="px-3 py-1.5 bg-accent text-accent-foreground text-xs font-semibold rounded-lg">Update</button>
                     </div>
                   )}
 
                   {/* Intern can also add a comment */}
                   {!isMentor && (
                     <div className="flex gap-2">
-                      <input className="flex-1 px-3 py-1.5 bg-[#12151D] border border-[#262A35] rounded-lg text-xs placeholder:text-[#5A6275]"
+                      <input className="flex-1 px-3 py-1.5 bg-surface border border-border rounded-lg text-xs placeholder:text-subtle"
                         placeholder="Add a comment…"
                         value={commentText[f.id] ?? ""} onChange={e => setCommentText(p => ({ ...p, [f.id]: e.target.value }))}
                         onKeyDown={async e => {
@@ -1797,7 +1797,7 @@ function FindingsTab({ isMentor, userId: _userId, currentUser: _currentUser }: {
                             load();
                           }
                         }} />
-                      <button className="px-3 py-1.5 bg-[#00C2FF] text-[#06121A] rounded-lg" onClick={async () => {
+                      <button className="px-3 py-1.5 bg-accent text-accent-foreground rounded-lg" onClick={async () => {
                         if (!commentText[f.id]?.trim()) return;
                         await fetch(`/api/internship/findings/${f.id}`, {
                           method: "PATCH", headers: { "Content-Type": "application/json" },
@@ -1838,73 +1838,73 @@ function ProgressTab({ isMentor, userId: _userId }: { isMentor: boolean; userId:
         {/* Headline metrics */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
-            { label: "Active Interns", value: s.internCount, color: "text-[#00C2FF]", bg: "bg-[#0E2532]", icon: Sparkles },
-            { label: "Total Tasks",    value: s.taskCount,   color: "text-[#0f9d58]", bg: "bg-[#0f9d58]/12",   icon: ClipboardList },
-            { label: "Pending Review", value: s.pendingReviews, color: "text-[#F59E0B]", bg: "bg-[#F59E0B]/12", icon: Clock },
-            { label: "Open Findings",  value: s.openFindings, color: "text-[#ea4335]",  bg: "bg-[#ea4335]/12",   icon: Bug },
+            { label: "Active Interns", value: s.internCount, color: "text-accent", bg: "bg-accent-soft", icon: Sparkles },
+            { label: "Total Tasks",    value: s.taskCount,   color: "text-ok", bg: "bg-ok/12",   icon: ClipboardList },
+            { label: "Pending Review", value: s.pendingReviews, color: "text-warn", bg: "bg-warn/12", icon: Clock },
+            { label: "Open Findings",  value: s.openFindings, color: "text-crit",  bg: "bg-crit/12",   icon: Bug },
           ].map(m => (
-            <div key={m.label} className="bg-[#12151D] border border-[#262A35] rounded-xl p-4">
+            <div key={m.label} className="bg-surface border border-border rounded-xl p-4">
               <div className={`inline-flex p-2 rounded-lg ${m.bg} mb-3`}><m.icon className={`w-4 h-4 ${m.color}`} /></div>
               <div className={`text-2xl font-bold font-mono ${m.color}`}>{m.value}</div>
-              <div className="text-xs text-[#8A92A6] mt-0.5">{m.label}</div>
+              <div className="text-xs text-muted mt-0.5">{m.label}</div>
             </div>
           ))}
         </div>
 
         {/* Per-intern leaderboard */}
-        <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
-          <div className="px-5 py-4 border-b border-[#262A35]">
-            <h3 className="font-semibold text-[#E6E9F0]">Leaderboard</h3>
-            <p className="text-xs text-[#5A6275] mt-0.5">Ranked by approved submissions</p>
+        <div className="bg-surface border border-border rounded-xl overflow-hidden">
+          <div className="px-5 py-4 border-b border-border">
+            <h3 className="font-semibold text-foreground">Leaderboard</h3>
+            <p className="text-xs text-subtle mt-0.5">Ranked by approved submissions</p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-[#262A35] bg-[#1B1F2A]">
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-[#8A92A6] w-10">#</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-[#8A92A6]">Intern</th>
-                  <th className="text-center px-4 py-3 text-xs font-semibold text-[#8A92A6]">Assigned</th>
-                  <th className="text-center px-4 py-3 text-xs font-semibold text-[#8A92A6]">Submitted</th>
-                  <th className="text-center px-4 py-3 text-xs font-semibold text-[#8A92A6]">Approved</th>
-                  <th className="text-center px-4 py-3 text-xs font-semibold text-[#8A92A6]">Messages</th>
-                  <th className="text-center px-4 py-3 text-xs font-semibold text-[#8A92A6]">Score</th>
+                <tr className="border-b border-border bg-surface-sunken">
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted w-10">#</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-muted">Intern</th>
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-muted">Assigned</th>
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-muted">Submitted</th>
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-muted">Approved</th>
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-muted">Messages</th>
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-muted">Score</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#1B1F2A]">
+              <tbody className="divide-y divide-border">
                 {s.internStats.length === 0 && (
-                  <tr><td colSpan={7} className="px-5 py-8 text-center text-sm text-[#5A6275]">No interns yet — create intern accounts from Users.</td></tr>
+                  <tr><td colSpan={7} className="px-5 py-8 text-center text-sm text-subtle">No interns yet — create intern accounts from Users.</td></tr>
                 )}
                 {[...s.internStats]
                   .sort((a, b) => b.approved - a.approved || b.submitted - a.submitted)
                   .map(({ intern, assigned, submitted, approved, discussions }, rank) => {
                   const score = assigned > 0 ? Math.round((approved / assigned) * 100) : null;
                   return (
-                    <tr key={intern.id} className="hover:bg-[#1B1F2A]">
-                      <td className={`px-4 py-3 font-mono font-bold ${rank < 3 ? "text-[#00C2FF]" : "text-[#5A6275]"}`}>{rank + 1}</td>
+                    <tr key={intern.id} className="hover:bg-surface-sunken">
+                      <td className={`px-4 py-3 font-mono font-bold ${rank < 3 ? "text-accent" : "text-subtle"}`}>{rank + 1}</td>
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-2">
                           <Avatar user={intern} size={7} />
                           <div>
-                            <p className="font-medium text-[#E6E9F0]">{intern.fullName}</p>
-                            <p className="text-xs text-[#5A6275]">{intern.email}</p>
+                            <p className="font-medium text-foreground">{intern.fullName}</p>
+                            <p className="text-xs text-subtle">{intern.email}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="text-center px-4 py-3 font-semibold font-mono text-[#E6E9F0]">{assigned}</td>
-                      <td className="text-center px-4 py-3 font-semibold font-mono text-[#E6E9F0]">{submitted}</td>
+                      <td className="text-center px-4 py-3 font-semibold font-mono text-foreground">{assigned}</td>
+                      <td className="text-center px-4 py-3 font-semibold font-mono text-foreground">{submitted}</td>
                       <td className="text-center px-4 py-3">
-                        <span className={`font-semibold font-mono ${approved > 0 ? "text-[#0f9d58]" : "text-[#5A6275]"}`}>{approved}</span>
+                        <span className={`font-semibold font-mono ${approved > 0 ? "text-ok" : "text-subtle"}`}>{approved}</span>
                       </td>
-                      <td className="text-center px-4 py-3 text-[#E6E9F0] font-mono">{discussions}</td>
+                      <td className="text-center px-4 py-3 text-foreground font-mono">{discussions}</td>
                       <td className="text-center px-4 py-3">
                         {score !== null ? (
                           <div className="flex items-center justify-center gap-1.5">
-                            <div className="w-12 h-1.5 bg-[#262A35] rounded-full overflow-hidden">
-                              <div className="h-full bg-[#00C2FF] rounded-full" style={{ width: `${score}%` }} />
+                            <div className="w-12 h-1.5 bg-border rounded-full overflow-hidden">
+                              <div className="h-full bg-accent rounded-full" style={{ width: `${score}%` }} />
                             </div>
-                            <span className="text-xs font-semibold text-[#00C2FF] font-mono">{score}%</span>
+                            <span className="text-xs font-semibold text-accent font-mono">{score}%</span>
                           </div>
-                        ) : <span className="text-xs text-[#5A6275]">—</span>}
+                        ) : <span className="text-xs text-subtle">—</span>}
                       </td>
                     </tr>
                   );
@@ -1925,56 +1925,56 @@ function ProgressTab({ isMentor, userId: _userId }: { isMentor: boolean; userId:
       {/* Personal stat cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
         {[
-          { label: "Tasks Assigned",   value: s.assigned,     color: "text-[#00C2FF]",  bg: "bg-[#0E2532]",  icon: ClipboardList },
-          { label: "Submitted",        value: s.submitted,    color: "text-[#F59E0B]",  bg: "bg-[#F59E0B]/12",   icon: Upload },
-          { label: "Approved",         value: s.approved,     color: "text-[#0f9d58]",  bg: "bg-[#0f9d58]/12",   icon: CheckCircle2 },
-          { label: "Pending Review",   value: s.pendingReview,color: "text-[#ff6d00]",  bg: "bg-[#ff6d00]/12",  icon: Clock },
-          { label: "Findings Filed",   value: s.findings,     color: "text-[#ea4335]",  bg: "bg-[#ea4335]/12",     icon: Bug },
-          { label: "Completion Rate",  value: `${completionRate}%`, color: "text-[#00C2FF]", bg: "bg-[#0E2532]", icon: Star },
+          { label: "Tasks Assigned",   value: s.assigned,     color: "text-accent",  bg: "bg-accent-soft",  icon: ClipboardList },
+          { label: "Submitted",        value: s.submitted,    color: "text-warn",  bg: "bg-warn/12",   icon: Upload },
+          { label: "Approved",         value: s.approved,     color: "text-ok",  bg: "bg-ok/12",   icon: CheckCircle2 },
+          { label: "Pending Review",   value: s.pendingReview,color: "text-warn",  bg: "bg-warn/12",  icon: Clock },
+          { label: "Findings Filed",   value: s.findings,     color: "text-crit",  bg: "bg-crit/12",     icon: Bug },
+          { label: "Completion Rate",  value: `${completionRate}%`, color: "text-accent", bg: "bg-accent-soft", icon: Star },
         ].map(m => (
-          <div key={m.label} className="bg-[#12151D] border border-[#262A35] rounded-xl p-4">
+          <div key={m.label} className="bg-surface border border-border rounded-xl p-4">
             <div className={`inline-flex p-2 rounded-lg ${m.bg} mb-3`}><m.icon className={`w-4 h-4 ${m.color}`} /></div>
             <div className={`text-2xl font-bold font-mono ${m.color}`}>{m.value}</div>
-            <div className="text-xs text-[#8A92A6] mt-0.5">{m.label}</div>
+            <div className="text-xs text-muted mt-0.5">{m.label}</div>
           </div>
         ))}
       </div>
 
       {/* Progress bar */}
-      <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-5">
+      <div className="bg-surface border border-border rounded-xl p-5">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-semibold text-[#E6E9F0]">Overall Progress</span>
-          <span className="text-sm font-bold text-[#00C2FF] font-mono">{completionRate}%</span>
+          <span className="text-sm font-semibold text-foreground">Overall Progress</span>
+          <span className="text-sm font-bold text-accent font-mono">{completionRate}%</span>
         </div>
-        <div className="w-full h-2.5 bg-[#262A35] rounded-full overflow-hidden">
-          <div className="h-full bg-[#00C2FF] rounded-full transition-all" style={{ width: `${completionRate}%` }} />
+        <div className="w-full h-2.5 bg-border rounded-full overflow-hidden">
+          <div className="h-full bg-accent rounded-full transition-all" style={{ width: `${completionRate}%` }} />
         </div>
-        <p className="text-xs text-[#5A6275] mt-2">{s.approved} of {s.assigned} tasks approved</p>
+        <p className="text-xs text-subtle mt-2">{s.approved} of {s.assigned} tasks approved</p>
       </div>
 
       {/* Recent reviews */}
       {s.recentReviews.length > 0 && (
-        <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
-          <div className="px-5 py-4 border-b border-[#262A35]">
-            <h3 className="font-semibold text-[#E6E9F0]">Recent Feedback</h3>
+        <div className="bg-surface border border-border rounded-xl overflow-hidden">
+          <div className="px-5 py-4 border-b border-border">
+            <h3 className="font-semibold text-foreground">Recent Feedback</h3>
           </div>
-          <div className="divide-y divide-[#1B1F2A]">
+          <div className="divide-y divide-border">
             {s.recentReviews.map(r => (
               <div key={r.id} className="px-5 py-4 flex items-start gap-3">
                 <Avatar user={r.reviewer} size={7} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-medium text-[#E6E9F0]">{r.reviewer.fullName}</span>
+                    <span className="text-sm font-medium text-foreground">{r.reviewer.fullName}</span>
                     <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
-                      r.verdict === "approved" ? "bg-[#0f9d58]/12 text-[#0f9d58]" :
-                      r.verdict === "rejected" ? "bg-[#ea4335]/12 text-[#ea4335]" : "bg-[#ff6d00]/12 text-[#ff6d00]"
+                      r.verdict === "approved" ? "bg-ok/12 text-ok" :
+                      r.verdict === "rejected" ? "bg-crit/12 text-crit" : "bg-warn/12 text-warn"
                     }`}>{r.verdict.replace("_", " ")}</span>
-                    {r.score != null && <span className="text-xs font-bold text-[#00C2FF] font-mono">{r.score}/100</span>}
+                    {r.score != null && <span className="text-xs font-bold text-accent font-mono">{r.score}/100</span>}
                   </div>
-                  <p className="text-xs text-[#5A6275]">on &ldquo;{r.submission.task.title}&rdquo;</p>
-                  {r.comment && <p className="text-sm text-[#C8CEDB] mt-1">{r.comment}</p>}
+                  <p className="text-xs text-subtle">on &ldquo;{r.submission.task.title}&rdquo;</p>
+                  {r.comment && <p className="text-sm text-foreground mt-1">{r.comment}</p>}
                 </div>
-                <span className="text-[10px] text-[#5A6275] shrink-0 font-mono">{fmt(r.createdAt)}</span>
+                <span className="text-[10px] text-subtle shrink-0 font-mono">{fmt(r.createdAt)}</span>
               </div>
             ))}
           </div>
@@ -2019,7 +2019,7 @@ function FindingAttachment({ att }: { att: AttachmentMeta }) {
       const result = await mammoth.convertToHtml({ arrayBuffer: buf });
       setWordHtml(result.value);
     } catch {
-      setWordHtml("<p class='text-red-500'>Preview unavailable — download to view.</p>");
+      setWordHtml("<p class='text-crit'>Preview unavailable — download to view.</p>");
     } finally { setLoadingWord(false); }
   };
 
@@ -2029,18 +2029,18 @@ function FindingAttachment({ att }: { att: AttachmentMeta }) {
   };
 
   return (
-    <div className="border border-[#262A35] rounded-lg overflow-hidden">
-      <div className="flex items-center gap-2 px-3 py-2 bg-[#1B1F2A]">
-        <FileText className="w-4 h-4 text-[#00C2FF] shrink-0" />
-        <span className="text-sm text-[#E6E9F0] flex-1 truncate font-medium">{att.name}</span>
+    <div className="border border-border rounded-lg overflow-hidden">
+      <div className="flex items-center gap-2 px-3 py-2 bg-surface-sunken">
+        <FileText className="w-4 h-4 text-accent shrink-0" />
+        <span className="text-sm text-foreground flex-1 truncate font-medium">{att.name}</span>
         {fileUrl && (
           <>
             <button onClick={handleExpand}
-              className="text-xs text-[#00C2FF] hover:underline font-medium px-2 py-0.5">
+              className="text-xs text-accent hover:underline font-medium px-2 py-0.5">
               {expanded ? "Hide preview" : "Preview"}
             </button>
             <a href={isPdf ? (inlineUrl ?? fileUrl) : fileUrl} target="_blank" rel="noreferrer"
-              className="flex items-center gap-1 text-xs text-[#8A92A6] hover:text-[#E6E9F0] px-2 py-0.5 rounded hover:bg-[#262A35]">
+              className="flex items-center gap-1 text-xs text-muted hover:text-foreground px-2 py-0.5 rounded hover:bg-border">
               <ExternalLink className="w-3 h-3" /> Open
             </a>
           </>
@@ -2048,20 +2048,20 @@ function FindingAttachment({ att }: { att: AttachmentMeta }) {
       </div>
 
       {expanded && fileUrl && (
-        <div className="border-t border-[#262A35]">
+        <div className="border-t border-border">
           {isPdf && (
             <iframe
               src={inlineUrl ?? fileUrl}
-              className="w-full h-[500px] bg-[#12151D]"
+              className="w-full h-[500px] bg-surface"
               title={att.name}
             />
           )}
           {isWord && (
-            <div className="p-4 bg-[#12151D] max-h-[500px] overflow-y-auto">
+            <div className="p-4 bg-surface max-h-[500px] overflow-y-auto">
               {loadingWord
-                ? <div className="flex items-center gap-2 text-sm text-[#8A92A6]"><Loader2 className="w-4 h-4 animate-spin text-[#00C2FF]" /> Converting document…</div>
+                ? <div className="flex items-center gap-2 text-sm text-muted"><Loader2 className="w-4 h-4 animate-spin text-accent" /> Converting document…</div>
                 : wordHtml
-                  ? <div className="prose prose-sm max-w-none text-[#E6E9F0]" dangerouslySetInnerHTML={{ __html: wordHtml }} />
+                  ? <div className="prose prose-sm max-w-none text-foreground" dangerouslySetInnerHTML={{ __html: wordHtml }} />
                   : null}
             </div>
           )}
@@ -2109,20 +2109,20 @@ function LearningTab({ isMentor, userId }: { isMentor: boolean; userId: string }
   return (
     <div className="max-w-4xl space-y-4">
       {/* Vault SSO launch banner */}
-      <div className="flex items-center justify-between gap-4 px-4 py-3 bg-[#0E2532] border border-[#00C2FF]/20 rounded-xl">
+      <div className="flex items-center justify-between gap-4 px-4 py-3 bg-accent-soft border border-accent/20 rounded-xl">
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-[#E6E9F0]">Vault — Cybersecurity Courses</p>
-          <p className="text-xs text-[#8A92A6] mt-0.5">Launch Vault and sign in automatically with your Nexus account.</p>
+          <p className="text-sm font-semibold text-foreground">Vault — Cybersecurity Courses</p>
+          <p className="text-xs text-muted mt-0.5">Launch Vault and sign in automatically with your Nexus account.</p>
         </div>
         <a
           href="/api/sso/authorize?redirect_uri=https://cybersagevault.uk/api/auth/callback/nexus"
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-[#00C2FF] text-[#06121A] text-xs font-semibold rounded-lg hover:bg-[#33cfff] shrink-0 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-accent text-accent-foreground text-xs font-semibold rounded-lg hover:bg-accent shrink-0 transition-colors"
         >
           <ExternalLink className="w-3.5 h-3.5" /> Launch Vault
         </a>
       </div>
 
-      <p className="text-sm text-[#8A92A6]">
+      <p className="text-sm text-muted">
         Complete each week in order. Prerequisites are always available — later weeks unlock when your mentor opens them.
       </p>
 
@@ -2143,9 +2143,9 @@ function LearningTab({ isMentor, userId }: { isMentor: boolean; userId: string }
             : completed ? 100 : 0;
           const hasProgress = quizTopics.length > 0;
           const isLast = idx === weeks.length - 1;
-          const nodeCls = completed ? "bg-green-500/10 text-[#0f9d58] border-[#0f9d58]/30" :
-            locked ? "bg-[#1B1F2A] text-[#5A6275] border-[#262A35]" :
-            "bg-[#0E2532] text-[#00C2FF] border-[#00C2FF]/40";
+          const nodeCls = completed ? "bg-ok/10 text-ok border-ok/30" :
+            locked ? "bg-surface-sunken text-subtle border-border" :
+            "bg-accent-soft text-accent border-accent/40";
 
           return (
             <div key={week.id} className="flex gap-4">
@@ -2154,41 +2154,41 @@ function LearningTab({ isMentor, userId }: { isMentor: boolean; userId: string }
                 <div className={`w-9 h-9 rounded-xl border flex items-center justify-center text-sm font-bold ${nodeCls}`}>
                   {completed ? <CheckCircle2 className="w-4 h-4" /> : locked ? <Lock className="w-3.5 h-3.5" /> : isPrereq ? "P" : week.weekNumber}
                 </div>
-                {!isLast && <div className="w-px flex-1 min-h-6 bg-[#262A35] my-1" />}
+                {!isLast && <div className="w-px flex-1 min-h-6 bg-border my-1" />}
               </div>
 
               {/* Card */}
               <div
                 onClick={() => !locked && setSelected(week)}
-                className={`flex-1 min-w-0 mb-3 bg-[#12151D] border rounded-xl p-4 transition-all ${
-                  locked ? "border-[#262A35] opacity-60 cursor-not-allowed" :
-                  "border-[#262A35] hover:border-[#00C2FF]/30 hover:shadow-sm cursor-pointer group"
+                className={`flex-1 min-w-0 mb-3 bg-surface border rounded-xl p-4 transition-all ${
+                  locked ? "border-border opacity-60 cursor-not-allowed" :
+                  "border-border hover:border-accent/30 hover:shadow-sm cursor-pointer group"
                 }`}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                      <span className="text-[10px] font-semibold text-[#5A6275] font-mono">{isPrereq ? "PREREQ" : `WEEK ${week.weekNumber}`}</span>
-                      {isPrereq && <span className="text-[10px] bg-green-500/10 text-[#0f9d58] px-1.5 py-0.5 rounded font-semibold">Always open</span>}
-                      {completed && <span className="text-[10px] bg-green-500/10 text-[#0f9d58] px-1.5 py-0.5 rounded font-semibold flex items-center gap-0.5"><CheckCircle2 className="w-2.5 h-2.5" /> Complete</span>}
-                      {locked && <span className="text-[10px] bg-[#1B1F2A] text-[#5A6275] px-1.5 py-0.5 rounded font-semibold">Locked</span>}
+                      <span className="text-[10px] font-semibold text-subtle font-mono">{isPrereq ? "PREREQ" : `WEEK ${week.weekNumber}`}</span>
+                      {isPrereq && <span className="text-[10px] bg-ok/10 text-ok px-1.5 py-0.5 rounded font-semibold">Always open</span>}
+                      {completed && <span className="text-[10px] bg-ok/10 text-ok px-1.5 py-0.5 rounded font-semibold flex items-center gap-0.5"><CheckCircle2 className="w-2.5 h-2.5" /> Complete</span>}
+                      {locked && <span className="text-[10px] bg-surface-sunken text-subtle px-1.5 py-0.5 rounded font-semibold">Locked</span>}
                     </div>
-                    <h3 className={`font-semibold text-sm ${locked ? "text-[#5A6275]" : "text-[#E6E9F0] group-hover:text-[#00C2FF] transition-colors"}`}>
+                    <h3 className={`font-semibold text-sm ${locked ? "text-subtle" : "text-foreground group-hover:text-accent transition-colors"}`}>
                       {week.title}
                     </h3>
-                    <p className="text-xs text-[#8A92A6] line-clamp-2 mt-0.5">{week.overview}</p>
+                    <p className="text-xs text-muted line-clamp-2 mt-0.5">{week.overview}</p>
                     {!locked && (hasProgress || week.checkpoints.length > 0) && (
                       <div className="flex items-center gap-2 mt-2">
-                        <div className="flex-1 h-1.5 bg-[#262A35] rounded-full overflow-hidden max-w-40">
-                          <div className="h-full bg-[#00C2FF] rounded-full transition-all" style={{ width: `${progress}%` }} />
+                        <div className="flex-1 h-1.5 bg-border rounded-full overflow-hidden max-w-40">
+                          <div className="h-full bg-accent rounded-full transition-all" style={{ width: `${progress}%` }} />
                         </div>
-                        <span className="text-[10px] text-[#5A6275] font-mono">
+                        <span className="text-[10px] text-subtle font-mono">
                           {hasProgress ? `${doneModules}/${quizTopics.length} quizzes` : `${week.topics.length} modules · ${week.checkpoints.length} checkpoints`}
                         </span>
                       </div>
                     )}
                   </div>
                   <div className="shrink-0">
-                    {!locked && <ChevronRight className="w-4 h-4 text-[#5A6275] group-hover:text-[#00C2FF]" />}
+                    {!locked && <ChevronRight className="w-4 h-4 text-subtle group-hover:text-accent" />}
                   </div>
                 </div>
               </div>
@@ -2218,29 +2218,29 @@ function WeekDetail({ week, userId: _userId, isMentor, completed, onMarkComplete
 
   return (
     <div className="w-full">
-      <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-[#8A92A6] hover:text-[#E6E9F0] mb-4 transition-colors">
+      <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-muted hover:text-foreground mb-4 transition-colors">
         ← Back to curriculum
       </button>
 
       {/* Header */}
-      <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-6 mb-4">
+      <div className="bg-surface border border-border rounded-xl p-6 mb-4">
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-xs font-semibold bg-[#0E2532] text-[#00C2FF] px-2 py-0.5 rounded">
+              <span className="text-xs font-semibold bg-accent-soft text-accent px-2 py-0.5 rounded">
                 {week.weekNumber === 0 ? "Prerequisites" : `Week ${week.weekNumber}`}
               </span>
-              {completed && <span className="text-xs font-semibold bg-green-500/10 text-[#0f9d58] px-2 py-0.5 rounded flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Complete</span>}
+              {completed && <span className="text-xs font-semibold bg-ok/10 text-ok px-2 py-0.5 rounded flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Complete</span>}
             </div>
-            <h2 className="text-lg font-semibold text-[#E6E9F0] mb-2">{week.title}</h2>
-            <p className="text-sm text-[#8A92A6] leading-relaxed">{week.overview}</p>
+            <h2 className="text-lg font-semibold text-foreground mb-2">{week.title}</h2>
+            <p className="text-sm text-muted leading-relaxed">{week.overview}</p>
           </div>
           {!isMentor && (
             <button onClick={onMarkComplete}
               className={`shrink-0 flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg transition-colors ${
                 completed
-                  ? "bg-green-500/10 text-[#0f9d58] hover:bg-[#ea4335]/12 hover:text-[#ea4335]"
-                  : "bg-[#00C2FF] text-[#06121A] hover:bg-[#0098E6]"
+                  ? "bg-ok/10 text-ok hover:bg-crit/12 hover:text-crit"
+                  : "bg-accent text-accent-foreground hover:bg-accent-hover"
               }`}>
               {completed ? <><CheckCircle2 className="w-3.5 h-3.5" /> Completed</> : <><Circle className="w-3.5 h-3.5" /> Mark Complete</>}
             </button>
@@ -2251,28 +2251,28 @@ function WeekDetail({ week, userId: _userId, isMentor, completed, onMarkComplete
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Topics (2/3 width) */}
         <div className="lg:col-span-2 space-y-3">
-          <h3 className="text-xs font-semibold text-[#8A92A6]">Modules</h3>
+          <h3 className="text-xs font-semibold text-muted">Modules</h3>
           {week.topics.map(topic => {
             const hasQuiz = (topic.quiz?.questions?.length ?? 0) > 0;
             const done = isTopicDone(topic);
             return (
-            <div key={topic.id} className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
+            <div key={topic.id} className="bg-surface border border-border rounded-xl overflow-hidden">
               <button
                 onClick={() => setExpandedTopic(expandedTopic === topic.id ? null : topic.id)}
-                className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-[#1B1F2A] transition-colors">
+                className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-surface-sunken transition-colors">
                 <div className="flex items-center gap-2">
                   {!isMentor && done
-                    ? <span className="w-5 h-5 rounded-full bg-green-500/10 text-[#0f9d58] flex items-center justify-center shrink-0"><CheckCircle2 className="w-3.5 h-3.5" /></span>
-                    : <span className="w-5 h-5 rounded-full bg-[#0E2532] text-[#00C2FF] text-[10px] font-bold flex items-center justify-center shrink-0">{topic.order + 1}</span>}
-                  <span className="text-sm font-semibold text-[#E6E9F0]">{topic.title}</span>
-                  {hasQuiz && <span className="text-[10px] text-[#5A6275] bg-[#1B1F2A] px-1.5 py-0.5 rounded">Quiz</span>}
+                    ? <span className="w-5 h-5 rounded-full bg-ok/10 text-ok flex items-center justify-center shrink-0"><CheckCircle2 className="w-3.5 h-3.5" /></span>
+                    : <span className="w-5 h-5 rounded-full bg-accent-soft text-accent text-[10px] font-bold flex items-center justify-center shrink-0">{topic.order + 1}</span>}
+                  <span className="text-sm font-semibold text-foreground">{topic.title}</span>
+                  {hasQuiz && <span className="text-[10px] text-subtle bg-surface-sunken px-1.5 py-0.5 rounded">Quiz</span>}
                 </div>
                 {expandedTopic === topic.id
-                  ? <ChevronDown className="w-4 h-4 text-[#5A6275] shrink-0" />
-                  : <ChevronRight className="w-4 h-4 text-[#5A6275] shrink-0" />}
+                  ? <ChevronDown className="w-4 h-4 text-subtle shrink-0" />
+                  : <ChevronRight className="w-4 h-4 text-subtle shrink-0" />}
               </button>
               {expandedTopic === topic.id && (
-                <div className="px-5 pb-5 pt-3 border-t border-[#1B1F2A]">
+                <div className="px-5 pb-5 pt-3 border-t border-border">
                   <MarkdownBody content={topic.body} />
                   {!isMentor && hasQuiz && (
                     <ModuleQuiz topic={topic} completed={done} onCompleted={onRefresh} />
@@ -2291,16 +2291,16 @@ function WeekDetail({ week, userId: _userId, isMentor, completed, onMarkComplete
         <div className="space-y-4">
           {/* Your progress */}
           {!isMentor && week.topics.length > 0 && (
-            <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-4">
+            <div className="bg-surface border border-border rounded-xl p-4">
               <div className="flex items-center justify-between mb-3">
-                <h4 className="text-xs font-semibold text-[#8A92A6]">Your progress</h4>
-                <span className="text-xs font-semibold text-[#00C2FF] font-mono">{doneCount}/{week.topics.length}</span>
+                <h4 className="text-xs font-semibold text-muted">Your progress</h4>
+                <span className="text-xs font-semibold text-accent font-mono">{doneCount}/{week.topics.length}</span>
               </div>
               <div className="space-y-2">
                 {week.topics.map(t => (
                   <div key={t.id} className="flex items-start gap-2 text-sm">
-                    <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${isTopicDone(t) ? "text-[#0f9d58]" : "text-[#3A4150]"}`} />
-                    <span className={isTopicDone(t) ? "text-[#C8CEDB]" : "text-[#5A6275]"}>{t.title}</span>
+                    <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${isTopicDone(t) ? "text-ok" : "text-subtle"}`} />
+                    <span className={isTopicDone(t) ? "text-foreground" : "text-subtle"}>{t.title}</span>
                   </div>
                 ))}
               </div>
@@ -2309,12 +2309,12 @@ function WeekDetail({ week, userId: _userId, isMentor, completed, onMarkComplete
 
           {/* Resources */}
           {week.resources.length > 0 && (
-            <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-4">
-              <h4 className="text-xs font-semibold text-[#8A92A6] mb-3">Resources</h4>
+            <div className="bg-surface border border-border rounded-xl p-4">
+              <h4 className="text-xs font-semibold text-muted mb-3">Resources</h4>
               <div className="space-y-2">
                 {week.resources.map(r => (
                   <a key={r.id} href={r.url} target="_blank" rel="noreferrer"
-                    className="flex items-center gap-2 text-sm text-[#00C2FF] hover:underline">
+                    className="flex items-center gap-2 text-sm text-accent hover:underline">
                     <Link2 className="w-3.5 h-3.5 shrink-0" />
                     <span className="truncate">{r.title}</span>
                   </a>
@@ -2325,14 +2325,14 @@ function WeekDetail({ week, userId: _userId, isMentor, completed, onMarkComplete
 
           {/* Checkpoints */}
           {week.checkpoints.length > 0 && (
-            <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-4">
-              <h4 className="text-xs font-semibold text-[#8A92A6] mb-3">Checkpoints</h4>
+            <div className="bg-surface border border-border rounded-xl p-4">
+              <h4 className="text-xs font-semibold text-muted mb-3">Checkpoints</h4>
               <div className="space-y-2">
                 {week.checkpoints.map((cp, idx) => {
                   const cpDone = !isMentor && idx < doneCount;
                   return (
-                  <div key={cp.id} className="flex items-start gap-2 text-sm text-[#C8CEDB]">
-                    <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${cpDone ? "text-[#0f9d58]" : "text-[#3A4150]"}`} />
+                  <div key={cp.id} className="flex items-start gap-2 text-sm text-foreground">
+                    <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${cpDone ? "text-ok" : "text-subtle"}`} />
                     {cp.title}
                   </div>
                   );
@@ -2343,13 +2343,13 @@ function WeekDetail({ week, userId: _userId, isMentor, completed, onMarkComplete
 
           {/* Mentor notes */}
           {week.mentorNotes.length > 0 && (
-            <div className="bg-[#1B1F2A] border border-[#F59E0B]/30 rounded-xl p-4">
-              <h4 className="text-xs font-semibold text-[#F59E0B] mb-3 flex items-center gap-1.5"><Lightbulb className="w-3.5 h-3.5" /> Mentor Notes</h4>
+            <div className="bg-surface-sunken border border-warn/30 rounded-xl p-4">
+              <h4 className="text-xs font-semibold text-warn mb-3 flex items-center gap-1.5"><Lightbulb className="w-3.5 h-3.5" /> Mentor Notes</h4>
               <div className="space-y-3">
                 {week.mentorNotes.map(note => (
-                  <div key={note.id} className="border-l-2 border-[#F59E0B]/40 pl-3">
-                    <p className="text-xs text-[#C2C8D6] leading-relaxed">{note.body}</p>
-                    <p className="text-[10px] text-[#8A92A6] mt-1">— {note.author.fullName}</p>
+                  <div key={note.id} className="border-l-2 border-warn/40 pl-3">
+                    <p className="text-xs text-foreground leading-relaxed">{note.body}</p>
+                    <p className="text-[10px] text-muted mt-1">— {note.author.fullName}</p>
                   </div>
                 ))}
               </div>
@@ -2374,10 +2374,10 @@ function ModuleQuiz({ topic, completed, onCompleted }: { topic: InternWeekTopic;
 
   if (completed && !retaking) {
     return (
-      <div className="mt-4 border-t border-[#1B1F2A] pt-4">
-        <div className="flex items-center justify-between bg-green-500/10 rounded-lg px-3 py-2">
-          <span className="text-xs font-semibold text-[#0f9d58] flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4" /> Quiz passed — module complete</span>
-          <button onClick={() => { setRetaking(true); setAnswers({}); setWrong([]); }} className="text-xs text-[#00C2FF] hover:underline font-medium">Retake</button>
+      <div className="mt-4 border-t border-border pt-4">
+        <div className="flex items-center justify-between bg-ok/10 rounded-lg px-3 py-2">
+          <span className="text-xs font-semibold text-ok flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4" /> Quiz passed — module complete</span>
+          <button onClick={() => { setRetaking(true); setAnswers({}); setWrong([]); }} className="text-xs text-accent hover:underline font-medium">Retake</button>
         </div>
       </div>
     );
@@ -2413,27 +2413,27 @@ function ModuleQuiz({ topic, completed, onCompleted }: { topic: InternWeekTopic;
   };
 
   return (
-    <div className="mt-4 border-t border-[#1B1F2A] pt-4">
-      <h5 className="text-xs font-semibold text-[#00C2FF] mb-3">Module Quiz</h5>
+    <div className="mt-4 border-t border-border pt-4">
+      <h5 className="text-xs font-semibold text-accent mb-3">Module Quiz</h5>
       <div className="space-y-4">
         {questions.map((q, i) => {
           const isWrong = wrong.includes(q.id);
           return (
-            <div key={q.id} className={`rounded-lg p-3 border ${isWrong ? "border-[#ea4335]/40 bg-[#ea4335]/10" : "border-[#262A35] bg-[#1B1F2A]"}`}>
-              <p className="text-sm font-medium text-[#E6E9F0] mb-2">{i + 1}. {q.prompt}</p>
+            <div key={q.id} className={`rounded-lg p-3 border ${isWrong ? "border-crit/40 bg-crit/10" : "border-border bg-surface-sunken"}`}>
+              <p className="text-sm font-medium text-foreground mb-2">{i + 1}. {q.prompt}</p>
               {q.type === "mcq" ? (
                 <div className="space-y-1.5">
                   {(q.options ?? []).map((opt, oi) => (
-                    <label key={oi} className="flex items-center gap-2 text-sm text-[#C8CEDB] cursor-pointer">
+                    <label key={oi} className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
                       <input type="radio" name={`ans-${q.id}`} checked={answers[q.id] === oi}
-                        onChange={() => setAns(q.id, oi)} className="accent-[#00C2FF]" />
+                        onChange={() => setAns(q.id, oi)} className="accent-accent" />
                       {opt}
                     </label>
                   ))}
                 </div>
               ) : (
                 <textarea rows={3}
-                  className="w-full px-3 py-2 bg-[#12151D] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] resize-y focus:outline-none focus:border-[#00C2FF]/60"
+                  className="w-full px-3 py-2 bg-surface border border-border-strong rounded-lg text-sm text-foreground resize-y focus:outline-none focus:border-accent/60"
                   placeholder="Your answer…"
                   value={typeof answers[q.id] === "string" ? (answers[q.id] as string) : ""}
                   onChange={e => setAns(q.id, e.target.value)} />
@@ -2444,11 +2444,11 @@ function ModuleQuiz({ topic, completed, onCompleted }: { topic: InternWeekTopic;
       </div>
       <div className="flex items-center gap-3 mt-3">
         <button onClick={submit} disabled={submitting || !allAnswered}
-          className="flex items-center gap-1.5 px-4 py-2 bg-[#00C2FF] text-[#06121A] text-sm font-semibold rounded-lg hover:bg-[#0098E6] disabled:opacity-50">
+          className="flex items-center gap-1.5 px-4 py-2 bg-accent text-accent-foreground text-sm font-semibold rounded-lg hover:bg-accent-hover disabled:opacity-50">
           {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
           Submit quiz
         </button>
-        {!allAnswered && <span className="text-xs text-[#5A6275]">Answer all questions to submit.</span>}
+        {!allAnswered && <span className="text-xs text-subtle">Answer all questions to submit.</span>}
       </div>
     </div>
   );
@@ -2460,21 +2460,21 @@ function MentorQuizResponses({ topic, responses }: { topic: InternWeekTopic; res
   const questions = topic.quiz?.questions ?? [];
   const textQs = questions.filter(q => q.type === "text");
   return (
-    <div className="mt-4 border-t border-[#1B1F2A] pt-4 space-y-4">
+    <div className="mt-4 border-t border-border pt-4 space-y-4">
       {/* Quiz preview — what interns must answer (correct option marked) */}
       <div>
-        <h5 className="text-xs font-semibold text-[#8A92A6] mb-2">Quiz ({questions.length} {questions.length === 1 ? "question" : "questions"})</h5>
+        <h5 className="text-xs font-semibold text-muted mb-2">Quiz ({questions.length} {questions.length === 1 ? "question" : "questions"})</h5>
         <div className="space-y-2">
           {questions.map((q, i) => (
-            <div key={q.id} className="bg-[#1B1F2A] border border-[#262A35] rounded-lg p-2.5">
-              <p className="text-xs font-medium text-[#E6E9F0] mb-1">{i + 1}. {q.prompt}
-                <span className="ml-1 text-[10px] font-semibold text-[#5A6275]">{q.type === "mcq" ? "(MCQ)" : "(short answer)"}</span>
+            <div key={q.id} className="bg-surface-sunken border border-border rounded-lg p-2.5">
+              <p className="text-xs font-medium text-foreground mb-1">{i + 1}. {q.prompt}
+                <span className="ml-1 text-[10px] font-semibold text-subtle">{q.type === "mcq" ? "(MCQ)" : "(short answer)"}</span>
               </p>
               {q.type === "mcq" && (
                 <ul className="space-y-0.5">
                   {(q.options ?? []).map((opt, oi) => (
-                    <li key={oi} className={`text-xs flex items-center gap-1.5 ${oi === q.answerIndex ? "text-[#0f9d58] font-semibold" : "text-[#8A92A6]"}`}>
-                      {oi === q.answerIndex ? <CheckCircle2 className="w-3 h-3 shrink-0" /> : <Circle className="w-3 h-3 shrink-0 text-[#3A4150]" />}
+                    <li key={oi} className={`text-xs flex items-center gap-1.5 ${oi === q.answerIndex ? "text-ok font-semibold" : "text-muted"}`}>
+                      {oi === q.answerIndex ? <CheckCircle2 className="w-3 h-3 shrink-0" /> : <Circle className="w-3 h-3 shrink-0 text-subtle" />}
                       {opt}
                     </li>
                   ))}
@@ -2482,23 +2482,23 @@ function MentorQuizResponses({ topic, responses }: { topic: InternWeekTopic; res
               )}
             </div>
           ))}
-          {questions.length === 0 && <p className="text-xs text-[#5A6275]">No quiz on this module yet.</p>}
+          {questions.length === 0 && <p className="text-xs text-subtle">No quiz on this module yet.</p>}
         </div>
       </div>
 
       {/* Intern responses */}
       {responses.length === 0 ? (
-        <p className="text-xs text-[#5A6275]">No intern responses yet.</p>
+        <p className="text-xs text-subtle">No intern responses yet.</p>
       ) : (
       <div>
-      <h5 className="text-xs font-semibold text-[#8A92A6] mb-3">Quiz Responses ({responses.length})</h5>
+      <h5 className="text-xs font-semibold text-muted mb-3">Quiz Responses ({responses.length})</h5>
       <div className="space-y-3">
         {responses.map(r => (
-          <div key={r.id} className="bg-[#12151D] border border-[#262A35] rounded-lg p-3">
+          <div key={r.id} className="bg-surface border border-border rounded-lg p-3">
             <div className="flex items-center gap-2 mb-1.5">
               {r.intern && <Avatar user={r.intern} size={5} />}
-              <span className="text-xs font-medium text-[#E6E9F0]">{r.intern?.fullName ?? "Intern"}</span>
-              {r.score != null && <span className="text-[10px] font-semibold text-[#00C2FF] bg-[#0E2532] px-1.5 py-0.5 rounded font-mono">MCQ {r.score}%</span>}
+              <span className="text-xs font-medium text-foreground">{r.intern?.fullName ?? "Intern"}</span>
+              {r.score != null && <span className="text-[10px] font-semibold text-accent bg-accent-soft px-1.5 py-0.5 rounded font-mono">MCQ {r.score}%</span>}
             </div>
             {textQs.length > 0 ? (
               <div className="space-y-1.5">
@@ -2506,14 +2506,14 @@ function MentorQuizResponses({ topic, responses }: { topic: InternWeekTopic; res
                   const a = r.answers?.[q.id];
                   return (
                     <div key={q.id} className="text-xs">
-                      <p className="text-[#8A92A6]">{q.prompt}</p>
-                      <p className="text-[#E6E9F0] whitespace-pre-wrap">{typeof a === "string" && a.trim() ? a : <span className="text-[#5A6275] italic">— no answer —</span>}</p>
+                      <p className="text-muted">{q.prompt}</p>
+                      <p className="text-foreground whitespace-pre-wrap">{typeof a === "string" && a.trim() ? a : <span className="text-subtle italic">— no answer —</span>}</p>
                     </div>
                   );
                 })}
               </div>
             ) : (
-              <p className="text-[11px] text-[#5A6275]">All MCQ — no free-text answers to review.</p>
+              <p className="text-[11px] text-subtle">All MCQ — no free-text answers to review.</p>
             )}
           </div>
         ))}
@@ -2529,7 +2529,7 @@ function MentorQuizResponses({ topic, responses }: { topic: InternWeekTopic; res
 function LoadingSpinner() {
   return (
     <div className="flex items-center justify-center py-16">
-      <Loader2 className="w-7 h-7 text-[#00C2FF] animate-spin" />
+      <Loader2 className="w-7 h-7 text-accent animate-spin" />
     </div>
   );
 }
@@ -2537,11 +2537,11 @@ function LoadingSpinner() {
 function EmptyState({ icon: Icon, title, desc }: { icon: React.ElementType; title: string; desc: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">
-      <div className="w-14 h-14 rounded-2xl bg-[#0E2532] flex items-center justify-center mb-4">
-        <Icon className="w-7 h-7 text-[#00C2FF]" />
+      <div className="w-14 h-14 rounded-2xl bg-accent-soft flex items-center justify-center mb-4">
+        <Icon className="w-7 h-7 text-accent" />
       </div>
-      <p className="font-semibold text-[#E6E9F0]">{title}</p>
-      <p className="text-sm text-[#5A6275] mt-1 max-w-xs">{desc}</p>
+      <p className="font-semibold text-foreground">{title}</p>
+      <p className="text-sm text-subtle mt-1 max-w-xs">{desc}</p>
     </div>
   );
 }

@@ -51,15 +51,15 @@ export function DesktopBridge() {
   if (!updateVersion) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 bg-[#12151D] border border-[#00C2FF]/30 rounded-xl px-4 py-3 shadow-xl flex items-center gap-3 text-sm">
-      <span className="text-[#E6E9F0]">CyberSage <strong className="text-[#00C2FF]">{updateVersion}</strong> is ready</span>
+    <div className="fixed bottom-4 right-4 z-50 bg-surface border border-accent/30 rounded-xl px-4 py-3 shadow-xl flex items-center gap-3 text-sm">
+      <span className="text-foreground">CyberSage <strong className="text-accent">{updateVersion}</strong> is ready</span>
       <button
         onClick={() => window.cyberSageDesktop?.installUpdate()}
-        className="bg-[#00C2FF] text-[#06121A] font-semibold px-3 py-1 rounded-lg text-xs hover:opacity-90 transition-opacity"
+        className="bg-accent text-accent-foreground font-semibold px-3 py-1 rounded-lg text-xs hover:opacity-90 transition-opacity"
       >
         Restart &amp; update
       </button>
-      <button onClick={() => setUpdateVersion(null)} className="text-[#5A6275] hover:text-[#8A92A6] text-xs">
+      <button onClick={() => setUpdateVersion(null)} className="text-subtle hover:text-muted text-xs">
         Later
       </button>
     </div>

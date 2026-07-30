@@ -6,23 +6,23 @@ import type { UserRole } from "@/generated/prisma/enums";
 import { roleLabels } from "@/lib/auth";
 
 const roleTileColors: Record<UserRole, string> = {
-  ADMIN:         "bg-[#ea4335]/10 text-[#ea4335]",
-  CEO:           "bg-purple-500/10 text-purple-300",
-  CISO:          "bg-[#1a56db]/10 text-[#1a56db]",
-  R_AND_D:       "bg-indigo-500/10 text-indigo-300",
-  COO:           "bg-violet-500/10 text-violet-300",
-  OPS_MANAGER:   "bg-orange-500/10 text-orange-300",
-  DEVELOPER:     "bg-[#1a56db]/10 text-[#1a56db]",
-  CYBER_SECURITY:"bg-[#ea4335]/10 text-[#ea4335]",
-  QA:            "bg-yellow-500/10 text-yellow-300",
-  MARKETING:     "bg-[#0f9d58]/10 text-[#0f9d58]",
-  RESEARCH:      "bg-teal-500/10 text-teal-300",
-  FINANCE:       "bg-[#0f9d58]/10 text-[#0f9d58]",
-  OPERATIONS:    "bg-amber-500/10 text-amber-300",
-  SUPPORT:       "bg-sky-500/10 text-sky-300",
+  ADMIN:         "bg-crit/10 text-crit",
+  CEO:           "bg-violet/10 text-violet",
+  CISO:          "bg-accent/10 text-accent",
+  R_AND_D:       "bg-violet/10 text-violet",
+  COO:           "bg-violet/10 text-violet",
+  OPS_MANAGER:   "bg-warn/10 text-warn",
+  DEVELOPER:     "bg-accent/10 text-accent",
+  CYBER_SECURITY:"bg-crit/10 text-crit",
+  QA:            "bg-warn/10 text-warn",
+  MARKETING:     "bg-ok/10 text-ok",
+  RESEARCH:      "bg-ok/10 text-ok",
+  FINANCE:       "bg-ok/10 text-ok",
+  OPERATIONS:    "bg-warn/10 text-warn",
+  SUPPORT:       "bg-accent/10 text-accent",
   HR:            "bg-pink-500/10 text-pink-600",
-  INTERNSHIP:    "bg-[#f1f3f4] text-[#5f6368]",
-  MEMBER:        "bg-[#f1f3f4] text-[#5f6368]",
+  INTERNSHIP:    "bg-surface-sunken text-muted",
+  MEMBER:        "bg-surface-sunken text-muted",
 };
 
 export type LoginUser = {
@@ -59,21 +59,21 @@ export function UserPicker({
     return (
       <div>
         {error && (
-          <div className="mb-6 px-3 py-2 bg-[#ea4335]/10 border border-[#ea4335]/30 rounded-lg">
-            <p className="text-sm text-[#ea4335]">Invalid email or password. Please try again.</p>
+          <div className="mb-6 px-3 py-2 bg-crit/10 border border-crit/30 rounded-lg">
+            <p className="text-sm text-crit">Invalid email or password. Please try again.</p>
           </div>
         )}
 
         {users.length > 6 && (
           <div className="mb-6">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#5f6368]" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted" />
               <input
                 type="search"
                 placeholder="Search by name, email, or role"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 border border-[#e8eaed] rounded-lg text-sm text-[#202124] bg-white focus:ring-2 focus:ring-[#1a56db] focus:border-[#1a56db] outline-none"
+                className="w-full pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm text-foreground bg-surface focus:ring-2 focus:ring-accent focus:border-accent outline-none"
               />
             </div>
           </div>
@@ -82,7 +82,7 @@ export function UserPicker({
         <div className="grid grid-cols-1 gap-3">
           {filtered.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-[#5f6368]">
+              <p className="text-muted">
                 {users.length === 0
                   ? "No users exist yet. Contact an administrator."
                   : "No users match your search."}
@@ -94,14 +94,14 @@ export function UserPicker({
                 key={u.id}
                 type="button"
                 onClick={() => setSelectedUser(u)}
-                className="flex items-center gap-4 p-4 border border-[#e8eaed] rounded-xl hover:border-[#1a56db]/40 hover:shadow-md hover:bg-[#f1f3f4] transition-all text-left"
+                className="flex items-center gap-4 p-4 border border-border rounded-xl hover:border-accent/40 hover:shadow-md hover:bg-surface-sunken transition-all text-left"
               >
                 <div className={`flex h-10 w-10 items-center justify-center rounded-full font-semibold text-base ${roleTileColors[u.role]}`}>
                   {u.fullName.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold text-[#202124] text-sm">{u.fullName}</p>
-                  <p className="text-xs text-[#5f6368]">{u.email}</p>
+                  <p className="font-semibold text-foreground text-sm">{u.fullName}</p>
+                  <p className="text-xs text-muted">{u.email}</p>
                   <span className={`inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded-full ${roleTileColors[u.role]}`}>
                     {roleLabels[u.role]}
                   </span>
@@ -119,19 +119,19 @@ export function UserPicker({
       <button
         type="button"
         onClick={() => setSelectedUser(null)}
-        className="flex items-center gap-2 text-sm text-[#1a56db] hover:text-[#47d6ff] mb-6 transition-colors"
+        className="flex items-center gap-2 text-sm text-accent hover:text-accent mb-6 transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />
         Choose different account
       </button>
 
-      <div className="flex items-center gap-4 mb-6 p-4 bg-[#f1f3f4] border border-[#e8eaed] rounded-xl">
+      <div className="flex items-center gap-4 mb-6 p-4 bg-surface-sunken border border-border rounded-xl">
         <div className={`flex h-12 w-12 items-center justify-center rounded-full font-semibold text-lg ${roleTileColors[selectedUser.role]}`}>
           {selectedUser.fullName.charAt(0).toUpperCase()}
         </div>
         <div>
-          <p className="font-semibold text-[#202124]">{selectedUser.fullName}</p>
-          <p className="text-sm text-[#5f6368]">{selectedUser.email}</p>
+          <p className="font-semibold text-foreground">{selectedUser.fullName}</p>
+          <p className="text-sm text-muted">{selectedUser.email}</p>
           <span className={`inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded-full ${roleTileColors[selectedUser.role]}`}>
             {roleLabels[selectedUser.role]}
           </span>
@@ -142,23 +142,23 @@ export function UserPicker({
       <input type="hidden" name="email" value={selectedUser.email} />
 
       <div className="mb-5">
-        <label className="block text-sm font-medium text-[#202124] mb-1.5">Password</label>
+        <label className="block text-sm font-medium text-foreground mb-1.5">Password</label>
         <input
           name="password"
           type="password"
           autoFocus
           required
-          className="block w-full py-2.5 px-3 border border-[#e8eaed] rounded-md bg-white text-[#202124] focus:ring-2 focus:ring-[#1a56db] focus:border-[#1a56db] text-sm outline-none"
+          className="block w-full py-2.5 px-3 border border-border rounded-md bg-surface text-foreground focus:ring-2 focus:ring-accent focus:border-accent text-sm outline-none"
         />
       </div>
 
       {error && (
-        <div className="mb-5 px-3 py-2 bg-[#ea4335]/10 border border-[#ea4335]/30 rounded-lg">
-          <p className="text-sm text-[#ea4335]">Invalid password. Please try again.</p>
+        <div className="mb-5 px-3 py-2 bg-crit/10 border border-crit/30 rounded-lg">
+          <p className="text-sm text-crit">Invalid password. Please try again.</p>
         </div>
       )}
 
-      <button className="w-full flex justify-center py-2.5 px-4 rounded-md shadow-sm text-sm font-semibold text-white bg-[#1a56db] hover:bg-[#1447c0] transition-all active:scale-[0.98]">
+      <button className="w-full flex justify-center py-2.5 px-4 rounded-md shadow-sm text-sm font-semibold text-accent-foreground bg-accent hover:bg-accent-hover transition-all active:scale-[0.98]">
         Sign in as {selectedUser.fullName}
       </button>
     </form>

@@ -74,7 +74,7 @@ const ACTIONS: Action[] = [
     label: "Compose email",
     description: "Write a new email",
     icon: Pencil,
-    iconColor: "text-blue-500",
+    iconColor: "text-accent",
     keywords: ["compose", "write", "email", "new", "draft"],
     kind: "compose",
   },
@@ -83,7 +83,7 @@ const ACTIONS: Action[] = [
     label: "Go to Inbox",
     description: "Open your inbox",
     icon: Inbox,
-    iconColor: "text-blue-400",
+    iconColor: "text-accent",
     keywords: ["inbox", "mail", "email", "go"],
     kind: "navigate",
     href: "/inbox",
@@ -93,7 +93,7 @@ const ACTIONS: Action[] = [
     label: "Go to Chat",
     description: "Open workspace chat",
     icon: MessageSquare,
-    iconColor: "text-emerald-400",
+    iconColor: "text-ok",
     keywords: ["chat", "messages", "dm", "go"],
     kind: "navigate",
     href: "/chat",
@@ -103,7 +103,7 @@ const ACTIONS: Action[] = [
     label: "Go to Drive",
     description: "Open file storage",
     icon: HardDrive,
-    iconColor: "text-yellow-400",
+    iconColor: "text-warn",
     keywords: ["drive", "files", "storage", "documents", "go"],
     kind: "navigate",
     href: "/drive",
@@ -113,7 +113,7 @@ const ACTIONS: Action[] = [
     label: "Go to Calendar",
     description: "Open calendar",
     icon: CalendarDays,
-    iconColor: "text-violet-400",
+    iconColor: "text-violet",
     keywords: ["calendar", "events", "schedule", "go"],
     kind: "navigate",
     href: "/calendar",
@@ -123,7 +123,7 @@ const ACTIONS: Action[] = [
     label: "Go to Dashboard",
     description: "Open your dashboard",
     icon: LayoutDashboard,
-    iconColor: "text-cyan-400",
+    iconColor: "text-accent",
     keywords: ["dashboard", "home", "overview", "go"],
     kind: "navigate",
     href: "/dashboard",
@@ -133,7 +133,7 @@ const ACTIONS: Action[] = [
     label: "New calendar event",
     description: "Create a new event",
     icon: Calendar,
-    iconColor: "text-violet-400",
+    iconColor: "text-violet",
     keywords: ["new", "event", "calendar", "schedule", "create"],
     kind: "calendar-event",
     href: "/calendar",
@@ -143,7 +143,7 @@ const ACTIONS: Action[] = [
     label: "Upload file",
     description: "Upload a file to Drive",
     icon: Upload,
-    iconColor: "text-yellow-400",
+    iconColor: "text-warn",
     keywords: ["upload", "file", "drive", "attach"],
     kind: "upload",
     href: "/drive",
@@ -153,7 +153,7 @@ const ACTIONS: Action[] = [
     label: "New chat message",
     description: "Start a new conversation",
     icon: MessageSquare,
-    iconColor: "text-emerald-400",
+    iconColor: "text-ok",
     keywords: ["new", "chat", "message", "conversation"],
     kind: "chat-message",
     href: "/chat",
@@ -168,44 +168,44 @@ const TYPE_META: Record<
 > = {
   mail: {
     label: "Mail",
-    color: "text-blue-400 dark:text-blue-400",
-    bg: "bg-blue-500/15 dark:bg-blue-500/20",
+    color: "text-accent dark:text-accent",
+    bg: "bg-accent/15 dark:bg-accent/20",
     Icon: Mail,
   },
   chat: {
     label: "Chat",
-    color: "text-purple-400 dark:text-purple-400",
-    bg: "bg-purple-500/15 dark:bg-purple-500/20",
+    color: "text-violet dark:text-violet",
+    bg: "bg-violet/15 dark:bg-violet/20",
     Icon: MessageSquare,
   },
   drive: {
     label: "Files",
-    color: "text-green-400 dark:text-green-400",
-    bg: "bg-green-500/15 dark:bg-green-500/20",
+    color: "text-ok dark:text-ok",
+    bg: "bg-ok/15 dark:bg-ok/20",
     Icon: HardDrive,
   },
   calendar: {
     label: "Calendar",
-    color: "text-amber-400 dark:text-amber-400",
-    bg: "bg-amber-500/15 dark:bg-amber-500/20",
+    color: "text-warn dark:text-warn",
+    bg: "bg-warn/15 dark:bg-warn/20",
     Icon: CalendarDays,
   },
   meeting: {
     label: "Meetings",
-    color: "text-rose-400 dark:text-rose-400",
-    bg: "bg-rose-500/15 dark:bg-rose-500/20",
+    color: "text-crit dark:text-crit",
+    bg: "bg-crit/15 dark:bg-crit/20",
     Icon: Video,
   },
   note: {
     label: "Notes",
-    color: "text-teal-400 dark:text-teal-400",
-    bg: "bg-teal-500/15 dark:bg-teal-500/20",
+    color: "text-ok dark:text-ok",
+    bg: "bg-ok/15 dark:bg-ok/20",
     Icon: StickyNote,
   },
   people: {
     label: "People",
-    color: "text-cyan-400 dark:text-cyan-400",
-    bg: "bg-cyan-500/15 dark:bg-cyan-500/20",
+    color: "text-accent dark:text-accent",
+    bg: "bg-accent/15 dark:bg-accent/20",
     Icon: Users,
   },
 };
@@ -475,16 +475,16 @@ export function GlobalSearch({
 
   return (
     <div
-      className="nexfade fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-start justify-center pt-[10vh]"
+      className="nexfade fixed inset-0 z-50 bg-overlay backdrop-blur-sm flex items-start justify-center pt-[10vh]"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="nexpop bg-[#12151D] rounded-xl shadow-2xl border border-[rgba(255,255,255,0.08)] w-full max-w-xl overflow-hidden flex flex-col max-h-[70vh]">
+      <div className="nexpop bg-surface rounded-xl shadow-2xl border border-border w-full max-w-xl overflow-hidden flex flex-col max-h-[70vh]">
 
         {/* Search input */}
-        <div className="px-4 py-3 border-b border-[rgba(255,255,255,0.08)] flex items-center gap-3">
-          <Search className="h-5 w-5 text-[#9aa3b8] flex-shrink-0" />
+        <div className="px-4 py-3 border-b border-border flex items-center gap-3">
+          <Search className="h-5 w-5 text-muted flex-shrink-0" />
           <input
             ref={inputRef}
             type="text"
@@ -492,12 +492,12 @@ export function GlobalSearch({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="flex-1 text-[#dfe1f6] bg-transparent outline-none text-sm placeholder:text-[#707a90]"
+            className="flex-1 text-foreground bg-transparent outline-none text-sm placeholder:text-muted"
           />
-          {loading && <Loader2 className="h-4 w-4 text-[#00d2ff] animate-spin flex-shrink-0" />}
+          {loading && <Loader2 className="h-4 w-4 text-accent animate-spin flex-shrink-0" />}
           <button
             onClick={onClose}
-            className="flex-shrink-0 p-1 rounded-lg text-[#9aa3b8] hover:text-[#dfe1f6] hover:bg-[#262939] transition-colors"
+            className="flex-shrink-0 p-1 rounded-lg text-muted hover:text-foreground hover:bg-hover transition-colors"
           >
             <X className="h-4 w-4" />
           </button>
@@ -505,7 +505,7 @@ export function GlobalSearch({
 
         {/* Type filter tabs — shown only when searching */}
         {isSearchMode && (
-          <div className="flex gap-1 px-4 py-2 border-b border-[rgba(255,255,255,0.08)] bg-[#12151D]">
+          <div className="flex gap-1 px-4 py-2 border-b border-border bg-surface">
             {TYPE_FILTERS.map((f) => {
               const label =
                 f === "all"
@@ -517,8 +517,8 @@ export function GlobalSearch({
                   onClick={() => setTypeFilter(f)}
                   className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
                     typeFilter === f
-                      ? "bg-[#12151D] text-[#003543]"
-                      : "text-[#9aa3b8] hover:bg-[#262939]"
+                      ? "bg-surface text-accent-foreground"
+                      : "text-muted hover:bg-hover"
                   }`}
                 >
                   {label}
@@ -535,12 +535,12 @@ export function GlobalSearch({
           {filteredActions.length > 0 && (
             <div>
               {isSearchMode && (
-                <div className="px-4 py-1.5 text-xs font-semibold text-[#9aa3b8] bg-[#12151D]">
+                <div className="px-4 py-1.5 text-xs font-semibold text-muted bg-surface">
                   Actions
                 </div>
               )}
               {!isSearchMode && (
-                <div className="px-4 py-1.5 text-xs font-semibold text-[#9aa3b8] bg-[#12151D]">
+                <div className="px-4 py-1.5 text-xs font-semibold text-muted bg-surface">
                   Quick Actions
                 </div>
               )}
@@ -554,23 +554,23 @@ export function GlobalSearch({
                     onMouseEnter={() => setSelectedIndex(idx)}
                     className={`w-full text-left px-4 py-2.5 flex items-center gap-3 transition-colors ${
                       isSelected
-                        ? "bg-[#0f9d58]/10"
-                        : "hover:bg-[#262939]"
+                        ? "bg-ok/10"
+                        : "hover:bg-hover"
                     }`}
                   >
-                    <div className={`w-7 h-7 rounded-md bg-[#262939] flex items-center justify-center flex-shrink-0 ${action.iconColor}`}>
+                    <div className={`w-7 h-7 rounded-md bg-hover flex items-center justify-center flex-shrink-0 ${action.iconColor}`}>
                       <Icon className="h-3.5 w-3.5" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-[#dfe1f6] truncate">
+                      <p className="text-sm font-medium text-foreground truncate">
                         {action.label}
                       </p>
-                      <p className="text-xs text-[#9aa3b8] truncate">
+                      <p className="text-xs text-muted truncate">
                         {action.description}
                       </p>
                     </div>
                     {isSelected && (
-                      <ArrowRight className="h-3.5 w-3.5 text-[#9aa3b8] flex-shrink-0" />
+                      <ArrowRight className="h-3.5 w-3.5 text-muted flex-shrink-0" />
                     )}
                   </button>
                 );
@@ -580,7 +580,7 @@ export function GlobalSearch({
 
           {/* Search results */}
           {isSearchMode && !loading && results.length === 0 && filteredActions.length === 0 && (
-            <div className="py-12 text-center text-sm text-[#9aa3b8]">
+            <div className="py-12 text-center text-sm text-muted">
               No results for &ldquo;{query}&rdquo;
             </div>
           )}
@@ -591,7 +591,7 @@ export function GlobalSearch({
                 .filter((t) => grouped[t]?.length)
                 .map((t) => (
                   <div key={t}>
-                    <div className="px-4 py-1.5 text-xs font-semibold text-[#9aa3b8] bg-[#12151D]">
+                    <div className="px-4 py-1.5 text-xs font-semibold text-muted bg-surface">
                       {TYPE_META[t].label}
                     </div>
                     {grouped[t]!.map((result) => {
@@ -605,31 +605,31 @@ export function GlobalSearch({
                           onMouseEnter={() => setSelectedIndex(flatIndex)}
                           className={`w-full text-left px-4 py-2.5 flex items-center gap-3 cursor-pointer transition-colors ${
                             isSelected
-                              ? "bg-[#0f9d58]/10"
-                              : "hover:bg-[#262939]"
+                              ? "bg-ok/10"
+                              : "hover:bg-hover"
                           }`}
                         >
                           {(() => {
                             const meta = TYPE_META[result.type];
                             const Icon = meta?.Icon;
                             return (
-                              <div className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5 ${meta?.bg ?? "bg-[#262939]"}`}>
-                                {Icon && <Icon className={`h-3.5 w-3.5 ${meta?.color ?? "text-[#9aa3b8]"}`} />}
+                              <div className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5 ${meta?.bg ?? "bg-hover"}`}>
+                                {Icon && <Icon className={`h-3.5 w-3.5 ${meta?.color ?? "text-muted"}`} />}
                               </div>
                             );
                           })()}
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-[#dfe1f6] truncate">
+                            <p className="text-sm font-medium text-foreground truncate">
                               {result.title}
                             </p>
                             {result.excerpt && (
-                              <p className="text-xs text-[#9aa3b8] mt-0.5 line-clamp-1">
+                              <p className="text-xs text-muted mt-0.5 line-clamp-1">
                                 {result.excerpt}
                               </p>
                             )}
                           </div>
                           {isSelected && (
-                            <ArrowRight className="h-3.5 w-3.5 text-[#9aa3b8] flex-shrink-0" />
+                            <ArrowRight className="h-3.5 w-3.5 text-muted flex-shrink-0" />
                           )}
                         </button>
                       );
@@ -641,7 +641,7 @@ export function GlobalSearch({
 
           {/* Empty state when no query */}
           {!isSearchMode && filteredActions.length === 0 && !showAiRow && (
-            <div className="py-12 text-center text-sm text-[#9aa3b8]">
+            <div className="py-12 text-center text-sm text-muted">
               No matching actions
             </div>
           )}
@@ -652,7 +652,7 @@ export function GlobalSearch({
             const isSelected = selectedIndex === aiIdx;
             return (
               <div>
-                <div className="px-4 py-1.5 text-xs font-semibold text-[#00C2FF] bg-[#12151D]/5 border-t border-[#00d2ff]/20 flex items-center gap-1.5">
+                <div className="px-4 py-1.5 text-xs font-semibold text-accent bg-surface/5 border-t border-accent/20 flex items-center gap-1.5">
                   <Sparkles className="h-3 w-3" />
                   AI Command
                 </div>
@@ -661,26 +661,26 @@ export function GlobalSearch({
                   onMouseEnter={() => setSelectedIndex(aiIdx)}
                   className={`w-full text-left px-4 py-2.5 flex items-center gap-3 transition-colors ${
                     isSelected
-                      ? "bg-[#0f9d58]/10"
-                      : "hover:bg-[#262939]"
+                      ? "bg-ok/10"
+                      : "hover:bg-hover"
                   }`}
                 >
-                  <div className="w-7 h-7 rounded-md bg-[#0f9d58]/10 flex items-center justify-center text-[#00d2ff] flex-shrink-0">
+                  <div className="w-7 h-7 rounded-md bg-ok/10 flex items-center justify-center text-accent flex-shrink-0">
                     {aiLoading
                       ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       : <Sparkles className="h-3.5 w-3.5" />
                     }
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-[#00C2FF] truncate">
+                    <p className="text-sm font-medium text-accent truncate">
                       Ask AI: &ldquo;{query}&rdquo;
                     </p>
-                    <p className="text-xs text-[#9aa3b8] truncate">
+                    <p className="text-xs text-muted truncate">
                       Let AI understand your intent and take action
                     </p>
                   </div>
                   {isSelected && !aiLoading && (
-                    <ArrowRight className="h-3.5 w-3.5 text-[#00d2ff] flex-shrink-0" />
+                    <ArrowRight className="h-3.5 w-3.5 text-accent flex-shrink-0" />
                   )}
                 </button>
               </div>
@@ -689,21 +689,21 @@ export function GlobalSearch({
         </div>
 
         {/* Footer hint */}
-        <div className="px-4 py-2 border-t border-[rgba(255,255,255,0.08)] bg-[#12151D] flex items-center gap-4 text-[11px] text-[#9aa3b8]">
+        <div className="px-4 py-2 border-t border-border bg-surface flex items-center gap-4 text-[11px] text-muted">
           <span>
-            <kbd className="text-xs text-[#9aa3b8] bg-[#262939] px-1.5 py-0.5 rounded border border-[rgba(255,255,255,0.08)]">↑↓</kbd>{" "}
+            <kbd className="text-xs text-muted bg-hover px-1.5 py-0.5 rounded border border-border">↑↓</kbd>{" "}
             navigate
           </span>
           <span>
-            <kbd className="text-xs text-[#9aa3b8] bg-[#262939] px-1.5 py-0.5 rounded border border-[rgba(255,255,255,0.08)]">Enter</kbd>{" "}
+            <kbd className="text-xs text-muted bg-hover px-1.5 py-0.5 rounded border border-border">Enter</kbd>{" "}
             select
           </span>
           <span>
-            <kbd className="text-xs text-[#9aa3b8] bg-[#262939] px-1.5 py-0.5 rounded border border-[rgba(255,255,255,0.08)]">Esc</kbd>{" "}
+            <kbd className="text-xs text-muted bg-hover px-1.5 py-0.5 rounded border border-border">Esc</kbd>{" "}
             close
           </span>
           <span className="ml-auto">
-            <kbd className="text-xs text-[#9aa3b8] bg-[#262939] px-1.5 py-0.5 rounded border border-[rgba(255,255,255,0.08)]">Ctrl K</kbd>{" "}
+            <kbd className="text-xs text-muted bg-hover px-1.5 py-0.5 rounded border border-border">Ctrl K</kbd>{" "}
             anywhere
           </span>
         </div>
@@ -734,7 +734,7 @@ export function SearchTrigger({ variant = "light" }: { variant?: "light" | "dark
         <button
           onClick={() => setOpen(true)}
           aria-label="Search"
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-[#8A92A6] hover:bg-[#1B1F2A] transition-colors"
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-muted hover:bg-surface-sunken transition-colors"
         >
           <Search className="h-[18px] w-[18px]" />
         </button>
@@ -749,7 +749,7 @@ export function SearchTrigger({ variant = "light" }: { variant?: "light" | "dark
         <button
           onClick={() => setOpen(true)}
           title="Search (Ctrl+K)"
-          className="flex h-9 w-9 items-center justify-center rounded-xl text-[#5A6275] hover:bg-[#1B1F2A] hover:text-[#8A92A6] transition-colors"
+          className="flex h-9 w-9 items-center justify-center rounded-xl text-subtle hover:bg-surface-sunken hover:text-muted transition-colors"
         >
           <Search className="h-[17px] w-[17px]" />
         </button>
@@ -763,10 +763,10 @@ export function SearchTrigger({ variant = "light" }: { variant?: "light" | "dark
       <>
         <button
           onClick={() => setOpen(true)}
-          className="flex-1 flex items-center gap-2.5 h-[40px] rounded-full bg-[#1B1F2A] border border-[#262A35] hover:border-[#2E333F] hover:bg-[#1e2230] px-4 transition-colors"
+          className="flex-1 flex items-center gap-2.5 h-[40px] rounded-full bg-surface-sunken border border-border hover:border-border-strong hover:bg-surface px-4 transition-colors"
         >
-          <Search className="h-4 w-4 text-[#5A6275] flex-shrink-0" />
-          <span className="text-[13px] text-[#5A6275] flex-1 text-left">Search in Nexus</span>
+          <Search className="h-4 w-4 text-subtle flex-shrink-0" />
+          <span className="text-[13px] text-subtle flex-1 text-left">Search in Nexus</span>
         </button>
         {open && <GlobalSearch onClose={() => setOpen(false)} />}
       </>
@@ -778,11 +778,11 @@ export function SearchTrigger({ variant = "light" }: { variant?: "light" | "dark
       <>
         <button
           onClick={() => setOpen(true)}
-          className="flex items-center gap-2.5 w-full max-w-[440px] h-9 px-3.5 rounded-lg bg-[#12151D] border border-[#262A35] hover:border-[#2E333F] text-[13px] text-[#5A6275] hover:text-[#8A92A6] transition-colors"
+          className="flex items-center gap-2.5 w-full max-w-[440px] h-9 px-3.5 rounded-lg bg-surface border border-border hover:border-border-strong text-[13px] text-subtle hover:text-muted transition-colors"
         >
           <Search className="h-4 w-4 flex-shrink-0" />
           <span className="flex-1 text-left">Search or jump to…</span>
-          <kbd className="hidden sm:inline-block text-[10px] font-mono bg-[#1B1F2A] border border-[#262A35] text-[#5A6275] px-1.5 py-0.5 rounded">⌘K</kbd>
+          <kbd className="hidden sm:inline-block text-[10px] font-mono bg-surface-sunken border border-border text-subtle px-1.5 py-0.5 rounded">⌘K</kbd>
         </button>
         {open && <GlobalSearch onClose={() => setOpen(false)} />}
       </>
@@ -790,10 +790,10 @@ export function SearchTrigger({ variant = "light" }: { variant?: "light" | "dark
   }
 
   const btnClass =
-    "flex items-center gap-2 w-full px-3 py-2 rounded-xl bg-[#1B1F2A] hover:bg-[#262A35] text-[13px] text-[#5A6275] hover:text-[#8A92A6] transition-colors";
+    "flex items-center gap-2 w-full px-3 py-2 rounded-xl bg-surface-sunken hover:bg-border text-[13px] text-subtle hover:text-muted transition-colors";
 
   const kbdClass =
-    "hidden sm:inline-block text-[10px] font-mono bg-[#12151D] border border-[#262A35] text-[#5A6275] px-1.5 py-0.5 rounded";
+    "hidden sm:inline-block text-[10px] font-mono bg-surface border border-border text-subtle px-1.5 py-0.5 rounded";
 
   return (
     <>

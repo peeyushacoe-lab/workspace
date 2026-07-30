@@ -4,8 +4,8 @@
   "private": true,
   "main": "dist/electron/main.js",
   "scripts": {
-    "dev": "next dev --turbopack",
-    "dev:all": "concurrently -n \"next,worker\" -c \"blue,green\" \"next dev --turbopack\" \"tsx scripts/worker.ts\"",
+    "dev": "next dev",
+    "dev:all": "concurrently -n \"next,worker\" -c \"blue,green\" \"next dev\" \"tsx scripts/worker.ts\"",
     "postinstall": "prisma generate",
     "build": "next build",
     "start": "node server.js",
@@ -37,7 +37,10 @@
     "restore-drill": "tsx scripts/restore-drill-cli.ts",
     "reindex-search": "tsx scripts/reindex-search.ts",
     "reset-test-data": "tsx scripts/reset-test-data.ts",
-    "check:icons": "node scripts/check-icons.mjs"
+    "check:icons": "node scripts/check-icons.mjs",
+    "check:atrium": "python3 scripts/check-atrium.py",
+    "check:nav": "tsx scripts/check-nav-parity.ts",
+    "check": "npm run check:icons && npm run check:atrium && npm run check:nav"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.99.0",

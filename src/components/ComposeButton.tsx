@@ -37,7 +37,7 @@ export function ComposeButton({
         <button
           onClick={() => setOpen(true)}
           title="Compose (Ctrl+Shift+C)"
-          className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-[#00C2FF] to-[#0098E6] text-[#06121A] hover:brightness-110 shadow-[0_6px_16px_-6px_rgba(0,194,255,0.5)] transition-all"
+          className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-accent-foreground hover:bg-accent-hover transition-colors"
         >
           <SquarePen className="h-[17px] w-[17px]" />
         </button>
@@ -50,11 +50,11 @@ export function ComposeButton({
     <>
       <button
         onClick={() => setOpen(true)}
-        className="mx-1 flex w-[calc(100%-0.5rem)] items-center gap-2.5 rounded-2xl bg-gradient-to-br from-[#00C2FF] to-[#0098E6] hover:brightness-110 px-4 py-2.5 text-[13.5px] font-semibold text-[#06121A] shadow-[0_6px_16px_-6px_rgba(0,194,255,0.5)] transition-all"
+        className="flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-3.5 py-2 text-[13px] font-semibold text-accent-foreground hover:bg-accent-hover transition-colors"
       >
         <SquarePen className="h-4 w-4 flex-shrink-0" />
         <span>Compose</span>
-        <span className="ml-auto text-[10px] font-normal text-[#06121A]/60 hidden xl:inline">⌃⇧C</span>
+        
       </button>
       {open && <ComposeModal userRole={userRole} onClose={() => setOpen(false)} />}
     </>
@@ -96,32 +96,32 @@ function ComposeModal({
           width: minimized ? 288 : 580,
           maxWidth: "calc(100vw - 3rem)",
         }}
-        className={`bg-[#12151D] overflow-hidden transition-[width] duration-200 ${
+        className={`bg-surface overflow-hidden transition-[width] duration-200 ${
           minimized
             ? "rounded-t-2xl shadow-lg"
-            : "rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.5)] border border-[#262A35]"
+            : "rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.5)] border border-border"
         }`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div
-          className={`flex items-center justify-between px-5 py-3.5 bg-[#1B1F2A] ${
+          className={`flex items-center justify-between px-5 py-3.5 bg-surface-sunken ${
             minimized ? "rounded-t-2xl cursor-pointer" : ""
           }`}
           onClick={minimized ? () => setMinimized(false) : undefined}
         >
-          <h2 className="text-[13.5px] font-semibold text-white">New Message</h2>
+          <h2 className="text-[13.5px] font-semibold text-foreground">New Message</h2>
           <div className="flex items-center gap-0.5">
             <button
               onClick={(e) => { e.stopPropagation(); setMinimized(!minimized); }}
-              className="rounded-md p-1.5 text-white/60 hover:bg-white/10 hover:text-white transition-colors"
+              className="rounded-md p-1.5 text-muted hover:bg-hover hover:text-foreground transition-colors"
               aria-label={minimized ? "Restore" : "Minimise"}
             >
               <ChevronDown className={`h-3.5 w-3.5 transition-transform ${minimized ? "rotate-180" : ""}`} />
             </button>
             <button
               onClick={expandToFullPage}
-              className="rounded-md p-1.5 text-white/60 hover:bg-white/10 hover:text-white transition-colors"
+              className="rounded-md p-1.5 text-muted hover:bg-hover hover:text-foreground transition-colors"
               aria-label="Expand to full page"
               title="Open full compose"
             >
@@ -129,7 +129,7 @@ function ComposeModal({
             </button>
             <button
               onClick={onClose}
-              className="rounded-md p-1.5 text-white/60 hover:bg-white/10 hover:text-white transition-colors"
+              className="rounded-md p-1.5 text-muted hover:bg-hover hover:text-foreground transition-colors"
               aria-label="Close"
             >
               <X className="h-3.5 w-3.5" />

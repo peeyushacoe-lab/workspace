@@ -155,7 +155,7 @@ export function PresenceStatusPicker({
       <button
         ref={triggerRef}
         onClick={() => setIsOpen((v) => !v)}
-        className="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-sm font-medium text-[#E6E9F0] bg-[#12151D] border border-[rgba(0,210,255,0.12)] hover:border-[rgba(0,210,255,0.3)] hover:bg-[#232740] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00C2FF]/20"
+        className="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-sm font-medium text-foreground bg-surface border border-accent/[0.12] hover:border-accent/[0.3] hover:bg-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-label={`Presence status: ${currentOption.label}`}
@@ -163,7 +163,7 @@ export function PresenceStatusPicker({
         <PresenceDot status={presence.status} size="sm" />
         <span>{currentOption.label}</span>
         <ChevronDown
-          className={`h-3.5 w-3.5 text-[#5A6275] transition-transform ${isOpen ? "rotate-180" : ""}`}
+          className={`h-3.5 w-3.5 text-subtle transition-transform ${isOpen ? "rotate-180" : ""}`}
         />
       </button>
 
@@ -173,10 +173,10 @@ export function PresenceStatusPicker({
           ref={popoverRef}
           role="listbox"
           aria-label="Set your status"
-          className="absolute left-0 top-full mt-1.5 z-50 w-72 rounded-xl border border-[rgba(0,210,255,0.12)] bg-[#12151D] shadow-2xl shadow-black/50 overflow-hidden"
+          className="absolute left-0 top-full mt-1.5 z-50 w-72 rounded-xl border border-accent/[0.12] bg-surface shadow-2xl shadow-black/50 overflow-hidden"
         >
           <div className="px-3 pt-3 pb-1">
-            <p className="text-xs font-semibold text-[#5A6275] mb-2">
+            <p className="text-xs font-semibold text-subtle mb-2">
               Set Status
             </p>
 
@@ -187,7 +187,7 @@ export function PresenceStatusPicker({
               onChange={(e) => setCustomMessage(e.target.value)}
               placeholder="What are you working on?"
               maxLength={200}
-              className="w-full rounded-md bg-[#12151D] border border-[rgba(0,210,255,0.1)] px-2.5 py-1.5 text-sm text-[#E6E9F0] placeholder-[#5d6579] focus:outline-none focus:border-[rgba(0,210,255,0.35)] transition-colors"
+              className="w-full rounded-md bg-surface border border-accent/[0.1] px-2.5 py-1.5 text-sm text-foreground placeholder-subtle focus:outline-none focus:border-accent/[0.35] transition-colors"
             />
           </div>
 
@@ -204,19 +204,19 @@ export function PresenceStatusPicker({
                     onClick={() => selectStatus(opt.value)}
                     className={`flex w-full items-center gap-3 px-3 py-2 text-sm transition-colors ${
                       isSelected
-                        ? "bg-[rgba(0,210,255,0.08)] text-[#E6E9F0]"
-                        : "text-[#8A92A6] hover:bg-[rgba(0,210,255,0.05)] hover:text-[#E6E9F0]"
+                        ? "bg-accent/[0.08] text-foreground"
+                        : "text-muted hover:bg-accent/[0.05] hover:text-foreground"
                     } disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     <PresenceDot status={opt.value} size="md" />
                     <div className="flex-1 text-left">
                       <span className="font-medium">{opt.label}</span>
-                      <span className="block text-xs text-[#5A6275]">
+                      <span className="block text-xs text-subtle">
                         {opt.description}
                       </span>
                     </div>
                     {isSelected && (
-                      <Check className="h-4 w-4 text-[#00C2FF] flex-shrink-0" />
+                      <Check className="h-4 w-4 text-accent flex-shrink-0" />
                     )}
                   </button>
                 </li>
@@ -226,11 +226,11 @@ export function PresenceStatusPicker({
 
           {/* Save custom message button */}
           {customMessage.trim() && customMessage !== presence.customMessage && (
-            <div className="px-3 pb-3 pt-1 border-t border-[rgba(0,210,255,0.06)]">
+            <div className="px-3 pb-3 pt-1 border-t border-accent/[0.06]">
               <button
                 onClick={saveCustomMessage}
                 disabled={isSaving}
-                className="w-full rounded-md bg-[#00C2FF]/10 border border-[rgba(26,86,219,0.2)] px-3 py-1.5 text-xs font-medium text-[#00C2FF] hover:bg-[#00C2FF]/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full rounded-md bg-accent/10 border border-accent/[0.2] px-3 py-1.5 text-xs font-medium text-accent hover:bg-accent/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSaving ? "Saving…" : "Save message"}
               </button>
@@ -238,7 +238,7 @@ export function PresenceStatusPicker({
           )}
 
           {error && (
-            <p className="px-3 pb-2 text-xs text-[#ea4335]">{error}</p>
+            <p className="px-3 pb-2 text-xs text-crit">{error}</p>
           )}
         </div>
       )}

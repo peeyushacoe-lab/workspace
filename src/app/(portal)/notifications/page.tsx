@@ -41,14 +41,14 @@ const TYPE_CONFIG: Record<NotificationType, {
   bg: string;
   border: string;
 }> = {
-  MENTION:           { label: "Mention",          Icon: AtSign,       color: "text-[#00C2FF]",   bg: "bg-[#00C2FF]/10",   border: "border-[#00C2FF]/20" },
-  CALENDAR_INVITE:   { label: "Calendar Invite",  Icon: Calendar,     color: "text-violet-400",  bg: "bg-violet-400/10",  border: "border-violet-400/20" },
-  CALENDAR_REMINDER: { label: "Reminder",         Icon: Calendar,     color: "text-amber-400",   bg: "bg-amber-400/10",   border: "border-amber-400/20" },
-  SOC_ALERT:         { label: "SOC Alert",        Icon: Shield,       color: "text-red-400",     bg: "bg-red-400/10",     border: "border-red-400/20" },
-  DLP_VIOLATION:     { label: "DLP Violation",    Icon: AlertTriangle,color: "text-orange-400",  bg: "bg-orange-400/10",  border: "border-orange-400/20" },
-  NEW_MESSAGE:       { label: "New Message",      Icon: Mail,         color: "text-emerald-400", bg: "bg-emerald-400/10", border: "border-emerald-400/20" },
-  FILE_SHARED:       { label: "File Shared",      Icon: FileText,     color: "text-sky-400",     bg: "bg-sky-400/10",     border: "border-sky-400/20" },
-  SYSTEM:            { label: "System",           Icon: Settings,     color: "text-[#5A6275]",   bg: "bg-[#5d6579]/10",  border: "border-[#5d6579]/20" },
+  MENTION:           { label: "Mention",          Icon: AtSign,       color: "text-accent",   bg: "bg-accent/10",   border: "border-accent/20" },
+  CALENDAR_INVITE:   { label: "Calendar Invite",  Icon: Calendar,     color: "text-violet",  bg: "bg-violet/10",  border: "border-violet/20" },
+  CALENDAR_REMINDER: { label: "Reminder",         Icon: Calendar,     color: "text-warn",   bg: "bg-warn/10",   border: "border-warn/20" },
+  SOC_ALERT:         { label: "SOC Alert",        Icon: Shield,       color: "text-crit",     bg: "bg-crit/10",     border: "border-crit/20" },
+  DLP_VIOLATION:     { label: "DLP Violation",    Icon: AlertTriangle,color: "text-warn",  bg: "bg-warn/10",  border: "border-warn/20" },
+  NEW_MESSAGE:       { label: "New Message",      Icon: Mail,         color: "text-ok", bg: "bg-ok/10", border: "border-ok/20" },
+  FILE_SHARED:       { label: "File Shared",      Icon: FileText,     color: "text-accent",     bg: "bg-accent/10",     border: "border-accent/20" },
+  SYSTEM:            { label: "System",           Icon: Settings,     color: "text-subtle",   bg: "bg-border-strong/10",  border: "border-border-strong/20" },
 };
 
 const _ALL_TYPES = Object.keys(TYPE_CONFIG) as NotificationType[];
@@ -109,13 +109,13 @@ function NotificationRow({
     <div
       className={[
         "group relative flex items-start gap-3 px-4 py-3.5 transition-colors",
-        "hover:bg-[#1B1F2A]/40 cursor-pointer",
-        !notification.read ? "bg-[#12151D]" : "bg-transparent",
+        "hover:bg-surface-sunken/40 cursor-pointer",
+        !notification.read ? "bg-surface" : "bg-transparent",
       ].join(" ")}
     >
       {/* Unread dot */}
       {!notification.read && (
-        <span className="absolute left-1.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-[#00C2FF]" />
+        <span className="absolute left-1.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-accent" />
       )}
 
       {/* Icon */}
@@ -129,12 +129,12 @@ function NotificationRow({
           <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${cfg.color} ${cfg.bg} border ${cfg.border}`}>
             {cfg.label}
           </span>
-          <span className="text-[10px] font-mono text-[#5A6275] ml-auto">{timeAgo(notification.createdAt)}</span>
+          <span className="text-[10px] font-mono text-subtle ml-auto">{timeAgo(notification.createdAt)}</span>
         </div>
-        <p className={`text-sm font-medium mt-1 leading-snug ${notification.read ? "text-[#8A92A6]" : "text-[#E6E9F0]"}`}>
+        <p className={`text-sm font-medium mt-1 leading-snug ${notification.read ? "text-muted" : "text-foreground"}`}>
           {notification.title}
         </p>
-        <p className="text-xs text-[#5A6275] mt-0.5 line-clamp-2">{notification.body}</p>
+        <p className="text-xs text-subtle mt-0.5 line-clamp-2">{notification.body}</p>
       </div>
 
       {/* Actions — revealed on hover */}
@@ -142,7 +142,7 @@ function NotificationRow({
         {!notification.read && (
           <button
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); onMarkRead(notification.id); }}
-            className="p-1.5 rounded text-[#5A6275] hover:text-emerald-400 hover:bg-[#12151D] transition-colors"
+            className="p-1.5 rounded text-subtle hover:text-ok hover:bg-surface transition-colors"
             title="Mark as read"
           >
             <Check className="w-3.5 h-3.5" />
@@ -150,7 +150,7 @@ function NotificationRow({
         )}
         <button
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(notification.id); }}
-          className="p-1.5 rounded text-[#5A6275] hover:text-red-400 hover:bg-[#12151D] transition-colors"
+          className="p-1.5 rounded text-subtle hover:text-crit hover:bg-surface transition-colors"
           title="Delete"
         >
           <Trash2 className="w-3.5 h-3.5" />
@@ -259,7 +259,7 @@ export default function NotificationsPage() {
   const groups = groupByDate(filtered);
 
   return (
-    <div className="min-h-screen bg-[#12151D] text-[#E6E9F0]">
+    <div className="min-h-full bg-surface text-foreground">
       <PageHeader
         eyebrow="Workspace"
         title="Notifications"
@@ -268,7 +268,7 @@ export default function NotificationsPage() {
           unreadCount > 0 ? (
             <button
               onClick={() => void markAllRead()}
-              className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors"
+              className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-ok/10 text-ok border border-ok/20 hover:bg-ok/20 transition-colors"
             >
               <CheckCheck className="w-3.5 h-3.5" />
               Mark all read
@@ -283,9 +283,9 @@ export default function NotificationsPage() {
         <div className="flex flex-wrap items-center gap-3">
           {/* Unread badge */}
           {unreadCount > 0 && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#00C2FF]/10 border border-[#00C2FF]/20">
-              <Bell className="w-3 h-3 text-[#00C2FF]" />
-              <span className="text-xs font-semibold text-[#00C2FF]"><span className="font-mono">{unreadCount}</span> unread</span>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent/10 border border-accent/20">
+              <Bell className="w-3 h-3 text-accent" />
+              <span className="text-xs font-semibold text-accent"><span className="font-mono">{unreadCount}</span> unread</span>
             </div>
           )}
 
@@ -295,8 +295,8 @@ export default function NotificationsPage() {
             className={[
               "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors",
               unreadOnly
-                ? "bg-[#00C2FF]/10 text-[#00C2FF] border-[#00C2FF]/20"
-                : "bg-[#12151D] text-[#5A6275] border-[#262A35] hover:text-[#8A92A6]",
+                ? "bg-accent/10 text-accent border-accent/20"
+                : "bg-surface text-subtle border-border hover:text-muted",
             ].join(" ")}
           >
             <Filter className="w-3 h-3" />
@@ -307,7 +307,7 @@ export default function NotificationsPage() {
           <button
             onClick={() => void load()}
             disabled={loading}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#12151D] text-[#5A6275] border border-[#262A35] hover:text-[#8A92A6] transition-colors disabled:opacity-50 ml-auto"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-surface text-subtle border border-border hover:text-muted transition-colors disabled:opacity-50 ml-auto"
           >
             <RefreshCw className={`w-3 h-3 ${loading ? "animate-spin" : ""}`} />
             Refresh
@@ -330,13 +330,13 @@ export default function NotificationsPage() {
                 className={[
                   "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors",
                   active
-                    ? "bg-[#00C2FF]/15 text-[#00C2FF] border-[#00C2FF]/30"
-                    : "bg-[#12151D] text-[#5A6275] border-[#262A35] hover:text-[#8A92A6] hover:border-[#2E333F]",
+                    ? "bg-accent/15 text-accent border-accent/30"
+                    : "bg-surface text-subtle border-border hover:text-muted hover:border-border-strong",
                 ].join(" ")}
               >
                 {label}
                 {count > 0 && (
-                  <span className={`px-1 min-w-[16px] text-center rounded-full text-[9px] font-mono font-semibold ${active ? "bg-[#00C2FF]/20 text-[#00C2FF]" : "bg-[#1B1F2A] text-[#5A6275]"}`}>
+                  <span className={`px-1 min-w-[16px] text-center rounded-full text-[9px] font-mono font-semibold ${active ? "bg-accent/20 text-accent" : "bg-surface-sunken text-subtle"}`}>
                     {count}
                   </span>
                 )}
@@ -347,20 +347,20 @@ export default function NotificationsPage() {
 
         {/* Notification list */}
         {loading ? (
-          <div className="flex items-center justify-center py-20 gap-2 text-[#5A6275]">
+          <div className="flex items-center justify-center py-20 gap-2 text-subtle">
             <Loader2 className="w-5 h-5 animate-spin" />
             <span className="text-sm">Loading notifications…</span>
           </div>
         ) : groups.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-[#12151D] border border-[#262A35] flex items-center justify-center">
-              <BellOff className="w-6 h-6 text-[#5A6275]" />
+            <div className="w-14 h-14 rounded-2xl bg-surface border border-border flex items-center justify-center">
+              <BellOff className="w-6 h-6 text-subtle" />
             </div>
             <div className="text-center">
-              <p className="text-sm font-medium text-[#8A92A6]">
+              <p className="text-sm font-medium text-muted">
                 {unreadOnly ? "No unread notifications" : "All quiet"}
               </p>
-              <p className="text-xs text-[#5A6275] mt-1">
+              <p className="text-xs text-subtle mt-1">
                 {unreadOnly ? "Switch to 'Show all' to see past notifications." : "You're up to date."}
               </p>
             </div>
@@ -371,12 +371,12 @@ export default function NotificationsPage() {
               <div key={label}>
                 {/* Date group header */}
                 <div className="flex items-center gap-3 mb-1 px-4">
-                  <span className="text-[10px] font-semibold text-[#8A92A6]">{label}</span>
-                  <div className="flex-1 h-px bg-[#1C1F28]" />
+                  <span className="text-[10px] font-semibold text-muted">{label}</span>
+                  <div className="flex-1 h-px bg-border-soft" />
                 </div>
 
                 {/* Card */}
-                <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden divide-y divide-[#1C1F28]">
+                <div className="bg-surface border border-border rounded-xl overflow-hidden divide-y divide-border-soft">
                   {items.map((n) => (
                     <NotificationRow
                       key={n.id}
@@ -393,7 +393,7 @@ export default function NotificationsPage() {
 
         {/* Count summary */}
         {!loading && notifications.length > 0 && (
-          <p className="text-center text-xs text-[#5A6275] pt-2">
+          <p className="text-center text-xs text-subtle pt-2">
             <span className="font-mono">{filtered.length}</span> of <span className="font-mono">{notifications.length}</span> notifications shown
           </p>
         )}

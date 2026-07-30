@@ -51,20 +51,20 @@ function AIWriteModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-[#12151D] rounded-xl shadow-xl p-6 w-full max-w-md mx-4 border border-[#262A35]">
+    <div className="fixed inset-0 bg-overlay backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-surface rounded-xl shadow-xl p-6 w-full max-w-md mx-4 border border-border">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-semibold text-[#E6E9F0] flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-[#00C2FF]" />
+          <h2 className="text-base font-semibold text-foreground flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-accent" />
             Write with AI
           </h2>
-          <button onClick={onClose} className="text-[#8A92A6] hover:text-[#E6E9F0]">
+          <button onClick={onClose} className="text-muted hover:text-foreground">
             <X className="w-5 h-5" />
           </button>
         </div>
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-[#8A92A6] mb-1.5">
+            <label className="block text-xs font-medium text-muted mb-1.5">
               Describe what you want to say
             </label>
             <textarea
@@ -72,26 +72,26 @@ function AIWriteModal({
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="e.g. Follow up with the client about the Q3 proposal, keep it friendly but professional"
               rows={4}
-              className="w-full px-3 py-2.5 border border-[#2E333F] rounded-md text-sm focus:ring-2 focus:ring-[#00C2FF]/20 focus:border-[#00C2FF]/60 outline-none resize-none bg-[#1B1F2A] text-[#E6E9F0] placeholder:text-[#5A6275]"
+              className="w-full px-3 py-2.5 border border-border-strong rounded-md text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent/60 outline-none resize-none bg-surface-sunken text-foreground placeholder:text-subtle"
               autoFocus
               onKeyDown={(e) => {
                 if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) generate();
               }}
             />
-            <p className="text-[10px] text-[#8A92A6] mt-1">Ctrl+Enter to generate</p>
+            <p className="text-[10px] text-muted mt-1">Ctrl+Enter to generate</p>
           </div>
         </div>
         <div className="flex gap-3 mt-5">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2 border border-[#2E333F] rounded-md text-sm font-medium text-[#8A92A6] hover:bg-[#1B1F2A] bg-[#12151D]"
+            className="flex-1 px-4 py-2 border border-border-strong rounded-md text-sm font-medium text-muted hover:bg-surface-sunken bg-surface"
           >
             Cancel
           </button>
           <button
             onClick={generate}
             disabled={!prompt.trim() || loading}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#00C2FF] text-[#06121A] rounded-md text-sm font-medium hover:bg-[#0098E6] transition-colors disabled:opacity-50"
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-accent text-accent-foreground rounded-md text-sm font-medium hover:bg-accent-hover transition-colors disabled:opacity-50"
           >
             {loading ? (
               <><Loader2 className="w-4 h-4 animate-spin" /> Generating…</>
@@ -166,7 +166,7 @@ function SubjectOptimizer({
         type="button"
         onClick={optimize}
         disabled={loading}
-        className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium text-[#8A92A6] hover:text-[#00C2FF] rounded-md hover:bg-[#00C2FF]/10 transition-colors disabled:opacity-50"
+        className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium text-muted hover:text-accent rounded-md hover:bg-accent/10 transition-colors disabled:opacity-50"
         title="Optimize subject with AI"
       >
         {loading ? (
@@ -178,21 +178,21 @@ function SubjectOptimizer({
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-1 w-80 bg-[#12151D] border border-[#262A35] rounded-lg shadow-xl z-20 p-3 space-y-2">
+        <div className="absolute right-0 top-full mt-1 w-80 bg-surface border border-border rounded-lg shadow-xl z-20 p-3 space-y-2">
           <div className="flex items-center justify-between mb-1">
-            <p className="text-xs font-medium text-[#8A92A6]">
+            <p className="text-xs font-medium text-muted">
               Suggestions
             </p>
-            <button onClick={() => setOpen(false)} className="text-[#8A92A6] hover:text-[#E6E9F0]">
+            <button onClick={() => setOpen(false)} className="text-muted hover:text-foreground">
               <X className="w-3.5 h-3.5" />
             </button>
           </div>
           {loading ? (
             <div className="flex items-center justify-center py-4">
-              <Loader2 className="w-5 h-5 animate-spin text-[#00C2FF]" />
+              <Loader2 className="w-5 h-5 animate-spin text-accent" />
             </div>
           ) : alternatives.length === 0 ? (
-            <p className="text-xs text-[#8A92A6] py-2 text-center">No suggestions available</p>
+            <p className="text-xs text-muted py-2 text-center">No suggestions available</p>
           ) : (
             alternatives.map((alt, i) => (
               <button
@@ -203,13 +203,13 @@ function SubjectOptimizer({
                   setOpen(false);
                   toast.success("Subject updated");
                 }}
-                className="w-full text-left px-3 py-2 text-sm text-[#E6E9F0] bg-[#1B1F2A] hover:bg-[#00C2FF]/10 hover:text-[#00C2FF] border border-[#262A35] hover:border-[#00C2FF]/30 rounded-md transition-colors"
+                className="w-full text-left px-3 py-2 text-sm text-foreground bg-surface-sunken hover:bg-accent/10 hover:text-accent border border-border hover:border-accent/30 rounded-md transition-colors"
               >
                 {alt}
               </button>
             ))
           )}
-          <p className="text-[10px] text-[#8A92A6] text-center pt-1">
+          <p className="text-[10px] text-muted text-center pt-1">
             Click an option to use it
           </p>
         </div>
@@ -514,8 +514,8 @@ export function SimpleComposer({
   const formContent = (
     <form onSubmit={handleSend} className="p-6 space-y-4">
       {hasDraft && (
-        <div className="flex items-center justify-between rounded-md bg-amber-500/10 border border-amber-500/30 px-4 py-2.5">
-          <p className="text-xs font-medium text-amber-400">Draft restored</p>
+        <div className="flex items-center justify-between rounded-md bg-warn/10 border border-warn/30 px-4 py-2.5">
+          <p className="text-xs font-medium text-warn">Draft restored</p>
           <button
             type="button"
             onClick={() => {
@@ -529,7 +529,7 @@ export function SimpleComposer({
               setHasDraft(false);
               if (draftKey) { try { localStorage.removeItem(draftKey); } catch {} }
             }}
-            className="text-xs font-semibold text-amber-400 hover:text-amber-300 transition-colors"
+            className="text-xs font-semibold text-warn hover:text-warn transition-colors"
           >
             Discard
           </button>
@@ -538,14 +538,14 @@ export function SimpleComposer({
 
       {/* Draft status + AI Write */}
       <div className="flex items-center justify-between">
-        <span className="text-[10px] text-[#8A92A6]">
+        <span className="text-[10px] text-muted">
           {draftSaveStatus === "saving" && "Saving draft…"}
           {draftSaveStatus === "saved" && "Draft saved"}
         </span>
         <button
           type="button"
           onClick={() => setShowAIWrite(true)}
-          className="text-[#8A92A6] hover:text-[#00C2FF] hover:bg-[#00C2FF]/10 rounded-md px-3 py-1.5 text-[13px] font-medium flex items-center gap-1.5 transition-colors"
+          className="text-muted hover:text-accent hover:bg-accent/10 rounded-md px-3 py-1.5 text-[13px] font-medium flex items-center gap-1.5 transition-colors"
         >
           <Sparkles className="w-3.5 h-3.5" />
           Write with AI
@@ -554,13 +554,13 @@ export function SimpleComposer({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label className="block text-xs font-medium text-[#8A92A6] mb-1.5">
+          <label className="block text-xs font-medium text-muted mb-1.5">
             From
           </label>
           <select
             value={selectedSenderEmail}
             onChange={(e) => setSelectedSenderEmail(e.target.value)}
-            className="block w-full py-2.5 border border-[#2E333F] rounded-md bg-[#1B1F2A] text-[#E6E9F0] focus:ring-2 focus:ring-[#00C2FF]/20 focus:border-[#00C2FF]/60 text-sm px-3"
+            className="block w-full py-2.5 border border-border-strong rounded-md bg-surface-sunken text-foreground focus:ring-2 focus:ring-accent/20 focus:border-accent/60 text-sm px-3"
           >
             {allowedSenders.map(s => (
               <option key={s.email} value={s.email}>{s.displayName}</option>
@@ -568,18 +568,18 @@ export function SimpleComposer({
           </select>
         </div>
         <div>
-          <label className="block text-xs font-medium text-[#8A92A6] mb-1.5">
+          <label className="block text-xs font-medium text-muted mb-1.5">
             Signature
           </label>
           {userRole === "INTERNSHIP" ? (
-            <div className="block w-full py-2.5 border border-[#2E333F] rounded-md bg-[#1B1F2A] text-[#8A92A6] text-sm px-3">
+            <div className="block w-full py-2.5 border border-border-strong rounded-md bg-surface-sunken text-muted text-sm px-3">
               Intern signature (added automatically)
             </div>
           ) : (
             <select
               value={selectedSignatureId}
               onChange={(e) => setSelectedSignatureId(e.target.value)}
-              className="block w-full py-2.5 border border-[#2E333F] rounded-md bg-[#1B1F2A] text-[#E6E9F0] focus:ring-2 focus:ring-[#00C2FF]/20 focus:border-[#00C2FF]/60 text-sm px-3"
+              className="block w-full py-2.5 border border-border-strong rounded-md bg-surface-sunken text-foreground focus:ring-2 focus:ring-accent/20 focus:border-accent/60 text-sm px-3"
             >
               <option value="">No Signature</option>
               {signatures.map(s => (
@@ -592,7 +592,7 @@ export function SimpleComposer({
 
       <div>
         <div className="flex items-center justify-between mb-1.5">
-          <label className="block text-xs font-medium text-[#8A92A6]">
+          <label className="block text-xs font-medium text-muted">
             To
           </label>
           <div className="flex items-center gap-2">
@@ -600,7 +600,7 @@ export function SimpleComposer({
               <button
                 type="button"
                 onClick={() => setShowCc(true)}
-                className="text-[11px] font-medium text-[#8A92A6] hover:text-[#E6E9F0] transition-colors"
+                className="text-[11px] font-medium text-muted hover:text-foreground transition-colors"
               >
                 Cc
               </button>
@@ -609,7 +609,7 @@ export function SimpleComposer({
               <button
                 type="button"
                 onClick={() => setShowBcc(true)}
-                className="text-[11px] font-medium text-[#8A92A6] hover:text-[#E6E9F0] transition-colors"
+                className="text-[11px] font-medium text-muted hover:text-foreground transition-colors"
               >
                 Bcc
               </button>
@@ -617,31 +617,31 @@ export function SimpleComposer({
           </div>
         </div>
         <div className="relative">
-          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5A6275]" />
+          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-subtle" />
           <input
             type="email"
             required
             placeholder="recipient@example.com"
             value={recipient}
             onChange={(e) => setRecipient(e.target.value)}
-            className="block w-full pl-10 pr-4 py-2.5 border border-[#2E333F] rounded-md bg-[#1B1F2A] text-[#E6E9F0] placeholder:text-[#5A6275] focus:ring-2 focus:ring-[#00C2FF]/20 focus:border-[#00C2FF]/60 text-sm outline-none transition-all"
+            className="block w-full pl-10 pr-4 py-2.5 border border-border-strong rounded-md bg-surface-sunken text-foreground placeholder:text-subtle focus:ring-2 focus:ring-accent/20 focus:border-accent/60 text-sm outline-none transition-all"
           />
         </div>
 
         {showCc && (
           <div className="relative mt-2">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[11px] font-medium text-[#5A6275] pointer-events-none">Cc</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[11px] font-medium text-subtle pointer-events-none">Cc</span>
             <input
               type="text"
               placeholder="cc@example.com, another@example.com"
               value={cc}
               onChange={(e) => setCc(e.target.value)}
-              className="block w-full pl-9 pr-9 py-2.5 border border-[#2E333F] rounded-md bg-[#1B1F2A] text-[#E6E9F0] placeholder:text-[#5A6275] focus:ring-2 focus:ring-[#00C2FF]/20 focus:border-[#00C2FF]/60 text-sm outline-none transition-all"
+              className="block w-full pl-9 pr-9 py-2.5 border border-border-strong rounded-md bg-surface-sunken text-foreground placeholder:text-subtle focus:ring-2 focus:ring-accent/20 focus:border-accent/60 text-sm outline-none transition-all"
             />
             <button
               type="button"
               onClick={() => { setShowCc(false); setCc(""); }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5A6275] hover:text-[#E6E9F0] transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-subtle hover:text-foreground transition-colors"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -650,18 +650,18 @@ export function SimpleComposer({
 
         {showBcc && (
           <div className="relative mt-2">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[11px] font-medium text-[#5A6275] pointer-events-none">Bcc</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[11px] font-medium text-subtle pointer-events-none">Bcc</span>
             <input
               type="text"
               placeholder="bcc@example.com, another@example.com"
               value={bcc}
               onChange={(e) => setBcc(e.target.value)}
-              className="block w-full pl-10 pr-9 py-2.5 border border-[#2E333F] rounded-md bg-[#1B1F2A] text-[#E6E9F0] placeholder:text-[#5A6275] focus:ring-2 focus:ring-[#00C2FF]/20 focus:border-[#00C2FF]/60 text-sm outline-none transition-all"
+              className="block w-full pl-10 pr-9 py-2.5 border border-border-strong rounded-md bg-surface-sunken text-foreground placeholder:text-subtle focus:ring-2 focus:ring-accent/20 focus:border-accent/60 text-sm outline-none transition-all"
             />
             <button
               type="button"
               onClick={() => { setShowBcc(false); setBcc(""); }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5A6275] hover:text-[#E6E9F0] transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-subtle hover:text-foreground transition-colors"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -671,7 +671,7 @@ export function SimpleComposer({
 
       <div>
         <div className="flex items-center justify-between mb-1.5">
-          <label className="block text-xs font-medium text-[#8A92A6]">
+          <label className="block text-xs font-medium text-muted">
             Subject
           </label>
           <SubjectOptimizer subject={subject} onSelect={setSubject} />
@@ -682,14 +682,14 @@ export function SimpleComposer({
           placeholder="Message subject"
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
-          className="block w-full py-2.5 border border-[#2E333F] rounded-md bg-[#1B1F2A] text-[#E6E9F0] placeholder:text-[#5A6275] focus:ring-2 focus:ring-[#00C2FF]/20 focus:border-[#00C2FF]/60 text-sm px-4 outline-none transition-all"
+          className="block w-full py-2.5 border border-border-strong rounded-md bg-surface-sunken text-foreground placeholder:text-subtle focus:ring-2 focus:ring-accent/20 focus:border-accent/60 text-sm px-4 outline-none transition-all"
         />
       </div>
 
       {/* Priority picker */}
       <div className="flex items-center gap-2">
-        <Flag className="w-3.5 h-3.5 text-[#8A92A6]" />
-        <span className="text-xs font-medium text-[#8A92A6]">Priority</span>
+        <Flag className="w-3.5 h-3.5 text-muted" />
+        <span className="text-xs font-medium text-muted">Priority</span>
         {(["NORMAL", "HIGH", "URGENT"] as const).map(p => (
           <button
             key={p}
@@ -697,10 +697,10 @@ export function SimpleComposer({
             onClick={() => setPriority(p)}
             className={`px-2.5 py-1 text-[11px] font-medium rounded-md border transition-colors ${
               priority === p
-                ? p === "URGENT" ? "bg-[#ea4335] border-[#ea4335] text-white"
-                  : p === "HIGH" ? "bg-[#f4b400] border-[#f4b400] text-white"
-                  : "bg-[#0E2532] border-[#00C2FF] text-[#00C2FF]"
-                : "border-[#262A35] text-[#8A92A6] hover:border-[#2E333F] hover:text-[#E6E9F0]"
+                ? p === "URGENT" ? "bg-crit border-crit text-white"
+                  : p === "HIGH" ? "bg-warn border-warn text-white"
+                  : "bg-accent-soft border-accent text-accent"
+                : "border-border text-muted hover:border-border-strong hover:text-foreground"
             }`}
           >
             {p === "NORMAL" ? "Normal" : p === "HIGH" ? "High" : "Urgent"}
@@ -709,7 +709,7 @@ export function SimpleComposer({
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-[#8A92A6] mb-1.5">
+        <label className="block text-xs font-medium text-muted mb-1.5">
           Message
         </label>
         <textarea
@@ -718,7 +718,7 @@ export function SimpleComposer({
           placeholder="Write your message here..."
           value={body}
           onChange={(e) => setBody(e.target.value)}
-          className="block w-full px-4 py-3 border border-[#2E333F] rounded-md bg-[#1B1F2A] text-[#E6E9F0] placeholder:text-[#5A6275] focus:ring-2 focus:ring-[#00C2FF]/20 focus:border-[#00C2FF]/60 text-sm outline-none transition-all resize-y min-h-[100px]"
+          className="block w-full px-4 py-3 border border-border-strong rounded-md bg-surface-sunken text-foreground placeholder:text-subtle focus:ring-2 focus:ring-accent/20 focus:border-accent/60 text-sm outline-none transition-all resize-y min-h-[100px]"
         />
       </div>
 
@@ -734,7 +734,7 @@ export function SimpleComposer({
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          className="flex items-center gap-1.5 text-xs font-medium text-[#8A92A6] hover:text-[#E6E9F0] transition-colors"
+          className="flex items-center gap-1.5 text-xs font-medium text-muted hover:text-foreground transition-colors"
         >
           <Paperclip className="w-3.5 h-3.5" />
           Attach files
@@ -744,32 +744,32 @@ export function SimpleComposer({
           <button
             type="button"
             onClick={() => setShowTemplateMenu((v) => !v)}
-            className="flex items-center gap-1.5 text-xs font-medium text-[#8A92A6] hover:text-[#E6E9F0] transition-colors"
+            className="flex items-center gap-1.5 text-xs font-medium text-muted hover:text-foreground transition-colors"
           >
             <Clock className="w-3.5 h-3.5" />
             Templates
           </button>
           {showTemplateMenu && (
-            <div className="absolute bottom-full left-0 mb-2 w-64 rounded-lg border border-[#262A35] bg-[#12151D] p-2 shadow-xl z-10 max-h-64 overflow-y-auto">
+            <div className="absolute bottom-full left-0 mb-2 w-64 rounded-lg border border-border bg-surface p-2 shadow-xl z-10 max-h-64 overflow-y-auto">
               {templates.length === 0 ? (
-                <p className="text-xs text-[#5A6275] px-2 py-1.5">No saved templates yet.</p>
+                <p className="text-xs text-subtle px-2 py-1.5">No saved templates yet.</p>
               ) : (
                 templates.map((t) => (
                   <button
                     key={t.id}
                     type="button"
                     onClick={() => applyTemplate(t)}
-                    className="w-full text-left px-2 py-1.5 text-xs text-[#E6E9F0] hover:bg-[#1B1F2A] rounded-md truncate"
+                    className="w-full text-left px-2 py-1.5 text-xs text-foreground hover:bg-surface-sunken rounded-md truncate"
                   >
                     {t.name}
                   </button>
                 ))
               )}
-              <div className="border-t border-[#262A35] mt-1 pt-1">
+              <div className="border-t border-border mt-1 pt-1">
                 <button
                   type="button"
                   onClick={() => void saveAsTemplate()}
-                  className="w-full text-left px-2 py-1.5 text-xs text-[#00C2FF] hover:bg-[#1B1F2A] rounded-md"
+                  className="w-full text-left px-2 py-1.5 text-xs text-accent hover:bg-surface-sunken rounded-md"
                 >
                   Save current as template
                 </button>
@@ -780,14 +780,14 @@ export function SimpleComposer({
         {attachments.length > 0 && (
           <ul className="mt-2 space-y-1">
             {attachments.map((f) => (
-              <li key={f.name} className="flex items-center gap-2 rounded-md bg-[#12151D] border border-[#262A35] px-3 py-1.5">
-                <Paperclip className="w-3 h-3 text-[#5A6275] shrink-0" />
-                <span className="text-xs text-[#E6E9F0] flex-1 truncate">{f.name}</span>
-                <span className="text-[10px] text-[#5A6275] shrink-0">{(f.size / 1024).toFixed(0)} KB</span>
+              <li key={f.name} className="flex items-center gap-2 rounded-md bg-surface border border-border px-3 py-1.5">
+                <Paperclip className="w-3 h-3 text-subtle shrink-0" />
+                <span className="text-xs text-foreground flex-1 truncate">{f.name}</span>
+                <span className="text-[10px] text-subtle shrink-0">{(f.size / 1024).toFixed(0)} KB</span>
                 <button
                   type="button"
                   onClick={() => setAttachments(prev => prev.filter(a => a.name !== f.name))}
-                  className="text-[#5A6275] hover:text-[#ea4335] transition-colors"
+                  className="text-subtle hover:text-crit transition-colors"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -800,7 +800,7 @@ export function SimpleComposer({
       <div className="relative flex">
         <button
           disabled={isPending}
-          className="flex-1 bg-[#00C2FF] text-[#06121A] font-medium py-3 rounded-l-md hover:bg-[#0098E6] transition-colors active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+          className="flex-1 bg-accent text-accent-foreground font-medium py-3 rounded-l-md hover:bg-accent-hover transition-colors active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
         >
           {isPending ? (
             <>
@@ -818,15 +818,15 @@ export function SimpleComposer({
           type="button"
           disabled={isPending}
           onClick={() => setShowScheduleMenu((v) => !v)}
-          className="px-3 bg-[#00C2FF] text-[#06121A] rounded-r-md border-l border-[#06121A]/20 hover:bg-[#0098E6] transition-colors disabled:opacity-50"
+          className="px-3 bg-accent text-accent-foreground rounded-r-md border-l border-accent-foreground/20 hover:bg-accent-hover transition-colors disabled:opacity-50"
           title="Send later"
         >
           <ChevronDown className="w-4 h-4" />
         </button>
 
         {showScheduleMenu && (
-          <div className="absolute bottom-full right-0 mb-2 w-72 rounded-lg border border-[#262A35] bg-[#12151D] p-3 shadow-xl z-10">
-            <p className="text-xs font-medium text-[#8A92A6] mb-2 flex items-center gap-1.5">
+          <div className="absolute bottom-full right-0 mb-2 w-72 rounded-lg border border-border bg-surface p-3 shadow-xl z-10">
+            <p className="text-xs font-medium text-muted mb-2 flex items-center gap-1.5">
               <Clock className="w-3.5 h-3.5" /> Send later
             </p>
             <input
@@ -834,13 +834,13 @@ export function SimpleComposer({
               value={scheduleAt}
               onChange={(e) => setScheduleAt(e.target.value)}
               min={new Date(Date.now() + 60_000).toISOString().slice(0, 16)}
-              className="w-full mb-2 px-2.5 py-1.5 bg-[#0B0D12] border border-[#262A35] rounded-md text-xs text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+              className="w-full mb-2 px-2.5 py-1.5 bg-surface border border-border rounded-md text-xs text-foreground focus:outline-none focus:border-accent/60"
             />
             <div className="flex items-center justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setShowScheduleMenu(false)}
-                className="px-2.5 py-1.5 text-xs text-[#8A92A6] hover:text-[#E6E9F0] transition-colors"
+                className="px-2.5 py-1.5 text-xs text-muted hover:text-foreground transition-colors"
               >
                 Cancel
               </button>
@@ -848,7 +848,7 @@ export function SimpleComposer({
                 type="button"
                 disabled={isScheduling}
                 onClick={() => void handleScheduleSend()}
-                className="px-3 py-1.5 text-xs font-medium rounded-md bg-[#00C2FF] text-[#06121A] hover:bg-[#0098E6] transition-colors disabled:opacity-50"
+                className="px-3 py-1.5 text-xs font-medium rounded-md bg-accent text-accent-foreground hover:bg-accent-hover transition-colors disabled:opacity-50"
               >
                 {isScheduling ? "Scheduling…" : "Schedule"}
               </button>
@@ -872,9 +872,9 @@ export function SimpleComposer({
   if (bare) return formContent;
 
   return (
-    <div className="bg-[#12151D] rounded-xl border border-[#262A35] overflow-hidden">
-      <div className="px-6 py-4 border-b border-[#262A35]">
-        <h3 className="text-base font-semibold text-[#E6E9F0]">New message</h3>
+    <div className="bg-surface rounded-xl border border-border overflow-hidden">
+      <div className="px-6 py-4 border-b border-border">
+        <h3 className="text-base font-semibold text-foreground">New message</h3>
       </div>
       {formContent}
     </div>
@@ -902,7 +902,7 @@ function MemberAvatar({ email, members }: { email: string; members: MemberInfo[]
   const m = members.find((u) => u.email.toLowerCase() === email.toLowerCase());
   const label = (m?.fullName ?? email).charAt(0).toUpperCase();
   if (m?.avatarUrl) {
-    return <img src={m.avatarUrl} alt={label} className="w-8 h-8 rounded-full object-cover flex-shrink-0 ring-1 ring-[#262A35]" />;
+    return <img src={m.avatarUrl} alt={label} className="w-8 h-8 rounded-full object-cover flex-shrink-0 ring-1 ring-border" />;
   }
   return (
     <div
@@ -933,52 +933,52 @@ export function WorkspaceDashboard({
       {/* Sent History */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-[#E6E9F0] tracking-[-0.01em]">Sent messages</h2>
-          <span className="text-xs font-medium text-[#8A92A6] font-mono">{recentLogs.length} total</span>
+          <h2 className="text-lg font-semibold text-foreground tracking-[-0.01em]">Sent messages</h2>
+          <span className="text-xs font-medium text-muted font-mono">{recentLogs.length} total</span>
         </div>
 
-        <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-x-auto">
+        <div className="bg-surface border border-border rounded-xl overflow-x-auto">
           <table className="w-full text-left min-w-[500px]">
-            <thead className="border-b border-[#262A35] bg-[#1B1F2A]">
+            <thead className="border-b border-border bg-surface-sunken">
               <tr>
-                <th className="px-4 py-2.5 text-left text-[11px] font-medium text-[#5A6275]">Recipient</th>
-                <th className="px-4 py-2.5 text-left text-[11px] font-medium text-[#5A6275]">Subject</th>
-                <th className="px-4 py-2.5 text-left text-[11px] font-medium text-[#5A6275]">Status</th>
-                <th className="px-4 py-2.5 text-[11px] font-medium text-[#5A6275] text-right">Sent</th>
+                <th className="px-4 py-2.5 text-left text-[11px] font-medium text-subtle">Recipient</th>
+                <th className="px-4 py-2.5 text-left text-[11px] font-medium text-subtle">Subject</th>
+                <th className="px-4 py-2.5 text-left text-[11px] font-medium text-subtle">Status</th>
+                <th className="px-4 py-2.5 text-[11px] font-medium text-subtle text-right">Sent</th>
               </tr>
             </thead>
             <tbody>
               {recentLogs.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-12 text-sm text-[#8A92A6] text-center italic">
+                  <td colSpan={4} className="px-4 py-12 text-sm text-muted text-center italic">
                     No sent messages found in this workspace.
                   </td>
                 </tr>
               ) : (
                 recentLogs.map((log) => (
-                  <tr key={log.id} className="border-b border-[#262A35] last:border-b-0 hover:bg-[#1B1F2A] transition-colors">
-                    <td className="px-4 py-3 text-sm text-[#E6E9F0]">
+                  <tr key={log.id} className="border-b border-border last:border-b-0 hover:bg-surface-sunken transition-colors">
+                    <td className="px-4 py-3 text-sm text-foreground">
                       <div className="flex items-center gap-3">
                         <MemberAvatar email={log.recipient} members={members} />
-                        <span className="text-[13px] font-medium text-[#E6E9F0] font-mono truncate max-w-[180px]">{log.recipient}</span>
+                        <span className="text-[13px] font-medium text-foreground font-mono truncate max-w-[180px]">{log.recipient}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-sm text-[#8A92A6] max-w-[200px] truncate">
+                    <td className="px-4 py-3 text-sm text-muted max-w-[200px] truncate">
                       {log.subject || "(No Subject)"}
                     </td>
-                    <td className="px-4 py-3 text-sm text-[#E6E9F0]">
+                    <td className="px-4 py-3 text-sm text-foreground">
                       <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${
-                        log.status === 'DELIVERED' || log.status === 'SENT' ? 'bg-[#0f9d58]/10 text-[#0f9d58]' :
-                        log.status === 'OPENED' || log.status === 'CLICKED' ? 'bg-[#00C2FF]/10 text-[#00C2FF]' :
-                        log.status === 'FAILED' || log.status === 'BOUNCED' ? 'bg-[#ea4335]/10 text-[#ea4335]' :
-                        'bg-[#1B1F2A] text-[#8A92A6]'
+                        log.status === 'DELIVERED' || log.status === 'SENT' ? 'bg-ok/10 text-ok' :
+                        log.status === 'OPENED' || log.status === 'CLICKED' ? 'bg-accent/10 text-accent' :
+                        log.status === 'FAILED' || log.status === 'BOUNCED' ? 'bg-crit/10 text-crit' :
+                        'bg-surface-sunken text-muted'
                       }`}>
                         {log.status === 'DELIVERED' ? <CheckCircle2 className="w-3 h-3" /> : null}
                         {log.status === 'FAILED' ? <AlertCircle className="w-3 h-3" /> : null}
                         {log.status.charAt(0) + log.status.slice(1).toLowerCase()}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-xs text-[#5A6275] text-right font-mono" suppressHydrationWarning>
+                    <td className="px-4 py-3 text-xs text-subtle text-right font-mono" suppressHydrationWarning>
                       {new Date(log.createdAt).toLocaleDateString('en-GB', {
                         day: '2-digit',
                         month: '2-digit',
@@ -995,7 +995,7 @@ export function WorkspaceDashboard({
 
       {/* Composer Side Pane */}
       <div className="space-y-4">
-        <h2 className="text-lg font-semibold text-[#E6E9F0] tracking-[-0.01em]">Quick compose</h2>
+        <h2 className="text-lg font-semibold text-foreground tracking-[-0.01em]">Quick compose</h2>
         <SimpleComposer userRole={currentUser.role} />
       </div>
     </div>

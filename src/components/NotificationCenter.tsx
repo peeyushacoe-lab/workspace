@@ -66,17 +66,17 @@ function TypeIcon({ type }: { type: NotificationType }) {
 }
 
 const TYPE_COLOR: Record<NotificationType, string> = {
-  MENTION:           "bg-[#1a56db]/10 text-[#1a56db] border border-[#1a56db]/20",
-  CALENDAR_INVITE:   "bg-violet-500/10 text-violet-600 border border-violet-500/20",
-  CALENDAR_REMINDER: "bg-amber-500/10 text-amber-600 border border-amber-500/20",
-  SOC_ALERT:         "bg-[#ea4335]/10 text-[#ea4335] border border-[#ea4335]/20",
-  DLP_VIOLATION:     "bg-[#f4b400]/10 text-[#b06000] border border-[#f4b400]/20",
-  NEW_MESSAGE:       "bg-[#0f9d58]/10 text-[#0f9d58] border border-[#0f9d58]/20",
-  FILE_SHARED:       "bg-sky-500/10 text-sky-600 border border-sky-500/20",
-  SYSTEM:            "bg-[#f1f3f4] text-[#5f6368] border border-[#e8eaed]",
-  TASK_ASSIGNED:     "bg-[#0f9d58]/10 text-[#0f9d58] border border-[#0f9d58]/20",
-  TASK_DUE_SOON:     "bg-[#f4b400]/10 text-[#b06000] border border-[#f4b400]/20",
-  TASK_COMMENT:      "bg-[#1a56db]/10 text-[#1a56db] border border-[#1a56db]/20",
+  MENTION:           "bg-accent/10 text-accent border border-accent/20",
+  CALENDAR_INVITE:   "bg-violet/10 text-violet border border-violet/20",
+  CALENDAR_REMINDER: "bg-warn/10 text-warn border border-warn/20",
+  SOC_ALERT:         "bg-crit/10 text-crit border border-crit/20",
+  DLP_VIOLATION:     "bg-warn/10 text-warn border border-warn/20",
+  NEW_MESSAGE:       "bg-ok/10 text-ok border border-ok/20",
+  FILE_SHARED:       "bg-accent/10 text-accent border border-accent/20",
+  SYSTEM:            "bg-surface-sunken text-muted border border-border",
+  TASK_ASSIGNED:     "bg-ok/10 text-ok border border-ok/20",
+  TASK_DUE_SOON:     "bg-warn/10 text-warn border border-warn/20",
+  TASK_COMMENT:      "bg-accent/10 text-accent border border-accent/20",
 };
 
 function timeAgo(iso: string): string {
@@ -256,38 +256,38 @@ export function NotificationCenter({ userId, dark: _dark = false }: { userId: st
       <div className="relative" ref={panelRef}>
         <button
           onClick={() => setOpen((o) => !o)}
-          className="relative p-2 text-[#5f6368] hover:text-[#202124] hover:bg-[#f1f3f4] rounded-full transition-colors"
+          className="relative p-2 text-muted hover:text-foreground hover:bg-surface-sunken rounded-full transition-colors"
           aria-label="Notifications"
         >
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
-            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[#ea4335] ring-2 ring-white" />
+            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-crit ring-2 ring-canvas" />
           )}
         </button>
 
         {open && (
-          <div className="absolute right-0 top-10 bg-white border border-[#e8eaed] rounded-xl shadow-xl w-80 z-50">
-            <div className="px-4 py-3 border-b border-[#e8eaed] flex items-center justify-between">
-              <h2 className="font-semibold text-[#202124] text-sm">Notifications</h2>
+          <div className="absolute right-0 top-10 bg-surface border border-border rounded-xl shadow-xl w-80 z-50">
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+              <h2 className="font-semibold text-foreground text-sm">Notifications</h2>
               {unreadCount > 0 && (
                 <button
                   onClick={markAllRead}
-                  className="text-xs text-[#1a56db] hover:text-[#1648c7] font-medium"
+                  className="text-xs text-accent hover:text-accent-hover font-medium"
                 >
                   Mark all read
                 </button>
               )}
             </div>
 
-            <div className="flex border-b border-[#e8eaed]">
+            <div className="flex border-b border-border">
               {(["all", "unread"] as const).map((t) => (
                 <button
                   key={t}
                   onClick={() => setTab(t)}
                   className={`flex-1 py-2 text-xs font-medium transition-colors capitalize ${
                     tab === t
-                      ? "border-b-2 border-[#1a56db] text-[#1a56db]"
-                      : "text-[#5f6368] hover:text-[#202124]"
+                      ? "border-b-2 border-accent text-accent"
+                      : "text-muted hover:text-foreground"
                   }`}
                 >
                   {t}
@@ -297,9 +297,9 @@ export function NotificationCenter({ userId, dark: _dark = false }: { userId: st
 
             <div className="max-h-96 overflow-y-auto">
               {displayed.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-[#5f6368]">
-                  <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f1f3f4] border border-[#e8eaed]">
-                    <BellOff className="h-5 w-5 text-[#80868b]" />
+                <div className="flex flex-col items-center justify-center py-12 text-muted">
+                  <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-surface-sunken border border-border">
+                    <BellOff className="h-5 w-5 text-subtle" />
                   </span>
                   <p className="text-sm">No notifications</p>
                 </div>
@@ -307,15 +307,15 @@ export function NotificationCenter({ userId, dark: _dark = false }: { userId: st
                 Object.entries(groups).map(([label, items]) =>
                   items.length === 0 ? null : (
                     <div key={label}>
-                      <div className="sticky top-0 px-4 py-1.5 text-xs font-semibold text-[#5f6368] bg-[#f8f9fa] border-b border-[#e8eaed]">
+                      <div className="sticky top-0 px-4 py-1.5 text-xs font-semibold text-muted bg-surface-sunken border-b border-border">
                         {label}
                       </div>
                       {items.map((n) => (
                         <button
                           key={n.id}
                           onClick={() => handleClick(n)}
-                          className={`px-4 py-3 border-b border-[#e8eaed] hover:bg-[#f8f9fa] cursor-pointer transition-colors flex gap-3 w-full text-left ${
-                            !n.read ? "bg-[#1a56db]/5" : ""
+                          className={`px-4 py-3 border-b border-border hover:bg-surface-sunken cursor-pointer transition-colors flex gap-3 w-full text-left ${
+                            !n.read ? "bg-accent/5" : ""
                           }`}
                         >
                           <span
@@ -325,17 +325,17 @@ export function NotificationCenter({ userId, dark: _dark = false }: { userId: st
                           </span>
                           <div className="min-w-0 flex-1">
                             <div className="flex items-start justify-between gap-2">
-                              <p className="text-sm font-medium text-[#202124] leading-tight truncate">
+                              <p className="text-sm font-medium text-foreground leading-tight truncate">
                                 {n.title}
                               </p>
-                              <span className="shrink-0 text-xs text-[#80868b] mt-0.5">
+                              <span className="shrink-0 text-xs text-subtle mt-0.5">
                                 {timeAgo(n.createdAt)}
                               </span>
                             </div>
-                            <p className="text-xs text-[#5f6368] line-clamp-2">{n.body}</p>
+                            <p className="text-xs text-muted line-clamp-2">{n.body}</p>
                           </div>
                           {!n.read && (
-                            <span className="w-2 h-2 rounded-full bg-[#1a56db] flex-shrink-0 mt-1" />
+                            <span className="w-2 h-2 rounded-full bg-accent flex-shrink-0 mt-1" />
                           )}
                         </button>
                       ))}
@@ -362,7 +362,7 @@ export function NotificationCenter({ userId, dark: _dark = false }: { userId: st
                   setToasts((prev) => prev.filter((x) => x.id !== t.id));
                   if (t.link) router.push(t.link);
                 }}
-                className="pointer-events-auto flex items-start gap-3 rounded-xl border border-[#e8eaed] bg-white p-4 shadow-lg w-80 text-left cursor-pointer hover:border-[#1a56db]/40 animate-in slide-in-from-bottom-2 fade-in duration-200 transition-colors"
+                className="pointer-events-auto flex items-start gap-3 rounded-xl border border-border bg-surface p-4 shadow-lg w-80 text-left cursor-pointer hover:border-accent/40 animate-in slide-in-from-bottom-2 fade-in duration-200 transition-colors"
               >
                 <span
                   className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${TYPE_COLOR[t.type] ?? TYPE_COLOR.SYSTEM}`}
@@ -370,8 +370,8 @@ export function NotificationCenter({ userId, dark: _dark = false }: { userId: st
                   <TypeIcon type={t.type} />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold text-[#202124] truncate">{t.title}</p>
-                  <p className="mt-0.5 text-xs text-[#5f6368] line-clamp-2">{t.body}</p>
+                  <p className="text-xs font-semibold text-foreground truncate">{t.title}</p>
+                  <p className="mt-0.5 text-xs text-muted line-clamp-2">{t.body}</p>
                 </div>
               </button>
             ))}
@@ -390,15 +390,15 @@ export function NotificationCenter({ userId, dark: _dark = false }: { userId: st
               key={a.id}
               role="alertdialog"
               aria-label={a.title}
-              className="flex items-start gap-3 rounded-xl border border-[#ea4335]/40 border-l-4 border-l-[#ea4335] bg-white p-4 shadow-xl animate-in slide-in-from-top-2 fade-in duration-200"
+              className="flex items-start gap-3 rounded-xl border border-crit/40 border-l-4 border-l-crit bg-surface p-4 shadow-xl animate-in slide-in-from-top-2 fade-in duration-200"
             >
-              <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#ea4335]/10 text-[#ea4335]">
+              <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-crit/10 text-crit">
                 <Siren className="h-4 w-4" />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-[11px] font-medium text-[#ea4335]">Urgent message</p>
-                <p className="mt-0.5 text-sm font-semibold text-[#202124] truncate">{a.title}</p>
-                <p className="mt-0.5 text-xs text-[#5f6368] line-clamp-2">{a.body}</p>
+                <p className="text-[11px] font-medium text-crit">Urgent message</p>
+                <p className="mt-0.5 text-sm font-semibold text-foreground truncate">{a.title}</p>
+                <p className="mt-0.5 text-xs text-muted line-clamp-2">{a.body}</p>
                 <div className="mt-2.5 flex items-center gap-2">
                   <button
                     type="button"
@@ -406,14 +406,14 @@ export function NotificationCenter({ userId, dark: _dark = false }: { userId: st
                       setUrgentAlerts((prev) => prev.filter((x) => x.id !== a.id));
                       if (a.link) router.push(a.link);
                     }}
-                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#ea4335] text-white hover:bg-[#d33426] transition-colors"
+                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-crit text-white hover:bg-crit transition-colors"
                   >
                     View message
                   </button>
                   <button
                     type="button"
                     onClick={() => setUrgentAlerts((prev) => prev.filter((x) => x.id !== a.id))}
-                    className="px-3 py-1.5 text-xs font-medium rounded-lg text-[#5f6368] hover:text-[#202124] hover:bg-[#f1f3f4] transition-colors"
+                    className="px-3 py-1.5 text-xs font-medium rounded-lg text-muted hover:text-foreground hover:bg-surface-sunken transition-colors"
                   >
                     Dismiss
                   </button>
@@ -423,7 +423,7 @@ export function NotificationCenter({ userId, dark: _dark = false }: { userId: st
                 type="button"
                 aria-label="Dismiss urgent alert"
                 onClick={() => setUrgentAlerts((prev) => prev.filter((x) => x.id !== a.id))}
-                className="p-1 rounded-md text-[#80868b] hover:text-[#202124] hover:bg-[#f1f3f4] transition-colors"
+                className="p-1 rounded-md text-subtle hover:text-foreground hover:bg-surface-sunken transition-colors"
               >
                 <X className="h-3.5 w-3.5" />
               </button>

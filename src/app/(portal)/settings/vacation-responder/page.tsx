@@ -13,11 +13,11 @@ type Responder = {
   endDate: string | null;
 };
 
-const cardClass = "bg-[#12151D] border border-[#262A35] rounded-xl";
+const cardClass = "bg-surface border border-border rounded-xl";
 const inputClass =
-  "w-full px-3 py-2 bg-[#0B0D12] border border-[#262A35] rounded-lg text-sm text-[#E6E9F0] placeholder:text-[#5A6275] focus:outline-none focus:border-[#00C2FF]/60 focus:ring-2 focus:ring-[#00C2FF]/20 transition-colors";
+  "w-full px-3 py-2 bg-surface border border-border rounded-lg text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20 transition-colors";
 const primaryBtn =
-  "inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-[#00C2FF] text-[#06121A] hover:bg-[#0098E6] transition disabled:opacity-50 disabled:cursor-not-allowed";
+  "inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-accent text-accent-foreground hover:bg-accent-hover transition disabled:opacity-50 disabled:cursor-not-allowed";
 
 function toInputDate(v: string | null): string {
   return v ? v.slice(0, 10) : "";
@@ -55,7 +55,7 @@ export default function VacationResponderPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0B0D12] text-[#E6E9F0]">
+    <div className="min-h-full bg-surface text-foreground">
       <PageHeader
         eyebrow="Settings"
         title="Vacation responder"
@@ -64,26 +64,26 @@ export default function VacationResponderPage() {
 
       <div className="px-6 pb-10 max-w-2xl space-y-6">
         {loading || !data ? (
-          <div className="flex items-center gap-2 text-[#5A6275] text-sm">
+          <div className="flex items-center gap-2 text-subtle text-sm">
             <Loader2 className="w-4 h-4 animate-spin" /> Loading…
           </div>
         ) : (
           <div className={`${cardClass} p-5 space-y-4`}>
             <label className="flex items-center justify-between cursor-pointer">
               <span className="flex items-center gap-2 text-sm font-medium">
-                <PalmtreeIcon className="w-4 h-4 text-[#00C2FF]" />
+                <PalmtreeIcon className="w-4 h-4 text-accent" />
                 Vacation responder on
               </span>
               <input
                 type="checkbox"
                 checked={data.isEnabled}
                 onChange={(e) => setData({ ...data, isEnabled: e.target.checked })}
-                className="w-4 h-4 accent-[#00C2FF]"
+                className="w-4 h-4 accent-accent"
               />
             </label>
 
             <div>
-              <label className="text-xs text-[#8A92A6] mb-1 block">Subject</label>
+              <label className="text-xs text-muted mb-1 block">Subject</label>
               <input
                 className={inputClass}
                 value={data.subject}
@@ -93,7 +93,7 @@ export default function VacationResponderPage() {
             </div>
 
             <div>
-              <label className="text-xs text-[#8A92A6] mb-1 block">Message</label>
+              <label className="text-xs text-muted mb-1 block">Message</label>
               <textarea
                 className={`${inputClass} min-h-[120px]`}
                 value={data.message}
@@ -104,7 +104,7 @@ export default function VacationResponderPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs text-[#8A92A6] mb-1 block">Start date (optional)</label>
+                <label className="text-xs text-muted mb-1 block">Start date (optional)</label>
                 <input
                   type="date"
                   className={inputClass}
@@ -113,7 +113,7 @@ export default function VacationResponderPage() {
                 />
               </div>
               <div>
-                <label className="text-xs text-[#8A92A6] mb-1 block">End date (optional)</label>
+                <label className="text-xs text-muted mb-1 block">End date (optional)</label>
                 <input
                   type="date"
                   className={inputClass}

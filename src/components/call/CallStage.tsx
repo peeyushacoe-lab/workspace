@@ -59,7 +59,7 @@ export function CallStage({
           disableThirdPartyRequests: true,
           liveStreamingEnabled: false,
           fileRecordingsEnabled: false,
-          defaultBackground: "#0f1321",
+          defaultBackground: "#f0efec",
         },
         interfaceConfigOverwrite: {
           SHOW_JITSI_WATERMARK: false,
@@ -70,7 +70,7 @@ export function CallStage({
           APP_NAME: "CyberSage Meet",
           NATIVE_APP_NAME: "CyberSage Meet",
           PROVIDER_NAME: "CyberSage",
-          DEFAULT_BACKGROUND: "#0f1321",
+          DEFAULT_BACKGROUND: "#f0efec",
           TOOLBAR_BUTTONS: [
             "microphone", "camera", "desktop", "fullscreen",
             "fodeviceselection", "hangup", "settings", "raisehand",
@@ -98,21 +98,21 @@ export function CallStage({
   }, [roomName]);
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col bg-[#0f1321]">
-      <div className="flex items-center justify-between px-4 py-2 bg-[#12151D] border-b border-[#262A35] flex-shrink-0">
+    <div className="fixed inset-0 z-[100] flex flex-col bg-surface">
+      <div className="flex items-center justify-between px-4 py-2 bg-surface border-b border-border flex-shrink-0">
         <div className="flex items-center gap-2">
           {media === "audio" ? (
-            <Phone className="w-4 h-4 text-[#00C2FF]" />
+            <Phone className="w-4 h-4 text-accent" />
           ) : (
-            <Video className="w-4 h-4 text-[#00C2FF]" />
+            <Video className="w-4 h-4 text-accent" />
           )}
-          <span className="text-sm font-semibold text-[#E6E9F0]">
+          <span className="text-sm font-semibold text-foreground">
             {media === "audio" ? "Voice call" : "Video call"} with {peerName}
           </span>
         </div>
         <button
           onClick={onEnd}
-          className="flex items-center gap-1.5 text-xs font-semibold text-white px-3 py-1.5 rounded-lg bg-[#ea4335] hover:bg-[#d33426] transition-colors"
+          className="flex items-center gap-1.5 text-xs font-semibold text-white px-3 py-1.5 rounded-lg bg-crit hover:bg-crit transition-colors"
         >
           <PhoneOff className="w-3.5 h-3.5" />
           Leave call

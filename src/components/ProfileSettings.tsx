@@ -25,18 +25,18 @@ type SignatureFormData = {
 };
 
 const inputClass =
-  "block w-full py-2.5 border border-[#262A35] rounded-md bg-[#12151D] text-[#E6E9F0] placeholder-[#9aa3b8] focus:ring-2 focus:ring-[#00C2FF] focus:border-[#00C2FF] text-sm px-3 outline-none transition";
+  "block w-full py-2.5 border border-border rounded-md bg-surface text-foreground placeholder-muted focus:ring-2 focus:ring-accent focus:border-accent text-sm px-3 outline-none transition";
 
 const textareaClass =
-  "block w-full py-2.5 border border-[#262A35] rounded-md bg-[#12151D] text-[#E6E9F0] placeholder-[#9aa3b8] focus:ring-2 focus:ring-[#00C2FF] focus:border-[#00C2FF] text-sm px-3 outline-none transition min-h-[120px]";
+  "block w-full py-2.5 border border-border rounded-md bg-surface text-foreground placeholder-muted focus:ring-2 focus:ring-accent focus:border-accent text-sm px-3 outline-none transition min-h-[120px]";
 
-const labelTextClass = "text-sm font-medium text-[#E6E9F0] mb-1.5 block";
+const labelTextClass = "text-sm font-medium text-foreground mb-1.5 block";
 
 const primaryButtonClass =
-  "inline-flex h-11 items-center justify-center gap-2 rounded-md bg-[#00C2FF] px-5 text-sm font-medium text-[#06121A] transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex h-11 items-center justify-center gap-2 rounded-md bg-accent px-5 text-sm font-medium text-accent-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60";
 
 const secondaryButtonClass =
-  "inline-flex h-11 items-center justify-center gap-2 rounded-md border border-[#262A35] bg-[#12151D] px-4 text-sm font-medium text-[#8A92A6] transition hover:bg-[#1B1F2A] disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex h-11 items-center justify-center gap-2 rounded-md border border-border bg-surface px-4 text-sm font-medium text-muted transition hover:bg-surface-sunken disabled:cursor-not-allowed disabled:opacity-50";
 
 export function ProfileSettings({
   userName,
@@ -181,19 +181,19 @@ export function ProfileSettings({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px] bg-[#12151D] rounded-xl border border-[#262A35]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00C2FF]"></div>
+      <div className="flex items-center justify-center min-h-[400px] bg-surface rounded-xl border border-border">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
       </div>
     );
   }
 
   return (
     <div className="space-y-8">
-      <div className="rounded-xl border border-[#262A35] bg-[#12151D] p-8">
+      <div className="rounded-xl border border-border bg-surface p-8">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h1 className="text-xl font-semibold text-[#E6E9F0]">Profile settings</h1>
-            <p className="mt-2 text-sm text-[#8A92A6]">
+            <h1 className="text-xl font-semibold text-foreground">Profile settings</h1>
+            <p className="mt-2 text-sm text-muted">
               Update your display name, reset your password, and manage your sender signature.
             </p>
           </div>
@@ -207,9 +207,9 @@ export function ProfileSettings({
 
         <div className="mt-8 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
           {/* Account security */}
-          <div className="rounded-xl border border-[#262A35] bg-[#12151D] p-6">
-            <h2 className="text-sm font-medium text-[#8A92A6]">Account security</h2>
-            <p className="mt-2 text-sm text-[#8A92A6]">Change your display name or password for your CyberSage account.</p>
+          <div className="rounded-xl border border-border bg-surface p-6">
+            <h2 className="text-sm font-medium text-muted">Account security</h2>
+            <p className="mt-2 text-sm text-muted">Change your display name or password for your CyberSage account.</p>
 
             <form onSubmit={handleAccountSave} className="mt-6 space-y-4">
               <div>
@@ -257,12 +257,12 @@ export function ProfileSettings({
               </div>
 
               {accountError && (
-                <div className="rounded-md border border-red-400/30 bg-red-400/10 p-4 text-sm text-red-400">
+                <div className="rounded-md border border-crit/30 bg-crit/10 p-4 text-sm text-crit">
                   {accountError}
                 </div>
               )}
               {accountMessage && (
-                <div className="rounded-md border border-emerald-400/30 bg-emerald-400/10 p-4 text-sm text-emerald-400">
+                <div className="rounded-md border border-ok/30 bg-ok/10 p-4 text-sm text-ok">
                   {accountMessage}
                 </div>
               )}
@@ -275,18 +275,18 @@ export function ProfileSettings({
           </div>
 
           {/* Sender identity */}
-          <div className="rounded-xl border border-[#262A35] bg-[#12151D] p-6">
-            <h2 className="text-sm font-medium text-[#8A92A6]">Sender identity</h2>
-            <p className="mt-2 text-sm text-[#8A92A6]">Manage your signature template and email identity.</p>
+          <div className="rounded-xl border border-border bg-surface p-6">
+            <h2 className="text-sm font-medium text-muted">Sender identity</h2>
+            <p className="mt-2 text-sm text-muted">Manage your signature template and email identity.</p>
 
             {isEditing ? (
               <form onSubmit={handleSubmit} className="mt-6 space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-base font-semibold text-[#E6E9F0]">
+                    <h3 className="text-base font-semibold text-foreground">
                       {signature ? "Edit signature" : "Create signature"}
                     </h3>
-                    <p className="text-sm text-[#8A92A6]">Customize the outgoing sender identity.</p>
+                    <p className="text-sm text-muted">Customize the outgoing sender identity.</p>
                   </div>
                   <button type="button" onClick={() => setIsEditing(false)} className={secondaryButtonClass}>
                     Cancel
@@ -362,35 +362,35 @@ export function ProfileSettings({
                 </button>
               </form>
             ) : signature ? (
-              <div className="mt-6 bg-[#12151D] border border-[#262A35] rounded-xl p-4">
+              <div className="mt-6 bg-surface border border-border rounded-xl p-4">
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <h3 className="font-semibold text-[#E6E9F0]">{signature.fullName}</h3>
-                    <p className="text-sm text-[#8A92A6]">{signature.title}</p>
+                    <h3 className="font-semibold text-foreground">{signature.fullName}</h3>
+                    <p className="text-sm text-muted">{signature.title}</p>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={handleEdit} className="p-2 text-[#8A92A6] hover:text-[#00C2FF] transition" title="Edit">
+                    <button onClick={handleEdit} className="p-2 text-muted hover:text-accent transition" title="Edit">
                       <Edit2 className="h-4 w-4" />
                     </button>
-                    <button onClick={handleDelete} className="text-red-400 hover:text-red-300 hover:bg-red-400/10 text-xs px-2 py-1 rounded-md transition-colors" title="Delete">
+                    <button onClick={handleDelete} className="text-crit hover:text-crit hover:bg-crit/10 text-xs px-2 py-1 rounded-md transition-colors" title="Delete">
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
-                <div className="text-sm text-[#8A92A6] space-y-2">
+                <div className="text-sm text-muted space-y-2">
                   {signature.phone && <p><strong>Phone:</strong> {signature.phone}</p>}
                   {signature.linkedinUrl && <p><strong>LinkedIn:</strong> {signature.linkedinUrl}</p>}
                   {signature.website && <p><strong>Website:</strong> {signature.website}</p>}
                 </div>
                 {signature.html && (
-                  <div className="mt-4 border border-[#262A35] rounded-xl p-4 inline-block bg-[#12151D] text-sm w-full">
-                    <p className="text-sm text-[#8A92A6] mb-2">Custom HTML preview</p>
+                  <div className="mt-4 border border-border rounded-xl p-4 inline-block bg-surface text-sm w-full">
+                    <p className="text-sm text-muted mb-2">Custom HTML preview</p>
                     <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(signature.html) }} />
                   </div>
                 )}
               </div>
             ) : (
-              <div className="mt-6 text-sm text-[#8A92A6]">
+              <div className="mt-6 text-sm text-muted">
                 Click &quot;Add Signature&quot; to create your sender identity for emails.
               </div>
             )}

@@ -3,11 +3,11 @@
 
 const AVATAR_GRADIENTS = [
   "linear-gradient(135deg,#FF6B9D,#C44FE0)",
-  "linear-gradient(135deg,#00C2FF,#3B82F6)",
-  "linear-gradient(135deg,#10B981,#059669)",
-  "linear-gradient(135deg,#F59E0B,#EF4444)",
-  "linear-gradient(135deg,#7C5CFF,#00C2FF)",
-  "linear-gradient(135deg,#F472B6,#7C3AED)",
+  "linear-gradient(135deg,#4f46e5,#3B82F6)",
+  "linear-gradient(135deg,#0e7c5a,#0e7c5a)",
+  "linear-gradient(135deg,#b45309,#c0362c)",
+  "linear-gradient(135deg,#7C5CFF,#4f46e5)",
+  "linear-gradient(135deg,#F472B6,#7c5cd6)",
 ];
 
 export function avatarGradient(key: string): string {

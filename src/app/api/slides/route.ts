@@ -10,9 +10,9 @@ const defaultSlide = {
   background: "#ffffff",
   elements: [
     { id: "el-1", type: "text", x: 80, y: 200, w: 760, h: 100,
-      content: "Click to add title", style: { fontSize: 48, bold: true, color: "#202124", align: "center" } },
+      content: "Click to add title", style: { fontSize: 48, bold: true, color: "#1a1a18", align: "center" } },
     { id: "el-2", type: "text", x: 80, y: 320, w: 760, h: 60,
-      content: "Click to add subtitle", style: { fontSize: 24, bold: false, color: "#5f6368", align: "center" } },
+      content: "Click to add subtitle", style: { fontSize: 24, bold: false, color: "#6b6a65", align: "center" } },
   ],
 };
 

@@ -199,24 +199,24 @@ function EmojiPicker({
 
   return (
     <div
-      className="absolute bottom-full right-0 mb-1 w-72 bg-[#12151D] border border-[#262A35] rounded-2xl shadow-xl z-50 overflow-hidden"
+      className="absolute bottom-full right-0 mb-1 w-72 bg-surface border border-border rounded-2xl shadow-xl z-50 overflow-hidden"
       style={{ transition: "opacity 150ms ease-out" }}
     >
       {/* Search */}
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-[#262A35]">
-        <Search className="w-3.5 h-3.5 text-[#8A92A6] flex-shrink-0" />
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
+        <Search className="w-3.5 h-3.5 text-muted flex-shrink-0" />
         <input
           ref={inputRef}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search emoji…"
-          className="flex-1 text-xs outline-none text-[#E6E9F0] placeholder-[#9aa3b8] bg-transparent"
+          className="flex-1 text-xs outline-none text-foreground placeholder-muted bg-transparent"
           onKeyDown={(e) => {
             if (e.key === "Escape") onClose();
           }}
         />
         {query && (
-          <button onClick={() => setQuery("")} className="text-[#8A92A6] hover:text-[#E6E9F0]">
+          <button onClick={() => setQuery("")} className="text-muted hover:text-foreground">
             <X className="w-3 h-3" />
           </button>
         )}
@@ -224,15 +224,15 @@ function EmojiPicker({
 
       {/* Category tabs — hidden during search */}
       {!query && (
-        <div className="flex border-b border-[#262A35] overflow-x-auto">
+        <div className="flex border-b border-border overflow-x-auto">
           {EMOJI_CATEGORIES.map((cat, i) => (
             <button
               key={cat.label}
               onClick={() => setActiveCategory(i)}
               className={`flex-shrink-0 px-3 py-1.5 text-[10px] font-semibold transition-colors ${
                 activeCategory === i
-                  ? "text-[#00C2FF] border-b-2 border-[#00C2FF]"
-                  : "text-[#8A92A6] hover:text-[#E6E9F0]"
+                  ? "text-accent border-b-2 border-accent"
+                  : "text-muted hover:text-foreground"
               }`}
             >
               {cat.label}
@@ -250,14 +250,14 @@ function EmojiPicker({
               onSelect(emoji);
               onClose();
             }}
-            className="flex items-center justify-center w-8 h-8 text-lg hover:bg-[#1B1F2A] rounded-lg transition-transform hover:scale-110"
+            className="flex items-center justify-center w-8 h-8 text-lg hover:bg-surface-sunken rounded-lg transition-transform hover:scale-110"
             title={emoji}
           >
             {emoji}
           </button>
         ))}
         {displayEmojis.length === 0 && (
-          <p className="col-span-8 text-center text-xs text-[#8A92A6] py-4">No results</p>
+          <p className="col-span-8 text-center text-xs text-muted py-4">No results</p>
         )}
       </div>
     </div>
@@ -310,7 +310,7 @@ function renderWithMentions(content: string, currentUserId: string, memberNames:
       const name = part.slice(1).trim().toLowerCase();
       if (name === "here" || name === "channel") {
         return (
-          <span key={i} className="bg-[#ea4335]/15 text-[#ea4335] font-semibold rounded px-0.5">
+          <span key={i} className="bg-crit/15 text-crit font-semibold rounded px-0.5">
             {part}
           </span>
         );
@@ -318,7 +318,7 @@ function renderWithMentions(content: string, currentUserId: string, memberNames:
       const isMention = memberNames.some(m => m.toLowerCase().startsWith(name));
       if (isMention) {
         return (
-          <span key={i} className="bg-[#00C2FF]/10 text-[#00C2FF] font-semibold rounded px-0.5">
+          <span key={i} className="bg-accent/10 text-accent font-semibold rounded px-0.5">
             {part}
           </span>
         );
@@ -353,8 +353,8 @@ function ReactionPill({
         onMouseLeave={() => setHovered(false)}
         className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-colors ${
           mine
-            ? "bg-[#00C2FF]/10 border-[#00C2FF] text-[#00C2FF]"
-            : "bg-[#12151D] border-[#262A35] text-[#8A92A6] hover:bg-[#00C2FF]/10"
+            ? "bg-accent/10 border-accent text-accent"
+            : "bg-surface border-border text-muted hover:bg-accent/10"
         }`}
       >
         {emoji} {count}
@@ -362,10 +362,10 @@ function ReactionPill({
 
       {hovered && reactors.length > 0 && (
         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 z-50 pointer-events-none">
-          <div className="bg-[#12151D] text-[#E6E9F0] text-[10px] rounded-lg px-2.5 py-1.5 whitespace-nowrap shadow-lg max-w-[200px] border border-[#262A35]">
-            <div className="font-semibold mb-0.5 text-[#5A6275]">Reacted by:</div>
-            <div className="text-[#E6E9F0] truncate">{reactors.join(", ")}</div>
-            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#262A35]" />
+          <div className="bg-surface text-foreground text-[10px] rounded-lg px-2.5 py-1.5 whitespace-nowrap shadow-lg max-w-[200px] border border-border">
+            <div className="font-semibold mb-0.5 text-subtle">Reacted by:</div>
+            <div className="text-foreground truncate">{reactors.join(", ")}</div>
+            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-border" />
           </div>
         </div>
       )}
@@ -394,16 +394,16 @@ function FileAttachmentCard({ content }: { content: string }) {
         ? `/api/drive/files/${data.fileId}/download?preview=1`
         : data.url;
       return (
-        <div className="mt-1.5 flex items-center gap-2 bg-[#12151D] border border-[#262A35] rounded-2xl px-3 py-2.5 max-w-sm w-full">
-          <div className="w-7 h-7 rounded-full bg-[#00C2FF]/15 flex items-center justify-center flex-shrink-0">
-            <Mic className="w-3.5 h-3.5 text-[#00C2FF]" />
+        <div className="mt-1.5 flex items-center gap-2 bg-surface border border-border rounded-2xl px-3 py-2.5 max-w-sm w-full">
+          <div className="w-7 h-7 rounded-full bg-accent/15 flex items-center justify-center flex-shrink-0">
+            <Mic className="w-3.5 h-3.5 text-accent" />
           </div>
           <audio
             src={previewUrl}
             controls
             preload="metadata"
             className="flex-1 h-8 min-w-0"
-            style={{ accentColor: "#00d2ff" }}
+            style={{ accentColor: "var(--accent)" }}
           />
         </div>
       );
@@ -419,27 +419,27 @@ function FileAttachmentCard({ content }: { content: string }) {
           <img
             src={previewUrl}
             alt={data.name}
-            className="rounded-xl max-w-xs max-h-48 object-cover border border-[#262A35]"
+            className="rounded-xl max-w-xs max-h-48 object-cover border border-border"
           />
-          <p className="text-[10px] text-[#7a8899] mt-1">{data.name} · {formatFileSize(data.size)}</p>
+          <p className="text-[10px] text-muted mt-1">{data.name} · {formatFileSize(data.size)}</p>
         </div>
       );
     }
 
     // All other files → download card
     return (
-      <div className="mt-1.5 inline-flex items-center gap-3 bg-[#12151D] border border-[#262A35] rounded-xl px-3 py-2.5 max-w-xs">
-        <FileText className="w-7 h-7 text-[#00C2FF] flex-shrink-0" />
+      <div className="mt-1.5 inline-flex items-center gap-3 bg-surface border border-border rounded-xl px-3 py-2.5 max-w-xs">
+        <FileText className="w-7 h-7 text-accent flex-shrink-0" />
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-[#E6E9F0] truncate">{data.name}</p>
-          <p className="text-[10px] text-[#8A92A6]">{formatFileSize(data.size)} · {data.mimeType.split("/")[1]?.toUpperCase()}</p>
+          <p className="text-sm font-semibold text-foreground truncate">{data.name}</p>
+          <p className="text-[10px] text-muted">{formatFileSize(data.size)} · {data.mimeType.split("/")[1]?.toUpperCase()}</p>
         </div>
         {data.url && (
           <a
             href={data.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[#00C2FF] hover:text-[#00C2FF] flex-shrink-0"
+            className="text-accent hover:text-accent flex-shrink-0"
             title="Download"
           >
             <Download className="w-4 h-4" />
@@ -448,7 +448,7 @@ function FileAttachmentCard({ content }: { content: string }) {
       </div>
     );
   } catch {
-    return <p className="text-sm text-[#E6E9F0] whitespace-pre-wrap break-words mt-0.5">{content}</p>;
+    return <p className="text-sm text-foreground whitespace-pre-wrap break-words mt-0.5">{content}</p>;
   }
 }
 
@@ -460,17 +460,17 @@ function BotResponseCard({ content }: { content: string }) {
     const data = JSON.parse(jsonStr) as { from: string; text: string };
     return (
       <div className="mt-1 flex items-start gap-3">
-        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#00C2FF]/10 border border-[#00C2FF]/20">
-          <Sparkles className="h-4 w-4 text-[#00C2FF]" />
+        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-accent/10 border border-accent/20">
+          <Sparkles className="h-4 w-4 text-accent" />
         </div>
-        <div className="flex-1 min-w-0 bg-[#1B1F2A] border border-[#262A35] rounded-xl p-4 max-w-xl">
-          <p className="text-[#00C2FF] font-semibold text-sm mb-1">{data.from}</p>
-          <p className="text-sm text-[#E6E9F0] whitespace-pre-wrap break-words leading-relaxed">{data.text}</p>
+        <div className="flex-1 min-w-0 bg-surface-sunken border border-border rounded-xl p-4 max-w-xl">
+          <p className="text-accent font-semibold text-sm mb-1">{data.from}</p>
+          <p className="text-sm text-foreground whitespace-pre-wrap break-words leading-relaxed">{data.text}</p>
         </div>
       </div>
     );
   } catch {
-    return <p className="text-sm text-[#E6E9F0] whitespace-pre-wrap break-words mt-0.5">{content}</p>;
+    return <p className="text-sm text-foreground whitespace-pre-wrap break-words mt-0.5">{content}</p>;
   }
 }
 
@@ -583,14 +583,14 @@ const MessageItem = memo(function MessageItem({
       (log.status === "ended" ? " ended" : " · Missed");
     return (
       <div className="flex items-center justify-center px-6 py-2">
-        <div className="inline-flex items-center gap-2 text-xs text-[#8A92A6] bg-[#1B1F2A] border border-[#262A35] rounded-full px-3 py-1">
+        <div className="inline-flex items-center gap-2 text-xs text-muted bg-surface-sunken border border-border rounded-full px-3 py-1">
           {isVideo ? (
-            <Video className="w-3.5 h-3.5 text-[#8A92A6]" />
+            <Video className="w-3.5 h-3.5 text-muted" />
           ) : (
-            <Phone className="w-3.5 h-3.5 text-[#8A92A6]" />
+            <Phone className="w-3.5 h-3.5 text-muted" />
           )}
           <span>{label}</span>
-          <span className="text-[#5A6275]">
+          <span className="text-subtle">
             {formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true })}
           </span>
         </div>
@@ -606,7 +606,7 @@ const MessageItem = memo(function MessageItem({
   return (
     <div
       id={`msg-${msg.id}`}
-      className={`group relative flex gap-3 px-3 lg:px-6 py-1.5 transition-colors scroll-mt-16 ${msg.isUrgent ? "bg-[#ea4335]/5 border-l-2 border-[#ea4335] hover:bg-[#ea4335]/10" : "hover:bg-[#1B1F2A]"}`}
+      className={`group relative flex gap-3 px-3 lg:px-6 py-1.5 transition-colors scroll-mt-16 ${msg.isUrgent ? "bg-crit/5 border-l-2 border-crit hover:bg-crit/10" : "hover:bg-surface-sunken"}`}
       onMouseEnter={() => !isDeleted && setShowActions(true)}
       onMouseLeave={() => {
         if (!showEmojiPicker) setShowActions(false);
@@ -617,15 +617,15 @@ const MessageItem = memo(function MessageItem({
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline gap-2 mb-0.5">
-          <span className="font-bold text-[#E6E9F0] text-[13.5px]">{msg.user.fullName}</span>
+          <span className="font-bold text-foreground text-[13.5px]">{msg.user.fullName}</span>
           {msg.isUrgent && (
-            <span className="text-[10px] font-semibold text-[#ea4335] bg-[#ea4335]/15 px-1.5 py-0.5 rounded-full leading-none inline-flex items-center gap-1"><Siren className="w-3 h-3" />Urgent</span>
+            <span className="text-[10px] font-semibold text-crit bg-crit/15 px-1.5 py-0.5 rounded-full leading-none inline-flex items-center gap-1"><Siren className="w-3 h-3" />Urgent</span>
           )}
-          <span className="font-mono text-[11px] text-[#5A6275]">
+          <span className="font-mono text-[11px] text-subtle">
             {formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true })}
           </span>
           {msg.editedAt && !isDeleted && (
-            <span className="text-[11px] text-[#5A6275] italic">(edited)</span>
+            <span className="text-[11px] text-subtle italic">(edited)</span>
           )}
         </div>
 
@@ -634,12 +634,12 @@ const MessageItem = memo(function MessageItem({
           <button
             type="button"
             onClick={() => onJumpTo?.(msg.quotedMessage!.id)}
-            className="mb-1 flex max-w-md flex-col rounded-md border-l-2 border-[#00C2FF] bg-[#12151D] px-2.5 py-1 text-left hover:bg-[#171B26] transition-colors"
+            className="mb-1 flex max-w-md flex-col rounded-md border-l-2 border-accent bg-surface px-2.5 py-1 text-left hover:bg-surface transition-colors"
           >
-            <span className="text-[11.5px] font-semibold text-[#00C2FF]">
+            <span className="text-[11.5px] font-semibold text-accent">
               {msg.quotedMessage.user.fullName}
             </span>
-            <span className="truncate text-[12.5px] text-[#8A92A6]">
+            <span className="truncate text-[12.5px] text-muted">
               {msg.quotedMessage.deletedAt ? "(message deleted)" : msg.quotedMessage.content || "Attachment"}
             </span>
           </button>
@@ -647,7 +647,7 @@ const MessageItem = memo(function MessageItem({
 
         {/* Deleted message */}
         {isDeleted ? (
-          <p className="text-sm text-[#8A92A6] italic mt-0.5">(message deleted)</p>
+          <p className="text-sm text-muted italic mt-0.5">(message deleted)</p>
         ) : editing ? (
           <div className="mt-1 flex items-center gap-2">
             <textarea
@@ -659,13 +659,13 @@ const MessageItem = memo(function MessageItem({
               }}
               onBlur={saveEdit}
               rows={1}
-              className="flex-1 text-sm border border-[#00C2FF] rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-[#00C2FF] resize-none bg-[#12151D] text-[#E6E9F0]"
+              className="flex-1 text-sm border border-accent rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-accent resize-none bg-surface text-foreground"
               autoFocus
             />
-            <button onClick={saveEdit} className="text-[#0f9d58] hover:text-[#0c7a43] flex-shrink-0">
+            <button onClick={saveEdit} className="text-ok hover:text-ok flex-shrink-0">
               <Check className="w-4 h-4" />
             </button>
-            <button onClick={() => setEditing(false)} className="text-[#8A92A6] hover:text-[#E6E9F0] flex-shrink-0">
+            <button onClick={() => setEditing(false)} className="text-muted hover:text-foreground flex-shrink-0">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -676,7 +676,7 @@ const MessageItem = memo(function MessageItem({
         ) : (
           <>
             {msg.content && (
-              <p className="text-[14px] leading-[1.55] text-[#C8CEDB] whitespace-pre-wrap break-words">
+              <p className="text-[14px] leading-[1.55] text-foreground whitespace-pre-wrap break-words">
                 {renderWithMentions(msg.content, currentUserId, memberNames)}
               </p>
             )}
@@ -685,7 +685,7 @@ const MessageItem = memo(function MessageItem({
                 <img
                   src={msg.attachmentUrl}
                   alt={msg.attachmentName ?? "image"}
-                  className="rounded-xl max-w-xs max-h-64 object-cover border border-[rgba(0,210,255,0.1)] hover:opacity-90 transition-opacity"
+                  className="rounded-xl max-w-xs max-h-64 object-cover border border-accent/[0.1] hover:opacity-90 transition-opacity"
                 />
               </a>
             )}
@@ -712,7 +712,7 @@ const MessageItem = memo(function MessageItem({
         {!isDeleted && onReply && (
           <button
             onClick={() => onReply(msg)}
-            className="mt-1.5 flex items-center gap-1.5 text-xs text-[#00C2FF] hover:underline"
+            className="mt-1.5 flex items-center gap-1.5 text-xs text-accent hover:underline"
           >
             <CornerDownRight className="w-3 h-3" />
             {msg.replies.length > 0
@@ -726,11 +726,11 @@ const MessageItem = memo(function MessageItem({
             Group: shown under the single most-recent message in the channel, visible
             to every member (not just the sender), listing who has caught up. */}
         {!isDeleted && !isGroupChat && isOwn && (
-          <div className="mt-1 flex items-center gap-1 text-[11px] text-[#5A6275]">
+          <div className="mt-1 flex items-center gap-1 text-[11px] text-subtle">
             {otherReaders.length > 0 ? (
               <>
-                <Check className="w-3 h-3 text-[#00C2FF]" />
-                <Check className="w-3 h-3 -ml-2 text-[#00C2FF]" />
+                <Check className="w-3 h-3 text-accent" />
+                <Check className="w-3 h-3 -ml-2 text-accent" />
                 <span>Seen {format(new Date(otherReaders[0].readAt), "h:mm a")}</span>
               </>
             ) : (
@@ -743,10 +743,10 @@ const MessageItem = memo(function MessageItem({
         )}
         {!isDeleted && isGroupChat && isLastInChannel && readers.length > 0 && (
           <div
-            className="mt-1 flex items-center gap-1 text-[11px] text-[#5A6275]"
+            className="mt-1 flex items-center gap-1 text-[11px] text-subtle"
             title={readers.map((r) => `${r.user.fullName} · ${format(new Date(r.readAt), "h:mm a")}`).join("\n")}
           >
-            <Check className="w-3 h-3 text-[#00C2FF]" />
+            <Check className="w-3 h-3 text-accent" />
             <span>
               Seen by {readers.slice(0, 2).map((r) => r.user.fullName.split(" ")[0]).join(", ")}
               {readers.length > 2 ? ` +${readers.length - 2}` : ""}
@@ -757,14 +757,14 @@ const MessageItem = memo(function MessageItem({
 
       {/* Action buttons — only on non-deleted, non-editing, non-bot messages */}
       {showActions && !editing && !isDeleted && !isBotResponse && (
-        <div className="absolute right-4 top-2 bg-[#12151D] border border-[#262A35] rounded-lg shadow-sm flex items-center gap-1 px-1 py-0.5">
+        <div className="absolute right-4 top-2 bg-surface border border-border rounded-lg shadow-sm flex items-center gap-1 px-1 py-0.5">
           {/* Quick reactions */}
-          <div className="flex items-center border-r border-[#262A35] pr-1 mr-0.5">
+          <div className="flex items-center border-r border-border pr-1 mr-0.5">
             {QUICK_EMOJIS.slice(0, 4).map((e) => (
               <button
                 key={e}
                 onClick={() => onReact(msg.id, e)}
-                className="text-sm p-1 hover:bg-[#1B1F2A] rounded-lg hover:scale-110 transition-transform"
+                className="text-sm p-1 hover:bg-surface-sunken rounded-lg hover:scale-110 transition-transform"
                 title={e}
               >
                 {e}
@@ -776,7 +776,7 @@ const MessageItem = memo(function MessageItem({
           <div className="relative" ref={pickerRef}>
             <button
               onClick={() => setShowEmojiPicker((p) => !p)}
-              className="p-1.5 hover:bg-[#1B1F2A] hover:text-[#E6E9F0] rounded-md text-xs transition-colors text-[#8A92A6]"
+              className="p-1.5 hover:bg-surface-sunken hover:text-foreground rounded-md text-xs transition-colors text-muted"
               title="More reactions"
             >
               <Smile className="w-4 h-4" />
@@ -792,7 +792,7 @@ const MessageItem = memo(function MessageItem({
           {onQuoteReply && (
             <button
               onClick={() => onQuoteReply(msg)}
-              className="p-1.5 hover:bg-[#1B1F2A] hover:text-[#E6E9F0] rounded-md text-xs transition-colors text-[#8A92A6]"
+              className="p-1.5 hover:bg-surface-sunken hover:text-foreground rounded-md text-xs transition-colors text-muted"
               title="Reply"
             >
               <ReplyIcon className="w-4 h-4" />
@@ -801,7 +801,7 @@ const MessageItem = memo(function MessageItem({
           {onReply && (
             <button
               onClick={() => onReply(msg)}
-              className="p-1.5 hover:bg-[#1B1F2A] hover:text-[#E6E9F0] rounded-md text-xs transition-colors text-[#8A92A6]"
+              className="p-1.5 hover:bg-surface-sunken hover:text-foreground rounded-md text-xs transition-colors text-muted"
               title="Reply in thread"
             >
               <CornerDownRight className="w-4 h-4" />
@@ -811,7 +811,7 @@ const MessageItem = memo(function MessageItem({
             <button
               onClick={() => void createTaskFromMessage()}
               disabled={creatingTask || taskCreated}
-              className={`p-1.5 hover:bg-[#1B1F2A] rounded-md text-xs transition-colors disabled:opacity-60 ${taskCreated ? "text-emerald-400" : "text-[#8A92A6] hover:text-[#E6E9F0]"}`}
+              className={`p-1.5 hover:bg-surface-sunken rounded-md text-xs transition-colors disabled:opacity-60 ${taskCreated ? "text-ok" : "text-muted hover:text-foreground"}`}
               title={taskCreated ? "Task created" : "Create task from this message"}
             >
               {creatingTask ? <Loader2 className="w-4 h-4 animate-spin" /> : <ListPlus className="w-4 h-4" />}
@@ -820,7 +820,7 @@ const MessageItem = memo(function MessageItem({
           {onPin && (
             <button
               onClick={() => onPin(msg.id, !msg.isPinned)}
-              className={`p-1.5 rounded-md text-xs transition-colors ${msg.isPinned ? "text-[#00C2FF]" : "text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0]"}`}
+              className={`p-1.5 rounded-md text-xs transition-colors ${msg.isPinned ? "text-accent" : "text-muted hover:bg-surface-sunken hover:text-foreground"}`}
               title={msg.isPinned ? "Unpin message" : "Pin message"}
             >
               {msg.isPinned ? <PinOff className="w-4 h-4" /> : <Pin className="w-4 h-4" />}
@@ -830,14 +830,14 @@ const MessageItem = memo(function MessageItem({
             <>
               <button
                 onClick={() => { setEditing(true); setShowActions(false); }}
-                className="p-1.5 hover:bg-[#1B1F2A] hover:text-[#E6E9F0] rounded-md text-xs transition-colors text-[#8A92A6]"
+                className="p-1.5 hover:bg-surface-sunken hover:text-foreground rounded-md text-xs transition-colors text-muted"
                 title="Edit"
               >
                 <Edit3 className="w-4 h-4" />
               </button>
               <button
                 onClick={() => onDelete(msg.id)}
-                className="p-1.5 hover:bg-[#ea4335]/10 rounded-md text-xs transition-colors text-[#8A92A6] hover:text-[#ea4335]"
+                className="p-1.5 hover:bg-crit/10 rounded-md text-xs transition-colors text-muted hover:text-crit"
                 title="Delete"
               >
                 <Trash2 className="w-4 h-4" />
@@ -855,11 +855,11 @@ const MessageItem = memo(function MessageItem({
 function DateSeparator({ label }: { label: string }) {
   return (
     <div className="flex items-center gap-3 px-6 py-3">
-      <div className="flex-1 h-px bg-[#1B1F2A]" />
-      <span className="text-xs text-[#8A92A6] font-medium whitespace-nowrap">
+      <div className="flex-1 h-px bg-surface-sunken" />
+      <span className="text-xs text-muted font-medium whitespace-nowrap">
         {label}
       </span>
-      <div className="flex-1 h-px bg-[#1B1F2A]" />
+      <div className="flex-1 h-px bg-surface-sunken" />
     </div>
   );
 }
@@ -917,28 +917,28 @@ function ThreadPanel({
   };
 
   return (
-    <div className="bg-[#12151D] border-l border-[#262A35] hidden lg:flex lg:flex-col lg:w-80">
+    <div className="bg-surface hidden lg:flex lg:flex-col lg:w-80 lg:flex-shrink-0 lg:rounded-panel lg:border lg:border-border lg:shadow-sm">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-[#262A35] flex items-center justify-between font-semibold text-[#E6E9F0] text-sm flex-shrink-0">
+      <div className="px-4 py-3 border-b border-border flex items-center justify-between font-semibold text-foreground text-sm flex-shrink-0">
         <div className="flex items-center gap-2">
-          <CornerDownRight className="w-4 h-4 text-[#8A92A6]" />
+          <CornerDownRight className="w-4 h-4 text-muted" />
           <span>Thread</span>
         </div>
         <button
           onClick={onClose}
-          className="p-1.5 text-[#8A92A6] hover:text-[#E6E9F0] hover:bg-[#1B1F2A] rounded-md transition-colors"
+          className="p-1.5 text-muted hover:text-foreground hover:bg-surface-sunken rounded-md transition-colors"
         >
           <X className="w-4 h-4" />
         </button>
       </div>
 
       {/* Parent message preview */}
-      <div className="px-4 py-3 bg-[#00C2FF]/10 border-b border-[#262A35] flex-shrink-0">
+      <div className="px-4 py-3 bg-accent/10 border-b border-border flex-shrink-0">
         <div className="flex items-start gap-2">
           <Avatar name={parentMsg.user.fullName} avatarUrl={parentMsg.user.avatarUrl} size="sm" />
           <div className="flex-1 min-w-0">
-            <span className="text-xs font-semibold text-[#E6E9F0]">{parentMsg.user.fullName}</span>
-            <p className="text-xs text-[#8A92A6] mt-0.5 line-clamp-3 whitespace-pre-wrap break-words">
+            <span className="text-xs font-semibold text-foreground">{parentMsg.user.fullName}</span>
+            <p className="text-xs text-muted mt-0.5 line-clamp-3 whitespace-pre-wrap break-words">
               {parentMsg.content}
             </p>
           </div>
@@ -948,7 +948,7 @@ function ThreadPanel({
       {/* Replies */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden py-2 space-y-1">
         {messages.length === 0 ? (
-          <div className="text-center text-[#8A92A6] py-8">
+          <div className="text-center text-muted py-8">
             <CornerDownRight className="w-8 h-8 mx-auto mb-2 opacity-20" />
             <p className="text-xs">No replies yet. Start the thread!</p>
           </div>
@@ -969,8 +969,8 @@ function ThreadPanel({
       </div>
 
       {/* Composer */}
-      <div className="border-t border-[#262A35] px-4 py-3 flex-shrink-0">
-        <div className="flex items-end gap-2 bg-[#12151D] border border-[#262A35] rounded-lg px-3 py-2">
+      <div className="border-t border-border px-4 py-3 flex-shrink-0">
+        <div className="flex items-end gap-2 bg-surface border border-border rounded-lg px-3 py-2">
           <textarea
             value={composerText}
             onChange={(e) => setComposerText(e.target.value)}
@@ -982,19 +982,19 @@ function ThreadPanel({
             }}
             placeholder="Reply in thread…"
             rows={1}
-            className="flex-1 bg-transparent resize-none text-sm text-[#E6E9F0] placeholder-[#9aa3b8] outline-none max-h-24 overflow-y-auto"
+            className="flex-1 bg-transparent resize-none text-sm text-foreground placeholder-muted outline-none max-h-24 overflow-y-auto"
             style={{ minHeight: "1.25rem" }}
           />
           <button
             onClick={send}
             disabled={!composerText.trim() || sending}
-            className="text-[#06121A] rounded-lg p-2 transition-opacity hover:opacity-90 disabled:opacity-40 flex-shrink-0"
-            style={{ background: "linear-gradient(135deg, #00C2FF, #0098E6)" }}
+            className="text-accent-foreground rounded-lg p-2 transition-opacity hover:opacity-90 disabled:opacity-40 flex-shrink-0"
+            style={{ background: "linear-gradient(135deg, var(--accent), var(--accent-hover))" }}
           >
             <Send className="w-3.5 h-3.5" />
           </button>
         </div>
-        <p className="text-[10px] text-[#8A92A6] mt-1 ml-1">Enter to reply</p>
+        <p className="text-[10px] text-muted mt-1 ml-1">Enter to reply</p>
       </div>
     </div>
   );
@@ -1037,16 +1037,16 @@ function NewChannelModal({
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="bg-[#12151D] rounded-2xl shadow-xl p-6 w-full max-w-md mx-4 border border-[#262A35]">
+      <div className="bg-surface rounded-2xl shadow-xl p-6 w-full max-w-md mx-4 border border-border">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-[#E6E9F0]">Create Channel</h2>
-          <button onClick={onClose} className="text-[#8A92A6] hover:text-[#E6E9F0]">
+          <h2 className="text-lg font-semibold text-foreground">Create Channel</h2>
+          <button onClick={onClose} className="text-muted hover:text-foreground">
             <X className="w-5 h-5" />
           </button>
         </div>
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-[#8A92A6] mb-1">
+            <label className="block text-xs font-semibold text-muted mb-1">
               Channel Name
             </label>
             <input
@@ -1054,19 +1054,19 @@ function NewChannelModal({
               onChange={(e) => setName(e.target.value.toLowerCase().replace(/\s+/g, "-"))}
               onKeyDown={(e) => { if (e.key === "Enter" && name.trim() && !creating) void submit(); }}
               placeholder="e.g. engineering"
-              className="w-full px-3 py-2 border border-[#262A35] rounded-xl text-sm focus:ring-2 focus:ring-[#00C2FF] focus:bg-[#12151D] outline-none bg-[#12151D] text-[#E6E9F0] placeholder-[#9aa3b8]"
+              className="w-full px-3 py-2 border border-border rounded-xl text-sm focus:ring-2 focus:ring-accent focus:bg-surface outline-none bg-surface text-foreground placeholder-muted"
               autoFocus
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-[#8A92A6] mb-1">
+            <label className="block text-xs font-semibold text-muted mb-1">
               Description (optional)
             </label>
             <input
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="What is this channel about?"
-              className="w-full px-3 py-2 border border-[#262A35] rounded-xl text-sm focus:ring-2 focus:ring-[#00C2FF] focus:bg-[#12151D] outline-none bg-[#12151D] text-[#E6E9F0] placeholder-[#9aa3b8]"
+              className="w-full px-3 py-2 border border-border rounded-xl text-sm focus:ring-2 focus:ring-accent focus:bg-surface outline-none bg-surface text-foreground placeholder-muted"
             />
           </div>
           <label className="flex items-center gap-3 cursor-pointer">
@@ -1076,7 +1076,7 @@ function NewChannelModal({
               onChange={(e) => setIsPrivate(e.target.checked)}
               className="rounded"
             />
-            <span className="text-sm text-[#E6E9F0]">Private channel</span>
+            <span className="text-sm text-foreground">Private channel</span>
           </label>
           <label className="flex items-start gap-3 cursor-pointer">
             <input
@@ -1086,25 +1086,25 @@ function NewChannelModal({
               className="rounded mt-0.5"
             />
             <div>
-              <span className="text-sm text-[#E6E9F0] flex items-center gap-1.5">
-                <Megaphone className="w-3.5 h-3.5 text-[#8A92A6]" />
+              <span className="text-sm text-foreground flex items-center gap-1.5">
+                <Megaphone className="w-3.5 h-3.5 text-muted" />
                 Broadcast channel
               </span>
-              <p className="text-[11px] text-[#5A6275] mt-0.5">Only you can post. Everyone can follow and read.</p>
+              <p className="text-[11px] text-subtle mt-0.5">Only you can post. Everyone can follow and read.</p>
             </div>
           </label>
         </div>
         <div className="flex gap-3 mt-6">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2 border border-[#262A35] rounded-xl text-sm font-semibold text-[#8A92A6] hover:bg-[#1B1F2A]"
+            className="flex-1 px-4 py-2 border border-border rounded-xl text-sm font-semibold text-muted hover:bg-surface-sunken"
           >
             Cancel
           </button>
           <button
             onClick={() => void submit()}
             disabled={!name.trim() || creating}
-            className="flex-1 px-4 py-2 bg-[#00C2FF] text-[#06121A] rounded-xl text-sm font-semibold hover:bg-[#0098E6] disabled:opacity-50"
+            className="flex-1 px-4 py-2 bg-accent text-accent-foreground rounded-xl text-sm font-semibold hover:bg-accent-hover disabled:opacity-50"
           >
             {creating ? "Creating…" : "Create Channel"}
           </button>
@@ -1199,28 +1199,28 @@ function NewGroupDMModal({
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="bg-[#12151D] rounded-2xl shadow-xl p-6 w-full max-w-md mx-4 border border-[#262A35]">
+      <div className="bg-surface rounded-2xl shadow-xl p-6 w-full max-w-md mx-4 border border-border">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-[#E6E9F0]">
+          <h2 className="text-lg font-semibold text-foreground">
             {selected.size > 1 ? "New Group Message" : "New Direct Message"}
           </h2>
-          <button onClick={onClose} className="text-[#8A92A6] hover:text-[#E6E9F0]">
+          <button onClick={onClose} className="text-muted hover:text-foreground">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <p className="text-xs text-[#8A92A6] mb-3">
+        <p className="text-xs text-muted mb-3">
           Select one person for a DM or multiple for a group conversation.
         </p>
 
         {/* Search */}
-        <div className="flex items-center gap-2 px-3 py-2 border border-[#262A35] rounded-xl mb-3 bg-[#12151D]">
-          <Search className="w-3.5 h-3.5 text-[#8A92A6]" />
+        <div className="flex items-center gap-2 px-3 py-2 border border-border rounded-xl mb-3 bg-surface">
+          <Search className="w-3.5 h-3.5 text-muted" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search people…"
-            className="flex-1 text-sm outline-none bg-transparent text-[#E6E9F0] placeholder-[#9aa3b8]"
+            className="flex-1 text-sm outline-none bg-transparent text-foreground placeholder-muted"
           />
         </div>
 
@@ -1232,7 +1232,7 @@ function NewGroupDMModal({
               return u ? (
                 <span
                   key={id}
-                  className="flex items-center gap-1 bg-[#00C2FF]/10 text-[#00C2FF] text-xs px-2.5 py-1 rounded-full"
+                  className="flex items-center gap-1 bg-accent/10 text-accent text-xs px-2.5 py-1 rounded-full"
                 >
                   {u.fullName}
                   <button onClick={() => toggle(id)} className="ml-0.5 opacity-60 hover:opacity-100">
@@ -1248,10 +1248,10 @@ function NewGroupDMModal({
         <div className="max-h-52 overflow-y-auto space-y-0.5 mb-4">
           {loading ? (
             <div className="flex items-center justify-center py-6">
-              <Loader2 className="w-5 h-5 animate-spin text-[#8A92A6]" />
+              <Loader2 className="w-5 h-5 animate-spin text-muted" />
             </div>
           ) : filtered.length === 0 ? (
-            <p className="text-center text-xs text-[#8A92A6] py-4">No users found</p>
+            <p className="text-center text-xs text-muted py-4">No users found</p>
           ) : (
             filtered.map((u) => (
               <button
@@ -1259,23 +1259,23 @@ function NewGroupDMModal({
                 onClick={() => toggle(u.id)}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left transition-colors ${
                   selected.has(u.id)
-                    ? "bg-[#00C2FF]/10"
-                    : "hover:bg-[#12151D]"
+                    ? "bg-accent/10"
+                    : "hover:bg-surface"
                 }`}
               >
                 <div
                   className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${
                     selected.has(u.id)
-                      ? "bg-[#00C2FF] border-[#00C2FF]"
-                      : "border-[#262A35]"
+                      ? "bg-accent border-accent"
+                      : "border-border"
                   }`}
                 >
-                  {selected.has(u.id) && <Check className="w-3 h-3 text-white" />}
+                  {selected.has(u.id) && <Check className="w-3 h-3 text-accent-foreground" />}
                 </div>
                 <Avatar name={u.fullName} avatarUrl={u.avatarUrl} size="sm" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-[#E6E9F0] truncate">{u.fullName}</p>
-                  <p className="text-[10px] text-[#8A92A6] truncate">{u.email}</p>
+                  <p className="text-sm font-semibold text-foreground truncate">{u.fullName}</p>
+                  <p className="text-[10px] text-muted truncate">{u.email}</p>
                 </div>
               </button>
             ))
@@ -1285,14 +1285,14 @@ function NewGroupDMModal({
         <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2 border border-[#262A35] rounded-xl text-sm font-semibold text-[#8A92A6] hover:bg-[#1B1F2A]"
+            className="flex-1 px-4 py-2 border border-border rounded-xl text-sm font-semibold text-muted hover:bg-surface-sunken"
           >
             Cancel
           </button>
           <button
             onClick={submit}
             disabled={selected.size === 0 || creating}
-            className="flex-1 px-4 py-2 bg-[#00C2FF] text-[#06121A] rounded-xl text-sm font-semibold hover:bg-[#0098E6] disabled:opacity-50"
+            className="flex-1 px-4 py-2 bg-accent text-accent-foreground rounded-xl text-sm font-semibold hover:bg-accent-hover disabled:opacity-50"
           >
             {creating ? "Creating…" : selected.size === 1 ? "Send Message" : `Start Group (${selected.size})`}
           </button>
@@ -1322,29 +1322,29 @@ function SummaryModal({
 }) {
   const sentimentColor =
     summary.sentiment === "positive"
-      ? "text-green-400"
+      ? "text-ok"
       : summary.sentiment === "negative"
-      ? "text-red-400"
-      : "text-[#5A6275]";
+      ? "text-crit"
+      : "text-subtle";
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="bg-[#12151D] rounded-2xl shadow-xl p-6 w-full max-w-lg mx-4 border border-[#262A35]">
+      <div className="bg-surface rounded-2xl shadow-xl p-6 w-full max-w-lg mx-4 border border-border">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-[#00C2FF]" />
-            <h2 className="text-lg font-semibold text-[#E6E9F0]">
+            <Sparkles className="w-5 h-5 text-accent" />
+            <h2 className="text-lg font-semibold text-foreground">
               #{channelName} Summary
             </h2>
           </div>
-          <button onClick={onClose} className="text-[#8A92A6] hover:text-[#E6E9F0]">
+          <button onClick={onClose} className="text-muted hover:text-foreground">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Summary */}
-        <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-4 mb-4">
-          <p className="text-sm text-[#E6E9F0] leading-relaxed">{summary.summary}</p>
+        <div className="bg-surface border border-border rounded-xl p-4 mb-4">
+          <p className="text-sm text-foreground leading-relaxed">{summary.summary}</p>
           <p className={`text-[10px] font-semibold mt-2 ${sentimentColor}`}>
             Sentiment: {summary.sentiment}
           </p>
@@ -1353,13 +1353,13 @@ function SummaryModal({
         {/* Key Points */}
         {summary.keyPoints.length > 0 && (
           <div className="mb-4">
-            <h3 className="text-xs font-semibold text-[#8A92A6] mb-2">
+            <h3 className="text-xs font-semibold text-muted mb-2">
               Key Points
             </h3>
             <ul className="space-y-1.5">
               {summary.keyPoints.map((point, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-[#E6E9F0]">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#00C2FF] mt-1.5 flex-shrink-0" />
+                <li key={i} className="flex items-start gap-2 text-sm text-foreground">
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent mt-1.5 flex-shrink-0" />
                   {point}
                 </li>
               ))}
@@ -1370,13 +1370,13 @@ function SummaryModal({
         {/* Action Items */}
         {summary.actionItems.length > 0 && (
           <div className="mb-4">
-            <h3 className="text-xs font-semibold text-[#8A92A6] mb-2">
+            <h3 className="text-xs font-semibold text-muted mb-2">
               Action Items
             </h3>
             <ul className="space-y-1.5">
               {summary.actionItems.map((item, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-[#E6E9F0]">
-                  <Check className="w-3.5 h-3.5 text-[#0f9d58] mt-0.5 flex-shrink-0" />
+                <li key={i} className="flex items-start gap-2 text-sm text-foreground">
+                  <Check className="w-3.5 h-3.5 text-ok mt-0.5 flex-shrink-0" />
                   {item}
                 </li>
               ))}
@@ -1386,7 +1386,7 @@ function SummaryModal({
 
         <button
           onClick={onClose}
-          className="w-full px-4 py-2 bg-[#00C2FF] text-[#06121A] rounded-xl text-sm font-semibold hover:bg-[#0098E6]"
+          className="w-full px-4 py-2 bg-accent text-accent-foreground rounded-xl text-sm font-semibold hover:bg-accent-hover"
         >
           Close
         </button>
@@ -1431,19 +1431,19 @@ function ChannelSection({
       <div className="flex items-center justify-between px-2.5 pt-3.5 pb-2">
         <button
           onClick={() => setCollapsed((p) => !p)}
-          className="flex items-center gap-1 text-[#5A6275] hover:text-[#8A92A6] transition-colors"
+          className="flex items-center gap-1 text-subtle hover:text-muted transition-colors"
         >
           {collapsed ? (
             <ChevronRight className="w-3 h-3" />
           ) : (
             <ChevronDown className="w-3 h-3" />
           )}
-          <span className="text-[11px] font-bold text-[#5A6275] uppercase tracking-[0.5px]">{label}</span>
+          <span className="text-[11px] font-bold text-subtle uppercase tracking-[0.5px]">{label}</span>
         </button>
         {onNew && (
           <button
             onClick={onNew}
-            className="text-[#5A6275] hover:text-[#8A92A6] transition-colors"
+            className="text-subtle hover:text-muted transition-colors"
             title={newTitle ?? "New"}
           >
             <Plus className="w-4 h-4" />
@@ -1466,20 +1466,20 @@ function ChannelSection({
               // Direct message / group row — 44px with avatar + presence dot
               const other = ch.members?.find((m) => m.userId !== currentUserId);
               const otherStatus = other ? presenceData?.[other.userId]?.status ?? "offline" : "offline";
-              const statusColors: Record<string, string> = { online: "#10B981", away: "#f59e0b", busy: "#ef4444", in_meeting: "#a855f7", dnd: "#ef4444", offline: "#5A6275" };
-              const presence = statusColors[otherStatus] ?? "#5A6275";
+              const statusColors: Record<string, string> = { online: "var(--ok)", away: "var(--warn)", busy: "var(--crit)", in_meeting: "var(--violet)", dnd: "var(--crit)", offline: "#9b9a93" };
+              const presence = statusColors[otherStatus] ?? "var(--subtle)";
               return (
                 <button
                   key={ch.id}
                   onClick={() => onSelect(ch.id)}
                   className={`w-full flex items-center gap-2.5 h-11 rounded-lg px-[11px] text-left transition-colors ${
-                    isSelected ? "bg-[#1B1F2A]" : "hover:bg-[#1B1F2A]"
+                    isSelected ? "bg-surface-sunken" : "hover:bg-surface-sunken"
                   }`}
                 >
                   <div className="relative flex-shrink-0">
                     {isGroup ? (
-                      <div className="w-[30px] h-[30px] rounded-full bg-[#1B1F2A] border border-[#262A35] flex items-center justify-center">
-                        <Users className="w-3.5 h-3.5 text-[#8A92A6]" />
+                      <div className="w-[30px] h-[30px] rounded-full bg-surface-sunken border border-border flex items-center justify-center">
+                        <Users className="w-3.5 h-3.5 text-muted" />
                       </div>
                     ) : (
                       <div className="w-[30px] h-[30px] rounded-full flex items-center justify-center text-[11px] font-bold text-white" style={{ background: avatarGradient(ch.name) }}>
@@ -1487,13 +1487,13 @@ function ChannelSection({
                       </div>
                     )}
                     <span
-                      className="absolute -bottom-px -right-px w-2.5 h-2.5 rounded-full border-2 border-[#12151D]"
+                      className="absolute -bottom-px -right-px w-2.5 h-2.5 rounded-full border-2 border-border"
                       style={{ background: presence }}
                     />
                   </div>
-                  <span className={`truncate flex-1 text-[13px] ${isSelected || hasUnread ? "font-semibold text-[#E6E9F0]" : "font-medium text-[#8A92A6]"}`}>{ch.name}</span>
+                  <span className={`truncate flex-1 text-[13px] ${isSelected || hasUnread ? "font-semibold text-foreground" : "font-medium text-muted"}`}>{ch.name}</span>
                   {showBadge && (
-                    <span className="font-mono bg-[#00C2FF] text-[#06121A] text-[10.5px] rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-[5px] font-bold leading-none flex-shrink-0">
+                    <span className="font-mono bg-accent text-accent-foreground text-[10.5px] rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-[5px] font-bold leading-none flex-shrink-0">
                       {badgeCount > 99 ? "99+" : badgeCount}
                     </span>
                   )}
@@ -1502,13 +1502,13 @@ function ChannelSection({
             }
 
             // Channel row — 38px with colored #
-            const hashColor = isSelected || hasUnread ? "#00C2FF" : "#5A6275";
+            const hashColor = isSelected || hasUnread ? "var(--accent)" : "var(--subtle)";
             return (
               <button
                 key={ch.id}
                 onClick={() => onSelect(ch.id)}
                 className={`w-full flex items-center gap-2.5 h-[38px] rounded-lg px-[11px] text-left transition-colors ${
-                  isSelected ? "bg-[#1B1F2A]" : "hover:bg-[#1B1F2A]"
+                  isSelected ? "bg-surface-sunken" : "hover:bg-surface-sunken"
                 }`}
               >
                 {ch.isBroadcast ? (
@@ -1516,9 +1516,9 @@ function ChannelSection({
                 ) : (
                   <span className="text-[15px] font-semibold leading-none flex-shrink-0" style={{ color: hashColor }}>#</span>
                 )}
-                <span className={`truncate flex-1 text-[13px] ${isSelected || hasUnread ? "font-semibold text-[#E6E9F0]" : "font-medium text-[#8A92A6]"}`}>{ch.name}</span>
+                <span className={`truncate flex-1 text-[13px] ${isSelected || hasUnread ? "font-semibold text-foreground" : "font-medium text-muted"}`}>{ch.name}</span>
                 {showBadge && (
-                  <span className="font-mono bg-[#00C2FF] text-[#06121A] text-[10.5px] rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-[5px] font-bold leading-none flex-shrink-0">
+                  <span className="font-mono bg-accent text-accent-foreground text-[10.5px] rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-[5px] font-bold leading-none flex-shrink-0">
                     {badgeCount > 99 ? "99+" : badgeCount}
                   </span>
                 )}
@@ -1526,7 +1526,7 @@ function ChannelSection({
             );
           })}
           {channels.length === 0 && (
-            <p className="text-[#5A6275] text-[11px] px-[11px] py-1 italic">None yet</p>
+            <p className="text-subtle text-[11px] px-[11px] py-1 italic">None yet</p>
           )}
         </div>
       )}
@@ -1607,10 +1607,10 @@ function AddMembersModal({
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="bg-[#12151D] rounded-2xl shadow-xl p-6 w-full max-w-md mx-4 border border-[#262A35]">
+      <div className="bg-surface rounded-2xl shadow-xl p-6 w-full max-w-md mx-4 border border-border">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-[#E6E9F0]">Add Members to #{channel.name}</h2>
-          <button onClick={onClose} className="text-[#8A92A6] hover:text-[#E6E9F0]">
+          <h2 className="text-lg font-semibold text-foreground">Add Members to #{channel.name}</h2>
+          <button onClick={onClose} className="text-muted hover:text-foreground">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -1619,14 +1619,14 @@ function AddMembersModal({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search people…"
-          className="w-full bg-[#12151D] border border-[#262A35] rounded-xl px-4 py-2.5 text-sm text-[#E6E9F0] placeholder-[#9aa3b8] outline-none focus:border-[#00C2FF] mb-3"
+          className="w-full bg-surface border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder-muted outline-none focus:border-accent mb-3"
         />
 
         <div className="max-h-56 overflow-y-auto space-y-1 mb-4">
           {loading ? (
-            <p className="text-sm text-[#8A92A6] text-center py-4">Loading users…</p>
+            <p className="text-sm text-muted text-center py-4">Loading users…</p>
           ) : filtered.length === 0 ? (
-            <p className="text-sm text-[#8A92A6] text-center py-4">
+            <p className="text-sm text-muted text-center py-4">
               {users.length === 0 ? "All users are already members" : "No matching users"}
             </p>
           ) : (
@@ -1635,34 +1635,34 @@ function AddMembersModal({
                 key={u.id}
                 onClick={() => toggle(u.id)}
                 className={`w-full flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-left transition-colors ${
-                  selected.has(u.id) ? "bg-[#00C2FF]/10 text-[#00C2FF] border border-[#00C2FF]/30" : "text-[#E6E9F0] hover:bg-[#1B1F2A]"
+                  selected.has(u.id) ? "bg-accent/10 text-accent border border-accent/30" : "text-foreground hover:bg-surface-sunken"
                 }`}
               >
-                <div className="w-8 h-8 rounded-full bg-[#1B1F2A] border border-[#262A35] flex items-center justify-center text-xs font-semibold text-[#00C2FF] flex-shrink-0">
+                <div className="w-8 h-8 rounded-full bg-surface-sunken border border-border flex items-center justify-center text-xs font-semibold text-accent flex-shrink-0">
                   {u.fullName[0]?.toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">{u.fullName}</p>
-                  <p className="text-xs text-[#8A92A6] truncate">{u.email}</p>
+                  <p className="text-xs text-muted truncate">{u.email}</p>
                 </div>
-                {selected.has(u.id) && <Check className="w-4 h-4 text-[#00C2FF] flex-shrink-0" />}
+                {selected.has(u.id) && <Check className="w-4 h-4 text-accent flex-shrink-0" />}
               </button>
             ))
           )}
         </div>
 
         {selected.size > 0 && (
-          <p className="text-xs text-[#8A92A6] mb-3">{selected.size} selected</p>
+          <p className="text-xs text-muted mb-3">{selected.size} selected</p>
         )}
 
         <div className="flex gap-2">
-          <button onClick={onClose} className="flex-1 px-4 py-2 border border-[#262A35] text-[#8A92A6] rounded-xl text-sm hover:bg-[#1B1F2A]">
+          <button onClick={onClose} className="flex-1 px-4 py-2 border border-border text-muted rounded-xl text-sm hover:bg-surface-sunken">
             Cancel
           </button>
           <button
             onClick={submit}
             disabled={selected.size === 0 || saving}
-            className="flex-1 px-4 py-2 bg-[#00C2FF] text-[#06121A] rounded-xl text-sm font-semibold hover:bg-[#0098E6] disabled:opacity-50"
+            className="flex-1 px-4 py-2 bg-accent text-accent-foreground rounded-xl text-sm font-semibold hover:bg-accent-hover disabled:opacity-50"
           >
             {saving ? "Adding…" : `Add ${selected.size > 0 ? selected.size : ""} Member${selected.size !== 1 ? "s" : ""}`}
           </button>
@@ -1722,19 +1722,19 @@ function ManageMembersModal({
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="bg-[#12151D] rounded-2xl shadow-xl p-6 w-full max-w-md mx-4 border border-[#262A35]">
+      <div className="bg-surface rounded-2xl shadow-xl p-6 w-full max-w-md mx-4 border border-border">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-[#E6E9F0]">
+          <h2 className="text-lg font-semibold text-foreground">
             Members {channel.type !== "DIRECT" ? `(${channel.members.length})` : ""}
           </h2>
-          <button onClick={onClose} className="text-[#8A92A6] hover:text-[#E6E9F0]">
+          <button onClick={onClose} className="text-muted hover:text-foreground">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <div className="max-h-80 overflow-y-auto space-y-1 mb-4">
           {loading ? (
-            <p className="text-sm text-[#8A92A6] text-center py-4">Loading members…</p>
+            <p className="text-sm text-muted text-center py-4">Loading members…</p>
           ) : (
             roster.map((m) => {
               const u = usersById.get(m.userId);
@@ -1743,16 +1743,16 @@ function ManageMembersModal({
               const isAdmin = m.role === "ADMIN";
               const busy = busyUserId === m.userId;
               return (
-                <div key={m.userId} className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm hover:bg-[#1B1F2A]">
-                  <div className="w-8 h-8 rounded-full bg-[#1B1F2A] border border-[#262A35] flex items-center justify-center text-xs font-semibold text-[#00C2FF] flex-shrink-0">
+                <div key={m.userId} className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm hover:bg-surface-sunken">
+                  <div className="w-8 h-8 rounded-full bg-surface-sunken border border-border flex items-center justify-center text-xs font-semibold text-accent flex-shrink-0">
                     {name[0]?.toUpperCase() ?? "?"}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate text-[#E6E9F0] flex items-center gap-1.5">
+                    <p className="font-medium truncate text-foreground flex items-center gap-1.5">
                       {name}{isSelf ? " (you)" : ""}
-                      {isAdmin && <Crown className="w-3 h-3 text-[#f4b400] flex-shrink-0" />}
+                      {isAdmin && <Crown className="w-3 h-3 text-warn flex-shrink-0" />}
                     </p>
-                    <p className="text-xs text-[#8A92A6] truncate">{u?.email ?? ""}</p>
+                    <p className="text-xs text-muted truncate">{u?.email ?? ""}</p>
                   </div>
 
                   {channel.type !== "DIRECT" && isChannelAdmin && !isSelf && (
@@ -1761,7 +1761,7 @@ function ManageMembersModal({
                         onClick={() => void runAction(m.userId, () => onChangeRole(m.userId, isAdmin ? "MEMBER" : "ADMIN"))}
                         disabled={busy}
                         title={isAdmin ? "Remove admin" : "Make admin"}
-                        className="p-1.5 rounded-lg text-[#8A92A6] hover:text-[#f4b400] hover:bg-[#f4b400]/10 transition-colors disabled:opacity-40"
+                        className="p-1.5 rounded-lg text-muted hover:text-warn hover:bg-warn/10 transition-colors disabled:opacity-40"
                       >
                         <Crown className="w-3.5 h-3.5" />
                       </button>
@@ -1769,7 +1769,7 @@ function ManageMembersModal({
                         onClick={() => void runAction(m.userId, () => onRemove(m.userId, name))}
                         disabled={busy}
                         title="Remove from group"
-                        className="p-1.5 rounded-lg text-[#8A92A6] hover:text-[#ea4335] hover:bg-[#ea4335]/10 transition-colors disabled:opacity-40"
+                        className="p-1.5 rounded-lg text-muted hover:text-crit hover:bg-crit/10 transition-colors disabled:opacity-40"
                       >
                         <UserMinus className="w-3.5 h-3.5" />
                       </button>
@@ -1782,13 +1782,13 @@ function ManageMembersModal({
         </div>
 
         <div className="flex gap-2">
-          <button onClick={onClose} className="flex-1 px-4 py-2 border border-[#262A35] text-[#8A92A6] rounded-xl text-sm hover:bg-[#1B1F2A]">
+          <button onClick={onClose} className="flex-1 px-4 py-2 border border-border text-muted rounded-xl text-sm hover:bg-surface-sunken">
             Close
           </button>
           {channel.type === "GROUP" && (
             <button
               onClick={onLeave}
-              className="flex-1 px-4 py-2 border border-[#ea4335]/40 text-[#ea4335] rounded-xl text-sm font-semibold hover:bg-[#ea4335]/10 flex items-center justify-center gap-1.5"
+              className="flex-1 px-4 py-2 border border-crit/40 text-crit rounded-xl text-sm font-semibold hover:bg-crit/10 flex items-center justify-center gap-1.5"
             >
               <LogOut className="w-3.5 h-3.5" /> Leave group
             </button>
@@ -1858,45 +1858,45 @@ function GifPicker({
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 " onClick={onClose}>
       <div
-        className="w-full max-w-lg bg-[#12151D] border border-[rgba(0,210,255,0.15)] rounded-t-2xl shadow-2xl overflow-hidden"
+        className="w-full max-w-lg bg-surface border border-accent/[0.15] rounded-t-2xl shadow-2xl overflow-hidden"
         style={{ maxHeight: "65vh" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Tab bar */}
-        <div className="flex border-b border-[rgba(0,210,255,0.1)]">
+        <div className="flex border-b border-accent/[0.1]">
           {tabs.map((t) => (
             <button
               key={t.id}
               onClick={() => { setTab(t.id); setQuery(""); }}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold transition-colors ${tab === t.id ? "text-[#00C2FF] border-b-2 border-[#00C2FF]" : "text-[#5A6275] hover:text-[#8A92A6]"}`}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold transition-colors ${tab === t.id ? "text-accent border-b-2 border-accent" : "text-subtle hover:text-muted"}`}
             >
               <t.icon className="w-4 h-4" />{t.label}
             </button>
           ))}
-          <button onClick={onClose} className="px-3 text-[#5A6275] hover:text-[#8A92A6]"><X className="w-4 h-4" /></button>
+          <button onClick={onClose} className="px-3 text-subtle hover:text-muted"><X className="w-4 h-4" /></button>
         </div>
 
         {/* Search bar (GIF + Sticker + Emoji) */}
-        <div className="flex items-center gap-2 px-3 py-2 border-b border-[rgba(0,210,255,0.08)]">
-          <Search className="w-3.5 h-3.5 text-[#5A6275] flex-shrink-0" />
+        <div className="flex items-center gap-2 px-3 py-2 border-b border-accent/[0.08]">
+          <Search className="w-3.5 h-3.5 text-subtle flex-shrink-0" />
           <input
             ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={tab === "emoji" ? "Search emoji…" : tab === "sticker" ? "Search stickers…" : "Search GIFs…"}
-            className="flex-1 bg-transparent text-sm text-[#E6E9F0] placeholder-[#5d6579] outline-none"
+            className="flex-1 bg-transparent text-sm text-foreground placeholder-subtle outline-none"
             onKeyDown={(e) => e.key === "Escape" && onClose()}
           />
         </div>
 
         {/* Emoji category pills */}
         {tab === "emoji" && !query && (
-          <div className="flex gap-1 px-3 py-1.5 overflow-x-auto border-b border-[rgba(0,210,255,0.08)]">
+          <div className="flex gap-1 px-3 py-1.5 overflow-x-auto border-b border-accent/[0.08]">
             {EMOJI_CATEGORIES.map((cat, i) => (
               <button
                 key={cat.label}
                 onClick={() => setEmojiCategory(i)}
-                className={`flex-shrink-0 text-[10px] px-2 py-0.5 rounded-full transition-colors ${emojiCategory === i ? "bg-[#00C2FF]/20 text-[#00C2FF]" : "text-[#5A6275] hover:text-[#8A92A6]"}`}
+                className={`flex-shrink-0 text-[10px] px-2 py-0.5 rounded-full transition-colors ${emojiCategory === i ? "bg-accent/20 text-accent" : "text-subtle hover:text-muted"}`}
               >{cat.label}</button>
             ))}
           </div>
@@ -1910,17 +1910,17 @@ function GifPicker({
                 <button
                   key={`${emoji}-${i}`}
                   onClick={() => { onEmojiInsert(emoji); onClose(); }}
-                  className="flex items-center justify-center w-9 h-9 text-xl hover:bg-[#1B1F2A] rounded-lg transition-transform hover:scale-110"
+                  className="flex items-center justify-center w-9 h-9 text-xl hover:bg-surface-sunken rounded-lg transition-transform hover:scale-110"
                 >{emoji}</button>
               ))}
-              {emojiRows.length === 0 && <p className="col-span-8 text-center text-sm text-[#5A6275] py-6">No results</p>}
+              {emojiRows.length === 0 && <p className="col-span-8 text-center text-sm text-subtle py-6">No results</p>}
             </div>
           ) : loading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-5 h-5 animate-spin text-[#5A6275]" />
+              <Loader2 className="w-5 h-5 animate-spin text-subtle" />
             </div>
           ) : results.length === 0 ? (
-            <p className="text-center text-sm text-[#5A6275] py-8">
+            <p className="text-center text-sm text-subtle py-8">
               {!process.env.NEXT_PUBLIC_GIPHY_KEY ? "Set GIPHY_API_KEY to enable" : "No results"}
             </p>
           ) : (
@@ -1929,7 +1929,7 @@ function GifPicker({
                 <button
                   key={gif.id}
                   onClick={() => { onSelect(gif.url, gif.title); onClose(); }}
-                  className="relative group overflow-hidden rounded-lg bg-[#12151D] aspect-square hover:ring-2 hover:ring-[#00d2ff] transition-all"
+                  className="relative group overflow-hidden rounded-lg bg-surface aspect-square hover:ring-2 hover:ring-accent transition-all"
                 >
                   <img src={gif.previewUrl} alt={gif.title} className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -1940,8 +1940,8 @@ function GifPicker({
             </div>
           )}
         </div>
-        <div className="px-4 py-1 border-t border-[rgba(0,210,255,0.08)]">
-          <span className="text-[9px] text-[#5A6275]">{tab !== "emoji" ? "Powered by GIPHY" : ""}</span>
+        <div className="px-4 py-1 border-t border-accent/[0.08]">
+          <span className="text-[9px] text-subtle">{tab !== "emoji" ? "Powered by GIPHY" : ""}</span>
         </div>
       </div>
     </div>
@@ -2027,31 +2027,31 @@ function CommandPalette({
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] bg-black/60 " onClick={onClose}>
       <div
-        className="w-full max-w-lg bg-[#12151D] border border-[rgba(0,210,255,0.15)] rounded-2xl shadow-2xl overflow-hidden"
+        className="w-full max-w-lg bg-surface border border-accent/[0.15] rounded-2xl shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search input */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-[rgba(0,210,255,0.1)]">
-          <Search className="w-4 h-4 text-[#8A92A6] flex-shrink-0" />
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-accent/[0.1]">
+          <Search className="w-4 h-4 text-muted flex-shrink-0" />
           <input
             ref={inputRef}
             value={query}
             onChange={(e) => { setQuery(e.target.value); setCursor(0); }}
             onKeyDown={handleKeyDown}
             placeholder="Jump to channel or action…"
-            className="flex-1 bg-transparent text-sm text-[#E6E9F0] placeholder-[#5d6579] outline-none"
+            className="flex-1 bg-transparent text-sm text-foreground placeholder-subtle outline-none"
           />
-          <kbd className="text-[10px] text-[#5A6275] bg-[#12151D] border border-[#262A35] rounded px-1.5 py-0.5">ESC</kbd>
+          <kbd className="text-[10px] text-subtle bg-surface border border-border rounded px-1.5 py-0.5">ESC</kbd>
         </div>
 
         {/* Results */}
         <div className="max-h-80 overflow-y-auto py-1">
           {allItems.length === 0 ? (
-            <p className="text-center text-sm text-[#5A6275] py-8">No results</p>
+            <p className="text-center text-sm text-subtle py-8">No results</p>
           ) : (
             groups.map((group) => (
               <div key={group.heading}>
-                <p className="px-4 pt-3 pb-1 text-[10px] font-semibold text-[#5A6275]">{group.heading}</p>
+                <p className="px-4 pt-3 pb-1 text-[10px] font-semibold text-subtle">{group.heading}</p>
                 {group.items.map((item) => {
                   const idx = flatIdx++;
                   const isActive = idx === safeCursor;
@@ -2060,16 +2060,16 @@ function CommandPalette({
                       key={item.id}
                       onMouseEnter={() => setCursor(idx)}
                       onClick={item.onSelect}
-                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${isActive ? "bg-[#00C2FF]/10" : "hover:bg-[#1B1F2A]"}`}
+                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${isActive ? "bg-accent/10" : "hover:bg-surface-sunken"}`}
                     >
-                      <item.icon className={`w-4 h-4 flex-shrink-0 ${isActive ? "text-[#00C2FF]" : "text-[#5A6275]"}`} />
+                      <item.icon className={`w-4 h-4 flex-shrink-0 ${isActive ? "text-accent" : "text-subtle"}`} />
                       <span className="flex-1 min-w-0">
-                        <span className={`text-sm font-medium ${isActive ? "text-[#00C2FF]" : "text-[#E6E9F0]"}`}>{item.label}</span>
+                        <span className={`text-sm font-medium ${isActive ? "text-accent" : "text-foreground"}`}>{item.label}</span>
                         {item.description && (
-                          <span className="block text-xs text-[#5A6275] truncate">{item.description}</span>
+                          <span className="block text-xs text-subtle truncate">{item.description}</span>
                         )}
                       </span>
-                      {isActive && <ChevronRight className="w-3.5 h-3.5 text-[#00C2FF] flex-shrink-0" />}
+                      {isActive && <ChevronRight className="w-3.5 h-3.5 text-accent flex-shrink-0" />}
                     </button>
                   );
                 })}
@@ -2079,10 +2079,10 @@ function CommandPalette({
         </div>
 
         {/* Footer hint */}
-        <div className="px-4 py-2 border-t border-[rgba(0,210,255,0.08)] flex items-center gap-4 text-[10px] text-[#5A6275]">
-          <span><kbd className="bg-[#12151D] border border-[#262A35] rounded px-1">↑↓</kbd> navigate</span>
-          <span><kbd className="bg-[#12151D] border border-[#262A35] rounded px-1">↵</kbd> select</span>
-          <span><kbd className="bg-[#12151D] border border-[#262A35] rounded px-1">Esc</kbd> close</span>
+        <div className="px-4 py-2 border-t border-accent/[0.08] flex items-center gap-4 text-[10px] text-subtle">
+          <span><kbd className="bg-surface border border-border rounded px-1">↑↓</kbd> navigate</span>
+          <span><kbd className="bg-surface border border-border rounded px-1">↵</kbd> select</span>
+          <span><kbd className="bg-surface border border-border rounded px-1">Esc</kbd> close</span>
         </div>
       </div>
     </div>
@@ -3258,8 +3258,8 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
     const el = document.getElementById(`msg-${messageId}`);
     if (!el) return;
     el.scrollIntoView({ behavior: "smooth", block: "center" });
-    el.classList.add("bg-[#00C2FF]/10");
-    setTimeout(() => el.classList.remove("bg-[#00C2FF]/10"), 1200);
+    el.classList.add("bg-accent/10");
+    setTimeout(() => el.classList.remove("bg-accent/10"), 1200);
   };
 
   // ─── Channel sections ──────────────────────────────────────────────────────
@@ -3286,15 +3286,15 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
     });
 
   return (
-    <div className="flex h-[calc(100vh-7.25rem)] lg:h-[calc(100vh-3.5rem)] bg-[#12151D] overflow-hidden">
+    <div className="flex h-[calc(100vh-7.25rem)] lg:h-full bg-surface lg:bg-transparent overflow-hidden lg:gap-2">
       {/* Channel sidebar — full width on mobile when no channel, hidden when channel open */}
-      <div className={`${selectedChannelId ? "hidden lg:flex" : "flex"} w-full lg:w-64 bg-[#12151D] border-r border-[#262A35] flex-col flex-shrink-0`}>
-        <div className="h-[50px] flex-shrink-0 flex items-center justify-between px-4 border-b border-[#262A35]">
-          <span className="text-[#E6E9F0] font-bold text-[13.5px]">Messages</span>
+      <div className={`${selectedChannelId ? "hidden lg:flex" : "flex"} w-full lg:w-64 flex-shrink-0 bg-surface lg:rounded-panel lg:border lg:border-border lg:shadow-sm flex-col overflow-y-auto overflow-x-hidden`}>
+        <div className="h-[50px] flex-shrink-0 flex items-center justify-between px-4 border-b border-border">
+          <span className="text-foreground font-bold text-[13.5px]">Messages</span>
           <button
             onClick={() => setShowCommandPalette(true)}
             title="Command palette (⌘K)"
-            className="flex items-center gap-1 text-[10px] text-[#5A6275] hover:text-[#8A92A6] transition-colors"
+            className="flex items-center gap-1 text-[10px] text-subtle hover:text-muted transition-colors"
           >
             <Search className="w-2.5 h-2.5" />
             <span>⌘K</span>
@@ -3302,17 +3302,17 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
         </div>
 
         {/* Sidebar search */}
-        <div className="px-2.5 py-2 border-b border-[#262A35]">
-          <div className="flex items-center gap-2 bg-[#0D1017] border border-[#262A35] rounded-lg px-2.5 py-1.5">
-            <Search className="w-3 h-3 text-[#5A6275] flex-shrink-0" />
+        <div className="px-2.5 py-2 border-b border-border">
+          <div className="flex items-center gap-2 bg-surface-sunken border border-border rounded-lg px-2.5 py-1.5">
+            <Search className="w-3 h-3 text-subtle flex-shrink-0" />
             <input
               value={sidebarSearch}
               onChange={(e) => setSidebarSearch(e.target.value)}
               placeholder="Search channels, people…"
-              className="flex-1 text-xs bg-transparent text-[#E6E9F0] placeholder-[#5d6579] outline-none"
+              className="flex-1 text-xs bg-transparent text-foreground placeholder-subtle outline-none"
             />
             {sidebarSearch && (
-              <button onClick={() => setSidebarSearch("")} className="text-[#5A6275] hover:text-[#8A92A6]">
+              <button onClick={() => setSidebarSearch("")} className="text-subtle hover:text-muted">
                 <X className="w-3 h-3" />
               </button>
             )}
@@ -3357,7 +3357,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
           />
 
           {channels.length === 0 && (
-            <p className="text-[#8A92A6] text-xs px-3 py-4 text-center">
+            <p className="text-muted text-xs px-3 py-4 text-center">
               No channels yet.
               <br />
               Create one to get started.
@@ -3368,7 +3368,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
 
       {/* Main area — hidden on mobile when no channel selected */}
       {!selectedChannelId ? (
-        <div className="hidden lg:flex flex-1 flex-col items-center justify-center text-[#8A92A6] bg-[#12151D] p-8">
+        <div className="hidden lg:flex flex-1 flex-col items-center justify-center text-muted bg-surface lg:rounded-panel lg:border lg:border-border lg:shadow-sm p-8">
           <MessageSquare className="w-16 h-16 mb-4 opacity-20" />
           <p className="text-lg font-medium">Select a channel</p>
           <p className="text-sm">Or create one from the sidebar.</p>
@@ -3377,7 +3377,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
         <>
           {/* Messages pane */}
           <div
-            className="bg-[#12151D] flex-1 flex flex-col min-w-0 overflow-x-hidden relative"
+            className="bg-surface flex-1 flex flex-col min-w-0 overflow-x-hidden relative lg:rounded-panel lg:border lg:border-border lg:shadow-sm"
             onDragEnter={handleDragEnter}
             onDragLeave={handleDragLeave}
             onDragOver={handleDragOver}
@@ -3386,41 +3386,41 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
             {/* Drag-drop overlay */}
             {isDragOver && (
               <div className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none">
-                <div className="absolute inset-4 border-2 border-dashed border-[#00C2FF] rounded-2xl bg-[#00C2FF]/10" />
+                <div className="absolute inset-4 border-2 border-dashed border-accent rounded-2xl bg-accent/10" />
                 <div className="relative z-10 text-center">
-                  <Paperclip className="w-8 h-8 mx-auto mb-2 text-[#00C2FF]" />
-                  <p className="text-lg font-semibold text-[#00C2FF]">Drop to attach</p>
-                  <p className="text-sm text-[#8A92A6]">File will be uploaded and shared in this channel</p>
+                  <Paperclip className="w-8 h-8 mx-auto mb-2 text-accent" />
+                  <p className="text-lg font-semibold text-accent">Drop to attach</p>
+                  <p className="text-sm text-muted">File will be uploaded and shared in this channel</p>
                 </div>
               </div>
             )}
 
             {/* Upload progress overlay */}
             {uploadingFile && (
-              <div className="absolute inset-0 z-40 flex items-center justify-center bg-[#12151D]/80">
+              <div className="absolute inset-0 z-40 flex items-center justify-center bg-surface/80">
                 <div className="flex flex-col items-center gap-3">
-                  <Loader2 className="w-8 h-8 animate-spin text-[#00C2FF]" />
-                  <p className="text-sm font-medium text-[#E6E9F0]">Uploading file…</p>
+                  <Loader2 className="w-8 h-8 animate-spin text-accent" />
+                  <p className="text-sm font-medium text-foreground">Uploading file…</p>
                 </div>
               </div>
             )}
 
             {/* Channel header */}
-            <div className="h-14 px-3 lg:px-5 border-b border-[#262A35] bg-[#12151D] flex items-center gap-2 lg:gap-3 flex-shrink-0">
+            <div className="h-14 px-3 lg:px-5 border-b border-border bg-surface flex items-center gap-2 lg:gap-3 flex-shrink-0">
               {/* Mobile back button */}
               <button
                 onClick={() => setSelectedChannelId(null)}
-                className="lg:hidden flex-shrink-0 p-1.5 rounded-lg text-[#8A92A6] hover:bg-[#1B1F2A] transition-colors"
+                className="lg:hidden flex-shrink-0 p-1.5 rounded-lg text-muted hover:bg-surface-sunken transition-colors"
                 aria-label="Back to channels"
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
               {selectedChannel?.type === "DIRECT" || selectedChannel?.type === "GROUP" ? (
-                <Users className="w-[18px] h-[18px] text-[#5A6275] flex-shrink-0" />
+                <Users className="w-[18px] h-[18px] text-subtle flex-shrink-0" />
               ) : selectedChannel?.isBroadcast ? (
-                <Megaphone className="w-[18px] h-[18px] text-[#5A6275] flex-shrink-0" />
+                <Megaphone className="w-[18px] h-[18px] text-subtle flex-shrink-0" />
               ) : (
-                <span className="text-base font-semibold text-[#5A6275] leading-none flex-shrink-0">#</span>
+                <span className="text-base font-semibold text-subtle leading-none flex-shrink-0">#</span>
               )}
               <div className="min-w-0 flex-1">
                 {/* Inline rename input for GROUP channels */}
@@ -3434,37 +3434,37 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                         if (e.key === "Enter") void handleRenameChannel();
                         if (e.key === "Escape") setRenamingChannel(false);
                       }}
-                      className="flex-1 min-w-0 bg-[#1B1F2A] border border-[#00C2FF]/50 rounded-lg px-2.5 py-1 text-sm font-bold text-[#E6E9F0] outline-none focus:border-[#00C2FF] max-w-[220px]"
+                      className="flex-1 min-w-0 bg-surface-sunken border border-accent/50 rounded-lg px-2.5 py-1 text-sm font-bold text-foreground outline-none focus:border-accent max-w-[220px]"
                       placeholder="Group name…"
                     />
                     <button
                       onClick={() => void handleRenameChannel()}
                       disabled={renameSaving}
-                      className="p-1.5 rounded-lg bg-[#00C2FF]/10 text-[#00C2FF] hover:bg-[#00C2FF]/20 transition-colors disabled:opacity-40"
+                      className="p-1.5 rounded-lg bg-accent/10 text-accent hover:bg-accent/20 transition-colors disabled:opacity-40"
                     >
                       {renameSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
                     </button>
                     <button
                       onClick={() => setRenamingChannel(false)}
-                      className="p-1.5 rounded-lg text-[#5A6275] hover:text-[#E6E9F0] hover:bg-[#1B1F2A] transition-colors"
+                      className="p-1.5 rounded-lg text-subtle hover:text-foreground hover:bg-surface-sunken transition-colors"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <h2 className="font-bold text-[#E6E9F0] text-[14.5px] truncate">{selectedChannelName}</h2>
+                    <h2 className="font-bold text-foreground text-[14.5px] truncate">{selectedChannelName}</h2>
                     {selectedChannel?.type === "DIRECT" && (
-                      <span className="text-[10px] font-semibold text-[#5A6275] bg-[#1B1F2A] border border-[#262A35] px-1.5 py-0.5 rounded-full flex-shrink-0">DM</span>
+                      <span className="text-[10px] font-semibold text-subtle bg-surface-sunken border border-border px-1.5 py-0.5 rounded-full flex-shrink-0">DM</span>
                     )}
                     {selectedChannel?.type === "GROUP" && (
                       <>
-                        <span className="text-[10px] font-semibold text-[#5A6275] bg-[#1B1F2A] border border-[#262A35] px-1.5 py-0.5 rounded-full flex-shrink-0">Group</span>
+                        <span className="text-[10px] font-semibold text-subtle bg-surface-sunken border border-border px-1.5 py-0.5 rounded-full flex-shrink-0">Group</span>
                         {/* Rename button — only for channel admin */}
                         {selectedChannel.members.find(m => m.userId === currentUserId)?.role === "ADMIN" && (
                           <button
                             onClick={() => { setRenameValue(selectedChannel.name); setRenamingChannel(true); }}
-                            className="p-0.5 rounded text-[#5A6275] hover:text-[#00C2FF] transition-colors flex-shrink-0"
+                            className="p-0.5 rounded text-subtle hover:text-accent transition-colors flex-shrink-0"
                             title="Rename group"
                           >
                             <Edit3 className="w-3 h-3" />
@@ -3473,12 +3473,12 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                       </>
                     )}
                     {selectedChannel?.isBroadcast && (
-                      <span className="text-[10px] font-semibold text-[#8A92A6] bg-[#1B1F2A] border border-[#262A35] px-1.5 py-0.5 rounded-full flex-shrink-0">Broadcast</span>
+                      <span className="text-[10px] font-semibold text-muted bg-surface-sunken border border-border px-1.5 py-0.5 rounded-full flex-shrink-0">Broadcast</span>
                     )}
                   </div>
                 )}
                 {!renamingChannel && (
-                  <p className="text-xs text-[#5A6275] truncate mt-px">
+                  <p className="text-xs text-subtle truncate mt-px">
                     {selectedChannel?.type === "DIRECT"
                       ? (() => {
                           const other = selectedChannel.members.find((m) => m.userId !== currentUserId);
@@ -3511,7 +3511,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                       onClick={() => { if (selectedChannelId && selectedChannel) void startCall(selectedChannelId, selectedChannelName, "audio"); }}
                       disabled={callBusy}
                       title={`Voice call ${selectedChannelName}`}
-                      className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#00C2FF]/30 bg-[#00C2FF]/10 text-[#00C2FF] hover:bg-[#00C2FF]/20 disabled:opacity-40 transition-colors flex-shrink-0"
+                      className="w-9 h-9 flex items-center justify-center rounded-lg border border-accent/30 bg-accent/10 text-accent hover:bg-accent/20 disabled:opacity-40 transition-colors flex-shrink-0"
                     >
                       <Phone className="w-[18px] h-[18px]" />
                     </button>
@@ -3519,7 +3519,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                       onClick={() => { if (selectedChannelId && selectedChannel) void startCall(selectedChannelId, selectedChannelName, "video"); }}
                       disabled={callBusy}
                       title={`Video call ${selectedChannelName}`}
-                      className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#00C2FF]/30 bg-[#00C2FF]/10 text-[#00C2FF] hover:bg-[#00C2FF]/20 disabled:opacity-40 transition-colors flex-shrink-0"
+                      className="w-9 h-9 flex items-center justify-center rounded-lg border border-accent/30 bg-accent/10 text-accent hover:bg-accent/20 disabled:opacity-40 transition-colors flex-shrink-0"
                     >
                       <Video className="w-[18px] h-[18px]" />
                     </button>
@@ -3528,7 +3528,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                   <button
                     onClick={() => { if (selectedChannelId) window.open(`/meet/cybersage-${selectedChannelId}`, "_blank"); }}
                     title="Start a group call"
-                    className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#00C2FF]/30 bg-[#00C2FF]/10 text-[#00C2FF] hover:bg-[#00C2FF]/20 transition-colors flex-shrink-0"
+                    className="w-9 h-9 flex items-center justify-center rounded-lg border border-accent/30 bg-accent/10 text-accent hover:bg-accent/20 transition-colors flex-shrink-0"
                   >
                     <Video className="w-[18px] h-[18px]" />
                   </button>
@@ -3539,14 +3539,14 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                   <button
                     onClick={() => void handleSummarize("summary")}
                     disabled={summarizing || messages.length === 0}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-[#262A35] text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0] disabled:opacity-40 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-border text-muted hover:bg-surface-sunken hover:text-foreground disabled:opacity-40 transition-colors"
                     title="AI tools"
                   >
-                    {summarizing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-[#00C2FF]" />}
+                    {summarizing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-accent" />}
                     <span className="hidden sm:inline">{summarizing ? "Thinking…" : "AI"}</span>
                     <ChevronDown className="w-3 h-3" />
                   </button>
-                  <div className="absolute right-0 top-full mt-1 w-44 bg-[#12151D] border border-[#262A35] rounded-xl shadow-xl z-20 py-1 hidden group-hover:block">
+                  <div className="absolute right-0 top-full mt-1 w-44 bg-surface border border-border rounded-xl shadow-xl z-20 py-1 hidden group-hover:block">
                     {([
                       { mode: "summary" as const,           label: "Summarize channel" },
                       { mode: "action-items" as const,      label: "Extract action items" },
@@ -3555,7 +3555,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                       <button
                         key={mode}
                         onClick={() => void handleSummarize(mode)}
-                        className="w-full text-left px-3 py-2 text-xs text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0] transition-colors"
+                        className="w-full text-left px-3 py-2 text-xs text-muted hover:bg-surface-sunken hover:text-foreground transition-colors"
                       >
                         {label}
                       </button>
@@ -3566,7 +3566,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                 {/* Pinned messages toggle */}
                 <button
                   onClick={() => { if (showPins) setShowPins(false); else void loadPinnedMessages(); }}
-                  className={`w-9 h-9 flex items-center justify-center rounded-lg border transition-colors flex-shrink-0 ${showPins ? "border-[#00C2FF] text-[#00C2FF] bg-[#00C2FF]/10" : "border-[#262A35] bg-[#12151D] text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0]"}`}
+                  className={`w-9 h-9 flex items-center justify-center rounded-lg border transition-colors flex-shrink-0 ${showPins ? "border-accent text-accent bg-accent/10" : "border-border bg-surface text-muted hover:bg-surface-sunken hover:text-foreground"}`}
                   title="Pinned messages"
                 >
                   <Pin className="w-[18px] h-[18px]" />
@@ -3579,7 +3579,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                 <button
                   onClick={() => void togglePush()}
                   disabled={pushLoading}
-                  className={`w-9 h-9 flex items-center justify-center rounded-lg border transition-colors flex-shrink-0 ${pushEnabled ? "border-[#00C2FF] text-[#00C2FF] bg-[#00C2FF]/10" : "border-[#262A35] bg-[#12151D] text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0]"} disabled:opacity-40`}
+                  className={`w-9 h-9 flex items-center justify-center rounded-lg border transition-colors flex-shrink-0 ${pushEnabled ? "border-accent text-accent bg-accent/10" : "border-border bg-surface text-muted hover:bg-surface-sunken hover:text-foreground"} disabled:opacity-40`}
                   title={pushEnabled ? "Disable urgent push notifications" : "Enable push for urgent messages"}
                 >
                   {pushLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : (pushEnabled ? <Bell className="w-4 h-4" /> : <BellOff className="w-4 h-4" />)}
@@ -3587,7 +3587,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                 {selectedChannel?.type !== "DIRECT" && (
                   <button
                     onClick={() => setShowAddMembers(true)}
-                    className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#262A35] bg-[#12151D] text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0] transition-colors flex-shrink-0"
+                    className="w-9 h-9 flex items-center justify-center rounded-lg border border-border bg-surface text-muted hover:bg-surface-sunken hover:text-foreground transition-colors flex-shrink-0"
                     title="Add members"
                   >
                     <UserPlus className="w-[18px] h-[18px]" />
@@ -3597,7 +3597,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
               {selectedChannel?.type !== "DIRECT" && (
                 <button
                   onClick={() => setShowManageMembers(true)}
-                  className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#262A35] bg-[#12151D] text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0] transition-colors flex-shrink-0"
+                  className="w-9 h-9 flex items-center justify-center rounded-lg border border-border bg-surface text-muted hover:bg-surface-sunken hover:text-foreground transition-colors flex-shrink-0"
                   title="Manage members"
                 >
                   <Settings className="w-[18px] h-[18px]" />
@@ -3608,7 +3608,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                 <button
                   onClick={() => void handleLeaveChannel()}
                   title="Leave group"
-                  className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#262A35] bg-[#12151D] text-[#8A92A6] hover:bg-[#ea4335]/10 hover:text-[#ea4335] hover:border-[#ea4335]/40 transition-colors flex-shrink-0"
+                  className="w-9 h-9 flex items-center justify-center rounded-lg border border-border bg-surface text-muted hover:bg-crit/10 hover:text-crit hover:border-crit/40 transition-colors flex-shrink-0"
                 >
                   <LogOut className="w-[18px] h-[18px]" />
                 </button>
@@ -3618,7 +3618,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                 <button
                   onClick={() => void handleDeleteChannel()}
                   title="Delete channel"
-                  className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#ea4335]/40 text-[#ea4335] hover:bg-[#ea4335]/10 transition-colors flex-shrink-0"
+                  className="w-9 h-9 flex items-center justify-center rounded-lg border border-crit/40 text-crit hover:bg-crit/10 transition-colors flex-shrink-0"
                 >
                   <Trash2 className="w-[18px] h-[18px]" />
                 </button>
@@ -3627,11 +3627,11 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto overflow-x-hidden py-2 bg-[#12151D]">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden py-2 bg-surface">
               {loadingMessages ? (
-                <div className="text-center text-[#8A92A6] py-8 text-sm">Loading messages…</div>
+                <div className="text-center text-muted py-8 text-sm">Loading messages…</div>
               ) : messages.length === 0 ? (
-                <div className="text-center text-[#8A92A6] py-12">
+                <div className="text-center text-muted py-12">
                   <Hash className="w-10 h-10 mx-auto mb-2 opacity-20" />
                   <p className="text-sm">No messages yet. Say hello!</p>
                 </div>
@@ -3662,13 +3662,13 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
             </div>
 
             {/* Typing / bot indicator */}
-            <div className="px-6 py-2 h-7 flex items-center flex-shrink-0 bg-[#12151D]">
+            <div className="px-6 py-2 h-7 flex items-center flex-shrink-0 bg-surface">
               {botResponding ? (
-                <p className="text-xs text-[#8A92A6] italic animate-pulse flex items-center gap-1">
-                  <Sparkles className="h-3 w-3 text-[#00C2FF]" /> CyberSage AI is thinking…
+                <p className="text-xs text-muted italic animate-pulse flex items-center gap-1">
+                  <Sparkles className="h-3 w-3 text-accent" /> CyberSage AI is thinking…
                 </p>
               ) : typingNames.size > 0 && (
-                <p className="text-xs text-[#8A92A6] italic animate-pulse">
+                <p className="text-xs text-muted italic animate-pulse">
                   {Array.from(typingNames.values()).join(", ")}{" "}
                   {typingNames.size === 1 ? "is" : "are"} typing…
                 </p>
@@ -3677,22 +3677,22 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
 
             {/* Broadcast read-only notice for non-admin members */}
             {selectedChannel?.isBroadcast && selectedChannel.members.find(m => m.userId === currentUserId)?.role !== "ADMIN" ? (
-              <div className="px-4 py-4 border-t border-[#262A35] bg-[#12151D] flex-shrink-0 flex items-center justify-center gap-3">
-                <Megaphone className="w-4 h-4 text-[#8A92A6] shrink-0" />
-                <p className="text-sm text-[#8A92A6]">
+              <div className="px-4 py-4 border-t border-border bg-surface flex-shrink-0 flex items-center justify-center gap-3">
+                <Megaphone className="w-4 h-4 text-muted shrink-0" />
+                <p className="text-sm text-muted">
                   This is a broadcast channel — only the owner can post.
                 </p>
               </div>
             ) : (
             <>
             {/* Composer */}
-            <div className="px-6 pt-3.5 pb-5 bg-[#12151D] flex-shrink-0">
+            <div className="px-6 pt-3.5 pb-5 bg-surface flex-shrink-0">
               {/* Voice note preview */}
               {audioBlob && (
-                <div className="flex items-center gap-3 mb-2 bg-[#12151D] border border-[#262A35] rounded-lg px-3 py-2">
+                <div className="flex items-center gap-3 mb-2 bg-surface border border-border rounded-lg px-3 py-2">
                   <audio src={URL.createObjectURL(audioBlob)} controls className="flex-1 h-8" />
-                  <button onClick={() => void sendVoiceNote()} disabled={uploadingFile} className="bg-[#00C2FF] text-[#06121A] px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-40">Send</button>
-                  <button onClick={() => setAudioBlob(null)} className="text-[#8A92A6] hover:text-[#ea4335]"><X className="w-4 h-4" /></button>
+                  <button onClick={() => void sendVoiceNote()} disabled={uploadingFile} className="bg-accent text-accent-foreground px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-40">Send</button>
+                  <button onClick={() => setAudioBlob(null)} className="text-muted hover:text-crit"><X className="w-4 h-4" /></button>
                 </div>
               )}
 
@@ -3700,19 +3700,19 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                   button is clicked; sending the composer attaches quotedMessageId
                   so the sent message renders with an inline quote card. */}
               {replyingTo && (
-                <div className="flex items-center gap-2 mb-2 bg-[#1B1F2A] border-l-2 border-[#00C2FF] rounded-lg pl-3 pr-2 py-2">
-                  <ReplyIcon className="w-3.5 h-3.5 text-[#00C2FF] flex-shrink-0" />
+                <div className="flex items-center gap-2 mb-2 bg-surface-sunken border-l-2 border-accent rounded-lg pl-3 pr-2 py-2">
+                  <ReplyIcon className="w-3.5 h-3.5 text-accent flex-shrink-0" />
                   <div className="min-w-0 flex-1">
-                    <p className="text-[11.5px] font-semibold text-[#00C2FF]">
+                    <p className="text-[11.5px] font-semibold text-accent">
                       Replying to {replyingTo.userId === currentUserId ? "yourself" : replyingTo.user.fullName}
                     </p>
-                    <p className="truncate text-[12.5px] text-[#8A92A6]">
+                    <p className="truncate text-[12.5px] text-muted">
                       {replyingTo.deletedAt ? "(message deleted)" : replyingTo.content || "Attachment"}
                     </p>
                   </div>
                   <button
                     onClick={() => setReplyingTo(null)}
-                    className="text-[#8A92A6] hover:text-[#E6E9F0] flex-shrink-0"
+                    className="text-muted hover:text-foreground flex-shrink-0"
                     title="Cancel reply"
                   >
                     <X className="w-4 h-4" />
@@ -3723,14 +3723,14 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
               <div className="relative">
                 {/* @mention autocomplete */}
                 {mentionQuery !== null && mentionResults.length > 0 && (
-                  <div className="absolute bottom-full left-0 mb-1 w-64 bg-[#12151D] border border-[#262A35] rounded-xl shadow-xl z-50 overflow-hidden">
+                  <div className="absolute bottom-full left-0 mb-1 w-64 bg-surface border border-border rounded-xl shadow-xl z-50 overflow-hidden">
                     {mentionResults.map(u => (
                       <button
                         key={u.id}
                         onClick={() => insertMention(u.fullName)}
-                        className="w-full text-left px-3 py-2 text-sm text-[#E6E9F0] hover:bg-[#1B1F2A] flex items-center gap-2"
+                        className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-surface-sunken flex items-center gap-2"
                       >
-                        <span className="w-6 h-6 rounded-full bg-[#00C2FF]/20 text-[#00C2FF] flex items-center justify-center text-xs font-semibold flex-shrink-0">
+                        <span className="w-6 h-6 rounded-full bg-accent/20 text-accent flex items-center justify-center text-xs font-semibold flex-shrink-0">
                           {u.fullName.charAt(0)}
                         </span>
                         {u.fullName}
@@ -3742,15 +3742,15 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                 {/* GIF attachment preview */}
                 {composerAttachment && (
                   <div className="mb-2 relative inline-block">
-                    <img src={composerAttachment.url} alt={composerAttachment.name} className="max-h-28 rounded-lg border border-[rgba(26,86,219,0.2)]" />
+                    <img src={composerAttachment.url} alt={composerAttachment.name} className="max-h-28 rounded-lg border border-accent/[0.2]" />
                     <button
                       onClick={() => setComposerAttachment(null)}
-                      className="absolute -top-1.5 -right-1.5 bg-[#ea4335] text-white rounded-full w-4 h-4 flex items-center justify-center text-xs leading-none"
+                      className="absolute -top-1.5 -right-1.5 bg-crit text-white rounded-full w-4 h-4 flex items-center justify-center text-xs leading-none"
                     >×</button>
                   </div>
                 )}
 
-                <div className={`flex items-end gap-2.5 bg-[#12151D] border rounded-xl pl-4 pr-2 py-2 transition-colors ${composerUrgent ? "border-[#ea4335]/50 bg-[#ea4335]/5" : "border-[#262A35]"}`}>
+                <div className={`flex items-end gap-2.5 bg-surface border rounded-xl pl-4 pr-2 py-2 transition-colors ${composerUrgent ? "border-crit/50 bg-crit/5" : "border-border"}`}>
                   {/* Hidden file input for attachments */}
                   <input ref={chatFileInputRef} type="file" className="hidden" onChange={(e) => void handleChatFileSelect(e)} />
                   {/* File attach button */}
@@ -3758,7 +3758,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                     onClick={() => chatFileInputRef.current?.click()}
                     disabled={uploadingFile}
                     title="Attach file"
-                    className="p-1 mb-1 rounded-lg transition-colors flex-shrink-0 text-[#5A6275] hover:text-[#8A92A6] disabled:opacity-40"
+                    className="p-1 mb-1 rounded-lg transition-colors flex-shrink-0 text-subtle hover:text-muted disabled:opacity-40"
                   >
                     {uploadingFile ? <Loader2 className="w-5 h-5 animate-spin" /> : <Paperclip className="w-5 h-5" />}
                   </button>
@@ -3775,27 +3775,27 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                     }}
                     placeholder={composerUrgent ? `Urgent message to #${selectedChannel?.name ?? ""}` : `Message #${selectedChannel?.name ?? ""}`}
                     rows={1}
-                    className="flex-1 bg-transparent resize-none text-sm text-[#E6E9F0] placeholder-[#9aa3b8] outline-none max-h-32 overflow-y-auto py-1.5"
+                    className="flex-1 bg-transparent resize-none text-sm text-foreground placeholder-muted outline-none max-h-32 overflow-y-auto py-1.5"
                     style={{ minHeight: "1.5rem" }}
                   />
                   {/* Emoji insert */}
-                  <button onClick={() => { setMediaPickerTab("emoji"); setShowGifPicker(true); }} title="Insert emoji" className="p-1.5 mb-1 rounded-lg transition-colors flex-shrink-0 text-[#5A6275] hover:text-[#8A92A6] hover:bg-[#1B1F2A]"><Smile className="w-4 h-4" /></button>
+                  <button onClick={() => { setMediaPickerTab("emoji"); setShowGifPicker(true); }} title="Insert emoji" className="p-1.5 mb-1 rounded-lg transition-colors flex-shrink-0 text-subtle hover:text-muted hover:bg-surface-sunken"><Smile className="w-4 h-4" /></button>
                   {/* Sticker */}
-                  <button onClick={() => { setMediaPickerTab("sticker"); setShowGifPicker(true); }} title="Send a sticker" className="p-1.5 mb-1 rounded-lg transition-colors flex-shrink-0 text-[#5A6275] hover:text-[#8A92A6] hover:bg-[#1B1F2A]"><Sticker className="w-4 h-4" /></button>
+                  <button onClick={() => { setMediaPickerTab("sticker"); setShowGifPicker(true); }} title="Send a sticker" className="p-1.5 mb-1 rounded-lg transition-colors flex-shrink-0 text-subtle hover:text-muted hover:bg-surface-sunken"><Sticker className="w-4 h-4" /></button>
                   {/* GIF */}
-                  <button onClick={() => { setMediaPickerTab("gif"); setShowGifPicker(true); }} title="Send a GIF" className="p-1.5 mb-1 rounded-lg transition-colors flex-shrink-0 text-xs font-semibold text-[#5A6275] hover:text-[#8A92A6] hover:bg-[#1B1F2A]">GIF</button>
+                  <button onClick={() => { setMediaPickerTab("gif"); setShowGifPicker(true); }} title="Send a GIF" className="p-1.5 mb-1 rounded-lg transition-colors flex-shrink-0 text-xs font-semibold text-subtle hover:text-muted hover:bg-surface-sunken">GIF</button>
                   {/* Urgent flag toggle */}
                   <button
                     onClick={() => setComposerUrgent(v => !v)}
                     title={composerUrgent ? "Remove urgent flag" : "Mark as urgent"}
-                    className={`p-1.5 mb-1 rounded-lg transition-colors flex-shrink-0 text-sm ${composerUrgent ? "bg-[#ea4335]/20 text-[#ea4335]" : "text-[#5A6275] hover:text-[#8A92A6] hover:bg-[#1B1F2A]"}`}
+                    className={`p-1.5 mb-1 rounded-lg transition-colors flex-shrink-0 text-sm ${composerUrgent ? "bg-crit/20 text-crit" : "text-subtle hover:text-muted hover:bg-surface-sunken"}`}
                   >
                     <Siren className="w-4 h-4" />
                   </button>
                   {/* Voice note button */}
                   <button
                     onClick={recording ? stopRecording : () => void startRecording()}
-                    className={`p-1.5 mb-1 rounded-lg transition-colors flex-shrink-0 ${recording ? "bg-[#ea4335] text-white animate-pulse" : "text-[#8A92A6] hover:text-[#E6E9F0] hover:bg-[#1B1F2A]"}`}
+                    className={`p-1.5 mb-1 rounded-lg transition-colors flex-shrink-0 ${recording ? "bg-crit text-white animate-pulse" : "text-muted hover:text-foreground hover:bg-surface-sunken"}`}
                     title={recording ? "Stop recording" : "Record voice note"}
                   >
                     {recording ? <Square className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
@@ -3803,14 +3803,14 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                   <button
                     onClick={sendMessage}
                     disabled={(!composerText.trim() && !composerAttachment) || sending}
-                    className="w-[38px] h-[38px] flex items-center justify-center rounded-[9px] text-[#06121A] transition-opacity hover:opacity-90 disabled:opacity-40 flex-shrink-0"
-                    style={{ background: "linear-gradient(135deg, #00C2FF, #0098E6)" }}
+                    className="w-[38px] h-[38px] flex items-center justify-center rounded-[9px] text-accent-foreground transition-opacity hover:opacity-90 disabled:opacity-40 flex-shrink-0"
+                    style={{ background: "linear-gradient(135deg, var(--accent), var(--accent-hover))" }}
                   >
                     <Send className="w-[18px] h-[18px]" />
                   </button>
                 </div>
               </div>
-              <p className="hidden lg:block text-[10px] text-[#8A92A6] mt-1.5 ml-1">
+              <p className="hidden lg:block text-[10px] text-muted mt-1.5 ml-1">
                 Enter to send · Shift+Enter for new line · Drag files to attach · @ to mention · ⌘K to navigate
               </p>
             </div>
@@ -3838,34 +3838,34 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
 
           {/* Pinned messages panel */}
           {showPins && !threadParentMsg && (
-            <div className="bg-[#12151D] border-l border-[#262A35] hidden lg:flex lg:flex-col lg:w-80 flex-shrink-0">
-              <div className="px-4 py-3 border-b border-[#262A35] flex items-center justify-between flex-shrink-0">
-                <div className="flex items-center gap-2 text-sm font-semibold text-[#E6E9F0]">
-                  <Pin className="w-4 h-4 text-[#00C2FF]" />
+            <div className="bg-surface hidden lg:flex lg:flex-col lg:w-80 flex-shrink-0 lg:rounded-panel lg:border lg:border-border lg:shadow-sm">
+              <div className="px-4 py-3 border-b border-border flex items-center justify-between flex-shrink-0">
+                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <Pin className="w-4 h-4 text-accent" />
                   <span>Pinned Messages</span>
-                  <span className="text-xs text-[#8A92A6]">({pinnedMessages.length})</span>
+                  <span className="text-xs text-muted">({pinnedMessages.length})</span>
                 </div>
-                <button onClick={() => setShowPins(false)} className="p-1.5 text-[#8A92A6] hover:text-[#E6E9F0] hover:bg-[#1B1F2A] rounded-md transition-colors">
+                <button onClick={() => setShowPins(false)} className="p-1.5 text-muted hover:text-foreground hover:bg-surface-sunken rounded-md transition-colors">
                   <X className="w-4 h-4" />
                 </button>
               </div>
               <div className="flex-1 overflow-y-auto overflow-x-hidden py-2">
                 {pinnedMessages.length === 0 ? (
-                  <div className="text-center text-[#8A92A6] py-8">
+                  <div className="text-center text-muted py-8">
                     <Pin className="w-8 h-8 mx-auto mb-2 opacity-20" />
                     <p className="text-xs">No pinned messages yet.</p>
                   </div>
                 ) : (
                   pinnedMessages.map(msg => (
-                    <div key={msg.id} className="px-4 py-3 border-b border-[#262A35] hover:bg-[#1B1F2A] transition-colors">
+                    <div key={msg.id} className="px-4 py-3 border-b border-border hover:bg-surface-sunken transition-colors">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-semibold text-[#E6E9F0]">{msg.user.fullName}</span>
-                        <span className="text-[10px] text-[#8A92A6]">{formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true })}</span>
+                        <span className="text-xs font-semibold text-foreground">{msg.user.fullName}</span>
+                        <span className="text-[10px] text-muted">{formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true })}</span>
                       </div>
-                      <p className="text-xs text-[#8A92A6] line-clamp-3">{msg.content}</p>
+                      <p className="text-xs text-muted line-clamp-3">{msg.content}</p>
                       <button
                         onClick={() => void handlePin(msg.id, false)}
-                        className="mt-1.5 text-[10px] text-[#8A92A6] hover:text-[#ea4335] flex items-center gap-1 transition-colors"
+                        className="mt-1.5 text-[10px] text-muted hover:text-crit flex items-center gap-1 transition-colors"
                       >
                         <PinOff className="w-3 h-3" /> Unpin
                       </button>

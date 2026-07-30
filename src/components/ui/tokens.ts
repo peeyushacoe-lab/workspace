@@ -3,30 +3,30 @@
 
 export const colors = {
   // Backgrounds
-  bgBase:    "#0f1321",
-  bgSurface: "#1b1f2e",
-  bgElevated: "#262939",
+  bgBase:    "#f0efec",
+  bgSurface: "#ffffff",
+  bgElevated: "#f2f1ee",
   bgHover:   "#2e3249",
 
   // Accent / brand
-  accent:    "#00d2ff",
-  accentDim: "rgba(0,210,255,0.15)",
-  accentGlow: "rgba(0,210,255,0.08)",
+  accent:    "#4f46e5",
+  accentDim: "color-mix(in srgb, var(--accent) 15%, transparent)",
+  accentGlow: "color-mix(in srgb, var(--accent) 8%, transparent)",
 
   // Text
-  textPrimary:   "#dfe1f6",
-  textSecondary: "#9aa3b8",
+  textPrimary:   "#1a1a18",
+  textSecondary: "#6b6a65",
   textMuted:     "rgba(187,201,207,0.5)",
 
   // Status
   success: "#22c55e",
-  warning: "#f59e0b",
-  error:   "#ef4444",
+  warning: "#b45309",
+  error:   "#c0362c",
   info:    "#3b82f6",
 
   // Borders
-  border:     "rgba(255,255,255,0.07)",
-  borderFocus: "#00d2ff",
+  border:     "var(--border)",
+  borderFocus: "#4f46e5",
 } as const;
 
 export const spacing = {
@@ -59,17 +59,17 @@ export const shadow = {
   sm:  "0 1px 3px rgba(0,0,0,0.4)",
   md:  "0 4px 12px rgba(0,0,0,0.5)",
   lg:  "0 8px 32px rgba(0,0,0,0.6)",
-  accent: "0 0 16px rgba(0,210,255,0.15)",
+  accent: "0 0 16px color-mix(in srgb, var(--accent) 15%, transparent)",
 } as const;
 
 // Tailwind class shorthands — use when you need className strings
 export const tw = {
-  bgBase:    "bg-[#0f1321]",
-  bgSurface: "bg-[#1b1f2e]",
-  bgElevated: "bg-[#262939]",
-  accent:    "text-[#00d2ff]",
-  textPrimary:   "text-[#dfe1f6]",
-  textSecondary: "text-[#9aa3b8]",
-  border:    "border-white/[0.07]",
-  ring:      "ring-[#00d2ff]",
+  bgBase:    "bg-canvas",
+  bgSurface: "bg-surface",
+  bgElevated: "bg-hover",
+  accent:    "text-accent",
+  textPrimary:   "text-foreground",
+  textSecondary: "text-muted",
+  border:    "border-border",
+  ring:      "ring-accent",
 } as const;

@@ -59,25 +59,25 @@ function MfaChallengeForm() {
   }, [authenticate]);
 
   return (
-    <div className="bg-white min-h-screen flex items-center justify-center px-4">
+    <div className="bg-surface min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
 
         {/* Logo */}
         <div className="flex justify-center mb-8">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#e8f0fe]">
-            <ShieldCheck className="h-6 w-6 text-[#1a56db]" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-soft">
+            <ShieldCheck className="h-6 w-6 text-accent" />
           </div>
         </div>
 
-        <div className="bg-white border border-[#e8eaed] rounded-xl p-8 shadow-sm text-center">
+        <div className="bg-surface border border-border rounded-xl p-8 shadow-sm text-center">
 
           {/* Success */}
           {step === "success" && (
             <div className="flex flex-col items-center gap-3 py-4">
-              <div className="w-16 h-16 rounded-full bg-[#e6f4ea] flex items-center justify-center">
-                <ShieldCheck className="h-8 w-8 text-[#0f9d58]" />
+              <div className="w-16 h-16 rounded-full bg-ok-soft flex items-center justify-center">
+                <ShieldCheck className="h-8 w-8 text-ok" />
               </div>
-              <p className="text-sm font-semibold text-[#0f9d58]">Verified — signing you in…</p>
+              <p className="text-sm font-semibold text-ok">Verified — signing you in…</p>
             </div>
           )}
 
@@ -85,36 +85,36 @@ function MfaChallengeForm() {
           {(step === "prompting" || step === "verifying") && (
             <div className="flex flex-col items-center gap-4 py-4">
               <div className="relative flex h-20 w-20 items-center justify-center">
-                <div className="absolute inset-0 rounded-full bg-[#e8f0fe] animate-pulse" />
-                <Fingerprint className="relative h-10 w-10 text-[#1a56db]" />
+                <div className="absolute inset-0 rounded-full bg-accent-soft animate-pulse" />
+                <Fingerprint className="relative h-10 w-10 text-accent" />
               </div>
               <div>
-                <p className="text-base font-semibold text-[#202124]">
+                <p className="text-base font-semibold text-foreground">
                   {step === "prompting" ? "Verify your identity" : "Verifying…"}
                 </p>
-                <p className="text-sm text-[#5f6368] mt-1">
+                <p className="text-sm text-muted mt-1">
                   {step === "prompting"
                     ? "Use Face ID, fingerprint, or your device PIN"
                     : "Checking your passkey…"}
                 </p>
               </div>
-              {step === "verifying" && <Loader2 className="h-5 w-5 animate-spin text-[#1a56db]" />}
+              {step === "verifying" && <Loader2 className="h-5 w-5 animate-spin text-accent" />}
             </div>
           )}
 
           {/* Idle (after cancel) */}
           {step === "idle" && (
             <div className="flex flex-col items-center gap-4 py-4">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#f1f3f4]">
-                <Fingerprint className="h-8 w-8 text-[#5f6368]" />
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-surface-sunken">
+                <Fingerprint className="h-8 w-8 text-muted" />
               </div>
               <div>
-                <p className="text-base font-semibold text-[#202124]">Biometric verification</p>
-                <p className="text-sm text-[#5f6368] mt-1">Use your registered passkey to sign in</p>
+                <p className="text-base font-semibold text-foreground">Biometric verification</p>
+                <p className="text-sm text-muted mt-1">Use your registered passkey to sign in</p>
               </div>
               <button
                 onClick={() => void authenticate()}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-[#1a56db] text-white hover:bg-[#1648c7] transition-colors"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-accent text-accent-foreground hover:bg-accent-hover transition-colors"
               >
                 <Fingerprint className="h-4 w-4" />
                 Verify with passkey
@@ -125,16 +125,16 @@ function MfaChallengeForm() {
           {/* Error */}
           {step === "error" && (
             <div className="flex flex-col items-center gap-4 py-4">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#fce8e6]">
-                <XCircle className="h-8 w-8 text-[#ea4335]" />
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-crit-soft">
+                <XCircle className="h-8 w-8 text-crit" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-[#ea4335]">Verification failed</p>
-                {errorMsg && <p className="text-xs text-[#5f6368] mt-1">{errorMsg}</p>}
+                <p className="text-sm font-semibold text-crit">Verification failed</p>
+                {errorMsg && <p className="text-xs text-muted mt-1">{errorMsg}</p>}
               </div>
               <button
                 onClick={() => void authenticate()}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-[#1a56db] text-white hover:bg-[#1648c7] transition-colors"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-accent text-accent-foreground hover:bg-accent-hover transition-colors"
               >
                 <RefreshCw className="h-4 w-4" />
                 Try again
@@ -143,10 +143,10 @@ function MfaChallengeForm() {
           )}
 
           {/* Sign out link */}
-          <div className="mt-6 pt-5 border-t border-[#e8eaed]">
+          <div className="mt-6 pt-5 border-t border-border">
             <a
               href="/api/auth/logout"
-              className="text-xs text-[#80868b] hover:text-[#5f6368] transition-colors"
+              className="text-xs text-subtle hover:text-muted transition-colors"
             >
               Sign out and use a different account
             </a>

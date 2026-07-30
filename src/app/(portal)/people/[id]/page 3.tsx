@@ -35,12 +35,12 @@ type PersonDetail = {
 type PresenceData = { status: string; updatedAt: string };
 
 const STATUS_COLORS: Record<string, string> = {
-  online: "#10B981",
-  away: "#f59e0b",
-  busy: "#ef4444",
-  in_meeting: "#a855f7",
-  dnd: "#ef4444",
-  offline: "#5A6275",
+  online: "var(--ok)",
+  away: "var(--warn)",
+  busy: "var(--crit)",
+  in_meeting: "var(--violet)",
+  dnd: "var(--crit)",
+  offline: "var(--subtle)",
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -83,18 +83,18 @@ export default function PersonProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0B0D12] flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-[#5A6275]" />
+      <div className="min-h-full bg-surface flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-subtle" />
       </div>
     );
   }
 
   if (notFound || !person) {
     return (
-      <div className="min-h-screen bg-[#0B0D12] flex flex-col items-center justify-center gap-4">
-        <User className="w-12 h-12 text-[#5A6275]" />
-        <p className="text-[#5A6275] text-sm">Profile not found</p>
-        <button onClick={() => router.back()} className="text-xs text-[#00C2FF] hover:underline">
+      <div className="min-h-full bg-surface flex flex-col items-center justify-center gap-4">
+        <User className="w-12 h-12 text-subtle" />
+        <p className="text-subtle text-sm">Profile not found</p>
+        <button onClick={() => router.back()} className="text-xs text-accent hover:underline">
           Go back
         </button>
       </div>
@@ -102,16 +102,16 @@ export default function PersonProfilePage() {
   }
 
   const presenceStatus = presence?.status ?? "offline";
-  const presenceColor = STATUS_COLORS[presenceStatus] ?? "#5A6275";
+  const presenceColor = STATUS_COLORS[presenceStatus] ?? "var(--subtle)";
   const presenceLabel = STATUS_LABELS[presenceStatus] ?? "Offline";
 
   return (
-    <div className="min-h-screen bg-[#0B0D12] text-[#E6E9F0]">
+    <div className="min-h-full bg-surface text-foreground">
       {/* Back button */}
       <div className="px-6 pt-6">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-1.5 text-xs text-[#5A6275] hover:text-[#E6E9F0] transition-colors"
+          className="flex items-center gap-1.5 text-xs text-subtle hover:text-foreground transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           Back to People
@@ -139,11 +139,11 @@ export default function PersonProfilePage() {
               <img
                 src={person.avatarUrl}
                 alt={person.fullName}
-                className="w-20 h-20 rounded-full object-cover border-4 border-[#0B0D12]"
+                className="w-20 h-20 rounded-full object-cover border-4 border-border"
               />
             ) : (
               <div
-                className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold text-white border-4 border-[#0B0D12]"
+                className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold text-white border-4 border-border"
                 style={{ background: avatarGradient(person.email) }}
               >
                 {initials(person.fullName)}
@@ -151,24 +151,24 @@ export default function PersonProfilePage() {
             )}
             {/* Presence dot */}
             <span
-              className="absolute bottom-1 right-1 w-4 h-4 rounded-full border-2 border-[#0B0D12]"
+              className="absolute bottom-1 right-1 w-4 h-4 rounded-full border-2 border-border"
               style={{ background: presenceColor }}
               title={presenceLabel}
             />
           </div>
 
           <div className="pb-2">
-            <h1 className="text-xl font-bold text-[#E6E9F0]">
+            <h1 className="text-xl font-bold text-foreground">
               {person.displayName || person.fullName}
               {person.pronouns && (
-                <span className="ml-2 text-xs font-normal text-[#5A6275]">({person.pronouns})</span>
+                <span className="ml-2 text-xs font-normal text-subtle">({person.pronouns})</span>
               )}
             </h1>
             {person.jobTitle && (
-              <p className="text-sm text-[#8A92A6]">{person.jobTitle}</p>
+              <p className="text-sm text-muted">{person.jobTitle}</p>
             )}
             <div className="flex items-center gap-2 mt-1">
-              <span className="px-2 py-0.5 text-[10px] font-mono font-semibold rounded-full bg-[#1B1F2A] text-[#8A92A6] border border-[#262A35]">
+              <span className="px-2 py-0.5 text-[10px] font-mono font-semibold rounded-full bg-surface-sunken text-muted border border-border">
                 {roleLabels[person.role] ?? person.role}
               </span>
               <span
@@ -187,25 +187,25 @@ export default function PersonProfilePage() {
           {/* Left: bio + contact */}
           <div className="md:col-span-2 space-y-5">
             {person.bio && (
-              <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-5">
-                <h2 className="text-xs font-semibold text-[#5A6275] uppercase tracking-wider mb-3">About</h2>
-                <p className="text-sm text-[#C5CAD3] leading-relaxed whitespace-pre-wrap">{person.bio}</p>
+              <div className="bg-surface border border-border rounded-xl p-5">
+                <h2 className="text-xs font-semibold text-subtle uppercase tracking-wider mb-3">About</h2>
+                <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{person.bio}</p>
               </div>
             )}
 
-            <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-5">
-              <h2 className="text-xs font-semibold text-[#5A6275] uppercase tracking-wider mb-4">Contact</h2>
+            <div className="bg-surface border border-border rounded-xl p-5">
+              <h2 className="text-xs font-semibold text-subtle uppercase tracking-wider mb-4">Contact</h2>
               <div className="space-y-3">
                 <a
                   href={`mailto:${person.email}`}
-                  className="flex items-center gap-3 text-sm text-[#8A92A6] hover:text-[#00C2FF] transition-colors"
+                  className="flex items-center gap-3 text-sm text-muted hover:text-accent transition-colors"
                 >
-                  <Mail className="w-4 h-4 flex-shrink-0 text-[#5A6275]" />
+                  <Mail className="w-4 h-4 flex-shrink-0 text-subtle" />
                   <span className="font-mono truncate">{person.email}</span>
                 </a>
                 {person.phone && (
-                  <div className="flex items-center gap-3 text-sm text-[#8A92A6]">
-                    <Phone className="w-4 h-4 flex-shrink-0 text-[#5A6275]" />
+                  <div className="flex items-center gap-3 text-sm text-muted">
+                    <Phone className="w-4 h-4 flex-shrink-0 text-subtle" />
                     <span>{person.phone}</span>
                   </div>
                 )}
@@ -214,9 +214,9 @@ export default function PersonProfilePage() {
                     href={person.website.startsWith("http") ? person.website : `https://${person.website}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-3 text-sm text-[#8A92A6] hover:text-[#00C2FF] transition-colors"
+                    className="flex items-center gap-3 text-sm text-muted hover:text-accent transition-colors"
                   >
-                    <Globe className="w-4 h-4 flex-shrink-0 text-[#5A6275]" />
+                    <Globe className="w-4 h-4 flex-shrink-0 text-subtle" />
                     <span className="truncate">{person.website}</span>
                   </a>
                 )}
@@ -226,41 +226,41 @@ export default function PersonProfilePage() {
 
           {/* Right: details */}
           <div className="space-y-5">
-            <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-5">
-              <h2 className="text-xs font-semibold text-[#5A6275] uppercase tracking-wider mb-4">Details</h2>
+            <div className="bg-surface border border-border rounded-xl p-5">
+              <h2 className="text-xs font-semibold text-subtle uppercase tracking-wider mb-4">Details</h2>
               <div className="space-y-3">
                 {person.department && (
                   <div className="flex items-start gap-2.5">
-                    <Building2 className="w-3.5 h-3.5 text-[#5A6275] mt-0.5 flex-shrink-0" />
+                    <Building2 className="w-3.5 h-3.5 text-subtle mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-[10px] text-[#5A6275]">Department</p>
-                      <p className="text-sm text-[#C5CAD3]">{person.department}</p>
+                      <p className="text-[10px] text-subtle">Department</p>
+                      <p className="text-sm text-foreground">{person.department}</p>
                     </div>
                   </div>
                 )}
                 {person.location && (
                   <div className="flex items-start gap-2.5">
-                    <MapPin className="w-3.5 h-3.5 text-[#5A6275] mt-0.5 flex-shrink-0" />
+                    <MapPin className="w-3.5 h-3.5 text-subtle mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-[10px] text-[#5A6275]">Location</p>
-                      <p className="text-sm text-[#C5CAD3]">{person.location}</p>
+                      <p className="text-[10px] text-subtle">Location</p>
+                      <p className="text-sm text-foreground">{person.location}</p>
                     </div>
                   </div>
                 )}
                 {person.timezone && person.timezone !== "UTC" && (
                   <div className="flex items-start gap-2.5">
-                    <Clock className="w-3.5 h-3.5 text-[#5A6275] mt-0.5 flex-shrink-0" />
+                    <Clock className="w-3.5 h-3.5 text-subtle mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-[10px] text-[#5A6275]">Timezone</p>
-                      <p className="text-sm text-[#C5CAD3]">{person.timezone}</p>
+                      <p className="text-[10px] text-subtle">Timezone</p>
+                      <p className="text-sm text-foreground">{person.timezone}</p>
                     </div>
                   </div>
                 )}
                 <div className="flex items-start gap-2.5">
-                  <User className="w-3.5 h-3.5 text-[#5A6275] mt-0.5 flex-shrink-0" />
+                  <User className="w-3.5 h-3.5 text-subtle mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-[10px] text-[#5A6275]">Member since</p>
-                    <p className="text-sm text-[#C5CAD3]">
+                    <p className="text-[10px] text-subtle">Member since</p>
+                    <p className="text-sm text-foreground">
                       {new Date(person.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
                     </p>
                   </div>
@@ -269,11 +269,11 @@ export default function PersonProfilePage() {
             </div>
 
             {/* Quick actions */}
-            <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-5">
-              <h2 className="text-xs font-semibold text-[#5A6275] uppercase tracking-wider mb-3">Actions</h2>
+            <div className="bg-surface border border-border rounded-xl p-5">
+              <h2 className="text-xs font-semibold text-subtle uppercase tracking-wider mb-3">Actions</h2>
               <a
                 href={`/inbox?compose=${encodeURIComponent(person.email)}`}
-                className="flex items-center gap-2 w-full px-3 py-2 text-sm font-medium rounded-lg bg-[#00C2FF]/10 text-[#00C2FF] border border-[#00C2FF]/20 hover:bg-[#00C2FF]/20 transition-colors"
+                className="flex items-center gap-2 w-full px-3 py-2 text-sm font-medium rounded-lg bg-accent/10 text-accent border border-accent/20 hover:bg-accent/20 transition-colors"
               >
                 <Mail className="w-4 h-4" />
                 Send email

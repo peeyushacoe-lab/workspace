@@ -70,7 +70,7 @@ function Avatar({ name, url, size = "md" }: { name: string; url?: string | null;
   const cls = size === "sm" ? "w-7 h-7 text-xs" : size === "lg" ? "w-12 h-12 text-base" : "w-9 h-9 text-sm";
   if (url) return <img src={url} className={`${cls} rounded-full object-cover flex-shrink-0`} alt={name} />;
   return (
-    <div className={`${cls} rounded-full bg-[#00C2FF]/20 text-[#00C2FF] font-semibold flex items-center justify-center flex-shrink-0`}>
+    <div className={`${cls} rounded-full bg-accent/20 text-accent font-semibold flex items-center justify-center flex-shrink-0`}>
       {initials}
     </div>
   );
@@ -78,10 +78,10 @@ function Avatar({ name, url, size = "md" }: { name: string; url?: string | null;
 
 function StatusBadge({ status }: { status: MeetingStatus }) {
   const config = {
-    LIVE:      { label: "Live",      cls: "bg-green-500/15 text-green-400 border border-green-500/30" },
-    SCHEDULED: { label: "Scheduled", cls: "bg-blue-500/15 text-blue-400 border border-blue-500/30" },
-    ENDED:     { label: "Ended",     cls: "bg-[#1B1F2A] text-[#7a8899] border border-[#262A35]" },
-    CANCELLED: { label: "Cancelled", cls: "bg-rose-500/15 text-rose-400 border border-rose-500/30" },
+    LIVE:      { label: "Live",      cls: "bg-ok/15 text-ok border border-ok/30" },
+    SCHEDULED: { label: "Scheduled", cls: "bg-accent/15 text-accent border border-accent/30" },
+    ENDED:     { label: "Ended",     cls: "bg-surface-sunken text-muted border border-border" },
+    CANCELLED: { label: "Cancelled", cls: "bg-crit/15 text-crit border border-crit/30" },
   };
   const { label, cls } = config[status];
   return <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${cls}`}>{label}</span>;
@@ -127,37 +127,37 @@ function NewMeetingModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60  p-4">
-      <div className="bg-[#12151D] border border-[#262A35] rounded-2xl w-full max-w-md shadow-2xl">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#262A35]">
+      <div className="bg-surface border border-border rounded-2xl w-full max-w-md shadow-2xl">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <div className="flex items-center gap-2">
-            <Video className="w-5 h-5 text-[#00C2FF]" />
-            <h2 className="text-base font-semibold text-[#E6E9F0]">New Meeting</h2>
+            <Video className="w-5 h-5 text-accent" />
+            <h2 className="text-base font-semibold text-foreground">New Meeting</h2>
           </div>
-          <button onClick={onClose} className="text-[#7a8899] hover:text-[#E6E9F0] transition-colors">
+          <button onClick={onClose} className="text-muted hover:text-foreground transition-colors">
             <X className="w-4 h-4" />
           </button>
         </div>
 
         <div className="p-6 space-y-4">
           <div>
-            <label className="block text-xs font-medium text-[#7a8899] mb-1.5">Meeting title</label>
+            <label className="block text-xs font-medium text-muted mb-1.5">Meeting title</label>
             <input
               autoFocus
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Weekly sync, design review…"
-              className="w-full bg-[#1B1F2A] border border-[#262A35] rounded-lg px-3 py-2 text-sm text-[#E6E9F0] placeholder:text-[#4a5568] outline-none focus:border-[#00C2FF]/40"
+              className="w-full bg-surface-sunken border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-subtle outline-none focus:border-accent/40"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-[#7a8899] mb-1.5">Description (optional)</label>
+            <label className="block text-xs font-medium text-muted mb-1.5">Description (optional)</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
               placeholder="Agenda, notes…"
-              className="w-full bg-[#1B1F2A] border border-[#262A35] rounded-lg px-3 py-2 text-sm text-[#E6E9F0] placeholder:text-[#4a5568] outline-none focus:border-[#00C2FF]/40 resize-none"
+              className="w-full bg-surface-sunken border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-subtle outline-none focus:border-accent/40 resize-none"
             />
           </div>
 
@@ -166,8 +166,8 @@ function NewMeetingModal({
               onClick={() => setIsInstant(true)}
               className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
                 isInstant
-                  ? "bg-[#00C2FF]/15 border-[#00C2FF]/40 text-[#00C2FF]"
-                  : "bg-[#1B1F2A] border-[#262A35] text-[#8A92A6] hover:border-[#00C2FF]/20"
+                  ? "bg-accent/15 border-accent/40 text-accent"
+                  : "bg-surface-sunken border-border text-muted hover:border-accent/20"
               }`}
             >
               <Video className="w-4 h-4" /> Start now
@@ -176,8 +176,8 @@ function NewMeetingModal({
               onClick={() => setIsInstant(false)}
               className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
                 !isInstant
-                  ? "bg-[#00C2FF]/15 border-[#00C2FF]/40 text-[#00C2FF]"
-                  : "bg-[#1B1F2A] border-[#262A35] text-[#8A92A6] hover:border-[#00C2FF]/20"
+                  ? "bg-accent/15 border-accent/40 text-accent"
+                  : "bg-surface-sunken border-border text-muted hover:border-accent/20"
               }`}
             >
               <Calendar className="w-4 h-4" /> Schedule
@@ -186,12 +186,12 @@ function NewMeetingModal({
 
           {!isInstant && (
             <div>
-              <label className="block text-xs font-medium text-[#7a8899] mb-1.5">Date & Time</label>
+              <label className="block text-xs font-medium text-muted mb-1.5">Date & Time</label>
               <input
                 type="datetime-local"
                 value={scheduledAt}
                 onChange={(e) => setScheduledAt(e.target.value)}
-                className="w-full bg-[#1B1F2A] border border-[#262A35] rounded-lg px-3 py-2 text-sm text-[#E6E9F0] outline-none focus:border-[#00C2FF]/40"
+                className="w-full bg-surface-sunken border border-border rounded-lg px-3 py-2 text-sm text-foreground outline-none focus:border-accent/40"
               />
             </div>
           )}
@@ -200,14 +200,14 @@ function NewMeetingModal({
         <div className="px-6 pb-6 flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2 rounded-lg bg-[#1B1F2A] text-[#8A92A6] text-sm font-medium hover:bg-[#2e3347] transition-colors"
+            className="flex-1 px-4 py-2 rounded-lg bg-surface-sunken text-muted text-sm font-medium hover:bg-hover transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleCreate}
             disabled={saving}
-            className="flex-1 px-4 py-2 rounded-lg bg-[#00C2FF] text-[#06121A] text-sm font-semibold hover:bg-[#0098E6] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            className="flex-1 px-4 py-2 rounded-lg bg-accent text-accent-foreground text-sm font-semibold hover:bg-accent-hover transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Video className="w-4 h-4" />}
             {isInstant ? "Start meeting" : "Schedule"}
@@ -279,25 +279,25 @@ function InMeetingRoom({
   ].join("");
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#12151D] flex flex-col">
+    <div className="fixed inset-0 z-50 bg-surface flex flex-col">
       {/* Slim header */}
-      <div className="flex items-center justify-between px-5 py-2.5 bg-[#12151D] border-b border-[#262A35] shrink-0">
+      <div className="flex items-center justify-between px-5 py-2.5 bg-surface border-b border-border shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-          <span className="text-sm font-semibold text-[#E6E9F0]">{meeting.title}</span>
-          <span className="text-xs text-[#7a8899] tabular-nums">{formatElapsed(elapsed)}</span>
+          <div className="w-2 h-2 rounded-full bg-ok animate-pulse" />
+          <span className="text-sm font-semibold text-foreground">{meeting.title}</span>
+          <span className="text-xs text-muted tabular-nums">{formatElapsed(elapsed)}</span>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={copyLink}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1B1F2A] text-xs text-[#8A92A6] hover:bg-[#2e3347] transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-sunken text-xs text-muted hover:bg-hover transition-colors"
           >
-            {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
+            {copied ? <Check className="w-3.5 h-3.5 text-ok" /> : <Copy className="w-3.5 h-3.5" />}
             {copied ? "Copied" : "Copy invite link"}
           </button>
           <button
             onClick={onLeave}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-600 text-white text-xs font-medium hover:bg-rose-500 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-crit text-white text-xs font-medium hover:bg-crit transition-colors"
           >
             <PhoneOff className="w-3.5 h-3.5" />
             Leave
@@ -305,7 +305,7 @@ function InMeetingRoom({
           {isHost && (
             <button
               onClick={onEnd}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-600/20 border border-rose-500/30 text-rose-400 text-xs font-medium hover:bg-rose-600/30 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-crit/20 border border-crit/30 text-crit text-xs font-medium hover:bg-crit/30 transition-colors"
             >
               End for all
             </button>
@@ -341,15 +341,15 @@ function MeetingCard({
       onClick={onSelect}
       className={`w-full text-left p-3.5 rounded-xl border transition-colors ${
         selected
-          ? "bg-[#00C2FF]/8 border-[#00C2FF]/30"
-          : "bg-[#12151D] border-[#262A35] hover:border-[#262A35]"
+          ? "bg-accent/8 border-accent/30"
+          : "bg-surface border-border hover:border-border"
       }`}
     >
       <div className="flex items-start justify-between gap-2 mb-1.5">
-        <p className="text-sm font-medium text-[#E6E9F0] leading-tight line-clamp-1">{meeting.title}</p>
+        <p className="text-sm font-medium text-foreground leading-tight line-clamp-1">{meeting.title}</p>
         <StatusBadge status={meeting.status} />
       </div>
-      <div className="flex items-center gap-2 text-xs text-[#7a8899]">
+      <div className="flex items-center gap-2 text-xs text-muted">
         <Users className="w-3 h-3" />
         <span>{meeting.participants.length}</span>
         <span>·</span>
@@ -359,7 +359,7 @@ function MeetingCard({
           <span>{formatDistanceToNow(parseISO(meeting.createdAt), { addSuffix: true })}</span>
         )}
       </div>
-      {isHost && <span className="text-xs text-[#00C2FF]/60 mt-0.5 inline-block">Host</span>}
+      {isHost && <span className="text-xs text-accent/60 mt-0.5 inline-block">Host</span>}
     </button>
   );
 }
@@ -375,7 +375,7 @@ function AvatarStack({ participants }: { participants: Participant[] }) {
         return (
           <div
             key={p.id}
-            className="w-[30px] h-[30px] -ml-2 first:ml-0 rounded-full border-2 border-[#12151D] flex items-center justify-center text-[10.5px] font-bold text-white"
+            className="w-[30px] h-[30px] -ml-2 first:ml-0 rounded-full border-2 border-border flex items-center justify-center text-[10.5px] font-bold text-white"
             style={{ background: avatarGradient(p.user.fullName) }}
             title={p.user.fullName}
           >
@@ -384,7 +384,7 @@ function AvatarStack({ participants }: { participants: Participant[] }) {
         );
       })}
       {more > 0 && (
-        <div className="w-[30px] h-[30px] -ml-2 rounded-full border-2 border-[#12151D] bg-[#1B1F2A] flex items-center justify-center text-[10px] font-bold text-[#8A92A6]">
+        <div className="w-[30px] h-[30px] -ml-2 rounded-full border-2 border-border bg-surface-sunken flex items-center justify-center text-[10px] font-bold text-muted">
           +{more}
         </div>
       )}
@@ -414,27 +414,27 @@ function MeetingRow({
 
   return (
     <div
-      className="flex items-center gap-[18px] px-5 py-4 bg-[#12151D] border rounded-[13px] transition-colors"
-      style={{ borderColor: isLive ? "rgba(255,92,122,0.3)" : "#262A35" }}
+      className="flex items-center gap-[18px] px-5 py-4 bg-surface border rounded-[13px] transition-colors"
+      style={{ borderColor: isLive ? "color-mix(in srgb, var(--crit) 30%, transparent)" : "var(--border)" }}
     >
       <button onClick={onSelect} className="w-[58px] flex-none text-center">
-        <div className="text-[18px] font-extrabold tracking-tight text-[#E6E9F0] font-mono leading-none">{time}</div>
-        <div className="text-[11px] font-semibold text-[#5A6275] mt-0.5">{ampm}</div>
+        <div className="text-[18px] font-extrabold tracking-tight text-foreground font-mono leading-none">{time}</div>
+        <div className="text-[11px] font-semibold text-subtle mt-0.5">{ampm}</div>
       </button>
 
-      <div className="w-px h-10 bg-white/[0.08]" />
+      <div className="w-px h-10 bg-surface/[0.08]" />
 
       <button onClick={onSelect} className="flex-1 min-w-0 text-left">
         <div className="flex items-center gap-[9px] mb-[5px]">
-          <span className="text-[14.5px] font-bold text-[#E6E9F0] truncate">{meeting.title}</span>
+          <span className="text-[14.5px] font-bold text-foreground truncate">{meeting.title}</span>
           {isLive && (
-            <span className="inline-flex items-center gap-[5px] text-[10.5px] font-bold text-[#FF5C7A] px-2 py-0.5 rounded-[5px] bg-[#FF5C7A]/[0.14]">
-              <span className="w-[6px] h-[6px] rounded-full bg-[#FF5C7A] animate-pulse" />
+            <span className="inline-flex items-center gap-[5px] text-[10.5px] font-bold text-crit px-2 py-0.5 rounded-[5px] bg-crit/[0.14]">
+              <span className="w-[6px] h-[6px] rounded-full bg-crit animate-pulse" />
               LIVE
             </span>
           )}
         </div>
-        <div className="text-[12.5px] text-[#6B7385]">{meta}</div>
+        <div className="text-[12.5px] text-muted">{meta}</div>
       </button>
 
       <AvatarStack participants={meeting.participants} />
@@ -446,8 +446,8 @@ function MeetingRow({
           className="h-9 px-[18px] rounded-lg text-[12.5px] font-bold flex items-center gap-[7px] transition-colors disabled:opacity-60"
           style={
             isLive
-              ? { background: "linear-gradient(135deg,#00C2FF,#0098E6)", color: "#06121A" }
-              : { background: "#1B1F2A", color: "#E6E9F0" }
+              ? { background: "linear-gradient(135deg,var(--accent),var(--accent-hover))", color: "#ffffff" }
+              : { background: "var(--surface-sunken)", color: "var(--foreground)" }
           }
         >
           {joining ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Video className="w-3.5 h-3.5" />}
@@ -456,7 +456,7 @@ function MeetingRow({
       ) : (
         <button
           onClick={onSelect}
-          className="h-9 px-[18px] rounded-lg text-[12.5px] font-bold flex items-center gap-[7px] bg-[#1B1F2A] text-[#E6E9F0] transition-colors"
+          className="h-9 px-[18px] rounded-lg text-[12.5px] font-bold flex items-center gap-[7px] bg-surface-sunken text-foreground transition-colors"
         >
           <ExternalLink className="w-3.5 h-3.5" />
           Details
@@ -602,25 +602,25 @@ export function MeetView({
         />
       )}
 
-      <div className="flex h-[calc(100vh-116px)] lg:h-[calc(100vh-56px)] bg-[#12151D]">
+      <div className="flex h-[calc(100vh-116px)] lg:h-full bg-surface">
         {/* Sidebar — full width on mobile when no meeting selected */}
-        <div className={`${selectedId ? "hidden lg:flex" : "flex"} w-full lg:w-72 flex-col border-r border-[#262A35] bg-[#12151D]`}>
-          <div className="px-4 py-4 border-b border-[#262A35]">
+        <div className={`${selectedId ? "hidden lg:flex" : "flex"} w-full lg:w-72 flex-col border-r border-border bg-surface`}>
+          <div className="px-4 py-4 border-b border-border">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <MonitorPlay className="w-4 h-4 text-[#00C2FF]" />
-                <span className="text-sm font-semibold text-[#E6E9F0]">Sage Meet</span>
+                <MonitorPlay className="w-4 h-4 text-accent" />
+                <span className="text-sm font-semibold text-foreground">Sage Meet</span>
               </div>
               <div className="flex items-center gap-1">
                 <button
                   onClick={loadMeetings}
-                  className="p-1.5 text-[#7a8899] hover:text-[#E6E9F0] rounded transition-colors"
+                  className="p-1.5 text-muted hover:text-foreground rounded transition-colors"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
                 </button>
                 <button
                   onClick={() => setShowNew(true)}
-                  className="p-1.5 bg-[#00C2FF] text-[#06121A] rounded-lg hover:bg-[#0098E6] transition-colors"
+                  className="p-1.5 bg-accent text-accent-foreground rounded-lg hover:bg-accent-hover transition-colors"
                 >
                   <Plus className="w-3.5 h-3.5" />
                 </button>
@@ -634,8 +634,8 @@ export function MeetView({
                   onClick={() => setFilter(f.id)}
                   className={`flex-1 text-xs px-2 py-1 rounded-lg font-medium transition-colors ${
                     filter === f.id
-                      ? "bg-[#00C2FF]/15 text-[#00C2FF]"
-                      : "text-[#7a8899] hover:text-[#E6E9F0] hover:bg-[#1B1F2A]"
+                      ? "bg-accent/15 text-accent"
+                      : "text-muted hover:text-foreground hover:bg-surface-sunken"
                   }`}
                 >
                   {f.label}
@@ -647,15 +647,15 @@ export function MeetView({
           <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 space-y-2">
             {loading ? (
               Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-20 bg-[#12151D] rounded-xl animate-pulse" />
+                <div key={i} className="h-20 bg-surface rounded-xl animate-pulse" />
               ))
             ) : filtered.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <Video className="w-8 h-8 text-[#4a5568] mb-2" />
-                <p className="text-sm text-[#7a8899]">No meetings</p>
+                <Video className="w-8 h-8 text-subtle mb-2" />
+                <p className="text-sm text-muted">No meetings</p>
                 <button
                   onClick={() => setShowNew(true)}
-                  className="mt-3 text-xs text-[#00C2FF] hover:underline"
+                  className="mt-3 text-xs text-accent hover:underline"
                 >
                   Create one
                 </button>
@@ -683,15 +683,15 @@ export function MeetView({
                 <div
                   className="px-5 py-[18px] rounded-[13px] border"
                   style={{
-                    background: "linear-gradient(135deg, rgba(0,194,255,0.14), rgba(0,194,255,0.04))",
-                    borderColor: "rgba(0,194,255,0.25)",
+                    background: "linear-gradient(135deg, color-mix(in srgb, var(--accent) 14%, transparent), color-mix(in srgb, var(--accent) 4%, transparent))",
+                    borderColor: "color-mix(in srgb, var(--accent) 25%, transparent)",
                   }}
                 >
-                  <div className="text-xs font-semibold text-[#7FD8F5] mb-2">Up next</div>
+                  <div className="text-xs font-semibold text-accent mb-2">Up next</div>
                   {upNext ? (
                     <>
-                      <div className="text-base font-bold text-[#E6E9F0] mb-1 truncate">{upNext.title}</div>
-                      <div className="text-[12.5px] text-[#9AA2B4] font-mono">
+                      <div className="text-base font-bold text-foreground mb-1 truncate">{upNext.title}</div>
+                      <div className="text-[12.5px] text-muted font-mono">
                         {upNext.scheduledAt
                           ? `${formatDistanceToNow(parseISO(upNext.scheduledAt), { addSuffix: true })} · ${format(parseISO(upNext.scheduledAt), "h:mm a")}`
                           : format(parseISO(upNext.createdAt), "h:mm a")}
@@ -699,34 +699,34 @@ export function MeetView({
                     </>
                   ) : (
                     <>
-                      <div className="text-base font-bold text-[#E6E9F0] mb-1">Nothing scheduled</div>
-                      <div className="text-[12.5px] text-[#9AA2B4] font-mono">all clear</div>
+                      <div className="text-base font-bold text-foreground mb-1">Nothing scheduled</div>
+                      <div className="text-[12.5px] text-muted font-mono">all clear</div>
                     </>
                   )}
                 </div>
-                <div className="px-5 py-[18px] rounded-[13px] bg-[#12151D] border border-[#262A35]">
-                  <div className="text-xs font-semibold text-[#8A92A6] mb-2">Today</div>
-                  <div className="text-[28px] font-extrabold tracking-tight text-[#E6E9F0] leading-none">{todayCount}</div>
-                  <div className="text-[12.5px] text-[#5A6275] mt-1">meetings scheduled</div>
+                <div className="px-5 py-[18px] rounded-[13px] bg-surface border border-border">
+                  <div className="text-xs font-semibold text-muted mb-2">Today</div>
+                  <div className="text-[28px] font-extrabold tracking-tight text-foreground leading-none">{todayCount}</div>
+                  <div className="text-[12.5px] text-subtle mt-1">meetings scheduled</div>
                 </div>
-                <div className="px-5 py-[18px] rounded-[13px] bg-[#12151D] border border-[#262A35]">
-                  <div className="text-xs font-semibold text-[#8A92A6] mb-2">This week</div>
-                  <div className="text-[28px] font-extrabold tracking-tight text-[#E6E9F0] leading-none">
+                <div className="px-5 py-[18px] rounded-[13px] bg-surface border border-border">
+                  <div className="text-xs font-semibold text-muted mb-2">This week</div>
+                  <div className="text-[28px] font-extrabold tracking-tight text-foreground leading-none">
                     {weekCount}
-                    <span className="text-[15px] font-semibold text-[#5A6275]"> {weekCount === 1 ? "mtg" : "mtgs"}</span>
+                    <span className="text-[15px] font-semibold text-subtle"> {weekCount === 1 ? "mtg" : "mtgs"}</span>
                   </div>
-                  <div className="text-[12.5px] text-[#5A6275] mt-1">in meetings</div>
+                  <div className="text-[12.5px] text-subtle mt-1">in meetings</div>
                 </div>
               </div>
 
               {/* Scheduled header */}
               <div className="flex items-center gap-3 mb-4">
-                <span className="text-[15px] font-bold text-[#E6E9F0]">Scheduled</span>
+                <span className="text-[15px] font-bold text-foreground">Scheduled</span>
                 <div className="flex-1" />
                 <button
                   onClick={() => setShowNew(true)}
-                  className="h-[34px] px-4 rounded-lg text-[12.5px] font-bold text-[#06121A] flex items-center gap-[7px]"
-                  style={{ background: "linear-gradient(135deg, #00C2FF, #0098E6)" }}
+                  className="h-[34px] px-4 rounded-lg text-[12.5px] font-bold text-accent-foreground flex items-center gap-[7px]"
+                  style={{ background: "linear-gradient(135deg, var(--accent), var(--accent-hover))" }}
                 >
                   <Plus className="w-4 h-4" /> New Meeting
                 </button>
@@ -736,15 +736,15 @@ export function MeetView({
               <div className="flex flex-col gap-3">
                 {loading ? (
                   Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="h-[78px] bg-[#12151D] border border-[#262A35] rounded-[13px] animate-pulse" />
+                    <div key={i} className="h-[78px] bg-surface border border-border rounded-[13px] animate-pulse" />
                   ))
                 ) : filtered.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <div className="w-16 h-16 rounded-2xl bg-[#00C2FF]/10 border border-[#00C2FF]/20 flex items-center justify-center mb-4">
-                      <MonitorPlay className="w-8 h-8 text-[#00C2FF]" />
+                    <div className="w-16 h-16 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center mb-4">
+                      <MonitorPlay className="w-8 h-8 text-accent" />
                     </div>
-                    <h2 className="text-xl font-semibold text-[#E6E9F0] mb-1">No meetings yet</h2>
-                    <p className="text-sm text-[#7a8899] max-w-xs">
+                    <h2 className="text-xl font-semibold text-foreground mb-1">No meetings yet</h2>
+                    <p className="text-sm text-muted max-w-xs">
                       HD video meetings with AI-powered transcription and smart summaries.
                     </p>
                   </div>
@@ -766,7 +766,7 @@ export function MeetView({
               {/* Mobile back button */}
               <button
                 onClick={() => setSelectedId(null)}
-                className="lg:hidden flex items-center gap-1.5 text-[#00C2FF] text-sm font-medium mb-4"
+                className="lg:hidden flex items-center gap-1.5 text-accent text-sm font-medium mb-4"
               >
                 <ChevronLeft className="w-4 h-4" />
                 All meetings
@@ -775,18 +775,18 @@ export function MeetView({
               <div className="flex items-start justify-between mb-6">
                 <div>
                   <div className="flex items-center gap-3 mb-1">
-                    <h1 className="text-2xl font-semibold text-[#E6E9F0]">{selected.title}</h1>
+                    <h1 className="text-2xl font-semibold text-foreground">{selected.title}</h1>
                     <StatusBadge status={selected.status} />
                   </div>
                   {selected.description && (
-                    <p className="text-sm text-[#7a8899]">{selected.description}</p>
+                    <p className="text-sm text-muted">{selected.description}</p>
                   )}
                 </div>
                 <div className="flex items-center gap-2">
                   {selected.organizer.id === currentUserId && selected.status !== "ENDED" && (
                     <button
                       onClick={() => handleDelete(selected.id)}
-                      className="p-2 text-[#7a8899] hover:text-rose-400 rounded-lg hover:bg-rose-400/10 transition-colors"
+                      className="p-2 text-muted hover:text-crit rounded-lg hover:bg-crit/10 transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -796,20 +796,20 @@ export function MeetView({
 
               {/* Info grid */}
               <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="bg-[#12151D] rounded-xl p-4 border border-[#262A35]">
-                  <p className="text-xs text-[#7a8899] mb-1 font-medium">Host</p>
+                <div className="bg-surface rounded-xl p-4 border border-border">
+                  <p className="text-xs text-muted mb-1 font-medium">Host</p>
                   <div className="flex items-center gap-2">
                     <Avatar name={selected.organizer.fullName} url={selected.organizer.avatarUrl} size="sm" />
-                    <span className="text-sm text-[#E6E9F0]">{selected.organizer.fullName}</span>
+                    <span className="text-sm text-foreground">{selected.organizer.fullName}</span>
                   </div>
                 </div>
-                <div className="bg-[#12151D] rounded-xl p-4 border border-[#262A35]">
-                  <p className="text-xs text-[#7a8899] mb-1 font-medium">
+                <div className="bg-surface rounded-xl p-4 border border-border">
+                  <p className="text-xs text-muted mb-1 font-medium">
                     {selected.scheduledAt ? "Scheduled" : "Created"}
                   </p>
                   <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-[#00C2FF]" />
-                    <span className="text-sm text-[#E6E9F0]">
+                    <Clock className="w-4 h-4 text-accent" />
+                    <span className="text-sm text-foreground">
                       {selected.scheduledAt
                         ? format(parseISO(selected.scheduledAt), "MMM d, yyyy h:mm a")
                         : formatDistanceToNow(parseISO(selected.createdAt), { addSuffix: true })}
@@ -824,7 +824,7 @@ export function MeetView({
                   <button
                     onClick={() => handleJoin(selected.id)}
                     disabled={joining === selected.id}
-                    className="flex items-center gap-2.5 px-6 py-3 bg-[#00C2FF] text-[#06121A] font-semibold text-sm rounded-xl hover:bg-[#0098E6] transition-colors disabled:opacity-60"
+                    className="flex items-center gap-2.5 px-6 py-3 bg-accent text-accent-foreground font-semibold text-sm rounded-xl hover:bg-accent-hover transition-colors disabled:opacity-60"
                   >
                     {joining === selected.id ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -837,12 +837,12 @@ export function MeetView({
               )}
 
               {/* Join link */}
-              <div className="mb-6 flex items-center gap-2 p-3 bg-[#12151D] rounded-xl border border-[#262A35]">
-                <ExternalLink className="w-4 h-4 text-[#7a8899] flex-shrink-0" />
-                <span className="text-xs text-[#7a8899] truncate flex-1">{`${typeof window !== "undefined" ? window.location.origin : ""}/meet/${selected.roomName}`}</span>
+              <div className="mb-6 flex items-center gap-2 p-3 bg-surface rounded-xl border border-border">
+                <ExternalLink className="w-4 h-4 text-muted flex-shrink-0" />
+                <span className="text-xs text-muted truncate flex-1">{`${typeof window !== "undefined" ? window.location.origin : ""}/meet/${selected.roomName}`}</span>
                 <button
                   onClick={() => navigator.clipboard.writeText(`${window.location.origin}/meet/${selected.roomName}`).then(() => toast.success("Link copied"))}
-                  className="text-xs text-[#00C2FF] hover:underline flex-shrink-0"
+                  className="text-xs text-accent hover:underline flex-shrink-0"
                 >
                   Copy
                 </button>
@@ -850,26 +850,26 @@ export function MeetView({
 
               {/* Participants */}
               <div className="mb-6">
-                <h3 className="text-sm font-semibold text-[#E6E9F0] mb-3 flex items-center gap-2">
-                  <Users className="w-4 h-4 text-[#00C2FF]" />
+                <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                  <Users className="w-4 h-4 text-accent" />
                   Participants ({selected.participants.length})
                 </h3>
                 <div className="space-y-2">
                   {selected.participants.map((p) => (
                     <div
                       key={p.id}
-                      className="flex items-center gap-3 p-3 bg-[#12151D] rounded-xl border border-[#262A35]"
+                      className="flex items-center gap-3 p-3 bg-surface rounded-xl border border-border"
                     >
                       <Avatar name={p.user.fullName} url={p.user.avatarUrl} size="sm" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-[#E6E9F0] font-medium">{p.user.fullName}</p>
-                        <p className="text-xs text-[#7a8899]">
+                        <p className="text-sm text-foreground font-medium">{p.user.fullName}</p>
+                        <p className="text-xs text-muted">
                           {p.role === "HOST" ? "Host" : "Participant"}
                           {p.joinedAt && ` · joined ${formatDistanceToNow(parseISO(p.joinedAt), { addSuffix: true })}`}
                         </p>
                       </div>
                       {p.role === "HOST" && (
-                        <CheckCircle className="w-4 h-4 text-[#00C2FF] flex-shrink-0" />
+                        <CheckCircle className="w-4 h-4 text-accent flex-shrink-0" />
                       )}
                     </div>
                   ))}
@@ -878,12 +878,12 @@ export function MeetView({
 
               {/* AI Summary */}
               {selected.aiSummary && (
-                <div className="p-4 bg-[#00C2FF]/6 border border-[#00C2FF]/15 rounded-xl">
+                <div className="p-4 bg-accent/6 border border-accent/15 rounded-xl">
                   <div className="flex items-center gap-2 mb-2">
-                    <Sparkles className="w-4 h-4 text-[#00C2FF]" />
-                    <span className="text-sm font-medium text-[#00C2FF]">AI Summary</span>
+                    <Sparkles className="w-4 h-4 text-accent" />
+                    <span className="text-sm font-medium text-accent">AI Summary</span>
                   </div>
-                  <p className="text-sm text-[#8A92A6] leading-relaxed">{selected.aiSummary}</p>
+                  <p className="text-sm text-muted leading-relaxed">{selected.aiSummary}</p>
                 </div>
               )}
             </div>

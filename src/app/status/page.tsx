@@ -19,30 +19,30 @@ type StatusPayload = {
 function StatusPill({ status }: { status: ComponentStatus }) {
   if (status === "operational") {
     return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full bg-ok/15 text-ok border border-ok/25">
         <CheckCircle2 className="w-3.5 h-3.5" /> Operational
       </span>
     );
   }
   if (status === "degraded") {
     return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full bg-yellow-500/15 text-yellow-400 border border-yellow-500/25">
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full bg-warn/15 text-warn border border-warn/25">
         <AlertTriangle className="w-3.5 h-3.5" /> Degraded
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full bg-red-500/15 text-red-400 border border-red-500/25">
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full bg-crit/15 text-crit border border-crit/25">
       <XCircle className="w-3.5 h-3.5" /> Outage
     </span>
   );
 }
 
 function dayBarColor(pct: number | null): string {
-  if (pct === null) return "bg-[#262A35]";
-  if (pct >= 99.5) return "bg-emerald-500";
-  if (pct >= 95) return "bg-yellow-500";
-  return "bg-red-500";
+  if (pct === null) return "bg-border";
+  if (pct >= 99.5) return "bg-ok";
+  if (pct >= 95) return "bg-warn";
+  return "bg-crit";
 }
 
 export default function PublicStatusPage() {
@@ -70,28 +70,28 @@ export default function PublicStatusPage() {
   }, [load]);
 
   return (
-    <div className="min-h-screen bg-[#0B0D12] text-[#E6E9F0]">
-      <nav className="border-b border-[#262A35]">
+    <div className="min-h-screen bg-canvas text-foreground">
+      <nav className="border-b border-border">
         <div className="max-w-3xl mx-auto flex items-center justify-between px-6 py-4">
-          <Link href="/" className="flex items-center gap-2 text-sm font-semibold tracking-tight text-[#E6E9F0]">
-            <ShieldCheck className="w-4 h-4 text-[#00C2FF]" /> Nexus Status
+          <Link href="/" className="flex items-center gap-2 text-sm font-semibold tracking-tight text-foreground">
+            <ShieldCheck className="w-4 h-4 text-accent" /> Nexus Status
           </Link>
-          <Link href="/login" className="text-sm text-[#5A6275] hover:text-[#8A92A6] transition-colors">Sign in</Link>
+          <Link href="/login" className="text-sm text-subtle hover:text-muted transition-colors">Sign in</Link>
         </div>
       </nav>
 
       <div className="max-w-3xl mx-auto px-6 py-12">
         {loading && !data ? (
-          <div className="flex items-center gap-2 text-[#5A6275] text-sm">
+          <div className="flex items-center gap-2 text-subtle text-sm">
             <Loader2 className="w-4 h-4 animate-spin" /> Checking systems…
           </div>
         ) : error && !data ? (
-          <div className="bg-[#12151D] border border-red-500/25 rounded-xl p-6 text-sm text-red-400">
+          <div className="bg-surface border border-crit/25 rounded-xl p-6 text-sm text-crit">
             Unable to reach the status service right now. Please try again shortly.
           </div>
         ) : data ? (
           <>
-            <div className="bg-[#12151D] border border-[#262A35] rounded-2xl p-6 mb-8 flex items-center justify-between flex-wrap gap-3">
+            <div className="bg-surface border border-border rounded-2xl p-6 mb-8 flex items-center justify-between flex-wrap gap-3">
               <div>
                 <h1 className="text-xl font-semibold tracking-tight mb-1">
                   {data.overall === "operational"
@@ -100,7 +100,7 @@ export default function PublicStatusPage() {
                     ? "Partial service degradation"
                     : "Service disruption"}
                 </h1>
-                <p className="text-xs text-[#5A6275]">
+                <p className="text-xs text-subtle">
                   Last checked {new Date(data.generatedAt).toLocaleString()}
                 </p>
               </div>
@@ -108,32 +108,32 @@ export default function PublicStatusPage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
-              <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-4">
-                <p className="text-[10px] text-[#5A6275] mb-1">Uptime (24h)</p>
+              <div className="bg-surface border border-border rounded-xl p-4">
+                <p className="text-[10px] text-subtle mb-1">Uptime (24h)</p>
                 <p className="text-lg font-semibold">{data.uptime.last24h}%</p>
               </div>
-              <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-4">
-                <p className="text-[10px] text-[#5A6275] mb-1">Uptime (90d)</p>
+              <div className="bg-surface border border-border rounded-xl p-4">
+                <p className="text-[10px] text-subtle mb-1">Uptime (90d)</p>
                 <p className="text-lg font-semibold">{data.uptime.last90d}%</p>
               </div>
-              <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-4">
-                <p className="text-[10px] text-[#5A6275] mb-1">Avg latency</p>
+              <div className="bg-surface border border-border rounded-xl p-4">
+                <p className="text-[10px] text-subtle mb-1">Avg latency</p>
                 <p className="text-lg font-semibold">{data.latencyMs} ms</p>
               </div>
             </div>
 
-            <h2 className="text-sm font-semibold text-[#5A6275] mb-3">Services</h2>
-            <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden mb-8 divide-y divide-[#1C1F28]">
+            <h2 className="text-sm font-semibold text-subtle mb-3">Services</h2>
+            <div className="bg-surface border border-border rounded-xl overflow-hidden mb-8 divide-y divide-border-soft">
               {data.components.map((c) => (
                 <div key={c.name} className="flex items-center justify-between px-5 py-3.5">
-                  <span className="text-sm text-[#E6E9F0]">{c.name}</span>
+                  <span className="text-sm text-foreground">{c.name}</span>
                   <StatusPill status={c.status} />
                 </div>
               ))}
             </div>
 
-            <h2 className="text-sm font-semibold text-[#5A6275] mb-3">90-day history</h2>
-            <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-5 mb-8">
+            <h2 className="text-sm font-semibold text-subtle mb-3">90-day history</h2>
+            <div className="bg-surface border border-border rounded-xl p-5 mb-8">
               <div className="flex items-end gap-[2px] h-10">
                 {data.history.map((d) => (
                   <div
@@ -143,42 +143,42 @@ export default function PublicStatusPage() {
                   />
                 ))}
               </div>
-              <div className="flex justify-between mt-2 text-[10px] text-[#5A6275]">
+              <div className="flex justify-between mt-2 text-[10px] text-subtle">
                 <span>90 days ago</span>
                 <span>Today</span>
               </div>
             </div>
 
             {data.backupVerification && (
-              <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-5 flex items-center justify-between flex-wrap gap-3 mb-8">
+              <div className="bg-surface border border-border rounded-xl p-5 flex items-center justify-between flex-wrap gap-3 mb-8">
                 <div>
                   <p className="text-sm font-medium mb-1">Backup restore verification</p>
-                  <p className="text-xs text-[#5A6275]">
+                  <p className="text-xs text-subtle">
                     Last tested {new Date(data.backupVerification.testedAt).toLocaleString()}
                   </p>
                 </div>
                 {data.backupVerification.status === "PASSED" ? (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full bg-ok/15 text-ok border border-ok/25">
                     <CheckCircle2 className="w-3.5 h-3.5" /> Passed
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full bg-red-500/15 text-red-400 border border-red-500/25">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full bg-crit/15 text-crit border border-crit/25">
                     <XCircle className="w-3.5 h-3.5" /> Failed
                   </span>
                 )}
               </div>
             )}
 
-            <div className="flex items-center justify-between text-sm text-[#5A6275]">
+            <div className="flex items-center justify-between text-sm text-subtle">
               <button
                 onClick={() => void load()}
-                className="flex items-center gap-2 px-3 py-1.5 text-xs text-[#5A6275] hover:text-[#8A92A6] transition-colors"
+                className="flex items-center gap-2 px-3 py-1.5 text-xs text-subtle hover:text-muted transition-colors"
               >
                 <RefreshCw className="w-3.5 h-3.5" /> Refresh
               </button>
               <span>
                 Questions? Email{" "}
-                <a href="mailto:support@cybersage.uk" className="text-[#00C2FF] hover:underline">
+                <a href="mailto:support@cybersage.uk" className="text-accent hover:underline">
                   support@cybersage.uk
                 </a>
               </span>

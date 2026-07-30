@@ -10,15 +10,15 @@ import path from "path";
 
 // ─── palette ──────────────────────────────────────────────────────────────────
 const NAVY = rgb(0.043, 0.165, 0.235); // #0B2A3C
-const CYAN = rgb(0, 0.76, 1); // #00C2FF
+const CYAN = rgb(0, 0.76, 1); // #4f46e5
 const INK = rgb(0.102, 0.114, 0.137); // #1a1d23
-const GREY = rgb(0.42, 0.447, 0.502); // #6b7280
-const LIGHT = rgb(0.886, 0.91, 0.941); // #e2e8f0
-const PANEL = rgb(0.957, 0.969, 0.976); // #f4f7f9
-const AMBER_BG = rgb(1, 0.973, 0.929); // #fff8ed
-const AMBER_BD = rgb(0.949, 0.851, 0.678); // #f2d9ad
+const GREY = rgb(0.42, 0.447, 0.502); // #6b6a65
+const LIGHT = rgb(0.886, 0.91, 0.941); // #e7e6e1
+const PANEL = rgb(0.957, 0.969, 0.976); // #f5f4f1
+const AMBER_BG = rgb(1, 0.973, 0.929); // #fdf3e6
+const AMBER_BD = rgb(0.949, 0.851, 0.678); // #fdf3e6
 const AMBER_TX = rgb(0.573, 0.251, 0.055); // #92400e
-const GREEN_BG = rgb(0.925, 0.992, 0.961); // #ecfdf5
+const GREEN_BG = rgb(0.925, 0.992, 0.961); // #e7f4ef
 const GREEN_TX = rgb(0.016, 0.471, 0.341); // #047857
 
 const A4: [number, number] = [595.28, 841.89];

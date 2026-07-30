@@ -32,11 +32,11 @@
  *   // Preferred — size token, no geometry props:
  *   import { Icon } from "@/components/icons";
  *   import { Mail } from "lucide-react";
- *   <Icon as={Mail} size="md" className="text-[#5A6275]" />
+ *   <Icon as={Mail} size="md" className="text-subtle" />
  *
  *   // Also fine — bare Lucide icon with a token size class:
  *   import { iconSize } from "@/components/icons";
- *   <Mail className={`${iconSize("md")} text-[#5A6275]`} />
+ *   <Mail className={`${iconSize("md")} text-subtle`} />
  */
 
 import { LucideProvider, type LucideIcon } from "lucide-react";
@@ -162,7 +162,7 @@ export type IconProps = Omit<
  * site physically cannot break the icon language. Colour comes from the
  * surrounding `text-*` class, size comes from the token.
  *
- *   <Icon as={ShieldCheck} size="lg" className="text-[#0f9d58]" />
+ *   <Icon as={ShieldCheck} size="lg" className="text-ok" />
  */
 export function Icon({ as: Glyph, size = "md", className = "", ...rest }: IconProps) {
   return <Glyph className={`${iconSize(size)} ${className}`.trim()} {...rest} />;

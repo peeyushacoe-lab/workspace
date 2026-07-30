@@ -33,14 +33,14 @@ type Note = {
 type Folder = { id: string; name: string };
 
 const NOTE_COLORS = [
-  { label: "Default", value: "",           bg: "bg-[#12151D]",          border: "border-[#262A35]", dot: "#262A35" },
-  { label: "Blue",    value: "#0E2532",    bg: "bg-blue-500/25",        border: "border-blue-500/50",  dot: "#93c5fd" },
+  { label: "Default", value: "",           bg: "bg-surface",          border: "border-border", dot: "#e7e6e1" },
+  { label: "Blue",    value: "#eeecff",    bg: "bg-blue-500/25",        border: "border-blue-500/50",  dot: "#93c5fd" },
   { label: "Green",   value: "#dcfce7",    bg: "bg-emerald-500/25",     border: "border-emerald-500/50", dot: "#6ee7b7" },
   { label: "Yellow",  value: "#fef9c3",    bg: "bg-yellow-500/25",      border: "border-yellow-500/50", dot: "#fde047" },
   { label: "Red",     value: "#fee2e2",    bg: "bg-red-500/25",         border: "border-red-500/50",   dot: "#fca5a5" },
   { label: "Purple",  value: "#f3e8ff",    bg: "bg-purple-500/25",      border: "border-purple-500/50", dot: "#d8b4fe" },
   { label: "Orange",  value: "#ffedd5",    bg: "bg-orange-500/25",      border: "border-orange-500/50", dot: "#fdba74" },
-  { label: "Grey",    value: "#1B1F2A",    bg: "bg-slate-400/25",       border: "border-slate-400/50", dot: "#bdc1c6" },
+  { label: "Grey",    value: "#f5f4f1",    bg: "bg-slate-400/25",       border: "border-slate-400/50", dot: "#9b9a93" },
 ];
 
 function getNoteColor(color: string | null) {
@@ -177,7 +177,7 @@ function TB({ icon, title, active, onClick }: {
       // onMouseDown + preventDefault keeps contentEditable focused on mobile
       // (tap fires blur then click — preventDefault stops the blur)
       onMouseDown={(e) => { e.preventDefault(); onClick?.(); }}
-      className={`flex items-center justify-center h-6 w-6 rounded text-xs transition-colors ${active ? "bg-[#0E2532] text-[#00C2FF]" : "text-[#8A92A6] hover:bg-[#1B1F2A]"}`}>
+      className={`flex items-center justify-center h-6 w-6 rounded text-xs transition-colors ${active ? "bg-accent-soft text-accent" : "text-muted hover:bg-surface-sunken"}`}>
       {icon}
     </button>
   );
@@ -340,7 +340,7 @@ function RichEditor({ value, onChange, placeholder }: {
       if (file.type.startsWith("image/")) {
         insertBlock('<img src="' + dataUrl + '" alt="' + safeName + '" style="max-width:100%;border-radius:8px;margin:8px 0"><p><br></p>');
       } else {
-        const chip = '<a href="' + dataUrl + '" download="' + safeName + '" style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;margin:2px 0;background:#1B1F2A;border:1px solid #262A35;border-radius:8px;color:#00C2FF;text-decoration:none;font-size:13px">' + safeName + '</a>';
+        const chip = '<a href="' + dataUrl + '" download="' + safeName + '" style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;margin:2px 0;background:#f5f4f1;border:1px solid #e7e6e1;border-radius:8px;color:#4f46e5;text-decoration:none;font-size:13px">' + safeName + '</a>';
         insertBlock(chip + '<p><br></p>');
       }
       toast.success("Attachment added");
@@ -364,24 +364,24 @@ function RichEditor({ value, onChange, placeholder }: {
         <TB icon={<Italic className="h-3 w-3" />} title="Italic" onClick={() => exec("italic")} />
         <TB icon={<Strikethrough className="h-3 w-3" />} title="Strikethrough" onClick={() => exec("strikeThrough")} />
         <TB icon={<Code className="h-3 w-3" />} title="Code" onClick={() => insertBlock("<code>code</code>")} />
-        <div className="w-px h-4 bg-[#262A35] mx-0.5 flex-shrink-0" />
+        <div className="w-px h-4 bg-border mx-0.5 flex-shrink-0" />
         <TB icon={<List className="h-3 w-3" />} title="Bullet list" onClick={() => exec("insertUnorderedList")} />
         <TB icon={<ListOrdered className="h-3 w-3" />} title="Numbered list" onClick={() => exec("insertOrderedList")} />
         <TB icon={<ListChecks className="h-3 w-3" />} title="Checklist" onClick={() => insertBlock('<p><input type="checkbox"> </p>')} />
-        <div className="w-px h-4 bg-[#262A35] mx-0.5 flex-shrink-0" />
+        <div className="w-px h-4 bg-border mx-0.5 flex-shrink-0" />
         <TB icon={<Quote className="h-3 w-3" />} title="Quote" onClick={() => insertBlock("<blockquote></blockquote>")} />
         <TB icon={<Type className="h-3 w-3" />} title="Code block" onClick={() => insertBlock("<pre><code></code></pre>")} />
         <TB icon={<Minus className="h-3 w-3" />} title="Divider" onClick={() => insertBlock("<hr>")} />
         <TB icon={<Link2 className="h-3 w-3" />} title="Link" onClick={() => { const u = prompt("URL:"); if (u) exec("createLink", u); }} />
         <TB icon={<ImageIcon className="h-3 w-3" />} title="Image" onClick={() => { const u = prompt("Image URL:"); if (u) insertBlock(`<img src="${u}" style="max-width:100%;border-radius:8px;margin:8px 0">`); }} />
         <TB icon={<Hash className="h-3 w-3" />} title="H2 Heading" onClick={() => exec("formatBlock", "h2")} />
-        <div className="w-px h-4 bg-[#262A35] mx-0.5 flex-shrink-0" />
+        <div className="w-px h-4 bg-border mx-0.5 flex-shrink-0" />
         <TB icon={<Paperclip className="h-3 w-3" />} title="Attach file" onClick={() => fileInputRef.current?.click()} />
         <button
           title={recording ? "Stop recording" : "Record voice note"}
           onClick={toggleRecording}
-          className={`flex items-center justify-center h-6 rounded text-xs transition-colors ${recording ? "px-1.5 gap-1 bg-red-500/10 text-[#ea4335]" : "w-6 text-[#8A92A6] hover:bg-[#1B1F2A]"}`}>
-          {recording ? <span className="h-2 w-2 rounded-full bg-[#ea4335] animate-pulse" /> : <Mic className="h-3 w-3" />}
+          className={`flex items-center justify-center h-6 rounded text-xs transition-colors ${recording ? "px-1.5 gap-1 bg-crit/10 text-crit" : "w-6 text-muted hover:bg-surface-sunken"}`}>
+          {recording ? <span className="h-2 w-2 rounded-full bg-crit animate-pulse" /> : <Mic className="h-3 w-3" />}
           {recording && <span className="text-[11px] font-medium tabular-nums">{formatElapsed(elapsed)}</span>}
         </button>
         <input
@@ -397,7 +397,7 @@ function RichEditor({ value, onChange, placeholder }: {
         contentEditable
         suppressContentEditableWarning
         data-placeholder={placeholder ?? "Start writing…"}
-        className="flex-1 overflow-y-auto w-full max-w-[680px] mx-auto px-6 py-4 pb-16 text-[15px] text-[#C2C8D6] focus:outline-none notes-editor"
+        className="flex-1 overflow-y-auto w-full max-w-[680px] mx-auto px-6 py-4 pb-16 text-[15px] text-foreground focus:outline-none notes-editor"
         style={{ lineHeight: 1.8 }}
         onInput={() => { if (ref.current) { onChange(ref.current.innerHTML); lastValue.current = ref.current.innerHTML; } }}
       />
@@ -423,16 +423,16 @@ function NoteCard({ note, selected, onSelect, onPin, onDelete, onColor, onArchiv
   return (
     <div
       onClick={onSelect}
-      className={`relative group rounded-xl border-2 p-3 cursor-pointer transition-all hover:shadow-md ${_colorInfo.bg} ${selected ? "border-[#00C2FF]" : _colorInfo.border} hover:border-[#00C2FF]/40`}
+      className={`relative group rounded-xl border-2 p-3 cursor-pointer transition-all hover:shadow-md ${_colorInfo.bg} ${selected ? "border-accent" : _colorInfo.border} hover:border-accent/40`}
       style={{ minHeight: 120 }}
     >
-      {note.pinned && <Pin className="absolute top-2 right-2 h-3.5 w-3.5 text-[#f4b400]" />}
-      <p className="text-xs font-semibold text-[#E6E9F0] mb-1 pr-5 line-clamp-2">{note.title || "Untitled"}</p>
-      <p className="text-[11px] text-[#8A92A6] line-clamp-4 leading-relaxed">{notePreview(note.content)}</p>
+      {note.pinned && <Pin className="absolute top-2 right-2 h-3.5 w-3.5 text-warn" />}
+      <p className="text-xs font-semibold text-foreground mb-1 pr-5 line-clamp-2">{note.title || "Untitled"}</p>
+      <p className="text-[11px] text-muted line-clamp-4 leading-relaxed">{notePreview(note.content)}</p>
       <div className="flex items-center gap-2 mt-2 flex-wrap">
-        <p className="text-[10px] text-[#bdc1c6]">{formatDistanceToNow(new Date(note.updatedAt), { addSuffix: true })}</p>
+        <p className="text-[10px] text-subtle">{formatDistanceToNow(new Date(note.updatedAt), { addSuffix: true })}</p>
         {reminderIso && (
-          <span className="inline-flex items-center gap-0.5 text-[10px] text-[#00C2FF]">
+          <span className="inline-flex items-center gap-0.5 text-[10px] text-accent">
             <Bell className="h-2.5 w-2.5" /> {format(new Date(reminderIso), "MMM d, h:mm a")}
           </span>
         )}
@@ -441,24 +441,24 @@ function NoteCard({ note, selected, onSelect, onPin, onDelete, onColor, onArchiv
       {/* Hover actions */}
       <div className="absolute bottom-2 right-2 hidden group-hover:flex items-center gap-1">
         <button onClick={e => { e.stopPropagation(); setShowMenu(v => !v); }}
-          className="p-1 rounded bg-[#12151D]/80 text-[#8A92A6] hover:text-[#E6E9F0] shadow-sm"><MoreVertical className="h-3 w-3" /></button>
+          className="p-1 rounded bg-surface/80 text-muted hover:text-foreground shadow-sm"><MoreVertical className="h-3 w-3" /></button>
         {showMenu && (
-          <div className="absolute bottom-full right-0 mb-1 w-36 bg-[#12151D] border border-[#262A35] rounded-lg shadow-lg z-50 py-1" onClick={e => e.stopPropagation()}>
-            <button onClick={e => { onPin(e); setShowMenu(false); }} className="w-full text-left flex items-center gap-2 px-3 py-1.5 text-xs text-[#E6E9F0] hover:bg-[#1B1F2A]">
+          <div className="absolute bottom-full right-0 mb-1 w-36 bg-surface border border-border rounded-lg shadow-lg z-50 py-1" onClick={e => e.stopPropagation()}>
+            <button onClick={e => { onPin(e); setShowMenu(false); }} className="w-full text-left flex items-center gap-2 px-3 py-1.5 text-xs text-foreground hover:bg-surface-sunken">
               {note.pinned ? <><PinOff className="h-3 w-3" /> Unpin</> : <><Pin className="h-3 w-3" /> Pin</>}
             </button>
-            <div className="px-3 py-1.5 text-[10px] text-[#5A6275] uppercase tracking-wider">Color</div>
+            <div className="px-3 py-1.5 text-[10px] text-subtle uppercase tracking-wider">Color</div>
             <div className="grid grid-cols-4 gap-1 px-3 pb-2">
               {NOTE_COLORS.map(c => (
                 <button key={c.value} title={c.label} onClick={e => { onColor(c.value, e); setShowMenu(false); }}
-                  className="h-5 w-5 rounded-full border border-[#262A35] hover:scale-110 transition-transform"
+                  className="h-5 w-5 rounded-full border border-border hover:scale-110 transition-transform"
                   style={{ background: c.value || "#ffffff" }} />
               ))}
             </div>
-            <button onClick={e => { onArchive(e); setShowMenu(false); }} className="w-full text-left flex items-center gap-2 px-3 py-1.5 text-xs text-[#E6E9F0] hover:bg-[#1B1F2A] border-t border-[#262A35]">
+            <button onClick={e => { onArchive(e); setShowMenu(false); }} className="w-full text-left flex items-center gap-2 px-3 py-1.5 text-xs text-foreground hover:bg-surface-sunken border-t border-border">
               {isArchived ? <><ArchiveRestore className="h-3 w-3" /> Unarchive</> : <><Archive className="h-3 w-3" /> Archive</>}
             </button>
-            <button onClick={e => { onDelete(e); setShowMenu(false); }} className="w-full text-left flex items-center gap-2 px-3 py-1.5 text-xs text-[#ea4335] hover:bg-red-500/10 border-t border-[#262A35]">
+            <button onClick={e => { onDelete(e); setShowMenu(false); }} className="w-full text-left flex items-center gap-2 px-3 py-1.5 text-xs text-crit hover:bg-crit/10 border-t border-border">
               <Trash2 className="h-3 w-3" /> Delete
             </button>
           </div>
@@ -770,64 +770,64 @@ export function NotesView() {
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div className="flex h-[calc(100vh-7.25rem)] lg:h-[calc(100vh-3.5rem)] bg-[#12151D] overflow-hidden text-[#E6E9F0]" onClick={() => { setShowColorPicker(false); setShowTemplateMenu(false); setShowReminder(false); }}>
+    <div className="flex h-[calc(100vh-7.25rem)] lg:h-full bg-surface overflow-hidden text-foreground" onClick={() => { setShowColorPicker(false); setShowTemplateMenu(false); setShowReminder(false); }}>
 
       {/* ── Left sidebar (folders + list) ── */}
-      <aside className={`${selectedId ? "hidden lg:flex" : "flex"} flex-col border-r border-[#1C1F28] bg-[#12151D] overflow-hidden flex-shrink-0 w-full lg:w-80`}>
+      <aside className={`${selectedId ? "hidden lg:flex" : "flex"} flex-col border-r border-border-soft bg-surface overflow-hidden flex-shrink-0 w-full lg:w-80`}>
 
         {/* "All Notes" header + new note */}
-        <div className="flex items-center justify-between px-4 h-[52px] flex-shrink-0 border-b border-[#1C1F28]">
-          <h2 className="text-[15px] font-bold tracking-tight text-[#E6E9F0]">
+        <div className="flex items-center justify-between px-4 h-[52px] flex-shrink-0 border-b border-border-soft">
+          <h2 className="text-[15px] font-bold tracking-tight text-foreground">
             {activeFolder === "archive" ? "Archive" : (folders.find(f => f.id === activeFolder)?.name ?? "All Notes")}
           </h2>
           <button onClick={() => void createNote()} title="New note"
-            className="flex items-center justify-center h-8 w-8 rounded-lg bg-[#00C2FF] text-[#06121A] hover:bg-[#0098E6] transition-colors">
+            className="flex items-center justify-center h-8 w-8 rounded-lg bg-accent text-accent-foreground hover:bg-accent-hover transition-colors">
             <Plus className="h-4 w-4" />
           </button>
         </div>
 
         {/* Search */}
-        <div className="px-3 py-2.5 border-b border-[#1C1F28]">
+        <div className="px-3 py-2.5 border-b border-border-soft">
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#5A6275]" />
-            <input className="w-full pl-8 pr-2 py-2 text-xs bg-[#0B0D12] border border-[#262A35] rounded-lg text-[#E6E9F0] placeholder:text-[#5A6275] focus:outline-none focus:border-[#00C2FF]/60"
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-subtle" />
+            <input className="w-full pl-8 pr-2 py-2 text-xs bg-surface border border-border rounded-lg text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60"
               placeholder="Search notes…" value={search} onChange={e => setSearch(e.target.value)} />
           </div>
         </div>
 
         {/* Folder list */}
-        <div className="px-2 py-2 border-b border-[#1C1F28]">
-          <p className="px-2 text-[10px] font-semibold text-[#5A6275] uppercase tracking-wider mb-1">Folders</p>
+        <div className="px-2 py-2 border-b border-border-soft">
+          <p className="px-2 text-[10px] font-semibold text-subtle uppercase tracking-wider mb-1">Folders</p>
           {folders.map(f => (
             <button key={f.id} onClick={() => setActiveFolder(f.id)}
-              className={`w-full flex items-center gap-2 px-2 py-1.5 text-xs rounded-lg transition-colors ${activeFolder === f.id ? "bg-[#0E2532] text-[#00C2FF] font-semibold" : "text-[#8A92A6] hover:bg-[#1B1F2A]"}`}>
+              className={`w-full flex items-center gap-2 px-2 py-1.5 text-xs rounded-lg transition-colors ${activeFolder === f.id ? "bg-accent-soft text-accent font-semibold" : "text-muted hover:bg-surface-sunken"}`}>
               <Folder className="h-3.5 w-3.5" /> {f.name}
-              <span className="ml-auto text-[10px] text-[#5A6275] font-mono">
+              <span className="ml-auto text-[10px] text-subtle font-mono">
                 {f.id === "all" ? notes.filter(n => !archived.has(n.id)).length : 0}
               </span>
             </button>
           ))}
           <button onClick={() => setActiveFolder("archive")}
-            className={`w-full flex items-center gap-2 px-2 py-1.5 text-xs rounded-lg transition-colors ${activeFolder === "archive" ? "bg-[#0E2532] text-[#00C2FF] font-semibold" : "text-[#8A92A6] hover:bg-[#1B1F2A]"}`}>
+            className={`w-full flex items-center gap-2 px-2 py-1.5 text-xs rounded-lg transition-colors ${activeFolder === "archive" ? "bg-accent-soft text-accent font-semibold" : "text-muted hover:bg-surface-sunken"}`}>
             <Archive className="h-3.5 w-3.5" /> Archive
-            <span className="ml-auto text-[10px] text-[#5A6275] font-mono">{archived.size}</span>
+            <span className="ml-auto text-[10px] text-subtle font-mono">{archived.size}</span>
           </button>
         </div>
 
         {/* Tags (from #hashtags in notes) */}
         {allTags.length > 0 && (
-          <div className="px-2 py-2 border-b border-[#1C1F28]">
-            <p className="px-2 text-[10px] font-semibold text-[#5A6275] uppercase tracking-wider mb-1.5">Tags</p>
+          <div className="px-2 py-2 border-b border-border-soft">
+            <p className="px-2 text-[10px] font-semibold text-subtle uppercase tracking-wider mb-1.5">Tags</p>
             <div className="flex flex-wrap gap-1 px-1">
               {activeTag && (
                 <button onClick={() => setActiveTag(null)}
-                  className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#1B1F2A] text-[#8A92A6] hover:bg-[#262A35]">
+                  className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-surface-sunken text-muted hover:bg-border">
                   Clear <X className="w-3 h-3" />
                 </button>
               )}
               {allTags.map(t => (
                 <button key={t} onClick={() => setActiveTag(activeTag === t ? null : t)}
-                  className={`px-2 py-0.5 rounded-full text-[11px] font-medium transition-colors ${activeTag === t ? "bg-[#00C2FF] text-[#06121A]" : "bg-[#0E2532] text-[#00C2FF] hover:bg-[#1B1F2A]"}`}>
+                  className={`px-2 py-0.5 rounded-full text-[11px] font-medium transition-colors ${activeTag === t ? "bg-accent text-accent-foreground" : "bg-accent-soft text-accent hover:bg-surface-sunken"}`}>
                   #{t}
                 </button>
               ))}
@@ -838,25 +838,25 @@ export function NotesView() {
         {/* Note list */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-2 space-y-1">
           {loading ? (
-            <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-[#00C2FF]" /></div>
+            <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-accent" /></div>
           ) : (
             <>
               {pinnedNotes.length > 0 && (
                 <div className="space-y-1">
-                  <p className="px-2 py-1 text-[10px] font-semibold text-[#5A6275] uppercase tracking-wider">Pinned</p>
+                  <p className="px-2 py-1 text-[10px] font-semibold text-subtle uppercase tracking-wider">Pinned</p>
                   {pinnedNotes.map(n => <NoteListItem key={n.id} note={n} selected={n.id === selectedId} onClick={() => selectNote(n)} reminderIso={reminders[n.id]} />)}
                 </div>
               )}
               {unpinnedNotes.length > 0 && (
                 <div className="space-y-1 pt-1">
-                  {pinnedNotes.length > 0 && <p className="px-2 py-1 text-[10px] font-semibold text-[#5A6275] uppercase tracking-wider">Notes</p>}
+                  {pinnedNotes.length > 0 && <p className="px-2 py-1 text-[10px] font-semibold text-subtle uppercase tracking-wider">Notes</p>}
                   {unpinnedNotes.map(n => <NoteListItem key={n.id} note={n} selected={n.id === selectedId} onClick={() => selectNote(n)} reminderIso={reminders[n.id]} />)}
                 </div>
               )}
               {filteredNotes.length === 0 && (
                 <div className="text-center py-10 px-4">
-                  <StickyNote className="h-10 w-10 text-[#bdc1c6] mx-auto mb-2" />
-                  <p className="text-xs text-[#5A6275]">{search ? "No matching notes" : "No notes yet"}</p>
+                  <StickyNote className="h-10 w-10 text-subtle mx-auto mb-2" />
+                  <p className="text-xs text-subtle">{search ? "No matching notes" : "No notes yet"}</p>
                 </div>
               )}
             </>
@@ -869,41 +869,41 @@ export function NotesView() {
         <div className={`flex flex-col flex-1 min-w-0 overflow-hidden ${_colorInfo.bg}`}>
 
           {/* Note toolbar — ~52px top bar */}
-          <div className="flex items-center gap-2 px-2 lg:px-4 h-[52px] flex-shrink-0 border-b border-[#1C1F28] bg-[#12151D] z-10 overflow-x-auto">
+          <div className="flex items-center gap-2 px-2 lg:px-4 h-[52px] flex-shrink-0 border-b border-border-soft bg-surface z-10 overflow-x-auto">
             {/* Mobile back button */}
             <button
               onClick={() => setSelectedId(null)}
-              className="lg:hidden flex items-center gap-1 text-[#00C2FF] text-sm font-medium flex-shrink-0 pr-1"
+              className="lg:hidden flex items-center gap-1 text-accent text-sm font-medium flex-shrink-0 pr-1"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <div className="flex items-center gap-2 text-[12px] font-mono text-[#5A6275] min-w-0">
+            <div className="flex items-center gap-2 text-[12px] font-mono text-subtle min-w-0">
               {saving
                 ? <span className="flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Saving…</span>
                 : <span>Edited {formatDistanceToNow(new Date(selectedNote.updatedAt), { addSuffix: true })}</span>}
             </div>
 
             {isOffline && (
-              <span className="flex items-center gap-1 text-[11px] font-medium text-[#f4b400]">
+              <span className="flex items-center gap-1 text-[11px] font-medium text-warn">
                 <WifiOff className="h-3.5 w-3.5" /> Offline
               </span>
             )}
 
-            <span className="text-[11px] font-mono text-[#5A6275] ml-auto">{words} words</span>
+            <span className="text-[11px] font-mono text-subtle ml-auto">{words} words</span>
 
             {/* Templates */}
             <div className="relative flex-shrink-0" onClick={e => e.stopPropagation()}>
               <button onClick={() => setShowTemplateMenu(v => !v)} title="Templates"
-                className={`p-1.5 rounded transition-colors ${showTemplateMenu ? "bg-[#0E2532] text-[#00C2FF]" : "text-[#8A92A6] hover:bg-[#1B1F2A]"}`}>
+                className={`p-1.5 rounded transition-colors ${showTemplateMenu ? "bg-accent-soft text-accent" : "text-muted hover:bg-surface-sunken"}`}>
                 <LayoutTemplate className="h-4 w-4" />
               </button>
               {showTemplateMenu && (
-                <div className="absolute right-0 top-full mt-1 w-44 bg-[#12151D] border border-[#262A35] rounded-lg shadow-lg z-50 py-1">
-                  <p className="px-3 py-1 text-[10px] font-medium text-[#5A6275]">Quick templates</p>
+                <div className="absolute right-0 top-full mt-1 w-44 bg-surface border border-border rounded-lg shadow-lg z-50 py-1">
+                  <p className="px-3 py-1 text-[10px] font-medium text-subtle">Quick templates</p>
                   {NOTE_TEMPLATES.map(tpl => (
                     <button key={tpl.id} onClick={() => applyTemplate(tpl)}
-                      className="w-full text-left flex items-center gap-2 px-3 py-1.5 text-xs text-[#E6E9F0] hover:bg-[#1B1F2A]">
-                      <StickyNote className="h-3.5 w-3.5 text-[#8A92A6]" /> {tpl.label}
+                      className="w-full text-left flex items-center gap-2 px-3 py-1.5 text-xs text-foreground hover:bg-surface-sunken">
+                      <StickyNote className="h-3.5 w-3.5 text-muted" /> {tpl.label}
                     </button>
                   ))}
                 </div>
@@ -915,7 +915,7 @@ export function NotesView() {
               title="Move to folder"
               value={selectedNote.folder ?? ""}
               onChange={e => void moveToFolder(selectedId, e.target.value)}
-              className="text-xs border border-[#262A35] rounded-lg px-2 py-1 bg-[#12151D] text-[#8A92A6] focus:outline-none focus:border-[#00C2FF]/60 cursor-pointer"
+              className="text-xs border border-border rounded-lg px-2 py-1 bg-surface text-muted focus:outline-none focus:border-accent/60 cursor-pointer"
             >
               <option value="">No folder</option>
               {folders.filter(f => f.id !== "all").map(f => (
@@ -925,30 +925,30 @@ export function NotesView() {
 
             {/* Color picker */}
             <div className="relative flex-shrink-0" onClick={e => e.stopPropagation()}>
-              <button onClick={() => setShowColorPicker(v => !v)} title="Note color" className="p-1.5 rounded text-[#8A92A6] hover:bg-[#1B1F2A]">
+              <button onClick={() => setShowColorPicker(v => !v)} title="Note color" className="p-1.5 rounded text-muted hover:bg-surface-sunken">
                 <Palette className="h-4 w-4" />
               </button>
               {showColorPicker && (
                 <>
                   {/* Mobile: fixed bottom sheet overlay */}
                   <div className="lg:hidden fixed inset-0 z-40" onClick={() => setShowColorPicker(false)} />
-                  <div className="lg:hidden fixed bottom-24 left-1/2 -translate-x-1/2 bg-[#12151D] border border-[#262A35] rounded-xl shadow-2xl z-50 p-3">
-                    <p className="text-[11px] font-medium text-[#5A6275] mb-2 text-center">Note colour</p>
+                  <div className="lg:hidden fixed bottom-24 left-1/2 -translate-x-1/2 bg-surface border border-border rounded-xl shadow-2xl z-50 p-3">
+                    <p className="text-[11px] font-medium text-subtle mb-2 text-center">Note colour</p>
                     <div className="grid grid-cols-4 gap-2">
                       {NOTE_COLORS.map(c => (
                         <button key={c.value} title={c.label} onClick={() => void colorNote(selectedId, c.value)}
-                          className={`h-9 w-9 rounded-lg border-2 transition-transform active:scale-95 ${selectedNote.color === c.value ? "border-[#00C2FF]" : "border-transparent"}`}
-                          style={{ background: c.value || "#ffffff", border: c.value ? undefined : "2px dashed #262A35" }} />
+                          className={`h-9 w-9 rounded-lg border-2 transition-transform active:scale-95 ${selectedNote.color === c.value ? "border-accent" : "border-transparent"}`}
+                          style={{ background: c.value || "#ffffff", border: c.value ? undefined : "2px dashed var(--border)" }} />
                       ))}
                     </div>
                   </div>
                   {/* Desktop: original absolute dropdown */}
-                  <div className="hidden lg:block absolute right-0 top-full mt-1 bg-[#12151D] border border-[#262A35] rounded-lg shadow-lg z-50 p-2">
+                  <div className="hidden lg:block absolute right-0 top-full mt-1 bg-surface border border-border rounded-lg shadow-lg z-50 p-2">
                     <div className="grid grid-cols-4 gap-1.5">
                       {NOTE_COLORS.map(c => (
                         <button key={c.value} title={c.label} onClick={() => void colorNote(selectedId, c.value)}
-                          className={`h-7 w-7 rounded-lg border-2 transition-transform hover:scale-110 ${selectedNote.color === c.value ? "border-[#00C2FF]" : "border-transparent"}`}
-                          style={{ background: c.value || "#ffffff", border: c.value ? undefined : "2px dashed #262A35" }} />
+                          className={`h-7 w-7 rounded-lg border-2 transition-transform hover:scale-110 ${selectedNote.color === c.value ? "border-accent" : "border-transparent"}`}
+                          style={{ background: c.value || "#ffffff", border: c.value ? undefined : "2px dashed var(--border)" }} />
                       ))}
                     </div>
                   </div>
@@ -957,24 +957,24 @@ export function NotesView() {
             </div>
 
             <button onClick={() => { void pinNote(selectedId, selectedNote.pinned, new MouseEvent("click") as unknown as React.MouseEvent); }} title={selectedNote.pinned ? "Unpin" : "Pin"}
-              className={`p-1.5 rounded transition-colors ${selectedNote.pinned ? "text-[#f4b400] bg-amber-500/10" : "text-[#8A92A6] hover:bg-[#1B1F2A]"}`}>
+              className={`p-1.5 rounded transition-colors ${selectedNote.pinned ? "text-warn bg-warn/10" : "text-muted hover:bg-surface-sunken"}`}>
               {selectedNote.pinned ? <Pin className="h-4 w-4" /> : <PinOff className="h-4 w-4" />}
             </button>
 
             <button onClick={() => setShowAI(v => !v)} title="AI assistant"
-              className={`p-1.5 rounded transition-colors ${showAI ? "text-purple-400 bg-purple-500/10" : "text-[#8A92A6] hover:bg-[#1B1F2A]"}`}>
+              className={`p-1.5 rounded transition-colors ${showAI ? "text-violet bg-violet/10" : "text-muted hover:bg-surface-sunken"}`}>
               <Sparkles className="h-4 w-4" />
             </button>
 
             {/* Reminder */}
             <div className="relative flex-shrink-0" onClick={e => e.stopPropagation()}>
               <button onClick={() => setShowReminder(v => !v)} title="Remind me"
-                className={`p-1.5 rounded transition-colors ${reminders[selectedId] ? "text-[#00C2FF] bg-[#0E2532]" : showReminder ? "bg-[#0E2532] text-[#00C2FF]" : "text-[#8A92A6] hover:bg-[#1B1F2A]"}`}>
+                className={`p-1.5 rounded transition-colors ${reminders[selectedId] ? "text-accent bg-accent-soft" : showReminder ? "bg-accent-soft text-accent" : "text-muted hover:bg-surface-sunken"}`}>
                 <Bell className="h-4 w-4" />
               </button>
               {showReminder && (
-                <div className="absolute right-0 top-full mt-1 w-60 bg-[#12151D] border border-[#262A35] rounded-lg shadow-lg z-50 p-3 space-y-2">
-                  <p className="text-[11px] font-medium text-[#8A92A6]">Set a reminder</p>
+                <div className="absolute right-0 top-full mt-1 w-60 bg-surface border border-border rounded-lg shadow-lg z-50 p-3 space-y-2">
+                  <p className="text-[11px] font-medium text-muted">Set a reminder</p>
                   <input
                     type="datetime-local"
                     value={reminders[selectedId] ? new Date(reminders[selectedId]).toISOString().slice(0, 16) : ""}
@@ -982,13 +982,13 @@ export function NotesView() {
                       const v = e.target.value;
                       if (v) setReminder(selectedId, new Date(v).toISOString());
                     }}
-                    className="w-full px-2 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-xs text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+                    className="w-full px-2 py-1.5 bg-surface-sunken border border-border-strong rounded-lg text-xs text-foreground focus:outline-none focus:border-accent/60"
                   />
                   {reminders[selectedId] && (
-                    <div className="flex items-center justify-between text-[11px] text-[#8A92A6]">
+                    <div className="flex items-center justify-between text-[11px] text-muted">
                       <span>{format(new Date(reminders[selectedId]), "MMM d, h:mm a")}</span>
                       <button onClick={() => { setReminder(selectedId, null); setShowReminder(false); }}
-                        className="flex items-center gap-1 text-[#ea4335] hover:underline">
+                        className="flex items-center gap-1 text-crit hover:underline">
                         <BellOff className="h-3 w-3" /> Clear
                       </button>
                     </div>
@@ -999,13 +999,13 @@ export function NotesView() {
 
             {/* Archive */}
             <button onClick={() => toggleArchive(selectedId)} title={archived.has(selectedId) ? "Unarchive" : "Archive"}
-              className={`p-1.5 rounded transition-colors ${archived.has(selectedId) ? "text-[#00C2FF] bg-[#0E2532]" : "text-[#8A92A6] hover:bg-[#1B1F2A]"}`}>
+              className={`p-1.5 rounded transition-colors ${archived.has(selectedId) ? "text-accent bg-accent-soft" : "text-muted hover:bg-surface-sunken"}`}>
               {archived.has(selectedId) ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
             </button>
 
-            <button onClick={duplicateNote} title="Duplicate" className="p-1.5 rounded text-[#8A92A6] hover:bg-[#1B1F2A]"><Copy className="h-4 w-4" /></button>
-            <button onClick={exportNote} title="Export" className="p-1.5 rounded text-[#8A92A6] hover:bg-[#1B1F2A]"><Download className="h-4 w-4" /></button>
-            <button onClick={e => void deleteNote(selectedId, e)} title="Delete" className="p-1.5 rounded text-[#8A92A6] hover:text-[#ea4335] hover:bg-red-500/10"><Trash2 className="h-4 w-4" /></button>
+            <button onClick={duplicateNote} title="Duplicate" className="p-1.5 rounded text-muted hover:bg-surface-sunken"><Copy className="h-4 w-4" /></button>
+            <button onClick={exportNote} title="Export" className="p-1.5 rounded text-muted hover:bg-surface-sunken"><Download className="h-4 w-4" /></button>
+            <button onClick={e => void deleteNote(selectedId, e)} title="Delete" className="p-1.5 rounded text-muted hover:text-crit hover:bg-crit/10"><Trash2 className="h-4 w-4" /></button>
           </div>
 
           {/* Editor + AI panel */}
@@ -1013,7 +1013,7 @@ export function NotesView() {
             <div className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col">
               <div className="w-full max-w-[680px] mx-auto px-6 pt-8 flex-shrink-0">
                 <input
-                  className="w-full bg-transparent border-none outline-none text-[#E6E9F0] placeholder:text-[#5A6275] tracking-tight"
+                  className="w-full bg-transparent border-none outline-none text-foreground placeholder:text-subtle tracking-tight"
                   style={{ fontSize: 30, fontWeight: 800, lineHeight: 1.2 }}
                   value={title}
                   placeholder="Untitled"
@@ -1022,7 +1022,7 @@ export function NotesView() {
                 {selectedNoteTags.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mt-3">
                     {selectedNoteTags.map(t => (
-                      <span key={t} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#0E2532] text-[#00C2FF]">#{t}</span>
+                      <span key={t} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-accent-soft text-accent">#{t}</span>
                     ))}
                   </div>
                 )}
@@ -1038,38 +1038,38 @@ export function NotesView() {
 
             {/* AI sidebar */}
             {showAI && (
-              <div className="hidden lg:flex w-72 border-l border-[#262A35] bg-[#12151D] flex-col flex-shrink-0">
-                <div className="flex items-center justify-between px-4 py-3 border-b border-[#262A35]">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-[#E6E9F0]">
-                    <Sparkles className="h-4 w-4 text-purple-400" /> AI Notes
+              <div className="hidden lg:flex w-72 border-l border-border bg-surface flex-col flex-shrink-0">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <Sparkles className="h-4 w-4 text-violet" /> AI Notes
                   </div>
-                  <button onClick={() => setShowAI(false)} className="text-[#5A6275] hover:text-[#E6E9F0]"><X className="h-4 w-4" /></button>
+                  <button onClick={() => setShowAI(false)} className="text-subtle hover:text-foreground"><X className="h-4 w-4" /></button>
                 </div>
-                <div className="flex border-b border-[#262A35]">
+                <div className="flex border-b border-border">
                   {(["summarize","title","actions","convert"] as const).map(m => (
                     <button key={m} onClick={() => setAIMode(m)}
-                      className={`flex-1 py-1.5 text-[10px] font-medium capitalize transition-colors ${aiMode === m ? "text-purple-400 border-b-2 border-purple-600" : "text-[#8A92A6] hover:text-[#E6E9F0]"}`}>
+                      className={`flex-1 py-1.5 text-[10px] font-medium capitalize transition-colors ${aiMode === m ? "text-violet border-b-2 border-violet" : "text-muted hover:text-foreground"}`}>
                       {m === "actions" ? "Tasks" : m}
                     </button>
                   ))}
                 </div>
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                  <p className="text-xs text-[#8A92A6]">
+                  <p className="text-xs text-muted">
                     {aiMode === "summarize" && "Get a quick summary of your note."}
                     {aiMode === "title" && "Generate a smart title based on content."}
                     {aiMode === "actions" && "Extract action items and tasks."}
                     {aiMode === "convert" && "Convert rough notes to a structured document."}
                   </p>
                   <button onClick={() => void runAI()} disabled={aiLoading}
-                    className="w-full flex items-center justify-center gap-2 py-2 text-xs font-semibold bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50">
+                    className="w-full flex items-center justify-center gap-2 py-2 text-xs font-semibold bg-violet text-white rounded-lg hover:bg-violet disabled:opacity-50">
                     {aiLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
                     {aiLoading ? "Thinking…" : `Run: ${aiMode}`}
                   </button>
                   {aiResult && (
                     <>
-                      <div className="bg-[#12151D] rounded-lg p-3 text-xs text-[#E6E9F0] whitespace-pre-wrap leading-relaxed border border-[#262A35] max-h-52 overflow-y-auto">{aiResult}</div>
+                      <div className="bg-surface rounded-lg p-3 text-xs text-foreground whitespace-pre-wrap leading-relaxed border border-border max-h-52 overflow-y-auto">{aiResult}</div>
                       <button onClick={applyAIResult}
-                        className="w-full py-2 text-xs font-semibold text-[#00C2FF] border border-[#00C2FF]/30 rounded-lg hover:bg-[#0E2532]">
+                        className="w-full py-2 text-xs font-semibold text-accent border border-accent/30 rounded-lg hover:bg-accent-soft">
                         <Check className="h-3 w-3 inline mr-1" />
                         {aiMode === "title" ? "Apply as title" : aiMode === "convert" ? "Replace content" : "Append to note"}
                       </button>
@@ -1081,7 +1081,7 @@ export function NotesView() {
           </div>
 
           {/* Footer meta */}
-          <div className="flex items-center gap-4 px-4 py-1.5 border-t border-[#1C1F28] bg-[#12151D] text-[10px] font-mono text-[#5A6275] flex-shrink-0">
+          <div className="flex items-center gap-4 px-4 py-1.5 border-t border-border-soft bg-surface text-[10px] font-mono text-subtle flex-shrink-0">
             <span>Created {format(new Date(selectedNote.createdAt), "MMM d, yyyy")}</span>
             <span>Updated {formatDistanceToNow(new Date(selectedNote.updatedAt), { addSuffix: true })}</span>
             <span>{words} words</span>
@@ -1089,27 +1089,27 @@ export function NotesView() {
         </div>
       ) : (
         /* Grid view */
-        <div className="flex-1 flex flex-col overflow-hidden bg-[#12151D]">
-          <div className="flex items-center justify-between px-4 h-[52px] flex-shrink-0 border-b border-[#1C1F28]">
-            <h2 className="text-sm font-semibold text-[#E6E9F0]">
+        <div className="flex-1 flex flex-col overflow-hidden bg-surface">
+          <div className="flex items-center justify-between px-4 h-[52px] flex-shrink-0 border-b border-border-soft">
+            <h2 className="text-sm font-semibold text-foreground">
               {activeFolder === "archive" ? "Archive" : (folders.find(f => f.id === activeFolder)?.name ?? "All Notes")}
-              <span className="ml-2 text-[#5A6275] font-normal">{filteredNotes.length}</span>
+              <span className="ml-2 text-subtle font-normal">{filteredNotes.length}</span>
             </h2>
             <button onClick={() => void createNote()}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-[#00C2FF] text-[#06121A] rounded-lg hover:bg-[#0098E6]">
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-accent text-accent-foreground rounded-lg hover:bg-accent-hover">
               <Plus className="h-3.5 w-3.5" /> New
             </button>
           </div>
 
           <div className="flex-1 overflow-y-auto overflow-x-hidden p-4">
             {loading ? (
-              <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-[#00C2FF]" /></div>
+              <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-accent" /></div>
             ) : filteredNotes.length === 0 ? (
               <div className="text-center py-16">
-                <StickyNote className="h-12 w-12 text-[#bdc1c6] mx-auto mb-3" />
-                <p className="text-sm font-semibold text-[#E6E9F0] mb-1">No notes yet</p>
-                <p className="text-xs text-[#8A92A6] mb-4">Create your first note to get started</p>
-                <button onClick={() => void createNote()} className="px-4 py-2 text-sm font-semibold bg-[#00C2FF] text-[#06121A] rounded-lg hover:bg-[#0098E6]">
+                <StickyNote className="h-12 w-12 text-subtle mx-auto mb-3" />
+                <p className="text-sm font-semibold text-foreground mb-1">No notes yet</p>
+                <p className="text-xs text-muted mb-4">Create your first note to get started</p>
+                <button onClick={() => void createNote()} className="px-4 py-2 text-sm font-semibold bg-accent text-accent-foreground rounded-lg hover:bg-accent-hover">
                   <Plus className="h-3.5 w-3.5 inline mr-1" /> New note
                 </button>
               </div>
@@ -1117,7 +1117,7 @@ export function NotesView() {
               <>
                 {pinnedNotes.length > 0 && (
                   <div className="mb-4">
-                    <p className="text-xs font-semibold text-[#8A92A6] mb-2 flex items-center gap-1"><Pin className="h-3 w-3 text-[#f4b400]" /> Pinned</p>
+                    <p className="text-xs font-semibold text-muted mb-2 flex items-center gap-1"><Pin className="h-3 w-3 text-warn" /> Pinned</p>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                       {pinnedNotes.map(n => (
                         <NoteCard key={n.id} note={n} selected={n.id === selectedId}
@@ -1135,7 +1135,7 @@ export function NotesView() {
                 )}
                 {unpinnedNotes.length > 0 && (
                   <div>
-                    {pinnedNotes.length > 0 && <p className="text-xs font-semibold text-[#8A92A6] mb-2">Notes</p>}
+                    {pinnedNotes.length > 0 && <p className="text-xs font-semibold text-muted mb-2">Notes</p>}
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                       {unpinnedNotes.map(n => (
                         <NoteCard key={n.id} note={n} selected={n.id === selectedId}
@@ -1166,18 +1166,18 @@ function NoteListItem({ note, selected, onClick, reminderIso }: { note: Note; se
   const _colorInfo = getNoteColor(note.color);
   return (
     <div onClick={onClick}
-      className={`flex items-start gap-2.5 px-3 py-2.5 rounded-lg cursor-pointer transition-colors border ${selected ? "bg-[#0E2532] border-[#00C2FF]/40" : "border-transparent hover:bg-[#1B1F2A]"}`}>
-      <div className="h-2.5 w-2.5 rounded-[3px] mt-1 flex-shrink-0" style={{ background: note.color || "#5A6275" }} />
+      className={`flex items-start gap-2.5 px-3 py-2.5 rounded-lg cursor-pointer transition-colors border ${selected ? "bg-accent-soft border-accent/40" : "border-transparent hover:bg-surface-sunken"}`}>
+      <div className="h-2.5 w-2.5 rounded-[3px] mt-1 flex-shrink-0" style={{ background: note.color || "var(--subtle)" }} />
       <div className="flex-1 min-w-0">
-        <p className={`text-[13px] font-semibold truncate ${selected ? "text-[#00C2FF]" : "text-[#E6E9F0]"}`}>
+        <p className={`text-[13px] font-semibold truncate ${selected ? "text-accent" : "text-foreground"}`}>
           {note.title || "Untitled"}
-          {note.pinned && <Pin className="inline h-2.5 w-2.5 text-[#f4b400] ml-1" />}
+          {note.pinned && <Pin className="inline h-2.5 w-2.5 text-warn ml-1" />}
         </p>
-        <p className="text-[11px] text-[#8A92A6] line-clamp-2 leading-relaxed mt-0.5">{notePreview(note.content)}</p>
+        <p className="text-[11px] text-muted line-clamp-2 leading-relaxed mt-0.5">{notePreview(note.content)}</p>
         <div className="flex items-center gap-2 mt-1">
-          <p className="text-[10px] font-mono text-[#5A6275]">{formatDistanceToNow(new Date(note.updatedAt), { addSuffix: true })}</p>
+          <p className="text-[10px] font-mono text-subtle">{formatDistanceToNow(new Date(note.updatedAt), { addSuffix: true })}</p>
           {reminderIso && (
-            <span className="inline-flex items-center gap-0.5 text-[10px] text-[#00C2FF]">
+            <span className="inline-flex items-center gap-0.5 text-[10px] text-accent">
               <Bell className="h-2.5 w-2.5" /> {format(new Date(reminderIso), "MMM d, h:mm a")}
             </span>
           )}

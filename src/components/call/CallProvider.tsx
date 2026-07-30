@@ -410,21 +410,21 @@ function CallModal({
   secondary: { label: string; onClick: () => void };
 }) {
   return (
-    <div className="nexfade fixed inset-0 z-[110] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="nexpop w-[320px] bg-[#12151D] border border-[#262A35] rounded-2xl shadow-2xl p-6 flex flex-col items-center text-center">
-        <div className="w-16 h-16 rounded-full bg-[#00C2FF]/10 flex items-center justify-center mb-4">
+    <div className="nexfade fixed inset-0 z-[110] flex items-center justify-center bg-overlay backdrop-blur-sm">
+      <div className="nexpop w-[320px] bg-surface border border-border rounded-2xl shadow-2xl p-6 flex flex-col items-center text-center">
+        <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mb-4">
           {media === "audio" ? (
-            <Phone className="w-7 h-7 text-[#00C2FF]" />
+            <Phone className="w-7 h-7 text-accent" />
           ) : (
-            <Video className="w-7 h-7 text-[#00C2FF]" />
+            <Video className="w-7 h-7 text-accent" />
           )}
         </div>
-        <p className="text-lg font-semibold text-[#E6E9F0]">{title}</p>
-        <p className="text-sm text-[#8A92A6] mt-1 mb-6">{subtitle}</p>
+        <p className="text-lg font-semibold text-foreground">{title}</p>
+        <p className="text-sm text-muted mt-1 mb-6">{subtitle}</p>
         <div className="flex items-center gap-3">
           <button
             onClick={secondary.onClick}
-            className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-lg bg-[#ea4335] text-white hover:bg-[#d33426] transition-colors"
+            className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-lg bg-crit text-white hover:bg-crit transition-colors"
           >
             <PhoneOff className="w-4 h-4" />
             {secondary.label}
@@ -432,7 +432,7 @@ function CallModal({
           {primary && (
             <button
               onClick={primary.onClick}
-              className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-lg bg-[#0f9d58] text-white hover:bg-[#0c7a43] transition-colors"
+              className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-lg bg-ok text-white hover:bg-ok transition-colors"
             >
               <Phone className="w-4 h-4" />
               {primary.label}

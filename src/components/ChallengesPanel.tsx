@@ -77,7 +77,7 @@ function Avatar({ user, size = 8 }: { user: HubUser; size?: number }) {
 function LoadingSpinner() {
   return (
     <div className="flex items-center justify-center py-16">
-      <Loader2 className="w-7 h-7 text-[#00C2FF] animate-spin" />
+      <Loader2 className="w-7 h-7 text-accent animate-spin" />
     </div>
   );
 }
@@ -85,11 +85,11 @@ function LoadingSpinner() {
 function EmptyState({ icon: Icon, title, desc }: { icon: React.ElementType; title: string; desc: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">
-      <div className="w-14 h-14 rounded-2xl bg-[#0E2532] flex items-center justify-center mb-4">
-        <Icon className="w-7 h-7 text-[#00C2FF]" />
+      <div className="w-14 h-14 rounded-2xl bg-accent-soft flex items-center justify-center mb-4">
+        <Icon className="w-7 h-7 text-accent" />
       </div>
-      <p className="font-semibold text-[#E6E9F0]">{title}</p>
-      <p className="text-sm text-[#5A6275] mt-1 max-w-xs">{desc}</p>
+      <p className="font-semibold text-foreground">{title}</p>
+      <p className="text-sm text-subtle mt-1 max-w-xs">{desc}</p>
     </div>
   );
 }
@@ -97,19 +97,19 @@ function EmptyState({ icon: Icon, title, desc }: { icon: React.ElementType; titl
 // ─── Status / color config ────────────────────────────────────────────────────
 
 const CHALLENGE_STATUS_CFG: Record<string, { label: string; color: string; bg: string }> = {
-  upcoming:  { label: "Upcoming",  color: "text-[#8A92A6]", bg: "bg-[#1B1F2A]" },
-  active:    { label: "Active",    color: "text-[#00C2FF]", bg: "bg-[#0E2532]" },
-  judging:   { label: "Judging",   color: "text-[#F59E0B]", bg: "bg-[#F59E0B]/12" },
-  completed: { label: "Completed", color: "text-[#0f9d58]", bg: "bg-[#0f9d58]/12" },
-  cancelled: { label: "Cancelled", color: "text-[#ea4335]", bg: "bg-[#ea4335]/12" },
+  upcoming:  { label: "Upcoming",  color: "text-muted", bg: "bg-surface-sunken" },
+  active:    { label: "Active",    color: "text-accent", bg: "bg-accent-soft" },
+  judging:   { label: "Judging",   color: "text-warn", bg: "bg-warn/12" },
+  completed: { label: "Completed", color: "text-ok", bg: "bg-ok/12" },
+  cancelled: { label: "Cancelled", color: "text-crit", bg: "bg-crit/12" },
 };
 
 const TEAM_COLOR_HEX: Record<string, string> = {
-  red: "#ea4335", blue: "#4285f4", green: "#0f9d58", purple: "#a142f4",
-  amber: "#f4b400", orange: "#ff6d00", cyan: "#00C2FF",
+  red: "#c0362c", blue: "#4285f4", green: "#0e7c5a", purple: "#a142f4",
+  amber: "#b45309", orange: "#b45309", cyan: "#4f46e5",
 };
 function teamColorHex(color?: string | null): string {
-  return (color && TEAM_COLOR_HEX[color.toLowerCase()]) || "#8A92A6";
+  return (color && TEAM_COLOR_HEX[color.toLowerCase()]) || "#6b6a65";
 }
 
 function ChallengeStatusBadge({ s }: { s: string }) {
@@ -196,11 +196,11 @@ export function ChallengesTab({ isMentor, userId }: { isMentor: boolean; userId:
       {isMentor && (
         <div className="flex justify-end gap-2">
           <button onClick={seedWeek4} disabled={seeding}
-            className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-lg border border-[#262A35] text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0] transition-colors disabled:opacity-50">
+            className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-lg border border-border text-muted hover:bg-surface-sunken hover:text-foreground transition-colors disabled:opacity-50">
             {seeding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trophy className="w-4 h-4" />} Seed Week 4: Red vs Blue
           </button>
           <button onClick={() => setShowForm(v => !v)}
-            className="flex items-center gap-1.5 px-4 py-2 bg-[#00C2FF] text-[#06121A] text-sm font-semibold rounded-lg hover:bg-[#0098E6] transition-colors">
+            className="flex items-center gap-1.5 px-4 py-2 bg-accent text-accent-foreground text-sm font-semibold rounded-lg hover:bg-accent-hover transition-colors">
             <Plus className="w-4 h-4" /> New Challenge
           </button>
         </div>
@@ -226,15 +226,15 @@ export function ChallengesTab({ isMentor, userId }: { isMentor: boolean; userId:
           const revealScores = isMentor || c.status === "completed";
           return (
             <div key={c.id} onClick={() => setSelected(c)}
-              className="bg-[#12151D] border border-[#262A35] rounded-xl p-4 hover:border-[#00C2FF]/40 hover:shadow-sm transition-all cursor-pointer group">
+              className="bg-surface border border-border rounded-xl p-4 hover:border-accent/40 hover:shadow-sm transition-all cursor-pointer group">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
-                  <Swords className="w-4 h-4 text-[#00C2FF] shrink-0" />
-                  <h4 className="font-semibold text-sm text-[#E6E9F0] group-hover:text-[#00C2FF] transition-colors truncate">{c.title}</h4>
+                  <Swords className="w-4 h-4 text-accent shrink-0" />
+                  <h4 className="font-semibold text-sm text-foreground group-hover:text-accent transition-colors truncate">{c.title}</h4>
                 </div>
                 <ChallengeStatusBadge s={c.status} />
               </div>
-              <p className="text-sm text-[#8A92A6] mt-1 line-clamp-2">{c.description}</p>
+              <p className="text-sm text-muted mt-1 line-clamp-2">{c.description}</p>
               <div className="flex items-center gap-3 mt-3 flex-wrap">
                 {c.teams.map(t => (
                   <span key={t.id} className="inline-flex items-center gap-1.5 text-xs font-medium" style={{ color: teamColorHex(t.color) }}>
@@ -243,12 +243,12 @@ export function ChallengesTab({ isMentor, userId }: { isMentor: boolean; userId:
                   </span>
                 ))}
                 {cd && (
-                  <span className={`flex items-center gap-1 text-[11px] font-mono ml-auto ${cd.overdue ? "text-[#ea4335]" : "text-[#5A6275]"}`}>
+                  <span className={`flex items-center gap-1 text-[11px] font-mono ml-auto ${cd.overdue ? "text-crit" : "text-subtle"}`}>
                     <Clock className="w-3 h-3" /> {cd.label}
                   </span>
                 )}
                 {c.winnerTeam && (
-                  <span className="flex items-center gap-1 text-[11px] font-semibold text-[#f4b400]">
+                  <span className="flex items-center gap-1 text-[11px] font-semibold text-warn">
                     <Crown className="w-3 h-3" /> {c.winnerTeam.name} won
                   </span>
                 )}
@@ -316,76 +316,76 @@ function NewChallengeForm({ interns, onCancel, onCreated }: {
   };
 
   return (
-    <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-5 space-y-4">
-      <h3 className="font-semibold text-[#E6E9F0]">Create Challenge</h3>
+    <div className="bg-surface border border-border rounded-xl p-5 space-y-4">
+      <h3 className="font-semibold text-foreground">Create Challenge</h3>
 
-      <input className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] placeholder:text-[#5A6275] focus:outline-none focus:border-[#00C2FF]/60 focus:ring-2 focus:ring-[#00C2FF]/20"
+      <input className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20"
         placeholder="Challenge title… e.g. Week 4: Red vs Blue" value={title} onChange={e => setTitle(e.target.value)} />
       <textarea rows={3}
-        className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] placeholder:text-[#5A6275] focus:outline-none focus:border-[#00C2FF]/60 focus:ring-2 focus:ring-[#00C2FF]/20 resize-none"
+        className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20 resize-none"
         placeholder="Objective / brief…" value={description} onChange={e => setDescription(e.target.value)} />
       <div>
-        <label className="block text-xs font-medium text-[#8A92A6] mb-1">Submission deadline</label>
-        <input type="datetime-local" className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+        <label className="block text-xs font-medium text-muted mb-1">Submission deadline</label>
+        <input type="datetime-local" className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground focus:outline-none focus:border-accent/60"
           value={deadline} onChange={e => setDeadline(e.target.value)} />
       </div>
 
       <div>
         <div className="flex items-center justify-between mb-2">
-          <label className="text-xs font-medium text-[#8A92A6]">Evaluation criteria</label>
-          <span className={`text-xs font-mono ${totalPoints === 100 ? "text-[#0f9d58]" : "text-[#ea4335]"}`}>{totalPoints} / 100 pts</span>
+          <label className="text-xs font-medium text-muted">Evaluation criteria</label>
+          <span className={`text-xs font-mono ${totalPoints === 100 ? "text-ok" : "text-crit"}`}>{totalPoints} / 100 pts</span>
         </div>
         <div className="space-y-2">
           {categories.map((c, i) => (
             <div key={i} className="flex items-center gap-2">
-              <input className="flex-1 px-2.5 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-xs text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+              <input className="flex-1 px-2.5 py-1.5 bg-surface-sunken border border-border-strong rounded-lg text-xs text-foreground focus:outline-none focus:border-accent/60"
                 value={c.label} onChange={e => updateCategory(i, { label: e.target.value })} placeholder="Category name" />
-              <input type="number" className="w-20 px-2.5 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-xs text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+              <input type="number" className="w-20 px-2.5 py-1.5 bg-surface-sunken border border-border-strong rounded-lg text-xs text-foreground focus:outline-none focus:border-accent/60"
                 value={c.maxPoints} onChange={e => updateCategory(i, { maxPoints: Number(e.target.value) })} />
               <button type="button" onClick={() => setCategories(prev => prev.filter((_, idx) => idx !== i))}
-                className="p-1.5 text-[#5A6275] hover:text-[#ea4335] hover:bg-[#ea4335]/12 rounded transition-colors">
+                className="p-1.5 text-subtle hover:text-crit hover:bg-crit/12 rounded transition-colors">
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
             </div>
           ))}
           <button type="button"
             onClick={() => setCategories(prev => [...prev, { key: `cat_${prev.length}`, label: "", maxPoints: 0 }])}
-            className="flex items-center gap-1 text-xs text-[#00C2FF] hover:text-[#0098E6]">
+            className="flex items-center gap-1 text-xs text-accent hover:text-accent-hover">
             <Plus className="w-3 h-3" /> Add category
           </button>
         </div>
       </div>
 
       <div className="space-y-3">
-        <label className="text-xs font-medium text-[#8A92A6]">Teams</label>
+        <label className="text-xs font-medium text-muted">Teams</label>
         {teams.map((t, i) => (
-          <div key={i} className="bg-[#1B1F2A] border border-[#2E333F] rounded-lg p-3 space-y-2">
+          <div key={i} className="bg-surface-sunken border border-border-strong rounded-lg p-3 space-y-2">
             <div className="flex items-center gap-2">
-              <input className="flex-1 px-2.5 py-1.5 bg-[#0E1018] border border-[#2E333F] rounded-lg text-xs text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+              <input className="flex-1 px-2.5 py-1.5 bg-surface border border-border-strong rounded-lg text-xs text-foreground focus:outline-none focus:border-accent/60"
                 value={t.name} onChange={e => updateTeam(i, { name: e.target.value })} placeholder="Team name" />
-              <select className="px-2.5 py-1.5 bg-[#0E1018] border border-[#2E333F] rounded-lg text-xs text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+              <select className="px-2.5 py-1.5 bg-surface border border-border-strong rounded-lg text-xs text-foreground focus:outline-none focus:border-accent/60"
                 value={t.color} onChange={e => updateTeam(i, { color: e.target.value })}>
                 {Object.keys(TEAM_COLOR_HEX).map(c => <option key={c} value={c}>{c}</option>)}
               </select>
               {teams.length > 2 && (
                 <button type="button" onClick={() => setTeams(prev => prev.filter((_, idx) => idx !== i))}
-                  className="p-1.5 text-[#5A6275] hover:text-[#ea4335] hover:bg-[#ea4335]/12 rounded transition-colors">
+                  className="p-1.5 text-subtle hover:text-crit hover:bg-crit/12 rounded transition-colors">
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               )}
             </div>
-            <textarea rows={2} className="w-full px-2.5 py-1.5 bg-[#0E1018] border border-[#2E333F] rounded-lg text-xs text-[#E6E9F0] placeholder:text-[#5A6275] focus:outline-none focus:border-[#00C2FF]/60 resize-none"
+            <textarea rows={2} className="w-full px-2.5 py-1.5 bg-surface border border-border-strong rounded-lg text-xs text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60 resize-none"
               placeholder="Mission brief for this team… (only this team + mentors will see it)" value={t.mission} onChange={e => updateTeam(i, { mission: e.target.value })} />
             <div>
-              <label className="block text-[11px] text-[#5A6275] mb-1">Team lead</label>
-              <select className="w-full px-2.5 py-1.5 bg-[#0E1018] border border-[#2E333F] rounded-lg text-xs text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+              <label className="block text-[11px] text-subtle mb-1">Team lead</label>
+              <select className="w-full px-2.5 py-1.5 bg-surface border border-border-strong rounded-lg text-xs text-foreground focus:outline-none focus:border-accent/60"
                 value={t.leadId} onChange={e => updateTeam(i, { leadId: e.target.value })}>
                 <option value="">— none yet —</option>
                 {interns.map(intern => <option key={intern.id} value={intern.id}>{intern.fullName}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-[11px] text-[#5A6275] mb-1">Members</label>
+              <label className="block text-[11px] text-subtle mb-1">Members</label>
               <div className="flex flex-wrap gap-1.5">
                 {interns.map(intern => (
                   <button key={intern.id} type="button"
@@ -396,27 +396,27 @@ function NewChallengeForm({ interns, onCancel, onCreated }: {
                     })}
                     className={`px-2 py-0.5 rounded-full text-[11px] font-medium border transition-colors ${
                       t.memberIds.includes(intern.id)
-                        ? "border-[#00C2FF] bg-[#0E2532] text-[#00C2FF]"
-                        : "border-[#262A35] text-[#8A92A6] hover:bg-[#12151D]"
+                        ? "border-accent bg-accent-soft text-accent"
+                        : "border-border text-muted hover:bg-surface"
                     }`}>
                     {intern.fullName}
                   </button>
                 ))}
               </div>
-              <p className="text-[10px] text-[#5A6275] mt-1">You can leave this empty and add members later from the challenge page.</p>
+              <p className="text-[10px] text-subtle mt-1">You can leave this empty and add members later from the challenge page.</p>
             </div>
           </div>
         ))}
         <button type="button"
           onClick={() => setTeams(prev => [...prev, { name: `Team ${prev.length + 1}`, color: "amber", mission: "", leadId: "", memberIds: [] }])}
-          className="flex items-center gap-1 text-xs text-[#00C2FF] hover:text-[#0098E6]">
+          className="flex items-center gap-1 text-xs text-accent hover:text-accent-hover">
           <Plus className="w-3 h-3" /> Add team
         </button>
       </div>
 
       <div className="flex justify-end gap-2 pt-1">
-        <button onClick={onCancel} className="px-3 py-1.5 text-sm text-[#8A92A6] hover:bg-[#1B1F2A] rounded-lg">Cancel</button>
-        <button onClick={create} disabled={saving} className="px-4 py-1.5 bg-[#00C2FF] text-[#06121A] text-sm font-semibold rounded-lg hover:bg-[#0098E6] disabled:opacity-50">
+        <button onClick={onCancel} className="px-3 py-1.5 text-sm text-muted hover:bg-surface-sunken rounded-lg">Cancel</button>
+        <button onClick={create} disabled={saving} className="px-4 py-1.5 bg-accent text-accent-foreground text-sm font-semibold rounded-lg hover:bg-accent-hover disabled:opacity-50">
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create"}
         </button>
       </div>
@@ -507,35 +507,35 @@ function ChallengeDetail({ challenge, isMentor, userId, interns, onBack, onRefre
 
   return (
     <div className="w-full space-y-5">
-      <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-[#8A92A6] hover:text-[#E6E9F0] transition-colors">
+      <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-muted hover:text-foreground transition-colors">
         <ArrowRight className="w-4 h-4 rotate-180" /> Back to Challenges
       </button>
 
-      <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-5">
+      <div className="bg-surface border border-border rounded-xl p-5">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-lg font-semibold text-[#E6E9F0]">{challenge.title}</h2>
+              <h2 className="text-lg font-semibold text-foreground">{challenge.title}</h2>
               <ChallengeStatusBadge s={challenge.status} />
               {challenge.winnerTeam && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold text-[#f4b400] bg-[#f4b400]/12">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold text-warn bg-warn/12">
                   <Crown className="w-3 h-3" /> {challenge.winnerTeam.name} won
                 </span>
               )}
             </div>
-            <p className="text-sm text-[#8A92A6] mt-2 whitespace-pre-wrap">{challenge.description}</p>
+            <p className="text-sm text-muted mt-2 whitespace-pre-wrap">{challenge.description}</p>
           </div>
           {!editingDeadline && (
             <div className="flex items-center gap-1.5 shrink-0">
               {cd ? (
-                <span className={`flex items-center gap-1.5 text-sm font-mono ${cd.overdue ? "text-[#ea4335]" : "text-[#00C2FF]"}`}>
+                <span className={`flex items-center gap-1.5 text-sm font-mono ${cd.overdue ? "text-crit" : "text-accent"}`}>
                   <CalendarClock className="w-4 h-4" /> {cd.label}
                 </span>
               ) : (
-                <span className="text-sm text-[#5A6275]">No deadline set</span>
+                <span className="text-sm text-subtle">No deadline set</span>
               )}
               {isMentor && (
-                <button onClick={() => setEditingDeadline(true)} className="text-[11px] text-[#00C2FF] hover:underline">
+                <button onClick={() => setEditingDeadline(true)} className="text-[11px] text-accent hover:underline">
                   Edit
                 </button>
               )}
@@ -544,21 +544,21 @@ function ChallengeDetail({ challenge, isMentor, userId, interns, onBack, onRefre
         </div>
 
         {isMentor && editingDeadline && (
-          <div className="flex items-center gap-2 mt-3 flex-wrap bg-[#1B1F2A] border border-[#2E333F] rounded-lg p-2.5">
-            <label className="text-xs text-[#8A92A6]">Deadline:</label>
+          <div className="flex items-center gap-2 mt-3 flex-wrap bg-surface-sunken border border-border-strong rounded-lg p-2.5">
+            <label className="text-xs text-muted">Deadline:</label>
             <input type="datetime-local" value={deadlineDraft} onChange={e => setDeadlineDraft(e.target.value)}
-              className="px-2.5 py-1 bg-[#0E1018] border border-[#2E333F] rounded-lg text-xs text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60" />
+              className="px-2.5 py-1 bg-surface border border-border-strong rounded-lg text-xs text-foreground focus:outline-none focus:border-accent/60" />
             <button onClick={saveDeadline} disabled={savingDeadline}
-              className="flex items-center gap-1 px-2.5 py-1 bg-[#00C2FF] text-[#06121A] text-xs font-semibold rounded-lg hover:bg-[#0098E6] disabled:opacity-50">
+              className="flex items-center gap-1 px-2.5 py-1 bg-accent text-accent-foreground text-xs font-semibold rounded-lg hover:bg-accent-hover disabled:opacity-50">
               {savingDeadline ? <Loader2 className="w-3 h-3 animate-spin" /> : "Save"}
             </button>
             {deadlineDraft && (
-              <button onClick={() => setDeadlineDraft("")} className="text-xs text-[#8A92A6] hover:text-[#ea4335]">
+              <button onClick={() => setDeadlineDraft("")} className="text-xs text-muted hover:text-crit">
                 Clear
               </button>
             )}
             <button onClick={() => { setEditingDeadline(false); setDeadlineDraft(challenge.deadline ? toLocalInputValue(challenge.deadline) : ""); }}
-              className="text-xs text-[#8A92A6] hover:text-[#E6E9F0] ml-auto">
+              className="text-xs text-muted hover:text-foreground ml-auto">
               Cancel
             </button>
           </div>
@@ -566,17 +566,17 @@ function ChallengeDetail({ challenge, isMentor, userId, interns, onBack, onRefre
 
         {isMentor && (
           <div className="flex items-center gap-2 mt-4 flex-wrap">
-            <label className="text-xs text-[#8A92A6]">Status:</label>
+            <label className="text-xs text-muted">Status:</label>
             <select disabled={savingStatus} value={challenge.status} onChange={e => updateStatus(e.target.value)}
-              className="px-2.5 py-1 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-xs text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60">
+              className="px-2.5 py-1 bg-surface-sunken border border-border-strong rounded-lg text-xs text-foreground focus:outline-none focus:border-accent/60">
               {Object.keys(CHALLENGE_STATUS_CFG).map(s => <option key={s} value={s}>{CHALLENGE_STATUS_CFG[s].label}</option>)}
             </select>
             {!challenge.winnerTeamId ? (
               <div className="flex items-center gap-1.5 ml-auto">
-                <span className="text-xs text-[#8A92A6]">Announce winner:</span>
+                <span className="text-xs text-muted">Announce winner:</span>
                 {challenge.teams.map(t => (
                   <button key={t.id} disabled={announcing} onClick={() => setWinner(t.id)}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border transition-colors hover:bg-[#1B1F2A]"
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border transition-colors hover:bg-surface-sunken"
                     style={{ borderColor: teamColorHex(t.color), color: teamColorHex(t.color) }}>
                     <Trophy className="w-3 h-3" /> {t.name}
                   </button>
@@ -584,7 +584,7 @@ function ChallengeDetail({ challenge, isMentor, userId, interns, onBack, onRefre
               </div>
             ) : (
               <button disabled={announcing} onClick={() => setWinner(null)}
-                className="flex items-center gap-1.5 ml-auto px-2.5 py-1 rounded-full text-xs font-semibold text-[#8A92A6] border border-[#262A35] hover:text-[#ea4335] hover:border-[#ea4335]/40 transition-colors">
+                className="flex items-center gap-1.5 ml-auto px-2.5 py-1 rounded-full text-xs font-semibold text-muted border border-border hover:text-crit hover:border-crit/40 transition-colors">
                 {announcing ? <Loader2 className="w-3 h-3 animate-spin" /> : <X className="w-3 h-3" />} Undo winner
               </button>
             )}
@@ -595,7 +595,7 @@ function ChallengeDetail({ challenge, isMentor, userId, interns, onBack, onRefre
       {isMentor && (
         <div className="flex justify-end">
           <button onClick={deleteChallenge} disabled={deleting}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#5A6275] hover:text-[#ea4335] hover:bg-[#ea4335]/10 rounded-lg transition-colors disabled:opacity-50">
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-subtle hover:text-crit hover:bg-crit/10 rounded-lg transition-colors disabled:opacity-50">
             {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />} Delete challenge
           </button>
         </div>
@@ -603,33 +603,33 @@ function ChallengeDetail({ challenge, isMentor, userId, interns, onBack, onRefre
 
       {/* Leaderboard — hidden from interns until judging is complete */}
       {canSeeLeaderboard ? (
-        <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-4">
-          <h3 className="text-sm font-semibold text-[#E6E9F0] mb-3 flex items-center gap-2"><Award className="w-4 h-4 text-[#00C2FF]" /> Leaderboard</h3>
+        <div className="bg-surface border border-border rounded-xl p-4">
+          <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2"><Award className="w-4 h-4 text-accent" /> Leaderboard</h3>
           <div className="space-y-2">
             {ranked.map((t, i) => {
               const total = teamTotal(t);
               const pct = max > 0 ? Math.min(100, (total / max) * 100) : 0;
               return (
                 <div key={t.id} className="flex items-center gap-3">
-                  <span className="w-5 text-xs font-mono text-[#5A6275]">{i === 0 && total > 0 ? <Crown className="w-3.5 h-3.5 text-[#f4b400]" /> : `#${i + 1}`}</span>
+                  <span className="w-5 text-xs font-mono text-subtle">{i === 0 && total > 0 ? <Crown className="w-3.5 h-3.5 text-warn" /> : `#${i + 1}`}</span>
                   <span className="w-28 text-xs font-medium truncate" style={{ color: teamColorHex(t.color) }}>{t.name}</span>
-                  <div className="flex-1 h-2 rounded-full bg-[#1B1F2A] overflow-hidden">
+                  <div className="flex-1 h-2 rounded-full bg-surface-sunken overflow-hidden">
                     <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: teamColorHex(t.color) }} />
                   </div>
-                  <span className="w-16 text-right text-xs font-mono text-[#8A92A6]">{total}/{max}</span>
+                  <span className="w-16 text-right text-xs font-mono text-muted">{total}/{max}</span>
                 </div>
               );
             })}
           </div>
         </div>
       ) : (
-        <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-4 flex items-center gap-3 text-sm text-[#5A6275]">
+        <div className="bg-surface border border-border rounded-xl p-4 flex items-center gap-3 text-sm text-subtle">
           <Lock className="w-4 h-4 shrink-0" /> Leaderboard and scores are revealed once judging is complete — teams can{"'"}t see how they compare while the challenge is live.
         </div>
       )}
 
       {onNoTeam && (
-        <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-4 text-sm text-[#8A92A6]">
+        <div className="bg-surface border border-border rounded-xl p-4 text-sm text-muted">
           You{"'"}re not assigned to a team for this challenge yet.
         </div>
       )}
@@ -749,44 +749,44 @@ function TeamPanel({ team, challenge, isMentor, userId, interns, onRefresh }: {
   };
 
   return (
-    <div className="bg-[#12151D] border rounded-xl p-4 space-y-3" style={{ borderColor: `${color}44` }}>
+    <div className="bg-surface border rounded-xl p-4 space-y-3" style={{ borderColor: `${color}44` }}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full" style={{ background: color }} />
           <h4 className="font-semibold text-sm" style={{ color }}>{team.name}</h4>
         </div>
         <div className="flex items-center gap-2">
-          {revealScores && <span className="text-xs font-mono text-[#8A92A6]">{teamTotal(team)}/{schemaMax(challenge.scoringSchema)}</span>}
+          {revealScores && <span className="text-xs font-mono text-muted">{teamTotal(team)}/{schemaMax(challenge.scoringSchema)}</span>}
           {isMentor && (
-            <button onClick={() => setEditingRoster(v => !v)} className="text-[11px] text-[#00C2FF] hover:underline">
+            <button onClick={() => setEditingRoster(v => !v)} className="text-[11px] text-accent hover:underline">
               {editingRoster ? "Cancel" : "Edit roster"}
             </button>
           )}
         </div>
       </div>
 
-      {team.mission && <p className="text-xs text-[#8A92A6] whitespace-pre-wrap">{team.mission}</p>}
+      {team.mission && <p className="text-xs text-muted whitespace-pre-wrap">{team.mission}</p>}
 
       {isMentor && editingRoster ? (
-        <div className="bg-[#1B1F2A] border border-[#2E333F] rounded-lg p-3 space-y-2">
+        <div className="bg-surface-sunken border border-border-strong rounded-lg p-3 space-y-2">
           <div>
-            <label className="block text-[11px] text-[#5A6275] mb-1">Team lead</label>
-            <select className="w-full px-2.5 py-1.5 bg-[#0E1018] border border-[#2E333F] rounded-lg text-xs text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+            <label className="block text-[11px] text-subtle mb-1">Team lead</label>
+            <select className="w-full px-2.5 py-1.5 bg-surface border border-border-strong rounded-lg text-xs text-foreground focus:outline-none focus:border-accent/60"
               value={rosterLeadId} onChange={e => setRosterLeadId(e.target.value)}>
               <option value="">— none —</option>
               {interns.map(intern => <option key={intern.id} value={intern.id}>{intern.fullName}</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-[11px] text-[#5A6275] mb-1">Members</label>
+            <label className="block text-[11px] text-subtle mb-1">Members</label>
             <div className="flex flex-wrap gap-1.5">
               {interns.map(intern => (
                 <button key={intern.id} type="button"
                   onClick={() => setRosterMemberIds(prev => prev.includes(intern.id) ? prev.filter(id => id !== intern.id) : [...prev, intern.id])}
                   className={`px-2 py-0.5 rounded-full text-[11px] font-medium border transition-colors ${
                     rosterMemberIds.includes(intern.id)
-                      ? "border-[#00C2FF] bg-[#0E2532] text-[#00C2FF]"
-                      : "border-[#262A35] text-[#8A92A6] hover:bg-[#12151D]"
+                      ? "border-accent bg-accent-soft text-accent"
+                      : "border-border text-muted hover:bg-surface"
                   }`}>
                   {intern.fullName}
                 </button>
@@ -795,7 +795,7 @@ function TeamPanel({ team, challenge, isMentor, userId, interns, onRefresh }: {
           </div>
           <div className="flex justify-end">
             <button onClick={saveRoster} disabled={savingRoster}
-              className="flex items-center gap-1.5 px-3 py-1 text-xs font-semibold bg-[#00C2FF] text-[#06121A] rounded-lg hover:bg-[#0098E6] disabled:opacity-50">
+              className="flex items-center gap-1.5 px-3 py-1 text-xs font-semibold bg-accent text-accent-foreground rounded-lg hover:bg-accent-hover disabled:opacity-50">
               {savingRoster ? <Loader2 className="w-3 h-3 animate-spin" /> : "Save roster"}
             </button>
           </div>
@@ -803,46 +803,46 @@ function TeamPanel({ team, challenge, isMentor, userId, interns, onRefresh }: {
       ) : (
         <div className="flex items-center gap-1.5 flex-wrap">
           {team.lead && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#1B1F2A] text-[#E6E9F0]">
-              <Star className="w-3 h-3 text-[#f4b400]" /> {team.lead.fullName} (Lead)
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-surface-sunken text-foreground">
+              <Star className="w-3 h-3 text-warn" /> {team.lead.fullName} (Lead)
             </span>
           )}
           {memberUsers.filter(m => m.id !== team.leadId).map(m => (
-            <span key={m.id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#1B1F2A] text-[#8A92A6]">
+            <span key={m.id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-surface-sunken text-muted">
               <Users className="w-3 h-3" /> {m.fullName}
             </span>
           ))}
           {team.memberIds.length === 0 && !team.leadId && (
-            <span className="text-[11px] text-[#5A6275]">No members assigned yet</span>
+            <span className="text-[11px] text-subtle">No members assigned yet</span>
           )}
         </div>
       )}
 
       {/* Scorecard */}
-      <div className="space-y-1.5 pt-1 border-t border-[#262A35]">
+      <div className="space-y-1.5 pt-1 border-t border-border">
         {challenge.scoringSchema.map(cat => {
           const existing = scoreFor(cat.key);
           return (
             <div key={cat.key} className="flex items-center gap-2">
-              <span className="flex-1 text-xs text-[#8A92A6] truncate">{cat.label}</span>
+              <span className="flex-1 text-xs text-muted truncate">{cat.label}</span>
               {isMentor ? (
                 <>
                   <input type="number" min={0} max={cat.maxPoints}
-                    className="w-14 px-1.5 py-1 bg-[#1B1F2A] border border-[#2E333F] rounded text-xs text-[#E6E9F0] text-right focus:outline-none focus:border-[#00C2FF]/60"
+                    className="w-14 px-1.5 py-1 bg-surface-sunken border border-border-strong rounded text-xs text-foreground text-right focus:outline-none focus:border-accent/60"
                     placeholder={String(existing?.points ?? 0)}
                     value={scoreDrafts[cat.key] ?? ""}
                     onChange={e => setScoreDrafts(p => ({ ...p, [cat.key]: e.target.value }))}
                   />
-                  <span className="text-[11px] text-[#5A6275]">/ {cat.maxPoints}</span>
+                  <span className="text-[11px] text-subtle">/ {cat.maxPoints}</span>
                   <button onClick={() => saveScore(cat)} disabled={savingCategory === cat.key}
-                    className="px-2 py-1 text-[11px] font-semibold bg-[#1B1F2A] text-[#00C2FF] rounded hover:bg-[#0E2532] disabled:opacity-50">
+                    className="px-2 py-1 text-[11px] font-semibold bg-surface-sunken text-accent rounded hover:bg-accent-soft disabled:opacity-50">
                     {savingCategory === cat.key ? <Loader2 className="w-3 h-3 animate-spin" /> : "Save"}
                   </button>
                 </>
               ) : revealScores ? (
-                <span className="text-xs font-mono text-[#E6E9F0]">{existing ? `${existing.points}/${cat.maxPoints}` : <span className="text-[#5A6275]">— / {cat.maxPoints}</span>}</span>
+                <span className="text-xs font-mono text-foreground">{existing ? `${existing.points}/${cat.maxPoints}` : <span className="text-subtle">— / {cat.maxPoints}</span>}</span>
               ) : (
-                <span className="text-xs text-[#5A6275] flex items-center gap-1"><Lock className="w-3 h-3" /> hidden</span>
+                <span className="text-xs text-subtle flex items-center gap-1"><Lock className="w-3 h-3" /> hidden</span>
               )}
             </div>
           );
@@ -850,23 +850,23 @@ function TeamPanel({ team, challenge, isMentor, userId, interns, onRefresh }: {
       </div>
 
       {/* Submissions */}
-      <div className="pt-1 border-t border-[#262A35] space-y-2">
-        <p className="text-[11px] font-medium text-[#5A6275] flex items-center gap-1"><FileText className="w-3 h-3" /> Submissions</p>
-        {team.submissions.length === 0 && <p className="text-[11px] text-[#3A4150]">Nothing submitted yet</p>}
+      <div className="pt-1 border-t border-border space-y-2">
+        <p className="text-[11px] font-medium text-subtle flex items-center gap-1"><FileText className="w-3 h-3" /> Submissions</p>
+        {team.submissions.length === 0 && <p className="text-[11px] text-subtle">Nothing submitted yet</p>}
         {team.submissions.map(s => (
-          <div key={s.id} className="text-xs bg-[#1B1F2A] rounded-lg p-2">
-            <div className="flex items-center gap-1.5 text-[#8A92A6]">
+          <div key={s.id} className="text-xs bg-surface-sunken rounded-lg p-2">
+            <div className="flex items-center gap-1.5 text-muted">
               <Avatar user={s.submitter} size={4} /> <span>{s.submitter.fullName}</span>
-              <span className="text-[10px] text-[#5A6275] ml-auto">{fmt(s.createdAt)}</span>
+              <span className="text-[10px] text-subtle ml-auto">{fmt(s.createdAt)}</span>
             </div>
-            {s.notes && <p className="text-[#C8CEDB] mt-1">{s.notes}</p>}
+            {s.notes && <p className="text-foreground mt-1">{s.notes}</p>}
             {s.files && s.files.length > 0 && (
               <div className="flex flex-col gap-0.5 mt-1">
                 {s.files.map((f, i) => (
                   <a key={i} href={f.url} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-[#00C2FF] hover:underline truncate">
+                    className="flex items-center gap-1.5 text-accent hover:underline truncate">
                     <FileText className="w-3 h-3 shrink-0" /> {f.name}
-                    {f.size ? <span className="text-[10px] text-[#5A6275]">({fmtBytes(f.size)})</span> : null}
+                    {f.size ? <span className="text-[10px] text-subtle">({fmtBytes(f.size)})</span> : null}
                     <Download className="w-3 h-3 shrink-0 ml-auto" />
                   </a>
                 ))}
@@ -875,7 +875,7 @@ function TeamPanel({ team, challenge, isMentor, userId, interns, onRefresh }: {
             {s.links.length > 0 && (
               <div className="flex flex-col gap-0.5 mt-1">
                 {s.links.map((l, i) => (
-                  <a key={i} href={l} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[#00C2FF] hover:underline truncate">
+                  <a key={i} href={l} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-accent hover:underline truncate">
                     <Link2 className="w-3 h-3 shrink-0" /> {l}
                   </a>
                 ))}
@@ -886,13 +886,13 @@ function TeamPanel({ team, challenge, isMentor, userId, interns, onRefresh }: {
 
         {(isMentor || isMember) && (
           <div className="space-y-1.5">
-            <textarea rows={2} className="w-full px-2 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-xs text-[#E6E9F0] placeholder:text-[#5A6275] focus:outline-none focus:border-[#00C2FF]/60 resize-none"
+            <textarea rows={2} className="w-full px-2 py-1.5 bg-surface-sunken border border-border-strong rounded-lg text-xs text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60 resize-none"
               placeholder="Report notes…" value={submitNotes} onChange={e => setSubmitNotes(e.target.value)} />
-            <input className="w-full px-2 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-xs text-[#E6E9F0] placeholder:text-[#5A6275] focus:outline-none focus:border-[#00C2FF]/60"
+            <input className="w-full px-2 py-1.5 bg-surface-sunken border border-border-strong rounded-lg text-xs text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60"
               placeholder="Links (space or comma separated)" value={submitLinks} onChange={e => setSubmitLinks(e.target.value)} />
 
             {/* Report file attachment — PDF/Word only, uploaded straight to this page */}
-            <label className="flex items-center gap-1.5 px-2 py-1.5 bg-[#1B1F2A] border border-dashed border-[#2E333F] rounded-lg text-xs text-[#8A92A6] hover:border-[#00C2FF]/60 hover:text-[#00C2FF] cursor-pointer transition-colors">
+            <label className="flex items-center gap-1.5 px-2 py-1.5 bg-surface-sunken border border-dashed border-border-strong rounded-lg text-xs text-muted hover:border-accent/60 hover:text-accent cursor-pointer transition-colors">
               <Paperclip className="w-3.5 h-3.5" />
               Attach report (PDF or Word)
               <input type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
@@ -902,7 +902,7 @@ function TeamPanel({ team, challenge, isMentor, userId, interns, onRefresh }: {
             {uploadingFiles.length > 0 && (
               <div className="space-y-1">
                 {uploadingFiles.map(name => (
-                  <div key={name} className="flex items-center gap-1.5 text-[11px] text-[#8A92A6]">
+                  <div key={name} className="flex items-center gap-1.5 text-[11px] text-muted">
                     <Loader2 className="w-3 h-3 animate-spin" /> Uploading {name}…
                   </div>
                 ))}
@@ -912,12 +912,12 @@ function TeamPanel({ team, challenge, isMentor, userId, interns, onRefresh }: {
             {submitFiles.length > 0 && (
               <div className="space-y-1">
                 {submitFiles.map((f, i) => (
-                  <div key={i} className="flex items-center gap-1.5 px-2 py-1 bg-[#1B1F2A] rounded-lg text-[11px] text-[#E6E9F0]">
-                    <FileText className="w-3 h-3 text-[#00C2FF] shrink-0" />
+                  <div key={i} className="flex items-center gap-1.5 px-2 py-1 bg-surface-sunken rounded-lg text-[11px] text-foreground">
+                    <FileText className="w-3 h-3 text-accent shrink-0" />
                     <span className="truncate flex-1">{f.name}</span>
-                    <span className="text-[10px] text-[#5A6275]">{fmtBytes(f.size)}</span>
+                    <span className="text-[10px] text-subtle">{fmtBytes(f.size)}</span>
                     <button type="button" onClick={() => setSubmitFiles(prev => prev.filter((_, idx) => idx !== i))}
-                      className="text-[#5A6275] hover:text-[#ea4335]">
+                      className="text-subtle hover:text-crit">
                       <X className="w-3 h-3" />
                     </button>
                   </div>
@@ -927,7 +927,7 @@ function TeamPanel({ team, challenge, isMentor, userId, interns, onRefresh }: {
 
             <div className="flex justify-end">
               <button onClick={submitReport} disabled={submitting || uploadingFiles.length > 0}
-                className="flex items-center gap-1.5 px-3 py-1 text-xs font-semibold bg-[#00C2FF] text-[#06121A] rounded-lg hover:bg-[#0098E6] disabled:opacity-50">
+                className="flex items-center gap-1.5 px-3 py-1 text-xs font-semibold bg-accent text-accent-foreground rounded-lg hover:bg-accent-hover disabled:opacity-50">
                 {submitting ? <Loader2 className="w-3 h-3 animate-spin" /> : <><Send className="w-3 h-3" /> Submit</>}
               </button>
             </div>

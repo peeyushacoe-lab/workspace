@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Nexus — design directions, full walkthrough</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.31.0/dist/tabler-icons.min.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#e8e9ec;color:#111;-webkit-font-smoothing:antialiased}
+
+/* ══════ D · ATRIUM ══════ */
+.dir-d{
+  --page:#f0efec;--panel:#fff;--sunken:#f5f4f1;--hover:#f2f1ee;
+  --fg:#1a1a18;--muted:#6b6a65;--subtle:#9b9a93;
+  --line:#e7e6e1;--line-soft:#efeeea;--line-hard:#d9d8d2;
+  --acc:#4f46e5;--acc-h:#4338ca;--acc-soft:#eeecff;--acc-fg:#fff;--acc-tx:#3730a3;
+  --spine-bg:transparent;--spine-fg:#8a8983;--spine-on-bg:#fff;--spine-on-fg:#1a1a18;
+  --rail-bg:transparent;--rail-fg:#6b6a65;--rail-on-bg:#fff;--rail-on-fg:#1a1a18;
+  --top-bg:transparent;
+  --ok:#0e7c5a;--wn:#b45309;--cr:#c0362c;--vi:#7c5cd6;
+  --ok-s:#e7f4ef;--wn-s:#fdf3e6;--cr-s:#fbeceb;--vi-s:#f1edfb;
+  --r-panel:16px;--r-ctl:10px;--r-chip:999px;--r-row:12px;--r-av:50%;
+  --gut:9px;--pad:10px;
+  --sh:0 1px 2px rgba(26,26,24,.05),0 10px 28px -14px rgba(26,26,24,.22);
+  --sh-on:0 1px 3px rgba(26,26,24,.14);
+  --pane-bd:0;--mono:Inter;--rowpad:10px 13px;--nav-r:10px;
+}
+/* ══════ E · MERIDIAN ══════ */
+.dir-e{
+  --page:#fff;--panel:#fff;--sunken:#fafafa;--hover:#f6f6f6;
+  --fg:#0a0a0a;--muted:#6e6e6e;--subtle:#a1a1a1;
+  --line:#ebebeb;--line-soft:#f2f2f2;--line-hard:#dcdcdc;
+  --acc:#0a0a0a;--acc-h:#262626;--acc-soft:#f4f4f5;--acc-fg:#fff;--acc-tx:#0a0a0a;
+  --spine-bg:#fff;--spine-fg:#8f8f8f;--spine-on-bg:#f4f4f5;--spine-on-fg:#0a0a0a;
+  --rail-bg:#fff;--rail-fg:#6e6e6e;--rail-on-bg:transparent;--rail-on-fg:#0a0a0a;
+  --top-bg:#fff;
+  --ok:#00794a;--wn:#a35a00;--cr:#c02525;--vi:#5b45b8;
+  --ok-s:#f0faf5;--wn-s:#fdf7ed;--cr-s:#fdf1f1;--vi-s:#f4f2fc;
+  --r-panel:0;--r-ctl:6px;--r-chip:4px;--r-row:0;--r-av:4px;
+  --gut:0;--pad:0;--sh:none;--sh-on:none;
+  --pane-bd:1px;--mono:"JetBrains Mono",ui-monospace,monospace;--rowpad:12px 18px;--nav-r:6px;
+}
+/* ══════ F · SIGNAL ══════ */
+.dir-f{
+  --page:#f7f8f9;--panel:#fff;--sunken:#f2f3f5;--hover:#eef0f3;
+  --fg:#15181d;--muted:#5b6069;--subtle:#8d939c;
+  --line:#e4e7eb;--line-soft:#eef0f3;--line-hard:#d2d6dc;
+  --acc:#15181d;--acc-h:#000;--acc-soft:#eef0f3;--acc-fg:#fff;--acc-tx:#15181d;
+  --spine-bg:#111418;--spine-fg:#7b828c;--spine-on-bg:#22262d;--spine-on-fg:#fff;
+  --rail-bg:#fff;--rail-fg:#5b6069;--rail-on-bg:#eef0f3;--rail-on-fg:#15181d;
+  --top-bg:#fff;
+  --ok:#0a7c48;--wn:#a85a00;--cr:#cc2b1d;--vi:#5b45b8;
+  --ok-s:#e9f6ef;--wn-s:#fdf4e8;--cr-s:#fdeeec;--vi-s:#f2f0fb;
+  --r-panel:10px;--r-ctl:7px;--r-chip:5px;--r-row:0;--r-av:9px;
+  --gut:0;--pad:0;--sh:0 1px 2px rgba(21,24,29,.05);--sh-on:0 1px 2px rgba(21,24,29,.08);
+  --pane-bd:1px;--mono:"JetBrains Mono",ui-monospace,monospace;--rowpad:10px 14px;--nav-r:7px;
+}
+
+/* ══════ PAGE CHROME ══════ */
+.bar{position:sticky;top:0;z-index:80;background:#fff;border-bottom:1px solid #dfe1e5;padding:10px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.bar h1{font-size:14px;font-weight:600;letter-spacing:-.012em}
+.bar .tag{font-size:11px;font-weight:500;color:#5c6270;background:#f2f3f5;border:1px solid #e6e8ec;padding:3px 8px;border-radius:999px}
+.seg{display:flex;gap:3px;background:#f2f3f5;padding:3px;border-radius:9px;border:1px solid #e6e8ec;flex-wrap:wrap}
+.seg button{font:inherit;font-size:12px;font-weight:500;border:0;background:transparent;color:#5c6270;padding:6px 11px;border-radius:7px;cursor:pointer}
+.seg button.on{background:#fff;color:#16181d;box-shadow:0 1px 2px rgba(16,24,40,.1)}
+.stage{padding:16px}
+.cap{max-width:1600px;margin:0 auto 9px;font-size:12.5px;color:#5c6270;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.cap b{color:#16181d;font-weight:600;white-space:nowrap}
+.sws{display:flex;gap:5px;margin-left:auto}
+.sw{width:15px;height:15px;border-radius:4px;border:1px solid rgba(0,0,0,.09)}
+.frame{max-width:1600px;margin:0 auto;border:1px solid #dbdde1;border-radius:12px;overflow:hidden;box-shadow:0 12px 38px rgba(16,24,40,.11)}
+
+/* ══════ APP ══════ */
+.app{font-size:13px;color:var(--fg);background:var(--page);display:flex;flex-direction:column;height:880px;overflow:hidden}
+.top{height:54px;flex:none;display:flex;align-items:center;gap:12px;padding:0 var(--pad) 0 14px;background:var(--top-bg);position:relative}
+.dir-e .top,.dir-f .top{border-bottom:1px solid var(--line);padding:0 16px}
+.brand{display:flex;align-items:center;gap:9px}
+.logo{width:27px;height:27px;border-radius:8px;background:var(--acc);color:var(--acc-fg);display:grid;place-items:center;font-size:15px;flex:none}
+.dir-e .logo{border-radius:5px}
+.brand .nm{font-size:15px;font-weight:600;letter-spacing:-.02em}
+.brand .dv{width:1px;height:17px;background:var(--line-hard);margin:0 3px}
+.brand .ws{font-size:12.5px;color:var(--muted);font-weight:500;display:flex;align-items:center;gap:5px}
+.cmd{position:absolute;left:50%;transform:translateX(-50%);width:min(520px,42vw);display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--subtle);cursor:text;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-ctl);padding:8px 12px;box-shadow:var(--sh-on)}
+.dir-e .cmd,.dir-f .cmd{box-shadow:none;background:var(--sunken)}
+.cmd i{font-size:16px}
+.cmd .kbd{margin-left:auto;font-family:var(--mono);font-size:10.5px;border:1px solid var(--line-hard);border-radius:4px;padding:1px 5px}
+.topacts{margin-left:auto;display:flex;align-items:center;gap:2px;position:relative;z-index:2}
+.ib{width:33px;height:33px;border-radius:var(--r-ctl);display:grid;place-items:center;color:var(--muted);font-size:17px;position:relative;cursor:pointer;flex:none}
+.ib:hover{background:var(--hover)}
+.dot{position:absolute;top:5px;right:5px;min-width:15px;height:15px;padding:0 3px;border-radius:999px;background:var(--cr);color:#fff;font-size:9.5px;font-weight:700;display:grid;place-items:center;font-family:var(--mono)}
+.me{width:30px;height:30px;border-radius:50%;background:var(--acc-soft);color:var(--acc-tx);display:grid;place-items:center;font-size:11.5px;font-weight:600;margin-left:7px;cursor:pointer}
+
+.shell{flex:1;display:grid;min-height:0;gap:var(--gut);padding:0 var(--pad) var(--pad);grid-template-columns:58px 214px 384px 1fr}
+.dir-e .shell{grid-template-columns:214px 384px 1fr}
+.dir-e .spine{display:none}
+.sh-2{grid-template-columns:58px 232px 1fr!important}
+.dir-e .sh-2{grid-template-columns:232px 1fr!important}
+.sh-2r{grid-template-columns:58px 232px 1fr 272px!important}
+.dir-e .sh-2r{grid-template-columns:232px 1fr 272px!important}
+.sh-1{grid-template-columns:58px 1fr!important}
+.dir-e .sh-1{grid-template-columns:1fr!important}
+.showctx .shell{grid-template-columns:58px 208px 352px 1fr 268px}
+.dir-e.showctx .shell{grid-template-columns:208px 352px 1fr 268px}
+.pane{min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden;background:var(--panel);border-radius:var(--r-panel);box-shadow:var(--sh)}
+.dir-e .pane,.dir-f .pane{border-right:var(--pane-bd) solid var(--line);border-radius:0;box-shadow:none}
+.dir-e .pane:last-child,.dir-f .pane:last-child{border-right:0}
+
+/* spine */
+.spine{width:58px;background:var(--spine-bg);align-items:center;padding:10px 0;gap:3px;box-shadow:none;border-right:0!important;border-radius:var(--r-panel)}
+.dir-f .spine{border-radius:0}
+.sp{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;color:var(--spine-fg);font-size:20px;cursor:pointer;position:relative;flex:none}
+.dir-f .sp{border-radius:8px}
+.sp:hover{background:var(--spine-on-bg);color:var(--spine-on-fg)}
+.sp.on{background:var(--spine-on-bg);color:var(--spine-on-fg);box-shadow:var(--sh-on)}
+.dir-f .sp.on{box-shadow:none}
+.sp .pip{position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:var(--cr)}
+.sp-sep{width:22px;height:1px;background:var(--line);margin:7px 0}
+.dir-f .sp-sep{background:#252a31}
+.spine .foot{margin-top:auto}
+
+/* rail */
+.rail{background:var(--rail-bg);padding:12px 9px;overflow-y:auto}
+.dir-d .rail{background:transparent;box-shadow:none}
+.railtop{display:flex;align-items:center;gap:8px;padding:2px 6px 12px}
+.railtop b{font-size:15px;font-weight:600;letter-spacing:-.02em}
+.railtop .ib{width:26px;height:26px;font-size:15px;margin-left:auto}
+.newbtn{display:flex;align-items:center;gap:8px;width:100%;font:inherit;font-size:13px;font-weight:600;border:1px solid var(--line);cursor:pointer;background:var(--panel);color:var(--fg);border-radius:var(--r-ctl);padding:9px 12px;margin-bottom:14px;box-shadow:var(--sh-on)}
+.dir-e .newbtn,.dir-f .newbtn{background:var(--acc);color:var(--acc-fg);border-color:var(--acc);box-shadow:none}
+.newbtn i{font-size:17px}
+.newbtn .k{margin-left:auto;font-family:var(--mono);font-size:10px;opacity:.55;font-weight:500}
+.grp{font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--subtle);padding:14px 8px 6px;display:flex;align-items:center}
+.grp i{margin-left:auto;font-size:14px}
+.nav a{display:flex;align-items:center;gap:11px;padding:7px 9px;border-radius:var(--nav-r);color:var(--rail-fg);text-decoration:none;font-size:13px;margin-bottom:1px;cursor:pointer;position:relative}
+.nav a i{font-size:17px;width:17px;flex:none;opacity:.85}
+.nav a:hover{background:var(--hover);color:var(--fg)}
+.nav a.on{background:var(--rail-on-bg);color:var(--rail-on-fg);font-weight:600;box-shadow:var(--sh-on)}
+.dir-e .nav a.on,.dir-f .nav a.on{box-shadow:none}
+.dir-e .nav a.on:before{content:"";position:absolute;left:-9px;top:6px;bottom:6px;width:2px;background:var(--acc)}
+.nav a.ur{font-weight:700;color:var(--fg)}
+.cnt{margin-left:auto;font-size:11px;font-weight:600;color:var(--subtle);font-family:var(--mono)}
+.nav a.on .cnt{color:var(--rail-on-fg)}
+.cnt.hi{background:var(--cr);color:#fff;padding:1px 6px;border-radius:999px;font-size:10px}
+.dir-e .cnt.hi{border-radius:3px}
+.ldot{width:8px;height:8px;border-radius:3px;flex:none;margin-left:5px;margin-right:4px}
+.pdot{width:8px;height:8px;border-radius:50%;flex:none;margin-left:5px;margin-right:4px;border:1.5px solid var(--panel)}
+.railfoot{margin-top:auto;padding:12px 9px 2px;border-top:1px solid var(--line);font-size:11px;color:var(--subtle);display:flex;align-items:center;gap:8px}
+.meter{flex:1;height:4px;border-radius:999px;background:var(--line);overflow:hidden}
+.meter i{display:block;height:100%;width:38%;background:var(--acc);border-radius:999px}
+.railfoot .n{font-family:var(--mono)}
+
+/* shared bits */
+.lhead{flex:none;padding:13px 15px 10px;border-bottom:1px solid var(--line-soft)}
+.lhead .t{display:flex;align-items:baseline;gap:9px}
+.lhead h3{font-size:16px;font-weight:600;letter-spacing:-.018em}
+.lhead .n{font-family:var(--mono);font-size:11.5px;color:var(--subtle)}
+.lhead .a{margin-left:auto;display:flex;gap:1px}
+.lhead .a .ib{width:28px;height:28px;font-size:16px}
+.filters{display:flex;gap:5px;margin-top:11px;flex-wrap:wrap}
+.f{font-size:11.5px;font-weight:500;color:var(--muted);background:var(--sunken);border:1px solid var(--line);padding:4px 10px;border-radius:var(--r-chip);cursor:pointer;display:flex;align-items:center;gap:5px}
+.f.on{background:var(--acc);color:var(--acc-fg);border-color:var(--acc);font-weight:600}
+.f i{font-size:13px}
+.f .c{font-family:var(--mono);opacity:.7;font-size:10.5px}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:2px 7px;border-radius:var(--r-chip);border:1px solid;flex:none;line-height:1.6}
+.chip i{font-size:11px}
+.chip.ok{color:var(--ok);background:var(--ok-s);border-color:color-mix(in srgb,var(--ok) 26%,transparent)}
+.chip.wn{color:var(--wn);background:var(--wn-s);border-color:color-mix(in srgb,var(--wn) 26%,transparent)}
+.chip.cr{color:var(--cr);background:var(--cr-s);border-color:color-mix(in srgb,var(--cr) 26%,transparent)}
+.chip.vi{color:var(--vi);background:var(--vi-s);border-color:color-mix(in srgb,var(--vi) 26%,transparent)}
+.chip.n{color:var(--muted);background:var(--sunken);border-color:var(--line)}
+.chip.a{color:var(--acc-tx);background:var(--acc-soft);border-color:color-mix(in srgb,var(--acc) 22%,transparent)}
+.av{width:30px;height:30px;border-radius:var(--r-av);background:var(--sunken);color:var(--muted);display:grid;place-items:center;font-size:11px;font-weight:600;flex:none}
+.qa{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--muted);padding:6px 10px;border-radius:var(--r-ctl);cursor:pointer;border:1px solid transparent;white-space:nowrap}
+.qa:hover{background:var(--hover);color:var(--fg)}
+.qa i{font-size:16px}
+.qa.p{background:var(--acc);color:var(--acc-fg);font-weight:600;border-color:var(--acc)}
+.qa.o{border-color:var(--line-hard)}
+.scr{flex:1;overflow-y:auto;min-height:0}
+.hide{display:none!important}
+
+/* ── mail list ── */
+.posture{flex:none;margin:10px 12px 4px;border-radius:var(--r-ctl);padding:9px 11px;display:flex;align-items:center;gap:9px;background:var(--ok-s);border:1px solid color-mix(in srgb,var(--ok) 18%,transparent)}
+.posture>i{font-size:18px;color:var(--ok);flex:none}
+.posture b{font-size:12px;font-weight:600;display:block}
+.posture span{font-size:11px;color:var(--muted)}
+.posture .lv{margin-left:auto;font-family:var(--mono);font-size:10px;font-weight:600;color:var(--ok)}
+.list{flex:1;overflow-y:auto;padding:4px 0 10px}
+.lane{font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--subtle);padding:12px 16px 6px;display:flex;align-items:center;gap:9px}
+.lane:after{content:"";flex:1;height:1px;background:var(--line-soft)}
+.row{display:flex;align-items:flex-start;gap:10px;padding:var(--rowpad);cursor:pointer;position:relative;margin:0 8px;border-radius:var(--r-row)}
+.dir-e .row,.dir-f .row{margin:0;border-bottom:1px solid var(--line-soft)}
+.row:hover{background:var(--hover)}
+.dir-d .row:hover{box-shadow:var(--sh-on);background:var(--panel)}
+.row.on{background:var(--acc-soft)}
+.dir-e .row.on,.dir-f .row.on{background:var(--sunken)}
+.sig{position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:0 3px 3px 0;background:transparent}
+.dir-d .sig{left:-8px;border-radius:3px;top:8px;bottom:8px}
+.row.s-wn .sig{background:var(--wn)}
+.row.s-cr .sig{background:var(--cr)}
+.row.on .sig{background:var(--acc)}
+.row.s-wn.on .sig{background:var(--wn)}
+.row.s-cr.on .sig{background:var(--cr)}
+.col{flex:1;min-width:0}
+.l1{display:flex;align-items:baseline;gap:7px;min-width:0}
+.sn{font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px}
+.row.rd .sn,.row.rd .sj{font-weight:400;color:var(--muted)}
+.l1 time{margin-left:auto;font-size:10.5px;color:var(--subtle);white-space:nowrap;flex:none;font-family:var(--mono)}
+.sj{font-size:12.5px;font-weight:500;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sp2{font-size:11.5px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meta{display:flex;align-items:center;gap:5px;margin-top:6px;flex-wrap:wrap}
+.clip{font-size:14px;color:var(--subtle);flex:none}
+.hov{position:absolute;right:9px;top:8px;display:none;gap:1px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-ctl);padding:2px;box-shadow:var(--sh-on)}
+.row:hover .hov{display:flex}
+.hov span{width:27px;height:27px;border-radius:calc(var(--r-ctl) - 2px);display:grid;place-items:center;color:var(--muted);font-size:15px}
+.hov span:hover{background:var(--hover);color:var(--fg)}
+
+/* ── reading ── */
+.rh{padding:15px 22px 0}
+.rh h2{font-size:21px;font-weight:600;letter-spacing:-.024em;line-height:1.32}
+.rh .tags{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap}
+.acts{display:flex;align-items:center;gap:2px;margin-top:12px;padding-bottom:11px;border-bottom:1px solid var(--line-soft);flex-wrap:wrap}
+.sender{display:flex;align-items:flex-start;gap:12px;padding:16px 22px 13px}
+.sender .av{width:40px;height:40px;font-size:13px}
+.sender b{font-size:13.5px;font-weight:600}
+.sender .em{font-size:11.5px;color:var(--muted);margin-top:1px;font-family:var(--mono)}
+.sender .to{font-size:11.5px;color:var(--subtle);margin-top:4px;display:flex;align-items:center;gap:4px}
+.sender time{margin-left:auto;font-size:11px;color:var(--subtle);font-family:var(--mono);flex:none}
+.auth{margin:0 22px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-ctl);background:var(--sunken);display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.auth .lb{font-size:11px;font-weight:600;color:var(--muted);margin-right:3px;display:flex;align-items:center;gap:6px}
+.auth .lb i{font-size:15px;color:var(--ok)}
+.auth .vw{margin-left:auto;font-size:11.5px;color:var(--acc-tx);font-weight:500;cursor:pointer}
+.msg{padding:18px 22px;font-size:13.5px;line-height:1.72}
+.msg p{margin-bottom:14px;color:var(--muted)}
+.msg strong{color:var(--fg);font-weight:600}
+.att{margin:0 22px 18px;display:flex;gap:10px;flex-wrap:wrap}
+.attc{display:flex;align-items:center;gap:11px;border:1px solid var(--line);border-radius:var(--r-ctl);padding:10px 12px;min-width:236px}
+.attc .fi{font-size:22px;color:var(--cr)}
+.attc .an{font-size:12.5px;font-weight:600}
+.attc .as{font-size:10.5px;color:var(--subtle);margin-top:1px;font-family:var(--mono)}
+.smart{display:flex;gap:7px;margin:0 22px 16px;flex-wrap:wrap;align-items:center}
+.smart .lb{font-size:11px;color:var(--subtle);display:flex;align-items:center;gap:5px}
+.smart span.s{font-size:12px;font-weight:500;color:var(--fg);border:1px solid var(--line-hard);padding:6px 13px;border-radius:var(--r-chip);cursor:pointer}
+.smart span.s:hover{background:var(--hover)}
+.replybox{margin:0 22px 20px;border:1px solid var(--line);border-radius:var(--r-ctl);padding:12px 14px;background:var(--sunken);display:flex;align-items:center;gap:11px}
+.replybox .av{width:29px;height:29px;font-size:10.5px}
+.replybox .ph{flex:1;font-size:12.5px;color:var(--subtle)}
+
+/* ── context ── */
+.ch{padding:13px 15px;border-bottom:1px solid var(--line-soft);display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600}
+.ch i{font-size:17px;color:var(--muted)}
+.cs{padding:13px 15px;border-bottom:1px solid var(--line-soft)}
+.cs .h{font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--subtle);margin-bottom:10px}
+.kv{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:12px}
+.kv .k{color:var(--muted)}
+.kv .v{margin-left:auto;font-weight:600;font-family:var(--mono);font-size:11.5px}
+.risk{display:flex;align-items:center;gap:11px;margin-bottom:11px}
+.gauge{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;font-size:15px;font-weight:700;flex:none;font-family:var(--mono);background:var(--ok-s);color:var(--ok);border:1.5px solid color-mix(in srgb,var(--ok) 30%,transparent)}
+.dir-d .gauge{border-radius:50%}
+.mini{display:flex;align-items:center;gap:10px;padding:7px 0;font-size:12px}
+.mini .av{width:25px;height:25px;font-size:9.5px}
+.mini .s{font-size:10.5px;color:var(--subtle);font-family:var(--mono)}
+
+/* ── page header (generic) ── */
+.ph1{padding:17px 22px 0;flex:none}
+.ph1 .eye{font-size:10.5px;color:var(--subtle);font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.ph1 h2{font-size:21px;font-weight:600;letter-spacing:-.026em;margin-top:4px}
+.ph1 p{font-size:12.5px;color:var(--muted);margin-top:4px}
+.ph1 .r{display:flex;align-items:flex-start;gap:14px}
+.ph1 .a{margin-left:auto;display:flex;gap:7px}
+.tabs2{display:flex;gap:20px;padding:14px 22px 0;border-bottom:1px solid var(--line);flex:none}
+.tabs2 a{font-size:12.5px;font-weight:500;color:var(--muted);padding:0 0 11px;border-bottom:2px solid transparent;cursor:pointer}
+.tabs2 a.on{color:var(--fg);border-bottom-color:var(--acc);font-weight:600}
+.body1{padding:18px 22px 26px}
+
+/* ── dashboard ── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:12px}
+.stat{border:1px solid var(--line);border-radius:var(--r-ctl);padding:15px 16px}
+.dir-d .stat{border-color:var(--line-soft);box-shadow:var(--sh-on)}
+.stat .l{font-size:11.5px;color:var(--muted);font-weight:500;display:flex;align-items:center;gap:7px}
+.stat .l i{font-size:15px;color:var(--subtle)}
+.stat .v{font-size:27px;font-weight:600;letter-spacing:-.03em;margin-top:9px;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.dir-d .stat .v{font-family:Inter}
+.stat .d{font-size:11px;margin-top:6px;display:flex;align-items:center;gap:4px;color:var(--ok);font-weight:500}
+.stat .d.dn{color:var(--cr)}
+.stat .d i{font-size:14px}
+.g2{display:grid;grid-template-columns:1.55fr 1fr;gap:11px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}
+.panelc{border:1px solid var(--line);border-radius:var(--r-ctl);overflow:hidden;background:var(--panel)}
+.dir-d .panelc{border-color:var(--line-soft);box-shadow:var(--sh-on)}
+.ph2{padding:13px 16px;border-bottom:1px solid var(--line-soft);display:flex;align-items:center;gap:8px}
+.ph2 b{font-size:13px;font-weight:600}
+.ph2 .m{margin-left:auto;font-size:11.5px;color:var(--muted);font-weight:500;cursor:pointer}
+.prow{padding:11px 16px;border-bottom:1px solid var(--line-soft);display:flex;align-items:center;gap:11px}
+.prow:last-child{border-bottom:0}
+.prow .t{font-size:12.5px;font-weight:500}
+.prow .s{font-size:11px;color:var(--muted);margin-top:2px;font-family:var(--mono)}
+.prow time{margin-left:auto;font-size:10.5px;color:var(--subtle);font-family:var(--mono)}
+.sev{width:3px;height:28px;border-radius:2px;flex:none}
+.bars{display:flex;align-items:flex-end;gap:7px;height:136px;padding:20px 16px 12px}
+.bars div{flex:1;background:var(--acc);border-radius:3px 3px 0 0}
+.dir-e .bars div,.dir-f .bars div{border-radius:1px}
+.bars div:nth-child(even){opacity:.35}
+.legend{display:flex;gap:16px;padding:0 16px 15px;font-size:11.5px;color:var(--muted)}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend i{width:9px;height:9px;border-radius:2px;display:inline-block}
+
+/* ── CHAT ── */
+.chead{flex:none;padding:12px 18px;border-bottom:1px solid var(--line-soft);display:flex;align-items:center;gap:10px}
+.chead h3{font-size:15.5px;font-weight:600;letter-spacing:-.018em;display:flex;align-items:center;gap:6px}
+.chead .tp{font-size:11.5px;color:var(--muted)}
+.chead .a{margin-left:auto;display:flex;gap:1px;align-items:center}
+.faces{display:flex;margin-right:8px}
+.faces .av{width:25px;height:25px;font-size:9.5px;border:2px solid var(--panel);margin-left:-7px}
+.msgs{flex:1;overflow-y:auto;padding:14px 18px}
+.daysep{display:flex;align-items:center;gap:12px;margin:16px 0 14px;font-size:11px;color:var(--subtle);font-weight:500}
+.daysep:before,.daysep:after{content:"";flex:1;height:1px;background:var(--line-soft)}
+.m{display:flex;gap:11px;padding:5px 0;position:relative}
+.m .av{width:32px;height:32px;font-size:11.5px}
+.m.cont{padding-top:1px}
+.m.cont .av{visibility:hidden;height:0}
+.m .mh{display:flex;align-items:baseline;gap:8px;margin-bottom:2px}
+.m .mh b{font-size:12.5px;font-weight:600}
+.m .mh time{font-size:10.5px;color:var(--subtle);font-family:var(--mono)}
+.m .tx{font-size:13px;line-height:1.6;color:var(--fg)}
+.m .tx code{font-family:var(--mono);font-size:11.5px;background:var(--sunken);border:1px solid var(--line);padding:1px 5px;border-radius:4px}
+.reacts{display:flex;gap:5px;margin-top:6px}
+.reacts span{font-size:11px;border:1px solid var(--line-hard);border-radius:var(--r-chip);padding:2px 8px;display:flex;align-items:center;gap:4px;cursor:pointer;background:var(--panel)}
+.reacts span.mine{border-color:var(--acc);background:var(--acc-soft);color:var(--acc-tx);font-weight:600}
+.reacts .n{font-family:var(--mono);font-size:10px}
+.thr{margin-top:6px;font-size:11.5px;color:var(--acc-tx);font-weight:500;display:flex;align-items:center;gap:6px;cursor:pointer}
+.mcard{margin-top:8px;border:1px solid var(--line);border-left:3px solid var(--cr);border-radius:0 var(--r-ctl) var(--r-ctl) 0;padding:11px 13px;background:var(--sunken);max-width:440px}
+.mcard .t{font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:7px}
+.mcard .s{font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.55}
+.mcard .b{display:flex;gap:6px;margin-top:9px}
+.typing{display:flex;align-items:center;gap:9px;padding:8px 0 0;font-size:11.5px;color:var(--subtle)}
+.composer{flex:none;margin:0 18px 16px;border:1px solid var(--line-hard);border-radius:var(--r-ctl);background:var(--panel)}
+.composer .in{padding:11px 13px;font-size:13px;color:var(--subtle)}
+.composer .tb{display:flex;align-items:center;gap:1px;padding:5px 8px;border-top:1px solid var(--line-soft)}
+.composer .tb .ib{width:28px;height:28px;font-size:15px}
+.composer .send{margin-left:auto;width:30px;height:30px;border-radius:var(--r-ctl);background:var(--acc);color:var(--acc-fg);display:grid;place-items:center;font-size:15px}
+
+/* ── DRIVE ── */
+.crumb{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--muted);padding:14px 20px 0}
+.crumb b{color:var(--fg);font-weight:600}
+.crumb i{font-size:14px}
+.dtb{display:flex;align-items:center;gap:7px;padding:12px 20px;flex-wrap:wrap}
+.dtb .vt{margin-left:auto;display:flex;border:1px solid var(--line);border-radius:var(--r-ctl);overflow:hidden}
+.dtb .vt span{width:31px;height:29px;display:grid;place-items:center;color:var(--muted);font-size:15px;cursor:pointer}
+.dtb .vt span.on{background:var(--acc-soft);color:var(--acc-tx)}
+.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.tbl th{text-align:left;font-size:10.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--subtle);padding:9px 12px;border-bottom:1px solid var(--line);border-top:1px solid var(--line);background:var(--sunken)}
+.dir-d .tbl th{background:transparent}
+.tbl td{padding:10px 12px;border-bottom:1px solid var(--line-soft);vertical-align:middle}
+.tbl tr:hover td{background:var(--hover)}
+.fn{display:flex;align-items:center;gap:10px;font-weight:500}
+.fn i{font-size:19px;color:var(--muted)}
+.fn i.pdf{color:var(--cr)}.fn i.xls{color:var(--ok)}.fn i.fld{color:var(--acc)}.fn i.img{color:var(--vi)}
+.tbl .mn{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.folders{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;padding:4px 20px 16px}
+.fcard{border:1px solid var(--line);border-radius:var(--r-ctl);padding:13px;display:flex;align-items:center;gap:10px;cursor:pointer;background:var(--panel)}
+.dir-d .fcard{box-shadow:var(--sh-on);border-color:var(--line-soft)}
+.fcard:hover{background:var(--hover)}
+.fcard i{font-size:21px;color:var(--acc)}
+.fcard .t{font-size:12.5px;font-weight:600}
+.fcard .s{font-size:10.5px;color:var(--subtle);font-family:var(--mono);margin-top:2px}
+
+/* ── CALENDAR ── */
+.minic{padding:4px 4px 12px}
+.miniч{font-size:12.5px;font-weight:600;padding:0 6px 8px;display:flex;align-items:center}
+.miniч .ib{width:22px;height:22px;font-size:14px}
+.mgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;text-align:center}
+.mgrid span{font-size:10.5px;padding:5px 0;color:var(--muted);border-radius:6px;font-family:var(--mono)}
+.mgrid span.hd{color:var(--subtle);font-weight:600;font-family:Inter;font-size:9.5px}
+.mgrid span.o{color:var(--line-hard)}
+.mgrid span.td{background:var(--acc);color:var(--acc-fg);font-weight:600}
+.mgrid span.ev{font-weight:600;color:var(--fg)}
+.calhead{display:grid;grid-template-columns:56px repeat(5,1fr);border-bottom:1px solid var(--line);flex:none}
+.calhead div{padding:10px 6px;text-align:center;border-left:1px solid var(--line-soft)}
+.calhead div:first-child{border-left:0}
+.calhead .dn{font-size:10.5px;color:var(--subtle);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.calhead .dd{font-size:19px;font-weight:600;margin-top:2px;font-family:var(--mono);letter-spacing:-.02em}
+.calhead .now .dd{color:var(--acc)}
+.calbody{flex:1;overflow-y:auto;position:relative}
+.cgrid{display:grid;grid-template-columns:56px repeat(5,1fr);position:relative}
+.hrs{border-right:0}
+.hrs div{height:52px;font-size:10px;color:var(--subtle);text-align:right;padding:2px 8px 0;font-family:var(--mono)}
+.dcol{border-left:1px solid var(--line-soft);position:relative}
+.dcol .sl{height:52px;border-bottom:1px solid var(--line-soft)}
+.ev{position:absolute;left:3px;right:3px;border-radius:6px;padding:5px 7px;font-size:11px;overflow:hidden;border-left:3px solid;cursor:pointer}
+.ev b{font-weight:600;display:block;font-size:11px}
+.ev span{font-size:10px;opacity:.85;font-family:var(--mono)}
+.ev.a{background:var(--acc-soft);border-color:var(--acc);color:var(--acc-tx)}
+.ev.o{background:var(--ok-s);border-color:var(--ok);color:var(--ok)}
+.ev.w{background:var(--wn-s);border-color:var(--wn);color:var(--wn)}
+.ev.v{background:var(--vi-s);border-color:var(--vi);color:var(--vi)}
+.nowline{position:absolute;left:56px;right:0;height:1.5px;background:var(--cr);z-index:4}
+.nowline:before{content:"";position:absolute;left:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--cr)}
+
+/* ── SOC ── */
+.soc{width:100%;border-collapse:collapse;font-size:12.5px}
+.soc th{text-align:left;font-size:10.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--subtle);padding:10px 12px;border-bottom:1px solid var(--line);background:var(--sunken)}
+.dir-d .soc th{background:transparent}
+.soc td{padding:11px 12px;border-bottom:1px solid var(--line-soft)}
+.soc tr{cursor:pointer}
+.soc tr:hover td{background:var(--hover)}
+.soc tr.on td{background:var(--sunken)}
+.soc .id{font-family:var(--mono);font-size:11px;color:var(--subtle)}
+.soc .ti{font-weight:600}
+.soc .sub{font-size:11px;color:var(--muted);margin-top:2px}
+.pri{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;font-family:var(--mono)}
+.pri i{width:3px;height:15px;border-radius:2px;display:inline-block}
+.sla{font-family:var(--mono);font-size:11.5px;font-weight:600}
+.sla.brk{color:var(--cr)}.sla.warn{color:var(--wn)}.sla.okk{color:var(--muted)}
+.tl{padding:4px 0}
+.tli{display:flex;gap:11px;padding:9px 0;position:relative}
+.tli:before{content:"";position:absolute;left:9px;top:26px;bottom:-9px;width:1px;background:var(--line)}
+.tli:last-child:before{display:none}
+.tli .d{width:19px;height:19px;border-radius:50%;border:2px solid var(--line);background:var(--panel);flex:none;display:grid;place-items:center;font-size:10px;color:var(--muted);z-index:1}
+.tli .d.hot{border-color:var(--cr);color:var(--cr)}
+.tli .t{font-size:12.5px;font-weight:500}
+.tli .s{font-size:11px;color:var(--subtle);margin-top:2px;font-family:var(--mono)}
+
+/* ── SETTINGS ── */
+.sect{border:1px solid var(--line);border-radius:var(--r-ctl);margin-bottom:12px;overflow:hidden;background:var(--panel)}
+.dir-d .sect{border-color:var(--line-soft);box-shadow:var(--sh-on)}
+.sect>.h{padding:14px 17px;border-bottom:1px solid var(--line-soft)}
+.sect>.h b{font-size:13.5px;font-weight:600}
+.sect>.h p{font-size:11.5px;color:var(--muted);margin-top:3px}
+.fld{padding:13px 17px;border-bottom:1px solid var(--line-soft);display:flex;align-items:center;gap:16px}
+.fld:last-child{border-bottom:0}
+.fld .lb{width:180px;flex:none}
+.fld .lb b{font-size:12.5px;font-weight:500;display:block}
+.fld .lb p{font-size:11px;color:var(--subtle);margin-top:2px}
+.inp{flex:1;background:var(--sunken);border:1px solid var(--line);border-radius:var(--r-ctl);padding:8px 11px;font-size:12.5px;color:var(--fg)}
+.inp.ph{color:var(--subtle)}
+.tog{width:40px;height:22px;border-radius:999px;background:var(--line-hard);position:relative;flex:none;cursor:pointer;margin-left:auto}
+.tog:after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.tog.on{background:var(--ok)}
+.tog.on:after{left:20px}
+.sesh{display:flex;align-items:center;gap:11px;padding:11px 17px;border-bottom:1px solid var(--line-soft);font-size:12.5px}
+.sesh:last-child{border-bottom:0}
+.sesh i.dv{font-size:19px;color:var(--muted)}
+.sesh .s{font-size:11px;color:var(--subtle);margin-top:2px;font-family:var(--mono)}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <h1>Nexus — design directions</h1>
+  <span class="tag">v4 · mockup only</span>
+  <div class="seg" id="dirseg">
+    <button data-dir="dir-d" class="on">D · Atrium</button>
+    <button data-dir="dir-e">E · Meridian</button>
+    <button data-dir="dir-f">F · Signal</button>
+  </div>
+  <div class="seg" id="scrseg">
+    <button data-scr="inbox" class="on">Inbox</button>
+    <button data-scr="chat">Chat</button>
+    <button data-scr="drive">Drive</button>
+    <button data-scr="cal">Calendar</button>
+    <button data-scr="soc">SOC</button>
+    <button data-scr="dash">Dashboard</button>
+    <button data-scr="set">Settings</button>
+  </div>
+  <div class="seg" id="ctxseg">
+    <button data-ctx="off" class="on">No side panel</button>
+    <button data-ctx="on">Side panel</button>
+  </div>
+</div>
+
+<div class="stage">
+  <div class="cap"><b id="capN"></b><span id="capD"></span><div class="sws" id="capS"></div></div>
+
+  <div class="frame">
+  <div class="app dir-d" id="app">
+
+    <!-- ══ TOP ══ -->
+    <div class="top">
+      <div class="brand">
+        <div class="logo"><i class="ti ti-shield-lock"></i></div>
+        <span class="nm">Nexus</span><span class="dv"></span>
+        <span class="ws">Cybersage <i class="ti ti-chevron-down" style="font-size:13px"></i></span>
+      </div>
+      <div class="cmd"><i class="ti ti-search"></i>Search or run a command<span class="kbd">⌘K</span></div>
+      <div class="topacts">
+        <div class="ib"><i class="ti ti-shield-half"></i></div>
+        <div class="ib"><i class="ti ti-bell"></i><span class="dot">4</span></div>
+        <div class="ib"><i class="ti ti-settings"></i></div>
+        <div class="me">PM</div>
+      </div>
+    </div>
+
+    <div class="shell" id="shell">
+
+      <!-- ══ SPINE ══ -->
+      <aside class="pane spine">
+        <div class="sp sp-inbox on" title="Mail"><i class="ti ti-mail"></i><span class="pip"></span></div>
+        <div class="sp sp-chat" title="Chat"><i class="ti ti-message-circle"></i></div>
+        <div class="sp" title="Meet"><i class="ti ti-video"></i></div>
+        <div class="sp sp-cal" title="Calendar"><i class="ti ti-calendar"></i></div>
+        <div class="sp sp-drive" title="Drive"><i class="ti ti-folder"></i></div>
+        <div class="sp-sep"></div>
+        <div class="sp sp-soc" title="Security"><i class="ti ti-shield-half"></i><span class="pip"></span></div>
+        <div class="sp" title="Tasks"><i class="ti ti-checkbox"></i></div>
+        <div class="sp" title="AI"><i class="ti ti-sparkles"></i></div>
+        <div class="foot"></div>
+        <div class="sp sp-dash" title="Dashboard"><i class="ti ti-layout-dashboard"></i></div>
+        <div class="sp sp-set" title="Settings"><i class="ti ti-adjustments"></i></div>
+      </aside>
+
+      <!-- ══════════ RAIL: MAIL ══════════ -->
+      <aside class="pane rail r-inbox">
+        <div class="railtop"><b>Mail</b><div class="ib"><i class="ti ti-layout-sidebar-left-collapse"></i></div></div>
+        <button class="newbtn"><i class="ti ti-pencil-plus"></i>New message<span class="k">C</span></button>
+        <nav class="nav">
+          <a class="on"><i class="ti ti-inbox"></i>Inbox<span class="cnt hi">12</span></a>
+          <a><i class="ti ti-flag"></i>Flagged<span class="cnt">4</span></a>
+          <a><i class="ti ti-clock-pause"></i>Snoozed<span class="cnt">3</span></a>
+          <a><i class="ti ti-send"></i>Sent</a>
+          <a><i class="ti ti-file-pencil"></i>Drafts<span class="cnt">2</span></a>
+          <a><i class="ti ti-archive"></i>Archive</a>
+          <a><i class="ti ti-trash"></i>Deleted</a>
+        </nav>
+        <div class="grp">Lanes <i class="ti ti-plus"></i></div>
+        <nav class="nav">
+          <a><span class="ldot" style="background:var(--cr)"></span>Incidents<span class="cnt">7</span></a>
+          <a><span class="ldot" style="background:var(--wn)"></span>Vendors<span class="cnt">14</span></a>
+          <a><span class="ldot" style="background:var(--ok)"></span>Compliance</a>
+          <a><span class="ldot" style="background:var(--vi)"></span>Board</a>
+        </nav>
+        <div class="grp">Shared</div>
+        <nav class="nav">
+          <a><i class="ti ti-users"></i>security@<span class="cnt">2</span></a>
+          <a><i class="ti ti-users"></i>soc-alerts@<span class="cnt">31</span></a>
+        </nav>
+        <div class="railfoot"><i class="ti ti-database" style="font-size:15px"></i><div class="meter"><i></i></div><span class="n">5.7 GB</span></div>
+      </aside>
+
+      <!-- ══════════ RAIL: CHAT ══════════ -->
+      <aside class="pane rail r-chat hide">
+        <div class="railtop"><b>Chat</b><div class="ib"><i class="ti ti-plus"></i></div></div>
+        <button class="newbtn"><i class="ti ti-message-plus"></i>New conversation<span class="k">N</span></button>
+        <div class="grp">Channels <i class="ti ti-plus"></i></div>
+        <nav class="nav">
+          <a class="on"><i class="ti ti-hash"></i>soc-warroom<span class="cnt hi">5</span></a>
+          <a class="ur"><i class="ti ti-hash"></i>engineering<span class="cnt">3</span></a>
+          <a><i class="ti ti-hash"></i>general</a>
+          <a><i class="ti ti-hash"></i>compliance</a>
+          <a><i class="ti ti-lock"></i>exec-private</a>
+          <a><i class="ti ti-hash"></i>interns-2026</a>
+        </nav>
+        <div class="grp">Direct messages</div>
+        <nav class="nav">
+          <a class="ur"><span class="pdot" style="background:var(--ok)"></span>Aisha Rahman<span class="cnt">2</span></a>
+          <a><span class="pdot" style="background:var(--wn)"></span>Tom Chen</a>
+          <a><span class="pdot" style="background:var(--line-hard)"></span>Maya Rodriguez</a>
+          <a><span class="pdot" style="background:var(--ok)"></span>Joseph Okafor</a>
+          <a><span class="pdot" style="background:var(--cr)"></span>Sentinel bot</a>
+        </nav>
+        <div class="railfoot"><span class="pdot" style="background:var(--ok)"></span><span>Active</span><i class="ti ti-chevron-down" style="margin-left:auto;font-size:14px"></i></div>
+      </aside>
+
+      <!-- ══════════ RAIL: DRIVE ══════════ -->
+      <aside class="pane rail r-drive hide">
+        <div class="railtop"><b>Drive</b><div class="ib"><i class="ti ti-layout-sidebar-left-collapse"></i></div></div>
+        <button class="newbtn"><i class="ti ti-upload"></i>Upload<span class="k">U</span></button>
+        <nav class="nav">
+          <a class="on"><i class="ti ti-folder"></i>My drive</a>
+          <a><i class="ti ti-users"></i>Shared with me<span class="cnt">18</span></a>
+          <a><i class="ti ti-clock"></i>Recent</a>
+          <a><i class="ti ti-star"></i>Starred<span class="cnt">6</span></a>
+          <a><i class="ti ti-trash"></i>Trash</a>
+        </nav>
+        <div class="grp">Classification</div>
+        <nav class="nav">
+          <a><span class="ldot" style="background:var(--cr)"></span>Restricted<span class="cnt">12</span></a>
+          <a><span class="ldot" style="background:var(--wn)"></span>Confidential<span class="cnt">84</span></a>
+          <a><span class="ldot" style="background:var(--ok)"></span>Internal<span class="cnt">311</span></a>
+          <a><span class="ldot" style="background:var(--line-hard)"></span>Public<span class="cnt">27</span></a>
+        </nav>
+        <div class="railfoot"><i class="ti ti-database" style="font-size:15px"></i><div class="meter"><i></i></div><span class="n">142 GB / 2 TB</span></div>
+      </aside>
+
+      <!-- ══════════ RAIL: CALENDAR ══════════ -->
+      <aside class="pane rail r-cal hide">
+        <div class="railtop"><b>Calendar</b><div class="ib"><i class="ti ti-layout-sidebar-left-collapse"></i></div></div>
+        <button class="newbtn"><i class="ti ti-calendar-plus"></i>New event<span class="k">E</span></button>
+        <div class="minic">
+          <div class="miniч">July 2026<div class="ib"><i class="ti ti-chevron-left"></i></div><div class="ib"><i class="ti ti-chevron-right"></i></div></div>
+          <div class="mgrid">
+            <span class="hd">M</span><span class="hd">T</span><span class="hd">W</span><span class="hd">T</span><span class="hd">F</span><span class="hd">S</span><span class="hd">S</span>
+            <span class="o">29</span><span class="o">30</span><span>1</span><span>2</span><span>3</span><span class="o">4</span><span class="o">5</span>
+            <span>6</span><span>7</span><span class="ev">8</span><span>9</span><span>10</span><span class="o">11</span><span class="o">12</span>
+            <span>13</span><span class="ev">14</span><span>15</span><span>16</span><span>17</span><span class="o">18</span><span class="o">19</span>
+            <span>20</span><span>21</span><span>22</span><span class="ev">23</span><span>24</span><span class="o">25</span><span class="o">26</span>
+            <span>27</span><span>28</span><span class="td">29</span><span>30</span><span>31</span><span class="o">1</span><span class="o">2</span>
+          </div>
+        </div>
+        <div class="grp">My calendars</div>
+        <nav class="nav">
+          <a><span class="ldot" style="background:var(--acc)"></span>Peeyush M.</a>
+          <a><span class="ldot" style="background:var(--ok)"></span>Security team</a>
+          <a><span class="ldot" style="background:var(--wn)"></span>On-call rota</a>
+          <a><span class="ldot" style="background:var(--vi)"></span>Company events</a>
+        </nav>
+        <div class="grp">Rooms</div>
+        <nav class="nav">
+          <a><i class="ti ti-door"></i>Faraday <span class="cnt">free</span></a>
+          <a><i class="ti ti-door"></i>Turing <span class="cnt">busy</span></a>
+        </nav>
+      </aside>
+
+      <!-- ══════════ RAIL: SOC ══════════ -->
+      <aside class="pane rail r-soc hide">
+        <div class="railtop"><b>Security</b><div class="ib"><i class="ti ti-layout-sidebar-left-collapse"></i></div></div>
+        <button class="newbtn"><i class="ti ti-plus"></i>New incident<span class="k">I</span></button>
+        <div class="grp">Queues</div>
+        <nav class="nav">
+          <a class="on"><i class="ti ti-alert-triangle"></i>All open<span class="cnt hi">14</span></a>
+          <a class="ur"><i class="ti ti-flame"></i>P1 critical<span class="cnt hi">2</span></a>
+          <a><i class="ti ti-user-check"></i>Assigned to me<span class="cnt">3</span></a>
+          <a><i class="ti ti-inbox"></i>Unassigned<span class="cnt">5</span></a>
+          <a><i class="ti ti-clock-exclamation"></i>SLA at risk<span class="cnt">4</span></a>
+          <a><i class="ti ti-check"></i>Resolved</a>
+        </nav>
+        <div class="grp">Detection</div>
+        <nav class="nav">
+          <a><i class="ti ti-shield-check"></i>Sentinel alerts<span class="cnt">37</span></a>
+          <a><i class="ti ti-file-shredder"></i>DLP violations<span class="cnt">9</span></a>
+          <a><i class="ti ti-crosshair"></i>Threat intel</a>
+          <a><i class="ti ti-adjustments-alt"></i>Detection rules</a>
+          <a><i class="ti ti-activity"></i>SIEM stream</a>
+        </nav>
+        <div class="railfoot"><span class="pdot" style="background:var(--cr)"></span><span>2 P1 breaching SLA</span></div>
+      </aside>
+
+      <!-- ══════════ RAIL: SETTINGS ══════════ -->
+      <aside class="pane rail r-set hide">
+        <div class="railtop"><b>Settings</b></div>
+        <div class="grp">Account</div>
+        <nav class="nav">
+          <a class="on"><i class="ti ti-user"></i>Profile</a>
+          <a><i class="ti ti-shield-lock"></i>Security</a>
+          <a><i class="ti ti-bell"></i>Notifications</a>
+          <a><i class="ti ti-signature"></i>Signature</a>
+          <a><i class="ti ti-palette"></i>Appearance</a>
+        </nav>
+        <div class="grp">Mail</div>
+        <nav class="nav">
+          <a><i class="ti ti-filter"></i>Rules</a>
+          <a><i class="ti ti-user-share"></i>Delegation</a>
+          <a><i class="ti ti-mail-forward"></i>Forwarding</a>
+        </nav>
+        <div class="grp">Organisation</div>
+        <nav class="nav">
+          <a><i class="ti ti-users"></i>People</a>
+          <a><i class="ti ti-key"></i>Roles</a>
+          <a><i class="ti ti-plug"></i>Integrations</a>
+        </nav>
+      </aside>
+
+      <!-- ══════════════════════ INBOX ══════════════════════ -->
+      <section class="pane s-inbox">
+        <div class="lhead">
+          <div class="t"><h3>Inbox</h3><span class="n">12 unread · 2,481</span>
+            <div class="a"><div class="ib"><i class="ti ti-arrows-sort"></i></div><div class="ib"><i class="ti ti-refresh"></i></div><div class="ib"><i class="ti ti-dots"></i></div></div>
+          </div>
+          <div class="filters">
+            <span class="f on"><i class="ti ti-inbox"></i>All<span class="c">12</span></span>
+            <span class="f"><i class="ti ti-mail-opened"></i>Unread</span>
+            <span class="f"><i class="ti ti-shield-half"></i>Flagged<span class="c">2</span></span>
+            <span class="f"><i class="ti ti-world"></i>External</span>
+          </div>
+        </div>
+        <div class="posture"><i class="ti ti-shield-check"></i><div><b>Mailbox posture: secure</b><span>0 active threats · 2 quarantined · scanned 2 min ago</span></div><span class="lv">SECURE</span></div>
+        <div class="list">
+          <div class="lane">Today</div>
+          <div class="row on"><span class="sig"></span><div class="av">AR</div><div class="col">
+            <div class="l1"><span class="sn">Aisha Rahman</span><i class="ti ti-paperclip clip"></i><time>09:41</time></div>
+            <div class="sj">Q3 pen-test scope — final sign-off</div>
+            <div class="sp2">Attaching the revised RoE. Need your approval before Friday…</div>
+            <div class="meta"><span class="chip a"><i class="ti ti-flame"></i>Needs action</span><span class="chip n">Compliance</span></div></div>
+            <div class="hov"><span><i class="ti ti-flag"></i></span><span><i class="ti ti-archive"></i></span><span><i class="ti ti-clock-pause"></i></span></div></div>
+          <div class="row s-wn"><span class="sig"></span><div class="av" style="background:var(--wn-s);color:var(--wn)">NG</div><div class="col">
+            <div class="l1"><span class="sn">vendor@northgate.io</span><time>09:12</time></div>
+            <div class="sj">Invoice NG-4417 — updated payment details</div>
+            <div class="sp2">Please note our banking details have changed effective immediately…</div>
+            <div class="meta"><span class="chip wn"><i class="ti ti-world"></i>External</span><span class="chip cr"><i class="ti ti-alert-triangle"></i>Payment-change risk</span></div></div>
+            <div class="hov"><span><i class="ti ti-flag"></i></span><span><i class="ti ti-archive"></i></span><span><i class="ti ti-clock-pause"></i></span></div></div>
+          <div class="row s-cr"><span class="sig"></span><div class="av" style="background:var(--cr-s);color:var(--cr)"><i class="ti ti-shield-x" style="font-size:16px"></i></div><div class="col">
+            <div class="l1"><span class="sn">Sentinel</span><time>08:55</time></div>
+            <div class="sj">Policy violation — outbound PII blocked</div>
+            <div class="sp2">Message from j.okafor blocked. 14 records matched rule PII-03…</div>
+            <div class="meta"><span class="chip cr"><i class="ti ti-file-shredder"></i>DLP</span><span class="chip n">Automated</span></div></div>
+            <div class="hov"><span><i class="ti ti-flag"></i></span><span><i class="ti ti-archive"></i></span><span><i class="ti ti-clock-pause"></i></span></div></div>
+          <div class="row rd"><span class="sig"></span><div class="av">TC</div><div class="col">
+            <div class="l1"><span class="sn">Tom Chen, me</span><span style="font-size:10.5px;color:var(--subtle);font-family:var(--mono)">3</span><i class="ti ti-paperclip clip"></i><time>08:20</time></div>
+            <div class="sj">Re: SOC 2 evidence pack</div>
+            <div class="sp2">Uploaded the access-review exports to Drive — folder is shared…</div></div>
+            <div class="hov"><span><i class="ti ti-flag"></i></span><span><i class="ti ti-archive"></i></span><span><i class="ti ti-clock-pause"></i></span></div></div>
+          <div class="lane">Yesterday</div>
+          <div class="row rd"><span class="sig"></span><div class="av">MR</div><div class="col">
+            <div class="l1"><span class="sn">Maya Rodriguez</span><time>17:02</time></div>
+            <div class="sj">Renewal forecast — Cloudflare and R2</div>
+            <div class="sp2">Numbers look fine, one line item I want to query before we sign…</div>
+            <div class="meta"><span class="chip n">Finance</span></div></div>
+            <div class="hov"><span><i class="ti ti-flag"></i></span><span><i class="ti ti-archive"></i></span><span><i class="ti ti-clock-pause"></i></span></div></div>
+          <div class="row s-cr rd"><span class="sig"></span><div class="av" style="background:var(--cr-s);color:var(--cr)">GR</div><div class="col">
+            <div class="l1"><span class="sn">no-reply@grantham.co</span><time>14:31</time></div>
+            <div class="sj">Your account requires verification within 24 hours</div>
+            <div class="sp2">Click below to avoid suspension of your workspace access…</div>
+            <div class="meta"><span class="chip wn"><i class="ti ti-world"></i>External</span><span class="chip cr"><i class="ti ti-fish-hook"></i>Suspected phish</span></div></div>
+            <div class="hov"><span><i class="ti ti-flag"></i></span><span><i class="ti ti-archive"></i></span><span><i class="ti ti-clock-pause"></i></span></div></div>
+          <div class="row rd"><span class="sig"></span><div class="av">JO</div><div class="col">
+            <div class="l1"><span class="sn">Joseph Okafor</span><i class="ti ti-paperclip clip"></i><time>11:08</time></div>
+            <div class="sj">Access review — Q3 privileged accounts</div>
+            <div class="sp2">Attached the list of 41 accounts flagged for recertification…</div>
+            <div class="meta"><span class="chip n">Compliance</span></div></div>
+            <div class="hov"><span><i class="ti ti-flag"></i></span><span><i class="ti ti-archive"></i></span><span><i class="ti ti-clock-pause"></i></span></div></div>
+        </div>
+      </section>
+
+      <section class="pane s-inbox scr">
+        <div class="rh">
+          <h2>Q3 pen-test scope — final sign-off</h2>
+          <div class="tags"><span class="chip a"><i class="ti ti-flame"></i>Needs action</span><span class="chip n">Compliance</span><span class="chip ok"><i class="ti ti-shield-check"></i>Verified sender</span></div>
+          <div class="acts">
+            <span class="qa p"><i class="ti ti-corner-up-left"></i>Reply</span>
+            <span class="qa o"><i class="ti ti-corner-up-left-double"></i>Reply all</span>
+            <span class="qa o"><i class="ti ti-corner-up-right"></i>Forward</span>
+            <span class="qa"><i class="ti ti-flag"></i></span><span class="qa"><i class="ti ti-clock-pause"></i></span>
+            <span class="qa"><i class="ti ti-archive"></i></span><span class="qa"><i class="ti ti-trash"></i></span>
+            <span class="qa" style="margin-left:auto"><i class="ti ti-checkbox"></i>Create task</span>
+            <span class="qa"><i class="ti ti-sparkles"></i>Summarise</span>
+          </div>
+        </div>
+        <div class="sender"><div class="av">AR</div><div><b>Aisha Rahman</b>
+          <div class="em">aisha@cybersage.uk</div>
+          <div class="to">to me, security-team, j.okafor <i class="ti ti-chevron-down" style="font-size:14px"></i></div></div>
+          <time>Wed 29 Jul · 09:41</time></div>
+        <div class="auth"><span class="lb"><i class="ti ti-shield-check"></i>Authentication</span>
+          <span class="chip ok"><i class="ti ti-check"></i>SPF</span><span class="chip ok"><i class="ti ti-check"></i>DKIM</span>
+          <span class="chip ok"><i class="ti ti-check"></i>DMARC</span><span class="chip n"><i class="ti ti-building"></i>cybersage.uk</span>
+          <span class="vw">Headers</span></div>
+        <div class="msg">
+          <p>Hi Peeyush,</p>
+          <p>Attaching the revised <strong>Rules of Engagement</strong> for the Q3 external penetration test. Two changes since the last draft: R2 bucket enumeration is now in scope, and the test window moves to <strong>12–16 August</strong> to avoid the release freeze.</p>
+          <p>I need your approval before Friday so Northgate can lock in the engineer allocation.</p>
+          <p>Thanks,<br>Aisha</p>
+        </div>
+        <div class="att">
+          <div class="attc"><i class="ti ti-file-type-pdf fi"></i><div><div class="an">RoE_Q3_v4_signed.pdf</div><div class="as">248 KB · clean</div></div><span class="chip ok" style="margin-left:auto"><i class="ti ti-shield-check"></i>Safe</span></div>
+          <div class="attc"><i class="ti ti-file-spreadsheet fi" style="color:var(--ok)"></i><div><div class="an">scope_matrix.xlsx</div><div class="as">64 KB · clean</div></div><span class="chip ok" style="margin-left:auto"><i class="ti ti-shield-check"></i>Safe</span></div>
+        </div>
+        <div class="smart"><span class="lb"><i class="ti ti-sparkles" style="font-size:14px"></i>Suggested</span>
+          <span class="s">Approved — go ahead</span><span class="s">Can we discuss the window?</span><span class="s">Looping in Legal</span></div>
+        <div class="replybox"><div class="av">PM</div><div class="ph">Reply to Aisha…</div><span class="qa"><i class="ti ti-paperclip"></i></span><span class="qa"><i class="ti ti-sparkles"></i></span></div>
+      </section>
+
+      <!-- ══════════════════════ CHAT ══════════════════════ -->
+      <section class="pane s-chat hide">
+        <div class="chead">
+          <div><h3><i class="ti ti-hash" style="font-size:17px;color:var(--muted)"></i>soc-warroom</h3>
+            <div class="tp">14 members · incident #4417 active</div></div>
+          <div class="a">
+            <div class="faces"><div class="av">TC</div><div class="av">AR</div><div class="av">JO</div><div class="av" style="background:var(--acc-soft);color:var(--acc-tx)">+11</div></div>
+            <div class="ib"><i class="ti ti-phone"></i></div><div class="ib"><i class="ti ti-video"></i></div>
+            <div class="ib"><i class="ti ti-pin"></i></div><div class="ib"><i class="ti ti-users"></i></div><div class="ib"><i class="ti ti-dots"></i></div>
+          </div>
+        </div>
+        <div class="msgs">
+          <div class="daysep">Today</div>
+          <div class="m"><div class="av">TC</div><div>
+            <div class="mh"><b>Tom Chen</b><time>08:42</time></div>
+            <div class="tx">Sentinel just paged on the VPN gateway — spike in failed auths from a single ASN. Pulling the logs now.</div></div></div>
+          <div class="m"><div class="av" style="background:var(--cr-s);color:var(--cr)"><i class="ti ti-shield-x" style="font-size:15px"></i></div><div>
+            <div class="mh"><b>Sentinel</b><span class="chip n">bot</span><time>08:43</time></div>
+            <div class="tx">Detection rule <code>AUTH-BRUTE-02</code> triggered.</div>
+            <div class="mcard"><div class="t"><i class="ti ti-alert-triangle" style="font-size:15px;color:var(--cr)"></i>INC-4417 · Credential stuffing</div>
+              <div class="s">2,841 failed auths in 6 min from AS14061 · 38 accounts targeted · 0 successful</div>
+              <div class="b"><span class="chip cr">P1</span><span class="chip n">VPN gateway</span><span class="chip wn">SLA 42m</span></div></div></div></div>
+          <div class="m"><div class="av">AR</div><div>
+            <div class="mh"><b>Aisha Rahman</b><time>08:47</time></div>
+            <div class="tx">Blocking the ASN at the edge now. @tom can you confirm none of the 38 have MFA disabled?</div>
+            <div class="reacts"><span class="mine"><i class="ti ti-thumb-up" style="font-size:12px"></i><span class="n">3</span></span><span><i class="ti ti-eye" style="font-size:12px"></i><span class="n">2</span></span></div></div></div>
+          <div class="m cont"><div class="av">AR</div><div>
+            <div class="tx">Edge rule pushed — propagating in ~90s.</div></div></div>
+          <div class="m"><div class="av">JO</div><div>
+            <div class="mh"><b>Joseph Okafor</b><time>08:52</time></div>
+            <div class="tx">All 38 have MFA enforced. Two are dormant accounts that should have been offboarded — raising a separate finding.</div>
+            <div class="thr"><i class="ti ti-message-2" style="font-size:14px"></i>4 replies · last 12m ago</div></div></div>
+          <div class="m"><div class="av">TC</div><div>
+            <div class="mh"><b>Tom Chen</b><time>09:04</time></div>
+            <div class="tx">Attack stopped dead after the block. Moving INC-4417 to monitoring, will write it up this afternoon.</div>
+            <div class="reacts"><span><i class="ti ti-check" style="font-size:12px"></i><span class="n">6</span></span></div></div></div>
+          <div class="typing"><div class="av" style="width:20px;height:20px;font-size:8.5px">AR</div>Aisha is typing…</div>
+        </div>
+        <div class="composer">
+          <div class="in">Message #soc-warroom</div>
+          <div class="tb">
+            <div class="ib"><i class="ti ti-bold"></i></div><div class="ib"><i class="ti ti-italic"></i></div>
+            <div class="ib"><i class="ti ti-code"></i></div><div class="ib"><i class="ti ti-link"></i></div>
+            <div class="ib"><i class="ti ti-list"></i></div>
+            <div style="width:1px;height:18px;background:var(--line);margin:0 5px"></div>
+            <div class="ib"><i class="ti ti-paperclip"></i></div><div class="ib"><i class="ti ti-mood-smile"></i></div>
+            <div class="ib"><i class="ti ti-at"></i></div><div class="ib"><i class="ti ti-sparkles"></i></div>
+            <div class="send"><i class="ti ti-send"></i></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════ DRIVE ══════════════════════ -->
+      <section class="pane s-drive hide scr">
+        <div class="crumb"><b>My drive</b><i class="ti ti-chevron-right"></i>Security<i class="ti ti-chevron-right"></i><b>Pen tests</b></div>
+        <div class="dtb">
+          <span class="qa o"><i class="ti ti-folder-plus"></i>New folder</span>
+          <span class="qa o"><i class="ti ti-upload"></i>Upload</span>
+          <span class="qa o"><i class="ti ti-user-plus"></i>Share</span>
+          <span class="qa"><i class="ti ti-filter"></i>Filter</span>
+          <div class="vt"><span class="on"><i class="ti ti-list"></i></span><span><i class="ti ti-layout-grid"></i></span></div>
+        </div>
+        <div class="folders">
+          <div class="fcard"><i class="ti ti-folder"></i><div><div class="t">Q3 2026</div><div class="s">14 files · 82 MB</div></div></div>
+          <div class="fcard"><i class="ti ti-folder"></i><div><div class="t">Q2 2026</div><div class="s">21 files · 140 MB</div></div></div>
+          <div class="fcard"><i class="ti ti-folder"></i><div><div class="t">Reports archive</div><div class="s">86 files · 1.2 GB</div></div></div>
+          <div class="fcard"><i class="ti ti-folder-share"></i><div><div class="t">Northgate shared</div><div class="s">Shared · 9 files</div></div></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th style="width:38%">Name</th><th>Classification</th><th>Owner</th><th>Modified</th><th>Size</th><th style="width:36px"></th></tr></thead>
+          <tbody>
+            <tr><td><div class="fn"><i class="ti ti-file-type-pdf pdf"></i>RoE_Q3_v4_signed.pdf</div></td><td><span class="chip cr">Restricted</span></td><td>A. Rahman</td><td class="mn">29 Jul 09:38</td><td class="mn">248 KB</td><td><i class="ti ti-dots" style="color:var(--subtle)"></i></td></tr>
+            <tr><td><div class="fn"><i class="ti ti-file-spreadsheet xls"></i>scope_matrix.xlsx</div></td><td><span class="chip wn">Confidential</span></td><td>A. Rahman</td><td class="mn">29 Jul 09:12</td><td class="mn">64 KB</td><td><i class="ti ti-dots" style="color:var(--subtle)"></i></td></tr>
+            <tr><td><div class="fn"><i class="ti ti-file-text"></i>findings_draft.docx</div></td><td><span class="chip cr">Restricted</span></td><td>T. Chen</td><td class="mn">28 Jul 16:44</td><td class="mn">1.1 MB</td><td><i class="ti ti-dots" style="color:var(--subtle)"></i></td></tr>
+            <tr><td><div class="fn"><i class="ti ti-photo img"></i>network_topology.png</div></td><td><span class="chip ok">Internal</span></td><td>J. Okafor</td><td class="mn">27 Jul 11:20</td><td class="mn">3.4 MB</td><td><i class="ti ti-dots" style="color:var(--subtle)"></i></td></tr>
+            <tr><td><div class="fn"><i class="ti ti-file-code"></i>exploit_poc.py</div></td><td><span class="chip cr">Restricted</span></td><td>T. Chen</td><td class="mn">26 Jul 14:02</td><td class="mn">12 KB</td><td><i class="ti ti-dots" style="color:var(--subtle)"></i></td></tr>
+            <tr><td><div class="fn"><i class="ti ti-file-type-pdf pdf"></i>prior_year_summary.pdf</div></td><td><span class="chip ok">Internal</span></td><td>M. Rodriguez</td><td class="mn">18 Jul 09:15</td><td class="mn">820 KB</td><td><i class="ti ti-dots" style="color:var(--subtle)"></i></td></tr>
+            <tr><td><div class="fn"><i class="ti ti-file-text"></i>vendor_nda.pdf</div></td><td><span class="chip wn">Confidential</span></td><td>Legal</td><td class="mn">02 Jul 13:31</td><td class="mn">190 KB</td><td><i class="ti ti-dots" style="color:var(--subtle)"></i></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- ══════════════════════ CALENDAR ══════════════════════ -->
+      <section class="pane s-cal hide">
+        <div class="lhead" style="padding-bottom:12px">
+          <div class="t"><h3>27 – 31 July 2026</h3>
+            <div class="a" style="align-items:center;gap:6px">
+              <span class="qa o">Today</span>
+              <div class="ib"><i class="ti ti-chevron-left"></i></div><div class="ib"><i class="ti ti-chevron-right"></i></div>
+            </div>
+          </div>
+          <div class="filters"><span class="f">Day</span><span class="f on">Week</span><span class="f">Month</span><span class="f">Agenda</span></div>
+        </div>
+        <div class="calhead">
+          <div></div>
+          <div><div class="dn">Mon</div><div class="dd">27</div></div>
+          <div><div class="dn">Tue</div><div class="dd">28</div></div>
+          <div class="now"><div class="dn">Wed</div><div class="dd">29</div></div>
+          <div><div class="dn">Thu</div><div class="dd">30</div></div>
+          <div><div class="dn">Fri</div><div class="dd">31</div></div>
+        </div>
+        <div class="calbody">
+          <div class="cgrid">
+            <div class="hrs"><div>08:00</div><div>09:00</div><div>10:00</div><div>11:00</div><div>12:00</div><div>13:00</div><div>14:00</div><div>15:00</div><div>16:00</div><div>17:00</div></div>
+            <div class="dcol">
+              <div class="sl"></div><div class="sl"></div><div class="sl"></div><div class="sl"></div><div class="sl"></div><div class="sl"></div><div class="sl"></div><div class="sl"></div><div class="sl"></div><div class="sl"></div>
+              <div class="ev a" style="top:52px;height:50px"><b>SOC standup</b><span>09:00 – 09:15</span></div>
+              <div class="ev o" style="top:208px;height:102px"><b>Access review</b><span>11:00 – 13:00</span></div>
+            </div>
+            <div class="dcol">
+              <div class="sl"></div><div class="sl"></div><div class="sl"></div><div class="sl"></div><div class="sl"></div><div class="sl"></div><div class="sl"></div><div class="sl"></div><div class="sl"></div><div class="sl"></div>
+              <div class="ev a" style="top:52px;height:50px"><b>SOC standup</b><span>09:00 – 09:15</span></div>
+              <div class="ev v" style="top:156px;height:76px"><b>Intern onboarding</b><span>10:00 – 11:30</span></div>
+              <div class="ev w" style="top:364px;height:102px"><b>On-call handover</b><span>15:00 – 17:00</span></div>
+            </div>
+            <div class="dcol">
+              <div class="sl"></div><div class="sl"></div><div class="sl"></div><div class="sl"></div><div class="sl"></div><div class="sl"></div><div class="sl"></div><div class="sl"></div><div class="sl"></div><div class="sl"></div>
+              <div class="ev a" style="top:52px;height:50px"><b>SOC standup</b><span>09:00 – 09:15</span></div>
+              <div class="ev o" style="top:130px;height:76px"><b>Pen-test scope review</b><span>09:30 – 11:00</span></div>
+              <div class="ev a" style="top:260px;height:50px"><b>1:1 Aisha</b><span>13:00 – 13:30</span></div>
+              <div class="ev w" style="top:312px;height:102px"><b>INC-4417 review</b><span>14:00 – 16:00</span></div>
+            </div>
+            <div class="dcol">
+              <div class="sl"></div><div class="sl"></div><div class="sl"></div><div class="sl"></div><div class="sl"></div><div class="sl"></div><div class="sl"></div><div class="sl"></div><div class="sl"></div><div class="sl"></div>
+              <div class="ev a" style="top:52px;height:50px"><b>SOC standup</b><span>09:00 – 09:15</span></div>
+              <div class="ev v" style="top:260px;height:154px"><b>Board pack prep</b><span>13:00 – 16:00</span></div>
+            </div>
+            <div class="dcol">
+              <div class="sl"></div><div class="sl"></div><div class="sl"></div><div class="sl"></div><div class="sl"></div><div class="sl"></div><div class="sl"></div><div class="sl"></div><div class="sl"></div><div class="sl"></div>
+              <div class="ev a" style="top:52px;height:50px"><b>SOC standup</b><span>09:00 – 09:15</span></div>
+              <div class="ev o" style="top:104px;height:76px"><b>RoE deadline</b><span>10:00 – 11:30</span></div>
+            </div>
+          </div>
+          <div class="nowline" style="top:265px"></div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════ SOC ══════════════════════ -->
+      <section class="pane s-soc hide scr">
+        <div class="ph1">
+          <div class="r"><div>
+            <div class="eye">Security operations</div>
+            <h2>Open incidents</h2>
+            <p>14 open · 2 P1 · 4 approaching SLA breach</p></div>
+            <div class="a"><span class="qa o"><i class="ti ti-filter"></i>Filter</span><span class="qa p"><i class="ti ti-plus"></i>New incident</span></div>
+          </div>
+        </div>
+        <div class="tabs2"><a class="on">All open</a><a>P1</a><a>Assigned to me</a><a>Unassigned</a><a>SLA at risk</a><a>Resolved</a></div>
+        <table class="soc">
+          <thead><tr><th style="width:70px">Priority</th><th>Incident</th><th style="width:110px">Status</th><th style="width:130px">Assignee</th><th style="width:90px">SLA</th><th style="width:80px">Opened</th></tr></thead>
+          <tbody>
+            <tr class="on"><td><span class="pri" style="color:var(--cr)"><i style="background:var(--cr)"></i>P1</span></td>
+              <td><div class="ti"><span class="id">INC-4417</span> · Credential stuffing — VPN gateway</div><div class="sub">2,841 failed auths from AS14061 · 38 accounts targeted</div></td>
+              <td><span class="chip cr">Investigating</span></td><td>T. Chen</td><td class="sla brk">-12m</td><td class="sla okk">18m</td></tr>
+            <tr><td><span class="pri" style="color:var(--cr)"><i style="background:var(--cr)"></i>P1</span></td>
+              <td><div class="ti"><span class="id">INC-4415</span> · Unsigned binary on build agent</div><div class="sub">Sentinel flagged unknown hash on ci-runner-03</div></td>
+              <td><span class="chip cr">Triage</span></td><td>Unassigned</td><td class="sla warn">28m</td><td class="sla okk">1h</td></tr>
+            <tr><td><span class="pri" style="color:var(--wn)"><i style="background:var(--wn)"></i>P2</span></td>
+              <td><div class="ti"><span class="id">INC-4412</span> · DLP: outbound PII from finance</div><div class="sub">14 records matched PII-03 · sender j.okafor</div></td>
+              <td><span class="chip wn">Containment</span></td><td>A. Rahman</td><td class="sla warn">1h 05m</td><td class="sla okk">3h</td></tr>
+            <tr><td><span class="pri" style="color:var(--wn)"><i style="background:var(--wn)"></i>P2</span></td>
+              <td><div class="ti"><span class="id">INC-4409</span> · Impossible travel — j.okafor</div><div class="sub">London then São Paulo within 40 minutes</div></td>
+              <td><span class="chip wn">Investigating</span></td><td>J. Okafor</td><td class="sla okk">4h 12m</td><td class="sla okk">5h</td></tr>
+            <tr><td><span class="pri" style="color:var(--wn)"><i style="background:var(--wn)"></i>P2</span></td>
+              <td><div class="ti"><span class="id">INC-4402</span> · Phishing campaign — grantham.co</div><div class="sub">11 recipients · 2 clicked · 0 credentials submitted</div></td>
+              <td><span class="chip ok">Remediated</span></td><td>T. Chen</td><td class="sla okk">Met</td><td class="sla okk">1d</td></tr>
+            <tr><td><span class="pri" style="color:var(--muted)"><i style="background:var(--line-hard)"></i>P4</span></td>
+              <td><div class="ti"><span class="id">INC-4388</span> · Expired DKIM key — marketing</div><div class="sub">Rotation scheduled for 02 Aug maintenance window</div></td>
+              <td><span class="chip n">Scheduled</span></td><td>Platform</td><td class="sla okk">4d</td><td class="sla okk">2d</td></tr>
+          </tbody>
+        </table>
+        <div style="padding:18px 22px 26px">
+          <div class="g2">
+            <div class="panelc">
+              <div class="ph2"><b>INC-4417 timeline</b><span class="m">Full log</span></div>
+              <div style="padding:8px 16px 14px" class="tl">
+                <div class="tli"><span class="d hot"><i class="ti ti-alert-triangle"></i></span><div><div class="t">Rule AUTH-BRUTE-02 triggered</div><div class="s">08:43:12 · Sentinel</div></div></div>
+                <div class="tli"><span class="d"><i class="ti ti-user"></i></span><div><div class="t">Assigned to T. Chen</div><div class="s">08:44:01 · auto-routing</div></div></div>
+                <div class="tli"><span class="d"><i class="ti ti-shield"></i></span><div><div class="t">AS14061 blocked at edge</div><div class="s">08:48:33 · A. Rahman</div></div></div>
+                <div class="tli"><span class="d"><i class="ti ti-check"></i></span><div><div class="t">MFA verified on all 38 accounts</div><div class="s">08:52:10 · J. Okafor</div></div></div>
+                <div class="tli"><span class="d"><i class="ti ti-eye"></i></span><div><div class="t">Moved to monitoring</div><div class="s">09:04:47 · T. Chen</div></div></div>
+              </div>
+            </div>
+            <div class="panelc">
+              <div class="ph2"><b>Impact</b></div>
+              <div class="prow"><div><div class="t">Accounts targeted</div></div><time>38</time></div>
+              <div class="prow"><div><div class="t">Successful logins</div></div><time>0</time></div>
+              <div class="prow"><div><div class="t">Source ASN</div></div><time>AS14061</time></div>
+              <div class="prow"><div><div class="t">Dormant accounts found</div></div><time>2</time></div>
+              <div class="prow"><span class="chip cr">Escalated</span><div><div class="t">Follow-up finding raised</div><div class="s">FIN-208 · offboarding gap</div></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════ DASHBOARD ══════════════════════ -->
+      <section class="pane s-dash hide scr">
+        <div class="ph1">
+          <div class="r"><div>
+            <div class="eye">Admin</div><h2>Executive dashboard</h2>
+            <p>Workspace health, security posture and delivery across the last 30 days</p></div>
+            <div class="a"><span class="qa o"><i class="ti ti-calendar"></i>Last 30 days</span><span class="qa p"><i class="ti ti-download"></i>Export</span></div>
+          </div>
+        </div>
+        <div class="tabs2"><a class="on">Overview</a><a>Security</a><a>Deliverability</a><a>Usage</a><a>Compliance</a><a>Audit</a></div>
+        <div class="body1">
+          <div class="stats">
+            <div class="stat"><div class="l"><i class="ti ti-mail"></i>Messages delivered</div><div class="v">148,209</div><div class="d"><i class="ti ti-trending-up"></i>4.2% vs last period</div></div>
+            <div class="stat"><div class="l"><i class="ti ti-shield-check"></i>Threats blocked</div><div class="v">1,204</div><div class="d dn"><i class="ti ti-trending-up"></i>11% vs last period</div></div>
+            <div class="stat"><div class="l"><i class="ti ti-users"></i>Active users</div><div class="v">312</div><div class="d"><i class="ti ti-trending-up"></i>6 new this week</div></div>
+            <div class="stat"><div class="l"><i class="ti ti-activity"></i>Delivery rate</div><div class="v">99.4%</div><div class="d"><i class="ti ti-minus"></i>Stable</div></div>
+          </div>
+          <div class="g2">
+            <div class="panelc">
+              <div class="ph2"><b>Mail volume</b><span class="m">View report</span></div>
+              <div class="bars"><div style="height:44%"></div><div style="height:61%"></div><div style="height:38%"></div><div style="height:72%"></div><div style="height:55%"></div><div style="height:83%"></div><div style="height:49%"></div><div style="height:67%"></div><div style="height:41%"></div><div style="height:78%"></div><div style="height:58%"></div><div style="height:92%"></div><div style="height:46%"></div><div style="height:70%"></div></div>
+              <div class="legend"><span><i style="background:var(--acc)"></i>Inbound</span><span><i style="background:var(--acc);opacity:.35"></i>Outbound</span></div>
+            </div>
+            <div class="panelc">
+              <div class="ph2"><b>Open incidents</b><span class="m">SOC</span></div>
+              <div class="prow"><span class="sev" style="background:var(--cr)"></span><div><div class="t">Credential stuffing — VPN</div><div class="s">P1 · T. Chen</div></div><time>18m</time></div>
+              <div class="prow"><span class="sev" style="background:var(--cr)"></span><div><div class="t">Unsigned binary — build agent</div><div class="s">P1 · unassigned</div></div><time>1h</time></div>
+              <div class="prow"><span class="sev" style="background:var(--wn)"></span><div><div class="t">DLP: outbound PII</div><div class="s">P2 · A. Rahman</div></div><time>3h</time></div>
+              <div class="prow"><span class="sev" style="background:var(--line-hard)"></span><div><div class="t">Expired DKIM key</div><div class="s">P4 · scheduled</div></div><time>2d</time></div>
+            </div>
+          </div>
+          <div class="g3" style="margin-top:11px">
+            <div class="panelc">
+              <div class="ph2"><b>Audit events</b></div>
+              <div class="prow"><div class="av" style="width:26px;height:26px;font-size:10px">MR</div><div><div class="t">Role changed</div><div class="s">M. Rodriguez</div></div><time>10:04</time></div>
+              <div class="prow"><div class="av" style="width:26px;height:26px;font-size:10px">TC</div><div><div class="t">Legal hold applied</div><div class="s">4 mailboxes</div></div><time>09:36</time></div>
+              <div class="prow"><div class="av" style="width:26px;height:26px;font-size:10px">AR</div><div><div class="t">API key rotated</div><div class="s">sentinel-ingest</div></div><time>08:11</time></div>
+            </div>
+            <div class="panelc">
+              <div class="ph2"><b>Queue health</b></div>
+              <div class="prow"><span class="chip ok">OK</span><div><div class="t">email</div><div class="s">0 failed · 128 waiting</div></div></div>
+              <div class="prow"><span class="chip ok">OK</span><div><div class="t">notification</div><div class="s">0 failed · 12 waiting</div></div></div>
+              <div class="prow"><span class="chip wn">2 failed</span><div><div class="t">indexing</div><div class="s">Meilisearch timeout</div></div></div>
+            </div>
+            <div class="panelc">
+              <div class="ph2"><b>Compliance</b></div>
+              <div class="prow"><span class="chip ok">Pass</span><div><div class="t">SOC 2 controls</div><div class="s">118 / 118</div></div></div>
+              <div class="prow"><span class="chip wn">Due</span><div><div class="t">Access recertification</div><div class="s">41 accounts</div></div></div>
+              <div class="prow"><span class="chip ok">Active</span><div><div class="t">Legal holds</div><div class="s">4 mailboxes</div></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════ SETTINGS ══════════════════════ -->
+      <section class="pane s-set hide scr">
+        <div class="ph1">
+          <div class="r"><div><div class="eye">Account</div><h2>Profile and security</h2>
+            <p>How you appear across the workspace, and how your account is protected</p></div>
+            <div class="a"><span class="qa o">Discard</span><span class="qa p"><i class="ti ti-check"></i>Save changes</span></div>
+          </div>
+        </div>
+        <div class="tabs2"><a class="on">Profile</a><a>Security</a><a>Notifications</a><a>Signature</a><a>Appearance</a></div>
+        <div class="body1">
+          <div class="sect">
+            <div class="h"><b>Identity</b><p>Visible to everyone in the Cybersage workspace</p></div>
+            <div class="fld"><div class="lb"><b>Avatar</b><p>PNG or JPG, max 2 MB</p></div>
+              <div style="display:flex;align-items:center;gap:12px"><div class="av" style="width:52px;height:52px;font-size:17px;background:var(--acc-soft);color:var(--acc-tx)">PM</div>
+              <span class="qa o"><i class="ti ti-upload"></i>Replace</span><span class="qa">Remove</span></div></div>
+            <div class="fld"><div class="lb"><b>Display name</b></div><div class="inp">Peeyush Maurya</div></div>
+            <div class="fld"><div class="lb"><b>Job title</b></div><div class="inp">Workspace administrator</div></div>
+            <div class="fld"><div class="lb"><b>Email</b><p>Primary mailbox, cannot be changed</p></div><div class="inp ph" style="font-family:var(--mono);font-size:12px">peeyush@cybersage.uk</div></div>
+            <div class="fld"><div class="lb"><b>Employee ID</b></div><div class="inp ph" style="font-family:var(--mono);font-size:12px">SE-0001</div></div>
+          </div>
+
+          <div class="sect">
+            <div class="h"><b>Authentication</b><p>Two-factor and passkey settings for this account</p></div>
+            <div class="fld"><div class="lb"><b>Passkey</b><p>Sign in with Touch ID or a security key</p></div>
+              <span class="chip ok" style="margin-left:auto"><i class="ti ti-check"></i>1 registered</span><span class="qa o">Manage</span></div>
+            <div class="fld"><div class="lb"><b>Authenticator app</b><p>Time-based one-time codes</p></div>
+              <span class="chip n" style="margin-left:auto">Not configured</span><span class="qa o">Set up</span></div>
+            <div class="fld"><div class="lb"><b>Backup codes</b><p>Single-use recovery codes</p></div>
+              <span class="chip wn" style="margin-left:auto">3 of 10 remaining</span><span class="qa o">Regenerate</span></div>
+            <div class="fld"><div class="lb"><b>Require re-auth for admin actions</b><p>Prompt again before destructive operations</p></div>
+              <div class="tog on"></div></div>
+          </div>
+
+          <div class="sect">
+            <div class="h"><b>Active sessions</b><p>Devices currently signed in to your account</p></div>
+            <div class="sesh"><i class="ti ti-device-laptop dv"></i><div><div style="font-weight:500">MacBook Pro · Chrome</div><div class="s">London, UK · 92.14.x.x · current session</div></div><span class="chip ok" style="margin-left:auto">This device</span></div>
+            <div class="sesh"><i class="ti ti-device-mobile dv"></i><div><div style="font-weight:500">iPhone 16 · Nexus mobile</div><div class="s">London, UK · last active 2h ago</div></div><span class="qa" style="margin-left:auto">Revoke</span></div>
+            <div class="sesh"><i class="ti ti-device-desktop dv"></i><div><div style="font-weight:500">Windows 11 · Nexus desktop</div><div class="s">Manchester, UK · last active 3d ago</div></div><span class="qa" style="margin-left:auto">Revoke</span></div>
+          </div>
+
+          <div class="sect">
+            <div class="h"><b>Danger zone</b></div>
+            <div class="fld"><div class="lb"><b>Sign out everywhere</b><p>Ends every session except this one</p></div>
+              <span class="qa o" style="margin-left:auto;color:var(--cr);border-color:color-mix(in srgb,var(--cr) 35%,transparent)">Sign out all devices</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════ CONTEXT PANELS ══════════════════════ -->
+      <aside class="pane ctx c-inbox">
+        <div class="ch"><i class="ti ti-shield-half"></i>Threat context</div>
+        <div class="cs"><div class="h">Sender risk</div>
+          <div class="risk"><div class="gauge">08</div><div><div style="font-size:12.5px;font-weight:600">Low risk</div><div style="font-size:11px;color:var(--muted)">Internal · verified · 3y history</div></div></div>
+          <div class="kv"><span class="k">First seen</span><span class="v">Aug 2023</span></div>
+          <div class="kv"><span class="k">Messages exchanged</span><span class="v">1,284</span></div>
+          <div class="kv"><span class="k">Failed auth (90d)</span><span class="v">0</span></div></div>
+        <div class="cs"><div class="h">Attachment scan</div>
+          <div class="kv"><span class="k">Sentinel verdict</span><span class="chip ok">Clean</span></div>
+          <div class="kv"><span class="k">DLP match</span><span class="chip n">None</span></div>
+          <div class="kv"><span class="k">Sandboxed</span><span class="v">2 files</span></div></div>
+        <div class="cs"><div class="h">Related activity</div>
+          <div class="mini"><div class="av">AR</div><div><div style="font-weight:500">RoE_Q3_v3.pdf shared</div><div class="s">Drive · 2d ago</div></div></div>
+          <div class="mini"><div class="av">JO</div><div><div style="font-weight:500">Compliance sign-off</div><div class="s">Audit · 1d ago</div></div></div>
+          <div class="mini"><div class="av" style="background:var(--acc-soft);color:var(--acc-tx)"><i class="ti ti-calendar" style="font-size:13px"></i></div><div><div style="font-weight:500">Pen-test kickoff</div><div class="s">12 Aug · 10:00</div></div></div></div>
+        <div class="cs"><div class="h">Actions</div>
+          <div class="smart" style="margin:0;flex-direction:column;align-items:stretch;gap:6px">
+            <span class="s" style="text-align:center">Approve and reply</span>
+            <span class="s" style="text-align:center">Create task from email</span>
+            <span class="s" style="text-align:center">Attach to INC-4417</span></div></div>
+      </aside>
+
+      <aside class="pane ctx c-chat hide">
+        <div class="ch"><i class="ti ti-users"></i>Members · 14</div>
+        <div class="cs"><div class="h">Online now</div>
+          <div class="mini"><div class="av">TC</div><div><div style="font-weight:500">Tom Chen</div><div class="s">SOC lead</div></div><span class="pdot" style="background:var(--ok);margin-left:auto"></span></div>
+          <div class="mini"><div class="av">AR</div><div><div style="font-weight:500">Aisha Rahman</div><div class="s">Security eng</div></div><span class="pdot" style="background:var(--ok);margin-left:auto"></span></div>
+          <div class="mini"><div class="av">JO</div><div><div style="font-weight:500">Joseph Okafor</div><div class="s">Compliance</div></div><span class="pdot" style="background:var(--ok);margin-left:auto"></span></div>
+        </div>
+        <div class="cs"><div class="h">Pinned</div>
+          <div class="mini"><div class="av" style="background:var(--cr-s);color:var(--cr)"><i class="ti ti-pin" style="font-size:12px"></i></div><div><div style="font-weight:500">INC-4417 runbook</div><div class="s">pinned by T. Chen</div></div></div>
+          <div class="mini"><div class="av" style="background:var(--sunken)"><i class="ti ti-pin" style="font-size:12px"></i></div><div><div style="font-weight:500">Escalation matrix</div><div class="s">pinned by A. Rahman</div></div></div>
+        </div>
+        <div class="cs"><div class="h">Linked incident</div>
+          <div class="kv"><span class="k">Incident</span><span class="v">INC-4417</span></div>
+          <div class="kv"><span class="k">Priority</span><span class="chip cr">P1</span></div>
+          <div class="kv"><span class="k">Status</span><span class="chip wn">Monitoring</span></div>
+          <div class="kv"><span class="k">SLA</span><span class="v" style="color:var(--cr)">-12m</span></div>
+        </div>
+      </aside>
+
+      <aside class="pane ctx c-drive hide">
+        <div class="ch"><i class="ti ti-file-info"></i>File details</div>
+        <div class="cs" style="text-align:center;padding:20px 15px">
+          <i class="ti ti-file-type-pdf" style="font-size:44px;color:var(--cr)"></i>
+          <div style="font-size:13px;font-weight:600;margin-top:9px">RoE_Q3_v4_signed.pdf</div>
+          <div style="font-size:11px;color:var(--subtle);font-family:var(--mono);margin-top:3px">248 KB · PDF</div>
+        </div>
+        <div class="cs"><div class="h">Classification</div>
+          <div class="kv"><span class="k">Label</span><span class="chip cr">Restricted</span></div>
+          <div class="kv"><span class="k">DLP scan</span><span class="chip ok">Clean</span></div>
+          <div class="kv"><span class="k">Retention</span><span class="v">7 years</span></div>
+          <div class="kv"><span class="k">Legal hold</span><span class="chip n">No</span></div>
+        </div>
+        <div class="cs"><div class="h">Access · 4 people</div>
+          <div class="mini"><div class="av">AR</div><div><div style="font-weight:500">A. Rahman</div><div class="s">owner</div></div></div>
+          <div class="mini"><div class="av">PM</div><div><div style="font-weight:500">Peeyush M.</div><div class="s">editor</div></div></div>
+          <div class="mini"><div class="av">JO</div><div><div style="font-weight:500">J. Okafor</div><div class="s">viewer</div></div></div>
+          <div class="smart" style="margin:9px 0 0"><span class="s" style="width:100%;text-align:center">Manage access</span></div>
+        </div>
+        <div class="cs"><div class="h">Activity</div>
+          <div class="mini"><div class="av">AR</div><div><div style="font-weight:500">Uploaded v4</div><div class="s">29 Jul 09:38</div></div></div>
+          <div class="mini"><div class="av">PM</div><div><div style="font-weight:500">Viewed</div><div class="s">29 Jul 09:44</div></div></div>
+        </div>
+      </aside>
+
+      <aside class="pane ctx c-cal hide">
+        <div class="ch"><i class="ti ti-calendar-event"></i>Event details</div>
+        <div class="cs">
+          <div style="font-size:14px;font-weight:600">Pen-test scope review</div>
+          <div style="font-size:11.5px;color:var(--muted);margin-top:4px;font-family:var(--mono)">Wed 29 Jul · 09:30 – 11:00</div>
+          <div class="smart" style="margin:11px 0 0"><span class="s" style="flex:1;text-align:center">Join</span><span class="s" style="flex:1;text-align:center">Edit</span></div>
+        </div>
+        <div class="cs"><div class="h">Attendees · 5</div>
+          <div class="mini"><div class="av">AR</div><div><div style="font-weight:500">A. Rahman</div><div class="s">organiser</div></div><i class="ti ti-check" style="margin-left:auto;color:var(--ok);font-size:15px"></i></div>
+          <div class="mini"><div class="av">PM</div><div><div style="font-weight:500">Peeyush M.</div><div class="s">accepted</div></div><i class="ti ti-check" style="margin-left:auto;color:var(--ok);font-size:15px"></i></div>
+          <div class="mini"><div class="av">JO</div><div><div style="font-weight:500">J. Okafor</div><div class="s">tentative</div></div><i class="ti ti-question-mark" style="margin-left:auto;color:var(--wn);font-size:15px"></i></div>
+          <div class="mini"><div class="av">NG</div><div><div style="font-weight:500">Northgate</div><div class="s">no response</div></div><span class="chip wn" style="margin-left:auto">External</span></div>
+        </div>
+        <div class="cs"><div class="h">Location</div>
+          <div class="kv"><span class="k">Room</span><span class="v">Faraday</span></div>
+          <div class="kv"><span class="k">Video</span><span class="v">Jitsi</span></div>
+        </div>
+        <div class="cs"><div class="h">Attached</div>
+          <div class="mini"><div class="av" style="background:var(--cr-s);color:var(--cr)"><i class="ti ti-file-type-pdf" style="font-size:13px"></i></div><div><div style="font-weight:500">RoE_Q3_v4.pdf</div><div class="s">248 KB</div></div></div>
+        </div>
+      </aside>
+
+      <aside class="pane ctx c-soc hide">
+        <div class="ch"><i class="ti ti-alert-triangle"></i>INC-4417</div>
+        <div class="cs"><div class="h">Severity</div>
+          <div class="risk"><div class="gauge" style="background:var(--cr-s);color:var(--cr);border-color:color-mix(in srgb,var(--cr) 30%,transparent)">P1</div>
+            <div><div style="font-size:12.5px;font-weight:600">Critical</div><div style="font-size:11px;color:var(--muted)">SLA breached 12m ago</div></div></div>
+          <div class="kv"><span class="k">Status</span><span class="chip wn">Monitoring</span></div>
+          <div class="kv"><span class="k">Assignee</span><span class="v">T. Chen</span></div>
+          <div class="kv"><span class="k">Opened</span><span class="v">08:43</span></div>
+        </div>
+        <div class="cs"><div class="h">Actions</div>
+          <div class="smart" style="margin:0;flex-direction:column;align-items:stretch;gap:6px">
+            <span class="s" style="text-align:center">Reassign</span>
+            <span class="s" style="text-align:center">Escalate to CISO</span>
+            <span class="s" style="text-align:center">Open war room</span>
+            <span class="s" style="text-align:center">Mark resolved</span></div>
+        </div>
+        <div class="cs"><div class="h">Linked</div>
+          <div class="mini"><div class="av" style="background:var(--acc-soft);color:var(--acc-tx)"><i class="ti ti-hash" style="font-size:13px"></i></div><div><div style="font-weight:500">soc-warroom</div><div class="s">14 members</div></div></div>
+          <div class="mini"><div class="av" style="background:var(--sunken)"><i class="ti ti-flag" style="font-size:13px"></i></div><div><div style="font-weight:500">FIN-208</div><div class="s">offboarding gap</div></div></div>
+        </div>
+      </aside>
+
+    </div>
+  </div>
+  </div>
+</div>
+
+<script>
+var meta={
+ "dir-d":{n:"D · Atrium",d:"Floating panels on a warm canvas — every pane is its own rounded card with real gutters. Icon spine for app switching, indigo as the only accent. Calm and premium; closer to Arc or Raycast than to a mail client.",s:["#f0efec","#ffffff","#e7e6e1","#4f46e5","#1a1a18"]},
+ "dir-e":{n:"E · Meridian",d:"Editorial and technical. Pure white, no fills, structure entirely from hairlines and type contrast. Monospace for every number and timestamp, near-square corners, ink-black accent. The most serious and dense.",s:["#ffffff","#fafafa","#ebebeb","#0a0a0a","#6e6e6e"]},
+ "dir-f":{n:"F · Signal",d:"Monochrome chrome with one hard rule — colour is reserved exclusively for threat state. Nav and buttons are greyscale, so a red spine or amber chip always means something real. Dark icon spine anchors it as an operations tool.",s:["#111418","#f7f8f9","#e4e7eb","#cc2b1d","#15181d"]}
+};
+var layout={inbox:"",chat:"sh-2r",drive:"sh-2",cal:"sh-2",soc:"sh-2",dash:"sh-1",set:"sh-2"};
+var hasCtx={inbox:1,chat:1,drive:1,cal:1,soc:1,dash:0,set:0};
+var app=document.getElementById("app"),shell=document.getElementById("shell");
+var dir="dir-d",scr="inbox",ctx=false;
+
+function render(){
+  app.className="app "+dir+((ctx&&hasCtx[scr])?" showctx":"");
+  var l=layout[scr];
+  if(ctx&&hasCtx[scr]){ if(l==="sh-2")l="sh-2r"; if(l==="sh-1")l="sh-2"; }
+  else { if(l==="sh-2r")l="sh-2"; }
+  shell.className="shell"+(scr==="inbox"?(ctx?"":""):" "+l);
+  if(scr==="inbox"&&!ctx)shell.className="shell";
+
+  ["inbox","chat","drive","cal","soc","dash","set"].forEach(function(k){
+    document.querySelectorAll(".r-"+k).forEach(function(e){e.classList.toggle("hide",k!==scr)});
+    document.querySelectorAll(".s-"+k).forEach(function(e){e.classList.toggle("hide",k!==scr)});
+    document.querySelectorAll(".c-"+k).forEach(function(e){e.classList.toggle("hide",!(k===scr&&ctx&&hasCtx[scr]))});
+    var s=document.querySelector(".sp-"+k); if(s)s.classList.toggle("on",k===scr);
+  });
+  document.getElementById("capN").textContent=meta[dir].n;
+  document.getElementById("capD").textContent=meta[dir].d;
+  document.getElementById("capS").innerHTML=meta[dir].s.map(function(c){return '<span class="sw" style="background:'+c+'"></span>'}).join("");
+}
+function wire(id,fn){document.getElementById(id).addEventListener("click",function(e){
+  var b=e.target.closest("button");if(!b)return;
+  [].forEach.call(this.children,function(x){x.classList.remove("on")});
+  b.classList.add("on");fn(b);render();});}
+wire("dirseg",function(b){dir=b.dataset.dir});
+wire("scrseg",function(b){scr=b.dataset.scr});
+wire("ctxseg",function(b){ctx=b.dataset.ctx==="on"});
+document.querySelectorAll(".list .row").forEach(function(r){r.addEventListener("click",function(){
+  document.querySelectorAll(".list .row").forEach(function(x){x.classList.remove("on");x.classList.add("rd")});
+  r.classList.add("on");r.classList.remove("rd");});});
+document.querySelectorAll(".filters .f, .tabs2 a, .soc tbody tr").forEach(function(el){
+  el.addEventListener("click",function(){
+    var sibs=el.parentElement.children;
+    [].forEach.call(sibs,function(x){x.classList.remove("on")});
+    el.classList.add("on");});});
+render();
+</script>
+</body>
+</html>

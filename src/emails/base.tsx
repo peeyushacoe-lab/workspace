@@ -71,7 +71,7 @@ const brandBar = {
 };
 
 const brand = {
-  color: "#0f172a",
+  color: "#1a1a18",
   fontSize: "18px",
   fontWeight: "700",
 };

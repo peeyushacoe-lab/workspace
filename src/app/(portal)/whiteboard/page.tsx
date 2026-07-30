@@ -7,12 +7,12 @@ import { PageHeader } from "@/components/Shell";
 type Tool = "pen" | "eraser" | "line" | "rect" | "ellipse";
 type _DrawEvent = { type: "draw" | "clear"; tool: Tool; color: string; size: number; points?: [number, number][]; from?: [number, number]; to?: [number, number] };
 
-const COLORS = ["#00d2ff", "#7dd8f5", "#dfe1f6", "#ff4d6d", "#ffd166", "#06d6a0", "#ffffff", "#000000"];
+const COLORS = ["#4f46e5", "#7dd8f5", "#1a1a18", "#c0362c", "#ffd166", "#06d6a0", "#ffffff", "#000000"];
 
 export default function WhiteboardPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [tool, setTool] = useState<Tool>("pen");
-  const [color, setColor] = useState("#00d2ff");
+  const [color, setColor] = useState("#4f46e5");
   const [size, setSize] = useState(3);
   const [drawing, setDrawing] = useState(false);
   const lastPos = useRef<[number, number] | null>(null);
@@ -110,7 +110,7 @@ export default function WhiteboardPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#12151D] text-[#E6E9F0] flex flex-col">
+    <div className="min-h-full bg-surface text-foreground flex flex-col">
       <PageHeader
         eyebrow="Collaboration · Phase 25"
         title="Whiteboard"
@@ -118,14 +118,14 @@ export default function WhiteboardPage() {
       />
 
       {/* Toolbar */}
-      <div className="flex items-center gap-3 px-6 py-3 bg-[#12151D] border-b border-[#262A35]">
+      <div className="flex items-center gap-3 px-6 py-3 bg-surface border-b border-border">
         {/* Tools */}
-        <div className="flex items-center gap-1 bg-[#1B1F2A] rounded-lg p-1">
+        <div className="flex items-center gap-1 bg-surface-sunken rounded-lg p-1">
           {TOOLS.map(({ id, Icon }) => (
             <button
               key={id}
               onClick={() => setTool(id)}
-              className={`p-2 rounded-md transition-colors ${tool === id ? "bg-[#00C2FF]/20 text-[#00C2FF]" : "text-[#5A6275] hover:text-[#8A92A6]"}`}
+              className={`p-2 rounded-md transition-colors ${tool === id ? "bg-accent/20 text-accent" : "text-subtle hover:text-muted"}`}
               title={id}
             >
               <Icon className="w-4 h-4" />
@@ -140,29 +140,29 @@ export default function WhiteboardPage() {
               key={c}
               onClick={() => setColor(c)}
               className="w-5 h-5 rounded-full border-2 transition-transform hover:scale-110"
-              style={{ backgroundColor: c, borderColor: color === c ? "#00d2ff" : "transparent" }}
+              style={{ backgroundColor: c, borderColor: color === c ? "var(--accent)" : "transparent" }}
             />
           ))}
         </div>
 
         {/* Size */}
-        <input type="range" min={1} max={20} value={size} onChange={(e) => setSize(Number(e.target.value))} className="w-24 accent-[#00d2ff]" />
-        <span className="text-xs text-[#5A6275] w-6">{size}px</span>
+        <input type="range" min={1} max={20} value={size} onChange={(e) => setSize(Number(e.target.value))} className="w-24 accent-accent" />
+        <span className="text-xs text-subtle w-6">{size}px</span>
 
         <div className="flex-1" />
 
         {/* Collaborators */}
         {collaborators.length > 0 && (
-          <div className="flex items-center gap-1 text-xs text-[#5A6275]">
+          <div className="flex items-center gap-1 text-xs text-subtle">
             <Users className="w-3.5 h-3.5" />
             {collaborators.length} online
           </div>
         )}
 
-        <button onClick={handleDownload} className="p-2 text-[#5A6275] hover:text-[#8A92A6]" title="Download">
+        <button onClick={handleDownload} className="p-2 text-subtle hover:text-muted" title="Download">
           <Download className="w-4 h-4" />
         </button>
-        <button onClick={handleClear} className="p-2 text-[#5A6275] hover:text-[#ff4d6d]" title="Clear">
+        <button onClick={handleClear} className="p-2 text-subtle hover:text-crit" title="Clear">
           <Trash2 className="w-4 h-4" />
         </button>
       </div>
@@ -172,7 +172,7 @@ export default function WhiteboardPage() {
         <canvas
           ref={canvasRef}
           className="absolute inset-0 w-full h-full cursor-crosshair"
-          style={{ background: "#0a0e1a" }}
+          style={{ background: "var(--canvas)" }}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}

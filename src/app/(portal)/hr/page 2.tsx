@@ -45,10 +45,10 @@ const LEAVE_META: Record<string, { label: string; icon: React.ElementType }> = {
 };
 
 const STATUS_STYLE: Record<string, string> = {
-  PENDING: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-  APPROVED: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-  REJECTED: "bg-red-500/10 text-red-400 border-red-500/20",
-  CANCELLED: "bg-[#1B1F2A] text-[#5A6275] border-[#2E333F]",
+  PENDING: "bg-warn/10 text-warn border-warn/20",
+  APPROVED: "bg-ok/10 text-ok border-ok/20",
+  REJECTED: "bg-crit/10 text-crit border-crit/20",
+  CANCELLED: "bg-surface-sunken text-subtle border-border-strong",
 };
 
 const CATEGORY_LABEL: Record<string, string> = {
@@ -66,17 +66,17 @@ function fmtSize(bytes: number) {
 }
 
 const inputClass =
-  "w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] placeholder:text-[#5A6275] focus:outline-none focus:border-[#00C2FF]/60";
+  "w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60";
 
 function Card({ title, icon: Icon, action, children }: {
   title: string; icon: React.ElementType; action?: React.ReactNode; children: React.ReactNode;
 }) {
   return (
-    <div className="bg-[#12151D] border border-[#262A35] rounded-xl">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[#262A35]">
+    <div className="bg-surface border border-border rounded-xl">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <div className="flex items-center gap-2">
-          <Icon className="w-4 h-4 text-[#00C2FF]" />
-          <h2 className="text-sm font-semibold text-[#E6E9F0] tracking-tight">{title}</h2>
+          <Icon className="w-4 h-4 text-accent" />
+          <h2 className="text-sm font-semibold text-foreground tracking-tight">{title}</h2>
         </div>
         {action}
       </div>
@@ -118,19 +118,19 @@ function LifecycleCard({ lifecycle: lc, onChanged }: { lifecycle: Lifecycle; onC
   // ── exited: show the NOC ──
   if (isExited) {
     return (
-      <div className="bg-[#12151D] border border-emerald-500/30 rounded-xl p-4">
+      <div className="bg-surface border border-ok/30 rounded-xl p-4">
         <div className="flex items-center gap-2 mb-1">
-          <ShieldCheck className="w-4 h-4 text-emerald-400" />
-          <h2 className="text-sm font-semibold text-[#E6E9F0]">Exit complete — NOC issued</h2>
-          <span className="px-2 py-0.5 text-[11px] font-medium rounded-full border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">Cleared</span>
+          <ShieldCheck className="w-4 h-4 text-ok" />
+          <h2 className="text-sm font-semibold text-foreground">Exit complete — NOC issued</h2>
+          <span className="px-2 py-0.5 text-[11px] font-medium rounded-full border bg-ok/10 text-ok border-ok/20">Cleared</span>
         </div>
-        <p className="text-xs text-[#8A92A6] mb-3">
+        <p className="text-xs text-muted mb-3">
           You are no longer associated with Cybersage{lc.nocRef ? ` · Ref ${lc.nocRef}` : ""}. The certificate was also emailed to you.
         </p>
         {lc.nocDocId && (
           <a href={`/api/hr/documents/${lc.nocDocId}`} target="_blank" rel="noreferrer"
-            className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg bg-[#1B1F2A] border border-[#262A35] text-[#E6E9F0] hover:border-emerald-500/40 transition-colors">
-            <Download className="w-4 h-4 text-emerald-400" /> Download NOC
+            className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg bg-surface-sunken border border-border text-foreground hover:border-ok/40 transition-colors">
+            <Download className="w-4 h-4 text-ok" /> Download NOC
           </a>
         )}
       </div>
@@ -139,21 +139,21 @@ function LifecycleCard({ lifecycle: lc, onChanged }: { lifecycle: Lifecycle; onC
 
   // ── onboarding / offboarding: letter + sign & return ──
   return (
-    <div className="bg-[#12151D] border border-[#00C2FF]/30 rounded-xl p-4 space-y-3">
+    <div className="bg-surface border border-accent/30 rounded-xl p-4 space-y-3">
       <div className="flex items-center gap-2 flex-wrap">
-        <FileText className="w-4 h-4 text-[#00C2FF]" />
-        <h2 className="text-sm font-semibold text-[#E6E9F0]">
+        <FileText className="w-4 h-4 text-accent" />
+        <h2 className="text-sm font-semibold text-foreground">
           {isOnboarding ? "Your onboarding letter" : lc.type === "TERMINATION" ? "Your termination letter" : "Your exit letter"}
         </h2>
-        {lc.ref && <span className="text-[11px] font-mono text-[#5A6275]">{lc.ref}</span>}
+        {lc.ref && <span className="text-[11px] font-mono text-subtle">{lc.ref}</span>}
         {returned && (
-          <span className="px-2 py-0.5 text-[11px] font-medium rounded-full border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+          <span className="px-2 py-0.5 text-[11px] font-medium rounded-full border bg-ok/10 text-ok border-ok/20">
             Returned ✓ {isOnboarding ? "— awaiting HR verification" : "— NOC on its way"}
           </span>
         )}
       </div>
 
-      <p className="text-xs text-[#8A92A6]">
+      <p className="text-xs text-muted">
         {isOnboarding
           ? "Download the letter, sign it, and return it below within 7 days."
           : `Download the letter, sign it, and return it below.${lc.lastWorkingDay ? ` Last working day: ${fmt(lc.lastWorkingDay)}.` : ""} Your NOC is issued once HR verifies the signed copy.`}
@@ -162,14 +162,14 @@ function LifecycleCard({ lifecycle: lc, onChanged }: { lifecycle: Lifecycle; onC
       <div className="flex items-center gap-2 flex-wrap">
         {lc.letterDocId && (
           <a href={`/api/hr/documents/${lc.letterDocId}`} target="_blank" rel="noreferrer"
-            className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg bg-[#1B1F2A] border border-[#262A35] text-[#E6E9F0] hover:border-[#00C2FF]/40 transition-colors">
-            <Download className="w-4 h-4 text-[#00C2FF]" /> Download letter
+            className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg bg-surface-sunken border border-border text-foreground hover:border-accent/40 transition-colors">
+            <Download className="w-4 h-4 text-accent" /> Download letter
           </a>
         )}
         {lc.signedDocId && (
           <a href={`/api/hr/documents/${lc.signedDocId}`} target="_blank" rel="noreferrer"
-            className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg bg-[#1B1F2A] border border-[#262A35] text-[#8A92A6] hover:text-[#E6E9F0] transition-colors">
-            <FileText className="w-4 h-4 text-emerald-400" /> Your signed copy
+            className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg bg-surface-sunken border border-border text-muted hover:text-foreground transition-colors">
+            <FileText className="w-4 h-4 text-ok" /> Your signed copy
           </a>
         )}
       </div>
@@ -177,24 +177,24 @@ function LifecycleCard({ lifecycle: lc, onChanged }: { lifecycle: Lifecycle; onC
       {!returned && (
         <div className="space-y-3 pt-1">
           <label className={`flex items-center gap-2 px-3 py-3 border border-dashed rounded-lg cursor-pointer text-sm transition-colors ${
-            file ? "border-[#00C2FF]/50 text-[#E6E9F0]" : "border-[#2E333F] text-[#5A6275] hover:border-[#00C2FF]/40"}`}>
+            file ? "border-accent/50 text-foreground" : "border-border-strong text-subtle hover:border-accent/40"}`}>
             <Upload className="w-4 h-4 shrink-0" />
             {file ? file.name : "Attach your signed letter (PDF or photo/scan)"}
             <input type="file" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg" className="hidden"
               onChange={(e) => { setFile(e.target.files?.[0] ?? null); e.target.value = ""; }} />
           </label>
 
-          <label className="flex items-start gap-2.5 px-3 py-2.5 bg-amber-500/5 border border-amber-500/25 rounded-lg cursor-pointer">
-            <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} className="mt-0.5 accent-[#00C2FF]" />
-            <span className="text-xs text-[#C8CEDB] leading-relaxed">
-              <b className="text-amber-400">Confidentiality acknowledgment (required)</b> — I acknowledge that I must not leak,
+          <label className="flex items-start gap-2.5 px-3 py-2.5 bg-warn/5 border border-warn/25 rounded-lg cursor-pointer">
+            <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} className="mt-0.5 accent-accent" />
+            <span className="text-xs text-foreground leading-relaxed">
+              <b className="text-warn">Confidentiality acknowledgment (required)</b> — I acknowledge that I must not leak,
               disclose, use or retain any product details, source code, security research, client information or internal data
               belonging to Cybersage, during or after my association with the company.
             </span>
           </label>
 
           <button onClick={() => void submit()} disabled={submitting || !file || !ack}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-[#00C2FF] text-[#06121A] hover:bg-[#33cfff] disabled:opacity-40 transition-colors">
+            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-accent text-accent-foreground hover:bg-accent disabled:opacity-40 transition-colors">
             {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             Submit signed letter
           </button>
@@ -310,7 +310,7 @@ export default function MyHRPage() {
         action={
           <button
             onClick={() => setShowForm((v) => !v)}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-[#00C2FF] text-[#06121A] hover:bg-[#33cfff] transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-accent text-accent-foreground hover:bg-accent transition-colors"
           >
             {showForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
             {showForm ? "Close" : "Request leave"}
@@ -319,7 +319,7 @@ export default function MyHRPage() {
       />
 
       {loading ? (
-        <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-[#00C2FF]" /></div>
+        <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-accent" /></div>
       ) : (
         <>
           <LifecycleCard lifecycle={lifecycle} onChanged={() => void load()} />
@@ -330,18 +330,18 @@ export default function MyHRPage() {
               const meta = LEAVE_META[b.type] ?? LEAVE_META.OTHER;
               const pct = b.allowance ? Math.min(100, Math.round((b.used / b.allowance) * 100)) : 0;
               return (
-                <div key={b.type} className="bg-[#12151D] border border-[#262A35] rounded-xl p-4">
+                <div key={b.type} className="bg-surface border border-border rounded-xl p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2 text-sm font-medium text-[#E6E9F0]">
-                      <meta.icon className="w-4 h-4 text-[#00C2FF]" />{meta.label} leave
+                    <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                      <meta.icon className="w-4 h-4 text-accent" />{meta.label} leave
                     </div>
-                    <span className="text-xs font-mono text-[#8A92A6]">{b.used}/{b.allowance}d used</span>
+                    <span className="text-xs font-mono text-muted">{b.used}/{b.allowance}d used</span>
                   </div>
-                  <div className="text-2xl font-semibold tracking-tight text-[#E6E9F0]">
-                    {b.remaining}<span className="text-sm text-[#8A92A6] ml-1">days left</span>
+                  <div className="text-2xl font-semibold tracking-tight text-foreground">
+                    {b.remaining}<span className="text-sm text-muted ml-1">days left</span>
                   </div>
-                  <div className="mt-3 h-1.5 rounded-full bg-[#1B1F2A] overflow-hidden">
-                    <div className="h-full rounded-full bg-[#00C2FF]" style={{ width: `${pct}%` }} />
+                  <div className="mt-3 h-1.5 rounded-full bg-surface-sunken overflow-hidden">
+                    <div className="h-full rounded-full bg-accent" style={{ width: `${pct}%` }} />
                   </div>
                 </div>
               );
@@ -350,32 +350,32 @@ export default function MyHRPage() {
 
           {/* Request form */}
           {showForm && (
-            <div className="bg-[#12151D] border border-[#00C2FF]/30 rounded-xl p-4 space-y-3">
+            <div className="bg-surface border border-accent/30 rounded-xl p-4 space-y-3">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-[#8A92A6] mb-1">Type</label>
+                  <label className="block text-xs font-medium text-muted mb-1">Type</label>
                   <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className={inputClass}>
                     {Object.entries(LEAVE_META).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-[#8A92A6] mb-1">First day</label>
+                  <label className="block text-xs font-medium text-muted mb-1">First day</label>
                   <input type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} className={inputClass} />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-[#8A92A6] mb-1">Last day</label>
+                  <label className="block text-xs font-medium text-muted mb-1">Last day</label>
                   <input type="date" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} className={inputClass} />
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-medium text-[#8A92A6] mb-1">Reason (optional)</label>
+                <label className="block text-xs font-medium text-muted mb-1">Reason (optional)</label>
                 <textarea rows={2} value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} className={inputClass} placeholder="Short note for the approver" />
               </div>
               <div className="flex justify-end">
                 <button
                   onClick={() => void submitLeave()}
                   disabled={submitting}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-[#00C2FF] text-[#06121A] hover:bg-[#33cfff] disabled:opacity-50 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-accent text-accent-foreground hover:bg-accent disabled:opacity-50 transition-colors"
                 >
                   {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                   Submit request
@@ -389,17 +389,17 @@ export default function MyHRPage() {
             <div className="lg:col-span-2">
               <Card title="My leave requests" icon={CalendarDays}>
                 {requests.length === 0 ? (
-                  <p className="text-sm text-[#5A6275] py-6 text-center">No leave requests yet.</p>
+                  <p className="text-sm text-subtle py-6 text-center">No leave requests yet.</p>
                 ) : (
                   <div className="space-y-2">
                     {requests.map((r) => (
-                      <div key={r.id} className="flex items-center justify-between gap-3 px-3 py-2.5 bg-[#1B1F2A]/50 border border-[#262A35] rounded-lg">
+                      <div key={r.id} className="flex items-center justify-between gap-3 px-3 py-2.5 bg-surface-sunken/50 border border-border rounded-lg">
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-sm font-medium text-[#E6E9F0]">{LEAVE_META[r.type]?.label ?? r.type}</span>
-                            <span className="text-xs font-mono text-[#8A92A6]">{fmt(r.startDate)} → {fmt(r.endDate)} · {r.days}d</span>
+                            <span className="text-sm font-medium text-foreground">{LEAVE_META[r.type]?.label ?? r.type}</span>
+                            <span className="text-xs font-mono text-muted">{fmt(r.startDate)} → {fmt(r.endDate)} · {r.days}d</span>
                           </div>
-                          {r.reviewNote && <p className="text-xs text-[#8A92A6] mt-0.5 truncate">Note: {r.reviewNote}</p>}
+                          {r.reviewNote && <p className="text-xs text-muted mt-0.5 truncate">Note: {r.reviewNote}</p>}
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
                           <span className={`px-2 py-0.5 text-[11px] font-medium rounded-full border ${STATUS_STYLE[r.status] ?? STATUS_STYLE.CANCELLED}`}>
@@ -407,7 +407,7 @@ export default function MyHRPage() {
                           </span>
                           {(r.status === "PENDING" || r.status === "APPROVED") && (
                             <button onClick={() => void cancelRequest(r.id)} title="Cancel"
-                              className="p-1.5 rounded-md text-[#5A6275] hover:text-red-400 hover:bg-red-500/10 transition-colors">
+                              className="p-1.5 rounded-md text-subtle hover:text-crit hover:bg-crit/10 transition-colors">
                               <X className="w-3.5 h-3.5" />
                             </button>
                           )}
@@ -422,13 +422,13 @@ export default function MyHRPage() {
             {/* Holidays */}
             <Card title="Company holidays" icon={CalendarOff}>
               {holidays.length === 0 ? (
-                <p className="text-sm text-[#5A6275] py-6 text-center">No holidays configured.</p>
+                <p className="text-sm text-subtle py-6 text-center">No holidays configured.</p>
               ) : (
                 <div className="space-y-1.5">
                   {holidays.map((h) => (
-                    <div key={h.id} className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-[#1B1F2A] transition-colors">
-                      <span className="text-sm text-[#E6E9F0]">{h.name}</span>
-                      <span className="text-xs font-mono text-[#8A92A6]">{fmt(h.date)}</span>
+                    <div key={h.id} className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-surface-sunken transition-colors">
+                      <span className="text-sm text-foreground">{h.name}</span>
+                      <span className="text-xs font-mono text-muted">{fmt(h.date)}</span>
                     </div>
                   ))}
                 </div>
@@ -442,7 +442,7 @@ export default function MyHRPage() {
               title="My documents"
               icon={FileText}
               action={
-                <label className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium rounded-md text-[#8A92A6] hover:text-[#E6E9F0] hover:bg-[#1B1F2A] cursor-pointer transition-colors">
+                <label className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium rounded-md text-muted hover:text-foreground hover:bg-surface-sunken cursor-pointer transition-colors">
                   {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
                   Upload
                   <input type="file" className="hidden" disabled={uploading}
@@ -451,19 +451,19 @@ export default function MyHRPage() {
               }
             >
               {docs.length === 0 ? (
-                <p className="text-sm text-[#5A6275] py-6 text-center">No documents on file.</p>
+                <p className="text-sm text-subtle py-6 text-center">No documents on file.</p>
               ) : (
                 <div className="space-y-1.5">
                   {docs.map((d) => (
-                    <div key={d.id} className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg hover:bg-[#1B1F2A] transition-colors">
+                    <div key={d.id} className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg hover:bg-surface-sunken transition-colors">
                       <div className="min-w-0">
-                        <p className="text-sm text-[#E6E9F0] truncate">{d.title}</p>
-                        <p className="text-xs text-[#5A6275]">
+                        <p className="text-sm text-foreground truncate">{d.title}</p>
+                        <p className="text-xs text-subtle">
                           {CATEGORY_LABEL[d.category] ?? d.category} · {fmtSize(d.size)} · {fmt(d.createdAt)}
                         </p>
                       </div>
                       <a href={`/api/hr/documents/${d.id}`} target="_blank" rel="noreferrer" title="Download"
-                        className="p-1.5 rounded-md text-[#5A6275] hover:text-[#00C2FF] hover:bg-[#0E2532] shrink-0 transition-colors">
+                        className="p-1.5 rounded-md text-subtle hover:text-accent hover:bg-accent-soft shrink-0 transition-colors">
                         <Download className="w-4 h-4" />
                       </a>
                     </div>
@@ -475,22 +475,22 @@ export default function MyHRPage() {
             {/* Onboarding checklist */}
             <Card title="My onboarding" icon={ClipboardList}>
               {checklist.length === 0 ? (
-                <p className="text-sm text-[#5A6275] py-6 text-center">No checklist assigned.</p>
+                <p className="text-sm text-subtle py-6 text-center">No checklist assigned.</p>
               ) : (
                 <div className="space-y-1.5">
                   {checklist.map((item) => (
                     <button key={item.id} onClick={() => void toggleItem(item)}
-                      className="w-full flex items-start gap-3 px-3 py-2 rounded-lg text-left hover:bg-[#1B1F2A] transition-colors">
+                      className="w-full flex items-start gap-3 px-3 py-2 rounded-lg text-left hover:bg-surface-sunken transition-colors">
                       {item.completedAt
-                        ? <CheckCircle2 className="w-4.5 h-4.5 text-emerald-400 shrink-0 mt-0.5" />
-                        : <div className="w-4.5 h-4.5 rounded-full border-2 border-[#2E333F] shrink-0 mt-0.5" />}
+                        ? <CheckCircle2 className="w-4.5 h-4.5 text-ok shrink-0 mt-0.5" />
+                        : <div className="w-4.5 h-4.5 rounded-full border-2 border-border-strong shrink-0 mt-0.5" />}
                       <div className="min-w-0">
-                        <p className={`text-sm ${item.completedAt ? "text-[#5A6275] line-through" : "text-[#E6E9F0]"}`}>{item.title}</p>
-                        {item.description && <p className="text-xs text-[#5A6275]">{item.description}</p>}
+                        <p className={`text-sm ${item.completedAt ? "text-subtle line-through" : "text-foreground"}`}>{item.title}</p>
+                        {item.description && <p className="text-xs text-subtle">{item.description}</p>}
                       </div>
                     </button>
                   ))}
-                  <p className="text-xs text-[#5A6275] pt-2 text-right font-mono">
+                  <p className="text-xs text-subtle pt-2 text-right font-mono">
                     {checklist.filter((i) => i.completedAt).length}/{checklist.length} complete
                   </p>
                 </div>

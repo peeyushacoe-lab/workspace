@@ -33,12 +33,12 @@ interface Props {
 
 // Consistent avatar colour palette (matches SidebarLayout)
 const AVATAR_COLORS = [
-  { bg: "bg-[#00C2FF]", text: "text-[#06121A]" },
-  { bg: "bg-[#7c3aed]", text: "text-white" },
-  { bg: "bg-[#059669]", text: "text-white" },
-  { bg: "bg-[#d97706]", text: "text-white" },
-  { bg: "bg-[#dc2626]", text: "text-white" },
-  { bg: "bg-[#0891b2]", text: "text-white" },
+  { bg: "bg-accent", text: "text-accent-foreground" },
+  { bg: "bg-violet", text: "text-white" },
+  { bg: "bg-ok", text: "text-white" },
+  { bg: "bg-warn", text: "text-white" },
+  { bg: "bg-crit", text: "text-white" },
+  { bg: "bg-accent", text: "text-white" },
 ];
 
 function avatarColor(name: string) {
@@ -78,18 +78,18 @@ export function UserProfileModal({ userId, onClose, onCompose }: Props) {
     >
       <div className="absolute inset-0 bg-black/30" />
       <div
-        className="relative w-full max-w-sm bg-[#12151D] border border-[#262A35] rounded-2xl shadow-xl overflow-hidden"
+        className="relative w-full max-w-sm bg-surface border border-border rounded-2xl shadow-xl overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         {/* Cover banner */}
-        <div className="relative h-24 bg-gradient-to-r from-[#0E2532] to-[#0E2532]">
+        <div className="relative h-24 bg-gradient-to-r from-accent-soft to-accent-soft">
           {profile?.coverUrl && (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={profile.coverUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
           )}
           <button
             onClick={onClose}
-            className="absolute top-3 right-3 p-1.5 rounded-full bg-[#12151D]/80 hover:bg-[#12151D] text-[#8A92A6] hover:text-[#E6E9F0] transition-colors shadow-sm"
+            className="absolute top-3 right-3 p-1.5 rounded-full bg-surface/80 hover:bg-surface text-muted hover:text-foreground transition-colors shadow-sm"
           >
             <X size={15} />
           </button>
@@ -99,7 +99,7 @@ export function UserProfileModal({ userId, onClose, onCompose }: Props) {
         <div className="px-4 pb-4 sm:px-5 sm:pb-5">
           {/* Avatar — -mt-10 pulls it up to overlap cover bottom */}
           <div className="-mt-10 mb-3 flex items-end justify-between">
-            <div className="rounded-full border-4 border-white shadow-sm overflow-hidden flex-shrink-0">
+            <div className="rounded-full border-4 border-border shadow-sm overflow-hidden flex-shrink-0">
               {profile?.avatarUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -116,45 +116,45 @@ export function UserProfileModal({ userId, onClose, onCompose }: Props) {
           </div>
 
           {loading && (
-            <div className="py-8 flex items-center justify-center gap-2 text-[#8A92A6] text-sm">
+            <div className="py-8 flex items-center justify-center gap-2 text-muted text-sm">
               <Loader2 className="w-4 h-4 animate-spin" />
               Loading profile…
             </div>
           )}
 
           {error && (
-            <div className="py-6 text-center text-[#ea4335] text-sm">{error}</div>
+            <div className="py-6 text-center text-crit text-sm">{error}</div>
           )}
 
           {profile && !loading && (
             <>
               <div className="mb-4">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-lg font-semibold text-[#E6E9F0]">{displayName}</h2>
+                  <h2 className="text-lg font-semibold text-foreground">{displayName}</h2>
                   {profile.pronouns && (
-                    <span className="text-xs text-[#5A6275]">({profile.pronouns})</span>
+                    <span className="text-xs text-subtle">({profile.pronouns})</span>
                   )}
                 </div>
                 {(profile.statusEmoji || profile.statusMessage) && (
-                  <p className="text-sm text-[#8A92A6] mt-0.5">
+                  <p className="text-sm text-muted mt-0.5">
                     {profile.statusEmoji} {profile.statusMessage}
                   </p>
                 )}
                 <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#0E2532] text-[#00C2FF] border border-[#00C2FF]/20">
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-accent-soft text-accent border border-accent/20">
                     {roleLabel}
                   </span>
                   {profile.jobTitle && (
-                    <span className="text-sm text-[#8A92A6]">{profile.jobTitle}</span>
+                    <span className="text-sm text-muted">{profile.jobTitle}</span>
                   )}
                 </div>
                 {profile.department && (
-                  <p className="text-xs text-[#5A6275] mt-1">{profile.department}</p>
+                  <p className="text-xs text-subtle mt-1">{profile.department}</p>
                 )}
               </div>
 
               {profile.bio && (
-                <p className="text-sm text-[#8A92A6] leading-relaxed mb-4 border-t border-[#262A35] pt-4">
+                <p className="text-sm text-muted leading-relaxed mb-4 border-t border-border pt-4">
                   {profile.bio}
                 </p>
               )}
@@ -170,17 +170,17 @@ export function UserProfileModal({ userId, onClose, onCompose }: Props) {
                 )}
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-2 border-t border-[#262A35] pt-4">
+              <div className="flex flex-col sm:flex-row gap-2 border-t border-border pt-4">
                 <button
                   onClick={() => { onCompose?.(profile.email); onClose(); }}
-                  className="flex-1 flex items-center justify-center gap-2 bg-[#00C2FF] hover:bg-[#0098E6] text-[#06121A] font-semibold text-sm py-2.5 rounded-lg transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-accent-foreground font-semibold text-sm py-2.5 rounded-lg transition-colors"
                 >
                   <Mail size={14} />
                   Send email
                 </button>
                 <button
                   onClick={() => { void navigator.clipboard?.writeText(profile.email); }}
-                  className="px-4 py-2.5 rounded-lg border border-[#262A35] hover:bg-[#1B1F2A] text-[#8A92A6] hover:text-[#E6E9F0] text-sm transition-colors"
+                  className="px-4 py-2.5 rounded-lg border border-border hover:bg-surface-sunken text-muted hover:text-foreground text-sm transition-colors"
                   title="Copy email address"
                 >
                   Copy
@@ -196,10 +196,10 @@ export function UserProfileModal({ userId, onClose, onCompose }: Props) {
 
 function InfoRow({ icon, value, link }: { icon: React.ReactNode; value: string; link?: string }) {
   return (
-    <div className="flex items-center gap-2 text-sm text-[#8A92A6]">
-      <span className="text-[#5A6275] flex-shrink-0">{icon}</span>
+    <div className="flex items-center gap-2 text-sm text-muted">
+      <span className="text-subtle flex-shrink-0">{icon}</span>
       {link ? (
-        <a href={link} target="_blank" rel="noopener noreferrer" className="hover:text-[#00C2FF] truncate transition-colors">
+        <a href={link} target="_blank" rel="noopener noreferrer" className="hover:text-accent truncate transition-colors">
           {value}
         </a>
       ) : (

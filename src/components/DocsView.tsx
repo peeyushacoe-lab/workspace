@@ -59,7 +59,7 @@ const TrackInsert = Mark.create({
   parseHTML() { return [{ tag: "ins[data-sugg]" }]; },
   renderHTML({ HTMLAttributes }) {
     return ["ins", { "data-sugg": "", "data-id": HTMLAttributes.id, "data-author": HTMLAttributes.author,
-      style: "color:#0f9d58;text-decoration:underline;background:rgba(15,157,88,0.08);border-radius:2px;" }, 0];
+      style: "color:#0e7c5a;text-decoration:underline;background:color-mix(in srgb, var(--ok) 8%, transparent);border-radius:2px;" }, 0];
   },
 });
 
@@ -75,7 +75,7 @@ const TrackDelete = Mark.create({
   parseHTML() { return [{ tag: "del[data-sugg]" }]; },
   renderHTML({ HTMLAttributes }) {
     return ["del", { "data-sugg": "", "data-id": HTMLAttributes.id, "data-author": HTMLAttributes.author,
-      style: "color:#ea4335;text-decoration:line-through;background:rgba(234,67,53,0.07);border-radius:2px;opacity:0.85;" }, 0];
+      style: "color:#c0362c;text-decoration:line-through;background:color-mix(in srgb, var(--crit) 7%, transparent);border-radius:2px;opacity:0.85;" }, 0];
   },
 });
 
@@ -108,10 +108,10 @@ type VersionSnapshot = {
 type SecurityLabel = "PUBLIC" | "INTERNAL" | "CONFIDENTIAL" | "RESTRICTED";
 
 const SECURITY_LABELS: { value: SecurityLabel; label: string; color: string; bg: string }[] = [
-  { value: "PUBLIC",       label: "Public",       color: "text-[#0f9d58]", bg: "bg-emerald-500/10 border-emerald-500/20" },
-  { value: "INTERNAL",     label: "Internal",     color: "text-[#00C2FF]", bg: "bg-blue-500/10 border-blue-500/20"    },
-  { value: "CONFIDENTIAL", label: "Confidential", color: "text-[#f4b400]", bg: "bg-amber-500/10 border-amber-500/20"  },
-  { value: "RESTRICTED",   label: "Restricted",   color: "text-[#ea4335]", bg: "bg-red-500/10 border-red-500/20"      },
+  { value: "PUBLIC",       label: "Public",       color: "text-ok", bg: "bg-ok/10 border-ok/20" },
+  { value: "INTERNAL",     label: "Internal",     color: "text-accent", bg: "bg-accent/10 border-accent/20"    },
+  { value: "CONFIDENTIAL", label: "Confidential", color: "text-warn", bg: "bg-warn/10 border-warn/20"  },
+  { value: "RESTRICTED",   label: "Restricted",   color: "text-crit", bg: "bg-crit/10 border-crit/20"      },
 ];
 
 const REMOTE_ORIGIN = "sse-relay";
@@ -339,7 +339,7 @@ function computeStats(text: string): DocStats {
 // ─── Collab hook ──────────────────────────────────────────────────────────────
 
 // Assign each user a stable accent colour for their cursor
-const COLLAB_COLORS = ["#00C2FF","#0f9d58","#f4b400","#ea4335","#a142f4","#ff6d00","#00bcd4","#e91e63"];
+const COLLAB_COLORS = ["#4f46e5","#0e7c5a","#b45309","#c0362c","#a142f4","#b45309","#00bcd4","#e91e63"];
 function userColor(userId: string): string {
   let h = 0;
   for (let i = 0; i < userId.length; i++) h = (h * 31 + userId.charCodeAt(i)) >>> 0;
@@ -422,17 +422,17 @@ function TB({ icon, title, active, onClick }: {
 }) {
   return (
     <button title={title} onClick={onClick}
-      className={`flex items-center justify-center h-7 w-7 rounded text-sm transition-colors ${active ? "bg-[#0E2532] text-[#00C2FF]" : "text-[#8A92A6] hover:bg-[#1B1F2A]"}`}>
+      className={`flex items-center justify-center h-7 w-7 rounded text-sm transition-colors ${active ? "bg-accent-soft text-accent" : "text-muted hover:bg-surface-sunken"}`}>
       {icon}
     </button>
   );
 }
 
-function TSep() { return <div className="w-px h-5 bg-[#262A35] mx-0.5" />; }
+function TSep() { return <div className="w-px h-5 bg-border mx-0.5" />; }
 
 function PanelTab({ active, icon, label, onClick }: { active: boolean; icon: React.ReactNode; label: string; onClick: () => void }) {
   return (
-    <button onClick={onClick} className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium border-b-2 transition-colors ${active ? "border-[#00C2FF] text-[#00C2FF]" : "border-transparent text-[#8A92A6] hover:text-[#E6E9F0]"}`}>
+    <button onClick={onClick} className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium border-b-2 transition-colors ${active ? "border-accent text-accent" : "border-transparent text-muted hover:text-foreground"}`}>
       {icon} {label}
     </button>
   );
@@ -449,23 +449,23 @@ function DocItem({ doc, selected, onSelect, onPin, onDelete }: {
   const [hover, setHover] = useState(false);
   return (
     <div
-      className={`group flex items-start gap-2 px-3 py-2 cursor-pointer transition-colors ${selected ? "bg-[#0E2532]" : "hover:bg-[#262A35]"}`}
+      className={`group flex items-start gap-2 px-3 py-2 cursor-pointer transition-colors ${selected ? "bg-accent-soft" : "hover:bg-border"}`}
       onClick={onSelect}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
     >
-      <FileText className={`h-4 w-4 flex-shrink-0 mt-0.5 ${selected ? "text-[#00C2FF]" : "text-[#5A6275]"}`} />
+      <FileText className={`h-4 w-4 flex-shrink-0 mt-0.5 ${selected ? "text-accent" : "text-subtle"}`} />
       <div className="flex-1 min-w-0">
-        <p className={`text-xs font-medium truncate ${selected ? "text-[#00C2FF]" : "text-[#E6E9F0]"}`}>{doc.title}</p>
-        <p className="text-[10px] text-[#5A6275] truncate">{docPreview(doc.content)}</p>
-        <p className="text-[10px] text-[#bdc1c6]">{formatDistanceToNow(new Date(doc.updatedAt), { addSuffix: true })}</p>
+        <p className={`text-xs font-medium truncate ${selected ? "text-accent" : "text-foreground"}`}>{doc.title}</p>
+        <p className="text-[10px] text-subtle truncate">{docPreview(doc.content)}</p>
+        <p className="text-[10px] text-subtle">{formatDistanceToNow(new Date(doc.updatedAt), { addSuffix: true })}</p>
       </div>
       {hover && (
         <div className="flex flex-col gap-0.5">
-          <button onClick={e => onPin(doc.id, doc.pinned, e)} className="p-0.5 rounded text-[#5A6275] hover:text-[#E6E9F0]">
+          <button onClick={e => onPin(doc.id, doc.pinned, e)} className="p-0.5 rounded text-subtle hover:text-foreground">
             {doc.pinned ? <PinOff className="h-3 w-3" /> : <Pin className="h-3 w-3" />}
           </button>
-          <button onClick={e => onDelete(doc.id, e)} className="p-0.5 rounded text-[#5A6275] hover:text-[#ea4335]">
+          <button onClick={e => onDelete(doc.id, e)} className="p-0.5 rounded text-subtle hover:text-crit">
             <Trash2 className="h-3 w-3" />
           </button>
         </div>
@@ -867,11 +867,11 @@ export function DocsView() {
   const exportHTML = () => {
     if (!editor) return;
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title>
-<style>body{font-family:Arial,sans-serif;max-width:820px;margin:40px auto;padding:20px 40px;line-height:1.7;color:#E6E9F0}
+<style>body{font-family:Arial,sans-serif;max-width:820px;margin:40px auto;padding:20px 40px;line-height:1.7;color:#1a1a18}
 h1{font-size:2rem;margin-top:1.5em}h2{font-size:1.5rem}h3{font-size:1.2rem}
 pre{background:#f4f4f4;padding:12px;border-radius:6px;overflow:auto}
-blockquote{border-left:4px solid #00C2FF;margin:0;padding-left:1em;color:#8A92A6}
-table{border-collapse:collapse;width:100%}td,th{border:1px solid #262A35;padding:8px}</style></head>
+blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65}
+table{border-collapse:collapse;width:100%}td,th{border:1px solid #e7e6e1;padding:8px}</style></head>
 <body><h1>${title}</h1>${editor.getHTML()}</body></html>`;
     const blob = new Blob([html], { type: "text/html" });
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `${title}.html`; a.click();
@@ -891,7 +891,7 @@ table{border-collapse:collapse;width:100%}td,th{border:1px solid #262A35;padding
 <style>body{font-family:Arial,sans-serif;max-width:820px;margin:40px auto;padding:20px 40px;line-height:1.7}
 h1{font-size:2rem}h2{font-size:1.5rem}h3{font-size:1.2rem}
 pre{background:#f4f4f4;padding:12px;border-radius:6px}
-blockquote{border-left:4px solid #00C2FF;margin:0;padding-left:1em;color:#8A92A6}
+blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65}
 @media print{body{margin:0}}</style></head>
 <body><h1>${title}</h1>${editor.getHTML()}</body></html>`);
     w.document.close(); w.print();
@@ -1106,46 +1106,46 @@ blockquote{border-left:4px solid #00C2FF;margin:0;padding-left:1em;color:#8A92A6
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div className="flex h-screen bg-[#12151D] overflow-hidden text-[#E6E9F0]" onClick={closeMenus}>
+    <div className="flex h-screen bg-surface overflow-hidden text-foreground" onClick={closeMenus}>
 
       {/* ── Doc list sidebar ── */}
-      <aside className="w-64 flex flex-col border-r border-[#262A35] bg-[#12151D] overflow-hidden flex-shrink-0">
+      <aside className="w-64 flex flex-col border-r border-border bg-surface overflow-hidden flex-shrink-0">
         <div className="px-3 pt-3">
           <a href="/apps" title="Back to Apps"
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-[#8A92A6] hover:text-[#E6E9F0] hover:bg-[#1B1F2A] rounded-md px-2 py-1 -ml-1 transition-colors">
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-muted hover:text-foreground hover:bg-surface-sunken rounded-md px-2 py-1 -ml-1 transition-colors">
             <ChevronDown className="h-3.5 w-3.5 rotate-90" /> Apps
           </a>
         </div>
-        <div className="p-3 border-b border-[#262A35]">
+        <div className="p-3 border-b border-border">
           <button onClick={() => void createDoc()}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold bg-[#00C2FF] text-[#06121A] rounded-lg hover:bg-[#0098E6] transition-colors">
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold bg-accent text-accent-foreground rounded-lg hover:bg-accent-hover transition-colors">
             <Plus className="h-4 w-4" /> New document
           </button>
         </div>
-        <div className="px-3 py-2 border-b border-[#262A35]">
+        <div className="px-3 py-2 border-b border-border">
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#5A6275]" />
-            <input className="w-full pl-8 pr-2 py-1.5 text-xs bg-[#12151D] border border-[#262A35] rounded-lg placeholder:text-[#5A6275] focus:outline-none focus:border-[#00C2FF]/60"
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-subtle" />
+            <input className="w-full pl-8 pr-2 py-1.5 text-xs bg-surface border border-border rounded-lg placeholder:text-subtle focus:outline-none focus:border-accent/60"
               placeholder="Search documents…" value={search} onChange={e => setSearch(e.target.value)} />
           </div>
         </div>
         <div className="flex-1 overflow-y-auto overflow-x-hidden py-2">
           {loading ? (
-            <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-[#00C2FF]" /></div>
+            <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-accent" /></div>
           ) : (
             <>
               {pinnedDocs.length > 0 && (
                 <div className="mb-1">
-                  <p className="px-3 py-1 text-[10px] font-semibold text-[#5A6275] uppercase tracking-wider">Pinned</p>
+                  <p className="px-3 py-1 text-[10px] font-semibold text-subtle uppercase tracking-wider">Pinned</p>
                   {pinnedDocs.map(doc => <DocItem key={doc.id} doc={doc} selected={doc.id === selectedId} onSelect={() => selectDoc(doc)} onPin={pinDoc} onDelete={deleteDoc} />)}
-                  <div className="h-px bg-[#262A35] mx-3 my-1" />
+                  <div className="h-px bg-border mx-3 my-1" />
                 </div>
               )}
               {unpinnedDocs.map(doc => <DocItem key={doc.id} doc={doc} selected={doc.id === selectedId} onSelect={() => selectDoc(doc)} onPin={pinDoc} onDelete={deleteDoc} />)}
               {filteredDocs.length === 0 && (
                 <div className="text-center py-8 px-4">
-                  <FileText className="h-8 w-8 text-[#bdc1c6] mx-auto mb-2" />
-                  <p className="text-xs text-[#5A6275]">{search ? "No matching documents" : "No documents yet"}</p>
+                  <FileText className="h-8 w-8 text-subtle mx-auto mb-2" />
+                  <p className="text-xs text-subtle">{search ? "No matching documents" : "No documents yet"}</p>
                 </div>
               )}
             </>
@@ -1158,9 +1158,9 @@ blockquote{border-left:4px solid #00C2FF;margin:0;padding-left:1em;color:#8A92A6
         <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
 
           {/* Title & action bar */}
-          <div className="flex items-center gap-2 px-4 py-2 border-b border-[#262A35] bg-[#12151D] z-10 flex-wrap">
+          <div className="flex items-center gap-2 px-4 py-2 border-b border-border bg-surface z-10 flex-wrap">
             <input
-              className="flex-1 min-w-32 text-base font-semibold text-[#E6E9F0] bg-transparent border-none outline-none focus:bg-[#1B1F2A] rounded px-1"
+              className="flex-1 min-w-32 text-base font-semibold text-foreground bg-transparent border-none outline-none focus:bg-surface-sunken rounded px-1"
               value={title}
               onChange={e => setTitle(e.target.value)}
               onBlur={e => void saveTitle(e.target.value)}
@@ -1175,10 +1175,10 @@ blockquote{border-left:4px solid #00C2FF;margin:0;padding-left:1em;color:#8A92A6
                 <Shield className="h-3 w-3" /> {secInfo.label} <ChevronDown className="h-2.5 w-2.5" />
               </button>
               {showSecurityMenu && (
-                <div className="absolute right-0 top-full mt-1 w-40 bg-[#12151D] border border-[#262A35] rounded-lg shadow-lg z-50 py-1">
+                <div className="absolute right-0 top-full mt-1 w-40 bg-surface border border-border rounded-lg shadow-lg z-50 py-1">
                   {SECURITY_LABELS.map(sl => (
                     <button key={sl.value} onClick={() => { setSecurityLabel(sl.value); setShowSecurityMenu(false); }}
-                      className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-[#1B1F2A] ${securityLabel === sl.value ? `${sl.color} font-semibold` : "text-[#8A92A6]"}`}>
+                      className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-surface-sunken ${securityLabel === sl.value ? `${sl.color} font-semibold` : "text-muted"}`}>
                       <Shield className="h-3 w-3" /> {sl.label}
                       {securityLabel === sl.value && <Check className="h-3 w-3 ml-auto" />}
                     </button>
@@ -1189,32 +1189,32 @@ blockquote{border-left:4px solid #00C2FF;margin:0;padding-left:1em;color:#8A92A6
 
             {/* Collab avatars */}
             {collaborators.length > 0 && (
-              <div className="flex items-center gap-1 px-2 py-0.5 bg-[#1B1F2A] rounded-full">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#0f9d58] animate-pulse" />
-                <span className="text-[11px] text-[#8A92A6]">{collaborators.length} live</span>
+              <div className="flex items-center gap-1 px-2 py-0.5 bg-surface-sunken rounded-full">
+                <span className="w-1.5 h-1.5 rounded-full bg-ok animate-pulse" />
+                <span className="text-[11px] text-muted">{collaborators.length} live</span>
               </div>
             )}
             {collaborators.slice(0, 4).map(c => (
               <div key={c.userId} title={`${c.name} — editing`}
-                className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold border-2 border-white -ml-2 first:ml-0 ring-2 shadow-sm"
+                className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold border-2 border-border -ml-2 first:ml-0 ring-2 shadow-sm"
                 style={{ backgroundColor: c.color, borderColor: "white", outline: `2px solid ${c.color}`, outlineOffset: "1px" }}>
                 {c.name[0]?.toUpperCase()}
               </div>
             ))}
             {collaborators.length > 4 && (
-              <div className="w-7 h-7 rounded-full flex items-center justify-center bg-[#262A35] text-[#8A92A6] text-[10px] font-bold border-2 border-white -ml-2">
+              <div className="w-7 h-7 rounded-full flex items-center justify-center bg-border text-muted text-[10px] font-bold border-2 border-border -ml-2">
                 +{collaborators.length - 4}
               </div>
             )}
 
             {isOffline && (
-              <span className="flex items-center gap-1 text-[11px] font-medium text-[#f4b400]">
+              <span className="flex items-center gap-1 text-[11px] font-medium text-warn">
                 <WifiOff className="h-3.5 w-3.5" /> Offline — editing locally
               </span>
             )}
 
-            <span className="text-[11px] text-[#5A6275]">
-              {saving ? <span className="flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" />Saving…</span> : <span className="text-[#0f9d58]">Saved</span>}
+            <span className="text-[11px] text-subtle">
+              {saving ? <span className="flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" />Saving…</span> : <span className="text-ok">Saved</span>}
             </span>
 
             <div className="flex items-center gap-0.5">
@@ -1222,7 +1222,7 @@ blockquote{border-left:4px solid #00C2FF;margin:0;padding-left:1em;color:#8A92A6
               <IconBtn icon={<Search className="h-4 w-4" />} title="Find & replace (⌘H)" onClick={() => setShowFindReplace(true)} />
               {/* Columns */}
               <select value={docColumns} onChange={e => setDocColumns(Number(e.target.value))} title="Text columns"
-                className="text-xs border border-[#262A35] rounded px-1 h-7 bg-[#12151D] text-[#8A92A6] cursor-pointer">
+                className="text-xs border border-border rounded px-1 h-7 bg-surface text-muted cursor-pointer">
                 <option value={1}>1 col</option>
                 <option value={2}>2 cols</option>
                 <option value={3}>3 cols</option>
@@ -1231,36 +1231,36 @@ blockquote{border-left:4px solid #00C2FF;margin:0;padding-left:1em;color:#8A92A6
               <div className="relative" onClick={e => e.stopPropagation()}>
                 <IconBtn icon={<FileCog className="h-4 w-4" />} title="Page setup" active={showPageSetupMenu} onClick={() => { setShowPageSetupMenu(v => !v); setShowStats(false); }} />
                 {showPageSetupMenu && (
-                  <div className="absolute right-0 top-full mt-1 w-56 bg-[#12151D] border border-[#262A35] rounded-lg shadow-lg z-50 p-3 space-y-3">
-                    <p className="text-xs font-semibold text-[#E6E9F0]">Page setup</p>
+                  <div className="absolute right-0 top-full mt-1 w-56 bg-surface border border-border rounded-lg shadow-lg z-50 p-3 space-y-3">
+                    <p className="text-xs font-semibold text-foreground">Page setup</p>
                     <div className="space-y-1">
-                      <p className="text-[11px] font-medium text-[#8A92A6]">Page size</p>
+                      <p className="text-[11px] font-medium text-muted">Page size</p>
                       <div className="grid grid-cols-3 gap-1">
                         {(["Letter", "A4", "Legal"] as const).map(s => (
                           <button key={s} onClick={() => updatePageSetup({ size: s })}
-                            className={`px-2 py-1 text-[11px] font-medium rounded border transition-colors ${pageSetup.size === s ? "bg-[#0E2532] text-[#00C2FF] border-[#00C2FF]/40" : "border-[#262A35] text-[#8A92A6] hover:bg-[#1B1F2A]"}`}>
+                            className={`px-2 py-1 text-[11px] font-medium rounded border transition-colors ${pageSetup.size === s ? "bg-accent-soft text-accent border-accent/40" : "border-border text-muted hover:bg-surface-sunken"}`}>
                             {s}
                           </button>
                         ))}
                       </div>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-[11px] font-medium text-[#8A92A6]">Orientation</p>
+                      <p className="text-[11px] font-medium text-muted">Orientation</p>
                       <div className="grid grid-cols-2 gap-1">
                         {(["Portrait", "Landscape"] as const).map(o => (
                           <button key={o} onClick={() => updatePageSetup({ orientation: o })}
-                            className={`px-2 py-1 text-[11px] font-medium rounded border transition-colors ${pageSetup.orientation === o ? "bg-[#0E2532] text-[#00C2FF] border-[#00C2FF]/40" : "border-[#262A35] text-[#8A92A6] hover:bg-[#1B1F2A]"}`}>
+                            className={`px-2 py-1 text-[11px] font-medium rounded border transition-colors ${pageSetup.orientation === o ? "bg-accent-soft text-accent border-accent/40" : "border-border text-muted hover:bg-surface-sunken"}`}>
                             {o}
                           </button>
                         ))}
                       </div>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-[11px] font-medium text-[#8A92A6]">Margins</p>
+                      <p className="text-[11px] font-medium text-muted">Margins</p>
                       <div className="grid grid-cols-3 gap-1">
                         {(["Normal", "Narrow", "Wide"] as const).map(m => (
                           <button key={m} onClick={() => updatePageSetup({ margins: m })}
-                            className={`px-2 py-1 text-[11px] font-medium rounded border transition-colors ${pageSetup.margins === m ? "bg-[#0E2532] text-[#00C2FF] border-[#00C2FF]/40" : "border-[#262A35] text-[#8A92A6] hover:bg-[#1B1F2A]"}`}>
+                            className={`px-2 py-1 text-[11px] font-medium rounded border transition-colors ${pageSetup.margins === m ? "bg-accent-soft text-accent border-accent/40" : "border-border text-muted hover:bg-surface-sunken"}`}>
                             {m}
                           </button>
                         ))}
@@ -1277,10 +1277,10 @@ blockquote{border-left:4px solid #00C2FF;margin:0;padding-left:1em;color:#8A92A6
               <div className="relative" onClick={e => e.stopPropagation()}>
                 <IconBtn icon={<BarChart3 className="h-4 w-4" />} title="Word count & stats" active={showStats} onClick={() => { const open = !showStats; setShowStats(open); setShowPageSetupMenu(false); if (open) refreshStats(); }} />
                 {showStats && (
-                  <div className="absolute right-0 top-full mt-1 w-60 bg-[#12151D] border border-[#262A35] rounded-lg shadow-lg z-50 p-3">
+                  <div className="absolute right-0 top-full mt-1 w-60 bg-surface border border-border rounded-lg shadow-lg z-50 p-3">
                     <div className="flex items-center gap-2 mb-2">
-                      <BarChart3 className="h-4 w-4 text-[#00C2FF]" />
-                      <p className="text-xs font-semibold text-[#E6E9F0]">Document stats</p>
+                      <BarChart3 className="h-4 w-4 text-accent" />
+                      <p className="text-xs font-semibold text-foreground">Document stats</p>
                     </div>
                     <div className="space-y-1.5">
                       {([
@@ -1292,8 +1292,8 @@ blockquote{border-left:4px solid #00C2FF;margin:0;padding-left:1em;color:#8A92A6
                         ["Reading time", stats.readingMinutes + " min"],
                       ] as const).map(([label, value]) => (
                         <div key={label} className="flex items-center justify-between text-xs">
-                          <span className="text-[#8A92A6]">{label}</span>
-                          <span className="font-semibold text-[#E6E9F0]">{value}</span>
+                          <span className="text-muted">{label}</span>
+                          <span className="font-semibold text-foreground">{value}</span>
                         </div>
                       ))}
                     </div>
@@ -1305,11 +1305,11 @@ blockquote{border-left:4px solid #00C2FF;margin:0;padding-left:1em;color:#8A92A6
               <div className="relative" onClick={e => e.stopPropagation()}>
                 <IconBtn icon={<LayoutTemplate className="h-4 w-4" />} title="Templates" active={showTemplateMenu} onClick={() => setShowTemplateMenu(v => !v)} />
                 {showTemplateMenu && (
-                  <div className="absolute right-0 top-full mt-1 w-44 bg-[#12151D] border border-[#262A35] rounded-lg shadow-lg z-50 py-1">
-                    <p className="px-3 py-1 text-[10px] font-medium text-[#5A6275]">Start from template</p>
+                  <div className="absolute right-0 top-full mt-1 w-44 bg-surface border border-border rounded-lg shadow-lg z-50 py-1">
+                    <p className="px-3 py-1 text-[10px] font-medium text-subtle">Start from template</p>
                     {DOC_TEMPLATES.map(tpl => (
                       <MenuItm key={tpl.id} onClick={() => applyTemplate(tpl)}>
-                        <FileText className="h-3.5 w-3.5 text-[#8A92A6]" /> {tpl.label}
+                        <FileText className="h-3.5 w-3.5 text-muted" /> {tpl.label}
                       </MenuItm>
                     ))}
                   </div>
@@ -1330,18 +1330,18 @@ blockquote{border-left:4px solid #00C2FF;margin:0;padding-left:1em;color:#8A92A6
                 }}
                 className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
                   suggestMode
-                    ? "bg-[#e6f4ea] text-[#0f9d58] border-[#0f9d58]/30"
-                    : "border-[#262A35] text-[#8A92A6] hover:bg-[#1B1F2A]"
+                    ? "bg-ok-soft text-ok border-ok/30"
+                    : "border-border text-muted hover:bg-surface-sunken"
                 }`}
               >
                 <GitMerge className="h-3.5 w-3.5" />
                 {suggestMode ? "Suggesting" : "Suggest"}
               </button>
-              <IconBtn icon={<Sparkles className="h-4 w-4" />} title="AI assistant" active={showAI} activeClass="text-purple-400 bg-purple-500/10" onClick={() => { setShowAI(v => !v); setShowComments(false); setShowHistory(false); setShowSuggestions(false); }} />
+              <IconBtn icon={<Sparkles className="h-4 w-4" />} title="AI assistant" active={showAI} activeClass="text-violet bg-violet/10" onClick={() => { setShowAI(v => !v); setShowComments(false); setShowHistory(false); setShowSuggestions(false); }} />
               <div className="relative" onClick={e => e.stopPropagation()}>
                 <IconBtn icon={<Download className="h-4 w-4" />} title="Export" onClick={() => setShowExportMenu(v => !v)} />
                 {showExportMenu && (
-                  <div className="absolute right-0 top-full mt-1 w-48 bg-[#12151D] border border-[#262A35] rounded-lg shadow-lg z-50 py-1">
+                  <div className="absolute right-0 top-full mt-1 w-48 bg-surface border border-border rounded-lg shadow-lg z-50 py-1">
                     <MenuItm onClick={() => { printDoc(); setShowExportMenu(false); }}>🖨 Print / Save as PDF</MenuItm>
                     <MenuItm onClick={() => { exportHTML(); setShowExportMenu(false); }}>🌐 Export as HTML</MenuItm>
                     <MenuItm onClick={() => { exportText(); setShowExportMenu(false); }}>📄 Export as Plain Text</MenuItm>
@@ -1349,14 +1349,14 @@ blockquote{border-left:4px solid #00C2FF;margin:0;padding-left:1em;color:#8A92A6
                 )}
               </div>
               <button onClick={() => setShowShare(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-[#00C2FF] text-[#06121A] rounded-lg hover:bg-[#0098E6] transition-colors ml-1">
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-accent text-accent-foreground rounded-lg hover:bg-accent-hover transition-colors ml-1">
                 <Share2 className="h-3.5 w-3.5" /> Share
               </button>
             </div>
           </div>
 
           {/* Formatting toolbar */}
-          <div className="flex flex-wrap items-center gap-0.5 px-2 py-1 border-b border-[#262A35] bg-[#12151D] z-10 overflow-x-auto" onClick={e => e.stopPropagation()}>
+          <div className="flex flex-wrap items-center gap-0.5 px-2 py-1 border-b border-border bg-surface z-10 overflow-x-auto" onClick={e => e.stopPropagation()}>
             <TB icon={<Undo2 className="h-3.5 w-3.5" />} title="Undo (⌘Z)" onClick={() => editor?.commands.undo()} />
             <TB icon={<Redo2 className="h-3.5 w-3.5" />} title="Redo (⌘⇧Z)" onClick={() => editor?.commands.redo()} />
             <TSep />
@@ -1364,18 +1364,18 @@ blockquote{border-left:4px solid #00C2FF;margin:0;padding-left:1em;color:#8A92A6
             {/* Heading picker */}
             <div className="relative">
               <button onClick={() => setHeadingMenu(v => !v)}
-                className="flex items-center gap-1 px-2 py-1 text-xs border border-[#262A35] rounded h-7 text-[#8A92A6] hover:bg-[#1B1F2A] min-w-[96px]">
+                className="flex items-center gap-1 px-2 py-1 text-xs border border-border rounded h-7 text-muted hover:bg-surface-sunken min-w-[96px]">
                 {[1,2,3,4,5,6].find(l => editor?.isActive("heading", { level: l }))
                   ? `Heading ${[1,2,3,4,5,6].find(l => editor?.isActive("heading", { level: l }))}`
                   : "Normal text"}
                 <ChevronDown className="h-3 w-3 ml-auto" />
               </button>
               {headingMenu && (
-                <div className="absolute top-full left-0 mt-1 w-44 bg-[#12151D] border border-[#262A35] rounded-lg shadow-lg z-50 py-1">
-                  <button className="w-full px-3 py-2 text-sm text-[#E6E9F0] hover:bg-[#1B1F2A] text-left" onClick={() => { editor?.chain().focus().setParagraph().run(); setHeadingMenu(false); }}>Normal text</button>
+                <div className="absolute top-full left-0 mt-1 w-44 bg-surface border border-border rounded-lg shadow-lg z-50 py-1">
+                  <button className="w-full px-3 py-2 text-sm text-foreground hover:bg-surface-sunken text-left" onClick={() => { editor?.chain().focus().setParagraph().run(); setHeadingMenu(false); }}>Normal text</button>
                   {([1,2,3,4,5,6] as const).map(l => (
                     <button key={l}
-                      className={`w-full px-3 py-1.5 hover:bg-[#1B1F2A] text-left font-semibold text-[#E6E9F0] ${l === 1 ? "text-xl" : l === 2 ? "text-lg" : l === 3 ? "text-base" : "text-sm"}`}
+                      className={`w-full px-3 py-1.5 hover:bg-surface-sunken text-left font-semibold text-foreground ${l === 1 ? "text-xl" : l === 2 ? "text-lg" : l === 3 ? "text-base" : "text-sm"}`}
                       onClick={() => { editor?.chain().focus().toggleHeading({ level: l }).run(); setHeadingMenu(false); }}>
                       H{l} — Heading {l}
                     </button>
@@ -1388,7 +1388,7 @@ blockquote{border-left:4px solid #00C2FF;margin:0;padding-left:1em;color:#8A92A6
             {/* Font family */}
             <select
               title="Font"
-              className="h-7 px-1.5 text-xs border border-[#262A35] rounded text-[#8A92A6] bg-[#12151D] hover:bg-[#1B1F2A] focus:outline-none focus:border-[#00C2FF]/60 cursor-pointer"
+              className="h-7 px-1.5 text-xs border border-border rounded text-muted bg-surface hover:bg-surface-sunken focus:outline-none focus:border-accent/60 cursor-pointer"
               value={(editor?.getAttributes("textStyle").fontFamily as string) ?? ""}
               onChange={e => {
                 const v = e.target.value;
@@ -1405,7 +1405,7 @@ blockquote{border-left:4px solid #00C2FF;margin:0;padding-left:1em;color:#8A92A6
             {/* Font size */}
             <select
               title="Font size"
-              className="h-7 px-1.5 text-xs border border-[#262A35] rounded text-[#8A92A6] bg-[#12151D] hover:bg-[#1B1F2A] focus:outline-none focus:border-[#00C2FF]/60 cursor-pointer"
+              className="h-7 px-1.5 text-xs border border-border rounded text-muted bg-surface hover:bg-surface-sunken focus:outline-none focus:border-accent/60 cursor-pointer"
               value={((editor?.getAttributes("textStyle").fontSize as string) ?? "").replace("px", "")}
               onChange={e => {
                 const v = e.target.value;
@@ -1420,16 +1420,16 @@ blockquote{border-left:4px solid #00C2FF;margin:0;padding-left:1em;color:#8A92A6
             </select>
 
             {/* Text color */}
-            <label title="Text color" className="flex items-center justify-center h-7 w-7 rounded text-[#8A92A6] hover:bg-[#1B1F2A] cursor-pointer relative">
+            <label title="Text color" className="flex items-center justify-center h-7 w-7 rounded text-muted hover:bg-surface-sunken cursor-pointer relative">
               <Type className="h-3.5 w-3.5" />
               <input type="color" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                value={(editor?.getAttributes("textStyle").color as string) ?? "#E6E9F0"}
+                value={(editor?.getAttributes("textStyle").color as string) ?? "#1a1a18"}
                 onChange={e => (editor?.chain().focus() as unknown as { setColor: (v: string) => { run: () => void } } | undefined)?.setColor(e.target.value).run()} />
             </label>
 
             {/* Highlight color */}
             <label title="Highlight color"
-              className={`flex items-center justify-center h-7 w-7 rounded cursor-pointer relative ${editor?.isActive("highlight") ? "bg-[#0E2532] text-[#00C2FF]" : "text-[#8A92A6] hover:bg-[#1B1F2A]"}`}>
+              className={`flex items-center justify-center h-7 w-7 rounded cursor-pointer relative ${editor?.isActive("highlight") ? "bg-accent-soft text-accent" : "text-muted hover:bg-surface-sunken"}`}>
               <Highlighter className="h-3.5 w-3.5" />
               <input type="color" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 value={(editor?.getAttributes("highlight").color as string) ?? "#fff176"}
@@ -1462,7 +1462,7 @@ blockquote{border-left:4px solid #00C2FF;margin:0;padding-left:1em;color:#8A92A6
             <TB icon={<Type className="h-3.5 w-3.5" />} title="Code block" active={editor?.isActive("codeBlock")} onClick={() => editor?.chain().focus().toggleCodeBlock().run()} />
             <TB icon={<Minus className="h-3.5 w-3.5" />} title="Horizontal rule" onClick={() => editor?.chain().focus().setHorizontalRule().run()} />
             <TB icon={<Table className="h-3.5 w-3.5" />} title="Insert table (3×3)" onClick={() => { (editor?.chain().focus() as unknown as { insertTable?: (o: { rows: number; cols: number; withHeaderRow: boolean }) => { run: () => boolean } })?.insertTable?.({ rows: 3, cols: 3, withHeaderRow: true })?.run?.(); }} />
-            <label title="Insert image (upload)" className="flex items-center justify-center h-7 w-7 rounded text-sm text-[#8A92A6] hover:bg-[#1B1F2A] cursor-pointer transition-colors">
+            <label title="Insert image (upload)" className="flex items-center justify-center h-7 w-7 rounded text-sm text-muted hover:bg-surface-sunken cursor-pointer transition-colors">
               <ImageIcon className="h-3.5 w-3.5" />
               <input type="file" accept="image/*" className="hidden" onChange={e => {
                 const f = e.target.files?.[0];
@@ -1487,11 +1487,11 @@ blockquote{border-left:4px solid #00C2FF;margin:0;padding-left:1em;color:#8A92A6
             <div className="relative" onClick={e => e.stopPropagation()}>
               <TB icon={<AlignVerticalSpaceAround className="h-3.5 w-3.5" />} title="Line spacing" active={showLineSpacing} onClick={() => { setShowLineSpacing(v => !v); setShowSymbols(false); }} />
               {showLineSpacing && (
-                <div className="absolute top-full left-0 mt-1 w-28 bg-[#12151D] border border-[#262A35] rounded-lg shadow-lg z-50 py-1">
-                  <p className="px-3 py-1 text-[10px] font-medium text-[#5A6275]">Line spacing</p>
+                <div className="absolute top-full left-0 mt-1 w-28 bg-surface border border-border rounded-lg shadow-lg z-50 py-1">
+                  <p className="px-3 py-1 text-[10px] font-medium text-subtle">Line spacing</p>
                   {["1.0", "1.15", "1.5", "2.0"].map(ls => (
                     <button key={ls} onClick={() => { setLineHeight(ls); setShowLineSpacing(false); }}
-                      className={`w-full text-left flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-[#1B1F2A] ${lineHeight === ls ? "text-[#00C2FF] font-semibold" : "text-[#E6E9F0]"}`}>
+                      className={`w-full text-left flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-surface-sunken ${lineHeight === ls ? "text-accent font-semibold" : "text-foreground"}`}>
                       {ls}
                       {lineHeight === ls && <Check className="h-3 w-3 ml-auto" />}
                     </button>
@@ -1504,12 +1504,12 @@ blockquote{border-left:4px solid #00C2FF;margin:0;padding-left:1em;color:#8A92A6
             <div className="relative" onClick={e => e.stopPropagation()}>
               <TB icon={<Sigma className="h-3.5 w-3.5" />} title="Insert symbol" active={showSymbols} onClick={() => { setShowSymbols(v => !v); setShowLineSpacing(false); }} />
               {showSymbols && (
-                <div className="absolute top-full left-0 mt-1 w-56 bg-[#12151D] border border-[#262A35] rounded-lg shadow-lg z-50 p-2">
-                  <p className="px-1 pb-1.5 text-[10px] font-medium text-[#5A6275]">Insert symbol</p>
+                <div className="absolute top-full left-0 mt-1 w-56 bg-surface border border-border rounded-lg shadow-lg z-50 p-2">
+                  <p className="px-1 pb-1.5 text-[10px] font-medium text-subtle">Insert symbol</p>
                   <div className="grid grid-cols-8 gap-0.5">
                     {["©","®","™","…","—","–","•","§","¶","†","‡","→","←","↑","↓","°","±","×","÷","≤","≥","≠","∞","€","£","¥","✓","✗","★","♥"].map(sym => (
                       <button key={sym} onClick={() => insertSymbol(sym)}
-                        className="flex items-center justify-center h-6 w-6 rounded text-sm text-[#E6E9F0] hover:bg-[#0E2532] hover:text-[#00C2FF]">
+                        className="flex items-center justify-center h-6 w-6 rounded text-sm text-foreground hover:bg-accent-soft hover:text-accent">
                         {sym}
                       </button>
                     ))}
@@ -1522,7 +1522,7 @@ blockquote{border-left:4px solid #00C2FF;margin:0;padding-left:1em;color:#8A92A6
             <TB icon={<ListTree className="h-3.5 w-3.5" />} title="Insert table of contents" onClick={insertTOC} />
             <TSep />
 
-            <span className="text-[11px] text-[#5A6275] px-1 whitespace-nowrap">{wordCount} words</span>
+            <span className="text-[11px] text-subtle px-1 whitespace-nowrap">{wordCount} words</span>
           </div>
 
           {/* Content row */}
@@ -1530,11 +1530,11 @@ blockquote{border-left:4px solid #00C2FF;margin:0;padding-left:1em;color:#8A92A6
 
             {/* Document outline */}
             {showOutline && outline.length > 0 && (
-              <div className="w-44 border-r border-[#262A35] overflow-y-auto overflow-x-hidden py-4 px-3 flex-shrink-0 bg-[#12151D]">
-                <p className="text-[10px] font-semibold text-[#5A6275] uppercase tracking-wider mb-2">Outline</p>
+              <div className="w-44 border-r border-border overflow-y-auto overflow-x-hidden py-4 px-3 flex-shrink-0 bg-surface">
+                <p className="text-[10px] font-semibold text-subtle uppercase tracking-wider mb-2">Outline</p>
                 <nav className="space-y-1">
                   {outline.map((h, i) => (
-                    <button key={i} className="w-full text-left text-xs text-[#8A92A6] hover:text-[#00C2FF] hover:bg-[#1B1F2A] rounded px-1 py-0.5 truncate"
+                    <button key={i} className="w-full text-left text-xs text-muted hover:text-accent hover:bg-surface-sunken rounded px-1 py-0.5 truncate"
                       style={{ paddingLeft: (h.level - 1) * 8 + 4 }}>
                       {h.text}
                     </button>
@@ -1544,18 +1544,18 @@ blockquote{border-left:4px solid #00C2FF;margin:0;padding-left:1em;color:#8A92A6
             )}
 
             {/* Paper editor */}
-            <div className="flex-1 overflow-y-auto overflow-x-hidden bg-[#f4f6f8]">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden bg-surface-sunken">
               <div
-                className="mx-auto my-8 bg-[#12151D] shadow border border-[#262A35] rounded-lg flex flex-col"
+                className="mx-auto my-8 bg-surface shadow border border-border rounded-lg flex flex-col"
                 style={{ width: paperW, maxWidth: "100%", minHeight: paperH }}
               >
                 {headerFooter.enabled && (
                   <div
-                    className="border-b border-dashed border-[#262A35]"
+                    className="border-b border-dashed border-border"
                     style={{ paddingLeft: marginPx.h, paddingRight: marginPx.h, paddingTop: Math.min(marginPx.v, 40), paddingBottom: 12 }}
                   >
                     <input
-                      className="w-full bg-transparent text-xs text-[#8A92A6] placeholder:text-[#5A6275] outline-none focus:bg-[#12151D] rounded px-1 py-0.5"
+                      className="w-full bg-transparent text-xs text-muted placeholder:text-subtle outline-none focus:bg-surface rounded px-1 py-0.5"
                       placeholder="Header (e.g. document title, author)…"
                       value={headerFooter.header}
                       onChange={e => updateHeaderFooter({ header: e.target.value })}
@@ -1567,16 +1567,16 @@ blockquote{border-left:4px solid #00C2FF;margin:0;padding-left:1em;color:#8A92A6
                 </div>
                 {headerFooter.enabled && (
                   <div
-                    className="border-t border-dashed border-[#262A35] flex items-center gap-2"
+                    className="border-t border-dashed border-border flex items-center gap-2"
                     style={{ paddingLeft: marginPx.h, paddingRight: marginPx.h, paddingTop: 12, paddingBottom: Math.min(marginPx.v, 40) }}
                   >
                     <input
-                      className="flex-1 bg-transparent text-xs text-[#8A92A6] placeholder:text-[#5A6275] outline-none focus:bg-[#12151D] rounded px-1 py-0.5"
+                      className="flex-1 bg-transparent text-xs text-muted placeholder:text-subtle outline-none focus:bg-surface rounded px-1 py-0.5"
                       placeholder="Footer…"
                       value={headerFooter.footer}
                       onChange={e => updateHeaderFooter({ footer: e.target.value })}
                     />
-                    <span className="text-[11px] text-[#5A6275] whitespace-nowrap flex-shrink-0">
+                    <span className="text-[11px] text-subtle whitespace-nowrap flex-shrink-0">
                       {"Page 1 of " + estimatedPages}
                     </span>
                   </div>
@@ -1586,13 +1586,13 @@ blockquote{border-left:4px solid #00C2FF;margin:0;padding-left:1em;color:#8A92A6
 
             {/* Right panel */}
             {rightPanelOpen && (
-              <div className="w-80 border-l border-[#262A35] bg-[#12151D] flex flex-col overflow-hidden flex-shrink-0">
-                <div className="flex items-center border-b border-[#262A35]">
+              <div className="w-80 border-l border-border bg-surface flex flex-col overflow-hidden flex-shrink-0">
+                <div className="flex items-center border-b border-border">
                   {showAI          && <PanelTab active icon={<Sparkles className="h-3.5 w-3.5" />} label="AI" onClick={() => {}} />}
                   {showComments    && <PanelTab active icon={<MessageSquare className="h-3.5 w-3.5" />} label="Comments" onClick={() => {}} />}
                   {showHistory     && <PanelTab active icon={<History className="h-3.5 w-3.5" />} label="History" onClick={() => {}} />}
                   {showSuggestions && <PanelTab active icon={<GitMerge className="h-3.5 w-3.5" />} label="Suggestions" onClick={() => {}} />}
-                  <button className="ml-auto p-2 text-[#5A6275] hover:text-[#E6E9F0]" onClick={() => { setShowAI(false); setShowComments(false); setShowHistory(false); setShowSuggestions(false); setSuggestMode(false); }}>
+                  <button className="ml-auto p-2 text-subtle hover:text-foreground" onClick={() => { setShowAI(false); setShowComments(false); setShowHistory(false); setShowSuggestions(false); setSuggestMode(false); }}>
                     <X className="h-3.5 w-3.5" />
                   </button>
                 </div>
@@ -1603,25 +1603,25 @@ blockquote{border-left:4px solid #00C2FF;margin:0;padding-left:1em;color:#8A92A6
                     <div className="grid grid-cols-2 gap-1.5">
                       {(["summarize","rewrite","expand","shorten","grammar","generate"] as const).map(m => (
                         <button key={m} onClick={() => setAIMode(m)}
-                          className={`px-2 py-1.5 text-[11px] font-medium rounded-lg border capitalize transition-colors ${aiMode === m ? "bg-purple-500/10 text-purple-400 border-purple-500/20" : "border-[#262A35] text-[#8A92A6] hover:bg-[#1B1F2A]"}`}>
+                          className={`px-2 py-1.5 text-[11px] font-medium rounded-lg border capitalize transition-colors ${aiMode === m ? "bg-violet/10 text-violet border-violet/20" : "border-border text-muted hover:bg-surface-sunken"}`}>
                           {m}
                         </button>
                       ))}
                     </div>
                     {aiMode === "generate" && (
-                      <textarea className="w-full px-3 py-2 text-xs bg-[#1B1F2A] border border-[#2E333F] rounded-lg resize-none focus:outline-none focus:border-[#00C2FF]/60"
+                      <textarea className="w-full px-3 py-2 text-xs bg-surface-sunken border border-border-strong rounded-lg resize-none focus:outline-none focus:border-accent/60"
                         rows={3} placeholder="Describe the document you want to generate…"
                         value={aiPrompt} onChange={e => setAIPrompt(e.target.value)} />
                     )}
                     <button onClick={() => void runAI()} disabled={aiLoading}
-                      className="w-full flex items-center justify-center gap-2 py-2 text-xs font-semibold bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors">
+                      className="w-full flex items-center justify-center gap-2 py-2 text-xs font-semibold bg-violet text-white rounded-lg hover:bg-violet disabled:opacity-50 transition-colors">
                       {aiLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
                       {aiLoading ? "Thinking…" : `Run AI: ${aiMode}`}
                     </button>
                     {aiResult && (
                       <>
-                        <div className="bg-[#12151D] rounded-lg p-3 text-xs text-[#E6E9F0] whitespace-pre-wrap leading-relaxed max-h-60 overflow-y-auto border border-[#262A35]">{aiResult}</div>
-                        <button onClick={insertAIResult} className="w-full py-2 text-xs font-semibold text-[#00C2FF] border border-[#00C2FF]/30 rounded-lg hover:bg-[#0E2532] transition-colors">
+                        <div className="bg-surface rounded-lg p-3 text-xs text-foreground whitespace-pre-wrap leading-relaxed max-h-60 overflow-y-auto border border-border">{aiResult}</div>
+                        <button onClick={insertAIResult} className="w-full py-2 text-xs font-semibold text-accent border border-accent/30 rounded-lg hover:bg-accent-soft transition-colors">
                           Insert into document
                         </button>
                       </>
@@ -1635,32 +1635,32 @@ blockquote{border-left:4px solid #00C2FF;margin:0;padding-left:1em;color:#8A92A6
                     <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 space-y-3">
                       {comments.length === 0 ? (
                         <div className="text-center py-8">
-                          <MessageSquare className="h-8 w-8 mx-auto mb-2 text-[#bdc1c6]" />
-                          <p className="text-xs text-[#5A6275]">No comments yet</p>
+                          <MessageSquare className="h-8 w-8 mx-auto mb-2 text-subtle" />
+                          <p className="text-xs text-subtle">No comments yet</p>
                         </div>
                       ) : comments.map(c => (
-                        <div key={c.id} className={`rounded-lg border p-3 space-y-2 ${c.resolved ? "opacity-50" : "bg-[#12151D]"} border-[#262A35]`}>
+                        <div key={c.id} className={`rounded-lg border p-3 space-y-2 ${c.resolved ? "opacity-50" : "bg-surface"} border-border`}>
                           <div className="flex items-center gap-2">
-                            <div className="h-5 w-5 rounded-full bg-[#00C2FF] text-[#06121A] text-[9px] flex items-center justify-center font-bold">{c.author[0]}</div>
-                            <span className="text-xs font-medium text-[#E6E9F0]">{c.author}</span>
-                            <span className="text-[10px] text-[#5A6275] ml-auto">{formatDistanceToNow(new Date(c.createdAt), { addSuffix: true })}</span>
+                            <div className="h-5 w-5 rounded-full bg-accent text-accent-foreground text-[9px] flex items-center justify-center font-bold">{c.author[0]}</div>
+                            <span className="text-xs font-medium text-foreground">{c.author}</span>
+                            <span className="text-[10px] text-subtle ml-auto">{formatDistanceToNow(new Date(c.createdAt), { addSuffix: true })}</span>
                           </div>
-                          <p className="text-xs text-[#8A92A6]">{c.text}</p>
+                          <p className="text-xs text-muted">{c.text}</p>
                           {!c.resolved && (
                             <button onClick={() => setComments(prev => prev.map(x => x.id === c.id ? { ...x, resolved: true } : x))}
-                              className="text-[11px] text-[#0f9d58] font-medium hover:underline">
+                              className="text-[11px] text-ok font-medium hover:underline">
                               ✓ Resolve
                             </button>
                           )}
                         </div>
                       ))}
                     </div>
-                    <div className="border-t border-[#262A35] p-3 space-y-2">
-                      <textarea className="w-full px-3 py-2 text-xs bg-[#1B1F2A] border border-[#2E333F] rounded-lg resize-none focus:outline-none focus:border-[#00C2FF]/60"
+                    <div className="border-t border-border p-3 space-y-2">
+                      <textarea className="w-full px-3 py-2 text-xs bg-surface-sunken border border-border-strong rounded-lg resize-none focus:outline-none focus:border-accent/60"
                         rows={2} placeholder="Add comment (Enter to post)…" value={newComment}
                         onChange={e => setNewComment(e.target.value)}
                         onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); addComment(); } }} />
-                      <button onClick={addComment} className="w-full py-1.5 text-xs font-semibold bg-[#00C2FF] text-[#06121A] rounded-lg hover:bg-[#0098E6]">Post comment</button>
+                      <button onClick={addComment} className="w-full py-1.5 text-xs font-semibold bg-accent text-accent-foreground rounded-lg hover:bg-accent-hover">Post comment</button>
                     </div>
                   </div>
                 )}
@@ -1670,17 +1670,17 @@ blockquote{border-left:4px solid #00C2FF;margin:0;padding-left:1em;color:#8A92A6
                   const suggestions = getSuggestions();
                   return (
                     <div className="flex flex-col h-full overflow-hidden">
-                      <div className="flex items-center justify-between px-3 pt-3 pb-2 border-b border-[#262A35] flex-shrink-0">
+                      <div className="flex items-center justify-between px-3 pt-3 pb-2 border-b border-border flex-shrink-0">
                         <div>
-                          <p className="text-xs font-semibold text-[#E6E9F0]">Tracked changes</p>
-                          <p className="text-[10px] text-[#5A6275]">{suggestions.length} pending suggestion{suggestions.length !== 1 ? "s" : ""}</p>
+                          <p className="text-xs font-semibold text-foreground">Tracked changes</p>
+                          <p className="text-[10px] text-subtle">{suggestions.length} pending suggestion{suggestions.length !== 1 ? "s" : ""}</p>
                         </div>
                         {suggestions.length > 0 && (
                           <div className="flex gap-1">
-                            <button onClick={acceptAllSuggestions} title="Accept all" className="p-1.5 rounded-lg text-[#0f9d58] hover:bg-[#e6f4ea] transition-colors">
+                            <button onClick={acceptAllSuggestions} title="Accept all" className="p-1.5 rounded-lg text-ok hover:bg-ok-soft transition-colors">
                               <CheckCheck className="h-3.5 w-3.5" />
                             </button>
-                            <button onClick={rejectAllSuggestions} title="Reject all" className="p-1.5 rounded-lg text-[#ea4335] hover:bg-red-500/10 transition-colors">
+                            <button onClick={rejectAllSuggestions} title="Reject all" className="p-1.5 rounded-lg text-crit hover:bg-crit/10 transition-colors">
                               <XCircle className="h-3.5 w-3.5" />
                             </button>
                           </div>
@@ -1688,30 +1688,30 @@ blockquote{border-left:4px solid #00C2FF;margin:0;padding-left:1em;color:#8A92A6
                       </div>
                       <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 space-y-2">
                         {/* Suggest-mode banner */}
-                        <div className={`flex items-center gap-2 px-2.5 py-2 rounded-lg text-[11px] font-medium border ${suggestMode ? "bg-[#e6f4ea] border-[#0f9d58]/30 text-[#0f9d58]" : "bg-[#12151D] border-[#262A35] text-[#8A92A6]"}`}>
+                        <div className={`flex items-center gap-2 px-2.5 py-2 rounded-lg text-[11px] font-medium border ${suggestMode ? "bg-ok-soft border-ok/30 text-ok" : "bg-surface border-border text-muted"}`}>
                           <GitMerge className="h-3.5 w-3.5 flex-shrink-0" />
                           {suggestMode ? "Suggesting mode is ON — edits are tracked" : "Suggesting mode is OFF — edits apply directly"}
                         </div>
                         {suggestions.length === 0 ? (
                           <div className="text-center py-10">
-                            <GitMerge className="h-8 w-8 mx-auto mb-2 text-[#bdc1c6]" />
-                            <p className="text-xs text-[#5A6275]">No pending suggestions</p>
-                            <p className="text-[11px] text-[#5A6275] mt-1">Enable suggesting mode and start editing</p>
+                            <GitMerge className="h-8 w-8 mx-auto mb-2 text-subtle" />
+                            <p className="text-xs text-subtle">No pending suggestions</p>
+                            <p className="text-[11px] text-subtle mt-1">Enable suggesting mode and start editing</p>
                           </div>
                         ) : suggestions.map(s => (
-                          <div key={s.id} className={`rounded-lg border p-3 space-y-1.5 ${s.type === "insert" ? "bg-[#f6fef9] border-[#0f9d58]/20" : "bg-[#fff8f8] border-[#ea4335]/20"}`}>
+                          <div key={s.id} className={`rounded-lg border p-3 space-y-1.5 ${s.type === "insert" ? "bg-ok-soft border-ok/20" : "bg-crit-soft border-crit/20"}`}>
                             <div className="flex items-center gap-2">
-                              <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${s.type === "insert" ? "bg-[#e6f4ea] text-[#0f9d58]" : "bg-red-500/10 text-[#ea4335]"}`}>
+                              <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${s.type === "insert" ? "bg-ok-soft text-ok" : "bg-crit/10 text-crit"}`}>
                                 {s.type === "insert" ? "+ Insertion" : "− Deletion"}
                               </span>
-                              <span className="text-[10px] text-[#5A6275] ml-auto">{s.author}</span>
+                              <span className="text-[10px] text-subtle ml-auto">{s.author}</span>
                             </div>
-                            <p className="text-xs text-[#E6E9F0] font-mono bg-[#12151D] border border-[#262A35] rounded px-2 py-1 truncate">&ldquo;{s.text}&rdquo;</p>
+                            <p className="text-xs text-foreground font-mono bg-surface border border-border rounded px-2 py-1 truncate">&ldquo;{s.text}&rdquo;</p>
                             <div className="flex gap-2 pt-0.5">
-                              <button onClick={() => acceptSuggestion(s)} className="flex items-center gap-1 text-[11px] font-medium text-[#0f9d58] hover:underline">
+                              <button onClick={() => acceptSuggestion(s)} className="flex items-center gap-1 text-[11px] font-medium text-ok hover:underline">
                                 <Check className="h-3 w-3" /> Accept
                               </button>
-                              <button onClick={() => rejectSuggestion(s)} className="flex items-center gap-1 text-[11px] font-medium text-[#ea4335] hover:underline">
+                              <button onClick={() => rejectSuggestion(s)} className="flex items-center gap-1 text-[11px] font-medium text-crit hover:underline">
                                 <X className="h-3 w-3" /> Reject
                               </button>
                             </div>
@@ -1725,43 +1725,43 @@ blockquote{border-left:4px solid #00C2FF;margin:0;padding-left:1em;color:#8A92A6
                 {/* History Panel */}
                 {showHistory && (
                   <div className="flex flex-col h-full overflow-hidden">
-                    <div className="flex items-center justify-between px-3 pt-3 pb-2 border-b border-[#262A35] flex-shrink-0">
-                      <p className="text-xs font-semibold text-[#E6E9F0]">
+                    <div className="flex items-center justify-between px-3 pt-3 pb-2 border-b border-border flex-shrink-0">
+                      <p className="text-xs font-semibold text-foreground">
                         {versions.length > 0 ? versions.length + " saved version" + (versions.length === 1 ? "" : "s") : "Version history"}
                       </p>
                       <button
                         onClick={() => { const label = window.prompt("Version label (optional):", "Manual save"); if (label !== null) saveVersion(label || "Manual save"); }}
-                        className="flex items-center gap-1 text-xs font-medium text-[#00C2FF] hover:text-[#0098E6]">
+                        className="flex items-center gap-1 text-xs font-medium text-accent hover:text-accent-hover">
                         <BookmarkPlus className="h-3.5 w-3.5" /> Save now
                       </button>
                     </div>
                     <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 space-y-2">
                       {versions.length === 0 ? (
                         <div className="text-center py-10">
-                          <Clock className="h-8 w-8 mx-auto mb-2 text-[#bdc1c6]" />
-                          <p className="text-xs text-[#5A6275] mb-3">No saved versions yet.</p>
-                          <p className="text-[11px] text-[#5A6275] mb-4">Versions auto-save every 5 minutes, or click Save now.</p>
+                          <Clock className="h-8 w-8 mx-auto mb-2 text-subtle" />
+                          <p className="text-xs text-subtle mb-3">No saved versions yet.</p>
+                          <p className="text-[11px] text-subtle mb-4">Versions auto-save every 5 minutes, or click Save now.</p>
                           <button
                             onClick={() => saveVersion("Manual save")}
-                            className="px-3 py-1.5 text-xs font-semibold bg-[#00C2FF] text-[#06121A] rounded-lg hover:bg-[#0098E6]">
+                            className="px-3 py-1.5 text-xs font-semibold bg-accent text-accent-foreground rounded-lg hover:bg-accent-hover">
                             Save current version
                           </button>
                         </div>
                       ) : versions.map(v => (
-                        <div key={v.id} className="border border-[#262A35] rounded-lg p-3 bg-[#12151D]">
+                        <div key={v.id} className="border border-border rounded-lg p-3 bg-surface">
                           <div className="flex items-start justify-between gap-2 mb-1">
-                            <span className="text-xs font-medium text-[#E6E9F0] truncate flex-1">{v.label}</span>
+                            <span className="text-xs font-medium text-foreground truncate flex-1">{v.label}</span>
                             <button
                               onClick={() => deleteVersion(v.id)}
                               title="Delete this version"
-                              className="flex-shrink-0 text-[#5A6275] hover:text-[#ea4335] transition-colors">
+                              className="flex-shrink-0 text-subtle hover:text-crit transition-colors">
                               <X className="h-3.5 w-3.5" />
                             </button>
                           </div>
-                          <p className="text-[10px] text-[#5A6275] mb-2">{relativeTime(v.timestamp)}</p>
+                          <p className="text-[10px] text-subtle mb-2">{relativeTime(v.timestamp)}</p>
                           <button
                             onClick={() => restoreVersion(v)}
-                            className="text-xs font-medium text-[#00C2FF] hover:underline">
+                            className="text-xs font-medium text-accent hover:underline">
                             Restore
                           </button>
                         </div>
@@ -1775,22 +1775,22 @@ blockquote{border-left:4px solid #00C2FF;margin:0;padding-left:1em;color:#8A92A6
         </div>
       ) : (
         /* Empty / welcome state */
-        <div className="flex-1 flex flex-col items-center justify-center bg-[#f4f6f8] gap-4">
-          <div className="w-16 h-16 bg-blue-500/10 rounded-2xl flex items-center justify-center">
-            <FileText className="h-8 w-8 text-[#00C2FF]" />
+        <div className="flex-1 flex flex-col items-center justify-center bg-surface-sunken gap-4">
+          <div className="w-16 h-16 bg-accent/10 rounded-2xl flex items-center justify-center">
+            <FileText className="h-8 w-8 text-accent" />
           </div>
           <div className="text-center">
-            <h2 className="text-xl font-semibold text-[#E6E9F0] mb-1">Nexus Docs</h2>
-            <p className="text-sm text-[#8A92A6] mb-4">Rich text documents with AI, collaboration & version history</p>
+            <h2 className="text-xl font-semibold text-foreground mb-1">Nexus Docs</h2>
+            <p className="text-sm text-muted mb-4">Rich text documents with AI, collaboration & version history</p>
             <button onClick={() => void createDoc()}
-              className="flex items-center gap-2 px-5 py-2.5 bg-[#00C2FF] text-[#06121A] text-sm font-semibold rounded-lg hover:bg-[#0098E6] transition-colors mx-auto">
+              className="flex items-center gap-2 px-5 py-2.5 bg-accent text-accent-foreground text-sm font-semibold rounded-lg hover:bg-accent-hover transition-colors mx-auto">
               <Plus className="h-4 w-4" /> New document
             </button>
           </div>
           <div className="grid grid-cols-3 gap-3 mt-2 max-w-md">
             {["Blank document","Meeting notes","Project SOP","Policy document","Technical spec","Team handbook"].map(t => (
               <button key={t} onClick={() => void createDoc()}
-                className="px-3 py-3 bg-[#12151D] border border-[#262A35] rounded-xl text-xs font-medium text-[#8A92A6] hover:border-[#00C2FF]/30 hover:text-[#00C2FF] transition-colors text-center shadow-sm">
+                className="px-3 py-3 bg-surface border border-border rounded-xl text-xs font-medium text-muted hover:border-accent/30 hover:text-accent transition-colors text-center shadow-sm">
                 {t}
               </button>
             ))}
@@ -1804,24 +1804,24 @@ blockquote{border-left:4px solid #00C2FF;margin:0;padding-left:1em;color:#8A92A6
 
       {showFindReplace && (
         <div className="fixed inset-0 bg-black/30 z-50 flex items-start justify-center pt-24" onClick={() => setShowFindReplace(false)}>
-          <div className="bg-[#12151D] rounded-xl border border-[#262A35] shadow-xl w-full max-w-sm p-4" onClick={e => e.stopPropagation()}>
+          <div className="bg-surface rounded-xl border border-border shadow-xl w-full max-w-sm p-4" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-[#E6E9F0]">Find & replace</h3>
-              <button onClick={() => setShowFindReplace(false)} className="p-1 rounded hover:bg-[#1B1F2A] text-[#8A92A6]"><X className="h-4 w-4" /></button>
+              <h3 className="text-sm font-semibold text-foreground">Find & replace</h3>
+              <button onClick={() => setShowFindReplace(false)} className="p-1 rounded hover:bg-surface-sunken text-muted"><X className="h-4 w-4" /></button>
             </div>
             <input autoFocus value={frFind} onChange={e => setFrFind(e.target.value)} placeholder="Find"
-              className="w-full px-3 py-2 mb-2 text-sm bg-[#1B1F2A] border border-[#2E333F] rounded-lg focus:outline-none focus:border-[#00C2FF]/60" />
+              className="w-full px-3 py-2 mb-2 text-sm bg-surface-sunken border border-border-strong rounded-lg focus:outline-none focus:border-accent/60" />
             <input value={frReplace} onChange={e => setFrReplace(e.target.value)} placeholder="Replace with"
-              className="w-full px-3 py-2 mb-2 text-sm bg-[#1B1F2A] border border-[#2E333F] rounded-lg focus:outline-none focus:border-[#00C2FF]/60" />
+              className="w-full px-3 py-2 mb-2 text-sm bg-surface-sunken border border-border-strong rounded-lg focus:outline-none focus:border-accent/60" />
             <div className="flex items-center justify-between mb-3">
-              <label className="flex items-center gap-2 text-xs text-[#8A92A6] cursor-pointer">
+              <label className="flex items-center gap-2 text-xs text-muted cursor-pointer">
                 <input type="checkbox" checked={frCase} onChange={e => setFrCase(e.target.checked)} /> Match case
               </label>
-              <span className="text-xs text-[#5A6275]">{frFind ? frCount + (frCount === 1 ? " match" : " matches") : ""}</span>
+              <span className="text-xs text-subtle">{frFind ? frCount + (frCount === 1 ? " match" : " matches") : ""}</span>
             </div>
             <div className="flex gap-2">
-              <button onClick={() => setShowFindReplace(false)} className="flex-1 px-4 py-2 text-sm border border-[#262A35] rounded-lg text-[#8A92A6] hover:bg-[#1B1F2A]">Close</button>
-              <button onClick={docReplaceAll} disabled={!frFind} className="flex-1 px-4 py-2 text-sm font-semibold bg-[#00C2FF] text-[#06121A] rounded-lg hover:bg-[#0098E6] disabled:opacity-50">Replace all</button>
+              <button onClick={() => setShowFindReplace(false)} className="flex-1 px-4 py-2 text-sm border border-border rounded-lg text-muted hover:bg-surface-sunken">Close</button>
+              <button onClick={docReplaceAll} disabled={!frFind} className="flex-1 px-4 py-2 text-sm font-semibold bg-accent text-accent-foreground rounded-lg hover:bg-accent-hover disabled:opacity-50">Replace all</button>
             </div>
           </div>
         </div>
@@ -1837,7 +1837,7 @@ function IconBtn({ icon, title, active, activeClass, onClick }: {
 }) {
   return (
     <button title={title} onClick={onClick}
-      className={`p-1.5 rounded transition-colors ${active ? (activeClass ?? "bg-[#0E2532] text-[#00C2FF]") : "text-[#8A92A6] hover:bg-[#1B1F2A]"}`}>
+      className={`p-1.5 rounded transition-colors ${active ? (activeClass ?? "bg-accent-soft text-accent") : "text-muted hover:bg-surface-sunken"}`}>
       {icon}
     </button>
   );
@@ -1845,7 +1845,7 @@ function IconBtn({ icon, title, active, activeClass, onClick }: {
 
 function MenuItm({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
   return (
-    <button onClick={onClick} className="w-full text-left flex items-center gap-2 px-3 py-1.5 text-xs text-[#E6E9F0] hover:bg-[#1B1F2A]">
+    <button onClick={onClick} className="w-full text-left flex items-center gap-2 px-3 py-1.5 text-xs text-foreground hover:bg-surface-sunken">
       {children}
     </button>
   );

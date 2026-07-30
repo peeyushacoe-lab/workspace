@@ -39,16 +39,16 @@ export async function GET(request: Request) {
 <title>Link warning — Nexus</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
-  body { margin:0; background:#0B0D13; color:#E6E9F0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; display:flex; align-items:center; justify-content:center; min-height:100vh; padding:24px; }
-  .card { max-width:440px; width:100%; background:#12151D; border:1px solid #262A35; border-radius:16px; padding:28px; }
-  .icon { width:40px; height:40px; border-radius:50%; background:rgba(234,67,53,0.12); display:flex; align-items:center; justify-content:center; margin-bottom:16px; font-size:20px; }
+  body { margin:0; background:#f0efec; color:#1a1a18; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; display:flex; align-items:center; justify-content:center; min-height:100vh; padding:24px; }
+  .card { max-width:440px; width:100%; background:#ffffff; border:1px solid #e7e6e1; border-radius:16px; padding:28px; }
+  .icon { width:40px; height:40px; border-radius:50%; background:color-mix(in srgb, var(--crit) 12%, transparent); display:flex; align-items:center; justify-content:center; margin-bottom:16px; font-size:20px; }
   h1 { font-size:16px; font-weight:600; margin:0 0 8px; }
-  p { font-size:13px; color:#8A92A6; line-height:1.6; margin:0 0 4px; }
-  .host { font-family:monospace; font-size:12px; background:#1B1F2A; border:1px solid #262A35; border-radius:8px; padding:8px 10px; margin:14px 0 20px; word-break:break-all; color:#ea4335; }
+  p { font-size:13px; color:#6b6a65; line-height:1.6; margin:0 0 4px; }
+  .host { font-family:monospace; font-size:12px; background:#f5f4f1; border:1px solid #e7e6e1; border-radius:8px; padding:8px 10px; margin:14px 0 20px; word-break:break-all; color:#c0362c; }
   .actions { display:flex; gap:10px; }
   a.btn { flex:1; text-align:center; padding:10px 14px; border-radius:10px; font-size:13px; font-weight:600; text-decoration:none; }
-  .go-back { background:#00C2FF; color:#06121A; }
-  .continue { background:transparent; color:#8A92A6; border:1px solid #262A35; }
+  .go-back { background:#4f46e5; color:#ffffff; }
+  .continue { background:transparent; color:#6b6a65; border:1px solid #e7e6e1; }
 </style>
 </head>
 <body>

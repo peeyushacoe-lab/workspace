@@ -110,10 +110,10 @@ export async function POST(request: Request) {
     const safeName = (user.fullName ?? "")
       .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     const internHtml =
-      `<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#202124;line-height:1.6;margin-top:10px;">` +
+      `<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#1a1a18;line-height:1.6;margin-top:10px;">` +
       `<div style="font-weight:700;">${safeName}</div>` +
       `<div>Intern, CyberSage</div>` +
-      `<div><a href="https://www.cybersage.uk" style="color:#1a56db;text-decoration:none;">www.cybersage.uk</a></div>` +
+      `<div><a href="https://www.cybersage.uk" style="color:#4f46e5;text-decoration:none;">www.cybersage.uk</a></div>` +
       `</div>`;
     sigTemplate = { fullName: user.fullName, title: "Intern", phone: undefined, linkedinUrl: undefined, website: "https://www.cybersage.uk", avatarUrl: undefined, html: internHtml };
   }

@@ -9,12 +9,12 @@ const STATUS_CONFIG: Record<
   PresenceStatus,
   { color: string; label: string; strikethrough?: boolean }
 > = {
-  online:     { color: "#0f9d58", label: "Online" },
-  away:       { color: "#b06000", label: "Away" },
-  busy:       { color: "#ea4335", label: "Busy" },
-  in_meeting: { color: "#a855f7", label: "In Meeting" },
-  dnd:        { color: "#ea4335", label: "Do Not Disturb", strikethrough: true },
-  offline:    { color: "#5d6579", label: "Offline" },
+  online:     { color: "var(--ok)", label: "Online" },
+  away:       { color: "var(--warn)", label: "Away" },
+  busy:       { color: "var(--crit)", label: "Busy" },
+  in_meeting: { color: "var(--violet)", label: "In Meeting" },
+  dnd:        { color: "var(--crit)", label: "Do Not Disturb", strikethrough: true },
+  offline:    { color: "var(--border-strong)", label: "Offline" },
 };
 
 // ─── PresenceDot — pure visual, no data fetching ─────────────────────────────

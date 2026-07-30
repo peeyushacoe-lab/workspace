@@ -82,7 +82,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0B0D12",
+  themeColor: "#f0efec",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -94,17 +94,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${dmSans.variable} ${inter.variable} ${jakarta.variable} ${jetbrains.variable} dark h-full antialiased`} suppressHydrationWarning>
+    <html lang="en" className={`${dmSans.variable} ${inter.variable} ${jakarta.variable} ${jetbrains.variable} h-full antialiased`} suppressHydrationWarning>
       {/*
-        Always dark mode — this used to be applied via an inline <script>
-        (document.documentElement.classList.add('dark')) so the class was
-        present before first paint. That required 'unsafe-inline' in the CSP
-        script-src. Since the app is unconditionally dark (no user toggle),
-        the class can just be part of the static className above instead —
-        same visual result, no inline script, and CSP can drop 'unsafe-inline'.
+        Atrium is light-first: no theme class means the :root (light) tokens in
+        globals.css apply. Dark mode is opt-in — add "dark" to this className,
+        or have a future toggle set document.documentElement.classList.add('dark').
+        Note that doing it from an inline <script> would reintroduce the need for
+        'unsafe-inline' in the CSP script-src, so prefer a server-rendered class.
       */}
       <head></head>
-      <body className="min-h-full bg-[#0B0D12] text-[#E6E9F0] font-sans" suppressHydrationWarning>
+      <body className="min-h-full bg-canvas text-foreground font-sans" suppressHydrationWarning>
         {/*
           Nexus Icon System — feeds Lucide's context so every glyph in the app
           renders on the 24x24 grid with a 2px round-capped stroke and no fill.
@@ -112,7 +111,7 @@ export default function RootLayout({
           and deviation has to be deliberate. See src/components/icons.tsx.
         */}
         <NexusIconProvider>
-          <div className="min-h-screen flex flex-col">
+          <div className="min-h-full flex flex-col">
             {children}
           </div>
           <Toaster richColors position="top-right" />

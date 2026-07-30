@@ -69,14 +69,14 @@ function Avatar({ user, size = 8 }: { user: User; size?: number }) {
     : <div className={`${s} rounded-full flex items-center justify-center text-white text-[11px] font-semibold shrink-0`} style={{ background: avatarGradient(user.fullName) }}>{initials(user.fullName)}</div>;
 }
 function LoadingSpinner() {
-  return (<div className="flex items-center justify-center py-16"><Loader2 className="w-7 h-7 text-[#00C2FF] animate-spin" /></div>);
+  return (<div className="flex items-center justify-center py-16"><Loader2 className="w-7 h-7 text-accent animate-spin" /></div>);
 }
 function EmptyState({ icon: Icon, title, desc }: { icon: React.ElementType; title: string; desc: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">
-      <div className="w-14 h-14 rounded-2xl bg-[#0E2532] flex items-center justify-center mb-4"><Icon className="w-7 h-7 text-[#00C2FF]" /></div>
-      <p className="font-semibold text-[#E6E9F0]">{title}</p>
-      <p className="text-sm text-[#5A6275] mt-1 max-w-xs">{desc}</p>
+      <div className="w-14 h-14 rounded-2xl bg-accent-soft flex items-center justify-center mb-4"><Icon className="w-7 h-7 text-accent" /></div>
+      <p className="font-semibold text-foreground">{title}</p>
+      <p className="text-sm text-subtle mt-1 max-w-xs">{desc}</p>
     </div>
   );
 }
@@ -93,25 +93,25 @@ function QuizEditor({ quiz, onChange }: { quiz: Quiz; onChange: (q: Quiz) => voi
   const remove = (i: number) => update(questions.filter((_, j) => j !== i));
 
   return (
-    <div className="mt-3 border border-[#262A35] bg-[#1B1F2A] rounded-lg p-3">
+    <div className="mt-3 border border-border bg-surface-sunken rounded-lg p-3">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-[11px] font-semibold text-[#00C2FF]">Module Quiz ({questions.length})</span>
+        <span className="text-[11px] font-semibold text-accent">Module Quiz ({questions.length})</span>
         <div className="flex gap-1.5">
-          <button onClick={addMcq} className="flex items-center gap-1 px-2 py-1 bg-[#12151D] border border-[#2E333F] text-[#00C2FF] text-[11px] font-semibold rounded hover:bg-[#0E2532]"><Plus className="w-3 h-3" /> MCQ</button>
-          <button onClick={addText} className="flex items-center gap-1 px-2 py-1 bg-[#12151D] border border-[#2E333F] text-[#00C2FF] text-[11px] font-semibold rounded hover:bg-[#0E2532]"><Plus className="w-3 h-3" /> Text</button>
+          <button onClick={addMcq} className="flex items-center gap-1 px-2 py-1 bg-surface border border-border-strong text-accent text-[11px] font-semibold rounded hover:bg-accent-soft"><Plus className="w-3 h-3" /> MCQ</button>
+          <button onClick={addText} className="flex items-center gap-1 px-2 py-1 bg-surface border border-border-strong text-accent text-[11px] font-semibold rounded hover:bg-accent-soft"><Plus className="w-3 h-3" /> Text</button>
         </div>
       </div>
-      {questions.length === 0 && <p className="text-[11px] text-[#5A6275]">No quiz yet — add MCQ or text questions. Interns must answer all MCQs correctly to complete this module.</p>}
+      {questions.length === 0 && <p className="text-[11px] text-subtle">No quiz yet — add MCQ or text questions. Interns must answer all MCQs correctly to complete this module.</p>}
       <div className="space-y-3">
         {questions.map((q, i) => (
-          <div key={q.id} className="bg-[#12151D] border border-[#262A35] rounded-lg p-2.5">
+          <div key={q.id} className="bg-surface border border-border rounded-lg p-2.5">
             <div className="flex items-center gap-2 mb-1.5">
-              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${q.type === "mcq" ? "bg-[#0E2532] text-[#00C2FF]" : "bg-[#F59E0B]/12 text-[#F59E0B]"}`}>{q.type === "mcq" ? "MCQ" : "TEXT"}</span>
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${q.type === "mcq" ? "bg-accent-soft text-accent" : "bg-warn/12 text-warn"}`}>{q.type === "mcq" ? "MCQ" : "TEXT"}</span>
               <input
-                className="flex-1 px-2 py-1 bg-[#1B1F2A] border border-[#2E333F] rounded text-xs text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+                className="flex-1 px-2 py-1 bg-surface-sunken border border-border-strong rounded text-xs text-foreground focus:outline-none focus:border-accent/60"
                 placeholder="Question prompt…" value={q.prompt}
                 onChange={e => patch(i, { prompt: e.target.value })} />
-              <button onClick={() => remove(i)} className="p-1 text-[#5A6275] hover:text-[#ea4335] hover:bg-[#ea4335]/12 rounded"><Trash2 className="w-3.5 h-3.5" /></button>
+              <button onClick={() => remove(i)} className="p-1 text-subtle hover:text-crit hover:bg-crit/12 rounded"><Trash2 className="w-3.5 h-3.5" /></button>
             </div>
             {q.type === "mcq" && (
               <div className="pl-1 space-y-1.5">
@@ -119,9 +119,9 @@ function QuizEditor({ quiz, onChange }: { quiz: Quiz; onChange: (q: Quiz) => voi
                   <div key={oi} className="flex items-center gap-2">
                     <input type="radio" name={`correct-${q.id}`} checked={q.answerIndex === oi}
                       onChange={() => patch(i, { answerIndex: oi })} title="Mark as correct answer"
-                      className="accent-[#0f9d58]" />
+                      className="accent-ok" />
                     <input
-                      className="flex-1 px-2 py-1 bg-[#12151D] border border-[#262A35] rounded text-xs text-[#C8CEDB] focus:outline-none focus:border-[#00C2FF]/60"
+                      className="flex-1 px-2 py-1 bg-surface border border-border rounded text-xs text-foreground focus:outline-none focus:border-accent/60"
                       placeholder={`Option ${oi + 1}`} value={opt}
                       onChange={e => patch(i, { options: (q.options ?? []).map((o, j) => j === oi ? e.target.value : o) })} />
                     {(q.options?.length ?? 0) > 2 && (
@@ -129,16 +129,16 @@ function QuizEditor({ quiz, onChange }: { quiz: Quiz; onChange: (q: Quiz) => voi
                         const opts = (q.options ?? []).filter((_, j) => j !== oi);
                         const ai = q.answerIndex ?? 0;
                         patch(i, { options: opts, answerIndex: ai >= opts.length ? 0 : ai > oi ? ai - 1 : ai });
-                      }} className="p-0.5 text-[#5A6275] hover:text-[#ea4335]"><X className="w-3 h-3" /></button>
+                      }} className="p-0.5 text-subtle hover:text-crit"><X className="w-3 h-3" /></button>
                     )}
                   </div>
                 ))}
                 <button onClick={() => patch(i, { options: [...(q.options ?? []), ""] })}
-                  className="text-[11px] text-[#00C2FF] hover:underline font-medium">+ Add option</button>
-                <p className="text-[10px] text-[#5A6275]">Select the radio next to the correct option.</p>
+                  className="text-[11px] text-accent hover:underline font-medium">+ Add option</button>
+                <p className="text-[10px] text-subtle">Select the radio next to the correct option.</p>
               </div>
             )}
-            {q.type === "text" && <p className="pl-1 text-[10px] text-[#5A6275]">Free-text answer — counts as done once the intern writes a non-empty response. You can review answers in the Quiz Responses panel.</p>}
+            {q.type === "text" && <p className="pl-1 text-[10px] text-subtle">Free-text answer — counts as done once the intern writes a non-empty response. You can review answers in the Quiz Responses panel.</p>}
           </div>
         ))}
       </div>
@@ -294,7 +294,7 @@ export function MentorPanelTab() {
   return (
     <div className="max-w-5xl mx-auto space-y-4">
       {/* Sub-tab bar */}
-      <div className="flex gap-1 border-b border-[#262A35] pb-0 flex-wrap">
+      <div className="flex gap-1 border-b border-border pb-0 flex-wrap">
         {([
           { id: "overview" as MentorSubTab, label: "Overview", icon: TrendingUp },
           { id: "interns" as MentorSubTab, label: "Interns", icon: GraduationCap },
@@ -307,13 +307,13 @@ export function MentorPanelTab() {
         ]).map(t => (
           <button key={t.id} onClick={() => setSubTab(t.id)}
             className={`flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-              subTab === t.id ? "border-[#00C2FF] text-[#00C2FF]" : "border-transparent text-[#8A92A6] hover:text-[#E6E9F0]"
+              subTab === t.id ? "border-accent text-accent" : "border-transparent text-muted hover:text-foreground"
             }`}>
             <t.icon className="w-4 h-4" />{t.label}
           </button>
         ))}
         {subTab === "edit_week" && editingWeek && (
-          <button className="flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium border-b-2 border-[#00C2FF] text-[#00C2FF]">
+          <button className="flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium border-b-2 border-accent text-accent">
             <Pencil className="w-4 h-4" />Editing: {editingWeek.title.slice(0, 30)}{editingWeek.title.length > 30 ? "…" : ""}
           </button>
         )}
@@ -344,37 +344,37 @@ export function MentorPanelTab() {
 
       {/* New week form */}
       {subTab === "new_week" && (
-        <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-6 space-y-4">
-          <h3 className="font-semibold text-[#E6E9F0]">Create New Week</h3>
+        <div className="bg-surface border border-border rounded-xl p-6 space-y-4">
+          <h3 className="font-semibold text-foreground">Create New Week</h3>
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs font-medium text-[#8A92A6] mb-1">Week Number</label>
+              <label className="block text-xs font-medium text-muted mb-1">Week Number</label>
               <input type="number" min="0"
-                className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60 focus:ring-2 focus:ring-[#00C2FF]/20"
+                className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20"
                 placeholder="e.g. 5" value={newWeek.weekNumber}
                 onChange={e => setNewWeek(p => ({ ...p, weekNumber: e.target.value }))} />
-              <p className="text-[10px] text-[#5A6275] mt-1">0 = Prerequisites</p>
+              <p className="text-[10px] text-subtle mt-1">0 = Prerequisites</p>
             </div>
             <div className="col-span-2">
-              <label className="block text-xs font-medium text-[#8A92A6] mb-1">Title</label>
+              <label className="block text-xs font-medium text-muted mb-1">Title</label>
               <input
-                className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60 focus:ring-2 focus:ring-[#00C2FF]/20"
+                className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20"
                 placeholder="Week title…" value={newWeek.title}
                 onChange={e => setNewWeek(p => ({ ...p, title: e.target.value }))} />
             </div>
           </div>
           <div>
-            <label className="block text-xs font-medium text-[#8A92A6] mb-1">Overview</label>
+            <label className="block text-xs font-medium text-muted mb-1">Overview</label>
             <textarea rows={3}
-              className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] resize-none focus:outline-none focus:border-[#00C2FF]/60 focus:ring-2 focus:ring-[#00C2FF]/20"
+              className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground resize-none focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20"
               placeholder="What will interns learn this week?" value={newWeek.overview}
               onChange={e => setNewWeek(p => ({ ...p, overview: e.target.value }))} />
           </div>
-          <p className="text-xs text-[#8A92A6]">After creating the week, open it in the Weeks tab to add modules, resources, and checkpoints.</p>
+          <p className="text-xs text-muted">After creating the week, open it in the Weeks tab to add modules, resources, and checkpoints.</p>
           <div className="flex gap-2 justify-end">
-            <button onClick={() => setSubTab("weeks")} className="px-3 py-1.5 text-sm text-[#8A92A6] hover:bg-[#1B1F2A] rounded-lg">Cancel</button>
+            <button onClick={() => setSubTab("weeks")} className="px-3 py-1.5 text-sm text-muted hover:bg-surface-sunken rounded-lg">Cancel</button>
             <button onClick={createWeek} disabled={creatingWeek || !newWeek.title.trim() || !newWeek.overview.trim() || newWeek.weekNumber === ""}
-              className="flex items-center gap-1.5 px-4 py-1.5 bg-[#00C2FF] text-[#06121A] text-sm font-semibold rounded-lg hover:bg-[#0098E6] disabled:opacity-50">
+              className="flex items-center gap-1.5 px-4 py-1.5 bg-accent text-accent-foreground text-sm font-semibold rounded-lg hover:bg-accent-hover disabled:opacity-50">
               {creatingWeek ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Plus className="w-4 h-4" /> Create Week</>}
             </button>
           </div>
@@ -383,34 +383,34 @@ export function MentorPanelTab() {
 
       {/* Seed panel */}
       {subTab === "seed" && (
-        <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-6 space-y-4">
+        <div className="bg-surface border border-border rounded-xl p-6 space-y-4">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-[#0E2532] flex items-center justify-center shrink-0">
-              <GraduationCap className="w-6 h-6 text-[#00C2FF]" />
+            <div className="w-12 h-12 rounded-xl bg-accent-soft flex items-center justify-center shrink-0">
+              <GraduationCap className="w-6 h-6 text-accent" />
             </div>
             <div>
-              <h3 className="font-semibold text-[#E6E9F0] mb-1">Seed CyberSage Handbook</h3>
-              <p className="text-sm text-[#8A92A6]">
+              <h3 className="font-semibold text-foreground mb-1">Seed CyberSage Handbook</h3>
+              <p className="text-sm text-muted">
                 Loads the full curriculum from the CyberSage Intern Handbook — Prerequisites, Weeks 1–4 with all modules, resources, and checkpoints. This can only be run once. If weeks already exist this will fail.
               </p>
             </div>
           </div>
-          <div className="flex items-start gap-2 bg-[#F59E0B]/12 border border-[#F59E0B]/25 rounded-lg px-4 py-3 text-sm text-[#F59E0B]">
+          <div className="flex items-start gap-2 bg-warn/12 border border-warn/25 rounded-lg px-4 py-3 text-sm text-warn">
             <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
             <span>This will populate the database with all handbook content. Run only on a fresh install or after clearing existing weeks.</span>
           </div>
           <button onClick={seedHandbook} disabled={seedLoading}
-            className="flex items-center gap-2 px-4 py-2 bg-[#00C2FF] text-[#06121A] text-sm font-semibold rounded-lg hover:bg-[#0098E6] disabled:opacity-50 transition-colors">
+            className="flex items-center gap-2 px-4 py-2 bg-accent text-accent-foreground text-sm font-semibold rounded-lg hover:bg-accent-hover disabled:opacity-50 transition-colors">
             {seedLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Seeding…</> : <><GraduationCap className="w-4 h-4" /> Seed Handbook</>}
           </button>
 
-          <div className="border-t border-[#262A35] pt-4 mt-2">
-            <h3 className="font-semibold text-[#E6E9F0] mb-1">Add module quizzes</h3>
-            <p className="text-sm text-[#8A92A6] mb-3">
+          <div className="border-t border-border pt-4 mt-2">
+            <h3 className="font-semibold text-foreground mb-1">Add module quizzes</h3>
+            <p className="text-sm text-muted mb-3">
               Adds a ready-made MCQ/short-answer quiz to every handbook module. Interns must pass each module&apos;s quiz to tick it off, and the week auto-completes once all are passed. Safe to run on already-seeded weeks — re-running just refreshes the quizzes.
             </p>
             <button onClick={seedQuizzes} disabled={quizSeedLoading}
-              className="flex items-center gap-2 px-4 py-2 bg-[#0f9d58] text-white text-sm font-semibold rounded-lg hover:bg-[#0c7c46] disabled:opacity-50 transition-colors">
+              className="flex items-center gap-2 px-4 py-2 bg-ok text-white text-sm font-semibold rounded-lg hover:bg-ok disabled:opacity-50 transition-colors">
               {quizSeedLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Adding quizzes…</> : <><CheckCircle2 className="w-4 h-4" /> Add quizzes to all modules</>}
             </button>
           </div>
@@ -421,55 +421,55 @@ export function MentorPanelTab() {
       {subTab === "edit_week" && editingWeek && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <button onClick={() => setSubTab("weeks")} className="flex items-center gap-1.5 text-sm text-[#8A92A6] hover:text-[#E6E9F0]">
+            <button onClick={() => setSubTab("weeks")} className="flex items-center gap-1.5 text-sm text-muted hover:text-foreground">
               ← Back to weeks
             </button>
             <button onClick={saveFullContent} disabled={savingContent}
-              className="flex items-center gap-1.5 px-4 py-2 bg-[#00C2FF] text-[#06121A] text-sm font-semibold rounded-lg hover:bg-[#0098E6] disabled:opacity-50">
+              className="flex items-center gap-1.5 px-4 py-2 bg-accent text-accent-foreground text-sm font-semibold rounded-lg hover:bg-accent-hover disabled:opacity-50">
               {savingContent ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</> : <><Save className="w-4 h-4" /> Save all changes</>}
             </button>
           </div>
 
           {/* Meta */}
-          <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-5 space-y-3">
-            <h3 className="text-xs font-semibold text-[#8A92A6]">Week info</h3>
+          <div className="bg-surface border border-border rounded-xl p-5 space-y-3">
+            <h3 className="text-xs font-semibold text-muted">Week info</h3>
             <input
-              className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60 focus:ring-2 focus:ring-[#00C2FF]/20"
+              className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20"
               value={editMeta.title} onChange={e => setEditMeta(p => ({ ...p, title: e.target.value }))} placeholder="Week title…" />
             <textarea rows={4}
-              className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] resize-y focus:outline-none focus:border-[#00C2FF]/60 focus:ring-2 focus:ring-[#00C2FF]/20"
+              className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground resize-y focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20"
               value={editMeta.overview} onChange={e => setEditMeta(p => ({ ...p, overview: e.target.value }))} placeholder="Overview…" />
           </div>
 
           {/* Topics / Modules */}
-          <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-3 border-b border-[#262A35] bg-[#1B1F2A]">
-              <h3 className="text-xs font-semibold text-[#8A92A6]">Modules ({editTopics.length})</h3>
+          <div className="bg-surface border border-border rounded-xl overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-surface-sunken">
+              <h3 className="text-xs font-semibold text-muted">Modules ({editTopics.length})</h3>
               <button onClick={() => setEditTopics(p => [...p, { title: "New Module", body: "", order: p.length }])}
-                className="flex items-center gap-1 px-2.5 py-1 bg-[#00C2FF] text-[#06121A] text-xs font-semibold rounded-lg hover:bg-[#0098E6]">
+                className="flex items-center gap-1 px-2.5 py-1 bg-accent text-accent-foreground text-xs font-semibold rounded-lg hover:bg-accent-hover">
                 <Plus className="w-3 h-3" /> Add Module
               </button>
             </div>
-            <div className="divide-y divide-[#1B1F2A]">
+            <div className="divide-y divide-border">
               {editTopics.length === 0 && (
-                <p className="px-5 py-4 text-sm text-[#5A6275]">No modules yet. Click &ldquo;Add Module&rdquo; to create the first one.</p>
+                <p className="px-5 py-4 text-sm text-subtle">No modules yet. Click &ldquo;Add Module&rdquo; to create the first one.</p>
               )}
               {editTopics.map((topic, i) => (
                 <div key={i} className="p-4 space-y-2">
                   <div className="flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-full bg-[#0E2532] text-[#00C2FF] text-[10px] font-bold flex items-center justify-center shrink-0">{i + 1}</span>
+                    <span className="w-5 h-5 rounded-full bg-accent-soft text-accent text-[10px] font-bold flex items-center justify-center shrink-0">{i + 1}</span>
                     <input
-                      className="flex-1 px-3 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm font-semibold text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+                      className="flex-1 px-3 py-1.5 bg-surface-sunken border border-border-strong rounded-lg text-sm font-semibold text-foreground focus:outline-none focus:border-accent/60"
                       value={topic.title}
                       onChange={e => setEditTopics(p => p.map((t, j) => j === i ? { ...t, title: e.target.value } : t))}
                       placeholder="Module title…" />
                     <button onClick={() => setEditTopics(p => p.filter((_, j) => j !== i))}
-                      className="p-1.5 text-[#5A6275] hover:text-[#ea4335] hover:bg-[#ea4335]/12 rounded-lg transition-colors">
+                      className="p-1.5 text-subtle hover:text-crit hover:bg-crit/12 rounded-lg transition-colors">
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                   <textarea rows={18}
-                    className="w-full min-h-[340px] px-4 py-3 bg-[#12151D] border border-[#262A35] rounded-lg text-sm leading-relaxed text-[#C8CEDB] font-mono resize-y focus:outline-none focus:border-[#00C2FF]/60 focus:ring-1 focus:ring-[#00C2FF]/20"
+                    className="w-full min-h-[340px] px-4 py-3 bg-surface border border-border rounded-lg text-sm leading-relaxed text-foreground font-mono resize-y focus:outline-none focus:border-accent/60 focus:ring-1 focus:ring-accent/20"
                     value={topic.body}
                     onChange={e => setEditTopics(p => p.map((t, j) => j === i ? { ...t, body: e.target.value } : t))}
                     placeholder="Module content (Markdown supported)…" />
@@ -482,30 +482,30 @@ export function MentorPanelTab() {
           </div>
 
           {/* Resources */}
-          <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-3 border-b border-[#262A35] bg-[#1B1F2A]">
-              <h3 className="text-xs font-semibold text-[#8A92A6]">Resources ({editResources.length})</h3>
+          <div className="bg-surface border border-border rounded-xl overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-surface-sunken">
+              <h3 className="text-xs font-semibold text-muted">Resources ({editResources.length})</h3>
               <button onClick={() => setEditResources(p => [...p, { title: "", url: "", type: "link", order: p.length }])}
-                className="flex items-center gap-1 px-2.5 py-1 bg-[#00C2FF] text-[#06121A] text-xs font-semibold rounded-lg hover:bg-[#0098E6]">
+                className="flex items-center gap-1 px-2.5 py-1 bg-accent text-accent-foreground text-xs font-semibold rounded-lg hover:bg-accent-hover">
                 <Plus className="w-3 h-3" /> Add Link
               </button>
             </div>
             <div className="p-4 space-y-2">
               {editResources.length === 0 && (
-                <p className="text-sm text-[#5A6275]">No resources yet.</p>
+                <p className="text-sm text-subtle">No resources yet.</p>
               )}
               {editResources.map((r, i) => (
                 <div key={i} className="flex items-center gap-2">
                   <input
-                    className="flex-1 px-3 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+                    className="flex-1 px-3 py-1.5 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground focus:outline-none focus:border-accent/60"
                     value={r.title} onChange={e => setEditResources(p => p.map((x, j) => j === i ? { ...x, title: e.target.value } : x))}
                     placeholder="Link label…" />
                   <input
-                    className="flex-1 px-3 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+                    className="flex-1 px-3 py-1.5 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground focus:outline-none focus:border-accent/60"
                     value={r.url} onChange={e => setEditResources(p => p.map((x, j) => j === i ? { ...x, url: e.target.value } : x))}
                     placeholder="https://…" />
                   <button onClick={() => setEditResources(p => p.filter((_, j) => j !== i))}
-                    className="p-1.5 text-[#5A6275] hover:text-[#ea4335] hover:bg-[#ea4335]/12 rounded-lg">
+                    className="p-1.5 text-subtle hover:text-crit hover:bg-crit/12 rounded-lg">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -514,25 +514,25 @@ export function MentorPanelTab() {
           </div>
 
           {/* Checkpoints */}
-          <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-3 border-b border-[#262A35] bg-[#1B1F2A]">
-              <h3 className="text-xs font-semibold text-[#8A92A6]">Checkpoints ({editCheckpoints.length})</h3>
+          <div className="bg-surface border border-border rounded-xl overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-surface-sunken">
+              <h3 className="text-xs font-semibold text-muted">Checkpoints ({editCheckpoints.length})</h3>
               <button onClick={() => setEditCheckpoints(p => [...p, { title: "", order: p.length }])}
-                className="flex items-center gap-1 px-2.5 py-1 bg-[#00C2FF] text-[#06121A] text-xs font-semibold rounded-lg hover:bg-[#0098E6]">
+                className="flex items-center gap-1 px-2.5 py-1 bg-accent text-accent-foreground text-xs font-semibold rounded-lg hover:bg-accent-hover">
                 <Plus className="w-3 h-3" /> Add
               </button>
             </div>
             <div className="p-4 space-y-2">
-              {editCheckpoints.length === 0 && <p className="text-sm text-[#5A6275]">No checkpoints yet.</p>}
+              {editCheckpoints.length === 0 && <p className="text-sm text-subtle">No checkpoints yet.</p>}
               {editCheckpoints.map((c, i) => (
                 <div key={i} className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-[#3A4150] shrink-0" />
+                  <CheckCircle2 className="w-4 h-4 text-subtle shrink-0" />
                   <input
-                    className="flex-1 px-3 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+                    className="flex-1 px-3 py-1.5 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground focus:outline-none focus:border-accent/60"
                     value={c.title} onChange={e => setEditCheckpoints(p => p.map((x, j) => j === i ? { ...x, title: e.target.value } : x))}
                     placeholder="e.g. Kali Linux VM installed and updated" />
                   <button onClick={() => setEditCheckpoints(p => p.filter((_, j) => j !== i))}
-                    className="p-1.5 text-[#5A6275] hover:text-[#ea4335] hover:bg-[#ea4335]/12 rounded-lg">
+                    className="p-1.5 text-subtle hover:text-crit hover:bg-crit/12 rounded-lg">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -542,7 +542,7 @@ export function MentorPanelTab() {
 
           <div className="flex justify-end">
             <button onClick={saveFullContent} disabled={savingContent}
-              className="flex items-center gap-1.5 px-5 py-2.5 bg-[#00C2FF] text-[#06121A] text-sm font-semibold rounded-lg hover:bg-[#0098E6] disabled:opacity-50">
+              className="flex items-center gap-1.5 px-5 py-2.5 bg-accent text-accent-foreground text-sm font-semibold rounded-lg hover:bg-accent-hover disabled:opacity-50">
               {savingContent ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</> : <><Save className="w-4 h-4" /> Save all changes</>}
             </button>
           </div>
@@ -559,19 +559,19 @@ export function MentorPanelTab() {
           <div className="space-y-4">
             {weeks.map(week => {
               return (
-                <div key={week.id} className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
+                <div key={week.id} className="bg-surface border border-border rounded-xl overflow-hidden">
                   {/* Week header */}
-                  <div className="flex items-center justify-between px-5 py-4 border-b border-[#1B1F2A]">
+                  <div className="flex items-center justify-between px-5 py-4 border-b border-border">
                     <div className="flex items-center gap-3">
                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${
-                        week.weekNumber === 0 ? "bg-[#0E2532] text-[#00C2FF]" :
-                        week.isUnlocked ? "bg-green-500/10 text-[#0f9d58]" : "bg-[#1B1F2A] text-[#5A6275]"
+                        week.weekNumber === 0 ? "bg-accent-soft text-accent" :
+                        week.isUnlocked ? "bg-ok/10 text-ok" : "bg-surface-sunken text-subtle"
                       }`}>
                         {week.weekNumber === 0 ? "P" : week.weekNumber}
                       </div>
                       <div>
-                        <p className="font-semibold text-sm text-[#E6E9F0]">{week.title}</p>
-                        <p className="text-xs text-[#5A6275] font-mono">
+                        <p className="font-semibold text-sm text-foreground">{week.title}</p>
+                        <p className="text-xs text-subtle font-mono">
                           {week.topics.length} modules · {week.checkpoints.length} checkpoints · {week.completions.length} completed
                         </p>
                       </div>
@@ -579,7 +579,7 @@ export function MentorPanelTab() {
                     <div className="flex items-center gap-2">
                       {/* Edit content button */}
                       <button onClick={() => openEditor(week)}
-                        className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[#8A92A6] hover:text-[#00C2FF] hover:bg-[#0E2532] rounded-lg transition-colors">
+                        className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-muted hover:text-accent hover:bg-accent-soft rounded-lg transition-colors">
                         <Pencil className="w-3 h-3" /> Edit content
                       </button>
                       {/* Lock/unlock (only for non-prerequisites) */}
@@ -589,8 +589,8 @@ export function MentorPanelTab() {
                           disabled={toggling === week.id}
                           className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
                             week.isUnlocked
-                              ? "bg-green-500/10 text-[#0f9d58] hover:bg-[#ea4335]/12 hover:text-[#ea4335]"
-                              : "bg-[#1B1F2A] text-[#8A92A6] hover:bg-[#0E2532] hover:text-[#00C2FF]"
+                              ? "bg-ok/10 text-ok hover:bg-crit/12 hover:text-crit"
+                              : "bg-surface-sunken text-muted hover:bg-accent-soft hover:text-accent"
                           }`}>
                           {toggling === week.id
                             ? <Loader2 className="w-3 h-3 animate-spin" />
@@ -598,24 +598,24 @@ export function MentorPanelTab() {
                         </button>
                       )}
                       {week.weekNumber === 0 && (
-                        <span className="text-xs bg-green-500/10 text-[#0f9d58] px-2 py-1 rounded font-semibold">Always open</span>
+                        <span className="text-xs bg-ok/10 text-ok px-2 py-1 rounded font-semibold">Always open</span>
                       )}
                     </div>
                   </div>
 
                   {/* Mentor note input */}
                   <div className="px-5 py-4">
-                    <p className="text-xs font-semibold text-[#8A92A6] mb-2">Add a mentor note for interns</p>
+                    <p className="text-xs font-semibold text-muted mb-2">Add a mentor note for interns</p>
                     <div className="flex gap-2">
                       <input
-                        className="flex-1 px-3 py-2 bg-[#1B1F2A] border border-[#262A35] rounded-lg text-sm text-[#E6E9F0] placeholder:text-[#5A6275] focus:outline-none focus:border-[#00C2FF]/60"
+                        className="flex-1 px-3 py-2 bg-surface-sunken border border-border rounded-lg text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60"
                         placeholder="Tip, warning, or extra context for interns…"
                         value={noteText[week.id] ?? ""}
                         onChange={e => setNoteText(p => ({ ...p, [week.id]: e.target.value }))}
                         onKeyDown={e => e.key === "Enter" && saveNote(week.id)}
                       />
                       <button onClick={() => saveNote(week.id)} disabled={savingNote === week.id}
-                        className="px-3 py-2 bg-[#00C2FF] text-[#06121A] rounded-lg hover:bg-[#0098E6] disabled:opacity-50 text-sm font-semibold">
+                        className="px-3 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent-hover disabled:opacity-50 text-sm font-semibold">
                         {savingNote === week.id ? <Loader2 className="w-4 h-4 animate-spin" /> : "Add"}
                       </button>
                     </div>
@@ -623,12 +623,12 @@ export function MentorPanelTab() {
                     {week.mentorNotes.length > 0 && (
                       <div className="mt-3 space-y-1.5">
                         {week.mentorNotes.slice(0, 2).map(note => (
-                          <div key={note.id} className="text-xs text-[#C2C8D6] bg-[#1B1F2A] border-l-2 border-[#F59E0B]/40 rounded px-3 py-2">
-                            {note.body} <span className="text-[#5A6275]">— {note.author.fullName}</span>
+                          <div key={note.id} className="text-xs text-foreground bg-surface-sunken border-l-2 border-warn/40 rounded px-3 py-2">
+                            {note.body} <span className="text-subtle">— {note.author.fullName}</span>
                           </div>
                         ))}
                         {week.mentorNotes.length > 2 && (
-                          <p className="text-[10px] text-[#5A6275]">+{week.mentorNotes.length - 2} more notes</p>
+                          <p className="text-[10px] text-subtle">+{week.mentorNotes.length - 2} more notes</p>
                         )}
                       </div>
                     )}
@@ -736,9 +736,9 @@ function MentorHRSubTab() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <p className="text-sm text-[#8A92A6]">Intern HR records · <span className="text-[#E6E9F0] font-medium">{rows.length}</span></p>
+        <p className="text-sm text-muted">Intern HR records · <span className="text-foreground font-medium">{rows.length}</span></p>
         <button onClick={backfill} disabled={backfilling || missingCount === 0}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#0E2532] text-[#00C2FF] hover:bg-[#133347] disabled:opacity-50 transition-colors">
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-accent-soft text-accent hover:bg-accent-soft disabled:opacity-50 transition-colors">
           {backfilling ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
           {missingCount > 0 ? `Assign ${missingCount} missing ID${missingCount !== 1 ? "s" : ""}` : "All IDs assigned"}
         </button>
@@ -751,15 +751,15 @@ function MentorHRSubTab() {
           {rows.map(r => {
             const d = drafts[r.id] ?? rowToDraft(r);
             return (
-              <div key={r.id} className="bg-[#12151D] border border-[#262A35] rounded-xl p-4">
+              <div key={r.id} className="bg-surface border border-border rounded-xl p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <Avatar user={r} size={7} />
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-[#E6E9F0] truncate">{r.fullName}</p>
-                    <p className="text-[11px] text-[#5A6275] truncate">{r.email} · {r.role}</p>
+                    <p className="text-sm font-medium text-foreground truncate">{r.fullName}</p>
+                    <p className="text-[11px] text-subtle truncate">{r.email} · {r.role}</p>
                   </div>
                   <button onClick={() => saveRow(r.id)} disabled={savingId === r.id}
-                    className="ml-auto flex items-center gap-1.5 px-3 py-1.5 bg-[#00C2FF] text-[#06121A] text-xs font-semibold rounded-lg hover:bg-[#0098E6] disabled:opacity-50">
+                    className="ml-auto flex items-center gap-1.5 px-3 py-1.5 bg-accent text-accent-foreground text-xs font-semibold rounded-lg hover:bg-accent-hover disabled:opacity-50">
                     {savingId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />} Save
                   </button>
                 </div>
@@ -786,10 +786,10 @@ function HRField({ label, value, onChange, type = "text", placeholder, mono }: {
 }) {
   return (
     <div>
-      <label className="block text-[11px] font-medium text-[#8A92A6] mb-1">{label}</label>
+      <label className="block text-[11px] font-medium text-muted mb-1">{label}</label>
       <input type={type} value={value} placeholder={placeholder}
         onChange={e => onChange(e.target.value)}
-        className={`w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] placeholder:text-[#5A6275] focus:outline-none focus:border-[#00C2FF]/60 ${mono ? "font-mono" : ""}`} />
+        className={`w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60 ${mono ? "font-mono" : ""}`} />
     </div>
   );
 }
@@ -929,11 +929,11 @@ function MentorAttendanceSubTab() {
   return (
     <div className="space-y-5">
       {/* Tab toggle */}
-      <div className="flex items-center gap-1 bg-[#12151D] border border-[#262A35] rounded-xl p-1 w-fit">
+      <div className="flex items-center gap-1 bg-surface border border-border rounded-xl p-1 w-fit">
         {(["daily", "summary"] as const).map(tab => (
           <button key={tab} onClick={() => setActiveView(tab)}
             className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors
-              ${activeView === tab ? "bg-[#00C2FF] text-[#06121A]" : "text-[#8A92A6] hover:text-[#E6E9F0]"}`}>
+              ${activeView === tab ? "bg-accent text-accent-foreground" : "text-muted hover:text-foreground"}`}>
             {tab === "daily" ? "Daily Timesheet" : "Intern Summary"}
           </button>
         ))}
@@ -942,13 +942,13 @@ function MentorAttendanceSubTab() {
       {activeView === "summary" ? <AttendanceSummaryPanel /> : <>
 
       {/* Working hours config */}
-      <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-4">
+      <div className="bg-surface border border-border rounded-xl p-4">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-[#E6E9F0] flex items-center gap-2">
-            <Clock className="w-4 h-4 text-[#00C2FF]" /> Official Working Hours
+          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <Clock className="w-4 h-4 text-accent" /> Official Working Hours
           </h3>
           <button onClick={() => setEditingSchedule(v => !v)}
-            className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-[#00C2FF] bg-[#0E2532] rounded-lg hover:bg-[#133347] transition-colors">
+            className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-accent bg-accent-soft rounded-lg hover:bg-accent-soft transition-colors">
             <Pencil className="w-3 h-3" /> {editingSchedule ? "Cancel" : "Edit"}
           </button>
         </div>
@@ -957,55 +957,55 @@ function MentorAttendanceSubTab() {
           <div className="space-y-3">
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <label className="block text-[11px] font-medium text-[#8A92A6] mb-1">Start time</label>
+                <label className="block text-[11px] font-medium text-muted mb-1">Start time</label>
                 <input type="time"
-                  className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+                  className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground focus:outline-none focus:border-accent/60"
                   value={scheduleForm.startTime} onChange={e => setScheduleForm(p => ({ ...p, startTime: e.target.value }))} />
               </div>
               <div>
-                <label className="block text-[11px] font-medium text-[#8A92A6] mb-1">End time</label>
+                <label className="block text-[11px] font-medium text-muted mb-1">End time</label>
                 <input type="time"
-                  className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+                  className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground focus:outline-none focus:border-accent/60"
                   value={scheduleForm.endTime} onChange={e => setScheduleForm(p => ({ ...p, endTime: e.target.value }))} />
               </div>
               <div>
-                <label className="block text-[11px] font-medium text-[#8A92A6] mb-1">Grace (mins)</label>
+                <label className="block text-[11px] font-medium text-muted mb-1">Grace (mins)</label>
                 <input type="number" min={0} max={60}
-                  className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+                  className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground focus:outline-none focus:border-accent/60"
                   value={scheduleForm.lateGraceMinutes} onChange={e => setScheduleForm(p => ({ ...p, lateGraceMinutes: Number(e.target.value) }))} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-[11px] font-medium text-[#8A92A6] mb-1">Default break start</label>
+                <label className="block text-[11px] font-medium text-muted mb-1">Default break start</label>
                 <input type="time"
-                  className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+                  className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground focus:outline-none focus:border-accent/60"
                   value={scheduleForm.defaultBreakFrom} onChange={e => setScheduleForm(p => ({ ...p, defaultBreakFrom: e.target.value }))} />
               </div>
               <div>
-                <label className="block text-[11px] font-medium text-[#8A92A6] mb-1">Default break end</label>
+                <label className="block text-[11px] font-medium text-muted mb-1">Default break end</label>
                 <input type="time"
-                  className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+                  className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground focus:outline-none focus:border-accent/60"
                   value={scheduleForm.defaultBreakTo} onChange={e => setScheduleForm(p => ({ ...p, defaultBreakTo: e.target.value }))} />
               </div>
             </div>
-            <p className="text-[11px] text-[#5A6275]">Saving will notify all interns immediately and update their Attendance tab banner.</p>
+            <p className="text-[11px] text-subtle">Saving will notify all interns immediately and update their Attendance tab banner.</p>
             <div className="flex gap-2 justify-end">
-              <button onClick={() => setEditingSchedule(false)} className="px-3 py-1.5 text-xs text-[#8A92A6] hover:bg-[#1B1F2A] rounded-lg">Cancel</button>
+              <button onClick={() => setEditingSchedule(false)} className="px-3 py-1.5 text-xs text-muted hover:bg-surface-sunken rounded-lg">Cancel</button>
               <button onClick={saveSchedule} disabled={savingSchedule}
-                className="flex items-center gap-1.5 px-4 py-1.5 bg-[#00C2FF] text-[#06121A] text-xs font-semibold rounded-lg hover:bg-[#0098E6] disabled:opacity-50">
+                className="flex items-center gap-1.5 px-4 py-1.5 bg-accent text-accent-foreground text-xs font-semibold rounded-lg hover:bg-accent-hover disabled:opacity-50">
                 {savingSchedule ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <><Save className="w-3.5 h-3.5" /> Save & Notify All</>}
               </button>
             </div>
           </div>
         ) : schedule ? (
           <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm">
-            <span className="text-[#C8CEDB]"><span className="text-[#00C2FF] font-semibold font-mono">{schedule.startTime}</span> – <span className="text-[#00C2FF] font-semibold font-mono">{schedule.endTime}</span></span>
-            <span className="text-[#5A6275]">{schedule.lateGraceMinutes} min grace</span>
+            <span className="text-foreground"><span className="text-accent font-semibold font-mono">{schedule.startTime}</span> – <span className="text-accent font-semibold font-mono">{schedule.endTime}</span></span>
+            <span className="text-subtle">{schedule.lateGraceMinutes} min grace</span>
             {(schedule.defaultBreakFrom && schedule.defaultBreakTo) && (
-              <span className="text-[#5A6275]">Break: <span className="font-mono text-[#C8CEDB]">{schedule.defaultBreakFrom} – {schedule.defaultBreakTo}</span></span>
+              <span className="text-subtle">Break: <span className="font-mono text-foreground">{schedule.defaultBreakFrom} – {schedule.defaultBreakTo}</span></span>
             )}
-            {schedule.updatedAt && <span className="text-[#3A4150] text-xs">Updated {fmt(schedule.updatedAt)}</span>}
+            {schedule.updatedAt && <span className="text-subtle text-xs">Updated {fmt(schedule.updatedAt)}</span>}
           </div>
         ) : <LoadingSpinner />}
       </div>
@@ -1013,25 +1013,25 @@ function MentorAttendanceSubTab() {
       {/* Date picker + stats bar */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <button onClick={() => shiftDate(-1)} className="p-1.5 rounded-lg text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0] transition-colors">
+          <button onClick={() => shiftDate(-1)} className="p-1.5 rounded-lg text-muted hover:bg-surface-sunken hover:text-foreground transition-colors">
             <ChevronLeft className="w-4 h-4" />
           </button>
           <input type="date"
-            className="px-3 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+            className="px-3 py-1.5 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground focus:outline-none focus:border-accent/60"
             value={date} onChange={e => setDate(e.target.value)} max={todayStr()} />
           <button onClick={() => shiftDate(1)} disabled={date >= todayStr()}
-            className="p-1.5 rounded-lg text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0] transition-colors disabled:opacity-30">
+            className="p-1.5 rounded-lg text-muted hover:bg-surface-sunken hover:text-foreground transition-colors disabled:opacity-30">
             <ChevronRight className="w-4 h-4" />
           </button>
           {date !== todayStr() && (
-            <button onClick={() => setDate(todayStr())} className="text-xs text-[#00C2FF] hover:underline ml-1">Today</button>
+            <button onClick={() => setDate(todayStr())} className="text-xs text-accent hover:underline ml-1">Today</button>
           )}
         </div>
         <div className="flex items-center gap-4 text-xs">
-          <span className="text-[#0f9d58]"><UserCheck className="w-3.5 h-3.5 inline mr-1" />{presentCount} present</span>
-          {lateCount > 0 && <span className="text-[#F59E0B]"><Clock className="w-3.5 h-3.5 inline mr-1" />{lateCount} late</span>}
+          <span className="text-ok"><UserCheck className="w-3.5 h-3.5 inline mr-1" />{presentCount} present</span>
+          {lateCount > 0 && <span className="text-warn"><Clock className="w-3.5 h-3.5 inline mr-1" />{lateCount} late</span>}
           {idleCount > 0 && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#ff6d00]/20 text-[#ff6d00] font-semibold text-xs">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-warn/20 text-warn font-semibold text-xs">
               <Timer className="w-3 h-3" />{idleCount} idle {idleCount === 1 ? "flag" : "flags"}
             </span>
           )}
@@ -1042,8 +1042,8 @@ function MentorAttendanceSubTab() {
       {loadingRecords ? <LoadingSpinner /> : records.length === 0 ? (
         <EmptyState icon={CalendarClock} title="No interns found" desc="No intern accounts exist yet." />
       ) : (
-        <div className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
-          <div className="grid grid-cols-[1fr_60px_60px_54px_1fr_auto_auto] text-[11px] font-semibold text-[#5A6275] px-4 py-2 border-b border-[#262A35] gap-2">
+        <div className="bg-surface border border-border rounded-xl overflow-hidden">
+          <div className="grid grid-cols-[1fr_60px_60px_54px_1fr_auto_auto] text-[11px] font-semibold text-subtle px-4 py-2 border-b border-border gap-2">
             <span>Intern</span>
             <span>In</span>
             <span>Out</span>
@@ -1052,40 +1052,40 @@ function MentorAttendanceSubTab() {
             <span>Status</span>
             <span>Actions</span>
           </div>
-          <div className="divide-y divide-[#262A35]">
+          <div className="divide-y divide-border">
             {records.map(r => (
               <div key={r.intern.id}
-                className={`grid grid-cols-[1fr_60px_60px_54px_1fr_auto_auto] items-center px-4 py-3 gap-2 transition-colors ${r.isLeave ? "bg-[#7C3AED]/5" : r.idleFlag ? "bg-[#ff6d00]/5 hover:bg-[#ff6d00]/8" : "hover:bg-[#1B1F2A]/40"}`}>
+                className={`grid grid-cols-[1fr_60px_60px_54px_1fr_auto_auto] items-center px-4 py-3 gap-2 transition-colors ${r.isLeave ? "bg-violet/5" : r.idleFlag ? "bg-warn/5 hover:bg-warn/8" : "hover:bg-surface-sunken/40"}`}>
                 {/* Intern */}
                 <div className="flex items-center gap-2 min-w-0">
                   <Avatar user={r.intern} size={7} />
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-[#E6E9F0] truncate">{r.intern.fullName}</p>
+                    <p className="text-sm font-medium text-foreground truncate">{r.intern.fullName}</p>
                     {r.hasOverride && (
-                      <p className="text-[10px] text-[#5A6275] flex items-center gap-1"><Edit2 className="w-2.5 h-2.5" /> Adjusted</p>
+                      <p className="text-[10px] text-subtle flex items-center gap-1"><Edit2 className="w-2.5 h-2.5" /> Adjusted</p>
                     )}
                   </div>
                 </div>
 
                 {/* Punch In */}
-                <span className="text-xs font-mono text-[#C8CEDB] whitespace-nowrap">
-                  {r.firstPunchIn ? fmtHHMM(r.firstPunchIn) : <span className="text-[#3A4150]">—</span>}
+                <span className="text-xs font-mono text-foreground whitespace-nowrap">
+                  {r.firstPunchIn ? fmtHHMM(r.firstPunchIn) : <span className="text-subtle">—</span>}
                 </span>
 
                 {/* Punch Out */}
-                <span className="text-xs font-mono text-[#C8CEDB] whitespace-nowrap">
+                <span className="text-xs font-mono text-foreground whitespace-nowrap">
                   {r.lastPunchOut ? fmtHHMM(r.lastPunchOut) : r.isCurrentlyIn
-                    ? <span className="text-[#0f9d58] text-[11px]">● live</span>
-                    : <span className="text-[#3A4150]">—</span>}
+                    ? <span className="text-ok text-[11px]">● live</span>
+                    : <span className="text-subtle">—</span>}
                 </span>
 
                 {/* Total (net of breaks) */}
                 <div className="flex flex-col gap-0.5">
-                  <span className={`text-xs font-mono font-semibold whitespace-nowrap ${r.totalMinutes > 0 ? "text-[#E6E9F0]" : "text-[#3A4150]"}`}>
+                  <span className={`text-xs font-mono font-semibold whitespace-nowrap ${r.totalMinutes > 0 ? "text-foreground" : "text-subtle"}`}>
                     {r.totalMinutes > 0 ? fmtDuration(r.totalMinutes) : "—"}
                   </span>
                   {r.breakMinutes > 0 && (
-                    <span className="text-[10px] text-[#5A6275] whitespace-nowrap">−{fmtDuration(r.breakMinutes)} break</span>
+                    <span className="text-[10px] text-subtle whitespace-nowrap">−{fmtDuration(r.breakMinutes)} break</span>
                   )}
                 </div>
 
@@ -1096,17 +1096,17 @@ function MentorAttendanceSubTab() {
                       href={`https://www.google.com/maps?q=${r.punchLocation.lat},${r.punchLocation.lng}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="flex items-center gap-1 text-[11px] text-[#00C2FF] hover:underline truncate"
+                      className="flex items-center gap-1 text-[11px] text-accent hover:underline truncate"
                     >
                       <MapPin className="w-3 h-3 shrink-0" />
                       {r.punchLocation.lat.toFixed(4)}, {r.punchLocation.lng.toFixed(4)}
-                      <span className="text-[#5A6275] ml-0.5">±{r.punchLocation.accuracy}m</span>
+                      <span className="text-subtle ml-0.5">±{r.punchLocation.accuracy}m</span>
                     </a>
                   ) : r.firstPunchIn ? (
-                    <span className="text-[11px] text-[#3A4150] flex items-center gap-1"><MapPin className="w-3 h-3" /> No location</span>
+                    <span className="text-[11px] text-subtle flex items-center gap-1"><MapPin className="w-3 h-3" /> No location</span>
                   ) : null}
                   {r.punchDevice && (
-                    <span className="text-[11px] text-[#5A6275] flex items-center gap-1 truncate">
+                    <span className="text-[11px] text-subtle flex items-center gap-1 truncate">
                       <Monitor className="w-3 h-3 shrink-0" />{r.punchDevice}
                     </span>
                   )}
@@ -1115,20 +1115,20 @@ function MentorAttendanceSubTab() {
                 {/* Flags */}
                 <div className="flex flex-col gap-1">
                   {r.isLeave && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#7C3AED]/20 text-[#A78BFA] text-xs font-medium">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet/20 text-violet text-xs font-medium">
                       <Plane className="w-3 h-3" /> On Leave
                     </span>
                   )}
                   {!r.firstPunchIn && !r.isLeave && (
-                    <span className="text-xs text-[#3A4150]">Absent</span>
+                    <span className="text-xs text-subtle">Absent</span>
                   )}
                   {r.firstPunchIn && !r.isLate && !r.idleFlag && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#0f9d58]/15 text-[#0f9d58] text-xs font-medium">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-ok/15 text-ok text-xs font-medium">
                       <CheckCircle className="w-3 h-3" /> On time
                     </span>
                   )}
                   {r.isLate && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#F59E0B]/15 text-[#F59E0B] text-xs font-medium">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-warn/15 text-warn text-xs font-medium">
                       <AlertCircle className="w-3 h-3" /> Late
                     </span>
                   )}
@@ -1143,11 +1143,11 @@ function MentorAttendanceSubTab() {
                     return (
                       <div>
                         <button onClick={() => setIdleDetailId(idleDetailId === r.intern.id ? null : r.intern.id)}
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#ff6d00]/20 text-[#ff6d00] text-xs font-semibold">
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-warn/20 text-warn text-xs font-semibold">
                           <Timer className="w-3 h-3" /> Idle {fmtDuration(longestMin)}
                         </button>
                         {idleDetailId === r.intern.id && (
-                          <div className="mt-1.5 p-2 bg-[#ff6d00]/10 border border-[#ff6d00]/20 rounded-lg text-[11px] text-[#ff6d00] space-y-0.5">
+                          <div className="mt-1.5 p-2 bg-warn/10 border border-warn/20 rounded-lg text-[11px] text-warn space-y-0.5">
                             <p className="font-semibold">Idle flag details</p>
                             <p>Longest session: <span className="font-mono">{fmtDuration(longestMin)}</span></p>
                             <p>In since: <span className="font-mono">{r.firstPunchIn ? fmtHHMM(r.firstPunchIn) : "—"}</span></p>
@@ -1164,11 +1164,11 @@ function MentorAttendanceSubTab() {
                   <button onClick={() => markLeave(r)}
                     title={r.isLeave ? "Remove leave" : "Mark as on leave"}
                     className={`flex items-center gap-1 px-2 py-1 text-[11px] rounded-lg transition-colors whitespace-nowrap
-                      ${r.isLeave ? "text-[#A78BFA] bg-[#7C3AED]/20 hover:bg-[#7C3AED]/30" : "text-[#8A92A6] hover:text-[#A78BFA] hover:bg-[#7C3AED]/10"}`}>
+                      ${r.isLeave ? "text-violet bg-violet/20 hover:bg-violet/30" : "text-muted hover:text-violet hover:bg-violet/10"}`}>
                     <Plane className="w-3 h-3" /> {r.isLeave ? "Remove Leave" : "Leave"}
                   </button>
                   <button onClick={() => openOverride(r)}
-                    className="flex items-center gap-1 px-2 py-1 text-[11px] text-[#8A92A6] hover:text-[#00C2FF] hover:bg-[#0E2532] rounded-lg transition-colors whitespace-nowrap">
+                    className="flex items-center gap-1 px-2 py-1 text-[11px] text-muted hover:text-accent hover:bg-accent-soft rounded-lg transition-colors whitespace-nowrap">
                     <Edit2 className="w-3 h-3" /> Adjust
                   </button>
                 </div>
@@ -1182,62 +1182,62 @@ function MentorAttendanceSubTab() {
       {overrideFor && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60" onClick={() => { setOverrideFor(null); setOverrideBreaks([]); }} />
-          <div className="relative bg-[#12151D] border border-[#262A35] rounded-2xl p-6 w-full max-w-sm space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <h3 className="font-semibold text-[#E6E9F0] flex items-center gap-2">
-              <Edit2 className="w-4 h-4 text-[#00C2FF]" /> Adjust Attendance
+          <div className="relative bg-surface border border-border rounded-2xl p-6 w-full max-w-sm space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <h3 className="font-semibold text-foreground flex items-center gap-2">
+              <Edit2 className="w-4 h-4 text-accent" /> Adjust Attendance
             </h3>
-            <p className="text-xs text-[#8A92A6]">
-              Manually set punch times for <span className="text-[#E6E9F0] font-medium">{overrideFor.intern.fullName}</span> on {date}.
+            <p className="text-xs text-muted">
+              Manually set punch times for <span className="text-foreground font-medium">{overrideFor.intern.fullName}</span> on {date}.
             </p>
             <div className="space-y-3">
               <div>
-                <label className="block text-[11px] font-medium text-[#8A92A6] mb-1">Punch In</label>
+                <label className="block text-[11px] font-medium text-muted mb-1">Punch In</label>
                 <input type="datetime-local"
-                  className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+                  className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground focus:outline-none focus:border-accent/60"
                   value={overrideForm.punchIn} onChange={e => setOverrideForm(p => ({ ...p, punchIn: e.target.value }))} />
               </div>
               <div>
-                <label className="block text-[11px] font-medium text-[#8A92A6] mb-1">Punch Out</label>
+                <label className="block text-[11px] font-medium text-muted mb-1">Punch Out</label>
                 <input type="datetime-local"
-                  className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+                  className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground focus:outline-none focus:border-accent/60"
                   value={overrideForm.punchOut} onChange={e => setOverrideForm(p => ({ ...p, punchOut: e.target.value }))} />
               </div>
               {/* Breaks */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-[11px] font-medium text-[#8A92A6]">Breaks</label>
+                  <label className="text-[11px] font-medium text-muted">Breaks</label>
                   <button
                     type="button"
                     onClick={() => setOverrideBreaks(p => [...p, { from: `${date}T${scheduleForm.defaultBreakFrom}`, to: `${date}T${scheduleForm.defaultBreakTo}`, label: "" }])}
-                    className="flex items-center gap-1 text-[11px] text-[#00C2FF] hover:underline"
+                    className="flex items-center gap-1 text-[11px] text-accent hover:underline"
                   >
                     <Plus className="w-3 h-3" /> Add break
                   </button>
                 </div>
                 {overrideBreaks.length === 0 && (
-                  <p className="text-[11px] text-[#3A4150]">No breaks set — click &ldquo;Add break&rdquo; to record one.</p>
+                  <p className="text-[11px] text-subtle">No breaks set — click &ldquo;Add break&rdquo; to record one.</p>
                 )}
                 <div className="space-y-2">
                   {overrideBreaks.map((b, i) => (
                     <div key={i} className="flex items-end gap-2">
                       <div className="flex-1">
-                        <p className="text-[10px] text-[#5A6275] mb-0.5">From</p>
+                        <p className="text-[10px] text-subtle mb-0.5">From</p>
                         <input type="datetime-local"
-                          className="w-full px-2 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-xs text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+                          className="w-full px-2 py-1.5 bg-surface-sunken border border-border-strong rounded-lg text-xs text-foreground focus:outline-none focus:border-accent/60"
                           value={b.from}
                           onChange={e => setOverrideBreaks(p => p.map((x, j) => j === i ? { ...x, from: e.target.value } : x))} />
                       </div>
                       <div className="flex-1">
-                        <p className="text-[10px] text-[#5A6275] mb-0.5">To</p>
+                        <p className="text-[10px] text-subtle mb-0.5">To</p>
                         <input type="datetime-local"
-                          className="w-full px-2 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-xs text-[#E6E9F0] focus:outline-none focus:border-[#00C2FF]/60"
+                          className="w-full px-2 py-1.5 bg-surface-sunken border border-border-strong rounded-lg text-xs text-foreground focus:outline-none focus:border-accent/60"
                           value={b.to}
                           onChange={e => setOverrideBreaks(p => p.map((x, j) => j === i ? { ...x, to: e.target.value } : x))} />
                       </div>
                       <div className="w-24">
-                        <p className="text-[10px] text-[#5A6275] mb-0.5">Label</p>
+                        <p className="text-[10px] text-subtle mb-0.5">Label</p>
                         <input type="text"
-                          className="w-full px-2 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-xs text-[#E6E9F0] placeholder:text-[#3A4150] focus:outline-none focus:border-[#00C2FF]/60"
+                          className="w-full px-2 py-1.5 bg-surface-sunken border border-border-strong rounded-lg text-xs text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60"
                           placeholder="Lunch…"
                           value={b.label}
                           onChange={e => setOverrideBreaks(p => p.map((x, j) => j === i ? { ...x, label: e.target.value } : x))} />
@@ -1245,7 +1245,7 @@ function MentorAttendanceSubTab() {
                       <button
                         type="button"
                         onClick={() => setOverrideBreaks(p => p.filter((_, j) => j !== i))}
-                        className="mb-0.5 p-1.5 text-[#5A6275] hover:text-[#ea4335] hover:bg-[#ea4335]/10 rounded-lg transition-colors"
+                        className="mb-0.5 p-1.5 text-subtle hover:text-crit hover:bg-crit/10 rounded-lg transition-colors"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
@@ -1255,17 +1255,17 @@ function MentorAttendanceSubTab() {
               </div>
 
               <div>
-                <label className="block text-[11px] font-medium text-[#8A92A6] mb-1">Reason (optional)</label>
+                <label className="block text-[11px] font-medium text-muted mb-1">Reason (optional)</label>
                 <input type="text"
-                  className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] placeholder:text-[#5A6275] focus:outline-none focus:border-[#00C2FF]/60"
+                  className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60"
                   placeholder="e.g. Forgot to punch in"
                   value={overrideForm.reason} onChange={e => setOverrideForm(p => ({ ...p, reason: e.target.value }))} />
               </div>
             </div>
             <div className="flex gap-2 justify-end pt-1">
-              <button onClick={() => { setOverrideFor(null); setOverrideBreaks([]); }} className="px-3 py-1.5 text-sm text-[#8A92A6] hover:bg-[#1B1F2A] rounded-lg">Cancel</button>
+              <button onClick={() => { setOverrideFor(null); setOverrideBreaks([]); }} className="px-3 py-1.5 text-sm text-muted hover:bg-surface-sunken rounded-lg">Cancel</button>
               <button onClick={saveOverride} disabled={savingOverride}
-                className="flex items-center gap-1.5 px-4 py-1.5 bg-[#00C2FF] text-[#06121A] text-sm font-semibold rounded-lg hover:bg-[#0098E6] disabled:opacity-50">
+                className="flex items-center gap-1.5 px-4 py-1.5 bg-accent text-accent-foreground text-sm font-semibold rounded-lg hover:bg-accent-hover disabled:opacity-50">
                 {savingOverride ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-4 h-4" /> Save</>}
               </button>
             </div>
@@ -1341,19 +1341,19 @@ function AttendanceSummaryPanel() {
   return (
     <div className="space-y-4">
       {/* Date range */}
-      <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-4 flex flex-wrap items-center gap-3">
+      <div className="bg-surface border border-border rounded-xl p-4 flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2 text-sm flex-wrap">
-          <label className="text-[#8A92A6]">From</label>
+          <label className="text-muted">From</label>
           <input type="date" value={from} max={to} onChange={e => setFrom(e.target.value)}
-            className="px-2 py-1 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-[#E6E9F0] text-sm focus:outline-none focus:border-[#00C2FF]/60" />
-          <label className="text-[#8A92A6]">To</label>
+            className="px-2 py-1 bg-surface-sunken border border-border-strong rounded-lg text-foreground text-sm focus:outline-none focus:border-accent/60" />
+          <label className="text-muted">To</label>
           <input type="date" value={to} min={from} max={today} onChange={e => setTo(e.target.value)}
-            className="px-2 py-1 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-[#E6E9F0] text-sm focus:outline-none focus:border-[#00C2FF]/60" />
+            className="px-2 py-1 bg-surface-sunken border border-border-strong rounded-lg text-foreground text-sm focus:outline-none focus:border-accent/60" />
         </div>
         <div className="flex items-center gap-2 ml-auto">
           {presets.map(p => (
             <button key={p.label} onClick={() => { setFrom(p.from); setTo(p.to); }}
-              className="px-2.5 py-1 text-xs rounded-lg bg-[#1B1F2A] text-[#8A92A6] hover:text-[#00C2FF] hover:bg-[#0E2532] transition-colors">
+              className="px-2.5 py-1 text-xs rounded-lg bg-surface-sunken text-muted hover:text-accent hover:bg-accent-soft transition-colors">
               {p.label}
             </button>
           ))}
@@ -1363,19 +1363,19 @@ function AttendanceSummaryPanel() {
       {/* Stats */}
       {data && (
         <div className="grid grid-cols-3 gap-3">
-          <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-3 text-center">
-            <p className="text-2xl font-bold text-[#E6E9F0]">{data.interns.length}</p>
-            <p className="text-xs text-[#5A6275] mt-0.5">Active Interns</p>
+          <div className="bg-surface border border-border rounded-xl p-3 text-center">
+            <p className="text-2xl font-bold text-foreground">{data.interns.length}</p>
+            <p className="text-xs text-subtle mt-0.5">Active Interns</p>
           </div>
-          <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-3 text-center">
-            <p className="text-2xl font-bold text-[#E6E9F0]">{data.totalWorkingDays}</p>
-            <p className="text-xs text-[#5A6275] mt-0.5">Working Days</p>
+          <div className="bg-surface border border-border rounded-xl p-3 text-center">
+            <p className="text-2xl font-bold text-foreground">{data.totalWorkingDays}</p>
+            <p className="text-xs text-subtle mt-0.5">Working Days</p>
           </div>
-          <div className="bg-[#12151D] border border-[#262A35] rounded-xl p-3 text-center">
-            <p className="text-2xl font-bold text-[#0f9d58]">
+          <div className="bg-surface border border-border rounded-xl p-3 text-center">
+            <p className="text-2xl font-bold text-ok">
               {data.interns.length > 0 ? Math.round(data.interns.reduce((a, i) => a + i.attendanceRate, 0) / data.interns.length) : 0}%
             </p>
-            <p className="text-xs text-[#5A6275] mt-0.5">Avg Attendance</p>
+            <p className="text-xs text-subtle mt-0.5">Avg Attendance</p>
           </div>
         </div>
       )}
@@ -1387,38 +1387,38 @@ function AttendanceSummaryPanel() {
         <div className="space-y-2">
           {data.interns.map(row => {
             const isOpen = expanded === row.intern.id;
-            const rc = row.attendanceRate >= 80 ? "#0f9d58" : row.attendanceRate >= 60 ? "#F59E0B" : "#ea4335";
+            const rc = row.attendanceRate >= 80 ? "var(--ok)" : row.attendanceRate >= 60 ? "var(--warn)" : "var(--crit)";
             return (
-              <div key={row.intern.id} className="bg-[#12151D] border border-[#262A35] rounded-xl overflow-hidden">
+              <div key={row.intern.id} className="bg-surface border border-border rounded-xl overflow-hidden">
                 <button onClick={() => openProfile(row)}
-                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#1B1F2A] transition-colors text-left">
+                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-sunken transition-colors text-left">
                   <Avatar user={row.intern} size={9} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-[#E6E9F0] truncate">{row.intern.fullName}</p>
-                    <p className="text-xs text-[#5A6275]">
+                    <p className="text-sm font-semibold text-foreground truncate">{row.intern.fullName}</p>
+                    <p className="text-xs text-subtle">
                       {row.daysPresent} present · {row.daysAbsent} absent
-                      {row.daysLeave > 0 && <span className="text-[#A78BFA]"> · {row.daysLeave} leave</span>}
+                      {row.daysLeave > 0 && <span className="text-violet"> · {row.daysLeave} leave</span>}
                     </p>
                   </div>
                   <div className="hidden sm:flex items-center gap-2 w-28">
-                    <div className="flex-1 h-1.5 bg-[#262A35] rounded-full overflow-hidden">
+                    <div className="flex-1 h-1.5 bg-border rounded-full overflow-hidden">
                       <div className="h-full rounded-full" style={{ width: `${row.attendanceRate}%`, background: rc }} />
                     </div>
                     <span className="text-xs font-semibold w-8 text-right" style={{ color: rc }}>{row.attendanceRate}%</span>
                   </div>
                   {row.attendanceRate >= 80
-                    ? <TrendingUp className="w-4 h-4 text-[#0f9d58] flex-shrink-0" />
-                    : <TrendingDown className="w-4 h-4 text-[#ea4335] flex-shrink-0" />}
-                  <ChevronDown className={`w-4 h-4 text-[#5A6275] flex-shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                    ? <TrendingUp className="w-4 h-4 text-ok flex-shrink-0" />
+                    : <TrendingDown className="w-4 h-4 text-crit flex-shrink-0" />}
+                  <ChevronDown className={`w-4 h-4 text-subtle flex-shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`} />
                 </button>
 
                 {isOpen && profile && profile.row.intern.id === row.intern.id && (
-                  <div className="border-t border-[#262A35] px-4 pb-4 pt-3">
+                  <div className="border-t border-border px-4 pb-4 pt-3">
                     {profile.loading ? <LoadingSpinner /> : (
                       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                         {/* Calendar */}
                         <div className="space-y-2">
-                          <h4 className="text-xs font-semibold text-[#8A92A6] flex items-center gap-1.5">
+                          <h4 className="text-xs font-semibold text-muted flex items-center gap-1.5">
                             <CalendarClock className="w-3.5 h-3.5" /> Attendance
                           </h4>
                           <div className="flex flex-wrap gap-1">
@@ -1429,38 +1429,38 @@ function AttendanceSummaryPanel() {
                             ].sort((a, b) => a.d.localeCompare(b.d)).map(({ d, type }) => (
                               <div key={d} title={`${d} — ${type}`}
                                 className={`w-6 h-6 rounded text-[9px] flex items-center justify-center font-medium cursor-default
-                                  ${type === "present" ? "bg-[#0f9d58]/20 text-[#0f9d58]"
-                                    : type === "leave" ? "bg-[#7C3AED]/20 text-[#A78BFA]"
-                                    : "bg-[#ea4335]/20 text-[#ea4335]"}`}>
+                                  ${type === "present" ? "bg-ok/20 text-ok"
+                                    : type === "leave" ? "bg-violet/20 text-violet"
+                                    : "bg-crit/20 text-crit"}`}>
                                 {new Date(d + "T12:00:00").getDate()}
                               </div>
                             ))}
                           </div>
-                          <div className="flex flex-wrap gap-2 text-[10px] text-[#5A6275]">
-                            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[#0f9d58]/40" />Present</span>
-                            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[#ea4335]/40" />Absent</span>
-                            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-[#7C3AED]/40" />Leave</span>
+                          <div className="flex flex-wrap gap-2 text-[10px] text-subtle">
+                            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-ok/40" />Present</span>
+                            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-crit/40" />Absent</span>
+                            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-violet/40" />Leave</span>
                           </div>
                         </div>
 
                         {/* Submissions */}
                         <div className="space-y-2">
-                          <h4 className="text-xs font-semibold text-[#8A92A6] flex items-center gap-1.5">
+                          <h4 className="text-xs font-semibold text-muted flex items-center gap-1.5">
                             <FileText className="w-3.5 h-3.5" /> Submissions ({profile.submissions.length})
                           </h4>
-                          {profile.submissions.length === 0 ? <p className="text-xs text-[#3A4150]">No submissions yet.</p> : (
+                          {profile.submissions.length === 0 ? <p className="text-xs text-subtle">No submissions yet.</p> : (
                             <div className="space-y-1.5 max-h-48 overflow-y-auto">
                               {profile.submissions.slice(0, 20).map(s => (
-                                <div key={s.id} className="bg-[#1B1F2A] rounded-lg px-3 py-2">
-                                  <p className="text-xs font-medium text-[#C8CEDB] truncate">{s.task?.title ?? "Task"}</p>
+                                <div key={s.id} className="bg-surface-sunken rounded-lg px-3 py-2">
+                                  <p className="text-xs font-medium text-foreground truncate">{s.task?.title ?? "Task"}</p>
                                   <div className="flex items-center gap-2 mt-0.5">
                                     <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded
-                                      ${s.status === "APPROVED" ? "bg-[#0f9d58]/20 text-[#0f9d58]"
-                                        : s.status === "REJECTED" ? "bg-[#ea4335]/20 text-[#ea4335]"
-                                        : "bg-[#F59E0B]/20 text-[#F59E0B]"}`}>
+                                      ${s.status === "APPROVED" ? "bg-ok/20 text-ok"
+                                        : s.status === "REJECTED" ? "bg-crit/20 text-crit"
+                                        : "bg-warn/20 text-warn"}`}>
                                       {s.status}
                                     </span>
-                                    <span className="text-[10px] text-[#5A6275]">{fmt(s.submittedAt)}</span>
+                                    <span className="text-[10px] text-subtle">{fmt(s.submittedAt)}</span>
                                   </div>
                                 </div>
                               ))}
@@ -1470,15 +1470,15 @@ function AttendanceSummaryPanel() {
 
                         {/* Discussions */}
                         <div className="space-y-2">
-                          <h4 className="text-xs font-semibold text-[#8A92A6] flex items-center gap-1.5">
+                          <h4 className="text-xs font-semibold text-muted flex items-center gap-1.5">
                             <MessageSquare className="w-3.5 h-3.5" /> Discussions ({profile.discussions.length})
                           </h4>
-                          {profile.discussions.length === 0 ? <p className="text-xs text-[#3A4150]">No discussion activity.</p> : (
+                          {profile.discussions.length === 0 ? <p className="text-xs text-subtle">No discussion activity.</p> : (
                             <div className="space-y-1.5 max-h-48 overflow-y-auto">
                               {profile.discussions.slice(0, 20).map(d => (
-                                <div key={d.id} className="bg-[#1B1F2A] rounded-lg px-3 py-2">
-                                  <p className="text-xs text-[#C8CEDB] line-clamp-2">{d.body}</p>
-                                  <p className="text-[10px] text-[#5A6275] mt-0.5">{fmt(d.createdAt)}</p>
+                                <div key={d.id} className="bg-surface-sunken rounded-lg px-3 py-2">
+                                  <p className="text-xs text-foreground line-clamp-2">{d.body}</p>
+                                  <p className="text-[10px] text-subtle mt-0.5">{fmt(d.createdAt)}</p>
                                 </div>
                               ))}
                             </div>

@@ -44,7 +44,7 @@ export default function MeetRoomPage() {
           enableWelcomePage: false,
           hideConferenceTimer: true,          // hide the built-in call timer
           disableRemoteMute: false,
-          defaultBackground: "#0f1321",
+          defaultBackground: "#f0efec",
           brandingDataUrl: "",                // no external branding
           // Disable features that expose third-party branding
           disableThirdPartyRequests: true,
@@ -62,7 +62,7 @@ export default function MeetRoomPage() {
           APP_NAME: "CyberSage Meet",
           NATIVE_APP_NAME: "CyberSage Meet",
           PROVIDER_NAME: "CyberSage",
-          DEFAULT_BACKGROUND: "#0f1321",
+          DEFAULT_BACKGROUND: "#f0efec",
           DEFAULT_LOCAL_DISPLAY_NAME: "Me",
           TOOLBAR_ALWAYS_VISIBLE: false,
           TOOLBAR_BUTTONS: [
@@ -90,17 +90,17 @@ export default function MeetRoomPage() {
   }, [roomId, router]);
 
   return (
-    <div className="flex flex-col h-screen bg-[#12151D]">
+    <div className="flex flex-col h-full bg-surface">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2 bg-[#12151D] border-b border-[#262A35] flex-shrink-0">
+      <div className="flex items-center justify-between px-4 py-2 bg-surface border-b border-border flex-shrink-0">
         <div className="flex items-center gap-2">
-          <Phone className="w-4 h-4 text-[#00C2FF]" />
-          <span className="text-sm font-semibold text-[#E6E9F0]">CyberSage Meet</span>
-          <span className="text-xs text-[#5A6275] font-mono">{roomId}</span>
+          <Phone className="w-4 h-4 text-accent" />
+          <span className="text-sm font-semibold text-foreground">CyberSage Meet</span>
+          <span className="text-xs text-subtle font-mono">{roomId}</span>
         </div>
         <button
           onClick={() => router.back()}
-          className="text-xs text-[#8A92A6] hover:text-[#E6E9F0] px-3 py-1.5 rounded-lg border border-[#262A35] hover:bg-[#1B1F2A] transition-colors"
+          className="text-xs text-muted hover:text-foreground px-3 py-1.5 rounded-lg border border-border hover:bg-surface-sunken transition-colors"
         >
           Leave call
         </button>

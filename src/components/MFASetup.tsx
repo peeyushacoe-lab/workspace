@@ -105,41 +105,41 @@ export function MFASetup({
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-start gap-3">
-        <div className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${mfaEnabled ? "bg-[#e6f4ea]" : "bg-[#f1f3f4]"}`}>
+        <div className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${mfaEnabled ? "bg-ok-soft" : "bg-surface-sunken"}`}>
           {mfaEnabled
-            ? <ShieldCheck className="h-5 w-5 text-[#0f9d58]" />
-            : <Shield className="h-5 w-5 text-[#5f6368]" />}
+            ? <ShieldCheck className="h-5 w-5 text-ok" />
+            : <Shield className="h-5 w-5 text-muted" />}
         </div>
         <div>
-          <p className="text-sm font-semibold text-[#202124]">Passkey (biometric) authentication</p>
-          <p className="text-xs text-[#5f6368] mt-0.5">
+          <p className="text-sm font-semibold text-foreground">Passkey (biometric) authentication</p>
+          <p className="text-xs text-muted mt-0.5">
             {mfaEnabled
               ? `${passkeys.length} passkey${passkeys.length !== 1 ? "s" : ""} registered — sign-in requires biometric approval`
               : "Use Face ID, fingerprint, or your device PIN to verify sign-ins. No codes needed."}
           </p>
         </div>
-        <span className={`ml-auto shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${mfaEnabled ? "bg-[#e6f4ea] text-[#0f9d58]" : "bg-[#f1f3f4] text-[#5f6368]"}`}>
+        <span className={`ml-auto shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${mfaEnabled ? "bg-ok-soft text-ok" : "bg-surface-sunken text-muted"}`}>
           {mfaEnabled ? "Active" : "Inactive"}
         </span>
       </div>
 
       {/* Passkey list */}
       {loadingList ? (
-        <div className="flex items-center gap-2 py-2 text-xs text-[#5f6368]">
+        <div className="flex items-center gap-2 py-2 text-xs text-muted">
           <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading…
         </div>
       ) : passkeys.length > 0 ? (
         <div className="space-y-2">
           {passkeys.map((pk) => (
-            <div key={pk.id} className="flex items-center gap-3 rounded-lg border border-[#e8eaed] bg-[#f8f9fa] px-3 py-2.5">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[#e8f0fe]">
+            <div key={pk.id} className="flex items-center gap-3 rounded-lg border border-border bg-surface-sunken px-3 py-2.5">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-accent-soft">
                 {pk.deviceType === "multiDevice"
-                  ? <Smartphone className="h-4 w-4 text-[#1a56db]" />
-                  : <Fingerprint className="h-4 w-4 text-[#1a56db]" />}
+                  ? <Smartphone className="h-4 w-4 text-accent" />
+                  : <Fingerprint className="h-4 w-4 text-accent" />}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-[#202124] truncate">{pk.name}</p>
-                <p className="text-[11px] text-[#80868b]">
+                <p className="text-xs font-medium text-foreground truncate">{pk.name}</p>
+                <p className="text-[11px] text-subtle">
                   Added {formatDate(pk.createdAt)}
                   {pk.lastUsedAt && ` · Last used ${formatDate(pk.lastUsedAt)}`}
                   {pk.backedUp && " · Synced to cloud"}
@@ -148,7 +148,7 @@ export function MFASetup({
               <button
                 onClick={() => void removePasskey(pk.id)}
                 disabled={deletingId === pk.id}
-                className="shrink-0 p-1.5 rounded-md text-[#80868b] hover:text-[#ea4335] hover:bg-[#fce8e6] transition-colors disabled:opacity-40"
+                className="shrink-0 p-1.5 rounded-md text-subtle hover:text-crit hover:bg-crit-soft transition-colors disabled:opacity-40"
                 title="Remove passkey"
               >
                 {deletingId === pk.id
@@ -159,12 +159,12 @@ export function MFASetup({
           ))}
         </div>
       ) : mfaEnabled ? (
-        <p className="text-xs text-[#80868b]">No passkeys found — add one below.</p>
+        <p className="text-xs text-subtle">No passkeys found — add one below.</p>
       ) : null}
 
       {/* Feedback */}
-      {error && <p className="text-xs text-[#ea4335]">{error}</p>}
-      {success && <p className="text-xs text-[#0f9d58]">{success}</p>}
+      {error && <p className="text-xs text-crit">{error}</p>}
+      {success && <p className="text-xs text-ok">{success}</p>}
 
       {/* Add passkey */}
       {showNameInput ? (
@@ -174,7 +174,7 @@ export function MFASetup({
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="e.g. Work MacBook, iPhone 15"
-            className="flex-1 px-3 py-2 bg-[#f1f3f4] border border-[#d0d5dd] rounded-lg text-xs text-[#202124] placeholder:text-[#80868b] focus:outline-none focus:border-[#1a56db]/60 focus:ring-2 focus:ring-[#1a56db]/20 transition-colors"
+            className="flex-1 px-3 py-2 bg-surface-sunken border border-border rounded-lg text-xs text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20 transition-colors"
             autoFocus
             onKeyDown={(e) => {
               if (e.key === "Enter") void register();
@@ -184,14 +184,14 @@ export function MFASetup({
           <button
             onClick={() => void register()}
             disabled={registering}
-            className="px-3 py-2 text-xs font-semibold rounded-lg bg-[#1a56db] text-white hover:bg-[#1648c7] transition-colors disabled:opacity-40 flex items-center gap-1.5 whitespace-nowrap"
+            className="px-3 py-2 text-xs font-semibold rounded-lg bg-accent text-accent-foreground hover:bg-accent-hover transition-colors disabled:opacity-40 flex items-center gap-1.5 whitespace-nowrap"
           >
             {registering ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Fingerprint className="h-3.5 w-3.5" />}
             {registering ? "Waiting for biometric…" : "Register"}
           </button>
           <button
             onClick={() => setShowNameInput(false)}
-            className="px-3 py-2 text-xs font-medium rounded-lg text-[#5f6368] hover:bg-[#f1f3f4] transition-colors"
+            className="px-3 py-2 text-xs font-medium rounded-lg text-muted hover:bg-surface-sunken transition-colors"
           >
             Cancel
           </button>
@@ -200,7 +200,7 @@ export function MFASetup({
         <div className="flex gap-2 flex-wrap">
           <button
             onClick={() => { setShowNameInput(true); setError(""); setSuccess(""); }}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#1a56db] text-white hover:bg-[#1648c7] transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-accent text-accent-foreground hover:bg-accent-hover transition-colors"
           >
             <Plus className="h-3.5 w-3.5" />
             Add passkey
@@ -208,7 +208,7 @@ export function MFASetup({
           {passkeys.length > 0 && (
             <button
               onClick={() => void fetchPasskeys()}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg text-[#5f6368] hover:bg-[#f1f3f4] transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg text-muted hover:bg-surface-sunken transition-colors"
             >
               <RefreshCw className="h-3.5 w-3.5" />
               Refresh
@@ -220,7 +220,7 @@ export function MFASetup({
                 if (!confirm("Remove all passkeys and disable MFA?")) return;
                 for (const pk of passkeys) await removePasskey(pk.id);
               }}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg text-[#ea4335] hover:bg-[#fce8e6] transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg text-crit hover:bg-crit-soft transition-colors"
             >
               <ShieldOff className="h-3.5 w-3.5" />
               Disable MFA
@@ -231,7 +231,7 @@ export function MFASetup({
 
       {/* Explainer for new users */}
       {!mfaEnabled && (
-        <p className="text-[11px] text-[#80868b] leading-relaxed">
+        <p className="text-[11px] text-subtle leading-relaxed">
           Passkeys use your device&apos;s built-in biometrics (Face ID, Touch ID, Windows Hello) or PIN —
           nothing is shared with Nexus. Verification happens entirely on your device.
           Phishing-proof and more secure than any code or push notification.

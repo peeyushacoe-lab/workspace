@@ -1,292 +1,324 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
-import { LogOut, ChevronLeft, ChevronRight, Menu, X, Settings, Inbox, MessageSquare, Video, Sparkles, Search } from "lucide-react";
+import Link from "next/link";
+import {
+  LogOut, Menu, X, Settings, Inbox, MessageSquare, Video, Sparkles, Search,
+  PanelLeftClose, PanelLeftOpen,
+} from "lucide-react";
 import { iconSize } from "@/components/icons";
-// Search is used in the Suspense fallback pill
+import { AppSpine, SPINE_WIDTH } from "./AppSpine";
+import { NavRail } from "./NavRail";
 import { SidebarNav } from "./SidebarNav";
 import { SearchTrigger } from "./GlobalSearch";
 import { NotificationCenter } from "./NotificationCenter";
 import { ComposeButton } from "./ComposeButton";
 import { roleLabels, type SessionUser } from "@/lib/auth";
 import type { PortalNavItem } from "@/lib/auth";
+import { activeGroupId, railVisible, type ResolvedGroup } from "@/lib/nav-groups";
 import { avatarGradient } from "@/lib/avatar";
 
+/**
+ * Atrium shell.
+ *
+ *   [ 60px icon spine ][ 212px contextual rail? ][ floating content panel ]
+ *
+ * The spine answers "which app", the rail "where in that app". Apps that render
+ * their own second column (Mail, Chat, Drive, Docs) suppress the rail so the
+ * shell never stacks a redundant column in front of them.
+ *
+ * Mobile keeps the drawer + bottom tab bar; the spine is desktop-only.
+ */
 export function SidebarLayout({
   nav,
+  groups,
   currentUser,
   children,
 }: {
   nav: PortalNavItem[];
+  groups: ResolvedGroup[];
   currentUser: SessionUser | null | undefined;
   children: React.ReactNode;
 }) {
-  const [collapsed, setCollapsed] = useState(false);
+  const [railOpen, setRailOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const pathname = usePathname();
+  const [unreadCount, setUnreadCount] = useState(0);
+  const pathname = usePathname() ?? "";
   const currentUserId = currentUser?.id;
 
   // Editor routes open full-screen (no portal chrome), like opening a doc in Google.
   const fullScreen =
-    /^\/apps\/(sheets|slides)\/[^/]+$/.test(pathname || "") ||
-    pathname === "/docs" || (pathname?.startsWith("/docs/") ?? false);
+    /^\/apps\/(sheets|slides)\/[^/]+$/.test(pathname) ||
+    pathname === "/docs" || pathname.startsWith("/docs/");
+
+  const activeId = useMemo(() => activeGroupId(groups, pathname), [groups, pathname]);
+  const activeGroup = groups.find((g) => g.id === activeId);
+  const showRail = mounted && railOpen && railVisible(activeGroup);
 
   useEffect(() => {
     setMounted(true);
     try {
-      if (localStorage.getItem("sidebar_collapsed") === "true") setCollapsed(true);
+      if (localStorage.getItem("nav_rail_closed") === "true") setRailOpen(false);
     } catch {}
     if (currentUserId) {
-      // Load avatar
       fetch("/api/profile")
-        .then(r => r.ok ? r.json() : null)
-        .then(d => { if (d?.avatarUrl) setAvatarUrl(d.avatarUrl); })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => { if (d?.avatarUrl) setAvatarUrl(d.avatarUrl); })
         .catch(() => {});
     }
   }, [currentUserId]);
 
-  const toggleCollapsed = () => {
-    setCollapsed((prev) => {
+  // Unread mail count feeds the spine badge.
+  useEffect(() => {
+    const load = () =>
+      fetch("/api/inbox/unread-count", { cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => { if (typeof d?.count === "number") setUnreadCount(d.count); })
+        .catch(() => {});
+    load();
+    const id = setInterval(load, 30000);
+    const onRefresh = () => load();
+    window.addEventListener("cybersage:unread-refresh", onRefresh);
+    return () => {
+      clearInterval(id);
+      window.removeEventListener("cybersage:unread-refresh", onRefresh);
+    };
+  }, []);
+
+  const toggleRail = () => {
+    setRailOpen((prev) => {
       const next = !prev;
-      try { localStorage.setItem("sidebar_collapsed", String(next)); } catch {}
+      try { localStorage.setItem("nav_rail_closed", String(!next)); } catch {}
       return next;
     });
   };
 
-  /* ── Sidebar content (shared desktop/mobile) ──────────────────── */
-  const sidebarContent = (isMobile: boolean) => {
-    return (
-      <div className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
+  const avatar = (size: string, ring = false) =>
+    avatarUrl ? (
+      <img
+        src={avatarUrl}
+        alt={currentUser?.fullName ?? ""}
+        className={`${size} rounded-full object-cover ${ring ? "ring-2 ring-border" : ""}`}
+      />
+    ) : (
+      <div
+        className={`${size} flex items-center justify-center rounded-full text-[11px] font-semibold text-white ${ring ? "ring-2 ring-border" : ""}`}
+        style={{ background: avatarGradient(currentUser?.fullName ?? "U") }}
+      >
+        {(currentUser?.fullName ?? "U").charAt(0).toUpperCase()}
+      </div>
+    );
 
-        {/* Compose / New */}
-        {(!collapsed || isMobile) && (
-          <div className="px-3 pt-3 pb-1 space-y-1">
-            {currentUser && <ComposeButton userRole={currentUser.role} collapsed={false} />}
-          </div>
-        )}
-        {collapsed && !isMobile && (
-          <div className="flex flex-col items-center gap-1.5 py-3 px-1.5">
-            {currentUser && <ComposeButton userRole={currentUser.role} collapsed={true} />}
-          </div>
-        )}
+  if (fullScreen) {
+    return <div className="h-screen w-screen overflow-hidden bg-canvas">{children}</div>;
+  }
 
-        {/* Nav links */}
-        <SidebarNav nav={nav} collapsed={collapsed && !isMobile} />
+  // Desktop sidebar width: labeled spine, plus the rail when the current app uses one.
+  const sidebarW = showRail ? SPINE_WIDTH + 212 : SPINE_WIDTH;
 
-        {/* Footer */}
-        {currentUser && (
-          <div
-            className={`mt-auto border-t border-[#1C1F28] px-3 py-3 space-y-1 ${
-              collapsed && !isMobile ? "flex flex-col items-center gap-1 space-y-0" : ""
-            }`}
-          >
-            {/* User row */}
-            {collapsed && !isMobile ? (
-              avatarUrl
-                ? <img src={avatarUrl} alt={currentUser.fullName} title={currentUser.fullName} className="h-8 w-8 rounded-full object-cover flex-shrink-0" />
-                : <div className="flex h-8 w-8 items-center justify-center rounded-full text-white text-xs font-semibold" style={{ background: avatarGradient(currentUser.fullName) }} title={currentUser.fullName}>{currentUser.fullName.charAt(0).toUpperCase()}</div>
-            ) : (
-              <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl hover:bg-[#1B1F2A] transition-colors cursor-default">
-                {avatarUrl
-                  ? <img src={avatarUrl} alt={currentUser.fullName} className="h-8 w-8 rounded-full object-cover flex-shrink-0" />
-                  : <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-white text-xs font-semibold" style={{ background: avatarGradient(currentUser.fullName) }}>{currentUser.fullName.charAt(0).toUpperCase()}</div>
-                }
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-semibold text-[#E6E9F0] truncate leading-tight">{currentUser.fullName}</p>
-                  <p className="text-[11.5px] text-[#5A6275] leading-tight truncate">{roleLabels[currentUser.role]}</p>
-                </div>
-              </div>
-            )}
+  /**
+   * Multi-pane views (mail, chat, drive) render their own panes as floating cards
+   * on the canvas — that's the Atrium look. For those the shell must NOT add an
+   * outer panel, or the cards end up nested inside a card and read as flat regions.
+   * Single-surface pages keep the shell panel.
+   */
+  const panedView = /^\/(inbox|chat|drive)(\/|$)/.test(pathname);
 
-            {/* Sign out */}
-            <form
-              action="/api/auth/logout"
-              method="post"
-              className={collapsed && !isMobile ? "w-full flex justify-center" : ""}
+  return (
+    <div className="min-h-screen bg-canvas">
+
+      {/* ══ Desktop: icon spine + contextual rail, both riding on the canvas ══ */}
+      <div
+        className="hidden lg:flex lg:fixed lg:inset-y-0 lg:left-0 z-30 bg-canvas transition-[width] duration-200"
+        style={{ width: sidebarW }}
+      >
+        <div className="flex h-full flex-col flex-shrink-0" style={{ width: SPINE_WIDTH }}>
+          {/* Brand mark doubles as the spine header */}
+          <Link href="/inbox" aria-label="Nexus home" className="flex h-[56px] items-center gap-2.5 px-4 flex-shrink-0">
+            <img src="/nexus.png" alt="Nexus" className="h-6 w-6 object-contain flex-shrink-0" />
+            <span className="text-[13.5px] font-semibold text-foreground truncate">Nexus</span>
+          </Link>
+          <AppSpine groups={groups} activeId={activeId} unreadCount={unreadCount} />
+          <div className="flex flex-col gap-0.5 px-2.5 pb-3">
+            <div className="my-1.5 h-px bg-border-soft mx-1" aria-hidden />
+            <Link
+              href="/settings"
+              className="flex h-10 items-center gap-3 rounded-lg px-3 text-[13px] font-medium text-muted hover:bg-hover hover:text-foreground transition-colors"
             >
+              <Settings className={`${iconSize("md")} flex-shrink-0`} />
+              Settings
+            </Link>
+            <form action="/api/auth/logout" method="post">
               <button
-                title={collapsed && !isMobile ? "Sign out" : undefined}
-                className={`flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13px] text-[#8A92A6] hover:bg-red-500/10 hover:text-red-400 transition-colors w-full ${
-                  collapsed && !isMobile ? "justify-center w-9 px-0" : ""
-                }`}
+                type="submit"
+                className="flex h-10 w-full items-center gap-3 rounded-lg px-3 text-[13px] font-medium text-muted hover:bg-crit-soft hover:text-crit transition-colors"
               >
                 <LogOut className={`${iconSize("md")} flex-shrink-0`} />
-                {(!collapsed || isMobile) && "Sign out"}
+                Sign out
               </button>
             </form>
+            {currentUser && (
+              <Link href="/profile" className="flex items-center gap-2.5 rounded-lg px-3 py-2 mt-1 hover:bg-hover transition-colors">
+                {avatar("h-7 w-7")}
+                <span className="text-[12.5px] font-medium text-foreground truncate">{currentUser.fullName}</span>
+              </Link>
+            )}
+          </div>
+        </div>
+
+        {showRail && activeGroup && <NavRail group={activeGroup} />}
+      </div>
+
+      {/* ══ Mobile drawer ══ */}
+      {mobileOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 flex">
+          <div className="absolute inset-0 bg-overlay" onClick={() => setMobileOpen(false)} />
+          <aside className="relative z-10 flex w-[264px] flex-col bg-surface shadow-pop border-r border-border">
+            <div className="flex h-[52px] items-center gap-2.5 border-b border-border-soft px-4">
+              <img src="/nexusLogo.png" alt="CyberSage Nexus" className="h-[24px] w-auto object-contain max-w-[130px] dark:hidden" />
+              <img src="/nexusLogo-dark.png" alt="" aria-hidden className="hidden h-[24px] w-auto object-contain max-w-[130px] dark:block" />
+              <div className="flex-1" />
+              <button onClick={() => setMobileOpen(false)} className="p-1.5 rounded-lg text-subtle hover:bg-surface-sunken">
+                <X className={iconSize("md")} />
+              </button>
+            </div>
+            <div className="flex flex-1 flex-col overflow-y-auto">
+              <div className="px-3 pt-3 pb-1">
+                {currentUser && <ComposeButton userRole={currentUser.role} collapsed={false} />}
+              </div>
+              {/* Mobile keeps the flat list — a spine needs hover tooltips to be legible */}
+              <SidebarNav nav={nav} collapsed={false} />
+              {currentUser && (
+                <div className="mt-auto border-t border-border-soft px-3 py-3 space-y-1">
+                  <Link href="/profile" className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl hover:bg-surface-sunken transition-colors">
+                    {avatar("h-8 w-8")}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-semibold text-foreground truncate leading-tight">{currentUser.fullName}</p>
+                      <p className="text-[11.5px] text-subtle leading-tight truncate">{roleLabels[currentUser.role]}</p>
+                    </div>
+                  </Link>
+                  <form action="/api/auth/logout" method="post">
+                    <button className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13px] text-muted hover:bg-crit-soft hover:text-crit transition-colors">
+                      <LogOut className={`${iconSize("md")} flex-shrink-0`} />
+                      Sign out
+                    </button>
+                  </form>
+                </div>
+              )}
+            </div>
+          </aside>
+        </div>
+      )}
+
+      {/* ══ Mobile top bar ══ */}
+      <div className="lg:hidden fixed top-0 inset-x-0 z-40 flex h-[60px] items-center gap-2 bg-canvas px-3">
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="flex-shrink-0 p-1.5 rounded-lg text-muted hover:bg-hover transition-colors"
+          aria-label="Open menu"
+        >
+          <Menu className={iconSize("xl")} />
+        </button>
+        <Suspense fallback={
+          <div className="flex-1 flex items-center gap-2.5 h-[40px] rounded-full bg-surface-sunken border border-border px-4 cursor-pointer">
+            <Search className={`${iconSize("md")} text-subtle flex-shrink-0`} />
+            <span className="text-[13px] text-subtle">Search in Nexus</span>
+          </div>
+        }>
+          <SearchTrigger variant="searchbar" />
+        </Suspense>
+        <Link href="/profile" aria-label="Profile" className="flex-shrink-0">{avatar("h-8 w-8", true)}</Link>
+      </div>
+
+      {/* ══ Mobile bottom tabs ══ */}
+      <nav
+        className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-surface border-t border-border"
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      >
+        <div className="flex h-[56px] items-stretch">
+          {([
+            { href: "/inbox", icon: Inbox,          label: "Inbox" },
+            { href: "/chat",  icon: MessageSquare,  label: "Chat"  },
+            { href: "/meet",  icon: Video,          label: "Meet"  },
+            { href: "/ai",    icon: Sparkles,       label: "AI"    },
+          ] as const).map(({ href, icon: Icon, label }) => {
+            const active = pathname === href || pathname.startsWith(href + "/");
+            return (
+              <Link
+                key={href}
+                href={href}
+                className="flex flex-1 flex-col items-center justify-center gap-0.5 transition-colors"
+                style={{ color: active ? "var(--accent)" : "var(--subtle)" }}
+              >
+                <Icon className={iconSize("2xl")} />
+                {active
+                  ? <span className="w-[20px] h-[3px] rounded-full mt-0.5" style={{ background: "var(--accent)" }} />
+                  : <span className="text-[10px] font-medium mt-0.5">{label}</span>}
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+
+      {/* ══ Desktop top bar — centred command bar ══ */}
+      <div
+        className="hidden lg:flex fixed top-0 right-0 z-20 h-[56px] items-center gap-3 pl-3 pr-4 bg-canvas transition-[left] duration-200"
+        style={{ left: sidebarW }}
+      >
+        {railVisible(activeGroup) && (
+          <button
+            onClick={toggleRail}
+            title={railOpen ? "Hide navigation" : "Show navigation"}
+            className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-muted hover:bg-hover hover:text-foreground transition-colors"
+          >
+            {railOpen ? <PanelLeftClose className={iconSize("md")} /> : <PanelLeftOpen className={iconSize("md")} />}
+          </button>
+        )}
+        <div className="flex-1 flex justify-center">
+          <SearchTrigger variant="topbar" />
+        </div>
+        {currentUser && (
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Compose used to live in the old sidebar. The mail app owns its own
+                second column, so the primary action moves to the bar instead. */}
+            {activeId === "mail" && (
+              <div className="w-[124px]">
+                <ComposeButton userRole={currentUser.role} collapsed={false} />
+              </div>
+            )}
+            <Suspense fallback={null}>
+              <NotificationCenter userId={currentUser.id} />
+            </Suspense>
           </div>
         )}
       </div>
-    );
-  };
 
-  const desktopWidth = mounted && collapsed ? "lg:w-[56px]" : "lg:w-[228px]";
-  const contentPad   = mounted && collapsed ? "lg:pl-[56px]" : "lg:pl-[228px]";
-
-  if (fullScreen) {
-    return <div className="h-screen w-screen overflow-hidden bg-[#0B0D12]">{children}</div>;
-  }
-
-  return (
-    <div className="min-h-screen bg-transparent">
-      <div className="flex min-h-screen">
-
-        {/* ── Desktop sidebar ───────────────────────────────── */}
-        <aside
-          className={`hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 glass-strong border-r transition-all duration-200 z-30 ${desktopWidth}`}
+      {/* ══ Content — one floating panel on the canvas ══
+          Left padding is two literal, static Tailwind classes picked by `showRail`
+          (never a CSS custom property) — that was the actual bug: --shell-inset
+          could silently fail to resolve and collapse padding-left to 0, sliding
+          the panel under the fixed-position spine. Static classes can't do that. */}
+      <div className="pt-[60px] pb-[56px] lg:pt-[56px] lg:pb-0 overflow-x-hidden">
+        <main
+          className={`overflow-x-hidden transition-[padding-left] duration-200 lg:pr-2 lg:pb-2 ${
+            showRail ? "lg:pl-[428px]" : "lg:pl-[216px]"
+          }`}
         >
-          {/* Logo header */}
           <div
-            className={`flex h-[56px] flex-shrink-0 items-center border-b border-[#1C1F28] ${
-              collapsed ? "justify-center px-2" : "gap-2.5 px-4"
+            key={pathname}
+            className={`nexpage h-full min-h-[calc(100vh-116px)] lg:h-[calc(100vh-64px)] lg:min-h-[calc(100vh-64px)] overflow-hidden ${
+              panedView
+                ? "bg-surface lg:bg-transparent"
+                : "bg-surface lg:rounded-panel lg:border lg:border-border lg:shadow-panel"
             }`}
           >
-            {collapsed
-              ? <img src="/nexus.png" alt="Nexus" className="h-8 w-8 flex-shrink-0 object-contain" />
-              : <img src="/nexusLogo-dark.png" alt="CyberSage Nexus" className="h-[34px] w-auto flex-shrink-0 object-contain max-w-[160px]" />
-            }
-            {!collapsed && (
-              <>
-                <div className="flex-1" />
-                <button
-                  onClick={toggleCollapsed}
-                  className="p-1.5 rounded-lg text-[#5A6275] hover:bg-[#1B1F2A] hover:text-[#8A92A6] transition-colors"
-                  title="Collapse sidebar"
-                >
-                  <ChevronLeft className={iconSize("sm")} />
-                </button>
-              </>
-            )}
-            {collapsed && (
-              <button
-                onClick={toggleCollapsed}
-                className="absolute -right-3 top-5 flex h-6 w-6 items-center justify-center rounded-full bg-[#12151D] border border-[#262A35] shadow-sm text-[#5A6275] hover:text-[#8A92A6] transition-colors z-10"
-                title="Expand sidebar"
-              >
-                <ChevronRight className={iconSize("xs")} />
-              </button>
-            )}
+            {children}
           </div>
-
-          {sidebarContent(false)}
-        </aside>
-
-        {/* ── Mobile overlay drawer ─────────────────────────── */}
-        {mobileOpen && (
-          <div className="lg:hidden fixed inset-0 z-50 flex">
-            <div
-              className="absolute inset-0 bg-black/40"
-              onClick={() => setMobileOpen(false)}
-            />
-            <aside className="relative z-10 flex w-[228px] flex-col glass-strong shadow-xl border-r">
-              <div className="flex h-[52px] items-center gap-2.5 border-b border-[#1C1F28] px-4">
-                <img src="/nexusLogo-dark.png" alt="CyberSage Nexus" className="h-[24px] w-auto object-contain max-w-[130px]" />
-                <div className="flex-1" />
-                <button
-                  onClick={() => setMobileOpen(false)}
-                  className="p-1.5 rounded-lg text-[#5A6275] hover:bg-[#1B1F2A]"
-                >
-                  <X className={iconSize("md")} />
-                </button>
-              </div>
-              {sidebarContent(true)}
-            </aside>
-          </div>
-        )}
-
-        {/* ── Mobile top bar — Gmail-style search-first ─────── */}
-        <div className="lg:hidden fixed top-0 inset-x-0 z-40 flex h-[60px] items-center gap-2 glass px-3">
-          {/* Hamburger */}
-          <button
-            onClick={() => setMobileOpen(true)}
-            className="flex-shrink-0 p-1.5 rounded-lg text-[#8A92A6] hover:bg-[#1B1F2A] transition-colors"
-            aria-label="Open menu"
-          >
-            <Menu className={iconSize("xl")} />
-          </button>
-          {/* Search pill */}
-          <Suspense fallback={
-            <div className="flex-1 flex items-center gap-2.5 h-[40px] rounded-full bg-[#1B1F2A] border border-[#262A35] px-4 cursor-pointer">
-              <Search className={`${iconSize("md")} text-[#5A6275] flex-shrink-0`} />
-              <span className="text-[13px] text-[#5A6275]">Search in Nexus</span>
-            </div>
-          }>
-            <SearchTrigger variant="searchbar" />
-          </Suspense>
-          {/* Avatar → Profile */}
-          <a href="/profile" aria-label="Profile" className="flex-shrink-0">
-            {avatarUrl
-              ? <img src={avatarUrl} alt={currentUser?.fullName ?? ""} className="h-8 w-8 rounded-full object-cover ring-2 ring-[#262A35]" />
-              : <div className="flex h-8 w-8 items-center justify-center rounded-full text-white text-[11px] font-semibold ring-2 ring-[#262A35]" style={{ background: avatarGradient(currentUser?.fullName ?? "U") }}>{(currentUser?.fullName ?? "U").charAt(0).toUpperCase()}</div>
-            }
-          </a>
-        </div>
-
-        {/* ── Mobile bottom tab bar — 4-tab pip style ───────── */}
-        <nav
-          className="lg:hidden fixed bottom-0 inset-x-0 z-40 glass border-t"
-          style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-        >
-          <div className="flex h-[56px] items-stretch">
-            {([
-              { href: "/inbox", icon: Inbox,        label: "Inbox" },
-              { href: "/chat",  icon: MessageSquare, label: "Chat"  },
-              { href: "/meet",  icon: Video,         label: "Meet"  },
-              { href: "/ai",    icon: Sparkles,      label: "AI"    },
-            ] as const).map(({ href, icon: Icon, label }) => {
-              const active = pathname === href || pathname?.startsWith(href + "/");
-              return (
-                <a
-                  key={href}
-                  href={href}
-                  className="flex flex-1 flex-col items-center justify-center gap-0.5 transition-colors"
-                  style={{ color: active ? "#00C2FF" : "#5A6275" }}
-                >
-                  <Icon className={iconSize("2xl")} />
-                  {active
-                    ? <span className="w-[20px] h-[3px] rounded-full mt-0.5" style={{ background: "#00C2FF" }} />
-                    : <span className="text-[10px] font-medium mt-0.5">{label}</span>
-                  }
-                </a>
-              );
-            })}
-          </div>
-        </nav>
-
-        {/* ── Desktop top bar (search + actions) ───────────── */}
-        <div className={`hidden lg:flex fixed top-0 inset-x-0 z-20 h-[56px] items-center gap-4 px-5 glass border-b transition-all duration-200 ${contentPad}`}>
-          <div className="flex-1 flex justify-center">
-            <SearchTrigger variant="topbar" />
-          </div>
-          {currentUser && (
-            <div className="topbar-actions flex items-center gap-1.5 flex-shrink-0">
-              <Suspense fallback={null}>
-                <NotificationCenter userId={currentUser.id} />
-              </Suspense>
-              <a
-                href="/settings"
-                title="Settings"
-                className="flex h-9 w-9 items-center justify-center rounded-full text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#E6E9F0] transition-colors"
-              >
-                <Settings className={iconSize("lg")} />
-              </a>
-              {avatarUrl
-                ? <img src={avatarUrl} alt={currentUser.fullName} title={currentUser.fullName} className="h-8 w-8 rounded-full object-cover" />
-                : <div className="flex h-8 w-8 items-center justify-center rounded-full text-white text-xs font-semibold" style={{ background: avatarGradient(currentUser.fullName) }} title={currentUser.fullName}>{currentUser.fullName.charAt(0).toUpperCase()}</div>
-              }
-            </div>
-          )}
-        </div>
-
-        {/* ── Main content ──────────────────────────────────── */}
-        <div className={`flex-1 transition-[padding] duration-200 pt-[60px] pb-[56px] lg:pt-[56px] lg:pb-0 overflow-x-hidden ${contentPad}`}>
-          <main className="min-h-[calc(100vh-116px)] lg:min-h-[calc(100vh-56px)] overflow-x-hidden"><div key={pathname} className="nexpage h-full">{children}</div></main>
-        </div>
-
+        </main>
       </div>
     </div>
   );

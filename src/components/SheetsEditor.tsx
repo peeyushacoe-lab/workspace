@@ -139,7 +139,7 @@ const COL_HEADER_H = 24;
 
 const FONTS = ["Arial", "Roboto", "Georgia", "Courier New", "Times New Roman", "Verdana"];
 const FONT_SIZES = [8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 36, 48, 72];
-const CHART_COLORS = ["#00C2FF", "#0f9d58", "#f4b400", "#ea4335", "#9334e6", "#00897b", "#f57c00", "#3949ab"];
+const CHART_COLORS = ["#4f46e5", "#0e7c5a", "#b45309", "#c0362c", "#9334e6", "#00897b", "#f57c00", "#3949ab"];
 
 // Currency options for the currency-format dropdown. "USD" is the default and
 // matches formatValue()'s built-in behaviour, so it needs no override.
@@ -1483,7 +1483,7 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
         if (sh.id !== activeSheetId) return sh;
         const cells = { ...sh.cells };
         const k = ck(sel.r, sel.c);
-        cells[k] = { ...cells[k], v: cells[k]?.v ?? "", spark: { range, mode: "bar", color: "#00C2FF" } };
+        cells[k] = { ...cells[k], v: cells[k]?.v ?? "", spark: { range, mode: "bar", color: "#4f46e5" } };
         return { ...sh, cells };
       });
       pushHistory(next); scheduleSave(next, title); return next;
@@ -1704,38 +1704,38 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
   // ─────────────────────────────────────────────────────────────────────────
 
   if (!loaded) return (
-    <div className="flex items-center justify-center h-screen bg-[#12151D]">
-      <Loader2 className="h-6 w-6 animate-spin text-[#00C2FF]" />
+    <div className="flex items-center justify-center h-screen bg-surface">
+      <Loader2 className="h-6 w-6 animate-spin text-accent" />
     </div>
   );
 
   return (
-    <div className="flex flex-col h-screen bg-[#12151D] overflow-hidden" onClick={() => { setColorPickerTarget(null); setSortMenuOpen(false); setFreezeMenuOpen(false); setDvDropdown(null); setCurrencyMenuOpen(false); setBorderMenuOpen(false); setCellCtx(null); }}>
+    <div className="flex flex-col h-screen bg-surface overflow-hidden" onClick={() => { setColorPickerTarget(null); setSortMenuOpen(false); setFreezeMenuOpen(false); setDvDropdown(null); setCurrencyMenuOpen(false); setBorderMenuOpen(false); setCellCtx(null); }}>
 
       {/* ── Title bar ── */}
-      <div className="flex items-center gap-2 px-4 py-2 border-b border-[#262A35] bg-[#12151D] z-20">
+      <div className="flex items-center gap-2 px-4 py-2 border-b border-border bg-surface z-20">
         <button
           onClick={() => router.push("/apps/sheets")}
           title="Back to spreadsheets"
-          className="flex items-center justify-center h-8 w-8 rounded-lg text-[#8A92A6] hover:bg-[#1B1F2A] transition-colors flex-shrink-0"
+          className="flex items-center justify-center h-8 w-8 rounded-lg text-muted hover:bg-surface-sunken transition-colors flex-shrink-0"
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
         <input
-          className="text-sm font-semibold text-[#E6E9F0] bg-transparent border-none outline-none focus:bg-[#1B1F2A] rounded px-1 min-w-0 w-48"
+          className="text-sm font-semibold text-foreground bg-transparent border-none outline-none focus:bg-surface-sunken rounded px-1 min-w-0 w-48"
           value={title}
           onChange={e => { setTitle(e.target.value); scheduleSave(sheets, e.target.value); }}
         />
-        <div className="flex items-center gap-1 ml-auto text-xs text-[#5A6275]">
+        <div className="flex items-center gap-1 ml-auto text-xs text-subtle">
           {saving && <><Loader2 className="h-3 w-3 animate-spin" /> Saving…</>}
         </div>
-        <button onClick={() => setShowShare(true)} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#00C2FF] text-[#06121A] hover:bg-[#0098E6] transition-colors">
+        <button onClick={() => setShowShare(true)} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-accent text-accent-foreground hover:bg-accent-hover transition-colors">
           <Share2 className="h-3.5 w-3.5" /> Share
         </button>
       </div>
 
       {/* ── Toolbar ── */}
-      <div className="flex flex-wrap items-center gap-0.5 px-2 py-1 border-b border-[#262A35] bg-[#12151D] z-10 overflow-x-auto">
+      <div className="flex flex-wrap items-center gap-0.5 px-2 py-1 border-b border-border bg-surface z-10 overflow-x-auto">
         {/* Undo/Redo */}
         <ToolBtn icon={<Undo2 className="h-3.5 w-3.5" />} title="Undo (⌘Z)" onClick={undo} />
         <ToolBtn icon={<Redo2 className="h-3.5 w-3.5" />} title="Redo (⌘⇧Z)" onClick={redo} />
@@ -1743,7 +1743,7 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
 
         {/* Font family */}
         <select
-          className="text-xs border border-[#262A35] rounded px-1.5 py-1 bg-[#12151D] text-[#E6E9F0] h-7 cursor-pointer"
+          className="text-xs border border-border rounded px-1.5 py-1 bg-surface text-foreground h-7 cursor-pointer"
           value={cellStyle.fontFamily ?? "Arial"}
           onChange={e => applyStyle({ fontFamily: e.target.value })}
         >
@@ -1752,7 +1752,7 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
 
         {/* Font size */}
         <select
-          className="text-xs border border-[#262A35] rounded px-1 py-1 bg-[#12151D] text-[#E6E9F0] h-7 w-14 cursor-pointer"
+          className="text-xs border border-border rounded px-1 py-1 bg-surface text-foreground h-7 w-14 cursor-pointer"
           value={cellStyle.fontSize ?? 12}
           onChange={e => applyStyle({ fontSize: Number(e.target.value) })}
         >
@@ -1770,7 +1770,7 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
         {/* Text / BG color */}
         <div className="relative">
           <ToolBtn
-            icon={<div className="flex flex-col items-center gap-0.5"><Type className="h-3.5 w-3.5" /><div className="h-0.5 w-3.5 rounded" style={{ background: cellStyle.color ?? "#E6E9F0" }} /></div>}
+            icon={<div className="flex flex-col items-center gap-0.5"><Type className="h-3.5 w-3.5" /><div className="h-0.5 w-3.5 rounded" style={{ background: cellStyle.color ?? "var(--foreground)" }} /></div>}
             title="Text color"
             onClick={e => { e.stopPropagation(); setColorPickerTarget(colorPickerTarget === "text" ? null : "text"); }}
           />
@@ -1778,7 +1778,7 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
         </div>
         <div className="relative">
           <ToolBtn
-            icon={<div className="flex flex-col items-center gap-0.5"><Paintbrush className="h-3.5 w-3.5" /><div className="h-0.5 w-3.5 rounded" style={{ background: cellStyle.background ?? "transparent", border: "1px solid #262A35" }} /></div>}
+            icon={<div className="flex flex-col items-center gap-0.5"><Paintbrush className="h-3.5 w-3.5" /><div className="h-0.5 w-3.5 rounded" style={{ background: cellStyle.background ?? "transparent", border: "1px solid var(--border)" }} /></div>}
             title="Fill color"
             onClick={e => { e.stopPropagation(); setColorPickerTarget(colorPickerTarget === "bg" ? null : "bg"); }}
           />
@@ -1796,7 +1796,7 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
 
         {/* Number format */}
         <select
-          className="text-xs border border-[#262A35] rounded px-1.5 py-1 bg-[#12151D] text-[#E6E9F0] h-7 cursor-pointer"
+          className="text-xs border border-border rounded px-1.5 py-1 bg-surface text-foreground h-7 cursor-pointer"
           value={cellStyle.accounting ? "accounting" : (cellStyle.format ?? "general")}
           onChange={e => {
             const v = e.target.value;
@@ -1847,12 +1847,12 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
             onClick={e => { e.stopPropagation(); setCurrencyMenuOpen(v => !v); }}
           />
           {currencyMenuOpen && (
-            <div className="absolute top-full left-0 mt-1 w-28 bg-[#12151D] border border-[#262A35] rounded-lg shadow-lg z-50 py-1" onClick={e => e.stopPropagation()}>
+            <div className="absolute top-full left-0 mt-1 w-28 bg-surface border border-border rounded-lg shadow-lg z-50 py-1" onClick={e => e.stopPropagation()}>
               {CURRENCIES.map(cur => (
                 <button
                   key={cur.code}
                   onClick={() => { applyStyle({ format: "currency", currency: cur.code }); setCurrencyMenuOpen(false); }}
-                  className={`flex items-center gap-2 w-full px-2.5 py-1.5 text-[13px] text-left transition-colors ${(cellStyle.currency ?? "USD") === cur.code ? "bg-[#0E2532] text-[#00C2FF]" : "text-[#8A92A6] hover:bg-[#1B1F2A]"}`}
+                  className={`flex items-center gap-2 w-full px-2.5 py-1.5 text-[13px] text-left transition-colors ${(cellStyle.currency ?? "USD") === cur.code ? "bg-accent-soft text-accent" : "text-muted hover:bg-surface-sunken"}`}
                 >
                   <span className="w-4 text-center font-semibold">{cur.symbol}</span>
                   {cur.label}
@@ -1886,14 +1886,14 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
             onClick={e => { e.stopPropagation(); setBorderMenuOpen(v => !v); }}
           />
           {borderMenuOpen && (
-            <div className="absolute top-full left-0 mt-1 w-40 bg-[#12151D] border border-[#262A35] rounded-lg shadow-lg z-50 py-1" onClick={e => e.stopPropagation()}>
+            <div className="absolute top-full left-0 mt-1 w-40 bg-surface border border-border rounded-lg shadow-lg z-50 py-1" onClick={e => e.stopPropagation()}>
               <MenuItem onClick={() => applyBorders("all")}><Grid2x2 className="h-3 w-3" /> All borders</MenuItem>
               <MenuItem onClick={() => applyBorders("outer")}><Table className="h-3 w-3" /> Outer border</MenuItem>
               <MenuItem onClick={() => applyBorders("top")}>Top border</MenuItem>
               <MenuItem onClick={() => applyBorders("bottom")}>Bottom border</MenuItem>
               <MenuItem onClick={() => applyBorders("left")}>Left border</MenuItem>
               <MenuItem onClick={() => applyBorders("right")}>Right border</MenuItem>
-              <div className="border-t border-[#262A35] my-1" />
+              <div className="border-t border-border my-1" />
               <MenuItem onClick={() => applyBorders("none")}><X className="h-3 w-3" /> No borders</MenuItem>
             </div>
           )}
@@ -1909,13 +1909,13 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
             onClick={e => { e.stopPropagation(); setFreezeMenuOpen(v => !v); }}
           />
           {freezeMenuOpen && (
-            <div className="absolute top-full left-0 mt-1 w-52 bg-[#12151D] border border-[#262A35] rounded-lg shadow-lg z-50 py-1 text-[#E6E9F0]" onClick={e => e.stopPropagation()}>
-              <div className="px-3 py-1 text-[10px] font-medium text-[#5A6275]">Rows</div>
+            <div className="absolute top-full left-0 mt-1 w-52 bg-surface border border-border rounded-lg shadow-lg z-50 py-1 text-foreground" onClick={e => e.stopPropagation()}>
+              <div className="px-3 py-1 text-[10px] font-medium text-subtle">Rows</div>
               <FreezeMenuItem label="No frozen rows" active={activeSheet.frozenRows === 0} onClick={() => setFreeze({ frozenRows: 0 })} />
               <FreezeMenuItem label="Freeze 1 row" active={activeSheet.frozenRows === 1} onClick={() => setFreeze({ frozenRows: 1 })} />
               <FreezeMenuItem label={"Freeze up to row " + (sel.r + 1)} active={activeSheet.frozenRows === sel.r + 1} onClick={() => setFreeze({ frozenRows: sel.r + 1 })} />
-              <div className="border-t border-[#262A35] my-1" />
-              <div className="px-3 py-1 text-[10px] font-medium text-[#5A6275]">Columns</div>
+              <div className="border-t border-border my-1" />
+              <div className="px-3 py-1 text-[10px] font-medium text-subtle">Columns</div>
               <FreezeMenuItem label="No frozen columns" active={activeSheet.frozenCols === 0} onClick={() => setFreeze({ frozenCols: 0 })} />
               <FreezeMenuItem label="Freeze 1 column" active={activeSheet.frozenCols === 1} onClick={() => setFreeze({ frozenCols: 1 })} />
               <FreezeMenuItem label={"Freeze up to column " + indexToCol(sel.c)} active={activeSheet.frozenCols === sel.c + 1} onClick={() => setFreeze({ frozenCols: sel.c + 1 })} />
@@ -1935,18 +1935,18 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
             onClick={e => { e.stopPropagation(); setSortMenuOpen(v => !v); }}
           />
           {sortMenuOpen && (
-            <div className="absolute top-full left-0 mt-1 w-44 bg-[#12151D] border border-[#262A35] rounded-lg shadow-lg z-50 py-1" onClick={e => e.stopPropagation()}>
+            <div className="absolute top-full left-0 mt-1 w-44 bg-surface border border-border rounded-lg shadow-lg z-50 py-1" onClick={e => e.stopPropagation()}>
               {Array.from({ length: Math.min(COLS, 10) }, (_, i) => (
-                <div key={i} className="px-3 py-1.5 text-xs text-[#E6E9F0] hover:bg-[#1B1F2A] cursor-pointer flex justify-between items-center"
+                <div key={i} className="px-3 py-1.5 text-xs text-foreground hover:bg-surface-sunken cursor-pointer flex justify-between items-center"
                   onClick={() => sortByCol(i, "asc")}>
-                  {indexToCol(i)} <SortAsc className="h-3 w-3 text-[#8A92A6]" />
+                  {indexToCol(i)} <SortAsc className="h-3 w-3 text-muted" />
                 </div>
               ))}
-              <div className="border-t border-[#262A35] my-1" />
+              <div className="border-t border-border my-1" />
               {Array.from({ length: Math.min(COLS, 10) }, (_, i) => (
-                <div key={i} className="px-3 py-1.5 text-xs text-[#E6E9F0] hover:bg-[#1B1F2A] cursor-pointer flex justify-between items-center"
+                <div key={i} className="px-3 py-1.5 text-xs text-foreground hover:bg-surface-sunken cursor-pointer flex justify-between items-center"
                   onClick={() => sortByCol(i, "desc")}>
-                  {indexToCol(i)} <SortDesc className="h-3 w-3 text-[#8A92A6]" />
+                  {indexToCol(i)} <SortDesc className="h-3 w-3 text-muted" />
                 </div>
               ))}
             </div>
@@ -1993,27 +1993,27 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
 
         {/* AI */}
         <button onClick={() => setShowAI(v => !v)}
-          className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors ${showAI ? "bg-purple-500/15 text-purple-400" : "text-[#8A92A6] hover:bg-[#1B1F2A]"}`}>
+          className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors ${showAI ? "bg-violet/15 text-violet" : "text-muted hover:bg-surface-sunken"}`}>
           <Sparkles className="h-3.5 w-3.5" /> AI
         </button>
         <Sep />
 
         {/* Export / Import */}
         <ToolBtn icon={<Download className="h-3.5 w-3.5" />} title="Export XLSX" onClick={() => void exportXLSX()} />
-        <label title="Import XLSX" className="flex items-center justify-center h-7 w-7 rounded text-[#8A92A6] hover:bg-[#1B1F2A] cursor-pointer">
+        <label title="Import XLSX" className="flex items-center justify-center h-7 w-7 rounded text-muted hover:bg-surface-sunken cursor-pointer">
           <Upload className="h-3.5 w-3.5" />
           <input type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={importXLSX} />
         </label>
       </div>
 
       {/* ── Formula bar ── */}
-      <div className="flex items-center gap-2 px-2 py-1 border-b border-[#262A35] bg-[#12151D] z-10">
-        <div className="w-16 text-center text-xs font-mono font-semibold text-[#8A92A6] border border-[#262A35] rounded px-1 py-0.5">
+      <div className="flex items-center gap-2 px-2 py-1 border-b border-border bg-surface z-10">
+        <div className="w-16 text-center text-xs font-mono font-semibold text-muted border border-border rounded px-1 py-0.5">
           {toA1(sel.r, sel.c)}
         </div>
-        <div className="text-[#bdc1c6] select-none">ƒx</div>
+        <div className="text-subtle select-none">ƒx</div>
         <input
-          className="flex-1 text-xs font-mono px-2 py-1 border border-[#262A35] rounded outline-none focus:border-[#00C2FF]/60 focus:ring-1 focus:ring-[#00C2FF]/20 bg-[#12151D]"
+          className="flex-1 text-xs font-mono px-2 py-1 border border-border rounded outline-none focus:border-accent/60 focus:ring-1 focus:ring-accent/20 bg-surface"
           value={editing ? editVal : formulaBarVal}
           onChange={e => { if (editing) { setEditVal(e.target.value); } else { setFormulaBarVal(e.target.value); setEditVal(e.target.value); setEditing(true); } }}
           onKeyDown={e => {
@@ -2029,7 +2029,7 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
         <div className="flex-1 overflow-auto outline-none" ref={gridRef} tabIndex={0} onKeyDown={handleGridKey}>
           <div style={{ display: "grid", gridTemplateColumns: `${ROW_HEADER_W}px ${Array.from({ length: COLS }, (_, c) => `${activeSheet.hiddenCols.has(c) ? 6 : (activeSheet.colWidths[c] ?? DEFAULT_COL_W)}px`).join(" ")}` }}>
             {/* Column headers */}
-            <div className="sticky top-0 left-0 z-20 bg-[#12151D] border-r border-b border-[#262A35]" style={{ height: COL_HEADER_H }} />
+            <div className="sticky top-0 left-0 z-20 bg-surface border-r border-b border-border" style={{ height: COL_HEADER_H }} />
             {Array.from({ length: COLS }, (_, c) => (
               <ColHeader
                 key={c}
@@ -2182,19 +2182,19 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
               else setAllowed([...allowed, v]);
             };
             return (
-              <div key={"slicer_" + col} className="mx-4 my-4 inline-block align-top bg-[#12151D] border border-[#262A35] rounded-xl p-3 shadow-sm" style={{ minWidth: 180, maxWidth: 240 }}>
+              <div key={"slicer_" + col} className="mx-4 my-4 inline-block align-top bg-surface border border-border rounded-xl p-3 shadow-sm" style={{ minWidth: 180, maxWidth: 240 }}>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-semibold text-[#E6E9F0]">Slicer · {indexToCol(col)}</span>
+                  <span className="text-xs font-semibold text-foreground">Slicer · {indexToCol(col)}</span>
                   <div className="flex items-center gap-1">
-                    <button onClick={() => setAllowed([])} title="Show all" className="text-[10px] text-[#8A92A6] hover:text-[#00C2FF] px-1">All</button>
-                    <button onClick={() => setSheets(prev => prev.map(sh => sh.id === activeSheetId ? { ...sh, slicers: (sh.slicers ?? []).filter(x => x !== col) } : sh))} className="text-[#5A6275] hover:text-[#ea4335]"><X className="h-3.5 w-3.5" /></button>
+                    <button onClick={() => setAllowed([])} title="Show all" className="text-[10px] text-muted hover:text-accent px-1">All</button>
+                    <button onClick={() => setSheets(prev => prev.map(sh => sh.id === activeSheetId ? { ...sh, slicers: (sh.slicers ?? []).filter(x => x !== col) } : sh))} className="text-subtle hover:text-crit"><X className="h-3.5 w-3.5" /></button>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-1 max-h-44 overflow-y-auto">
-                  {values.length === 0 && <span className="text-[11px] text-[#5A6275]">No values</span>}
+                  {values.length === 0 && <span className="text-[11px] text-subtle">No values</span>}
                   {values.map(v => (
                     <button key={v} onClick={() => toggle(v)}
-                      className={`px-2 py-0.5 rounded text-[11px] border transition-colors ${isOn(v) ? "bg-[#0E2532] text-[#00C2FF] border-[#00C2FF]/30" : "bg-[#12151D] text-[#5A6275] border-[#262A35] line-through"}`}>
+                      className={`px-2 py-0.5 rounded text-[11px] border transition-colors ${isOn(v) ? "bg-accent-soft text-accent border-accent/30" : "bg-surface text-subtle border-border line-through"}`}>
                       {v}
                     </button>
                   ))}
@@ -2222,16 +2222,16 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
       </div>
 
       {/* ── Sheet tabs ── */}
-      <div className="flex items-center gap-0 border-t border-[#262A35] bg-[#12151D] px-2 overflow-x-auto">
+      <div className="flex items-center gap-0 border-t border-border bg-surface px-2 overflow-x-auto">
         {sheets.map(sh => (
-          <div key={sh.id} className={`group flex items-center gap-1 px-3 py-1.5 text-xs cursor-pointer border-r border-[#262A35] transition-colors ${sh.id === activeSheetId ? "bg-[#12151D] text-[#00C2FF] font-semibold border-t-2 border-t-[#00C2FF]" : "text-[#8A92A6] hover:bg-[#262A35]"}`}
+          <div key={sh.id} className={`group flex items-center gap-1 px-3 py-1.5 text-xs cursor-pointer border-r border-border transition-colors ${sh.id === activeSheetId ? "bg-surface text-accent font-semibold border-t-2 border-t-accent" : "text-muted hover:bg-border"}`}
             onClick={() => { if (editingSheetName !== sh.id) setActiveSheetId(sh.id); }}
             onDoubleClick={() => { setEditingSheetName(sh.id); setRenameVal(sh.name); }}
           >
             {editingSheetName === sh.id ? (
               <input
                 autoFocus
-                className="w-20 text-xs border border-[#00C2FF] rounded px-1 outline-none"
+                className="w-20 text-xs border border-accent rounded px-1 outline-none"
                 value={renameVal}
                 onChange={e => setRenameVal(e.target.value)}
                 onBlur={() => {
@@ -2242,25 +2242,25 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
               />
             ) : sh.name}
             {sheets.length > 1 && (
-              <button className="hidden group-hover:flex items-center ml-1 text-[#5A6275] hover:text-[#ea4335]"
+              <button className="hidden group-hover:flex items-center ml-1 text-subtle hover:text-crit"
                 onClick={e => { e.stopPropagation(); deleteSheet(sh.id); }}>
                 <X className="h-3 w-3" />
               </button>
             )}
           </div>
         ))}
-        <button onClick={addSheet} className="flex items-center gap-1 px-2 py-1.5 text-xs text-[#8A92A6] hover:bg-[#262A35] rounded">
+        <button onClick={addSheet} className="flex items-center gap-1 px-2 py-1.5 text-xs text-muted hover:bg-border rounded">
           <Plus className="h-3.5 w-3.5" />
         </button>
 
         {/* Selection status bar (Excel-style) */}
         {selStats && (
-          <div className="ml-auto flex items-center gap-4 pr-3 text-[11px] text-[#8A92A6] whitespace-nowrap">
-            {selStats.numCount > 0 && <span>Sum: <span className="font-semibold text-[#E6E9F0]">{fmtStat(selStats.sum)}</span></span>}
-            {selStats.numCount > 0 && <span>Avg: <span className="font-semibold text-[#E6E9F0]">{fmtStat(selStats.avg)}</span></span>}
-            {selStats.numCount > 0 && <span>Min: <span className="font-semibold text-[#E6E9F0]">{fmtStat(selStats.min)}</span></span>}
-            {selStats.numCount > 0 && <span>Max: <span className="font-semibold text-[#E6E9F0]">{fmtStat(selStats.max)}</span></span>}
-            <span>Count: <span className="font-semibold text-[#E6E9F0]">{selStats.count}</span></span>
+          <div className="ml-auto flex items-center gap-4 pr-3 text-[11px] text-muted whitespace-nowrap">
+            {selStats.numCount > 0 && <span>Sum: <span className="font-semibold text-foreground">{fmtStat(selStats.sum)}</span></span>}
+            {selStats.numCount > 0 && <span>Avg: <span className="font-semibold text-foreground">{fmtStat(selStats.avg)}</span></span>}
+            {selStats.numCount > 0 && <span>Min: <span className="font-semibold text-foreground">{fmtStat(selStats.min)}</span></span>}
+            {selStats.numCount > 0 && <span>Max: <span className="font-semibold text-foreground">{fmtStat(selStats.max)}</span></span>}
+            <span>Count: <span className="font-semibold text-foreground">{selStats.count}</span></span>
           </div>
         )}
       </div>
@@ -2268,38 +2268,38 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
       {/* ── Right-click context menu ── */}
       {cellCtx && (
         <div
-          className="fixed z-[60] w-52 bg-[#12151D] border border-[#262A35] rounded-lg shadow-lg py-1 text-[#E6E9F0]"
+          className="fixed z-[60] w-52 bg-surface border border-border rounded-lg shadow-lg py-1 text-foreground"
           style={{ left: Math.min(cellCtx.x, (typeof window !== "undefined" ? window.innerWidth : 1200) - 220), top: Math.min(cellCtx.y, (typeof window !== "undefined" ? window.innerHeight : 800) - 380) }}
           onClick={e => e.stopPropagation()}
         >
           <MenuItem onClick={() => { void cutSelection(); setCellCtx(null); }}>Cut</MenuItem>
           <MenuItem onClick={() => { void copySelection(); setCellCtx(null); }}>Copy</MenuItem>
           <MenuItem onClick={() => { void pasteFromClipboard(); setCellCtx(null); }}>Paste</MenuItem>
-          <div className="border-t border-[#262A35] my-1" />
+          <div className="border-t border-border my-1" />
           <MenuItem onClick={() => { insertRow(cellCtx.r); setCellCtx(null); }}>Insert row above</MenuItem>
           <MenuItem onClick={() => { insertRow(cellCtx.r + 1); setCellCtx(null); }}>Insert row below</MenuItem>
           <MenuItem onClick={() => { deleteRowAt(cellCtx.r); setCellCtx(null); }}>Delete row</MenuItem>
-          <div className="border-t border-[#262A35] my-1" />
+          <div className="border-t border-border my-1" />
           <MenuItem onClick={() => { insertCol(cellCtx.c); setCellCtx(null); }}>Insert column left</MenuItem>
           <MenuItem onClick={() => { insertCol(cellCtx.c + 1); setCellCtx(null); }}>Insert column right</MenuItem>
           <MenuItem onClick={() => { deleteColAt(cellCtx.c); setCellCtx(null); }}>Delete column</MenuItem>
-          <div className="border-t border-[#262A35] my-1" />
+          <div className="border-t border-border my-1" />
           <MenuItem onClick={() => { sortByCol(cellCtx.c, "asc"); setCellCtx(null); }}>Sort sheet A → Z (this column)</MenuItem>
           <MenuItem onClick={() => { sortByCol(cellCtx.c, "desc"); setCellCtx(null); }}>Sort sheet Z → A (this column)</MenuItem>
           <MenuItem onClick={() => { setSheets(prev => { const next = prev.map(sh => sh.id === activeSheetId ? { ...sh, slicers: [...new Set([...(sh.slicers ?? []), cellCtx.c])] } : sh); scheduleSave(next, title); return next; }); setCellCtx(null); }}>Insert slicer (this column)</MenuItem>
-          <div className="border-t border-[#262A35] my-1" />
+          <div className="border-t border-border my-1" />
           <MenuItem onClick={() => { setFreeze({ frozenRows: cellCtx.r + 1 }); setCellCtx(null); }}>Freeze up to this row</MenuItem>
           <MenuItem onClick={() => { setFreeze({ frozenCols: cellCtx.c + 1 }); setCellCtx(null); }}>Freeze up to this column</MenuItem>
           <MenuItem onClick={() => { setFreeze({ frozenRows: 0, frozenCols: 0 }); setCellCtx(null); }}>Unfreeze</MenuItem>
-          <div className="border-t border-[#262A35] my-1" />
+          <div className="border-t border-border my-1" />
           <MenuItem onClick={() => { mergeCells(); setCellCtx(null); }}>Merge cells</MenuItem>
           <MenuItem onClick={() => { unmergeAt(cellCtx.r, cellCtx.c); setCellCtx(null); }}>Unmerge</MenuItem>
-          <div className="border-t border-[#262A35] my-1" />
+          <div className="border-t border-border my-1" />
           <MenuItem onClick={() => { insertSparkline(); setCellCtx(null); }}>Insert sparkline</MenuItem>
-          <div className="border-t border-[#262A35] my-1" />
+          <div className="border-t border-border my-1" />
           <MenuItem onClick={() => { updateCell(cellCtx.r, cellCtx.c, ""); setCellCtx(null); }}>Clear contents</MenuItem>
           <MenuItem onClick={() => { setSheets(prev => { const next = prev.map(sh => sh.id === activeSheetId ? { ...sh, hiddenRows: new Set<number>(), hiddenCols: new Set<number>() } : sh); scheduleSave(next, title); return next; }); setCellCtx(null); }}>Show all hidden rows/columns</MenuItem>
-          <div className="border-t border-[#262A35] my-1" />
+          <div className="border-t border-border my-1" />
           {isProtected(cellCtx.r, cellCtx.c)
             ? <MenuItem onClick={() => { unprotectAt(cellCtx.r, cellCtx.c); setCellCtx(null); }}>Unprotect range</MenuItem>
             : <MenuItem onClick={() => { protectSelection(); setCellCtx(null); }}>Protect selection</MenuItem>}
@@ -2421,29 +2421,29 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
 
 // ─── Sub-components ────────────────────────────────────────────────────────────
 
-function Sep() { return <div className="w-px h-5 bg-[#262A35] mx-0.5" />; }
+function Sep() { return <div className="w-px h-5 bg-border mx-0.5" />; }
 
 function ToolBtn({ icon, title, active, onClick }: { icon: React.ReactNode; title: string; active?: boolean; onClick?: (e: React.MouseEvent) => void }) {
   return (
     <button title={title} onClick={onClick}
-      className={`flex items-center justify-center h-7 w-7 rounded text-sm transition-colors ${active ? "bg-[#0E2532] text-[#00C2FF]" : "text-[#8A92A6] hover:bg-[#1B1F2A]"}`}>
+      className={`flex items-center justify-center h-7 w-7 rounded text-sm transition-colors ${active ? "bg-accent-soft text-accent" : "text-muted hover:bg-surface-sunken"}`}>
       {icon}
     </button>
   );
 }
 
 const PALETTE = [
-  "#E6E9F0","#8A92A6","#5A6275","#bdc1c6","#12151D","#ffffff",
-  "#ea4335","#ff6d00","#f4b400","#0f9d58","#00C2FF","#9334e6",
-  "#fad2cf","#fce8b2","#b7e1cd","#c9e2f9","#e6d4f5","#0E2532",
+  "#1a1a18","#6b6a65","#9b9a93","#9b9a93","#ffffff","#ffffff",
+  "#c0362c","#b45309","#b45309","#0e7c5a","#4f46e5","#9334e6",
+  "#fad2cf","#fdf3e6","#b7e1cd","#c9e2f9","#e6d4f5","#eeecff",
 ];
 
 function ColorPicker({ onSelect }: { onSelect: (c: string) => void }) {
   return (
-    <div className="absolute top-full left-0 mt-1 p-2 bg-[#12151D] border border-[#262A35] rounded-lg shadow-lg z-50 w-36" onClick={e => e.stopPropagation()}>
+    <div className="absolute top-full left-0 mt-1 p-2 bg-surface border border-border rounded-lg shadow-lg z-50 w-36" onClick={e => e.stopPropagation()}>
       <div className="grid grid-cols-6 gap-1">
         {PALETTE.map(c => (
-          <button key={c} className="h-4 w-4 rounded border border-[#262A35] hover:scale-110 transition-transform" style={{ background: c }} onClick={() => onSelect(c)} />
+          <button key={c} className="h-4 w-4 rounded border border-border hover:scale-110 transition-transform" style={{ background: c }} onClick={() => onSelect(c)} />
         ))}
       </div>
       <input type="color" className="w-full mt-2 h-6 cursor-pointer" onChange={e => onSelect(e.target.value)} />
@@ -2465,21 +2465,21 @@ function ColHeader({ col: _col, label, width, hidden, selected, onResize, onAuto
     <div
       title={"Show column " + label}
       onClick={onHide}
-      style={{ width: 6, height: COL_HEADER_H, background: "#2E333F", cursor: "pointer", borderRight: "1px solid #5A6275", borderLeft: "1px solid #5A6275" }}
+      style={{ width: 6, height: COL_HEADER_H, background: "var(--border-strong)", cursor: "pointer", borderRight: "1px solid var(--subtle)", borderLeft: "1px solid var(--subtle)" }}
     />
   );
 
   return (
     <div
-      className={`relative flex items-center justify-center text-xs font-semibold sticky top-0 z-10 border-r border-b border-[#262A35] select-none cursor-pointer group ${selected ? "bg-[#0E2532] text-[#00C2FF]" : "bg-[#12151D] text-[#8A92A6] hover:bg-[#262A35]"}`}
+      className={`relative flex items-center justify-center text-xs font-semibold sticky top-0 z-10 border-r border-b border-border select-none cursor-pointer group ${selected ? "bg-accent-soft text-accent" : "bg-surface text-muted hover:bg-border"}`}
       style={{ height: COL_HEADER_H, width }}
       onContextMenu={e => { e.preventDefault(); setMenu(true); }}
     >
       {label}
-      {filterActive && <div className="absolute bottom-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-[#00C2FF]" />}
+      {filterActive && <div className="absolute bottom-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-accent" />}
       {/* Resize handle */}
       <div
-        className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-[#00C2FF]"
+        className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-accent"
         title="Drag to resize · double-click to autofit"
         onDoubleClick={e => { e.stopPropagation(); onAutofit(); }}
         onMouseDown={e => {
@@ -2495,7 +2495,7 @@ function ColHeader({ col: _col, label, width, hidden, selected, onResize, onAuto
         }}
       />
       {menu && (
-        <div className="absolute top-full left-0 mt-0.5 w-36 bg-[#12151D] border border-[#262A35] rounded-lg shadow-lg z-50 py-1 text-[#E6E9F0]" onClick={e => e.stopPropagation()}>
+        <div className="absolute top-full left-0 mt-0.5 w-36 bg-surface border border-border rounded-lg shadow-lg z-50 py-1 text-foreground" onClick={e => e.stopPropagation()}>
           <MenuItem onClick={() => { onSort("asc"); setMenu(false); }}><SortAsc className="h-3 w-3" /> Sort A→Z</MenuItem>
           <MenuItem onClick={() => { onSort("desc"); setMenu(false); }}><SortDesc className="h-3 w-3" /> Sort Z→A</MenuItem>
           <MenuItem onClick={() => { onFilter(); setMenu(false); }}><Filter className="h-3 w-3" /> Filter</MenuItem>
@@ -2507,15 +2507,15 @@ function ColHeader({ col: _col, label, width, hidden, selected, onResize, onAuto
 }
 
 function MenuItem({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
-  return <button className="w-full flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-[#1B1F2A]" onClick={onClick}>{children}</button>;
+  return <button className="w-full flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-surface-sunken" onClick={onClick}>{children}</button>;
 }
 
 function FreezeMenuItem({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
   return (
     <button onClick={onClick}
-      className={`w-full flex items-center justify-between px-3 py-1.5 text-xs hover:bg-[#1B1F2A] ${active ? "text-[#00C2FF] font-medium" : "text-[#E6E9F0]"}`}>
+      className={`w-full flex items-center justify-between px-3 py-1.5 text-xs hover:bg-surface-sunken ${active ? "text-accent font-medium" : "text-foreground"}`}>
       <span>{label}</span>
-      {active && <Check className="h-3 w-3 text-[#00C2FF]" />}
+      {active && <Check className="h-3 w-3 text-accent" />}
     </button>
   );
 }
@@ -2610,35 +2610,35 @@ function TemplatesDialog({ hasData, onClose, onApply }: {
   return (
     <Modal title="Insert template" onClose={onClose}>
       <div className="space-y-3 p-4">
-        <p className="text-xs text-[#8A92A6]">Start from a ready-made layout. Each one fills this sheet with sample rows and live formulas.</p>
+        <p className="text-xs text-muted">Start from a ready-made layout. Each one fills this sheet with sample rows and live formulas.</p>
 
         <div className="space-y-2">
           {SHEET_TEMPLATES.map(t => (
             <button key={t.id} onClick={() => choose(t)}
-              className="w-full text-left bg-[#12151D] border border-[#262A35] rounded-lg px-3 py-2.5 hover:border-[#00C2FF]/40 hover:bg-[#0E2532]/40 transition-colors flex items-center gap-3">
-              <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-[#0E2532] text-[#00C2FF] flex-shrink-0">
+              className="w-full text-left bg-surface border border-border rounded-lg px-3 py-2.5 hover:border-accent/40 hover:bg-accent-soft/40 transition-colors flex items-center gap-3">
+              <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-accent-soft text-accent flex-shrink-0">
                 <LayoutGrid className="h-4 w-4" />
               </div>
               <div className="min-w-0">
-                <div className="text-xs font-semibold text-[#E6E9F0]">{t.name}</div>
-                <div className="text-[11px] text-[#8A92A6] truncate">{t.description}</div>
+                <div className="text-xs font-semibold text-foreground">{t.name}</div>
+                <div className="text-[11px] text-muted truncate">{t.description}</div>
               </div>
             </button>
           ))}
         </div>
 
         {hasData && selected && (
-          <div className="bg-[#fce8b2]/40 border border-[#f4b400]/40 rounded-lg p-3 space-y-2">
-            <p className="text-xs text-[#E6E9F0]">This replaces the current sheet contents with the <span className="font-semibold">{selected.name}</span> template. This can&apos;t be undone except via Undo (⌘Z).</p>
+          <div className="bg-warn-soft/40 border border-warn/40 rounded-lg p-3 space-y-2">
+            <p className="text-xs text-foreground">This replaces the current sheet contents with the <span className="font-semibold">{selected.name}</span> template. This can&apos;t be undone except via Undo (⌘Z).</p>
             <div className="flex gap-2">
-              <button onClick={() => setSelected(null)} className="flex-1 px-3 py-1.5 text-xs border border-[#262A35] rounded-lg text-[#8A92A6] hover:bg-[#1B1F2A]">Cancel</button>
-              <button onClick={() => onApply(selected.build())} className="flex-1 px-3 py-1.5 text-xs font-semibold bg-[#00C2FF] text-[#06121A] rounded-lg hover:bg-[#0098E6]">Replace contents</button>
+              <button onClick={() => setSelected(null)} className="flex-1 px-3 py-1.5 text-xs border border-border rounded-lg text-muted hover:bg-surface-sunken">Cancel</button>
+              <button onClick={() => onApply(selected.build())} className="flex-1 px-3 py-1.5 text-xs font-semibold bg-accent text-accent-foreground rounded-lg hover:bg-accent-hover">Replace contents</button>
             </div>
           </div>
         )}
 
         <div className="flex gap-2 pt-1">
-          <button onClick={onClose} className="flex-1 px-4 py-2 text-sm border border-[#262A35] rounded-lg text-[#8A92A6] hover:bg-[#1B1F2A]">Close</button>
+          <button onClick={onClose} className="flex-1 px-4 py-2 text-sm border border-border rounded-lg text-muted hover:bg-surface-sunken">Close</button>
         </div>
       </div>
     </Modal>
@@ -2703,21 +2703,21 @@ function Row({ row, cols, sheet, sel, selEnd, editing, editVal, cellInputRef, co
     height: rowHeight,
     width: ROW_HEADER_W,
     ...(isFrozenRow ? { position: "sticky", top: frozenRowTops[row], zIndex: 30 } : {}),
-    ...(isLastFrozenRow ? { borderBottom: "2px solid #2E333F" } : {}),
+    ...(isLastFrozenRow ? { borderBottom: "2px solid var(--border-strong)" } : {}),
   };
 
   return (
     <>
       {/* Row header */}
       <div
-        className={`sticky left-0 z-10 flex items-center justify-center text-xs text-[#8A92A6] border-r border-b border-[#262A35] select-none bg-[#12151D] cursor-pointer group relative
-          ${inSel(0) ? "bg-[#0E2532]" : "hover:bg-[#262A35]"}`}
+        className={`sticky left-0 z-10 flex items-center justify-center text-xs text-muted border-r border-b border-border select-none bg-surface cursor-pointer group relative
+          ${inSel(0) ? "bg-accent-soft" : "hover:bg-border"}`}
         style={rowHeaderStyle}
         onContextMenu={e => { e.preventDefault(); setCtxMenu(true); }}
       >
         {row + 1}
         {/* Row resize */}
-        <div className="absolute bottom-0 left-0 right-0 h-1 cursor-row-resize hover:bg-[#00C2FF]"
+        <div className="absolute bottom-0 left-0 right-0 h-1 cursor-row-resize hover:bg-accent"
           onMouseDown={e => {
             e.preventDefault();
             resizing.current = { startY: e.clientY, startH: rowHeight };
@@ -2728,7 +2728,7 @@ function Row({ row, cols, sheet, sel, selEnd, editing, editVal, cellInputRef, co
           }}
         />
         {ctxMenu && (
-          <div className="absolute top-0 left-full ml-1 w-32 bg-[#12151D] border border-[#262A35] rounded-lg shadow-lg z-50 py-1 text-[#E6E9F0]" onClick={e => e.stopPropagation()}>
+          <div className="absolute top-0 left-full ml-1 w-32 bg-surface border border-border rounded-lg shadow-lg z-50 py-1 text-foreground" onClick={e => e.stopPropagation()}>
             <MenuItem onClick={() => { onHideRow(); setCtxMenu(false); }}><EyeOff className="h-3 w-3" /> Hide row</MenuItem>
           </div>
         )}
@@ -2777,19 +2777,19 @@ function Row({ row, cols, sheet, sel, selEnd, editing, editVal, cellInputRef, co
           fontStyle: style.italic ? "italic" : "normal",
           textDecoration: [style.underline && "underline", style.strikethrough && "line-through"].filter(Boolean).join(" ") || "none",
           textAlign: style.align ?? "left",
-          color: cfStyle.color ?? style.color ?? "#E6E9F0",
+          color: cfStyle.color ?? style.color ?? "#1a1a18",
           background: cfStyle.background ?? style.background ?? "transparent",
           whiteSpace: style.wrap ? "pre-wrap" : "nowrap",
           overflow: "hidden",
           textOverflow: "ellipsis",
           ...(span ? { gridColumn: `span ${span.cols}`, gridRow: `span ${span.rows}` } : {}),
           ...stickyFreeze,
-          ...(isLastFrozenCol ? { borderRight: "2px solid #2E333F" } : {}),
-          ...(cellIsLastFrozenRow ? { borderBottom: "2px solid #2E333F" } : {}),
-          ...(style.border?.top ? { borderTop: "1px solid #8A92A6" } : {}),
-          ...(style.border?.bottom ? { borderBottom: "1px solid #8A92A6" } : {}),
-          ...(style.border?.left ? { borderLeft: "1px solid #8A92A6" } : {}),
-          ...(style.border?.right ? { borderRight: "1px solid #8A92A6" } : {}),
+          ...(isLastFrozenCol ? { borderRight: "2px solid var(--border-strong)" } : {}),
+          ...(cellIsLastFrozenRow ? { borderBottom: "2px solid var(--border-strong)" } : {}),
+          ...(style.border?.top ? { borderTop: "1px solid var(--muted)" } : {}),
+          ...(style.border?.bottom ? { borderBottom: "1px solid var(--muted)" } : {}),
+          ...(style.border?.left ? { borderLeft: "1px solid var(--muted)" } : {}),
+          ...(style.border?.right ? { borderRight: "1px solid var(--muted)" } : {}),
         };
 
         const isFillPreview = inFillPreview(c);
@@ -2798,9 +2798,9 @@ function Row({ row, cols, sheet, sel, selEnd, editing, editVal, cellInputRef, co
         return (
           <div
             key={c}
-            className={`relative border-r border-b border-[#262A35] px-1 cursor-cell select-none transition-colors
-              ${isSelected ? "outline outline-2 outline-[#00C2FF] z-[5]" : isInRange ? "bg-[#0E2532]/60" : ""}
-              ${isFillPreview ? "outline-dashed outline-1 outline-[#00C2FF]/60 bg-[#0E2532]/40" : ""}`}
+            className={`relative border-r border-b border-border px-1 cursor-cell select-none transition-colors
+              ${isSelected ? "outline outline-2 outline-accent z-[5]" : isInRange ? "bg-accent-soft/60" : ""}
+              ${isFillPreview ? "outline-dashed outline-1 outline-accent/60 bg-accent-soft/40" : ""}`}
             style={cellStyle}
             data-cellrow={row}
             data-cellcol={c}
@@ -2813,7 +2813,7 @@ function Row({ row, cols, sheet, sel, selEnd, editing, editVal, cellInputRef, co
             {isEditing ? (
               <input
                 ref={cellInputRef}
-                className="absolute inset-0 w-full h-full px-1 text-xs font-mono outline-none border-none bg-[#12151D] z-10"
+                className="absolute inset-0 w-full h-full px-1 text-xs font-mono outline-none border-none bg-surface z-10"
                 style={{ fontFamily: style.fontFamily ?? "Arial", fontSize: style.fontSize ?? 12 }}
                 value={editVal}
                 onChange={e => onEditChange(e.target.value)}
@@ -2838,7 +2838,7 @@ function Row({ row, cols, sheet, sel, selEnd, editing, editVal, cellInputRef, co
               <button
                 title="Choose from list"
                 onClick={e => { e.stopPropagation(); onOpenDropdown(row, c, validation.values); }}
-                className="absolute right-0 top-1/2 -translate-y-1/2 h-full w-4 flex items-center justify-center text-[#8A92A6] hover:text-[#00C2FF] bg-[#1B1F2A]/80 z-[6]"
+                className="absolute right-0 top-1/2 -translate-y-1/2 h-full w-4 flex items-center justify-center text-muted hover:text-accent bg-surface-sunken/80 z-[6]"
               >
                 <ChevronDown className="h-3 w-3" />
               </button>
@@ -2847,17 +2847,17 @@ function Row({ row, cols, sheet, sel, selEnd, editing, editVal, cellInputRef, co
             {/* Data-validation dropdown menu */}
             {dropdownOpen && (
               <div
-                className="absolute left-0 top-full mt-0.5 min-w-full max-h-48 overflow-y-auto bg-[#12151D] border border-[#262A35] rounded-lg shadow-lg z-50 py-1"
+                className="absolute left-0 top-full mt-0.5 min-w-full max-h-48 overflow-y-auto bg-surface border border-border rounded-lg shadow-lg z-50 py-1"
                 onClick={e => e.stopPropagation()}
               >
                 {validation?.values.length ? validation.values.map(v => (
                   <button key={v} onClick={() => onPickValidation(row, c, v)}
-                    className="w-full text-left px-3 py-1.5 text-xs text-[#E6E9F0] hover:bg-[#0E2532] whitespace-nowrap flex items-center gap-2">
-                    {display === v && <Check className="h-3 w-3 text-[#00C2FF]" />}
+                    className="w-full text-left px-3 py-1.5 text-xs text-foreground hover:bg-accent-soft whitespace-nowrap flex items-center gap-2">
+                    {display === v && <Check className="h-3 w-3 text-accent" />}
                     <span className={display === v ? "" : "pl-5"}>{v}</span>
                   </button>
-                )) : <div className="px-3 py-1.5 text-xs text-[#5A6275]">No options</div>}
-                <button onClick={onCloseDropdown} className="w-full text-left px-3 py-1 text-[11px] text-[#5A6275] hover:bg-[#1B1F2A] border-t border-[#262A35] mt-1">Close</button>
+                )) : <div className="px-3 py-1.5 text-xs text-subtle">No options</div>}
+                <button onClick={onCloseDropdown} className="w-full text-left px-3 py-1 text-[11px] text-subtle hover:bg-surface-sunken border-t border-border mt-1">Close</button>
               </div>
             )}
 
@@ -2866,10 +2866,10 @@ function Row({ row, cols, sheet, sel, selEnd, editing, editVal, cellInputRef, co
               <div className="group/note absolute top-0 right-0 z-[7]">
                 <div
                   className="w-0 h-0 cursor-default"
-                  style={{ borderTop: "7px solid #f4b400", borderLeft: "7px solid transparent" }}
+                  style={{ borderTop: "7px solid var(--warn)", borderLeft: "7px solid transparent" }}
                   title={cell.note}
                 />
-                <div className="hidden group-hover/note:block absolute top-2 right-0 z-[40] w-48 max-w-[12rem] whitespace-pre-wrap break-words bg-[#12151D] border border-[#262A35] rounded-lg shadow-lg px-3 py-2 text-[11px] text-[#E6E9F0] leading-relaxed">
+                <div className="hidden group-hover/note:block absolute top-2 right-0 z-[40] w-48 max-w-[12rem] whitespace-pre-wrap break-words bg-surface border border-border rounded-lg shadow-lg px-3 py-2 text-[11px] text-foreground leading-relaxed">
                   {cell.note}
                 </div>
               </div>
@@ -2880,7 +2880,7 @@ function Row({ row, cols, sheet, sel, selEnd, editing, editVal, cellInputRef, co
               <div
                 title="Drag to fill"
                 onMouseDown={e => { e.preventDefault(); e.stopPropagation(); onStartFill(); }}
-                className="absolute -bottom-[3px] -right-[3px] h-[7px] w-[7px] bg-[#00C2FF] border border-white cursor-crosshair z-[8]"
+                className="absolute -bottom-[3px] -right-[3px] h-[7px] w-[7px] bg-accent border border-border cursor-crosshair z-[8]"
               />
             )}
           </div>
@@ -2925,7 +2925,7 @@ function ChartWidget({ chart, sheet, computeCell, onRemove }: {
     switch (chart.type) {
       case "bar": return (
         <BarChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#262A35" />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
           <XAxis dataKey="name" tick={{ fontSize: 11 }} />
           <YAxis tick={{ fontSize: 11 }} />
           <Tooltip />
@@ -2935,7 +2935,7 @@ function ChartWidget({ chart, sheet, computeCell, onRemove }: {
       );
       case "line": return (
         <LineChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#262A35" />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
           <XAxis dataKey="name" tick={{ fontSize: 11 }} />
           <YAxis tick={{ fontSize: 11 }} />
           <Tooltip />
@@ -2945,7 +2945,7 @@ function ChartWidget({ chart, sheet, computeCell, onRemove }: {
       );
       case "area": return (
         <AreaChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#262A35" />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
           <XAxis dataKey="name" tick={{ fontSize: 11 }} />
           <YAxis tick={{ fontSize: 11 }} />
           <Tooltip />
@@ -2973,7 +2973,7 @@ function ChartWidget({ chart, sheet, computeCell, onRemove }: {
       );
       case "combo": return (
         <ComposedChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#262A35" />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
           <XAxis dataKey="name" tick={{ fontSize: 11 }} />
           <YAxis tick={{ fontSize: 11 }} />
           <Tooltip />
@@ -2985,7 +2985,7 @@ function ChartWidget({ chart, sheet, computeCell, onRemove }: {
       );
       case "radar": return (
         <RadarChart data={chartData} cx="50%" cy="50%" outerRadius={80}>
-          <PolarGrid stroke="#262A35" />
+          <PolarGrid stroke="var(--border)" />
           <PolarAngleAxis dataKey="name" tick={{ fontSize: 11 }} />
           <PolarRadiusAxis tick={{ fontSize: 10 }} />
           <Tooltip />
@@ -3006,10 +3006,10 @@ function ChartWidget({ chart, sheet, computeCell, onRemove }: {
   };
 
   return (
-    <div className="mx-4 my-4 bg-[#12151D] border border-[#262A35] rounded-xl p-4 relative shadow-sm" style={{ width: 480, height: 300 }}>
+    <div className="mx-4 my-4 bg-surface border border-border rounded-xl p-4 relative shadow-sm" style={{ width: 480, height: 300 }}>
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-semibold text-[#E6E9F0]">{chart.title}</span>
-        <button onClick={onRemove} className="text-[#5A6275] hover:text-[#ea4335]"><X className="h-3.5 w-3.5" /></button>
+        <span className="text-xs font-semibold text-foreground">{chart.title}</span>
+        <button onClick={onRemove} className="text-subtle hover:text-crit"><X className="h-3.5 w-3.5" /></button>
       </div>
       <ResponsiveContainer width="100%" height={220}>
         {renderChart() ?? <div />}
@@ -3033,34 +3033,34 @@ function ChartDialog({ defaultRange, onClose, onInsert }: {
     <Modal title="Insert Chart" onClose={onClose}>
       <div className="space-y-3 p-4">
         <div>
-          <label className="text-xs font-medium text-[#8A92A6] mb-1 block">Chart type</label>
+          <label className="text-xs font-medium text-muted mb-1 block">Chart type</label>
           <div className="flex gap-2 flex-wrap">
             {(["bar","line","area","pie","donut","combo","radar","scatter"] as const).map(t => (
               <button key={t} onClick={() => setType(t)}
-                className={`px-3 py-1.5 text-xs rounded-lg border transition-colors capitalize ${type === t ? "bg-[#0E2532] text-[#00C2FF] border-[#00C2FF]/30" : "border-[#262A35] text-[#8A92A6] hover:border-[#2E333F]"}`}>
+                className={`px-3 py-1.5 text-xs rounded-lg border transition-colors capitalize ${type === t ? "bg-accent-soft text-accent border-accent/30" : "border-border text-muted hover:border-border-strong"}`}>
                 {t}
               </button>
             ))}
           </div>
         </div>
         <div>
-          <label className="text-xs font-medium text-[#8A92A6] mb-1 block">Data range</label>
-          <input className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm font-mono focus:outline-none focus:border-[#00C2FF]/60"
+          <label className="text-xs font-medium text-muted mb-1 block">Data range</label>
+          <input className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm font-mono focus:outline-none focus:border-accent/60"
             value={range} onChange={e => setRange(e.target.value)} placeholder="e.g. A1:C10" />
         </div>
         <div>
-          <label className="text-xs font-medium text-[#8A92A6] mb-1 block">Title</label>
-          <input className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm focus:outline-none focus:border-[#00C2FF]/60"
+          <label className="text-xs font-medium text-muted mb-1 block">Title</label>
+          <input className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm focus:outline-none focus:border-accent/60"
             value={title} onChange={e => setTitle(e.target.value)} />
         </div>
         <label className="flex items-center gap-2 text-sm cursor-pointer">
           <input type="checkbox" checked={hasHeader} onChange={e => setHasHeader(e.target.checked)} />
-          <span className="text-xs text-[#8A92A6]">First row is header</span>
+          <span className="text-xs text-muted">First row is header</span>
         </label>
         <div className="flex gap-2 pt-1">
-          <button onClick={onClose} className="flex-1 px-4 py-2 text-sm border border-[#262A35] rounded-lg text-[#8A92A6] hover:bg-[#1B1F2A]">Cancel</button>
+          <button onClick={onClose} className="flex-1 px-4 py-2 text-sm border border-border rounded-lg text-muted hover:bg-surface-sunken">Cancel</button>
           <button onClick={() => onInsert({ type, range: range.toUpperCase(), title, hasHeader, colors: CHART_COLORS })}
-            className="flex-1 px-4 py-2 text-sm font-semibold bg-[#00C2FF] text-[#06121A] rounded-lg hover:bg-[#0098E6]">
+            className="flex-1 px-4 py-2 text-sm font-semibold bg-accent text-accent-foreground rounded-lg hover:bg-accent-hover">
             Insert
           </button>
         </div>
@@ -3072,11 +3072,11 @@ function ChartDialog({ defaultRange, onClose, onInsert }: {
 // ─── Conditional Formatting Dialog ────────────────────────────────────────────
 
 const CF_SWATCHES = [
-  { bg: "#fce8e6", color: "#ea4335", label: "Red" },
+  { bg: "#fbeceb", color: "#c0362c", label: "Red" },
   { bg: "#fef3e2", color: "#f57c00", label: "Orange" },
-  { bg: "#fef9e0", color: "#f4b400", label: "Yellow" },
-  { bg: "#e6f4ea", color: "#0f9d58", label: "Green" },
-  { bg: "#0E2532", color: "#00C2FF", label: "Blue" },
+  { bg: "#fef9e0", color: "#b45309", label: "Yellow" },
+  { bg: "#e7f4ef", color: "#0e7c5a", label: "Green" },
+  { bg: "#eeecff", color: "#4f46e5", label: "Blue" },
   { bg: "#f3e8fd", color: "#9334e6", label: "Purple" },
 ];
 
@@ -3125,13 +3125,13 @@ function CFDialog({ defaultRange, rules, onClose, onAdd, onRemove }: {
     <Modal title="Conditional Formatting" onClose={onClose}>
       <div className="space-y-3 p-4 max-h-[80vh] overflow-y-auto">
         <div>
-          <label className="text-xs font-medium text-[#8A92A6] mb-1 block">Range</label>
-          <input className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm font-mono focus:outline-none focus:border-[#00C2FF]/60"
+          <label className="text-xs font-medium text-muted mb-1 block">Range</label>
+          <input className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm font-mono focus:outline-none focus:border-accent/60"
             value={range} onChange={e => setRange(e.target.value)} />
         </div>
         <div>
-          <label className="text-xs font-medium text-[#8A92A6] mb-1 block">Rule</label>
-          <select className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm focus:outline-none"
+          <label className="text-xs font-medium text-muted mb-1 block">Rule</label>
+          <select className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm focus:outline-none"
             value={ruleType} onChange={e => setRuleType(e.target.value as ConditionalRule["type"])}>
             <option value="gt">Greater than</option>
             <option value="lt">Less than</option>
@@ -3153,10 +3153,10 @@ function CFDialog({ defaultRange, rules, onClose, onAdd, onRemove }: {
         </div>
         {!noValue && (
           <div className="flex gap-2">
-            <input placeholder={ruleType === "formula" ? "=A1>10" : "Value"} className="flex-1 px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm focus:outline-none focus:border-[#00C2FF]/60"
+            <input placeholder={ruleType === "formula" ? "=A1>10" : "Value"} className="flex-1 px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm focus:outline-none focus:border-accent/60"
               value={value} onChange={e => setValue(e.target.value)} />
             {ruleType === "between" && (
-              <input placeholder="And" className="flex-1 px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm focus:outline-none focus:border-[#00C2FF]/60"
+              <input placeholder="And" className="flex-1 px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm focus:outline-none focus:border-accent/60"
                 value={value2} onChange={e => setValue2(e.target.value)} />
             )}
           </div>
@@ -3164,25 +3164,25 @@ function CFDialog({ defaultRange, rules, onClose, onAdd, onRemove }: {
         {!noStyle && (
           <>
             <div>
-              <label className="text-xs font-medium text-[#8A92A6] mb-1.5 block">Fill color</label>
+              <label className="text-xs font-medium text-muted mb-1.5 block">Fill color</label>
               <div className="flex gap-1.5 flex-wrap">
                 {CF_SWATCHES.map(sw => (
                   <button key={sw.bg} title={sw.label} onClick={() => { setBg(sw.bg); setColor(sw.color); }}
-                    className={"h-6 w-6 rounded border-2 transition-all " + (bg === sw.bg ? "border-[#00C2FF] scale-110" : "border-[#262A35] hover:scale-105")}
+                    className={"h-6 w-6 rounded border-2 transition-all " + (bg === sw.bg ? "border-accent scale-110" : "border-border hover:scale-105")}
                     style={{ background: sw.bg }} />
                 ))}
-                <input type="color" value={bg} onChange={e => setBg(e.target.value)} className="h-6 w-10 cursor-pointer rounded border border-[#262A35]" title="Custom fill" />
+                <input type="color" value={bg} onChange={e => setBg(e.target.value)} className="h-6 w-10 cursor-pointer rounded border border-border" title="Custom fill" />
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <label className="flex items-center gap-1.5 text-xs cursor-pointer text-[#8A92A6]">
+              <label className="flex items-center gap-1.5 text-xs cursor-pointer text-muted">
                 <input type="checkbox" checked={useTextColor} onChange={e => setUseTextColor(e.target.checked)} />
                 Custom text color
               </label>
               {useTextColor && (
-                <input type="color" value={color} onChange={e => setColor(e.target.value)} className="h-6 w-10 cursor-pointer rounded border border-[#262A35]" />
+                <input type="color" value={color} onChange={e => setColor(e.target.value)} className="h-6 w-10 cursor-pointer rounded border border-border" />
               )}
-              <label className="flex items-center gap-1.5 text-xs cursor-pointer text-[#8A92A6] ml-2">
+              <label className="flex items-center gap-1.5 text-xs cursor-pointer text-muted ml-2">
                 <input type="checkbox" checked={bold} onChange={e => setBold(e.target.checked)} />
                 Bold
               </label>
@@ -3190,23 +3190,23 @@ function CFDialog({ defaultRange, rules, onClose, onAdd, onRemove }: {
           </>
         )}
         <div className="flex gap-2 pt-1">
-          <button onClick={onClose} className="flex-1 px-4 py-2 text-sm border border-[#262A35] rounded-lg text-[#8A92A6] hover:bg-[#1B1F2A]">Cancel</button>
-          <button onClick={handleAdd} className="flex-1 px-4 py-2 text-sm font-semibold bg-[#00C2FF] text-[#06121A] rounded-lg hover:bg-[#0098E6]">Add Rule</button>
+          <button onClick={onClose} className="flex-1 px-4 py-2 text-sm border border-border rounded-lg text-muted hover:bg-surface-sunken">Cancel</button>
+          <button onClick={handleAdd} className="flex-1 px-4 py-2 text-sm font-semibold bg-accent text-accent-foreground rounded-lg hover:bg-accent-hover">Add Rule</button>
         </div>
 
         {rules.length > 0 && (
           <>
-            <div className="border-t border-[#262A35] pt-3">
-              <div className="text-xs font-medium text-[#8A92A6] mb-2">Manage Rules ({rules.length})</div>
+            <div className="border-t border-border pt-3">
+              <div className="text-xs font-medium text-muted mb-2">Manage Rules ({rules.length})</div>
               <div className="space-y-1.5 max-h-40 overflow-y-auto">
                 {rules.map(rule => (
-                  <div key={rule.id} className="flex items-center gap-2 bg-[#12151D] border border-[#262A35] rounded-lg px-3 py-1.5">
-                    <div className="h-3.5 w-3.5 rounded flex-shrink-0 border border-[#262A35]" style={{ background: rule.style.background ?? "#12151D" }} />
-                    <span className="text-[11px] font-mono text-[#8A92A6] flex-shrink-0">
+                  <div key={rule.id} className="flex items-center gap-2 bg-surface border border-border rounded-lg px-3 py-1.5">
+                    <div className="h-3.5 w-3.5 rounded flex-shrink-0 border border-border" style={{ background: rule.style.background ?? "var(--surface)" }} />
+                    <span className="text-[11px] font-mono text-muted flex-shrink-0">
                       {indexToCol(rule.range.c1)}{rule.range.r1 + 1}:{indexToCol(rule.range.c2)}{rule.range.r2 + 1}
                     </span>
-                    <span className="text-[11px] text-[#E6E9F0] truncate flex-1">{ruleLabel(rule.type)}{rule.value ? " " + rule.value : ""}{rule.value2 ? "–" + rule.value2 : ""}</span>
-                    <button onClick={() => onRemove(rule.id)} className="p-0.5 rounded text-[#5A6275] hover:text-[#ea4335] flex-shrink-0">
+                    <span className="text-[11px] text-foreground truncate flex-1">{ruleLabel(rule.type)}{rule.value ? " " + rule.value : ""}{rule.value2 ? "–" + rule.value2 : ""}</span>
+                    <button onClick={() => onRemove(rule.id)} className="p-0.5 rounded text-subtle hover:text-crit flex-shrink-0">
                       <X className="h-3.5 w-3.5" />
                     </button>
                   </div>
@@ -3240,40 +3240,40 @@ function FindReplaceDialog({ onClose, countMatches, onFindNext, onReplace, onRep
     <Modal title="Find & replace" onClose={onClose}>
       <div className="space-y-3 p-4">
         <div>
-          <label className="text-xs font-medium text-[#8A92A6] mb-1 block">Find</label>
+          <label className="text-xs font-medium text-muted mb-1 block">Find</label>
           <input autoFocus value={find} onChange={e => setFind(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter") onFindNext(find, matchCase, wholeCell); }}
             placeholder="Search for…"
-            className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] placeholder:text-[#5A6275] focus:outline-none focus:border-[#00C2FF]/60 focus:ring-2 focus:ring-[#00C2FF]/20 transition-colors" />
+            className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20 transition-colors" />
         </div>
         <div>
-          <label className="text-xs font-medium text-[#8A92A6] mb-1 block">Replace with</label>
+          <label className="text-xs font-medium text-muted mb-1 block">Replace with</label>
           <input value={replace} onChange={e => setReplace(e.target.value)}
             placeholder="Replace with…"
-            className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] placeholder:text-[#5A6275] focus:outline-none focus:border-[#00C2FF]/60 focus:ring-2 focus:ring-[#00C2FF]/20 transition-colors" />
+            className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20 transition-colors" />
         </div>
         <div className="flex items-center gap-4">
-          <label className="flex items-center gap-2 text-xs text-[#8A92A6] cursor-pointer">
+          <label className="flex items-center gap-2 text-xs text-muted cursor-pointer">
             <input type="checkbox" checked={matchCase} onChange={e => setMatchCase(e.target.checked)} /> Match case
           </label>
-          <label className="flex items-center gap-2 text-xs text-[#8A92A6] cursor-pointer">
+          <label className="flex items-center gap-2 text-xs text-muted cursor-pointer">
             <input type="checkbox" checked={wholeCell} onChange={e => setWholeCell(e.target.checked)} /> Match entire cell
           </label>
         </div>
-        <div className="text-[11px] text-[#5A6275]">
+        <div className="text-[11px] text-subtle">
           {find === "" ? "Enter a term to search" : count + " matching cell" + (count === 1 ? "" : "s")}
         </div>
         <div className="flex gap-2 pt-1">
           <button onClick={() => { if (!onFindNext(find, matchCase, wholeCell)) toast.error("No matches found"); }}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium rounded-md text-[#8A92A6] hover:text-[#E6E9F0] hover:bg-[#1B1F2A] transition-colors border border-[#262A35]">
+            className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium rounded-md text-muted hover:text-foreground hover:bg-surface-sunken transition-colors border border-border">
             <Search className="h-3.5 w-3.5" /> Find next
           </button>
           <button onClick={() => { if (!onReplace(find, replace, matchCase, wholeCell)) onFindNext(find, matchCase, wholeCell); }}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium rounded-md text-[#8A92A6] hover:text-[#E6E9F0] hover:bg-[#1B1F2A] transition-colors border border-[#262A35]">
+            className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium rounded-md text-muted hover:text-foreground hover:bg-surface-sunken transition-colors border border-border">
             <Replace className="h-3.5 w-3.5" /> Replace
           </button>
           <button onClick={() => { const n = onReplaceAll(find, replace, matchCase, wholeCell); toast.success("Replaced " + n + " cell" + (n === 1 ? "" : "s")); }}
-            className="flex-1 px-4 py-2 text-sm font-semibold rounded-lg bg-[#00C2FF] text-[#06121A] hover:bg-[#0098E6] transition-colors">
+            className="flex-1 px-4 py-2 text-sm font-semibold rounded-lg bg-accent text-accent-foreground hover:bg-accent-hover transition-colors">
             Replace all
           </button>
         </div>
@@ -3296,16 +3296,16 @@ function FilterDialog({ col: _col, values, current, colLabel, onClose, onApply }
   return (
     <Modal title={`Filter column ${colLabel}`} onClose={onClose}>
       <div className="p-4 space-y-3">
-        <input className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm focus:outline-none focus:border-[#00C2FF]/60"
+        <input className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm focus:outline-none focus:border-accent/60"
           placeholder="Search values…" value={search} onChange={e => setSearch(e.target.value)} />
         <div className="flex gap-2 text-xs">
-          <button className="text-[#00C2FF] hover:underline" onClick={() => setSelected(new Set(values))}>Select all</button>
-          <span className="text-[#bdc1c6]">·</span>
-          <button className="text-[#00C2FF] hover:underline" onClick={() => setSelected(new Set())}>Clear all</button>
+          <button className="text-accent hover:underline" onClick={() => setSelected(new Set(values))}>Select all</button>
+          <span className="text-subtle">·</span>
+          <button className="text-accent hover:underline" onClick={() => setSelected(new Set())}>Clear all</button>
         </div>
-        <div className="max-h-48 overflow-y-auto space-y-1 border border-[#262A35] rounded-lg p-2">
+        <div className="max-h-48 overflow-y-auto space-y-1 border border-border rounded-lg p-2">
           {filtered.map(v => (
-            <label key={v} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-[#1B1F2A] px-1 rounded">
+            <label key={v} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-surface-sunken px-1 rounded">
               <input type="checkbox" checked={selected.has(v)} onChange={e => {
                 const s = new Set(selected);
                 if (e.target.checked) { s.add(v); } else { s.delete(v); }
@@ -3316,9 +3316,9 @@ function FilterDialog({ col: _col, values, current, colLabel, onClose, onApply }
           ))}
         </div>
         <div className="flex gap-2">
-          <button onClick={() => onApply([])} className="px-3 py-1.5 text-xs border border-[#262A35] rounded-lg text-[#8A92A6] hover:bg-[#1B1F2A]">Clear filter</button>
-          <button onClick={onClose} className="px-3 py-1.5 text-xs border border-[#262A35] rounded-lg text-[#8A92A6] hover:bg-[#1B1F2A]">Cancel</button>
-          <button onClick={() => onApply([...selected])} className="flex-1 px-4 py-1.5 text-xs font-semibold bg-[#00C2FF] text-[#06121A] rounded-lg hover:bg-[#0098E6]">Apply</button>
+          <button onClick={() => onApply([])} className="px-3 py-1.5 text-xs border border-border rounded-lg text-muted hover:bg-surface-sunken">Clear filter</button>
+          <button onClick={onClose} className="px-3 py-1.5 text-xs border border-border rounded-lg text-muted hover:bg-surface-sunken">Cancel</button>
+          <button onClick={() => onApply([...selected])} className="flex-1 px-4 py-1.5 text-xs font-semibold bg-accent text-accent-foreground rounded-lg hover:bg-accent-hover">Apply</button>
         </div>
       </div>
     </Modal>
@@ -3352,17 +3352,17 @@ function NamesDialog({ names, defaultRange, onClose, onSave }: {
   return (
     <Modal title="Named ranges" onClose={onClose}>
       <div className="space-y-3 p-4">
-        <p className="text-xs text-[#8A92A6]">Give a range a name, then use it in formulas — e.g. <span className="font-mono text-[#E6E9F0]">=SUM(Revenue)</span>.</p>
+        <p className="text-xs text-muted">Give a range a name, then use it in formulas — e.g. <span className="font-mono text-foreground">=SUM(Revenue)</span>.</p>
 
         {Object.keys(local).length > 0 && (
           <div className="space-y-1.5 max-h-44 overflow-y-auto">
             {Object.entries(local).map(([n, r]) => (
-              <div key={n} className="flex items-center gap-2 bg-[#12151D] border border-[#262A35] rounded-lg px-3 py-1.5">
-                <Tag className="h-3.5 w-3.5 text-[#00C2FF] flex-shrink-0" />
-                <span className="text-xs font-semibold text-[#E6E9F0] flex-shrink-0">{n}</span>
-                <span className="text-xs font-mono text-[#8A92A6] ml-1 truncate flex-1">{r}</span>
+              <div key={n} className="flex items-center gap-2 bg-surface border border-border rounded-lg px-3 py-1.5">
+                <Tag className="h-3.5 w-3.5 text-accent flex-shrink-0" />
+                <span className="text-xs font-semibold text-foreground flex-shrink-0">{n}</span>
+                <span className="text-xs font-mono text-muted ml-1 truncate flex-1">{r}</span>
                 <button onClick={() => setLocal(prev => { const cp = { ...prev }; delete cp[n]; return cp; })}
-                  className="p-1 rounded hover:bg-[#1B1F2A] text-[#5A6275] hover:text-[#ea4335] flex-shrink-0"><X className="h-3.5 w-3.5" /></button>
+                  className="p-1 rounded hover:bg-surface-sunken text-subtle hover:text-crit flex-shrink-0"><X className="h-3.5 w-3.5" /></button>
               </div>
             ))}
           </div>
@@ -3370,23 +3370,23 @@ function NamesDialog({ names, defaultRange, onClose, onSave }: {
 
         <div className="flex gap-2 items-end">
           <div className="flex-1">
-            <label className="text-[11px] font-medium text-[#8A92A6] mb-1 block">Name</label>
+            <label className="text-[11px] font-medium text-muted mb-1 block">Name</label>
             <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Revenue"
               onKeyDown={e => e.key === "Enter" && add()}
-              className="w-full px-2.5 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-xs focus:outline-none focus:border-[#00C2FF]/60" />
+              className="w-full px-2.5 py-1.5 bg-surface-sunken border border-border-strong rounded-lg text-xs focus:outline-none focus:border-accent/60" />
           </div>
           <div className="flex-1">
-            <label className="text-[11px] font-medium text-[#8A92A6] mb-1 block">Range</label>
+            <label className="text-[11px] font-medium text-muted mb-1 block">Range</label>
             <input value={newRange} onChange={e => setNewRange(e.target.value)} placeholder="A1:A10"
               onKeyDown={e => e.key === "Enter" && add()}
-              className="w-full px-2.5 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-xs font-mono focus:outline-none focus:border-[#00C2FF]/60" />
+              className="w-full px-2.5 py-1.5 bg-surface-sunken border border-border-strong rounded-lg text-xs font-mono focus:outline-none focus:border-accent/60" />
           </div>
-          <button onClick={add} className="px-3 py-1.5 text-xs font-semibold bg-[#0E2532] text-[#00C2FF] rounded-lg hover:bg-[#0E2532] h-[30px]">Add</button>
+          <button onClick={add} className="px-3 py-1.5 text-xs font-semibold bg-accent-soft text-accent rounded-lg hover:bg-accent-soft h-[30px]">Add</button>
         </div>
 
         <div className="flex gap-2 pt-1">
-          <button onClick={onClose} className="flex-1 px-4 py-2 text-sm border border-[#262A35] rounded-lg text-[#8A92A6] hover:bg-[#1B1F2A]">Cancel</button>
-          <button onClick={save} className="flex-1 px-4 py-2 text-sm font-semibold bg-[#00C2FF] text-[#06121A] rounded-lg hover:bg-[#0098E6]">Save</button>
+          <button onClick={onClose} className="flex-1 px-4 py-2 text-sm border border-border rounded-lg text-muted hover:bg-surface-sunken">Cancel</button>
+          <button onClick={save} className="flex-1 px-4 py-2 text-sm font-semibold bg-accent text-accent-foreground rounded-lg hover:bg-accent-hover">Save</button>
         </div>
       </div>
     </Modal>
@@ -3412,7 +3412,7 @@ function SparklineCell({ spark, sheet, getCellDisplayValue, height }: {
         if (!isNaN(n)) vals.push(n);
       }
   }
-  if (!vals.length) return <span className="text-[10px] text-[#5A6275] flex items-center h-full">(no data)</span>;
+  if (!vals.length) return <span className="text-[10px] text-subtle flex items-center h-full">(no data)</span>;
 
   const w = 80;
   const h = Math.max(12, Math.min(height - 4, 22));
@@ -3491,12 +3491,12 @@ function ValidationDialog({ defaultRange, rules, onClose, onAdd, onRemove }: {
   return (
     <Modal title="Data validation" onClose={onClose}>
       <div className="space-y-3 p-4">
-        <p className="text-xs text-[#8A92A6]">Restrict what a range accepts — a dropdown list, or a numeric range.</p>
+        <p className="text-xs text-muted">Restrict what a range accepts — a dropdown list, or a numeric range.</p>
 
-        <div className="flex gap-1 bg-[#1B1F2A] rounded-lg p-0.5">
+        <div className="flex gap-1 bg-surface-sunken rounded-lg p-0.5">
           {(["list", "number"] as const).map(k => (
             <button key={k} onClick={() => setKind(k)}
-              className={"flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors " + (kind === k ? "bg-[#12151D] text-[#00C2FF] shadow-sm" : "text-[#8A92A6] hover:text-[#E6E9F0]")}>
+              className={"flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors " + (kind === k ? "bg-surface text-accent shadow-sm" : "text-muted hover:text-foreground")}>
               {k === "list" ? "List" : "Number"}
             </button>
           ))}
@@ -3505,35 +3505,35 @@ function ValidationDialog({ defaultRange, rules, onClose, onAdd, onRemove }: {
         {rules.length > 0 && (
           <div className="space-y-1.5 max-h-36 overflow-y-auto">
             {rules.map(rule => (
-              <div key={rule.id} className="flex items-center gap-2 bg-[#12151D] border border-[#262A35] rounded-lg px-3 py-1.5">
-                <ListChecks className="h-3.5 w-3.5 text-[#00C2FF] flex-shrink-0" />
-                <span className="text-xs font-mono font-semibold text-[#E6E9F0] flex-shrink-0">{rangeLabel(rule.range)}</span>
-                <span className="text-xs text-[#8A92A6] ml-1 truncate flex-1">{rule.type === "number" ? "#" : ""} {ruleSummary(rule)}</span>
+              <div key={rule.id} className="flex items-center gap-2 bg-surface border border-border rounded-lg px-3 py-1.5">
+                <ListChecks className="h-3.5 w-3.5 text-accent flex-shrink-0" />
+                <span className="text-xs font-mono font-semibold text-foreground flex-shrink-0">{rangeLabel(rule.range)}</span>
+                <span className="text-xs text-muted ml-1 truncate flex-1">{rule.type === "number" ? "#" : ""} {ruleSummary(rule)}</span>
                 <button onClick={() => onRemove(rule.id)}
-                  className="p-1 rounded hover:bg-[#1B1F2A] text-[#5A6275] hover:text-[#ea4335] flex-shrink-0"><X className="h-3.5 w-3.5" /></button>
+                  className="p-1 rounded hover:bg-surface-sunken text-subtle hover:text-crit flex-shrink-0"><X className="h-3.5 w-3.5" /></button>
               </div>
             ))}
           </div>
         )}
 
         <div>
-          <label className="text-[11px] font-medium text-[#8A92A6] mb-1 block">Apply to range</label>
+          <label className="text-[11px] font-medium text-muted mb-1 block">Apply to range</label>
           <input value={range} onChange={e => setRange(e.target.value)} placeholder="A1:A10"
-            className="w-full px-2.5 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-xs font-mono focus:outline-none focus:border-[#00C2FF]/60" />
+            className="w-full px-2.5 py-1.5 bg-surface-sunken border border-border-strong rounded-lg text-xs font-mono focus:outline-none focus:border-accent/60" />
         </div>
         {kind === "list" ? (
           <div>
-            <label className="text-[11px] font-medium text-[#8A92A6] mb-1 block">Options (comma-separated)</label>
+            <label className="text-[11px] font-medium text-muted mb-1 block">Options (comma-separated)</label>
             <input value={values} onChange={e => setValues(e.target.value)} placeholder="Low, Medium, High, Critical"
               onKeyDown={e => e.key === "Enter" && add()}
-              className="w-full px-2.5 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-xs focus:outline-none focus:border-[#00C2FF]/60" />
+              className="w-full px-2.5 py-1.5 bg-surface-sunken border border-border-strong rounded-lg text-xs focus:outline-none focus:border-accent/60" />
           </div>
         ) : (
           <div className="space-y-2">
             <div>
-              <label className="text-[11px] font-medium text-[#8A92A6] mb-1 block">Condition</label>
+              <label className="text-[11px] font-medium text-muted mb-1 block">Condition</label>
               <select value={op} onChange={e => setOp(e.target.value as NumberOp)}
-                className="w-full px-2.5 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-xs focus:outline-none focus:border-[#00C2FF]/60">
+                className="w-full px-2.5 py-1.5 bg-surface-sunken border border-border-strong rounded-lg text-xs focus:outline-none focus:border-accent/60">
                 <option value="between">Between</option>
                 <option value="gt">Greater than</option>
                 <option value="gte">Greater than or equal</option>
@@ -3546,23 +3546,23 @@ function ValidationDialog({ defaultRange, rules, onClose, onAdd, onRemove }: {
             <div className="flex gap-2">
               <input type="number" value={minV} onChange={e => setMinV(e.target.value)} placeholder={op === "between" ? "Min" : "Value"}
                 onKeyDown={e => e.key === "Enter" && op !== "between" && add()}
-                className="flex-1 px-2.5 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-xs focus:outline-none focus:border-[#00C2FF]/60" />
+                className="flex-1 px-2.5 py-1.5 bg-surface-sunken border border-border-strong rounded-lg text-xs focus:outline-none focus:border-accent/60" />
               {op === "between" && (
                 <input type="number" value={maxV} onChange={e => setMaxV(e.target.value)} placeholder="Max"
                   onKeyDown={e => e.key === "Enter" && add()}
-                  className="flex-1 px-2.5 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-xs focus:outline-none focus:border-[#00C2FF]/60" />
+                  className="flex-1 px-2.5 py-1.5 bg-surface-sunken border border-border-strong rounded-lg text-xs focus:outline-none focus:border-accent/60" />
               )}
             </div>
           </div>
         )}
-        <label className="flex items-center gap-2 text-xs text-[#8A92A6] cursor-pointer">
+        <label className="flex items-center gap-2 text-xs text-muted cursor-pointer">
           <input type="checkbox" checked={strict} onChange={e => setStrict(e.target.checked)} />
           {kind === "list" ? "Reject input outside the list" : "Reject out-of-range numbers"}
         </label>
 
         <div className="flex gap-2 pt-1">
-          <button onClick={onClose} className="flex-1 px-4 py-2 text-sm border border-[#262A35] rounded-lg text-[#8A92A6] hover:bg-[#1B1F2A]">Done</button>
-          <button onClick={add} className="flex-1 px-4 py-2 text-sm font-semibold bg-[#00C2FF] text-[#06121A] rounded-lg hover:bg-[#0098E6]">{kind === "list" ? "Add dropdown" : "Add rule"}</button>
+          <button onClick={onClose} className="flex-1 px-4 py-2 text-sm border border-border rounded-lg text-muted hover:bg-surface-sunken">Done</button>
+          <button onClick={add} className="flex-1 px-4 py-2 text-sm font-semibold bg-accent text-accent-foreground rounded-lg hover:bg-accent-hover">{kind === "list" ? "Add dropdown" : "Add rule"}</button>
         </div>
       </div>
     </Modal>
@@ -3575,9 +3575,9 @@ function PivotWidget({ def, rows, onRemove }: { def: PivotDef; rows: string[][];
   const [pivotView, setPivotView] = useState<"table" | "chart">("table");
   if (!rows.length) {
     return (
-      <div className="mx-4 my-4 bg-[#12151D] border border-[#262A35] rounded-xl p-4 relative shadow-sm inline-block">
-        <button onClick={onRemove} className="absolute top-2 right-2 text-[#5A6275] hover:text-[#ea4335]"><X className="h-3.5 w-3.5" /></button>
-        <p className="text-xs text-[#5A6275]">Pivot source range {def.sourceRange} is empty.</p>
+      <div className="mx-4 my-4 bg-surface border border-border rounded-xl p-4 relative shadow-sm inline-block">
+        <button onClick={onRemove} className="absolute top-2 right-2 text-subtle hover:text-crit"><X className="h-3.5 w-3.5" /></button>
+        <p className="text-xs text-subtle">Pivot source range {def.sourceRange} is empty.</p>
       </div>
     );
   }
@@ -3595,25 +3595,25 @@ function PivotWidget({ def, rows, onRemove }: { def: PivotDef; rows: string[][];
   });
 
   return (
-    <div className="mx-4 my-4 bg-[#12151D] border border-[#262A35] rounded-xl p-4 relative shadow-sm inline-block max-w-full overflow-x-auto">
+    <div className="mx-4 my-4 bg-surface border border-border rounded-xl p-4 relative shadow-sm inline-block max-w-full overflow-x-auto">
       <div className="flex items-center justify-between mb-2 gap-6">
-        <span className="text-xs font-semibold text-[#E6E9F0]">
+        <span className="text-xs font-semibold text-foreground">
           Pivot · {aggLabel} of {headers[def.valueField] ?? `col ${def.valueField}`} by {headers[def.rowField] ?? `col ${def.rowField}`}
           {showColHeader ? ` × ${headers[def.colField!] ?? ""}` : ""}
         </span>
         <div className="flex items-center gap-1">
           <button onClick={() => setPivotView(v => v === "table" ? "chart" : "table")} title={pivotView === "table" ? "Show chart" : "Show table"}
-            className="flex items-center gap-1 px-2 py-0.5 text-[11px] rounded text-[#8A92A6] hover:bg-[#1B1F2A]">
+            className="flex items-center gap-1 px-2 py-0.5 text-[11px] rounded text-muted hover:bg-surface-sunken">
             <BarChart3 className="h-3.5 w-3.5" /> {pivotView === "table" ? "Chart" : "Table"}
           </button>
-          <button onClick={onRemove} className="text-[#5A6275] hover:text-[#ea4335]"><X className="h-3.5 w-3.5" /></button>
+          <button onClick={onRemove} className="text-subtle hover:text-crit"><X className="h-3.5 w-3.5" /></button>
         </div>
       </div>
       {pivotView === "chart" ? (
         <div style={{ width: Math.max(360, Math.min(720, chartData.length * 70 + 120)), height: 280 }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#262A35" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis dataKey="name" tick={{ fontSize: 11 }} />
               <YAxis tick={{ fontSize: 11 }} />
               <Tooltip />
@@ -3626,29 +3626,29 @@ function PivotWidget({ def, rows, onRemove }: { def: PivotDef; rows: string[][];
       <table className="text-xs border-collapse">
         <thead>
           <tr>
-            <th className="border border-[#262A35] bg-[#12151D] px-3 py-1.5 text-left text-[#8A92A6] font-semibold">{headers[def.rowField] ?? ""}</th>
+            <th className="border border-border bg-surface px-3 py-1.5 text-left text-muted font-semibold">{headers[def.rowField] ?? ""}</th>
             {piv.colKeys.map(ck => (
-              <th key={ck} className="border border-[#262A35] bg-[#12151D] px-3 py-1.5 text-right text-[#8A92A6] font-semibold">{ck === "__ALL__" ? aggLabel : ck}</th>
+              <th key={ck} className="border border-border bg-surface px-3 py-1.5 text-right text-muted font-semibold">{ck === "__ALL__" ? aggLabel : ck}</th>
             ))}
-            <th className="border border-[#262A35] bg-[#0E2532] px-3 py-1.5 text-right text-[#00C2FF] font-semibold">Total</th>
+            <th className="border border-border bg-accent-soft px-3 py-1.5 text-right text-accent font-semibold">Total</th>
           </tr>
         </thead>
         <tbody>
           {piv.rowKeys.map(rk => (
             <tr key={rk}>
-              <td className="border border-[#262A35] px-3 py-1.5 text-[#E6E9F0] font-medium">{rk || "(blank)"}</td>
+              <td className="border border-border px-3 py-1.5 text-foreground font-medium">{rk || "(blank)"}</td>
               {piv.colKeys.map(ck => (
-                <td key={ck} className="border border-[#262A35] px-3 py-1.5 text-right text-[#E6E9F0] tabular-nums">{fmt(piv.cells[rk + PIVOT_SEP + ck] ?? 0)}</td>
+                <td key={ck} className="border border-border px-3 py-1.5 text-right text-foreground tabular-nums">{fmt(piv.cells[rk + PIVOT_SEP + ck] ?? 0)}</td>
               ))}
-              <td className="border border-[#262A35] px-3 py-1.5 text-right font-semibold text-[#00C2FF] tabular-nums bg-[#0E2532]/40">{fmt(piv.rowTotals[rk] ?? 0)}</td>
+              <td className="border border-border px-3 py-1.5 text-right font-semibold text-accent tabular-nums bg-accent-soft/40">{fmt(piv.rowTotals[rk] ?? 0)}</td>
             </tr>
           ))}
           <tr>
-            <td className="border border-[#262A35] px-3 py-1.5 font-semibold text-[#00C2FF] bg-[#0E2532]/40">Grand total</td>
+            <td className="border border-border px-3 py-1.5 font-semibold text-accent bg-accent-soft/40">Grand total</td>
             {piv.colKeys.map(ck => (
-              <td key={ck} className="border border-[#262A35] px-3 py-1.5 text-right font-semibold text-[#00C2FF] tabular-nums bg-[#0E2532]/40">{fmt(piv.colTotals[ck] ?? 0)}</td>
+              <td key={ck} className="border border-border px-3 py-1.5 text-right font-semibold text-accent tabular-nums bg-accent-soft/40">{fmt(piv.colTotals[ck] ?? 0)}</td>
             ))}
-            <td className="border border-[#262A35] px-3 py-1.5 text-right font-bold text-[#00C2FF] tabular-nums bg-[#0E2532]">{fmt(piv.grand)}</td>
+            <td className="border border-border px-3 py-1.5 text-right font-bold text-accent tabular-nums bg-accent-soft">{fmt(piv.grand)}</td>
           </tr>
         </tbody>
       </table>
@@ -3686,49 +3686,49 @@ function PivotDialog({ defaultRange, existing, readHeaders, onClose, onAdd, onRe
   return (
     <Modal title="Pivot table" onClose={onClose}>
       <div className="space-y-3 p-4">
-        <p className="text-xs text-[#8A92A6]">Summarise a table. Pick the source range (first row = headers), then group by a field and aggregate a value.</p>
+        <p className="text-xs text-muted">Summarise a table. Pick the source range (first row = headers), then group by a field and aggregate a value.</p>
 
         {existing.length > 0 && (
           <div className="space-y-1.5 max-h-28 overflow-y-auto">
             {existing.map(p => (
-              <div key={p.id} className="flex items-center gap-2 bg-[#12151D] border border-[#262A35] rounded-lg px-3 py-1.5">
-                <Table className="h-3.5 w-3.5 text-[#00C2FF] flex-shrink-0" />
-                <span className="text-xs font-mono text-[#E6E9F0] flex-shrink-0">{p.sourceRange}</span>
-                <span className="text-xs text-[#8A92A6] ml-1 truncate flex-1">{p.agg}</span>
-                <button onClick={() => onRemove(p.id)} className="p-1 rounded hover:bg-[#1B1F2A] text-[#5A6275] hover:text-[#ea4335] flex-shrink-0"><X className="h-3.5 w-3.5" /></button>
+              <div key={p.id} className="flex items-center gap-2 bg-surface border border-border rounded-lg px-3 py-1.5">
+                <Table className="h-3.5 w-3.5 text-accent flex-shrink-0" />
+                <span className="text-xs font-mono text-foreground flex-shrink-0">{p.sourceRange}</span>
+                <span className="text-xs text-muted ml-1 truncate flex-1">{p.agg}</span>
+                <button onClick={() => onRemove(p.id)} className="p-1 rounded hover:bg-surface-sunken text-subtle hover:text-crit flex-shrink-0"><X className="h-3.5 w-3.5" /></button>
               </div>
             ))}
           </div>
         )}
 
         <div>
-          <label className="text-[11px] font-medium text-[#8A92A6] mb-1 block">Source range</label>
+          <label className="text-[11px] font-medium text-muted mb-1 block">Source range</label>
           <input value={range} onChange={e => setRange(e.target.value)} placeholder="A1:D100"
-            className="w-full px-2.5 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-xs font-mono focus:outline-none focus:border-[#00C2FF]/60" />
+            className="w-full px-2.5 py-1.5 bg-surface-sunken border border-border-strong rounded-lg text-xs font-mono focus:outline-none focus:border-accent/60" />
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <label className="text-[11px] font-medium text-[#8A92A6] mb-1 block">Rows (group by)</label>
-            <select value={rowField} onChange={e => setRowField(Number(e.target.value))} className="w-full px-2 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-xs focus:outline-none">
+            <label className="text-[11px] font-medium text-muted mb-1 block">Rows (group by)</label>
+            <select value={rowField} onChange={e => setRowField(Number(e.target.value))} className="w-full px-2 py-1.5 bg-surface-sunken border border-border-strong rounded-lg text-xs focus:outline-none">
               {fieldOptions.map(o => <option key={o.i} value={o.i}>{o.label}</option>)}
             </select>
           </div>
           <div>
-            <label className="text-[11px] font-medium text-[#8A92A6] mb-1 block">Columns (optional)</label>
-            <select value={colField} onChange={e => setColField(e.target.value === "none" ? "none" : Number(e.target.value))} className="w-full px-2 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-xs focus:outline-none">
+            <label className="text-[11px] font-medium text-muted mb-1 block">Columns (optional)</label>
+            <select value={colField} onChange={e => setColField(e.target.value === "none" ? "none" : Number(e.target.value))} className="w-full px-2 py-1.5 bg-surface-sunken border border-border-strong rounded-lg text-xs focus:outline-none">
               <option value="none">None</option>
               {fieldOptions.map(o => <option key={o.i} value={o.i}>{o.label}</option>)}
             </select>
           </div>
           <div>
-            <label className="text-[11px] font-medium text-[#8A92A6] mb-1 block">Values</label>
-            <select value={valueField} onChange={e => setValueField(Number(e.target.value))} className="w-full px-2 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-xs focus:outline-none">
+            <label className="text-[11px] font-medium text-muted mb-1 block">Values</label>
+            <select value={valueField} onChange={e => setValueField(Number(e.target.value))} className="w-full px-2 py-1.5 bg-surface-sunken border border-border-strong rounded-lg text-xs focus:outline-none">
               {fieldOptions.map(o => <option key={o.i} value={o.i}>{o.label}</option>)}
             </select>
           </div>
           <div>
-            <label className="text-[11px] font-medium text-[#8A92A6] mb-1 block">Summarise by</label>
-            <select value={agg} onChange={e => setAgg(e.target.value as PivotAgg)} className="w-full px-2 py-1.5 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-xs focus:outline-none">
+            <label className="text-[11px] font-medium text-muted mb-1 block">Summarise by</label>
+            <select value={agg} onChange={e => setAgg(e.target.value as PivotAgg)} className="w-full px-2 py-1.5 bg-surface-sunken border border-border-strong rounded-lg text-xs focus:outline-none">
               <option value="sum">Sum</option>
               <option value="count">Count</option>
               <option value="average">Average</option>
@@ -3739,8 +3739,8 @@ function PivotDialog({ defaultRange, existing, readHeaders, onClose, onAdd, onRe
         </div>
 
         <div className="flex gap-2 pt-1">
-          <button onClick={onClose} className="flex-1 px-4 py-2 text-sm border border-[#262A35] rounded-lg text-[#8A92A6] hover:bg-[#1B1F2A]">Done</button>
-          <button onClick={add} className="flex-1 px-4 py-2 text-sm font-semibold bg-[#00C2FF] text-[#06121A] rounded-lg hover:bg-[#0098E6]">Insert pivot</button>
+          <button onClick={onClose} className="flex-1 px-4 py-2 text-sm border border-border rounded-lg text-muted hover:bg-surface-sunken">Done</button>
+          <button onClick={add} className="flex-1 px-4 py-2 text-sm font-semibold bg-accent text-accent-foreground rounded-lg hover:bg-accent-hover">Insert pivot</button>
         </div>
       </div>
     </Modal>
@@ -3797,18 +3797,18 @@ function AISheetPanel({ sheet, sel, getCellDisplayValue, computeCell, onClose, o
   const formulaMatch = result.match(/^(=\S+)/m);
 
   return (
-    <div className="w-72 border-l border-[#262A35] bg-[#12151D] flex flex-col overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[#262A35]">
-        <div className="flex items-center gap-2 text-sm font-semibold text-[#E6E9F0]">
-          <Sparkles className="h-4 w-4 text-purple-400" /> AI Assistant
+    <div className="w-72 border-l border-border bg-surface flex flex-col overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+        <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+          <Sparkles className="h-4 w-4 text-violet" /> AI Assistant
         </div>
-        <button onClick={onClose} className="text-[#5A6275] hover:text-[#E6E9F0]"><X className="h-4 w-4" /></button>
+        <button onClick={onClose} className="text-subtle hover:text-foreground"><X className="h-4 w-4" /></button>
       </div>
 
-      <div className="flex border-b border-[#262A35]">
+      <div className="flex border-b border-border">
         {(["generate", "explain", "analyze"] as const).map(m => (
           <button key={m} onClick={() => setMode(m)}
-            className={`flex-1 py-1.5 text-[11px] font-medium capitalize transition-colors ${mode === m ? "text-[#00C2FF] border-b-2 border-[#00C2FF]" : "text-[#8A92A6] hover:text-[#E6E9F0]"}`}>
+            className={`flex-1 py-1.5 text-[11px] font-medium capitalize transition-colors ${mode === m ? "text-accent border-b-2 border-accent" : "text-muted hover:text-foreground"}`}>
             {m}
           </button>
         ))}
@@ -3816,17 +3816,17 @@ function AISheetPanel({ sheet, sel, getCellDisplayValue, computeCell, onClose, o
 
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {mode === "explain" && (
-          <div className="text-xs bg-[#12151D] rounded-lg p-3 text-[#8A92A6]">
-            <div className="font-medium text-[#E6E9F0] mb-1">Selected: {indexToCol(sel.c)}{sel.r + 1}</div>
+          <div className="text-xs bg-surface rounded-lg p-3 text-muted">
+            <div className="font-medium text-foreground mb-1">Selected: {indexToCol(sel.c)}{sel.r + 1}</div>
             <div className="font-mono text-[11px]">{cellVal || "(empty)"}</div>
           </div>
         )}
         {mode === "analyze" && (
-          <div className="text-xs text-[#8A92A6]">Analyzes the full sheet for patterns and anomalies.</div>
+          <div className="text-xs text-muted">Analyzes the full sheet for patterns and anomalies.</div>
         )}
         {(mode === "generate" || mode === "analyze") && (
           <textarea
-            className="w-full text-xs px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg resize-none focus:outline-none focus:border-[#00C2FF]/60"
+            className="w-full text-xs px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg resize-none focus:outline-none focus:border-accent/60"
             rows={3}
             placeholder={mode === "generate" ? "Describe what formula you need…\ne.g. Sum column B where column A = Sales" : "Any specific question about the data?"}
             value={prompt}
@@ -3834,18 +3834,18 @@ function AISheetPanel({ sheet, sel, getCellDisplayValue, computeCell, onClose, o
           />
         )}
         <button onClick={run} disabled={loading}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors">
+          className="w-full flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold bg-violet text-white rounded-lg hover:bg-violet disabled:opacity-50 transition-colors">
           {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
           {loading ? "Thinking…" : mode === "explain" ? "Explain" : mode === "analyze" ? "Analyze" : "Generate"}
         </button>
         {result && (
-          <div className="bg-[#12151D] rounded-lg p-3 text-xs text-[#E6E9F0] whitespace-pre-wrap leading-relaxed">
+          <div className="bg-surface rounded-lg p-3 text-xs text-foreground whitespace-pre-wrap leading-relaxed">
             {result}
           </div>
         )}
         {formulaMatch && (
           <button onClick={() => onInsertFormula(formulaMatch[1])}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold border border-[#00C2FF]/30 text-[#00C2FF] rounded-lg hover:bg-[#0E2532] transition-colors">
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold border border-accent/30 text-accent rounded-lg hover:bg-accent-soft transition-colors">
             <Check className="h-3.5 w-3.5" /> Insert formula
           </button>
         )}
@@ -3885,24 +3885,24 @@ function NoteDialog({ cellLabel, initial, onClose, onSave, onDelete }: {
   return (
     <Modal title={"Note on " + cellLabel} onClose={onClose}>
       <div className="space-y-3 p-4">
-        <p className="text-xs text-[#8A92A6]">Add a note to this cell. A small amber marker appears in the corner; hover the cell to read it.</p>
+        <p className="text-xs text-muted">Add a note to this cell. A small amber marker appears in the corner; hover the cell to read it.</p>
         <textarea
           autoFocus
           rows={4}
           value={note}
           onChange={e => setNote(e.target.value)}
           placeholder="Type a note…"
-          className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm text-[#E6E9F0] placeholder:text-[#5A6275] resize-none focus:outline-none focus:border-[#00C2FF]/60 focus:ring-2 focus:ring-[#00C2FF]/20 transition-colors"
+          className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm text-foreground placeholder:text-subtle resize-none focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20 transition-colors"
         />
         <div className="flex gap-2 pt-1">
           {initial.trim() !== "" && (
             <button onClick={onDelete}
-              className="px-3 py-2 text-sm border border-[#262A35] rounded-lg text-[#8A92A6] hover:bg-[#1B1F2A] hover:text-[#ea4335] transition-colors">
+              className="px-3 py-2 text-sm border border-border rounded-lg text-muted hover:bg-surface-sunken hover:text-crit transition-colors">
               Delete
             </button>
           )}
-          <button onClick={onClose} className="flex-1 px-4 py-2 text-sm border border-[#262A35] rounded-lg text-[#8A92A6] hover:bg-[#1B1F2A]">Cancel</button>
-          <button onClick={() => onSave(note)} className="flex-1 px-4 py-2 text-sm font-semibold bg-[#00C2FF] text-[#06121A] rounded-lg hover:bg-[#0098E6]">Save</button>
+          <button onClick={onClose} className="flex-1 px-4 py-2 text-sm border border-border rounded-lg text-muted hover:bg-surface-sunken">Cancel</button>
+          <button onClick={() => onSave(note)} className="flex-1 px-4 py-2 text-sm font-semibold bg-accent text-accent-foreground rounded-lg hover:bg-accent-hover">Save</button>
         </div>
       </div>
     </Modal>
@@ -3921,16 +3921,16 @@ function RemoveDuplicatesDialog({ rangeLabel, onClose, onApply }: {
   return (
     <Modal title="Remove duplicates" onClose={onClose}>
       <div className="space-y-3 p-4">
-        <p className="text-xs text-[#8A92A6]">
-          Scans the selected range <span className="font-mono font-semibold text-[#E6E9F0]">{rangeLabel}</span> and removes rows whose values (across the selected columns) match an earlier row. Survivors are compacted upward.
+        <p className="text-xs text-muted">
+          Scans the selected range <span className="font-mono font-semibold text-foreground">{rangeLabel}</span> and removes rows whose values (across the selected columns) match an earlier row. Survivors are compacted upward.
         </p>
-        <label className="flex items-center gap-2 text-xs text-[#8A92A6] cursor-pointer">
+        <label className="flex items-center gap-2 text-xs text-muted cursor-pointer">
           <input type="checkbox" checked={hasHeader} onChange={e => setHasHeader(e.target.checked)} />
           Data has a header row (skip the first row)
         </label>
         <div className="flex gap-2 pt-1">
-          <button onClick={onClose} className="flex-1 px-4 py-2 text-sm border border-[#262A35] rounded-lg text-[#8A92A6] hover:bg-[#1B1F2A]">Cancel</button>
-          <button onClick={() => onApply(hasHeader)} className="flex-1 px-4 py-2 text-sm font-semibold bg-[#00C2FF] text-[#06121A] rounded-lg hover:bg-[#0098E6]">Remove duplicates</button>
+          <button onClick={onClose} className="flex-1 px-4 py-2 text-sm border border-border rounded-lg text-muted hover:bg-surface-sunken">Cancel</button>
+          <button onClick={() => onApply(hasHeader)} className="flex-1 px-4 py-2 text-sm font-semibold bg-accent text-accent-foreground rounded-lg hover:bg-accent-hover">Remove duplicates</button>
         </div>
       </div>
     </Modal>
@@ -3968,15 +3968,15 @@ function SplitTextDialog({ colLabel, onClose, onApply }: {
   return (
     <Modal title="Split text to columns" onClose={onClose}>
       <div className="space-y-3 p-4">
-        <p className="text-xs text-[#8A92A6]">
-          Splits each cell in column <span className="font-mono font-semibold text-[#E6E9F0]">{colLabel}</span> by the chosen delimiter and writes the parts into the columns to the right (overwriting).
+        <p className="text-xs text-muted">
+          Splits each cell in column <span className="font-mono font-semibold text-foreground">{colLabel}</span> by the chosen delimiter and writes the parts into the columns to the right (overwriting).
         </p>
         <div>
-          <label className="text-xs font-medium text-[#8A92A6] mb-1 block">Delimiter</label>
+          <label className="text-xs font-medium text-muted mb-1 block">Delimiter</label>
           <div className="flex flex-wrap gap-2">
             {options.map(o => (
               <button key={o.id} onClick={() => setChoice(o.id)}
-                className={"px-3 py-1.5 text-xs rounded-lg border transition-colors " + (choice === o.id ? "bg-[#0E2532] text-[#00C2FF] border-[#00C2FF]/30" : "border-[#262A35] text-[#8A92A6] hover:border-[#2E333F]")}>
+                className={"px-3 py-1.5 text-xs rounded-lg border transition-colors " + (choice === o.id ? "bg-accent-soft text-accent border-accent/30" : "border-border text-muted hover:border-border-strong")}>
                 {o.label}
               </button>
             ))}
@@ -3984,11 +3984,11 @@ function SplitTextDialog({ colLabel, onClose, onApply }: {
         </div>
         {choice === "custom" && (
           <input autoFocus value={custom} onChange={e => setCustom(e.target.value)} placeholder="e.g. | or - or ::"
-            className="w-full px-3 py-2 bg-[#1B1F2A] border border-[#2E333F] rounded-lg text-sm font-mono focus:outline-none focus:border-[#00C2FF]/60 focus:ring-2 focus:ring-[#00C2FF]/20 transition-colors" />
+            className="w-full px-3 py-2 bg-surface-sunken border border-border-strong rounded-lg text-sm font-mono focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20 transition-colors" />
         )}
         <div className="flex gap-2 pt-1">
-          <button onClick={onClose} className="flex-1 px-4 py-2 text-sm border border-[#262A35] rounded-lg text-[#8A92A6] hover:bg-[#1B1F2A]">Cancel</button>
-          <button onClick={() => onApply(delimiterFor())} className="flex-1 px-4 py-2 text-sm font-semibold bg-[#00C2FF] text-[#06121A] rounded-lg hover:bg-[#0098E6]">Split</button>
+          <button onClick={onClose} className="flex-1 px-4 py-2 text-sm border border-border rounded-lg text-muted hover:bg-surface-sunken">Cancel</button>
+          <button onClick={() => onApply(delimiterFor())} className="flex-1 px-4 py-2 text-sm font-semibold bg-accent text-accent-foreground rounded-lg hover:bg-accent-hover">Split</button>
         </div>
       </div>
     </Modal>
@@ -4000,10 +4000,10 @@ function SplitTextDialog({ colLabel, onClose, onApply }: {
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
     <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-[#12151D] rounded-xl border border-[#262A35] shadow-xl w-full max-w-md" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[#262A35]">
-          <span className="text-sm font-semibold text-[#E6E9F0]">{title}</span>
-          <button onClick={onClose} className="text-[#5A6275] hover:text-[#E6E9F0]"><X className="h-4 w-4" /></button>
+      <div className="bg-surface rounded-xl border border-border shadow-xl w-full max-w-md" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+          <span className="text-sm font-semibold text-foreground">{title}</span>
+          <button onClick={onClose} className="text-subtle hover:text-foreground"><X className="h-4 w-4" /></button>
         </div>
         {children}
       </div>
