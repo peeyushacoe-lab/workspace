@@ -9,6 +9,7 @@ import {
   Download, AlertTriangle, Camera, Key, Cpu,
   Copy, Eye, EyeOff, Phone, MapPin,
   Link2, Tag, Briefcase, Users, Forward, ChevronDown,
+  CircleDot, CalendarDays, House, BellOff, Plane, Target, Palmtree, Clock,
 } from "lucide-react";
 import { sanitizeHtml } from "@/lib/sanitize-html";
 import { avatarGradient } from "@/lib/avatar";
@@ -127,12 +128,14 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-surface border border-border rounded-xl overflow-hidden mb-6">
-      <div className="px-6 pt-5 pb-4 border-b border-border/60">
-        <h3 className="text-[15px] font-bold text-foreground tracking-tight">{title}</h3>
-        {description && <p className="text-[13px] text-muted mt-1">{description}</p>}
+    // Atrium panel: 16px radius, hairline border, soft elevation — a floating
+    // card on the canvas rather than a boxed-in section.
+    <div className="nx-panel-in mb-5 overflow-hidden rounded-panel border border-border bg-surface shadow-sm">
+      <div className="border-b border-border-soft px-6 pb-4 pt-5">
+        <h3 className="text-[15px] font-semibold tracking-tight text-foreground">{title}</h3>
+        {description && <p className="mt-1 text-[13px] text-muted">{description}</p>}
       </div>
-      <div className="p-6">{children}</div>
+      <div className="px-6 py-5">{children}</div>
     </div>
   );
 }
@@ -159,16 +162,19 @@ function SettingRow({
 
 function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
   return (
+    // The off-state used to be a hardcoded #2A3040 — a dark-theme leftover that
+    // rendered as a navy pill on the light canvas. Both states are tokens now.
     <button
       onClick={() => onChange(!value)}
-      className="relative inline-block h-[26px] w-[44px] flex-none rounded-[13px] transition-colors focus:outline-none"
-      style={{ background: value ? "var(--accent)" : "#2A3040" }}
+      className={`nx-press relative inline-block h-[26px] w-[44px] flex-none rounded-full border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 ${
+        value ? "bg-accent border-accent" : "bg-surface-sunken border-border-strong"
+      }`}
       role="switch"
       aria-checked={value}
     >
       <span
-        className="absolute top-[3px] h-5 w-5 rounded-full bg-surface transition-[left] duration-200"
-        style={{ left: value ? "21px" : "3px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}
+        className="absolute top-[2px] h-[20px] w-[20px] rounded-full bg-surface shadow-sm transition-[left] duration-200 ease-out"
+        style={{ left: value ? "21px" : "2px" }}
       />
     </button>
   );
@@ -192,6 +198,23 @@ const ALL_TABS: { id: Tab; label: string; icon: React.ElementType; description: 
   { id: "api-tokens",    label: "API Tokens",        icon: Key,           description: "Personal access tokens" },
   { id: "roles",         label: "Custom Roles",      icon: Tag,           description: "Manage org roles", adminOnly: true },
 ];
+
+/**
+ * Presence presets. `emoji` is the persisted value (the API and other surfaces
+ * already store `statusEmoji`); `Icon` is what the UI actually renders, because
+ * emoji are content and never chrome. `tone` keeps colour semantic — green for
+ * available, amber for away-ish, red for do-not-disturb.
+ */
+const STATUS_PRESETS = [
+  { emoji: "🟢",  message: "Available",         Icon: CircleDot,   tone: "text-ok" },
+  { emoji: "📅",  message: "In a meeting",      Icon: CalendarDays, tone: "text-warn" },
+  { emoji: "🏠",  message: "Working from home", Icon: House,       tone: "text-muted" },
+  { emoji: "🔕",  message: "Do not disturb",    Icon: BellOff,     tone: "text-crit" },
+  { emoji: "✈️", message: "Out of office",     Icon: Plane,       tone: "text-muted" },
+  { emoji: "🎯",  message: "Focused",           Icon: Target,      tone: "text-violet" },
+  { emoji: "🏖️", message: "On vacation",       Icon: Palmtree,    tone: "text-warn" },
+  { emoji: "⏰",  message: "Be right back",     Icon: Clock,       tone: "text-muted" },
+] as const;
 
 // ─── Profile Tab ─────────────────────────────────────────────────────────────
 
@@ -380,29 +403,23 @@ function ProfileTab({ userId }: { userId: string }) {
         <div className="mt-4">
           <p className="text-xs font-medium text-muted mb-2">Status</p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            {([
-              { emoji: "🟢", message: "Available" },
-              { emoji: "📅", message: "In a meeting" },
-              { emoji: "🏠", message: "Working from home" },
-              { emoji: "🔕", message: "Do not disturb" },
-              { emoji: "✈️", message: "Out of office" },
-              { emoji: "🎯", message: "Focused" },
-              { emoji: "🏖️", message: "On vacation" },
-              { emoji: "⏰", message: "Be right back" },
-            ] as const).map(({ emoji, message }) => {
+            {/* Emoji stays as the persisted `statusEmoji` value (other surfaces
+                and the API already store it), but the chrome renders lucide —
+                emoji are content, never UI icons. */}
+            {(STATUS_PRESETS).map(({ emoji, message, Icon, tone }) => {
               const active = profile.statusEmoji === emoji && profile.statusMessage === message;
               return (
                 <button
                   key={message}
                   type="button"
                   onClick={() => { update("statusEmoji", emoji); update("statusMessage", message); }}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition ${
+                  className={`nx-press flex items-center gap-2 rounded-lg border px-3 py-2 text-[13px] transition-colors ${
                     active
-                      ? "border-accent bg-accent/10 text-accent font-medium"
-                      : "border-border bg-surface text-muted hover:border-accent/40 hover:text-foreground"
+                      ? "border-accent bg-accent-soft text-accent font-semibold"
+                      : "border-border bg-surface text-muted hover:bg-hover hover:text-foreground"
                   }`}
                 >
-                  <span>{emoji}</span>
+                  <Icon className={`h-4 w-4 flex-shrink-0 ${active ? "text-accent" : tone}`} />
                   <span className="truncate">{message}</span>
                 </button>
               );
@@ -411,8 +428,13 @@ function ProfileTab({ userId }: { userId: string }) {
           {/* Show active status or allow clearing */}
           {(profile.statusEmoji || profile.statusMessage) && (
             <div className="flex items-center justify-between mt-2">
-              <span className="text-xs text-muted">
-                Current: {profile.statusEmoji} {profile.statusMessage}
+              <span className="flex items-center gap-1.5 text-xs text-muted">
+                Current:
+                {(() => {
+                  const p = STATUS_PRESETS.find(x => x.message === profile.statusMessage);
+                  return p ? <p.Icon className={`h-3.5 w-3.5 ${p.tone}`} /> : null;
+                })()}
+                {profile.statusMessage}
               </span>
               <button
                 type="button"

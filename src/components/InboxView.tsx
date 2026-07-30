@@ -8,7 +8,7 @@ Reply, Forward, Trash2, Star, Archive, X, Send,
   AlertCircle, AlertTriangle, Info, ShieldAlert, FileText,
   Sparkles, Loader2, ChevronDown, CalendarClock, FolderPlus,
   Folder, BellOff, Zap, Plus, MailOpen,
-  Shield, ShieldCheck, ShieldX, Globe, Lock, Pencil, Check, } from "lucide-react";
+  Shield, ShieldCheck, ShieldX, Globe, Pencil, Check, Flame, } from "lucide-react";
 import { formatDistanceToNow, isPast, addHours, addDays, nextMonday, format, isToday, isYesterday, isThisYear } from "date-fns";
 import { toast } from "sonner";
 import { SimpleComposer } from "./WorkspaceDashboard";
@@ -272,35 +272,23 @@ function SecurityPostureBar({ threads, totalScanned }: {
   const level         = getThreatLevel(externalCount, urgentCount);
   const cfg           = THREAT_CONFIG[level];
 
+  // Atrium `.posture` — an inset rounded status card, not a full-bleed strip.
+  // Headline states the verdict; the detail line carries the supporting counts.
+  const detail = [
+    `${totalScanned} scanned`,
+    externalCount > 0 ? `${externalCount} external` : null,
+    urgentCount > 0 ? `${urgentCount} urgent` : null,
+    "SPF · DKIM · DMARC",
+  ].filter(Boolean).join(" · ");
+
   return (
-    <div className={`flex items-center gap-3 px-3 py-1.5 border-b ${cfg.border} ${cfg.bg} text-[11px] font-medium`}>
-      <cfg.Icon className={`w-3 h-3 flex-shrink-0 ${cfg.color}`} />
-      <span className={cfg.color}>{cfg.label}</span>
-      <span className="w-px h-3 bg-current opacity-20" />
-      <span className="text-subtle font-normal">{totalScanned} scanned</span>
-      {externalCount > 0 && (
-        <>
-          <span className="w-px h-3 bg-current opacity-20" />
-          <span className="flex items-center gap-1 text-warn">
-            <Globe className="w-2.5 h-2.5" />
-            {externalCount} external
-          </span>
-        </>
-      )}
-      {urgentCount > 0 && (
-        <>
-          <span className="w-px h-3 bg-current opacity-20" />
-          <span className="flex items-center gap-1 text-crit">
-            <AlertTriangle className="w-2.5 h-2.5" />
-            {urgentCount} urgent
-          </span>
-        </>
-      )}
-      <div className="flex-1" />
-      <span className="flex items-center gap-1 text-subtle font-normal">
-        <Lock className="w-2.5 h-2.5" />
-        SPF · DKIM · DMARC
-      </span>
+    <div className={`mx-2 mb-1 mt-2.5 flex flex-none items-center gap-2.5 rounded-lg border px-[11px] py-2 ${cfg.border} ${cfg.bg}`}>
+      <cfg.Icon className={`h-4 w-4 flex-shrink-0 ${cfg.color}`} />
+      <div className="min-w-0 flex-1 leading-tight">
+        <p className={`text-[11.5px] font-semibold ${cfg.color}`}>Mailbox posture: {cfg.label.toLowerCase()}</p>
+        <p className="truncate text-[10.5px] text-subtle">{detail}</p>
+      </div>
+      <span className={`flex-none font-mono text-[10px] font-semibold uppercase ${cfg.color}`}>{cfg.label}</span>
     </div>
   );
 }
@@ -1327,19 +1315,25 @@ export function InboxView({ userRole, initialThreads }: {
       <div className={`${selectedThreadId ? "hidden lg:flex" : "flex"} w-full lg:w-[340px] flex-shrink-0 bg-surface nx-panel-in lg:rounded-panel lg:border lg:border-border lg:shadow-sm flex-col overflow-hidden min-w-0`}>
         <div className="px-4 pt-3 pb-2 border-b border-border space-y-2">
           <div className="flex items-center justify-between min-h-[26px]">
-            <h2 className="text-[13.5px] font-bold text-foreground flex items-center gap-1.5">
-              {activeCustomFolder ? (
-                <>
-                  <Folder className="w-4 h-4 text-accent" />
-                  {customFolders.find(f => f.id === activeCustomFolder)?.name ?? "Folder"}
-                </>
-              ) : (
-                <>
-                  {(() => { const F = SYSTEM_FOLDERS.find(f => f.key === activeFolder); return F ? <F.Icon className="w-4 h-4 text-accent" /> : null; })()}
-                  {SYSTEM_FOLDERS.find(f => f.key === activeFolder)?.label ?? "Inbox"}
-                </>
-              )}
-            </h2>
+            {/* Atrium `.lhead .t` — title baseline-aligned with a mono count. */}
+            <div className="flex min-w-0 items-baseline gap-2.5">
+              <h2 className="flex items-center gap-1.5 text-[16px] font-semibold tracking-tight text-foreground">
+                {activeCustomFolder ? (
+                  <>
+                    <Folder className="w-4 h-4 text-accent" />
+                    {customFolders.find(f => f.id === activeCustomFolder)?.name ?? "Folder"}
+                  </>
+                ) : (
+                  <>
+                    {(() => { const F = SYSTEM_FOLDERS.find(f => f.key === activeFolder); return F ? <F.Icon className="w-4 h-4 text-accent" /> : null; })()}
+                    {SYSTEM_FOLDERS.find(f => f.key === activeFolder)?.label ?? "Inbox"}
+                  </>
+                )}
+              </h2>
+              <span className="truncate font-mono text-[11.5px] text-subtle">
+                {unreadCount > 0 ? `${unreadCount} unread · ` : ""}{visibleThreads.length}
+              </span>
+            </div>
             <button
               onClick={() => loadThreads()}
               disabled={isRefreshing}
@@ -1355,10 +1349,10 @@ export function InboxView({ userRole, initialThreads }: {
                 <button
                   key={cat}
                   onClick={() => setActiveCategory(cat)}
-                  className={`transition-colors ${
+                  className={`nx-press flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11.5px] transition-colors ${
                     activeCategory === cat
-                      ? "bg-accent/10 text-accent rounded-full border border-border px-3 py-1 text-xs font-medium"
-                      : "bg-surface text-muted rounded-full border border-border px-3 py-1 text-xs hover:bg-surface-sunken"
+                      ? "bg-accent text-accent-foreground border-accent font-semibold"
+                      : "bg-surface-sunken text-muted border-border font-medium hover:bg-hover hover:text-foreground"
                   }`}
                 >
                   {cat}
@@ -1417,7 +1411,8 @@ export function InboxView({ userRole, initialThreads }: {
         )}
 
         {/* Thread rows */}
-        <div className="nx-stagger flex-1 overflow-y-auto overflow-x-hidden divide-y divide-border-soft">
+        {/* Atrium list: rows are inset rounded cards, not divider-separated bands. */}
+        <div className="nx-stagger flex-1 overflow-y-auto overflow-x-hidden py-1">
 
           {/* ── Scheduled tab ── */}
           {activeFolder === "scheduled" ? (
@@ -1570,8 +1565,10 @@ export function InboxView({ userRole, initialThreads }: {
               return (
               <div key={`lane-wrap-${thread.id}`}>
                 {showLane && (
-                  <div className="sticky top-0 z-[5] px-4 py-1.5 bg-surface/95 backdrop-blur-0 border-b border-border-soft">
-                    <span className="text-[11px] font-semibold text-subtle">{lane}</span>
+                  // Atrium `.lane` — small-caps day divider, no rule beneath it.
+                  <div className="sticky top-0 z-[5] flex items-center gap-2 bg-surface px-4 pb-1.5 pt-3">
+                    <span className="text-[10.5px] font-semibold uppercase tracking-[0.06em] text-subtle">{lane}</span>
+                    <span className="h-px flex-1 bg-border-soft" aria-hidden />
                   </div>
                 )}
               <div
@@ -1584,10 +1581,10 @@ export function InboxView({ userRole, initialThreads }: {
                 }}
                 onDragEnd={() => { setDraggedThread(null); setDragOverFolderId(null); }}
                 onClick={() => loadThreadDetail(thread.id)}
-                className={`nx-row group relative cursor-grab active:cursor-grabbing transition-all duration-100 border-b border-border-soft ${
+                className={`nx-row group relative mx-2 mb-px cursor-grab overflow-hidden rounded-xl transition-colors active:cursor-grabbing ${
                   selectedThreadId === thread.id
-                    ? "bg-accent/[0.07]"
-                    : "hover:bg-surface-sunken"
+                    ? "bg-accent-soft"
+                    : "hover:bg-hover"
                 } ${draggedThread?.id === thread.id ? "opacity-50" : ""}`}
               >
                 {/* Threat/priority spine — 3px, colour only for HIGH/URGENT; selection overrides it */}
@@ -1774,16 +1771,39 @@ export function InboxView({ userRole, initialThreads }: {
                       {thread.lastMessage?.snippet || "No preview available"}
                     </p>
 
-                    {/* Label pills */}
-                    {thread.labels && thread.labels.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 mt-[7px]">
-                        {thread.labels.slice(0, 3).map(lbl => (
-                          <span key={lbl} className="inline-block text-[10.5px] font-semibold px-2 py-0.5 rounded-[5px] bg-accent/10 text-accent">
-                            {lbl}
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                    {/* ── Meta chips (Atrium `.meta`) ────────────────────────
+                        Security and workflow context as pills: external sender,
+                        priority, SLA, then user labels. Colour carries meaning —
+                        crit for risk, warn for external, accent for labels. */}
+                    {(() => {
+                      const external = isExternalSender(thread.lastMessage?.from ?? "");
+                      const pri = thread.priority;
+                      const showPri = pri === "URGENT" || pri === "HIGH";
+                      const labels = thread.labels?.slice(0, 2) ?? [];
+                      if (!external && !showPri && labels.length === 0) return null;
+                      const chip = "inline-flex items-center gap-1 rounded-full border px-[7px] py-[2px] text-[10px] font-semibold leading-[1.6]";
+                      return (
+                        <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                          {showPri && (
+                            <span className={`${chip} ${pri === "URGENT" ? "text-crit bg-crit-soft border-crit/25" : "text-warn bg-warn-soft border-warn/25"}`}>
+                              <Flame className="w-2.5 h-2.5" />
+                              {pri === "URGENT" ? "Urgent" : "Needs action"}
+                            </span>
+                          )}
+                          {external && (
+                            <span className={`${chip} text-warn bg-warn-soft border-warn/25`}>
+                              <Globe className="w-2.5 h-2.5" />
+                              External
+                            </span>
+                          )}
+                          {labels.map(lbl => (
+                            <span key={lbl} className={`${chip} text-accent-strong bg-accent-soft border-accent/20`}>
+                              {lbl}
+                            </span>
+                          ))}
+                        </div>
+                      );
+                    })()}
 
                   </div>
                 </div>

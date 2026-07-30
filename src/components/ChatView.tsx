@@ -1475,8 +1475,8 @@ function ChannelSection({
                 <button
                   key={ch.id}
                   onClick={() => onSelect(ch.id)}
-                  className={`nx-nav-item nx-press w-full flex items-center gap-2.5 h-11 rounded-lg px-[11px] text-left transition-colors ${
-                    isSelected ? "bg-surface-sunken" : "hover:bg-surface-sunken"
+                  className={`nx-nav-item nx-press w-full flex items-center gap-2.5 h-11 rounded-xl px-[11px] text-left transition-colors ${
+                    isSelected ? "bg-accent-soft" : "hover:bg-hover"
                   }`}
                 >
                   <div className="relative flex-shrink-0">
@@ -1510,8 +1510,8 @@ function ChannelSection({
               <button
                 key={ch.id}
                 onClick={() => onSelect(ch.id)}
-                className={`nx-nav-item nx-press w-full flex items-center gap-2.5 h-[38px] rounded-lg px-[11px] text-left transition-colors ${
-                  isSelected ? "bg-surface-sunken" : "hover:bg-surface-sunken"
+                className={`nx-nav-item nx-press w-full flex items-center gap-2.5 h-[38px] rounded-xl px-[11px] text-left transition-colors ${
+                  isSelected ? "bg-accent-soft" : "hover:bg-hover"
                 }`}
               >
                 {ch.isBroadcast ? (
@@ -3293,7 +3293,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
       {/* Channel sidebar — full width on mobile when no channel, hidden when channel open */}
       <div className={`${selectedChannelId ? "hidden lg:flex" : "flex"} w-full lg:w-64 flex-shrink-0 bg-surface nx-panel-in lg:rounded-panel lg:border lg:border-border lg:shadow-sm flex-col overflow-y-auto overflow-x-hidden`}>
         <div className="h-[50px] flex-shrink-0 flex items-center justify-between px-4 border-b border-border">
-          <span className="text-foreground font-bold text-[13.5px]">Messages</span>
+          <span className="text-[16px] font-semibold tracking-tight text-foreground">Messages</span>
           <button
             onClick={() => setShowCommandPalette(true)}
             title="Command palette (⌘K)"
@@ -3753,7 +3753,16 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                   </div>
                 )}
 
-                <div className={`flex items-end gap-2.5 bg-surface border rounded-xl pl-4 pr-2 py-2 transition-colors ${composerUrgent ? "border-crit/50 bg-crit/5" : "border-border"}`}>
+                {/* Composer: sunken well that lifts to a focused surface — the
+                    focus-within ring is the same accent treatment as every other
+                    input in the system, so the primary control reads as primary. */}
+                <div
+                  className={`flex items-end gap-2.5 rounded-xl border py-2 pl-4 pr-2 transition-all duration-150 focus-within:ring-2 ${
+                    composerUrgent
+                      ? "border-crit/50 bg-crit-soft focus-within:ring-crit/20"
+                      : "border-border bg-surface-sunken focus-within:border-accent/60 focus-within:bg-surface focus-within:ring-accent/20"
+                  }`}
+                >
                   {/* Hidden file input for attachments */}
                   <input ref={chatFileInputRef} type="file" className="hidden" onChange={(e) => void handleChatFileSelect(e)} />
                   {/* File attach button */}
@@ -3761,7 +3770,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                     onClick={() => chatFileInputRef.current?.click()}
                     disabled={uploadingFile}
                     title="Attach file"
-                    className="p-1 mb-1 rounded-lg transition-colors flex-shrink-0 text-subtle hover:text-muted disabled:opacity-40"
+                    className="nx-press p-1 mb-1 rounded-lg transition-colors flex-shrink-0 text-subtle hover:text-foreground hover:bg-hover disabled:opacity-40"
                   >
                     {uploadingFile ? <Loader2 className="w-5 h-5 animate-spin" /> : <Paperclip className="w-5 h-5" />}
                   </button>
@@ -3782,11 +3791,11 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                     style={{ minHeight: "1.5rem" }}
                   />
                   {/* Emoji insert */}
-                  <button onClick={() => { setMediaPickerTab("emoji"); setShowGifPicker(true); }} title="Insert emoji" className="p-1.5 mb-1 rounded-lg transition-colors flex-shrink-0 text-subtle hover:text-muted hover:bg-surface-sunken"><Smile className="w-4 h-4" /></button>
+                  <button onClick={() => { setMediaPickerTab("emoji"); setShowGifPicker(true); }} title="Insert emoji" className="nx-press p-1.5 mb-1 rounded-lg transition-colors flex-shrink-0 text-subtle hover:text-foreground hover:bg-hover"><Smile className="w-4 h-4" /></button>
                   {/* Sticker */}
-                  <button onClick={() => { setMediaPickerTab("sticker"); setShowGifPicker(true); }} title="Send a sticker" className="p-1.5 mb-1 rounded-lg transition-colors flex-shrink-0 text-subtle hover:text-muted hover:bg-surface-sunken"><Sticker className="w-4 h-4" /></button>
+                  <button onClick={() => { setMediaPickerTab("sticker"); setShowGifPicker(true); }} title="Send a sticker" className="nx-press p-1.5 mb-1 rounded-lg transition-colors flex-shrink-0 text-subtle hover:text-foreground hover:bg-hover"><Sticker className="w-4 h-4" /></button>
                   {/* GIF */}
-                  <button onClick={() => { setMediaPickerTab("gif"); setShowGifPicker(true); }} title="Send a GIF" className="p-1.5 mb-1 rounded-lg transition-colors flex-shrink-0 text-xs font-semibold text-subtle hover:text-muted hover:bg-surface-sunken">GIF</button>
+                  <button onClick={() => { setMediaPickerTab("gif"); setShowGifPicker(true); }} title="Send a GIF" className="nx-press p-1.5 mb-1 rounded-lg transition-colors flex-shrink-0 text-xs font-semibold text-subtle hover:text-foreground hover:bg-hover">GIF</button>
                   {/* Urgent flag toggle */}
                   <button
                     onClick={() => setComposerUrgent(v => !v)}
