@@ -2195,7 +2195,7 @@ export function SettingsView({
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-[11px] text-left rounded-lg h-10 px-3 w-full transition-colors ${
+                  className={`nx-nav-item nx-press flex items-center gap-[11px] text-left rounded-lg h-10 px-3 w-full transition-colors ${
                     active
                       ? "bg-accent-soft text-accent"
                       : "text-muted hover:bg-hover hover:text-foreground"

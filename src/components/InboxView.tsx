@@ -1204,7 +1204,7 @@ export function InboxView({ userRole, initialThreads }: {
     <div className="flex h-[calc(100vh-7.25rem)] lg:h-full bg-surface lg:bg-transparent overflow-hidden lg:gap-2">
 
       {/* ── Left Sidebar ── */}
-      <div className="hidden lg:flex w-[196px] flex-shrink-0 flex-col bg-surface lg:rounded-panel lg:border lg:border-border lg:shadow-sm overflow-y-auto overflow-x-hidden">
+      <div className="hidden lg:flex w-[196px] flex-shrink-0 flex-col bg-surface nx-panel-in lg:rounded-panel lg:border lg:border-border lg:shadow-sm overflow-y-auto overflow-x-hidden">
         {/* System folders */}
         <div className="px-2.5 pt-3.5 pb-2">
           <p className="px-2.5 mb-2 text-[11px] font-semibold text-subtle">Mailbox</p>
@@ -1214,7 +1214,7 @@ export function InboxView({ userRole, initialThreads }: {
               <button
                 key={key}
                 onClick={() => setSystemFolder(key)}
-                className={`flex w-full items-center gap-[11px] h-[38px] px-[11px] mb-0.5 text-[13px] font-semibold rounded-lg transition-colors duration-100 ${
+                className={`nx-nav-item nx-press flex w-full items-center gap-[11px] h-[38px] px-[11px] mb-0.5 text-[13px] font-semibold rounded-lg transition-colors duration-100 ${
                   isActive
                     ? "bg-accent-soft text-accent"
                     : "text-muted hover:bg-surface-sunken hover:text-foreground"
@@ -1324,7 +1324,7 @@ export function InboxView({ userRole, initialThreads }: {
       </div>
 
       {/* ── Thread List ── */}
-      <div className={`${selectedThreadId ? "hidden lg:flex" : "flex"} w-full lg:w-[340px] flex-shrink-0 bg-surface lg:rounded-panel lg:border lg:border-border lg:shadow-sm flex-col overflow-hidden min-w-0`}>
+      <div className={`${selectedThreadId ? "hidden lg:flex" : "flex"} w-full lg:w-[340px] flex-shrink-0 bg-surface nx-panel-in lg:rounded-panel lg:border lg:border-border lg:shadow-sm flex-col overflow-hidden min-w-0`}>
         <div className="px-4 pt-3 pb-2 border-b border-border space-y-2">
           <div className="flex items-center justify-between min-h-[26px]">
             <h2 className="text-[13.5px] font-bold text-foreground flex items-center gap-1.5">
@@ -1417,7 +1417,7 @@ export function InboxView({ userRole, initialThreads }: {
         )}
 
         {/* Thread rows */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden divide-y divide-border-soft">
+        <div className="nx-stagger flex-1 overflow-y-auto overflow-x-hidden divide-y divide-border-soft">
 
           {/* ── Scheduled tab ── */}
           {activeFolder === "scheduled" ? (
@@ -1539,9 +1539,19 @@ export function InboxView({ userRole, initialThreads }: {
 
           /* ── Thread list (inbox / starred / snoozed / trash / custom folder) ── */
           ) : isLoading ? (
-            <div className="p-8 flex flex-col items-center gap-3 text-muted">
-              <Loader2 className="w-6 h-6 animate-spin text-accent" />
-              <span className="text-sm">Loading…</span>
+            // Skeleton rows mirroring the real row geometry — the list appears to
+            // fill in rather than flashing from spinner to content.
+            <div className="divide-y divide-border-soft">
+              {Array.from({ length: 7 }).map((_, i) => (
+                <div key={i} className="flex gap-3 px-4 py-[13px]">
+                  <div className="nx-skeleton h-9 w-9 flex-shrink-0 rounded-full" />
+                  <div className="flex-1 space-y-2 pt-0.5">
+                    <div className="nx-skeleton h-3" style={{ width: `${58 + ((i * 13) % 30)}%` }} />
+                    <div className="nx-skeleton h-3" style={{ width: `${72 + ((i * 7) % 22)}%` }} />
+                    <div className="nx-skeleton h-2.5" style={{ width: `${40 + ((i * 11) % 25)}%` }} />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : visibleThreads.length === 0 ? (
             <div className="p-10 flex flex-col items-center gap-2 text-center">
@@ -1574,7 +1584,7 @@ export function InboxView({ userRole, initialThreads }: {
                 }}
                 onDragEnd={() => { setDraggedThread(null); setDragOverFolderId(null); }}
                 onClick={() => loadThreadDetail(thread.id)}
-                className={`group relative cursor-grab active:cursor-grabbing transition-all duration-100 border-b border-border-soft ${
+                className={`nx-row group relative cursor-grab active:cursor-grabbing transition-all duration-100 border-b border-border-soft ${
                   selectedThreadId === thread.id
                     ? "bg-accent/[0.07]"
                     : "hover:bg-surface-sunken"
@@ -1796,7 +1806,7 @@ export function InboxView({ userRole, initialThreads }: {
       </div>
 
       {/* ── Message Detail ── */}
-      <div className={`${selectedThreadId ? "flex" : "hidden lg:flex"} flex-1 bg-surface lg:rounded-panel lg:border lg:border-border lg:shadow-sm flex-col min-w-0 overflow-hidden`}>
+      <div className={`${selectedThreadId ? "flex" : "hidden lg:flex"} flex-1 bg-surface nx-panel-in lg:rounded-panel lg:border lg:border-border lg:shadow-sm flex-col min-w-0 overflow-hidden`}>
         {!selectedThreadId ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-4 p-8">
             <div className="w-12 h-12 rounded-xl bg-surface-sunken border border-border flex items-center justify-center">
@@ -1828,14 +1838,14 @@ export function InboxView({ userRole, initialThreads }: {
               <button
                 onClick={() => { setShowReply(true); setShowSmartReply(false); setShowForward(false); }}
                 title="Reply"
-                className="w-[34px] h-[34px] flex items-center justify-center rounded-lg border border-border bg-surface text-muted hover:bg-surface-sunken hover:text-foreground transition-colors"
+                className="nx-press w-[34px] h-[34px] flex items-center justify-center rounded-lg border border-border bg-surface text-muted hover:bg-surface-sunken hover:text-foreground transition-colors"
               >
                 <Reply className="w-4 h-4" />
               </button>
               <button
                 onClick={() => { setShowForward(true); setShowReply(false); setShowSmartReply(false); }}
                 title="Forward"
-                className="w-[34px] h-[34px] flex items-center justify-center rounded-lg border border-border bg-surface text-muted hover:bg-surface-sunken hover:text-foreground transition-colors"
+                className="nx-press w-[34px] h-[34px] flex items-center justify-center rounded-lg border border-border bg-surface text-muted hover:bg-surface-sunken hover:text-foreground transition-colors"
               >
                 <Forward className="w-4 h-4" />
               </button>
@@ -1856,7 +1866,7 @@ export function InboxView({ userRole, initialThreads }: {
               <button
                 onClick={(e) => handleArchive(threadDetail.id, e)}
                 title="Archive"
-                className="w-[34px] h-[34px] flex items-center justify-center rounded-lg border border-border bg-surface text-muted hover:bg-surface-sunken hover:text-foreground transition-colors"
+                className="nx-press w-[34px] h-[34px] flex items-center justify-center rounded-lg border border-border bg-surface text-muted hover:bg-surface-sunken hover:text-foreground transition-colors"
               >
                 <Archive className="w-4 h-4" />
               </button>

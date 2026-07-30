@@ -37,7 +37,7 @@ export function ComposeButton({
         <button
           onClick={() => setOpen(true)}
           title="Compose (Ctrl+Shift+C)"
-          className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-accent-foreground hover:bg-accent-hover transition-colors"
+          className="nx-press nx-lift flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-accent-foreground hover:bg-accent-hover transition-colors"
         >
           <SquarePen className="h-[17px] w-[17px]" />
         </button>
@@ -50,7 +50,7 @@ export function ComposeButton({
     <>
       <button
         onClick={() => setOpen(true)}
-        className="flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-3.5 py-2 text-[13px] font-semibold text-accent-foreground hover:bg-accent-hover transition-colors"
+        className="nx-press nx-lift flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-3.5 py-2 text-[13px] font-semibold text-accent-foreground hover:bg-accent-hover transition-colors"
       >
         <SquarePen className="h-4 w-4 flex-shrink-0" />
         <span>Compose</span>

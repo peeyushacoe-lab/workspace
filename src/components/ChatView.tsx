@@ -917,7 +917,7 @@ function ThreadPanel({
   };
 
   return (
-    <div className="bg-surface hidden lg:flex lg:flex-col lg:w-80 lg:flex-shrink-0 lg:rounded-panel lg:border lg:border-border lg:shadow-sm">
+    <div className="bg-surface hidden lg:flex lg:flex-col lg:w-80 lg:flex-shrink-0 nx-panel-in lg:rounded-panel lg:border lg:border-border lg:shadow-sm">
       {/* Header */}
       <div className="px-4 py-3 border-b border-border flex items-center justify-between font-semibold text-foreground text-sm flex-shrink-0">
         <div className="flex items-center gap-2">
@@ -1475,7 +1475,7 @@ function ChannelSection({
                 <button
                   key={ch.id}
                   onClick={() => onSelect(ch.id)}
-                  className={`w-full flex items-center gap-2.5 h-11 rounded-lg px-[11px] text-left transition-colors ${
+                  className={`nx-nav-item nx-press w-full flex items-center gap-2.5 h-11 rounded-lg px-[11px] text-left transition-colors ${
                     isSelected ? "bg-surface-sunken" : "hover:bg-surface-sunken"
                   }`}
                 >
@@ -1496,7 +1496,7 @@ function ChannelSection({
                   </div>
                   <span className={`truncate flex-1 text-[13px] ${isSelected || hasUnread ? "font-semibold text-foreground" : "font-medium text-muted"}`}>{ch.name}</span>
                   {showBadge && (
-                    <span className="font-mono bg-accent text-accent-foreground text-[10.5px] rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-[5px] font-bold leading-none flex-shrink-0">
+                    <span className="nx-badge font-mono bg-accent text-accent-foreground text-[10.5px] rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-[5px] font-bold leading-none flex-shrink-0">
                       {badgeCount > 99 ? "99+" : badgeCount}
                     </span>
                   )}
@@ -1510,7 +1510,7 @@ function ChannelSection({
               <button
                 key={ch.id}
                 onClick={() => onSelect(ch.id)}
-                className={`w-full flex items-center gap-2.5 h-[38px] rounded-lg px-[11px] text-left transition-colors ${
+                className={`nx-nav-item nx-press w-full flex items-center gap-2.5 h-[38px] rounded-lg px-[11px] text-left transition-colors ${
                   isSelected ? "bg-surface-sunken" : "hover:bg-surface-sunken"
                 }`}
               >
@@ -1521,7 +1521,7 @@ function ChannelSection({
                 )}
                 <span className={`truncate flex-1 text-[13px] ${isSelected || hasUnread ? "font-semibold text-foreground" : "font-medium text-muted"}`}>{ch.name}</span>
                 {showBadge && (
-                  <span className="font-mono bg-accent text-accent-foreground text-[10.5px] rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-[5px] font-bold leading-none flex-shrink-0">
+                  <span className="nx-badge font-mono bg-accent text-accent-foreground text-[10.5px] rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-[5px] font-bold leading-none flex-shrink-0">
                     {badgeCount > 99 ? "99+" : badgeCount}
                   </span>
                 )}
@@ -3291,7 +3291,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
   return (
     <div className="flex h-[calc(100vh-7.25rem)] lg:h-full bg-surface lg:bg-transparent overflow-hidden lg:gap-2">
       {/* Channel sidebar — full width on mobile when no channel, hidden when channel open */}
-      <div className={`${selectedChannelId ? "hidden lg:flex" : "flex"} w-full lg:w-64 flex-shrink-0 bg-surface lg:rounded-panel lg:border lg:border-border lg:shadow-sm flex-col overflow-y-auto overflow-x-hidden`}>
+      <div className={`${selectedChannelId ? "hidden lg:flex" : "flex"} w-full lg:w-64 flex-shrink-0 bg-surface nx-panel-in lg:rounded-panel lg:border lg:border-border lg:shadow-sm flex-col overflow-y-auto overflow-x-hidden`}>
         <div className="h-[50px] flex-shrink-0 flex items-center justify-between px-4 border-b border-border">
           <span className="text-foreground font-bold text-[13.5px]">Messages</span>
           <button
@@ -3371,7 +3371,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
 
       {/* Main area — hidden on mobile when no channel selected */}
       {!selectedChannelId ? (
-        <div className="hidden lg:flex flex-1 flex-col items-center justify-center text-muted bg-surface lg:rounded-panel lg:border lg:border-border lg:shadow-sm p-8">
+        <div className="hidden lg:flex flex-1 flex-col items-center justify-center text-muted bg-surface nx-panel-in lg:rounded-panel lg:border lg:border-border lg:shadow-sm p-8">
           <MessageSquare className="w-16 h-16 mb-4 opacity-20" />
           <p className="text-lg font-medium">Select a channel</p>
           <p className="text-sm">Or create one from the sidebar.</p>
@@ -3380,7 +3380,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
         <>
           {/* Messages pane */}
           <div
-            className="bg-surface flex-1 flex flex-col min-w-0 overflow-x-hidden relative lg:rounded-panel lg:border lg:border-border lg:shadow-sm"
+            className="bg-surface flex-1 flex flex-col min-w-0 overflow-x-hidden relative nx-panel-in lg:rounded-panel lg:border lg:border-border lg:shadow-sm"
             onDragEnter={handleDragEnter}
             onDragLeave={handleDragLeave}
             onDragOver={handleDragOver}
@@ -3841,7 +3841,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
 
           {/* Pinned messages panel */}
           {showPins && !threadParentMsg && (
-            <div className="bg-surface hidden lg:flex lg:flex-col lg:w-80 flex-shrink-0 lg:rounded-panel lg:border lg:border-border lg:shadow-sm">
+            <div className="bg-surface hidden lg:flex lg:flex-col lg:w-80 flex-shrink-0 nx-panel-in lg:rounded-panel lg:border lg:border-border lg:shadow-sm">
               <div className="px-4 py-3 border-b border-border flex items-center justify-between flex-shrink-0">
                 <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                   <Pin className="w-4 h-4 text-accent" />

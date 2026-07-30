@@ -446,7 +446,10 @@ button, a, [role="button"], input, textarea, select {
 @keyframes nexpop   { from { opacity: 0; transform: scale(0.97) translateY(6px); } to { opacity: 1; transform: none; } }
 @keyframes nexfade  { from { opacity: 0; } to { opacity: 1; } }
 @keyframes nexslide { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-@keyframes nexpulse { 0%,100% { box-shadow: 0 0 0 0 rgba(192, 54, 44, 0.5); } 50% { box-shadow: 0 0 0 5px rgba(192, 54, 44, 0); } }
+@keyframes nexpulse {
+  0%,100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--crit) 50%, transparent); }
+  50%     { box-shadow: 0 0 0 5px color-mix(in srgb, var(--crit) 0%, transparent); }
+}
 @keyframes nexspin  { to { transform: rotate(360deg); } }
 
 .nexpop  { animation: nexpop  0.18s cubic-bezier(0.4,0,0.2,1); }
@@ -475,6 +478,100 @@ button, a, [role="button"], input, textarea, select {
 @keyframes nx-slide-cover { from { transform: translateY(100%); }            to { transform: translateY(0); } }
 @keyframes nx-slide-morph { from { opacity: 0; transform: scale(0.96); }     to { opacity: 1; transform: none; } }
 
+/* ═══ Interaction layer ═══════════════════════════════════════════════════
+   What reads as "premium" is not decoration — it's that every interactive
+   element acknowledges input within ~150ms, and that entrances are directional
+   and staggered rather than everything appearing at once. All motion is
+   transform/opacity only (compositor-friendly, no layout thrash), and every
+   colour comes from a token so both themes stay correct.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Standard curves. `out` for entrances, `spring` for anything the user pokes. */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ── Staggered list entrance ───────────────────────────────────────────────
+   Rows cascade in ~22ms apart. Capped at 12 so a 200-row inbox doesn't spend
+   4s animating; everything past the 12th appears immediately. */
+@keyframes nx-row-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+
+.nx-stagger > * { animation: nx-row-in 0.32s var(--ease-out) both; }
+.nx-stagger > *:nth-child(1)  { animation-delay: 0ms; }
+.nx-stagger > *:nth-child(2)  { animation-delay: 22ms; }
+.nx-stagger > *:nth-child(3)  { animation-delay: 44ms; }
+.nx-stagger > *:nth-child(4)  { animation-delay: 66ms; }
+.nx-stagger > *:nth-child(5)  { animation-delay: 88ms; }
+.nx-stagger > *:nth-child(6)  { animation-delay: 110ms; }
+.nx-stagger > *:nth-child(7)  { animation-delay: 132ms; }
+.nx-stagger > *:nth-child(8)  { animation-delay: 154ms; }
+.nx-stagger > *:nth-child(9)  { animation-delay: 176ms; }
+.nx-stagger > *:nth-child(10) { animation-delay: 198ms; }
+.nx-stagger > *:nth-child(11) { animation-delay: 220ms; }
+.nx-stagger > *:nth-child(12) { animation-delay: 242ms; }
+.nx-stagger > *:nth-child(n+13) { animation-delay: 0ms; animation-duration: 0.001ms; }
+
+/* ── Nav rows ──────────────────────────────────────────────────────────────
+   An accent bar wipes in from the left edge on hover/active, and the icon
+   nudges 1px toward the label. Cheap, and it makes the nav feel wired up. */
+.nx-nav-item { position: relative; }
+.nx-nav-item::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 50%;
+  height: 0; width: 2.5px;
+  border-radius: 0 2px 2px 0;
+  background: var(--accent);
+  transform: translateY(-50%);
+  transition: height 0.2s var(--ease-out);
+}
+.nx-nav-item:hover::before      { height: 40%; }
+.nx-nav-item[aria-current]::before { height: 62%; }
+.nx-nav-item svg { transition: transform 0.2s var(--ease-out); }
+.nx-nav-item:hover svg { transform: translateX(1px); }
+
+/* ── Press feedback ────────────────────────────────────────────────────────
+   Buttons dip slightly on press. This is the single highest-value micro-
+   interaction: it converts "did that register?" into instant confirmation. */
+.nx-press { transition: transform 0.12s var(--ease-out), background-color 0.15s ease, box-shadow 0.15s ease; }
+.nx-press:active { transform: scale(0.97); }
+.nx-lift { transition: transform 0.18s var(--ease-out), box-shadow 0.18s var(--ease-out); }
+.nx-lift:hover { transform: translateY(-1px); box-shadow: var(--pop-shadow); }
+
+/* ── List rows ─────────────────────────────────────────────────────────────
+   Content shifts 2px right on hover — a "this is grabbable" hint without a
+   background change fighting the selected state. */
+.nx-row { transition: background-color 0.15s ease; }
+.nx-row > * { transition: transform 0.18s var(--ease-out); }
+.nx-row:hover > * { transform: translateX(2px); }
+
+/* ── Skeleton shimmer ──────────────────────────────────────────────────────
+   Replaces a bare spinner during loads: a sweep across sunken surface. */
+@keyframes nx-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+.nx-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-sunken) 25%,
+    color-mix(in srgb, var(--hover) 60%, var(--surface-sunken)) 50%,
+    var(--surface-sunken) 75%
+  );
+  background-size: 200% 100%;
+  animation: nx-shimmer 1.4s linear infinite;
+  border-radius: 6px;
+}
+
+/* ── Badge / count pop ─────────────────────────────────────────────────────
+   A new unread count springs in rather than blinking into place. */
+@keyframes nx-badge-in { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: none; } }
+.nx-badge { animation: nx-badge-in 0.28s var(--ease-spring) both; }
+
+/* ── Panel entrance ────────────────────────────────────────────────────────
+   Floating panes settle in with a whisper of scale. */
+@keyframes nx-panel-in { from { opacity: 0; transform: translateY(6px) scale(0.995); } to { opacity: 1; transform: none; } }
+.nx-panel-in { animation: nx-panel-in 0.34s var(--ease-out) both; }
+
+/* Honour both the OS setting and the in-app Appearance toggle. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.001ms !important;

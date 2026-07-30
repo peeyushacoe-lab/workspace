@@ -66,7 +66,7 @@ export function AppSpine({
         key={g.id}
         href={g.items[0].href}
         aria-current={active ? "page" : undefined}
-        className={`flex h-10 w-full items-center gap-3 rounded-lg px-3 text-[13px] font-medium transition-colors ${
+        className={`nx-nav-item nx-press flex h-10 w-full items-center gap-3 rounded-lg px-3 text-[13px] font-medium transition-colors ${
           active
             ? "bg-accent-soft text-accent"
             : "text-muted hover:bg-hover hover:text-foreground"
@@ -75,7 +75,7 @@ export function AppSpine({
         <Icon className={`${iconSize("md")} flex-shrink-0`} />
         <span className="flex-1 truncate text-left">{g.label}</span>
         {badge > 0 && (
-          <span className="flex h-4 min-w-4 flex-shrink-0 items-center justify-center rounded-full bg-crit px-1 text-[9px] font-semibold text-white">
+          <span className="nx-badge flex h-4 min-w-4 flex-shrink-0 items-center justify-center rounded-full bg-crit px-1 text-[9px] font-semibold text-white">
             {badge > 99 ? "99+" : badge}
           </span>
         )}

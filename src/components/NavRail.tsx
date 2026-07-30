@@ -26,7 +26,7 @@ export function NavRail({ group }: { group: ResolvedGroup }) {
   }
 
   return (
-    <div className="flex w-[214px] flex-none flex-col gap-1 overflow-y-auto rounded-panel border border-border bg-surface px-2.5 py-3 shadow-sm">
+    <div className="nx-panel-in flex w-[214px] flex-none flex-col gap-1 overflow-y-auto rounded-panel border border-border bg-surface px-2.5 py-3 shadow-sm">
       <h2 className="px-1.5 pb-2.5 text-[15px] font-semibold tracking-tight text-foreground">
         {group.label}
       </h2>
@@ -48,7 +48,7 @@ export function NavRail({ group }: { group: ResolvedGroup }) {
                   href={item.href}
                   title={item.hint}
                   aria-current={active ? "page" : undefined}
-                  className={`rounded-lg px-3 py-2 text-[13px] transition-colors ${
+                  className={`nx-nav-item nx-press rounded-lg px-3 py-2 text-[13px] transition-colors ${
                     active
                       ? "bg-accent-soft font-semibold text-accent"
                       : "text-muted hover:bg-hover hover:text-foreground"
