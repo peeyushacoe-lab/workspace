@@ -213,6 +213,11 @@ export function activeGroupId(groups: ResolvedGroup[], pathname: string): NavGro
  */
 export function railVisible(group: ResolvedGroup | undefined): boolean {
   if (!group) return false;
+  // selfNav apps (Mail, Chat, Drive, Docs) already render a labelled first
+  // column, so a rail there would be a redundant third column.
   if (group.selfNav) return false;
-  return group.items.length >= 2;
+  // Otherwise always show it, even for a single destination: the spine is
+  // icon-only, so the rail is what carries the visible text labels. Hiding it
+  // for one-item groups left those screens with no labels anywhere.
+  return true;
 }

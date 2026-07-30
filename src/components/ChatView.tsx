@@ -1421,10 +1421,10 @@ function ChannelSection({
 
   if (channels.length === 0 && !onNew) return null;
 
-  const isDM = label === "DIRECT MESSAGES";
-  const isGroup = label === "GROUPS";
-
-  const showAvatarRow = isDM || isGroup;
+  // Row style is derived from the channel's own type, never from `label`.
+  // This used to string-match the display label ("DIRECT MESSAGES"), so simply
+  // renaming the heading to sentence case silently turned every DM avatar into
+  // a "#" channel row.
 
   return (
     <div className="mb-1">
@@ -1461,6 +1461,9 @@ function ChannelSection({
             const hasUnread = !isSelected && (ch.unreadCount ?? 0) > 0;
             const badgeCount = ch.unreadCount ?? 0;
             const showBadge = hasUnread;
+
+            const isGroup = ch.type === "GROUP";
+            const showAvatarRow = ch.type === "DIRECT" || isGroup;
 
             if (showAvatarRow) {
               // Direct message / group row — 44px with avatar + presence dot

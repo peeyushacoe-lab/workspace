@@ -26,16 +26,19 @@ const GROUP_ICONS: Record<string, LucideIcon> = {
   more: MoreHorizontal,
 };
 
-/** Full width of the labeled app-switcher spine (icon + name on every row). */
-export const SPINE_WIDTH = 208;
+/**
+ * Spine width — 58px per the approved Atrium spec
+ * (`grid-template-columns: 58px 214px ... 1fr`).
+ */
+export const SPINE_WIDTH = 58;
 
 /**
- * Atrium app switcher — labeled spine.
+ * Atrium icon spine — top-level app switcher.
  *
- * Every row shows its icon and name, always. The rail that can appear beside it
- * answers "where in that app" for groups with more than one destination; apps
- * that render their own second column (Mail, Chat, Drive, Docs) skip the rail
- * entirely since their own panel already serves that purpose.
+ * Icon-only by design: the spine answers "which app", the rail beside it answers
+ * "where in that app" and carries the text labels. The rail is always present
+ * (either the shell's NavRail or, for Mail/Chat/Drive/Docs, the view's own first
+ * column), so labels are never hidden behind a hover.
  */
 export function AppSpine({
   groups,
@@ -61,17 +64,18 @@ export function AppSpine({
       <Link
         key={g.id}
         href={g.items[0].href}
+        title={g.label}
+        aria-label={g.label}
         aria-current={active ? "page" : undefined}
-        className={`flex h-10 w-full items-center gap-3 rounded-lg px-3 text-[13px] font-medium transition-colors ${
+        className={`relative grid h-[38px] w-[38px] flex-none place-items-center rounded-[11px] transition-colors ${
           active
-            ? "bg-accent-soft text-accent"
+            ? "bg-surface text-accent shadow-sm"
             : "text-muted hover:bg-hover hover:text-foreground"
         }`}
       >
-        <Icon className={`${iconSize("md")} flex-shrink-0`} />
-        <span className="flex-1 truncate text-left">{g.label}</span>
+        <Icon className={iconSize("lg")} />
         {badge > 0 && (
-          <span className="flex h-4 min-w-4 flex-shrink-0 items-center justify-center rounded-full bg-crit px-1 text-[9px] font-semibold text-white">
+          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-crit px-1 text-[9px] font-semibold text-white">
             {badge > 99 ? "99+" : badge}
           </span>
         )}
@@ -80,11 +84,14 @@ export function AppSpine({
   };
 
   return (
-    <nav aria-label="Applications" className="hidden lg:flex lg:flex-col gap-0.5 px-2.5 py-2 w-full flex-1 overflow-y-auto overflow-x-hidden">
+    <nav
+      aria-label="Applications"
+      className="hidden lg:flex lg:flex-col lg:items-center gap-1 py-2 w-full flex-1 overflow-y-auto overflow-x-hidden"
+    >
       {main.map(row)}
       {footer.length > 0 && (
         <>
-          <div className="my-2 h-px bg-border-soft mx-1" aria-hidden />
+          <span className="my-1.5 h-px w-6 bg-border" aria-hidden />
           {footer.map(row)}
         </>
       )}

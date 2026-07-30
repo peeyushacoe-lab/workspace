@@ -118,8 +118,9 @@ export function SidebarLayout({
     return <div className="h-screen w-screen overflow-hidden bg-canvas">{children}</div>;
   }
 
-  // Desktop sidebar width: labeled spine, plus the rail when the current app uses one.
-  const sidebarW = showRail ? SPINE_WIDTH + 212 : SPINE_WIDTH;
+  // Desktop sidebar width — spec: 58px spine + 214px rail (+8px gutter between).
+  const RAIL_W = 214;
+  const sidebarW = showRail ? SPINE_WIDTH + RAIL_W + 8 : SPINE_WIDTH;
 
   /**
    * Multi-pane views (mail, chat, drive) render their own panes as floating cards
@@ -137,41 +138,45 @@ export function SidebarLayout({
         className="hidden lg:flex lg:fixed lg:inset-y-0 lg:left-0 z-30 bg-canvas transition-[width] duration-200"
         style={{ width: sidebarW }}
       >
-        <div className="flex h-full flex-col flex-shrink-0" style={{ width: SPINE_WIDTH }}>
+        <div className="flex h-full flex-col items-center flex-shrink-0" style={{ width: SPINE_WIDTH }}>
           {/* Brand mark doubles as the spine header */}
-          <Link href="/inbox" aria-label="Nexus home" className="flex h-[56px] items-center gap-2.5 px-4 flex-shrink-0">
-            <img src="/nexus.png" alt="Nexus" className="h-6 w-6 object-contain flex-shrink-0" />
-            <span className="text-[13.5px] font-semibold text-foreground truncate">Nexus</span>
+          <Link href="/inbox" aria-label="Nexus home" className="flex h-[56px] w-full flex-shrink-0 items-center justify-center">
+            <img src="/nexus.png" alt="Nexus" className="h-7 w-7 object-contain" />
           </Link>
           <AppSpine groups={groups} activeId={activeId} unreadCount={unreadCount} />
-          <div className="flex flex-col gap-0.5 px-2.5 pb-3">
-            <div className="my-1.5 h-px bg-border-soft mx-1" aria-hidden />
+          <div className="flex flex-col items-center gap-1 pb-3">
+            <span className="my-1.5 h-px w-6 bg-border" aria-hidden />
             <Link
               href="/settings"
-              className="flex h-10 items-center gap-3 rounded-lg px-3 text-[13px] font-medium text-muted hover:bg-hover hover:text-foreground transition-colors"
+              title="Settings"
+              aria-label="Settings"
+              className="grid h-[38px] w-[38px] place-items-center rounded-[11px] text-muted hover:bg-hover hover:text-foreground transition-colors"
             >
-              <Settings className={`${iconSize("md")} flex-shrink-0`} />
-              Settings
+              <Settings className={iconSize("lg")} />
             </Link>
             <form action="/api/auth/logout" method="post">
               <button
                 type="submit"
-                className="flex h-10 w-full items-center gap-3 rounded-lg px-3 text-[13px] font-medium text-muted hover:bg-crit-soft hover:text-crit transition-colors"
+                title="Sign out"
+                aria-label="Sign out"
+                className="grid h-[38px] w-[38px] place-items-center rounded-[11px] text-muted hover:bg-crit-soft hover:text-crit transition-colors"
               >
-                <LogOut className={`${iconSize("md")} flex-shrink-0`} />
-                Sign out
+                <LogOut className={iconSize("lg")} />
               </button>
             </form>
             {currentUser && (
-              <Link href="/profile" className="flex items-center gap-2.5 rounded-lg px-3 py-2 mt-1 hover:bg-hover transition-colors">
-                {avatar("h-7 w-7")}
-                <span className="text-[12.5px] font-medium text-foreground truncate">{currentUser.fullName}</span>
+              <Link href="/profile" title={currentUser.fullName} className="mt-1">
+                {avatar("h-8 w-8")}
               </Link>
             )}
           </div>
         </div>
 
-        {showRail && activeGroup && <NavRail group={activeGroup} />}
+        {showRail && activeGroup && (
+          <div className="flex flex-1 min-w-0 py-2 pl-2">
+            <NavRail group={activeGroup} />
+          </div>
+        )}
       </div>
 
       {/* ══ Mobile drawer ══ */}
@@ -306,7 +311,7 @@ export function SidebarLayout({
       <div className="pt-[60px] pb-[56px] lg:pt-[56px] lg:pb-0 overflow-x-hidden">
         <main
           className={`overflow-x-hidden transition-[padding-left] duration-200 lg:pr-2 lg:pb-2 ${
-            showRail ? "lg:pl-[428px]" : "lg:pl-[216px]"
+            showRail ? "lg:pl-[288px]" : "lg:pl-[66px]"
           }`}
         >
           <div

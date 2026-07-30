@@ -5,11 +5,13 @@ import { usePathname } from "next/navigation";
 import type { ResolvedGroup } from "@/lib/nav-groups";
 
 /**
- * Atrium contextual rail — the destinations inside the current app.
+ * Atrium contextual rail — the destinations inside the current app, and the
+ * column that carries the text labels next to the icon-only spine.
  *
- * Only rendered for apps that don't already provide their own second column
- * (see `railVisible`). Mail, Chat, Drive and Docs supply their own, so the rail
- * stays out of the way there rather than adding a redundant third column.
+ * Rendered as a floating panel (`.pane.rail` in the design spec: panel fill,
+ * panel radius, soft shadow) at the spec width of 214px. Apps that supply their
+ * own labelled first column (Mail, Chat, Drive, Docs) suppress it via
+ * `railVisible` so there is never a redundant third column.
  */
 export function NavRail({ group }: { group: ResolvedGroup }) {
   const pathname = usePathname() ?? "";
@@ -24,8 +26,8 @@ export function NavRail({ group }: { group: ResolvedGroup }) {
   }
 
   return (
-    <div className="flex flex-col gap-1 py-3 pr-2 w-[212px] flex-shrink-0 overflow-y-auto">
-      <h2 className="px-3 pb-2 text-[15px] font-semibold tracking-tight text-foreground">
+    <div className="flex w-[214px] flex-none flex-col gap-1 overflow-y-auto rounded-panel border border-border bg-surface px-2.5 py-3 shadow-sm">
+      <h2 className="px-1.5 pb-2.5 text-[15px] font-semibold tracking-tight text-foreground">
         {group.label}
       </h2>
 
