@@ -15,6 +15,7 @@ import {
   LayoutTemplate, WifiOff, Mic, Paperclip, Archive, ArchiveRestore, Bell, BellOff, ChevronLeft,
 } from "lucide-react";
 import { toast } from "sonner";
+import { legacyTagsFromContent, normaliseTag, MAX_TAGS_PER_NOTE } from "@/lib/note-tags";
 import { formatDistanceToNow, format } from "date-fns";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -26,6 +27,8 @@ type Note = {
   pinned: boolean;
   color: string | null;
   folder: string | null;
+  /** Real column now (Note.tags), not a field inside the content JSON. */
+  tags?: string[];
   createdAt: string;
   updatedAt: string;
 };
@@ -55,8 +58,14 @@ function countWords(content: string): number {
   return getBody(content).replace(/<[^>]+>/g, " ").trim().split(/\s+/).filter(Boolean).length;
 }
 
-function getNoteTags(_title: string, content: string): string[] {
-  try { const p = JSON.parse(content); return Array.isArray(p?.tags) ? p.tags : []; } catch { return []; }
+/**
+ * Tags for a note. Prefers the real `tags` column and falls back to the legacy
+ * `content` JSON blob, so notes written before `npm run migrate:note-tags`
+ * still show their tags.
+ */
+function getNoteTags(note: { tags?: string[]; content: string }): string[] {
+  if (note.tags?.length) return note.tags;
+  return legacyTagsFromContent(note.content);
 }
 
 // ─── Note templates ─────────────────────────────────────────────────────────────
@@ -478,7 +487,11 @@ export function NotesView() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState(""); // HTML body only (no JSON)
   const [selectedNoteTags, setSelectedNoteTags] = useState<string[]>([]); // tags for the selected note
-  const [_tagInput, setTagInput] = useState("");
+  const [tagInput, setTagInput] = useState("");
+  // Mirrors selectedNoteTags so the debounced save closure always sends the
+  // current set without being re-created on every tag edit.
+  const tagsRef = useRef<string[]>([]);
+  tagsRef.current = selectedNoteTags;
   const [search, setSearch] = useState("");
   const [_viewMode, _setViewMode] = useState<"grid" | "list">("grid");
 
@@ -602,7 +615,9 @@ export function NotesView() {
     const parsed = parseContent(nextRawContent);
     setTitle(nextTitle);
     setContent(parsed.body);
-    setSelectedNoteTags(parsed.tags ?? []);
+    // Column first; legacy content-blob tags only as a fallback for notes that
+    // predate `npm run migrate:note-tags`.
+    setSelectedNoteTags(note.tags?.length ? note.tags : (parsed.tags ?? []));
     setTagInput("");
     setAIResult("");
   }, []);
@@ -636,15 +651,46 @@ export function NotesView() {
         await fetch(`/api/notes/${selectedId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title: t, content: c }),
+          body: JSON.stringify({ title: t, content: c, tags: tagsRef.current }),
         });
-        setNotes(prev => prev.map(n => n.id === selectedId ? { ...n, title: t, content: c, updatedAt: new Date().toISOString() } : n));
+        setNotes(prev => prev.map(n => n.id === selectedId ? { ...n, title: t, content: c, tags: tagsRef.current, updatedAt: new Date().toISOString() } : n));
       } finally { setSaving(false); }
     }, 1200);
   }, [selectedId]);
 
   const updateTitle = (t: string) => { setTitle(t); scheduleSave(t, content); };
   const updateContent = (c: string) => { setContent(c); scheduleSave(title, c); };
+
+  // ── Tags ──────────────────────────────────────────────────────────────────
+  // Written to the real Note.tags column via the same debounced save as the
+  // title and body. tagsRef is updated synchronously so a save fired by the
+  // very next keystroke already carries the new set.
+  const addTag = (raw: string) => {
+    const tag = normaliseTag(raw);
+    setTagInput("");
+    if (!tag) return;
+    if (selectedNoteTags.includes(tag)) {
+      toast.info(`Already tagged #${tag}`);
+      return;
+    }
+    if (selectedNoteTags.length >= MAX_TAGS_PER_NOTE) {
+      toast.error(`A note can have at most ${MAX_TAGS_PER_NOTE} tags`);
+      return;
+    }
+    const next = [...selectedNoteTags, tag];
+    setSelectedNoteTags(next);
+    tagsRef.current = next;
+    scheduleSave(title, content);
+  };
+
+  const removeTag = (tag: string) => {
+    const next = selectedNoteTags.filter(t => t !== tag);
+    setSelectedNoteTags(next);
+    tagsRef.current = next;
+    // Clear a filter that would otherwise hide the note the user is editing.
+    setActiveTag(prev => (prev === tag && !next.includes(tag) ? null : prev));
+    scheduleSave(title, content);
+  };
 
   // ── Delete note ───────────────────────────────────────────────────────────
   const deleteNote = async (id: string, e: React.MouseEvent) => {
@@ -750,7 +796,7 @@ export function NotesView() {
   };
 
   // ── Derived ───────────────────────────────────────────────────────────────
-  const allTags = [...new Set(notes.flatMap(n => getNoteTags(n.title, n.content)))].sort();
+  const allTags = [...new Set(notes.flatMap(getNoteTags))].sort();
   const filteredNotes = notes.filter(n => {
     const q = search.toLowerCase();
     const matchesSearch = !q || n.title.toLowerCase().includes(q) || notePreview(n.content).toLowerCase().includes(q);
@@ -759,7 +805,7 @@ export function NotesView() {
     if (activeFolder === "archive") matchesFolder = isArchived;
     else if (isArchived) matchesFolder = false; // hide archived from normal views
     else matchesFolder = activeFolder === "all" || n.folder === activeFolder;
-    const matchesTag = !activeTag || getNoteTags(n.title, n.content).includes(activeTag);
+    const matchesTag = !activeTag || getNoteTags(n).includes(activeTag);
     return matchesSearch && matchesFolder && matchesTag;
   });
   const pinnedNotes = filteredNotes.filter(n => n.pinned);
@@ -1019,13 +1065,43 @@ export function NotesView() {
                   placeholder="Untitled"
                   onChange={e => updateTitle(e.target.value)}
                 />
-                {selectedNoteTags.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mt-3">
-                    {selectedNoteTags.map(t => (
-                      <span key={t} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-accent-soft text-accent">#{t}</span>
-                    ))}
-                  </div>
-                )}
+                {/* ── Tags ── Editable chips backed by the real Note.tags
+                    column. Enter or comma commits; Backspace on an empty input
+                    removes the last chip, the convention every tag field uses. */}
+                <div className="flex flex-wrap items-center gap-1.5 mt-3">
+                  {selectedNoteTags.map(t => (
+                    <span
+                      key={t}
+                      className="group inline-flex items-center gap-1 pl-2.5 pr-1 py-0.5 rounded-full text-[11px] font-medium bg-accent-soft text-accent"
+                    >
+                      #{t}
+                      <button
+                        onClick={() => removeTag(t)}
+                        title={`Remove #${t}`}
+                        className="rounded-full p-0.5 text-accent/60 hover:text-accent hover:bg-accent/15 transition-colors"
+                      >
+                        <X className="h-2.5 w-2.5" />
+                      </button>
+                    </span>
+                  ))}
+                  {selectedNoteTags.length < MAX_TAGS_PER_NOTE && (
+                    <input
+                      value={tagInput}
+                      onChange={e => setTagInput(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === "Enter" || e.key === ",") {
+                          e.preventDefault();
+                          addTag(tagInput);
+                        } else if (e.key === "Backspace" && !tagInput && selectedNoteTags.length) {
+                          removeTag(selectedNoteTags[selectedNoteTags.length - 1]);
+                        }
+                      }}
+                      onBlur={() => { if (tagInput.trim()) addTag(tagInput); }}
+                      placeholder={selectedNoteTags.length ? "Add tag" : "Add a tag…"}
+                      className="bg-transparent border-none outline-none text-[11px] text-foreground placeholder:text-subtle w-24 py-0.5"
+                    />
+                  )}
+                </div>
               </div>
               <div className="flex-1 min-h-0 flex flex-col">
                 <RichEditor

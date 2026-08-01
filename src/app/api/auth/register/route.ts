@@ -7,6 +7,7 @@ import { emitEvent } from "@/lib/events";
 import { checkRateLimit } from "@/lib/rate-limit";
 import type { SessionUser } from "@/lib/auth";
 import bcrypt from "bcrypt";
+import { sessionCookieOptions } from "@/lib/cookie-options";
 
 const PLAN_LIMITS: Record<string, { maxUsers: number; trialDays: number }> = {
   free:       { maxUsers: 5,         trialDays: 0 },
@@ -153,13 +154,7 @@ export async function POST(request: NextRequest) {
       orgRole: "OWNER",
     };
 
-    const cookieOptions = {
-      httpOnly: true,
-      sameSite: "lax" as const,
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-      maxAge: 60 * 60 * 8,
-    };
+    const cookieOptions = sessionCookieOptions();
 
     const sessionToken = generateSessionToken();
     createSession(user.id, sessionToken, request).catch(() => {});

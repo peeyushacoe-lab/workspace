@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+// Built-in apps may live on their own subdomain (docs./drive./meet.);
+// router.push() cannot cross origins, so those go through useAppNavigate.
+import { useAppNavigate } from "@/components/AppLink";
 import {
   GitBranch, Layers, LayoutGrid, MessageSquare, Briefcase, Zap,
   Link, Code, CheckCircle2, Loader2, FileSpreadsheet, Presentation,
@@ -218,7 +221,9 @@ const CATEGORIES = ["All", "Developer", "Project Management", "CRM", "Communicat
 type Category = (typeof CATEGORIES)[number];
 
 export default function AppsPage() {
-  const router = useRouter();
+  // Built-in app tiles navigate via appNavigate, not router.push — several of
+  // them live on their own subdomain and router.push() cannot cross origins.
+  const appNavigate = useAppNavigate();
   const [apps, setApps] = useState<AppEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -270,7 +275,7 @@ export default function AppsPage() {
             {BUILTIN_APPS.map((app) => {
               const Icon = app.icon;
               return (
-                <button key={app.id} onClick={() => router.push(app.href)}
+                <button key={app.id} onClick={() => appNavigate(app.href)}
                   className="group flex flex-col gap-3 rounded-xl p-5 bg-surface border border-border hover:border-accent/30 hover:shadow-sm text-left transition-all">
                   <div className="flex items-center justify-between">
                     <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${app.color}`}>

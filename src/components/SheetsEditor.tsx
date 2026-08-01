@@ -18,7 +18,7 @@ import {
   Undo2, Redo2, WrapText, EyeOff, Tag, ListChecks, Table, Grid2x2,
   Columns, LayoutGrid, Search, Replace, Brush,
   MessageSquare, CopyMinus, SplitSquareHorizontal,
-  Lock, ListFilter,
+  Lock, ListFilter, History,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -28,6 +28,9 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
 import { DocShareModal } from "./DocShareModal";
+import { DocVersionHistory, snapshotVersion } from "./DocVersionHistory";
+import { DocPresenceBar } from "./DocPresenceBar";
+import { useDocPresence } from "@/lib/use-doc-presence";
 import { evaluateFormula, formatValue, indexToCol, parseRange, parseRef, getRangeVals, isSpill, shiftFormulaRefs } from "@/lib/sheets/formula";
 import type { CellValue, NumberFormat, SpillResult } from "@/lib/sheets/formula";
 
@@ -352,6 +355,9 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
   const [loaded, setLoaded] = useState(false);
 
   // ── Named ranges (workbook-level) ────────────────────────────────────────
+  // Server-persisted version history (shared with Docs & Slides).
+  const [showVersions, setShowVersions] = useState(false);
+
   const [namedRanges, setNamedRanges] = useState<Record<string, string>>({});
   const namedRangesRef = useRef<Record<string, string>>({});
   namedRangesRef.current = namedRanges;
@@ -410,6 +416,27 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
   const fillDragRef = useRef<{ r1: number; c1: number; r2: number; c2: number } | null>(null);
 
   const activeSheet = sheets.find(s => s.id === activeSheetId) ?? sheets[0];
+
+  // ── Live co-authoring presence ────────────────────────────────────────────
+  // Broadcasts the focused cell (A1 notation) scoped to the active sheet tab,
+  // so remote cursors only render on the tab the peer is actually looking at.
+  // Redis-backed polling — works on Vercel, where there is no Socket.IO server.
+  const peers = useDocPresence(
+    sheetId,
+    `${indexToCol(sel.c)}${sel.r + 1}`,
+    activeSheetId,
+  );
+  /** Peer cursors keyed by "row:col", for O(1) lookup while rendering cells. */
+  const peerCursors = useMemo(() => {
+    const map = new Map<string, { name: string; color: string }>();
+    for (const peer of peers) {
+      if (peer.scope !== activeSheetId || !peer.location) continue;
+      const parsed = parseRef(peer.location);
+      if (!parsed) continue;
+      map.set(`${parsed.row}:${parsed.col}`, { name: peer.name, color: peer.color });
+    }
+    return map;
+  }, [peers, activeSheetId]);
 
   // ── Spill map — computed once per activeSheet change ────────────────────
   // Maps "r:c" → spilled CellValue for non-anchor cells; anchors tracked separately.
@@ -525,15 +552,16 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
       setSaving(true);
+      const payload = JSON.stringify({ sheets: sheetsToSave.map(serializeSheet), namedRanges: namedRangesRef.current });
       try {
         await fetch(`/api/sheets/${sheetId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            title: titleToSave,
-            content: JSON.stringify({ sheets: sheetsToSave.map(serializeSheet), namedRanges: namedRangesRef.current }),
-          }),
+          body: JSON.stringify({ title: titleToSave, content: payload }),
         });
+        // Server-persisted version snapshot. Coalesced server-side into one row
+        // per 5-minute window, so firing on every debounced save is cheap.
+        snapshotVersion(sheetId, payload, titleToSave);
       } finally {
         setSaving(false);
       }
@@ -1729,6 +1757,17 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
         <div className="flex items-center gap-1 ml-auto text-xs text-subtle">
           {saving && <><Loader2 className="h-3 w-3 animate-spin" /> Saving…</>}
         </div>
+        <button
+          onClick={() => setShowVersions(v => !v)}
+          title="Version history"
+          className={`flex items-center justify-center h-7 w-7 rounded-lg transition-colors ${
+            showVersions ? "text-accent bg-accent-soft" : "text-muted hover:bg-surface-sunken"
+          }`}
+        >
+          <History className="h-3.5 w-3.5" />
+        </button>
+        {/* Who else is in this spreadsheet right now */}
+        <DocPresenceBar peers={peers} describe={p => p.location} />
         <button onClick={() => setShowShare(true)} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-accent text-accent-foreground hover:bg-accent-hover transition-colors">
           <Share2 className="h-3.5 w-3.5" /> Share
         </button>
@@ -2088,6 +2127,7 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
                   fillDrag={fillDrag}
                   fillTo={fillTo}
                   onStartFill={startFill}
+                  peerCursors={peerCursors}
                   onCellEnter={(rr, cc) => { if (fillDrag) setFillTo({ r: rr, c: cc }); else if (selecting.current) { setSelEnd({ r: rr, c: cc }); didDrag.current = true; } }}
                   onCellMouseDown={(rr, cc, shiftKey) => {
                     if (painterStyle) return; // let click handle the painter
@@ -2308,6 +2348,47 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
 
       {/* ── Modals ── */}
       {showShare && <DocShareModal docId={sheetId} docType="sheet" onClose={() => setShowShare(false)} />}
+
+      {/* ── Version history (server-persisted, shared with Docs & Slides) ── */}
+      {showVersions && (
+        <div className="fixed right-0 top-0 bottom-0 w-[300px] z-40 bg-surface border-l border-border shadow-panel">
+          <DocVersionHistory
+            docId={sheetId}
+            onClose={() => setShowVersions(false)}
+            getContent={() => ({
+              content: JSON.stringify({
+                sheets: sheets.map(serializeSheet),
+                namedRanges: namedRangesRef.current,
+              }),
+              title,
+            })}
+            onRestored={(content, restoredTitle) => {
+              try {
+                const parsed = JSON.parse(content) as {
+                  sheets?: Record<string, unknown>[];
+                  namedRanges?: Record<string, string>;
+                };
+                if (parsed.sheets?.length) {
+                  const restored = parsed.sheets.map(deserializeSheet);
+                  setSheets(restored);
+                  pushHistory(restored);
+                  // The restored workbook may not contain the tab that was
+                  // active — fall back to its first sheet.
+                  setActiveSheetId(prev =>
+                    restored.some(sh => sh.id === prev) ? prev : restored[0].id,
+                  );
+                  setSel({ r: 0, c: 0 });
+                  setSelEnd(null);
+                }
+                if (parsed.namedRanges) setNamedRanges(parsed.namedRanges);
+                if (restoredTitle) setTitle(restoredTitle);
+              } catch {
+                toast.error("That version could not be read");
+              }
+            }}
+          />
+        </div>
+      )}
       {showChart && (
         <ChartDialog
           defaultRange={selEnd ? `${toA1(Math.min(sel.r, selEnd.r), Math.min(sel.c, selEnd.c))}:${toA1(Math.max(sel.r, selEnd.r), Math.max(sel.c, selEnd.c))}` : "A1:B10"}
@@ -2647,7 +2728,7 @@ function TemplatesDialog({ hasData, onClose, onApply }: {
 
 // ─── Row ─────────────────────────────────────────────────────────────────────
 
-function Row({ row, cols, sheet, sel, selEnd, editing, editVal, cellInputRef, colWidths, rowHeight, frozenRows, frozenCols, frozenColLefts, frozenRowTops, getCellDisplayValue, getCFStyle, getCellValidation, dvDropdown, onOpenDropdown, onPickValidation, onCloseDropdown, fillDrag, fillTo, onStartFill, onCellEnter, onCellMouseDown, onCellContextMenu, onCellClick, onCellDoubleClick, onEditChange, onEditCommit, onEditCancel, onRowResize, onHideRow }: {
+function Row({ row, cols, sheet, sel, selEnd, editing, editVal, cellInputRef, colWidths, rowHeight, frozenRows, frozenCols, frozenColLefts, frozenRowTops, getCellDisplayValue, getCFStyle, getCellValidation, dvDropdown, onOpenDropdown, onPickValidation, onCloseDropdown, fillDrag, fillTo, onStartFill, onCellEnter, onCellMouseDown, onCellContextMenu, onCellClick, onCellDoubleClick, onEditChange, onEditCommit, onEditCancel, onRowResize, onHideRow, peerCursors }: {
   row: number; cols: number; sheet: SheetTab; sel: { r: number; c: number }; selEnd: { r: number; c: number } | null;
   editing: boolean; editVal: string; cellInputRef: React.RefObject<HTMLInputElement | null>;
   colWidths: Record<number, number>; rowHeight: number;
@@ -2663,6 +2744,8 @@ function Row({ row, cols, sheet, sel, selEnd, editing, editVal, cellInputRef, co
   fillDrag: { r1: number; c1: number; r2: number; c2: number } | null;
   fillTo: { r: number; c: number } | null;
   onStartFill: () => void;
+  /** Remote collaborators' focused cells, keyed "row:col". */
+  peerCursors: Map<string, { name: string; color: string }>;
   onCellEnter: (r: number, c: number) => void;
   onCellMouseDown: (r: number, c: number, shift: boolean) => void;
   onCellContextMenu: (r: number, c: number, x: number, y: number) => void;
@@ -2874,6 +2957,24 @@ function Row({ row, cols, sheet, sel, selEnd, editing, editVal, cellInputRef, co
                 </div>
               </div>
             )}
+
+            {/* Remote collaborator's cursor — a coloured outline plus a name
+                tag, matching how Sheets/Excel show co-editors. */}
+            {(() => {
+              const peer = peerCursors.get(`${row}:${c}`);
+              if (!peer) return null;
+              return (
+                <div className="pointer-events-none absolute inset-0 z-[9]" aria-hidden>
+                  <div className="absolute inset-0 border-2 rounded-[1px]" style={{ borderColor: peer.color }} />
+                  <span
+                    className="absolute -top-[14px] left-0 px-1 text-[9px] font-semibold leading-[14px] text-white whitespace-nowrap rounded-t-[3px]"
+                    style={{ backgroundColor: peer.color }}
+                  >
+                    {peer.name}
+                  </span>
+                </div>
+              );
+            })()}
 
             {/* Fill handle (drag to autofill) */}
             {isFillHandleCell && (

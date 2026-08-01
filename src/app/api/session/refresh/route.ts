@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUserFromCookieStore, type SessionUser } from "@/lib/auth";
 import { signPayload } from "@/lib/session-crypto";
 import { getSessionPerms } from "@/lib/rbac/session-perms";
+import { sessionCookieOptions } from "@/lib/cookie-options";
 
 // ─── Session cookie refresh (RFC-001, PR6) ────────────────────────────────────
 // The portal layout redirects here when the cookie's permEpoch is behind the DB
@@ -58,12 +59,10 @@ export async function GET(request: NextRequest) {
   };
 
   const res = NextResponse.redirect(new URL(next, request.url));
-  res.cookies.set("cybersage_user", signPayload(JSON.stringify(sessionUser)), {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 60 * 60 * 8,
-  });
+  res.cookies.set(
+    "cybersage_user",
+    signPayload(JSON.stringify(sessionUser)),
+    sessionCookieOptions(),
+  );
   return res;
 }

@@ -9,6 +9,7 @@ import { createSession } from "@/lib/session-tracker";
 import { emitEvent } from "@/lib/events";
 import { securitySyncQueue } from "@/lib/queues/security-sync.queue";
 import bcrypt from "bcrypt";
+import { sessionCookieOptions } from "@/lib/cookie-options";
 
 // Assumes deployment is behind a trusted edge/CDN (Vercel) that sets
 // X-Forwarded-For reliably; if ever deployed without such an edge, this
@@ -134,13 +135,7 @@ export async function POST(request: NextRequest) {
         ? requestedNext
         : roleHome;
 
-    const cookieOptions = {
-      httpOnly: true,
-      sameSite: "lax" as const,
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-      maxAge: 60 * 60 * 8,
-    };
+    const cookieOptions = sessionCookieOptions();
 
     const sessionToken = generateSessionToken();
     createSession(user.id, sessionToken, request).catch(() => {});

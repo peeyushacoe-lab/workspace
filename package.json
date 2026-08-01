@@ -18,6 +18,7 @@
     "seed:rbac": "tsx prisma/seed-rbac.ts",
     "backfill:rbac": "tsx prisma/backfill-rbac.ts",
     "migrate:tasks-redis-to-pg": "tsx scripts/migrate-tasks-redis-to-pg.ts",
+    "migrate:note-tags": "tsx scripts/migrate-note-tags.ts",
     "test:rbac-parity": "tsx scripts/rbac-parity-test.ts",
     "create-user": "tsx scripts/create-user.ts",
     "worker": "tsx scripts/worker.ts",

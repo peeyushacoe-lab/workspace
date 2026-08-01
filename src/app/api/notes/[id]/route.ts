@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { indexingQueue } from "@/lib/queues/indexing.queue";
+import { normaliseTags } from "@/lib/note-tags";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -37,6 +38,7 @@ export async function PUT(request: Request, { params }: Params) {
     pinned?: boolean;
     color?: string | null;
     folder?: string | null;
+    tags?: string[];
   };
 
   const updated = await prisma.note.update({
@@ -47,6 +49,7 @@ export async function PUT(request: Request, { params }: Params) {
       ...(body.pinned !== undefined ? { pinned: body.pinned } : {}),
       ...(body.color !== undefined ? { color: body.color } : {}),
       ...(body.folder !== undefined ? { folder: body.folder } : {}),
+      ...(body.tags !== undefined ? { tags: normaliseTags(body.tags) } : {}),
     },
   });
 
@@ -54,7 +57,7 @@ export async function PUT(request: Request, { params }: Params) {
     type: "INDEX",
     resource: "note",
     resourceId: updated.id,
-    content: `${updated.title} ${updated.content}`,
+    content: `${updated.title} ${updated.content} ${updated.tags.join(" ")}`,
     metadata: { ownerId: user.id, title: updated.title, updatedAt: updated.updatedAt.toISOString() },
   }).catch(() => {});
 

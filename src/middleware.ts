@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { canAccessPath, canAccessPathByPerms, getPortalHome, type SessionUser } from "@/lib/auth";
+import { matchSubdomain, subdomainToPath, isPassthrough } from "@/lib/subdomains";
 
 const protectedRoutes = [
   "/dashboard",
@@ -159,12 +160,39 @@ export async function middleware(request: NextRequest) {
   requestHeaders.set("x-nonce", nonce);
   requestHeaders.set("Content-Security-Policy", buildCsp(nonce));
 
-  const isProtected = protectedRoutes.some((route) =>
-    request.nextUrl.pathname.startsWith(route),
-  );
+  // ── Per-app subdomains ────────────────────────────────────────────────────
+  // docs.cybersage.uk/ → /docs, sheets.cybersage.uk/abc → /apps/sheets/abc, etc.
+  // One deployment, several hostnames (see src/lib/subdomains.ts).
+  //
+  // Resolved BEFORE auth gating so the rewritten path is what gets checked:
+  // a user hitting docs.cybersage.uk must be gated on /docs, and — if logged
+  // out — must come back to /docs after login, not to "/".
+  const subdomain = matchSubdomain(request.headers.get("host"));
+  let pathname = request.nextUrl.pathname;
+  let rewriteUrl: URL | null = null;
+
+  if (subdomain && !isPassthrough(pathname)) {
+    const mapped = subdomainToPath(subdomain, pathname);
+    if (mapped !== pathname) {
+      pathname = mapped;
+      rewriteUrl = new URL(request.url);
+      rewriteUrl.pathname = mapped;
+    }
+  }
+
+  /**
+   * Every early return has to honour the rewrite, otherwise a subdomain request
+   * would fall through to the hub's route tree and 404.
+   */
+  const proceed = () =>
+    rewriteUrl
+      ? NextResponse.rewrite(rewriteUrl, { request: { headers: requestHeaders } })
+      : NextResponse.next({ request: { headers: requestHeaders } });
+
+  const isProtected = protectedRoutes.some((route) => pathname.startsWith(route));
 
   if (!isProtected) {
-    return withCsp(NextResponse.next({ request: { headers: requestHeaders } }), nonce);
+    return withCsp(proceed(), nonce);
   }
 
   const sessionCookie = request.cookies.get("cybersage_session")?.value;
@@ -172,7 +200,7 @@ export async function middleware(request: NextRequest) {
 
   if (!sessionCookie || !userCookie) {
     const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("next", request.nextUrl.pathname);
+    loginUrl.searchParams.set("next", pathname);
     return withCsp(NextResponse.redirect(loginUrl), nonce);
   }
 
@@ -180,13 +208,13 @@ export async function middleware(request: NextRequest) {
 
   if (!user) {
     const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("next", request.nextUrl.pathname);
+    loginUrl.searchParams.set("next", pathname);
     return withCsp(NextResponse.redirect(loginUrl), nonce);
   }
 
   // ── Access gating (RFC-001, PR7) ──────────────────────────────────────────
   // Role-based decision (old) vs permission-based decision (new, from cookie perms).
-  const path = request.nextUrl.pathname;
+  const path = pathname;
   const oldDecision = canAccessPath(user, path);
   const newDecision = canAccessPathByPerms(user.perms, path); // boolean | null
 
@@ -214,7 +242,7 @@ export async function middleware(request: NextRequest) {
   // roles later is a one-line change.)
   const isMfaEnforcedRole = MFA_ENFORCED_ROLES.has(user.role);
   const hasMfaEnabled = user.mfaEnabled === true;
-  const isOnMfaChallenge = request.nextUrl.pathname.startsWith("/mfa-challenge");
+  const isOnMfaChallenge = pathname.startsWith("/mfa-challenge");
 
   // Cryptographically verify the mfa_verified cookie — presence alone is not enough
   const secret = process.env.SESSION_SECRET ?? "";
@@ -225,13 +253,16 @@ export async function middleware(request: NextRequest) {
 
   if (isMfaEnforcedRole && hasMfaEnabled && !mfaVerified && !isOnMfaChallenge) {
     const mfaUrl = new URL("/mfa-challenge", request.url);
-    mfaUrl.searchParams.set("next", request.nextUrl.pathname);
+    mfaUrl.searchParams.set("next", pathname);
     return withCsp(NextResponse.redirect(mfaUrl), nonce);
   }
 
   // Expose the current path to Server Components (RSC can't read it otherwise).
   // Used by the portal layout to build the return URL for a stale-cookie refresh
   // (RFC-001, PR6). Header-only — does not affect access gating.
-  requestHeaders.set("x-pathname", request.nextUrl.pathname);
-  return withCsp(NextResponse.next({ request: { headers: requestHeaders } }), nonce);
+  // This is the REWRITTEN path, so a refresh from docs.cybersage.uk returns to
+  // the Docs route rather than to "/".
+  requestHeaders.set("x-pathname", pathname);
+  if (subdomain) requestHeaders.set("x-app-subdomain", subdomain.host);
+  return withCsp(proceed(), nonce);
 }

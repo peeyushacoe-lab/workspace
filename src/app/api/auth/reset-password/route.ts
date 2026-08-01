@@ -5,6 +5,7 @@ import { signPayload } from "@/lib/session-crypto";
 import { checkRateLimit } from "@/lib/rate-limit";
 import bcrypt from "bcrypt";
 import { z } from "zod";
+import { sessionCookieOptions } from "@/lib/cookie-options";
 
 const schema = z.object({
   currentPassword: z.string().optional(),
@@ -46,13 +47,7 @@ export async function POST(request: NextRequest) {
 
     // Re-issue the signed user cookie with mustResetPassword cleared
     const updatedUser = { ...user, mustResetPassword: false };
-    const cookieOptions = {
-      httpOnly: true,
-      sameSite: "lax" as const,
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-      maxAge: 60 * 60 * 8,
-    };
+    const cookieOptions = sessionCookieOptions();
 
     // MFA/passkey setup is no longer forced on new users — it was walling
     // interns out of the app entirely on their very first login (passkeys

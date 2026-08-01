@@ -16,7 +16,7 @@ import {
   Undo2, Redo2, ChevronDown, Sparkles, MessageSquare, History,
   Download, Shield, X, Check, CheckCheck, XCircle,
   IndentDecrease, IndentIncrease, Type,
-  BookOpen, Clock, LayoutTemplate, WifiOff,
+  BookOpen, LayoutTemplate, WifiOff,
   Superscript as SuperscriptIcon, Subscript as SubscriptIcon, RemoveFormatting, Highlighter,
   FileCog, PanelTop, BarChart3, AlignVerticalSpaceAround, Sigma, ListTree,
   BookmarkPlus, GitMerge,
@@ -42,6 +42,8 @@ import Collaboration from "@tiptap/extension-collaboration";
 // import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
 
 import { DocShareModal } from "./DocShareModal";
+import { DocVersionHistory, snapshotVersion } from "./DocVersionHistory";
+import { downloadDocx, docxFileToHtml } from "@/lib/docx-export";
 
 // ─── Track-changes marks ──────────────────────────────────────────────────────
 
@@ -96,13 +98,6 @@ type Comment = {
   author: string;
   createdAt: string;
   resolved: boolean;
-};
-
-type VersionSnapshot = {
-  id: string;
-  label: string;
-  timestamp: number;
-  content: string; // JSON string of Tiptap doc content
 };
 
 type SecurityLabel = "PUBLIC" | "INTERNAL" | "CONFIDENTIAL" | "RESTRICTED";
@@ -234,51 +229,10 @@ function headerFooterKey(id: string): string {
   return "nexus_docs_headerfooter_" + id;
 }
 
-// ─── Version history (localStorage) ──────────────────────────────────────────
-
-function versionHistoryKey(id: string): string {
-  return "nexus_doc_versions_" + id;
-}
-
-const MAX_VERSIONS = 20;
-
-function loadVersions(docId: string): VersionSnapshot[] {
-  try {
-    const raw = localStorage.getItem(versionHistoryKey(docId));
-    if (!raw) return [];
-    const arr = JSON.parse(raw) as VersionSnapshot[];
-    if (!Array.isArray(arr)) return [];
-    return arr;
-  } catch {
-    try { localStorage.removeItem(versionHistoryKey(docId)); } catch { /* ignore */ }
-    return [];
-  }
-}
-
-function saveVersions(docId: string, snapshots: VersionSnapshot[]): void {
-  try {
-    localStorage.setItem(versionHistoryKey(docId), JSON.stringify(snapshots));
-  } catch { /* storage may be full */ }
-}
-
-function pushVersion(docId: string, snapshot: VersionSnapshot): VersionSnapshot[] {
-  const existing = loadVersions(docId);
-  const next = [snapshot, ...existing].slice(0, MAX_VERSIONS);
-  saveVersions(docId, next);
-  return next;
-}
-
-function relativeTime(timestamp: number): string {
-  const diff = Date.now() - timestamp;
-  const secs = Math.floor(diff / 1000);
-  if (secs < 60) return "just now";
-  const mins = Math.floor(secs / 60);
-  if (mins < 60) return mins + " min ago";
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return hrs + " hr ago";
-  const days = Math.floor(hrs / 24);
-  return days + " day" + (days === 1 ? "" : "s") + " ago";
-}
+// Version history now lives on the server (DocumentVersion table, rendered by
+// <DocVersionHistory>). The previous localStorage implementation — 20 snapshots
+// under `nexus_doc_versions_<id>` — was per-browser, invisible to collaborators
+// and lost on a cache clear, so it was removed rather than kept in parallel.
 
 function loadPageSetup(id: string): PageSetup {
   try {
@@ -483,6 +437,10 @@ export function DocsView() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [title, setTitle] = useState("");
+  // Mirrors `title` so the auto-save interval can read it without re-creating
+  // the interval on every keystroke in the title field.
+  const titleRef = useRef("");
+  titleRef.current = title;
   const [search, setSearch] = useState("");
 
   // Panels
@@ -515,7 +473,6 @@ export function DocsView() {
   // Features
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
-  const [versions, setVersions] = useState<VersionSnapshot[]>([]);
   const [securityLabel, setSecurityLabel] = useState<SecurityLabel>("INTERNAL");
   const [outline, setOutline] = useState<{ level: number; text: string }[]>([]);
 
@@ -647,15 +604,15 @@ export function DocsView() {
   }, []);
 
   // ── Version auto-save every 5 minutes ────────────────────────────────────
+  // Snapshots go to the server; identical or too-recent auto-saves are
+  // coalesced there, so this can fire freely without flooding the history.
   useEffect(() => {
     if (!selectedId) return;
     const interval = setInterval(() => {
       if (!editor || !selectedId) return;
       const c = editor.getJSON ? JSON.stringify(editor.getJSON()) : editor.getHTML();
       if (!c || c === "{}" || c === "null") return;
-      const snap: VersionSnapshot = { id: String(Date.now()), label: "Auto-save", timestamp: Date.now(), content: c };
-      const next = pushVersion(selectedId, snap);
-      setVersions(next);
+      snapshotVersion(selectedId, c, titleRef.current);
     }, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, [selectedId, editor]);
@@ -691,7 +648,6 @@ export function DocsView() {
   const selectDoc = useCallback((doc: Doc) => {
     setSelectedId(doc.id);
     setComments([]);
-    setVersions(loadVersions(doc.id));
     setPageSetup(loadPageSetup(doc.id));
     setHeaderFooter(loadHeaderFooter(doc.id));
 
@@ -802,52 +758,9 @@ export function DocsView() {
   };
 
   // ── Version history (localStorage) ────────────────────────────────────────
-  const saveVersion = useCallback((label?: string) => {
-    if (!editor || !selectedId) return;
-    const content = editor.getJSON ? JSON.stringify(editor.getJSON()) : editor.getHTML();
-    const snap: VersionSnapshot = {
-      id: String(Date.now()),
-      label: label ?? "Manual save",
-      timestamp: Date.now(),
-      content,
-    };
-    const next = pushVersion(selectedId, snap);
-    setVersions(next);
-    toast.success("Version saved");
-  }, [editor, selectedId]);
-
-  const _saveVersionAuto = useCallback(() => {
-    if (!editor || !selectedId) return;
-    const content = editor.getJSON ? JSON.stringify(editor.getJSON()) : editor.getHTML();
-    if (!content || content === "{}" || content === "null") return;
-    const snap: VersionSnapshot = {
-      id: String(Date.now()),
-      label: "Auto-save",
-      timestamp: Date.now(),
-      content,
-    };
-    const next = pushVersion(selectedId, snap);
-    setVersions(next);
-  }, [editor, selectedId]);
-
-  const restoreVersion = (v: VersionSnapshot) => {
-    if (!editor) return;
-    try {
-      const parsed = JSON.parse(v.content) as object;
-      editor.commands.setContent(parsed, { emitUpdate: false });
-    } catch {
-      editor.commands.setContent(v.content, { emitUpdate: false });
-    }
-    toast.success("Version restored");
-    setShowHistory(false);
-  };
-
-  const deleteVersion = (id: string) => {
-    if (!selectedId) return;
-    const next = versions.filter(v => v.id !== id);
-    saveVersions(selectedId, next);
-    setVersions(next);
-  };
+  // Version snapshots are server-persisted (DocumentVersion table) and rendered
+  // by <DocVersionHistory>. The old localStorage helpers were removed: they
+  // were per-browser, invisible to collaborators and lost on a cache clear.
 
   // ── Comments ──────────────────────────────────────────────────────────────
   const addComment = () => {
@@ -881,6 +794,48 @@ table{border-collapse:collapse;width:100%}td,th{border:1px solid #e7e6e1;padding
     if (!editor) return;
     const blob = new Blob([editor.getText()], { type: "text/plain" });
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `${title}.txt`; a.click();
+  };
+
+  // ── Word (.docx) ──────────────────────────────────────────────────────────
+  // A real OOXML package, not HTML with a .docx extension — see
+  // src/lib/docx-export.ts. Word/Pages/Google Docs all reject the latter.
+  const exportDocx = async () => {
+    if (!editor) return;
+    const toastId = toast.loading("Building .docx…");
+    try {
+      await downloadDocx(editor.getHTML(), title || "Document");
+      toast.success("Exported as Word document", { id: toastId });
+    } catch {
+      toast.error("Could not build the .docx file", { id: toastId });
+    }
+  };
+
+  const importDocx = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !editor) return;
+    e.target.value = ""; // allow re-picking the same file after a failure
+
+    const toastId = toast.loading(`Importing ${file.name}…`);
+    try {
+      const html = await docxFileToHtml(file);
+      if (!html.trim()) {
+        toast.error("That document appears to be empty", { id: toastId });
+        return;
+      }
+      // Appended rather than replacing — importing should never silently
+      // destroy whatever the user already had open.
+      editor.chain().focus("end").insertContent(html).run();
+
+      // Untitled docs adopt the filename, the way Word and Docs both behave.
+      if (!title.trim() || title === "Untitled Document") {
+        const name = file.name.replace(/\.docx$/i, "");
+        setTitle(name);
+        void saveTitle(name);
+      }
+      toast.success("Word document imported", { id: toastId });
+    } catch {
+      toast.error("Could not read that .docx file", { id: toastId });
+    }
   };
 
   const printDoc = () => {
@@ -1317,7 +1272,9 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
               </div>
               <IconBtn icon={<BookOpen className="h-4 w-4" />} title="Document outline" active={showOutline} onClick={() => setShowOutline(v => !v)} />
               <IconBtn icon={<MessageSquare className="h-4 w-4" />} title="Comments" active={showComments} onClick={() => { setShowComments(v => !v); setShowAI(false); setShowHistory(false); setShowSuggestions(false); }} />
-              <IconBtn icon={<BookmarkPlus className="h-4 w-4" />} title="Save version" onClick={() => { const label = window.prompt("Version label (optional):", "Manual save"); if (label !== null) saveVersion(label || "Manual save"); }} />
+              {/* Saving a version now lives inside the history panel, which owns
+                  the server round-trip and refreshes its own list afterwards. */}
+              <IconBtn icon={<BookmarkPlus className="h-4 w-4" />} title="Save a version" onClick={() => { setShowHistory(true); setShowAI(false); setShowComments(false); setShowSuggestions(false); }} />
               <IconBtn icon={<History className="h-4 w-4" />} title="Version history" active={showHistory} onClick={() => { setShowHistory(v => !v); setShowAI(false); setShowComments(false); setShowSuggestions(false); }} />
               {/* Suggest mode toggle */}
               <button
@@ -1341,10 +1298,21 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
               <div className="relative" onClick={e => e.stopPropagation()}>
                 <IconBtn icon={<Download className="h-4 w-4" />} title="Export" onClick={() => setShowExportMenu(v => !v)} />
                 {showExportMenu && (
-                  <div className="absolute right-0 top-full mt-1 w-48 bg-surface border border-border rounded-lg shadow-lg z-50 py-1">
-                    <MenuItm onClick={() => { printDoc(); setShowExportMenu(false); }}>🖨 Print / Save as PDF</MenuItm>
-                    <MenuItm onClick={() => { exportHTML(); setShowExportMenu(false); }}>🌐 Export as HTML</MenuItm>
-                    <MenuItm onClick={() => { exportText(); setShowExportMenu(false); }}>📄 Export as Plain Text</MenuItm>
+                  <div className="absolute right-0 top-full mt-1 w-56 bg-surface border border-border rounded-lg shadow-lg z-50 py-1">
+                    <MenuItm onClick={() => { void exportDocx(); setShowExportMenu(false); }}>Microsoft Word (.docx)</MenuItm>
+                    <MenuItm onClick={() => { printDoc(); setShowExportMenu(false); }}>Print / Save as PDF</MenuItm>
+                    <MenuItm onClick={() => { exportHTML(); setShowExportMenu(false); }}>Web page (.html)</MenuItm>
+                    <MenuItm onClick={() => { exportText(); setShowExportMenu(false); }}>Plain text (.txt)</MenuItm>
+                    <div className="my-1 h-px bg-border-soft" />
+                    <label className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-foreground hover:bg-hover cursor-pointer transition-colors">
+                      Import Word (.docx)…
+                      <input
+                        type="file"
+                        accept=".docx"
+                        className="hidden"
+                        onChange={e => { void importDocx(e); setShowExportMenu(false); }}
+                      />
+                    </label>
                   </div>
                 )}
               </div>
@@ -1723,51 +1691,30 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
                 })()}
 
                 {/* History Panel */}
-                {showHistory && (
-                  <div className="flex flex-col h-full overflow-hidden">
-                    <div className="flex items-center justify-between px-3 pt-3 pb-2 border-b border-border flex-shrink-0">
-                      <p className="text-xs font-semibold text-foreground">
-                        {versions.length > 0 ? versions.length + " saved version" + (versions.length === 1 ? "" : "s") : "Version history"}
-                      </p>
-                      <button
-                        onClick={() => { const label = window.prompt("Version label (optional):", "Manual save"); if (label !== null) saveVersion(label || "Manual save"); }}
-                        className="flex items-center gap-1 text-xs font-medium text-accent hover:text-accent-hover">
-                        <BookmarkPlus className="h-3.5 w-3.5" /> Save now
-                      </button>
-                    </div>
-                    <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 space-y-2">
-                      {versions.length === 0 ? (
-                        <div className="text-center py-10">
-                          <Clock className="h-8 w-8 mx-auto mb-2 text-subtle" />
-                          <p className="text-xs text-subtle mb-3">No saved versions yet.</p>
-                          <p className="text-[11px] text-subtle mb-4">Versions auto-save every 5 minutes, or click Save now.</p>
-                          <button
-                            onClick={() => saveVersion("Manual save")}
-                            className="px-3 py-1.5 text-xs font-semibold bg-accent text-accent-foreground rounded-lg hover:bg-accent-hover">
-                            Save current version
-                          </button>
-                        </div>
-                      ) : versions.map(v => (
-                        <div key={v.id} className="border border-border rounded-lg p-3 bg-surface">
-                          <div className="flex items-start justify-between gap-2 mb-1">
-                            <span className="text-xs font-medium text-foreground truncate flex-1">{v.label}</span>
-                            <button
-                              onClick={() => deleteVersion(v.id)}
-                              title="Delete this version"
-                              className="flex-shrink-0 text-subtle hover:text-crit transition-colors">
-                              <X className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                          <p className="text-[10px] text-subtle mb-2">{relativeTime(v.timestamp)}</p>
-                          <button
-                            onClick={() => restoreVersion(v)}
-                            className="text-xs font-medium text-accent hover:underline">
-                            Restore
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                {/* Version history — server-persisted (DocumentVersion table),
+                    shared with Sheets and Slides. Replaces the old
+                    localStorage list, which was per-browser and invisible to
+                    collaborators. */}
+                {showHistory && selectedId && (
+                  <DocVersionHistory
+                    docId={selectedId}
+                    onClose={() => setShowHistory(false)}
+                    getContent={() => ({
+                      content: editor
+                        ? (editor.getJSON ? JSON.stringify(editor.getJSON()) : editor.getHTML())
+                        : "",
+                      title,
+                    })}
+                    onRestored={(content, restoredTitle) => {
+                      if (!editor) return;
+                      try {
+                        editor.commands.setContent(JSON.parse(content) as object, { emitUpdate: false });
+                      } catch {
+                        editor.commands.setContent(content, { emitUpdate: false });
+                      }
+                      if (restoredTitle) setTitle(restoredTitle);
+                    }}
+                  />
                 )}
               </div>
             )}

@@ -1324,16 +1324,47 @@ model Note {
   pinned         Boolean  @default(false)
   color          String?
   folder         String?
+  // Real, queryable tags. Previously tags lived inside the `content` JSON blob,
+  // which made them impossible to filter on server-side or index.
+  tags           String[] @default([])
   isDoc          Boolean  @default(false)
   organizationId String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  versions DocumentVersion[]
 
   @@index([userId])
   @@index([userId, pinned, updatedAt])
   @@index([organizationId])
+  @@index([tags])
+}
+
+/// Server-persisted version history for every Note-backed document — Notes,
+/// Docs, Sheets and Slides all live in `Note` (discriminated by `color`, see
+/// src/lib/doc-markers.ts), so one version table covers the whole office suite.
+/// Replaces the previous localStorage-only history in DocsView, which was lost
+/// on cache clear and invisible to collaborators.
+model DocumentVersion {
+  id        String   @id @default(cuid())
+  noteId    String
+  authorId  String?
+  /// "Auto-save", "Manual save", or a user-supplied name.
+  label     String   @default("Auto-save")
+  /// Snapshot of Note.content at the time the version was taken.
+  content   String
+  /// Denormalised so a restored version can also restore its title.
+  title     String?
+  /// Byte length of `content` — shown in the history panel without shipping
+  /// the whole payload in the list response.
+  size      Int      @default(0)
+  createdAt DateTime @default(now())
+
+  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  @@index([noteId, createdAt])
+  @@index([authorId])
 }
 
 // ─── Phase 5: Sage Meet ───────────────────────────────────────────────────────

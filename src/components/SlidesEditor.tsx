@@ -17,7 +17,7 @@ import {
   Sparkles, Layers, Grid3x3, LayoutGrid,   Undo2, Redo2, ZoomIn, ZoomOut,
   LayoutTemplate, Eye, EyeOff, FolderPlus, ChevronRight as ChevronRightIcon, Images,
   Triangle, Star, MoveRight, Minus, Grid, Timer, RotateCcw,
-  Search, Video, Hash, Lock, Unlock, Music, Volume2,
+  Search, Video, Hash, Lock, Unlock, Music, Volume2, History,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -25,6 +25,9 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
 import { DocShareModal } from "./DocShareModal";
+import { DocVersionHistory, snapshotVersion } from "./DocVersionHistory";
+import { DocPresenceBar } from "./DocPresenceBar";
+import { useDocPresence } from "@/lib/use-doc-presence";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -494,6 +497,9 @@ export default function SlidesEditor({ presId }: { presId: string }) {
   const [showLayout, setShowLayout] = useState(false);
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
 
+  // Server-persisted version history (shared with Docs & Sheets).
+  const [showVersions, setShowVersions] = useState(false);
+
   // Slide sorter / grid overview
   const [sorterView, setSorterView] = useState(false);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
@@ -538,6 +544,11 @@ export default function SlidesEditor({ presId }: { presId: string }) {
   const activeSlide = slides[activeIdx] ?? slides[0];
   const selectedEl = activeSlide?.elements.find(e => e.id === selectedElId);
 
+  // Live co-authoring presence — who else is in this deck, and which slide
+  // they're looking at. Redis-backed polling, so it works on Vercel where
+  // there is no Socket.IO server.
+  const peers = useDocPresence(presId, activeSlide?.id, "slide");
+
   // ── Load ─────────────────────────────────────────────────────────────────
   useEffect(() => {
     fetch(`/api/slides/${presId}`)
@@ -568,12 +579,16 @@ export default function SlidesEditor({ presId }: { presId: string }) {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
       setSaving(true);
+      const payload = JSON.stringify({ slides: s, themeId: theme.id, deck: { showNumbers, showFooter, footerText, masterLogo, masterElements } });
       try {
         await fetch(`/api/slides/${presId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title: t, content: JSON.stringify({ slides: s, themeId: theme.id, deck: { showNumbers, showFooter, footerText, masterLogo, masterElements } }) }),
+          body: JSON.stringify({ title: t, content: payload }),
         });
+        // Server-persisted version snapshot. Coalesced server-side into one row
+        // per 5-minute window, so firing on every debounced save is cheap.
+        snapshotVersion(presId, payload, t);
       } finally { setSaving(false); }
     }, 1500);
   }, [presId, theme.id, showNumbers, showFooter, footerText, masterLogo, masterElements]);
@@ -741,12 +756,52 @@ export default function SlidesEditor({ presId }: { presId: string }) {
   };
 
   // ── Import PPTX ───────────────────────────────────────────────────────────
+  // Real OOXML parse (src/lib/pptx-import.ts) — text boxes, pictures, tables,
+  // autoshapes, positions and speaker notes. Previously this was a stub that
+  // just appended a blank slide.
   const importFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    // For now just create a slide with a message — full PPTX parse requires additional deps
-    toast.info("Import detected — creating placeholder slide");
-    addSlide();
+    e.target.value = ""; // let the same file be re-picked after a failure
+
+    const toastId = toast.loading(`Importing ${file.name}…`);
+    try {
+      const { parsePptx, describeImport } = await import("@/lib/pptx-import");
+      const imported = await parsePptx(file);
+      if (!imported.length) {
+        toast.error("No slides found in that file", { id: toastId });
+        return;
+      }
+
+      const converted: Slide[] = imported.map((s, i) => ({
+        id: `s_${Date.now()}_${i}`,
+        background: s.background,
+        elements: s.elements.map((el, j) => ({
+          ...el,
+          id: `el_${Date.now()}_${i}_${j}`,
+          zIndex: el.zIndex ?? j + 1,
+        })) as SlideElement[],
+        notes: s.notes,
+        transition: "fade",
+      }));
+
+      // Appended, not replacing: an import should never silently destroy the
+      // deck the user already has open.
+      setSlides(prev => {
+        const startedEmpty = prev.length === 1 && prev[0].elements.length === 0;
+        const next = startedEmpty ? converted : [...prev, ...converted];
+        pushHistory(next);
+        scheduleSave(next, title);
+        return next;
+      });
+      setActiveIdx(prev => (prev === 0 ? 0 : prev));
+      toast.success(`Imported ${describeImport(imported)}`, { id: toastId });
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Could not read that .pptx file",
+        { id: toastId },
+      );
+    }
   };
 
   // ── Apply theme ───────────────────────────────────────────────────────────
@@ -1250,6 +1305,23 @@ export default function SlidesEditor({ presId }: { presId: string }) {
           <button onClick={() => void exportPPTX(slides, title)} className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-muted hover:bg-surface-sunken rounded-lg">
             <Download className="h-3.5 w-3.5" /> Export
           </button>
+          <button
+            onClick={() => setShowVersions(v => !v)}
+            title="Version history"
+            className={`flex items-center justify-center h-7 w-7 rounded-lg transition-colors ${
+              showVersions ? "text-accent bg-accent-soft" : "text-muted hover:bg-surface-sunken"
+            }`}
+          >
+            <History className="h-3.5 w-3.5" />
+          </button>
+          {/* Who else is in this deck right now */}
+          <DocPresenceBar
+            peers={peers}
+            describe={p => {
+              const i = slides.findIndex(s => s.id === p.location);
+              return i >= 0 ? `Slide ${i + 1}` : undefined;
+            }}
+          />
           <button onClick={() => setShowShare(true)} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-accent text-accent-foreground rounded-lg hover:bg-accent-hover">
             <Share2 className="h-3.5 w-3.5" /> Share
           </button>
@@ -1945,6 +2017,51 @@ export default function SlidesEditor({ presId }: { presId: string }) {
       )}
 
       {showShare && <DocShareModal docId={presId} docType="pres" onClose={() => setShowShare(false)} />}
+
+      {/* ── Version history (server-persisted, shared with Docs & Sheets) ── */}
+      {showVersions && (
+        <div className="fixed right-0 top-0 bottom-0 w-[300px] z-40 bg-surface border-l border-border shadow-panel">
+          <DocVersionHistory
+            docId={presId}
+            onClose={() => setShowVersions(false)}
+            getContent={() => ({
+              content: JSON.stringify({
+                slides,
+                themeId: theme.id,
+                deck: { showNumbers, showFooter, footerText, masterLogo, masterElements },
+              }),
+              title,
+            })}
+            onRestored={(content, restoredTitle) => {
+              try {
+                const parsed = JSON.parse(content) as {
+                  slides?: Slide[];
+                  themeId?: string;
+                  deck?: { showNumbers?: boolean; showFooter?: boolean; footerText?: string; masterLogo?: string; masterElements?: SlideElement[] };
+                };
+                if (parsed.slides?.length) {
+                  setSlides(parsed.slides);
+                  pushHistory(parsed.slides);
+                  // Clamp: the restored deck may be shorter than the current one.
+                  setActiveIdx(i => Math.min(i, parsed.slides!.length - 1));
+                  setSelectedElId(null);
+                }
+                if (parsed.themeId) setTheme(THEMES.find(t => t.id === parsed.themeId) ?? THEMES[0]);
+                if (parsed.deck) {
+                  if (typeof parsed.deck.showNumbers === "boolean") setShowNumbers(parsed.deck.showNumbers);
+                  if (typeof parsed.deck.showFooter === "boolean") setShowFooter(parsed.deck.showFooter);
+                  if (typeof parsed.deck.footerText === "string") setFooterText(parsed.deck.footerText);
+                  if (typeof parsed.deck.masterLogo === "string") setMasterLogo(parsed.deck.masterLogo);
+                  if (Array.isArray(parsed.deck.masterElements)) setMasterElements(parsed.deck.masterElements);
+                }
+                if (restoredTitle) setTitle(restoredTitle);
+              } catch {
+                toast.error("That version could not be read");
+              }
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }

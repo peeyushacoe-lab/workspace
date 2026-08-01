@@ -1,6 +1,9 @@
 "use client";
 
-import Link from "next/link";
+// Nav targets may live on an app subdomain (docs./drive./meet.), which a
+// next/link cannot reach — AppLink falls back to a plain <a> for those and
+// behaves exactly like next/link for everything else.
+import { AppLink as Link } from "@/components/AppLink";
 import {
   Mail, MessageSquare, Video, CalendarDays, HardDrive, FileText,
   CheckSquare, Sparkles, ShieldAlert, Users, GraduationCap,
