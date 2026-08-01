@@ -17,7 +17,7 @@ import {
   Sparkles, Layers, Grid3x3, LayoutGrid,   Undo2, Redo2, ZoomIn, ZoomOut,
   LayoutTemplate, Eye, EyeOff, FolderPlus, ChevronRight as ChevronRightIcon, Images,
   Triangle, Star, MoveRight, Minus, Grid, Timer, RotateCcw,
-  Search, Video, Hash, Lock, Unlock, Music, Volume2, History,
+  Search, Video, Hash, Lock, Unlock, Music, Volume2, History, MessageSquare,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -26,8 +26,12 @@ import {
 } from "recharts";
 import { DocShareModal } from "./DocShareModal";
 import { DocVersionHistory, snapshotVersion } from "./DocVersionHistory";
+import { DocComments, type CommentAnchor } from "./DocComments";
 import { DocPresenceBar } from "./DocPresenceBar";
 import { useDocPresence } from "@/lib/use-doc-presence";
+import { useRecordOpen } from "@/lib/use-recent";
+import { ConflictBanner, useSaveConflict } from "./ConflictBanner";
+import { ShortcutHelp, SLIDES_SHORTCUTS } from "./ShortcutHelp";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -499,6 +503,8 @@ export default function SlidesEditor({ presId }: { presId: string }) {
 
   // Server-persisted version history (shared with Docs & Sheets).
   const [showVersions, setShowVersions] = useState(false);
+  // Threaded comments, anchored to the active slide.
+  const [showComments, setShowComments] = useState(false);
 
   // Slide sorter / grid overview
   const [sorterView, setSorterView] = useState(false);
@@ -547,13 +553,22 @@ export default function SlidesEditor({ presId }: { presId: string }) {
   // Live co-authoring presence — who else is in this deck, and which slide
   // they're looking at. Redis-backed polling, so it works on Vercel where
   // there is no Socket.IO server.
+  // Feeds the Recent views across Drive and the Slides home screen.
+  useRecordOpen("slide", presId);
+
+  // Save-conflict detection. Autosave writes the whole deck, so without this a
+  // second editor's save silently destroys the first's work.
+  const saveConflict = useSaveConflict();
+
   const peers = useDocPresence(presId, activeSlide?.id, "slide");
 
   // ── Load ─────────────────────────────────────────────────────────────────
   useEffect(() => {
     fetch(`/api/slides/${presId}`)
       .then(r => r.json())
-      .then((d: { title?: string; content?: string }) => {
+      .then((d: { title?: string; content?: string; updatedAt?: string }) => {
+        // Baseline for conflict detection.
+        saveConflict.setBase(d.updatedAt);
         if (d.title) setTitle(d.title);
         if (d.content) {
           try {
@@ -572,7 +587,7 @@ export default function SlidesEditor({ presId }: { presId: string }) {
         setLoaded(true);
       })
       .catch(() => setLoaded(true));
-  }, [presId]);
+  }, [presId, saveConflict]);
 
   // ── Save ──────────────────────────────────────────────────────────────────
   const scheduleSave = useCallback((s: Slide[], t: string) => {
@@ -581,17 +596,20 @@ export default function SlidesEditor({ presId }: { presId: string }) {
       setSaving(true);
       const payload = JSON.stringify({ slides: s, themeId: theme.id, deck: { showNumbers, showFooter, footerText, masterLogo, masterElements } });
       try {
-        await fetch(`/api/slides/${presId}`, {
+        const res = await fetch(`/api/slides/${presId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title: t, content: payload }),
+          body: JSON.stringify({ title: t, content: payload, ...saveConflict.saveFields() }),
         });
+        // 409 means someone else saved since we loaded — surface it rather than
+        // letting this write clobber theirs.
+        if (await saveConflict.handleResponse(res)) return;
         // Server-persisted version snapshot. Coalesced server-side into one row
         // per 5-minute window, so firing on every debounced save is cheap.
         snapshotVersion(presId, payload, t);
       } finally { setSaving(false); }
     }, 1500);
-  }, [presId, theme.id, showNumbers, showFooter, footerText, masterLogo, masterElements]);
+  }, [presId, theme.id, showNumbers, showFooter, footerText, masterLogo, masterElements, saveConflict]);
 
   // ── History ───────────────────────────────────────────────────────────────
   const pushHistory = useCallback((s: Slide[]) => {
@@ -718,41 +736,67 @@ export default function SlidesEditor({ presId }: { presId: string }) {
   const dragging = useRef<{ id: string; startX: number; startY: number; origX: number; origY: number } | null>(null);
   const resizing = useRef<{ id: string; startX: number; startY: number; origW: number; origH: number } | null>(null);
 
-  const onElMouseDown = (e: React.MouseEvent, id: string) => {
+  // Drag and resize use POINTER events, not mouse events. Pointer events cover
+  // mouse, touch and stylus with one code path — with mouse-only handlers the
+  // editor was completely unusable on a phone or tablet: elements could be
+  // selected but never moved or resized.
+  //
+  // The elements themselves carry `touch-action: none` so the browser doesn't
+  // claim the gesture for scrolling before the drag starts.
+
+  const onElMouseDown = (e: React.PointerEvent, id: string) => {
     e.stopPropagation();
     const el = activeSlide.elements.find(el => el.id === id);
     if (!el || el.locked) return;
     setSelectedElId(id);
     dragging.current = { id, startX: e.clientX, startY: e.clientY, origX: el.x, origY: el.y };
     const snap = (n: number) => snapToGrid ? Math.round(n / GRID) * GRID : n;
-    const onMove = (ev: MouseEvent) => {
+    const onMove = (ev: PointerEvent) => {
       if (!dragging.current) return;
+      // Without this, a touch-drag scrolls the page as well as moving the element.
+      ev.preventDefault();
       updateElement(id, {
         x: snap(Math.max(0, dragging.current.origX + (ev.clientX - dragging.current.startX) / zoom)),
         y: snap(Math.max(0, dragging.current.origY + (ev.clientY - dragging.current.startY) / zoom)),
       });
     };
-    const onUp = () => { dragging.current = null; window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onUp);
+    const onUp = () => {
+      dragging.current = null;
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+    };
+    // passive:false is required for preventDefault to take effect on touch.
+    window.addEventListener("pointermove", onMove, { passive: false });
+    window.addEventListener("pointerup", onUp);
+    // A touch interrupted by a system gesture fires pointercancel, not
+    // pointerup — without this the element would stay stuck to the finger.
+    window.addEventListener("pointercancel", onUp);
   };
 
-  const onResizeMouseDown = (e: React.MouseEvent, id: string) => {
+  const onResizeMouseDown = (e: React.PointerEvent, id: string) => {
     e.stopPropagation();
     const el = activeSlide.elements.find(el => el.id === id);
     if (!el || el.locked) return;
     resizing.current = { id, startX: e.clientX, startY: e.clientY, origW: el.w, origH: el.h };
     const snap = (n: number) => snapToGrid ? Math.round(n / GRID) * GRID : n;
-    const onMove = (ev: MouseEvent) => {
+    const onMove = (ev: PointerEvent) => {
       if (!resizing.current) return;
+      ev.preventDefault();
       updateElement(id, {
         w: snap(Math.max(40, resizing.current.origW + (ev.clientX - resizing.current.startX) / zoom)),
         h: snap(Math.max(20, resizing.current.origH + (ev.clientY - resizing.current.startY) / zoom)),
       });
     };
-    const onUp = () => { resizing.current = null; window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onUp);
+    const onUp = () => {
+      resizing.current = null;
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+    };
+    window.addEventListener("pointermove", onMove, { passive: false });
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
   };
 
   // ── Import PPTX ───────────────────────────────────────────────────────────
@@ -1246,7 +1290,51 @@ export default function SlidesEditor({ presId }: { presId: string }) {
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col h-screen bg-surface overflow-hidden text-foreground">
+    <div className="relative flex flex-col h-screen bg-surface overflow-hidden text-foreground">
+
+      <ShortcutHelp groups={SLIDES_SHORTCUTS} />
+
+      {/* Save conflict — someone else saved while this tab had the deck open */}
+      <ConflictBanner
+        conflict={saveConflict.conflict}
+        onReload={() => {
+          const server = saveConflict.conflict;
+          if (!server?.serverContent) { window.location.reload(); return; }
+          try {
+            const parsed = JSON.parse(server.serverContent) as {
+              slides?: Slide[];
+              themeId?: string;
+              deck?: { showNumbers?: boolean; showFooter?: boolean; footerText?: string; masterLogo?: string; masterElements?: SlideElement[] };
+            };
+            if (parsed.slides?.length) {
+              setSlides(parsed.slides);
+              pushHistory(parsed.slides);
+              setActiveIdx(i => Math.min(i, parsed.slides!.length - 1));
+              setSelectedElId(null);
+            }
+            if (parsed.themeId) setTheme(THEMES.find(t => t.id === parsed.themeId) ?? THEMES[0]);
+            if (parsed.deck) {
+              if (typeof parsed.deck.showNumbers === "boolean") setShowNumbers(parsed.deck.showNumbers);
+              if (typeof parsed.deck.showFooter === "boolean") setShowFooter(parsed.deck.showFooter);
+              if (typeof parsed.deck.footerText === "string") setFooterText(parsed.deck.footerText);
+              if (typeof parsed.deck.masterLogo === "string") setMasterLogo(parsed.deck.masterLogo);
+              if (Array.isArray(parsed.deck.masterElements)) setMasterElements(parsed.deck.masterElements);
+            }
+            if (server.serverTitle) setTitle(server.serverTitle);
+            saveConflict.setBase(server.serverUpdatedAt);
+            saveConflict.dismiss();
+            toast.success("Loaded their version");
+          } catch {
+            window.location.reload();
+          }
+        }}
+        onOverwrite={() => {
+          saveConflict.overwrite();
+          // Re-run the save immediately with force set.
+          scheduleSave(slides, title);
+          toast.success("Your version will be saved");
+        }}
+      />
 
       {/* ── Title bar ── */}
       <div className="flex items-center gap-2 px-4 py-2 border-b border-border bg-surface z-20">
@@ -1306,7 +1394,16 @@ export default function SlidesEditor({ presId }: { presId: string }) {
             <Download className="h-3.5 w-3.5" /> Export
           </button>
           <button
-            onClick={() => setShowVersions(v => !v)}
+            onClick={() => { setShowComments(v => !v); setShowVersions(false); }}
+            title="Comments"
+            className={`flex items-center justify-center h-7 w-7 rounded-lg transition-colors ${
+              showComments ? "text-accent bg-accent-soft" : "text-muted hover:bg-surface-sunken"
+            }`}
+          >
+            <MessageSquare className="h-3.5 w-3.5" />
+          </button>
+          <button
+            onClick={() => { setShowVersions(v => !v); setShowComments(false); }}
             title="Version history"
             className={`flex items-center justify-center h-7 w-7 rounded-lg transition-colors ${
               showVersions ? "text-accent bg-accent-soft" : "text-muted hover:bg-surface-sunken"
@@ -1651,13 +1748,18 @@ export default function SlidesEditor({ presId }: { presId: string }) {
                 ...(s.rotation ? { transform: "rotate(" + s.rotation + "deg)" } : {}),
                 outline: isSelected ? "2px solid var(--accent)" : "none",
                 cursor: el.locked ? "default" : "move",
+                // Hands the gesture to our pointer handlers instead of letting
+                // the browser scroll the page — without this, dragging an
+                // element on a touchscreen just scrolls.
+                touchAction: el.locked ? "auto" : "none",
               };
 
               if (el.type === "text") {
                 return (
-                  <div key={el.id} style={base} onMouseDown={e => onElMouseDown(e, el.id)} onClick={e => e.stopPropagation()}>
+                  <div key={el.id} style={base} onPointerDown={e => onElMouseDown(e, el.id)} onClick={e => e.stopPropagation()}>
                     {isSelected ? (
                       <textarea
+                        spellCheck
                         autoFocus
                         className="w-full h-full resize-none outline-none bg-transparent"
                         style={{ fontSize: (s.fontSize ?? 18) * zoom, fontWeight: s.bold ? "bold" : "normal", fontStyle: s.italic ? "italic" : "normal", color: s.color ?? theme.text, textAlign: s.align ?? "left", lineHeight: 1.4 }}
@@ -1677,15 +1779,33 @@ export default function SlidesEditor({ presId }: { presId: string }) {
                         {el.content}
                       </div>
                     )}
-                    {isSelected && <div className="absolute bottom-0 right-0 w-3 h-3 bg-accent cursor-se-resize" onMouseDown={e => onResizeMouseDown(e, el.id)} />}
+                    {isSelected && (
+                      <div
+                        // -m-2/p-2 grows the touch target to ~28px without
+                        // changing how the 12px handle looks.
+                        className="absolute -bottom-2 -right-2 p-2 cursor-se-resize"
+                        style={{ touchAction: "none" }}
+                        onPointerDown={e => onResizeMouseDown(e, el.id)}
+                      >
+                        <div className="w-3 h-3 bg-accent" />
+                      </div>
+                    )}
                   </div>
                 );
               }
 
               return (
-                <div key={el.id} style={base} onMouseDown={e => onElMouseDown(e, el.id)} onClick={e => e.stopPropagation()}>
+                <div key={el.id} style={base} onPointerDown={e => onElMouseDown(e, el.id)} onClick={e => e.stopPropagation()}>
                   <SlideElementView el={el} zoom={zoom} theme={theme} editMode />
-                  {isSelected && <div className="absolute bottom-0 right-0 w-3 h-3 bg-accent cursor-se-resize z-10" onMouseDown={e => onResizeMouseDown(e, el.id)} />}
+                  {isSelected && (
+                    <div
+                      className="absolute -bottom-2 -right-2 p-2 cursor-se-resize z-10"
+                      style={{ touchAction: "none" }}
+                      onPointerDown={e => onResizeMouseDown(e, el.id)}
+                    >
+                      <div className="w-3 h-3 bg-accent" />
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -2017,6 +2137,31 @@ export default function SlidesEditor({ presId }: { presId: string }) {
       )}
 
       {showShare && <DocShareModal docId={presId} docType="pres" onClose={() => setShowShare(false)} />}
+
+      {/* ── Comments (threaded, anchored to a slide) ── */}
+      {showComments && (
+        <div className="fixed right-0 top-0 bottom-0 w-[320px] z-40 bg-surface border-l border-border shadow-panel">
+          <DocComments
+            docId={presId}
+            onClose={() => setShowComments(false)}
+            currentAnchor={activeSlide ? { slide: activeSlide.id } : null}
+            anchorLabel={`Slide ${activeIdx + 1}`}
+            describeAnchor={(anchor: CommentAnchor) => {
+              if (!anchor || !("slide" in anchor)) return null;
+              const i = slides.findIndex(sl => sl.id === anchor.slide);
+              // The slide may have been deleted since the comment was written.
+              return i >= 0 ? `Slide ${i + 1}` : "(deleted slide)";
+            }}
+            onJumpToAnchor={(anchor: CommentAnchor) => {
+              if (!anchor || !("slide" in anchor)) return;
+              const i = slides.findIndex(sl => sl.id === anchor.slide);
+              if (i < 0) { toast.info("That slide has been deleted"); return; }
+              setActiveIdx(i);
+              setSelectedElId(null);
+            }}
+          />
+        </div>
+      )}
 
       {/* ── Version history (server-persisted, shared with Docs & Sheets) ── */}
       {showVersions && (

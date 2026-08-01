@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Plus, FileSpreadsheet, Users, Trash2, ExternalLink, Loader2, Clock, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
+import { RecentStrip } from "@/components/RecentStrip";
 
 type SheetItem = {
   id: string; title: string; updatedAt: string;
@@ -64,6 +65,8 @@ export default function SheetsPage() {
           New spreadsheet
         </button>
       </div>
+
+      <RecentStrip types={["sheet"]} />
 
       {loading ? (
         <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-accent" /></div>

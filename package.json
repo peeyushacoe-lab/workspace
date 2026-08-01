@@ -41,7 +41,13 @@
     "check:icons": "node scripts/check-icons.mjs",
     "check:atrium": "python3 scripts/check-atrium.py",
     "check:nav": "tsx scripts/check-nav-parity.ts",
-    "check": "npm run check:icons && npm run check:atrium && npm run check:nav"
+    "check": "npm run check:icons && npm run check:atrium && npm run check:nav",
+    "test:office-io": "tsx scripts/test-office-io.ts",
+    "test:formulas": "tsx scripts/test-formulas.ts",
+    "test:a11y": "tsx scripts/test-a11y.ts",
+    "test:cross-app": "tsx scripts/test-cross-app.ts",
+    "test": "npm run test:office-io && npm run test:formulas && npm run test:a11y && npm run test:cross-app && npm run test:goal-seek",
+    "test:goal-seek": "tsx scripts/test-goal-seek.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.99.0",
@@ -131,6 +137,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/jsdom": "^21.1.7",
     "@types/mysql": "^2.15.27",
     "@types/node": "^20",
     "@types/pg-pool": "^2.0.7",
@@ -146,6 +153,7 @@
     "electron-updater": "^6.8.3",
     "eslint": "^9",
     "eslint-config-next": "^15.5.18",
+    "jsdom": "^26.1.0",
     "tailwindcss": "^4",
     "tsx": "^4.22.4",
     "typescript": "^5"

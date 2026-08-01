@@ -1,63 +1,30 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { getSessionUserFromCookieStore } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 
-type Params = { params: Promise<{ id: string }> };
+/**
+ * REMOVED — superseded by /api/documents/[id]/comments.
+ *
+ * This route checked only that the caller was *logged in*, never that they had
+ * any access to the document being commented on. Any authenticated user could
+ * read every comment thread on every document in the workspace, and post into
+ * them, just by guessing or enumerating a document id.
+ *
+ * It is kept as a stub returning 410 rather than deleted outright so that any
+ * stale client still calling it fails loudly and safely instead of silently
+ * hitting a rebuilt handler. Nothing in the app referenced it at the time of
+ * removal.
+ *
+ * The replacement enforces access via resolveDocAccess() and works for Docs,
+ * Sheets and Slides alike.
+ */
 
-export async function GET(_req: Request, { params }: Params) {
-  const user = getSessionUserFromCookieStore(await cookies());
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const { id: documentId } = await params;
+const GONE = {
+  error: "This endpoint has been removed. Use /api/documents/[id]/comments.",
+};
 
-  const comments = await prisma.docComment.findMany({
-    where: { documentId, parentId: null },
-    include: {
-      replies: {
-        orderBy: { createdAt: "asc" },
-      },
-    },
-    orderBy: { createdAt: "asc" },
-  });
-
-  // Hydrate user names from IDs
-  const userIds = [...new Set([...comments.map((c) => c.userId), ...comments.flatMap((c) => c.replies.map((r) => r.userId))])];
-  const users = await prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, fullName: true, avatarUrl: true } });
-  const userMap = Object.fromEntries(users.map((u) => [u.id, u]));
-
-  const hydrated = comments.map((c) => ({
-    ...c,
-    user: userMap[c.userId],
-    replies: c.replies.map((r) => ({ ...r, user: userMap[r.userId] })),
-  }));
-
-  return NextResponse.json(hydrated);
+export async function GET() {
+  return NextResponse.json(GONE, { status: 410 });
 }
 
-export async function POST(request: Request, { params }: Params) {
-  const user = getSessionUserFromCookieStore(await cookies());
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const { id: documentId } = await params;
-
-  const body = await request.json() as {
-    content: string;
-    range?: { from: number; to: number };
-    parentId?: string;
-  };
-
-  if (!body.content?.trim()) {
-    return NextResponse.json({ error: "content required" }, { status: 400 });
-  }
-
-  const comment = await prisma.docComment.create({
-    data: {
-      documentId,
-      userId: user.id,
-      content: body.content.trim(),
-      range: (body.range ?? undefined) as never,
-      parentId: body.parentId ?? null,
-    },
-  });
-
-  return NextResponse.json({ ...comment, user: { id: user.id, fullName: user.fullName } }, { status: 201 });
+export async function POST() {
+  return NextResponse.json(GONE, { status: 410 });
 }

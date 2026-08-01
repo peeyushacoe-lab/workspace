@@ -14,7 +14,20 @@ const ROLES: UserRole[] = [
 
 // Rail links intentionally added back for routes that were reachable by URL but
 // had no nav entry at all (Drive, Docs, Notes, Compose).
-const INTENTIONAL_ADDITIONS = new Set(["/drive", "/docs", "/notes", "/compose"]);
+/**
+ * Rail entries that exist in nav-groups but deliberately not in
+ * `portalNavItems`, so the parity check shouldn't flag them.
+ *
+ * `/apps/sheets` and `/apps/slides` belong here: they are declared as `extra`
+ * items on the Docs group (see nav-groups.ts) because Sheets and Slides sit in
+ * the Docs rail rather than owning their own spine icon — mirroring the way
+ * docs.google.com hosts all three. They were never added to this list, so the
+ * check reported 16 false failures (one per role) and `npm run check` could
+ * never pass.
+ */
+const INTENTIONAL_ADDITIONS = new Set([
+  "/drive", "/docs", "/notes", "/compose", "/apps/sheets", "/apps/slides",
+]);
 
 let failures = 0;
 for (const role of ROLES) {

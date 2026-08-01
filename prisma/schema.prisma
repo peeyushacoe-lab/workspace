@@ -138,6 +138,7 @@ model User {
   notifications     Notification[]
   userSessions      UserSession[]
   notes             Note[]
+  recentItems       RecentItem[]
   drafts            Draft[]
   meetings          Meeting[]          @relation("MeetingOrganizer")
   meetingParticipations MeetingParticipant[]
@@ -1338,7 +1339,33 @@ model Note {
   @@index([userId])
   @@index([userId, pinned, updatedAt])
   @@index([organizationId])
-  @@index([tags])
+  // GIN, not the default B-tree: every query against this column is array
+  // containment (`tags: { has }` / `{ hasEvery }`), which a B-tree cannot serve.
+  @@index([tags(ops: ArrayOps)], type: Gin)
+}
+
+/// Per-user "last opened" tracking, powering the Recent views in Drive, Docs,
+/// Sheets and Slides.
+///
+/// Drive's Recent section previously sorted by `updatedAt`, i.e. when the file
+/// was last *modified by anyone* — so a document a colleague edited jumped to
+/// the top of your Recent list even if you had never opened it. Google sorts by
+/// when *you* last viewed it, which needs a per-user record.
+///
+/// Deliberately not a relation to DriveFile or Note: one table covers both, and
+/// a deleted resource just leaves a stale row that the read path filters out.
+model RecentItem {
+  id           String   @id @default(cuid())
+  userId       String
+  /// "file" (DriveFile) or "doc" | "sheet" | "slide" | "note" (Note).
+  resourceType String
+  resourceId   String
+  lastOpenedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, resourceType, resourceId])
+  @@index([userId, lastOpenedAt])
 }
 
 /// Server-persisted version history for every Note-backed document — Notes,

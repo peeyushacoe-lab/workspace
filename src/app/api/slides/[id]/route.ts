@@ -4,6 +4,7 @@ import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redis } from "@/lib/redis";
 import { SLIDE_MARKER } from "@/lib/doc-markers";
+import { checkConflict } from "@/lib/doc-conflict";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -38,7 +39,22 @@ export async function PUT(request: Request, { params }: Params) {
   const access = await getAccess(id, user.id, pres.userId, user.role);
   if (!access || access === "viewer") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const body = (await request.json()) as { title?: string; content?: string; pinned?: boolean };
+  const body = (await request.json()) as {
+    title?: string; content?: string; pinned?: boolean;
+    /** updatedAt the client last saw — see src/lib/doc-conflict.ts. */
+    baseUpdatedAt?: string; force?: boolean;
+  };
+
+  // Reject a save built on a stale copy rather than silently clobbering
+  // whoever saved in between.
+  if (body.content !== undefined) {
+    const conflict = checkConflict({
+      baseUpdatedAt: body.baseUpdatedAt,
+      force: body.force,
+      current: { updatedAt: pres.updatedAt, content: pres.content, title: pres.title },
+    });
+    if (!conflict.ok) return conflict.response;
+  }
   const updated = await prisma.note.update({
     where: { id },
     data: {

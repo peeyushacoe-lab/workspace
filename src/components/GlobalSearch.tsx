@@ -1,7 +1,10 @@
 ﻿"use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+// Global search jumps between apps, and Docs/Drive/Meet now live on their own
+// subdomains — appNavigate() cannot cross origins, so navigation goes through
+// appNavigate, which falls back to router.push for same-origin targets.
+import { useAppNavigate } from "@/components/AppLink";
 import {
   Search,
   X,
@@ -254,7 +257,7 @@ export function GlobalSearch({
   onClose: () => void;
   onAction?: (action: Action) => void;
 }) {
-  const router = useRouter();
+  const appNavigate = useAppNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -336,16 +339,16 @@ export function GlobalSearch({
 
   const navigateToResult = useCallback(
     (result: SearchResult) => {
-      router.push(result.link);
+      appNavigate(result.link);
       onClose();
     },
-    [router, onClose]
+    [appNavigate, onClose]
   );
 
   const executeAction = useCallback(
     (action: Action) => {
       if (action.kind === "navigate" || action.kind === "upload" || action.kind === "calendar-event" || action.kind === "chat-message") {
-        if (action.href) router.push(action.href);
+        if (action.href) appNavigate(action.href);
       } else if (action.kind === "compose") {
         // Trigger compose via the global keyboard shortcut 'c'
         // or delegate to parent via onAction callback
@@ -359,7 +362,7 @@ export function GlobalSearch({
       }
       onClose();
     },
-    [router, onClose, onAction]
+    [appNavigate, onClose, onAction]
   );
 
   const executeAiCommand = useCallback(async () => {
@@ -375,7 +378,7 @@ export function GlobalSearch({
 
       switch (data.action) {
         case "navigate":
-          router.push(data.params.href || "/inbox");
+          appNavigate(data.params.href || "/inbox");
           break;
         case "compose_email":
           if (onAction) {
@@ -385,25 +388,25 @@ export function GlobalSearch({
           }
           break;
         case "search":
-          router.push(`/inbox?q=${encodeURIComponent(data.params.query || query)}`);
+          appNavigate(`/inbox?q=${encodeURIComponent(data.params.query || query)}`);
           break;
         case "create_event":
-          router.push("/calendar");
+          appNavigate("/calendar");
           break;
         case "create_note":
-          router.push("/notes");
+          appNavigate("/notes");
           break;
         case "create_doc":
-          router.push("/docs");
+          appNavigate("/docs");
           break;
         case "upload_file":
-          router.push("/drive");
+          appNavigate("/drive");
           break;
         case "create_channel":
-          router.push("/chat");
+          appNavigate("/chat");
           break;
         case "summarize_inbox":
-          router.push("/inbox");
+          appNavigate("/inbox");
           break;
         default:
           break;
@@ -414,7 +417,7 @@ export function GlobalSearch({
     } finally {
       setAiLoading(false);
     }
-  }, [query, router, onClose, onAction]);
+  }, [query, onClose, onAction, appNavigate]);
 
   const activateItem = useCallback(
     (item: PaletteItem) => {

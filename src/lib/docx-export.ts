@@ -285,14 +285,27 @@ function blocks(node: Node, state: BuildState, listCtx?: { numId: number; level:
     case "p":
       return paragraph(inlineRuns(el, {}, state), { align, ...(listCtx ? { numId: listCtx.numId, level: listCtx.level } : {}) });
 
-    case "blockquote":
-      return Array.from(el.children).length
-        ? Array.from(el.childNodes).map(c => {
-            const inner = blocks(c, state);
-            return inner.replace("<w:p>", '<w:p><w:pPr><w:pStyle w:val="Quote"/></w:pPr>')
-              .replace(/<w:pPr>(?!<w:pStyle)/, '<w:pPr><w:pStyle w:val="Quote"/>');
-          }).join("")
-        : paragraph(inlineRuns(el, {}, state), { style: "Quote" });
+    case "blockquote": {
+      // Build the quoted paragraphs directly rather than post-processing the
+      // generic output. The previous string-replace approach injected a second
+      // <w:pPr> into paragraphs that already had one — two pPr elements in a
+      // single <w:p> is invalid OOXML, and Word refuses the file or "repairs"
+      // it by dropping content.
+      const children = Array.from(el.children).filter(c =>
+        ["p", "h1", "h2", "h3", "h4", "h5", "h6", "div"].includes(c.tagName.toLowerCase()),
+      );
+      if (!children.length) {
+        return paragraph(inlineRuns(el, {}, state), { style: "Quote", align });
+      }
+      return children
+        .map(child =>
+          paragraph(inlineRuns(child, {}, state), {
+            style: "Quote",
+            align: alignmentXml(child as HTMLElement),
+          }),
+        )
+        .join("");
+    }
 
     case "pre":
       return paragraph(inlineRuns(el, { code: true }, state), {});

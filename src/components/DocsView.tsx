@@ -19,7 +19,7 @@ import {
   BookOpen, LayoutTemplate, WifiOff,
   Superscript as SuperscriptIcon, Subscript as SubscriptIcon, RemoveFormatting, Highlighter,
   FileCog, PanelTop, BarChart3, AlignVerticalSpaceAround, Sigma, ListTree,
-  BookmarkPlus, GitMerge,
+  BookmarkPlus, GitMerge, Accessibility, Mic,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -43,6 +43,14 @@ import Collaboration from "@tiptap/extension-collaboration";
 
 import { DocShareModal } from "./DocShareModal";
 import { DocVersionHistory, snapshotVersion } from "./DocVersionHistory";
+import { DocComments } from "./DocComments";
+import { useRecordOpen } from "@/lib/use-recent";
+import { ConflictBanner, useSaveConflict } from "./ConflictBanner";
+import { ShortcutHelp, DOCS_SHORTCUTS } from "./ShortcutHelp";
+import { AccessibilityPanel } from "./AccessibilityPanel";
+import { useVoiceTyping } from "@/lib/use-voice-typing";
+import { docToSlides } from "@/lib/doc-to-slides";
+import { appUrl } from "@/lib/subdomains";
 import { downloadDocx, docxFileToHtml } from "@/lib/docx-export";
 
 // ─── Track-changes marks ──────────────────────────────────────────────────────
@@ -90,14 +98,6 @@ type Doc = {
   pinned: boolean;
   createdAt: string;
   updatedAt: string;
-};
-
-type Comment = {
-  id: string;
-  text: string;
-  author: string;
-  createdAt: string;
-  resolved: boolean;
 };
 
 type SecurityLabel = "PUBLIC" | "INTERNAL" | "CONFIDENTIAL" | "RESTRICTED";
@@ -461,6 +461,8 @@ export function DocsView() {
   const [frReplace, setFrReplace] = useState("");
   const [frCase, setFrCase] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  // WCAG 2.1 AA checker — see src/lib/a11y-check.ts.
+  const [showA11y, setShowA11y] = useState(false);
   const [lineHeight, setLineHeight] = useState("1.5");
   const [showLineSpacing, setShowLineSpacing] = useState(false);
   const [showSymbols, setShowSymbols] = useState(false);
@@ -471,8 +473,6 @@ export function DocsView() {
   const [stats, setStats] = useState<DocStats>(() => computeStats(""));
 
   // Features
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [newComment, setNewComment] = useState("");
   const [securityLabel, setSecurityLabel] = useState<SecurityLabel>("INTERNAL");
   const [outline, setOutline] = useState<{ level: number; text: string }[]>([]);
 
@@ -490,6 +490,13 @@ export function DocsView() {
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { ydoc, collaborators } = useDocCollab(selectedId);
+
+  // Feeds the Recent views across Drive and the Docs home screen.
+  useRecordOpen("doc", selectedId);
+
+  // Save-conflict detection — autoSave writes the whole document, so without
+  // this a second editor's save silently destroys the first's work.
+  const saveConflict = useSaveConflict();
 
   // ── Editor ──────────────────────────────────────────────────────────────
   const editor = useEditor({
@@ -515,7 +522,17 @@ export function DocsView() {
     ],
     content: "",
     editorProps: {
-      attributes: { class: "docs-editor-content outline-none min-h-[600px]" },
+      attributes: {
+        class: "docs-editor-content outline-none min-h-[600px]",
+        // Native browser spell-checking — red squiggles, right-click
+        // corrections, the user's own dictionary and language. It was never
+        // switched on, so the editor had no spell check at all.
+        spellcheck: "true",
+        // Screen readers otherwise announce this as an unlabelled text box.
+        role: "textbox",
+        "aria-multiline": "true",
+        "aria-label": "Document body",
+      },
     },
     onCreate({ editor: ed }) {
       // Override dispatchTransaction on the ProseMirror view for suggest-mode interception
@@ -647,7 +664,9 @@ export function DocsView() {
   // ── Select doc ────────────────────────────────────────────────────────────
   const selectDoc = useCallback((doc: Doc) => {
     setSelectedId(doc.id);
-    setComments([]);
+    // Baseline for conflict detection — later saves are checked against the
+    // version we opened here.
+    saveConflict.setBase(doc.updatedAt);
     setPageSetup(loadPageSetup(doc.id));
     setHeaderFooter(loadHeaderFooter(doc.id));
 
@@ -670,7 +689,7 @@ export function DocsView() {
       if (nextContent) editor.commands.setContent(nextContent, { emitUpdate: false });
       else editor.commands.clearContent();
     }
-  }, [editor]);
+  }, [editor, saveConflict]);
 
   // ── Create doc ────────────────────────────────────────────────────────────
   const createDoc = async () => {
@@ -701,8 +720,11 @@ export function DocsView() {
       const res = await fetch(`/api/docs/${selectedId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify({ content, ...saveConflict.saveFields() }),
       });
+      // 409 means someone else saved since we loaded — surface it rather than
+      // letting this write clobber theirs.
+      if (await saveConflict.handleResponse(res)) return;
       if (!res.ok) {
         // Most commonly a 403 — a viewer-only collaborator's edits can't be
         // persisted. Without this, the editor looks like it saved (spinner
@@ -716,7 +738,7 @@ export function DocsView() {
         localStorage.setItem(docsDraftKey(selectedId), JSON.stringify({ title, content }));
       } catch { /* ignore */ }
     } finally { setSaving(false); }
-  }, [selectedId, title]);
+  }, [selectedId, title, saveConflict]);
 
   const saveTitle = async (t: string) => {
     if (!selectedId) return;
@@ -763,18 +785,51 @@ export function DocsView() {
   // were per-browser, invisible to collaborators and lost on a cache clear.
 
   // ── Comments ──────────────────────────────────────────────────────────────
-  const addComment = () => {
-    if (!newComment.trim()) return;
-    const c: Comment = {
-      id: `c_${Date.now()}`,
-      text: newComment,
-      author: "You",
-      createdAt: new Date().toISOString(),
-      resolved: false,
-    };
-    setComments(prev => [...prev, c]);
-    setNewComment("");
-  };
+  // Threads live in the DocComment table and are rendered by <DocComments>.
+  // These helpers translate between that panel's opaque `anchor` and Tiptap's
+  // character positions, so a comment can be pinned to a text range.
+
+  /** Anchor for a NEW comment: the current selection, or null when collapsed. */
+  const commentAnchor = (() => {
+    if (!editor) return null;
+    const { from, to } = editor.state.selection;
+    return from === to ? null : { from, to };
+  })();
+
+  /** Selected text, truncated — shown above the composer. */
+  const commentAnchorLabel = (() => {
+    if (!editor || !commentAnchor) return undefined;
+    const text = editor.state.doc.textBetween(commentAnchor.from, commentAnchor.to, " ").trim();
+    if (!text) return undefined;
+    return text.length > 40 ? `"${text.slice(0, 40)}…"` : `"${text}"`;
+  })();
+
+  /** Chip label for an existing thread's anchor. */
+  const describeDocAnchor = useCallback((anchor: unknown): string | null => {
+    if (!editor || !anchor || typeof anchor !== "object") return null;
+    const range = anchor as { from?: number; to?: number };
+    if (typeof range.from !== "number" || typeof range.to !== "number") return null;
+    // The doc may have shrunk since the comment was written — an out-of-range
+    // anchor would throw inside textBetween.
+    const max = editor.state.doc.content.size;
+    if (range.from >= max || range.to > max) return "(text removed)";
+    const text = editor.state.doc.textBetween(range.from, range.to, " ").trim();
+    if (!text) return "(text removed)";
+    return text.length > 24 ? `${text.slice(0, 24)}…` : text;
+  }, [editor]);
+
+  /** Clicking a thread's chip scrolls to and selects the commented text. */
+  const jumpToDocAnchor = useCallback((anchor: unknown) => {
+    if (!editor || !anchor || typeof anchor !== "object") return;
+    const range = anchor as { from?: number; to?: number };
+    if (typeof range.from !== "number" || typeof range.to !== "number") return;
+    const max = editor.state.doc.content.size;
+    if (range.from >= max || range.to > max) {
+      toast.info("That text has since been deleted");
+      return;
+    }
+    editor.chain().focus().setTextSelection({ from: range.from, to: range.to }).scrollIntoView().run();
+  }, [editor]);
 
   // ── Export ────────────────────────────────────────────────────────────────
   const exportHTML = () => {
@@ -794,6 +849,56 @@ table{border-collapse:collapse;width:100%}td,th{border:1px solid #e7e6e1;padding
     if (!editor) return;
     const blob = new Blob([editor.getText()], { type: "text/plain" });
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `${title}.txt`; a.click();
+  };
+
+  // ── Cross-app: turn this document into a presentation ─────────────────────
+  // Each top-level heading becomes a slide; prose too long for a slide is kept
+  // as speaker notes rather than dropped. See src/lib/doc-to-slides.ts.
+  const convertToSlides = async () => {
+    if (!editor) return;
+    const generated = docToSlides(editor.getHTML(), title || "Untitled");
+    if (generated.length <= 1) {
+      toast.error("Add some headings or content first");
+      return;
+    }
+    const toastId = toast.loading("Building presentation…");
+    try {
+      const created = await fetch("/api/slides", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: title || "Untitled" }),
+      });
+      if (!created.ok) throw new Error();
+      const { id } = await created.json() as { id: string };
+
+      const slides = generated.map((slide, i) => ({
+        id: `s_${Date.now()}_${i}`,
+        background: "#ffffff",
+        elements: slide.elements.map((el, j) => ({
+          ...el,
+          id: `el_${Date.now()}_${i}_${j}`,
+          zIndex: j + 1,
+        })),
+        notes: slide.notes,
+        transition: "fade" as const,
+      }));
+
+      const saved = await fetch(`/api/slides/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: title || "Untitled",
+          content: JSON.stringify({ slides, themeId: "default" }),
+        }),
+      });
+      if (!saved.ok) throw new Error();
+
+      toast.success(`Created a ${generated.length}-slide deck`, { id: toastId });
+      // Slides live on the docs subdomain; a plain push can't cross origins.
+      window.location.href = appUrl(`/apps/slides/${id}`);
+    } catch {
+      toast.error("Could not create the presentation", { id: toastId });
+    }
   };
 
   // ── Word (.docx) ──────────────────────────────────────────────────────────
@@ -984,7 +1089,17 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
   // Estimated page count from content height vs page height (best-effort).
   const estimatedPages = Math.max(1, Math.ceil((wordCount * 6.2) / Math.max(1, (paperH - marginPx.v * 2))) || 1);
 
-  const rightPanelOpen = showAI || showComments || showHistory || showSuggestions;
+  const rightPanelOpen = showAI || showComments || showHistory || showSuggestions || showA11y;
+
+  // ── Voice typing ──────────────────────────────────────────────────────────
+  // Inserts dictated text at the cursor. Primarily an accessibility feature:
+  // it is how users with motor impairments or RSI author documents at all.
+  const voice = useVoiceTyping({
+    onText: (text) => {
+      if (!editor) return;
+      editor.chain().focus().insertContent(text).run();
+    },
+  });
 
   // Count matches in the document's visible text (for the Find dialog).
   const frCount = (() => {
@@ -1061,7 +1176,67 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div className="flex h-screen bg-surface overflow-hidden text-foreground" onClick={closeMenus}>
+    <div className="relative flex h-[calc(100vh-7.25rem)] lg:h-full bg-surface overflow-hidden text-foreground" onClick={closeMenus}>
+
+      <ShortcutHelp groups={DOCS_SHORTCUTS} />
+
+      {/* Live dictation indicator — voice typing gives no feedback otherwise,
+          so users can't tell whether it heard them. */}
+      {voice.listening && (
+        <div
+          className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5
+                     px-4 py-2 rounded-full bg-surface border border-border shadow-pop max-w-[80vw]"
+          role="status"
+          aria-live="polite"
+        >
+          <span className="relative flex h-2 w-2 flex-shrink-0">
+            <span className="absolute inline-flex h-full w-full rounded-full bg-crit opacity-75 animate-ping" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-crit" />
+          </span>
+          <span className="text-xs text-foreground truncate">
+            {voice.interim || "Listening… say \u201cnew paragraph\u201d or \u201cfull stop\u201d"}
+          </span>
+          <button
+            onClick={() => voice.stop()}
+            className="text-[11px] font-semibold text-muted hover:text-foreground transition-colors flex-shrink-0"
+          >
+            Stop
+          </button>
+        </div>
+      )}
+      {voice.error && (
+        <div
+          className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full
+                     bg-crit-soft border border-crit/30 text-xs text-crit"
+          role="alert"
+        >
+          {voice.error}
+        </div>
+      )}
+
+      {/* Save conflict — someone else saved while this tab had the doc open */}
+      <ConflictBanner
+        conflict={saveConflict.conflict}
+        onReload={() => {
+          const server = saveConflict.conflict;
+          if (!server?.serverContent || !editor) { window.location.reload(); return; }
+          try {
+            editor.commands.setContent(JSON.parse(server.serverContent) as object, { emitUpdate: false });
+          } catch {
+            editor.commands.setContent(server.serverContent, { emitUpdate: false });
+          }
+          if (server.serverTitle) setTitle(server.serverTitle);
+          saveConflict.setBase(server.serverUpdatedAt);
+          saveConflict.dismiss();
+          toast.success("Loaded their version");
+        }}
+        onOverwrite={() => {
+          saveConflict.overwrite();
+          // Re-run the save immediately with force set.
+          if (editor) void autoSave(editor.getHTML());
+          toast.success("Your version will be saved");
+        }}
+      />
 
       {/* ── Doc list sidebar ── */}
       <aside className="w-64 flex flex-col border-r border-border bg-surface overflow-hidden flex-shrink-0">
@@ -1231,6 +1406,28 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
               {/* Document stats */}
               <div className="relative" onClick={e => e.stopPropagation()}>
                 <IconBtn icon={<BarChart3 className="h-4 w-4" />} title="Word count & stats" active={showStats} onClick={() => { const open = !showStats; setShowStats(open); setShowPageSetupMenu(false); if (open) refreshStats(); }} />
+                {/* Voice typing — hidden entirely when the browser has no
+                    SpeechRecognition (Firefox), rather than offering a button
+                    that silently does nothing. */}
+                {voice.supported && (
+                  <IconBtn
+                    icon={<Mic className="h-4 w-4" />}
+                    title={voice.listening ? "Stop voice typing" : "Voice typing"}
+                    active={voice.listening}
+                    activeClass="text-crit bg-crit-soft"
+                    onClick={() => voice.toggle()}
+                  />
+                )}
+                <IconBtn
+                  icon={<Accessibility className="h-4 w-4" />}
+                  title="Accessibility checker"
+                  active={showA11y}
+                  onClick={() => {
+                    setShowA11y(v => !v);
+                    setShowAI(false); setShowComments(false);
+                    setShowHistory(false); setShowSuggestions(false);
+                  }}
+                />
                 {showStats && (
                   <div className="absolute right-0 top-full mt-1 w-60 bg-surface border border-border rounded-lg shadow-lg z-50 p-3">
                     <div className="flex items-center gap-2 mb-2">
@@ -1303,6 +1500,8 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
                     <MenuItm onClick={() => { printDoc(); setShowExportMenu(false); }}>Print / Save as PDF</MenuItm>
                     <MenuItm onClick={() => { exportHTML(); setShowExportMenu(false); }}>Web page (.html)</MenuItm>
                     <MenuItm onClick={() => { exportText(); setShowExportMenu(false); }}>Plain text (.txt)</MenuItm>
+                    <div className="my-1 h-px bg-border-soft" />
+                    <MenuItm onClick={() => { void convertToSlides(); setShowExportMenu(false); }}>Convert to presentation</MenuItm>
                     <div className="my-1 h-px bg-border-soft" />
                     <label className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-foreground hover:bg-hover cursor-pointer transition-colors">
                       Import Word (.docx)…
@@ -1437,7 +1636,19 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
                 if (!f) return;
                 if (f.size > 5 * 1024 * 1024) { toast.error("Image too large (max 5MB)"); return; }
                 const reader = new FileReader();
-                reader.onload = () => (editor?.chain().focus() as unknown as { setImage?: (o: { src: string }) => { run: () => boolean } })?.setImage?.({ src: String(reader.result) })?.run?.();
+                reader.onload = () => {
+                  // Alt text is prompted at insert time, not left to be added
+                  // later — WCAG 1.1.1, and the accessibility checker flags
+                  // every image that lacks it. Empty means "decorative", which
+                  // is a valid answer the checker accepts.
+                  const alt = window.prompt(
+                    "Describe this image for screen readers (leave blank if purely decorative):",
+                    "",
+                  );
+                  (editor?.chain().focus() as unknown as {
+                    setImage?: (o: { src: string; alt?: string }) => { run: () => boolean };
+                  })?.setImage?.({ src: String(reader.result), alt: alt ?? "" })?.run?.();
+                };
                 reader.readAsDataURL(f);
                 e.currentTarget.value = "";
               }} />
@@ -1598,39 +1809,27 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
                 )}
 
                 {/* Comments Panel */}
-                {showComments && (
-                  <div className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col">
-                    <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 space-y-3">
-                      {comments.length === 0 ? (
-                        <div className="text-center py-8">
-                          <MessageSquare className="h-8 w-8 mx-auto mb-2 text-subtle" />
-                          <p className="text-xs text-subtle">No comments yet</p>
-                        </div>
-                      ) : comments.map(c => (
-                        <div key={c.id} className={`rounded-lg border p-3 space-y-2 ${c.resolved ? "opacity-50" : "bg-surface"} border-border`}>
-                          <div className="flex items-center gap-2">
-                            <div className="h-5 w-5 rounded-full bg-accent text-accent-foreground text-[9px] flex items-center justify-center font-bold">{c.author[0]}</div>
-                            <span className="text-xs font-medium text-foreground">{c.author}</span>
-                            <span className="text-[10px] text-subtle ml-auto">{formatDistanceToNow(new Date(c.createdAt), { addSuffix: true })}</span>
-                          </div>
-                          <p className="text-xs text-muted">{c.text}</p>
-                          {!c.resolved && (
-                            <button onClick={() => setComments(prev => prev.map(x => x.id === c.id ? { ...x, resolved: true } : x))}
-                              className="text-[11px] text-ok font-medium hover:underline">
-                              ✓ Resolve
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                    <div className="border-t border-border p-3 space-y-2">
-                      <textarea className="w-full px-3 py-2 text-xs bg-surface-sunken border border-border-strong rounded-lg resize-none focus:outline-none focus:border-accent/60"
-                        rows={2} placeholder="Add comment (Enter to post)…" value={newComment}
-                        onChange={e => setNewComment(e.target.value)}
-                        onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); addComment(); } }} />
-                      <button onClick={addComment} className="w-full py-1.5 text-xs font-semibold bg-accent text-accent-foreground rounded-lg hover:bg-accent-hover">Post comment</button>
-                    </div>
-                  </div>
+                {/* Comments — server-persisted threads (DocComment table),
+                    shared with Sheets and Slides. Replaces the old local
+                    useState list, which was lost on refresh and always
+                    attributed to "You". */}
+                {/* Accessibility checker (WCAG 2.1 AA) */}
+                {showA11y && editor && (
+                  <AccessibilityPanel
+                    html={editor.getHTML()}
+                    onClose={() => setShowA11y(false)}
+                  />
+                )}
+
+                {showComments && selectedId && (
+                  <DocComments
+                    docId={selectedId}
+                    onClose={() => setShowComments(false)}
+                    currentAnchor={commentAnchor}
+                    anchorLabel={commentAnchorLabel}
+                    describeAnchor={describeDocAnchor}
+                    onJumpToAnchor={jumpToDocAnchor}
+                  />
                 )}
 
                 {/* Suggestions Panel */}

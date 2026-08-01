@@ -128,7 +128,10 @@ export function SidebarLayout({
    * outer panel, or the cards end up nested inside a card and read as flat regions.
    * Single-surface pages keep the shell panel.
    */
-  const panedView = /^\/(inbox|chat|drive)(\/|$)/.test(pathname);
+  // `docs` belongs here too: DocsView renders its own list sidebar + editor +
+  // right-hand panels, each scrolling independently, exactly like drive. It was
+  // missing from this list, so the shell wrapped it in a panel AND clipped it.
+  const panedView = /^\/(inbox|chat|drive|docs)(\/|$)/.test(pathname);
 
   return (
     <div className="min-h-screen bg-canvas">
@@ -314,12 +317,25 @@ export function SidebarLayout({
             showRail ? "lg:pl-[438px]" : "lg:pl-[216px]"
           }`}
         >
+          {/* Scroll ownership.
+              The panel is a fixed-height box, so SOMETHING has to scroll or tall
+              content is silently clipped with no scrollbar — which is exactly
+              what happened on ~30 single-surface pages (settings, users, people,
+              teams, billing, compliance, admin/*, apps/*): they render a long
+              list straight into the panel and the overflow was unreachable.
+
+              Paned views (inbox, chat, drive) own their internal scrolling —
+              each pane scrolls independently — so they must keep
+              `overflow-hidden`, otherwise the whole three-pane layout scrolls as
+              one block and the column headers slide away.
+
+              Hence: hidden for paned views, auto for everything else. */}
           <div
             key={pathname}
-            className={`nexpage h-full min-h-[calc(100vh-116px)] lg:h-[calc(100vh-64px)] lg:min-h-[calc(100vh-64px)] overflow-hidden ${
+            className={`nexpage h-full min-h-[calc(100vh-116px)] lg:h-[calc(100vh-64px)] lg:min-h-[calc(100vh-64px)] ${
               panedView
-                ? "bg-surface lg:bg-transparent"
-                : "bg-surface lg:rounded-panel lg:border lg:border-border lg:shadow-panel"
+                ? "overflow-hidden bg-surface lg:bg-transparent"
+                : "overflow-y-auto overflow-x-hidden bg-surface lg:rounded-panel lg:border lg:border-border lg:shadow-panel"
             }`}
           >
             {children}

@@ -405,6 +405,12 @@ function RichEditor({ value, onChange, placeholder }: {
         ref={ref}
         contentEditable
         suppressContentEditableWarning
+        // Native browser spell-checking: red squiggles, right-click
+        // corrections, the user's own dictionary. Never enabled before.
+        spellCheck
+        role="textbox"
+        aria-multiline="true"
+        aria-label="Note body"
         data-placeholder={placeholder ?? "Start writing…"}
         className="flex-1 overflow-y-auto w-full max-w-[680px] mx-auto px-6 py-4 pb-16 text-[15px] text-foreground focus:outline-none notes-editor"
         style={{ lineHeight: 1.8 }}

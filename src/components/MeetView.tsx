@@ -602,7 +602,7 @@ export function MeetView({
         />
       )}
 
-      <div className="flex h-[calc(100vh-116px)] lg:h-full bg-surface">
+      <div className="flex h-[calc(100vh-7.25rem)] lg:h-full bg-surface">
         {/* Sidebar — full width on mobile when no meeting selected */}
         <div className={`${selectedId ? "hidden lg:flex" : "flex"} w-full lg:w-72 flex-col border-r border-border bg-surface`}>
           <div className="px-4 py-4 border-b border-border">

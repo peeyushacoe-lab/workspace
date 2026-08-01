@@ -2,6 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+// Drive lives on drive.cybersage.uk; the office editors live on
+// docs.cybersage.uk. router.push() cannot cross origins, so opening a native
+// doc/sheet/slide has to go through appNavigate.
+import { useAppNavigate } from "@/components/AppLink";
 import {
   File,
   FileText,
@@ -688,6 +692,7 @@ function FileDetailPanel({
 
 export function DriveView({ currentUserId }: { currentUserId: string }) {
   const router = useRouter();
+  const appNavigate = useAppNavigate();
   const [showSidebar, setShowSidebar] = useState(false);
   const [section, setSection] = useState<SidebarSection>("my-drive");
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
@@ -791,17 +796,39 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
           size: Number(f.size),
         }));
       } else if (section === "recent") {
-        const fileRes = await fetch(`/api/drive/files?all=true`);
-        if (fileRes.ok) {
-          const all = (await fileRes.json() as DriveFile[]).map((f) => ({
-            ...f,
-            size: Number(f.size),
-          }));
-          filesData = all
-            .filter((f) => !f.isTrashed)
-            .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-            .slice(0, 50);
+        // Ordered by when YOU last opened each item, not by when it was last
+        // modified. Sorting by updatedAt (the old behaviour) meant a colleague
+        // editing a shared file pushed it to the top of your Recent list even
+        // if you'd never opened it — the opposite of what Recent means.
+        const [fileRes, recentRes] = await Promise.all([
+          fetch(`/api/drive/files?all=true`),
+          fetch(`/api/recent?limit=50`),
+        ]);
+
+        const all = fileRes.ok
+          ? (await fileRes.json() as DriveFile[])
+              .map((f) => ({ ...f, size: Number(f.size) }))
+              .filter((f) => !f.isTrashed)
+          : [];
+
+        let openedAt = new Map<string, number>();
+        if (recentRes.ok) {
+          const recent = await recentRes.json() as { id: string; lastOpenedAt: string }[];
+          openedAt = new Map(recent.map((r) => [r.id, new Date(r.lastOpenedAt).getTime()]));
         }
+
+        filesData = all
+          // Items you've actually opened first, in open order; anything with no
+          // open record falls back to modified time beneath them.
+          .sort((a, b) => {
+            const ao = openedAt.get(a.id);
+            const bo = openedAt.get(b.id);
+            if (ao !== undefined && bo !== undefined) return bo - ao;
+            if (ao !== undefined) return -1;
+            if (bo !== undefined) return 1;
+            return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+          })
+          .slice(0, 50);
       } else if (section === "shared") {
         // Files shared with current user via DrivePermission
         const fileRes = await fetch(`/api/drive/files/shared`);
@@ -1040,7 +1067,11 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
 
   const handlePreview = (file: DriveFile) => {
     // Native docs/sheets/slides open in their editor, not the file preview.
-    if (file.href) { router.push(file.href); return; }
+    // appNavigate, not router.push: Drive lives on drive.cybersage.uk while the
+    // editors live on docs.cybersage.uk, and router.push() cannot change origin
+    // — it would try to render /apps/sheets/<id> on the Drive subdomain, which
+    // rewrites to /drive/apps/sheets/<id> and 404s.
+    if (file.href) { appNavigate(file.href); return; }
     setPreviewFile(file);
   };
 

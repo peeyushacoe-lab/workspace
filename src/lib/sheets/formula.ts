@@ -152,10 +152,123 @@ function splitArgs(s: string): string[] {
 
 // ─── Function evaluator ────────────────────────────────────────────────────
 
+/** A complete A1:B2-style range, anchored so a nested call can't match it. */
+const RANGE_RE = /^\$?[A-Za-z]+\$?\d+:\$?[A-Za-z]+\$?\d+$/;
+
+// ─── Lambda scope ─────────────────────────────────────────────────────────────
+// LET and the LAMBDA-taking functions (MAP/REDUCE/SCAN) need variable binding,
+// which a purely string-rewriting evaluator has no way to express.
+//
+// A module-level stack rather than threading a scope parameter through every
+// call site: `evalE`, `evalBinOps` and `evalFn` call each other recursively in
+// a dozen places, and adding an optional parameter to all of them would be a
+// far larger change for the same result. The stack is push/pop-balanced in
+// `finally` blocks so a thrown error can't leak a binding into the next cell.
+//
+// Not re-entrant across concurrent evaluations — which is fine: evaluation is
+// synchronous and single-threaded in both the browser grid and the API route.
+
+const scopeStack: Record<string, CellValue>[] = [];
+
+/** Innermost binding for a name, or undefined when it isn't a variable. */
+function lookupVar(name: string): CellValue | undefined {
+  for (let i = scopeStack.length - 1; i >= 0; i--) {
+    const frame = scopeStack[i];
+    if (name in frame) return frame[name];
+  }
+  return undefined;
+}
+
+/** Runs `fn` with `bindings` in scope, always popping the frame afterwards. */
+function withScope<T>(bindings: Record<string, CellValue>, fn: () => T): T {
+  scopeStack.push(bindings);
+  try { return fn(); } finally { scopeStack.pop(); }
+}
+
+/** Guards against a self-referential LAMBDA recursing forever. */
+const MAX_SCOPE_DEPTH = 64;
+
+type Lambda = { params: string[]; body: string };
+
+/**
+ * Parses a raw `LAMBDA(a, b, body)` argument.
+ * Returns null when the text isn't a lambda, so callers can report a clear
+ * error rather than silently doing nothing.
+ */
+function parseLambda(raw: string): Lambda | null {
+  const m = raw.trim().match(/^LAMBDA\s*\(([\s\S]*)\)$/i);
+  if (!m) return null;
+  const parts = splitArgs(m[1]);
+  if (parts.length < 2) return null;
+  const params = parts.slice(0, -1).map(p => p.trim());
+  // Every parameter must be a plain identifier; anything else means the text
+  // was a call that merely looks like a lambda.
+  if (!params.every(p => /^[A-Za-z_][A-Za-z0-9_]*$/.test(p))) return null;
+  return { params, body: parts[parts.length - 1] };
+}
+
+/**
+ * Splits `LAMBDA(...)(args)` into its two bracket groups.
+ *
+ * A regex can't do this: the lambda body contains its own parentheses, and
+ * `/LAMBDA\((.*)\)\((.*)\)/` would split at the wrong pair for anything like
+ * `LAMBDA(x, SUM(x, 1))(2)`. Counting depth is the only correct approach.
+ * Returns null when the text isn't an immediate invocation.
+ */
+function findLambdaCallSplit(expr: string): { lambdaText: string; argsText: string } | null {
+  const open = expr.indexOf("(");
+  if (open === -1) return null;
+  let depth = 0;
+  let inString = false;
+  for (let i = open; i < expr.length; i++) {
+    const ch = expr[i];
+    if (ch === '"') { inString = !inString; continue; }
+    if (inString) continue;
+    if (ch === "(") depth++;
+    else if (ch === ")") {
+      depth--;
+      if (depth === 0) {
+        // Close of the LAMBDA(...) group; an invocation must follow immediately.
+        const rest = expr.slice(i + 1).trim();
+        if (!rest.startsWith("(") || !rest.endsWith(")")) return null;
+        return {
+          lambdaText: expr.slice(0, i + 1),
+          argsText: rest.slice(1, -1),
+        };
+      }
+    }
+  }
+  return null;
+}
+
+/** Applies a parsed lambda to arguments. */
+function applyLambda(fn: Lambda, args: CellValue[], g: CellGetter): CellValue {
+  if (scopeStack.length >= MAX_SCOPE_DEPTH) return "#NUM!";
+  const bindings: Record<string, CellValue> = {};
+  fn.params.forEach((p, i) => { bindings[p] = args[i] ?? null; });
+  return withScope(bindings, () => asVal(evalE(fn.body, g)));
+}
+
 function evalFn(name: string, rawArgs: string[], g: CellGetter): CellValue | SpillResult {
   const fn = name.toUpperCase();
   const e = (a: string): CellValue => asVal(evalE(a, g));
-  const getVals = (a: string): CellValue[] => a.includes(":") ? getRangeVals(a.trim(), g) : [e(a)];
+  /**
+   * Values for one argument, whether it's a range, a scalar, or a nested call
+   * that returns an array.
+   *
+   * The previous test was `a.includes(":")`, which mistook any expression
+   * merely *containing* a range for a range itself — so `SUM(SORT(A1:A3))`,
+   * `SUM(UNIQUE(...))` and `SUM(MAP(...))` all tried to parse the whole call
+   * as `A1:A3`-style text, failed, and silently returned 0. Match the full
+   * range form instead, and flatten spilled arrays from nested calls.
+   */
+  const getVals = (a: string): CellValue[] => {
+    const trimmed = a.trim();
+    if (RANGE_RE.test(trimmed)) return getRangeVals(trimmed, g);
+    const out = evalE(trimmed, g);
+    if (isSpill(out)) return out.values.flat();
+    return [out];
+  };
   const nums = (a: string) => getVals(a).map(toN);
   const allNums = (args: string[]) => args.flatMap(a => nums(a));
 
@@ -626,6 +739,379 @@ function evalFn(name: string, rawArgs: string[], g: CellGetter): CellValue | Spi
       return e(rawArgs[0]);
     }
 
+    // ── Logical constants ────────────────────────────────────────────────
+    case "TRUE": return true;
+    case "FALSE": return false;
+
+    // ── Lambda family ─────────────────────────────────────────────────────
+    // Excel/Sheets semantics. See § Lambda scope for why binding works this way.
+    case "LET": {
+      // LET(name1, value1, [name2, value2, …], calculation)
+      // Bindings are sequential: a later value may reference an earlier name.
+      if (rawArgs.length < 3 || rawArgs.length % 2 === 0) return "#VALUE!";
+      const bindings: Record<string, CellValue> = {};
+      // One frame, mutated as we go, so `LET(a,1,b,a+1,b)` resolves `a` while
+      // computing `b`.
+      return withScope(bindings, () => {
+        for (let i = 0; i + 1 < rawArgs.length - 1; i += 2) {
+          const varName = rawArgs[i].trim();
+          if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(varName)) return "#NAME?";
+          bindings[varName] = asVal(evalE(rawArgs[i + 1], g));
+        }
+        return asVal(evalE(rawArgs[rawArgs.length - 1], g));
+      });
+    }
+
+    case "LAMBDA": {
+      // A bare LAMBDA isn't a value — it has to be applied. Excel reports
+      // #CALC! here; this engine has no such literal, so #VALUE! stands in.
+      // Applied forms are handled by MAP / REDUCE / SCAN, and by the
+      // `LAMBDA(...)(args)` immediate-invocation path in evalE.
+      return "#VALUE!";
+    }
+
+    case "MAP": {
+      // MAP(array, LAMBDA(x, …)) — applies the lambda to every element.
+      if (rawArgs.length < 2) return "#VALUE!";
+      const fn = parseLambda(rawArgs[rawArgs.length - 1]);
+      if (!fn) return "#VALUE!";
+      const arrays = rawArgs.slice(0, -1).map(a => getVals(a));
+      const len = Math.max(...arrays.map(a => a.length));
+      const out: CellValue[][] = [];
+      for (let i = 0; i < len; i++) {
+        out.push([applyLambda(fn, arrays.map(a => a[i] ?? null), g)]);
+      }
+      return out.length === 1 ? out[0][0] : spill(out);
+    }
+
+    case "REDUCE": {
+      // REDUCE(initial, array, LAMBDA(acc, value, …)) — folds to a single value.
+      if (rawArgs.length < 3) return "#VALUE!";
+      const fn = parseLambda(rawArgs[2]);
+      if (!fn) return "#VALUE!";
+      let acc = asVal(evalE(rawArgs[0], g));
+      for (const v of getVals(rawArgs[1])) {
+        acc = applyLambda(fn, [acc, v], g);
+        // Stop at the first error rather than folding it through every element.
+        if (typeof acc === "string" && acc.startsWith("#")) return acc;
+      }
+      return acc;
+    }
+
+    case "SCAN": {
+      // SCAN(initial, array, LAMBDA(acc, value, …)) — like REDUCE but emits
+      // every intermediate accumulator, e.g. a running total.
+      if (rawArgs.length < 3) return "#VALUE!";
+      const fn = parseLambda(rawArgs[2]);
+      if (!fn) return "#VALUE!";
+      let acc = asVal(evalE(rawArgs[0], g));
+      const out: CellValue[][] = [];
+      for (const v of getVals(rawArgs[1])) {
+        acc = applyLambda(fn, [acc, v], g);
+        out.push([acc]);
+        if (typeof acc === "string" && acc.startsWith("#")) break;
+      }
+      return out.length === 1 ? out[0][0] : spill(out);
+    }
+
+    // ── Statistical ───────────────────────────────────────────────────────
+    case "AVERAGEIFS": {
+      // AVERAGEIFS(avg_range, crit_range1, crit1, [crit_range2, crit2], …)
+      if (rawArgs.length < 3) return "#VALUE!";
+      const avgR = getRangeVals(rawArgs[0], g);
+      let total = 0, count = 0;
+      outer: for (let i = 0; i < avgR.length; i++) {
+        for (let p = 1; p < rawArgs.length; p += 2) {
+          const cr = getRangeVals(rawArgs[p], g);
+          if (!matchCrit(cr[i] ?? null, e(rawArgs[p + 1]))) continue outer;
+        }
+        total += toN(avgR[i]); count++;
+      }
+      return count ? total / count : "#DIV/0!";
+    }
+    case "PERCENTILE": {
+      // Linear interpolation between closest ranks — matches Excel's PERCENTILE.INC.
+      const vals = nums(rawArgs[0]).filter(n => !isNaN(n)).sort((a, b) => a - b);
+      const k = toN(e(rawArgs[1]));
+      if (!vals.length || k < 0 || k > 1) return "#NUM!";
+      const pos = (vals.length - 1) * k;
+      const lo = Math.floor(pos), hi = Math.ceil(pos);
+      return lo === hi ? vals[lo] : vals[lo] + (pos - lo) * (vals[hi] - vals[lo]);
+    }
+    case "QUARTILE": {
+      const vals = nums(rawArgs[0]).filter(n => !isNaN(n)).sort((a, b) => a - b);
+      const q = toN(e(rawArgs[1]));
+      if (!vals.length || q < 0 || q > 4) return "#NUM!";
+      const pos = (vals.length - 1) * (q / 4);
+      const lo = Math.floor(pos), hi = Math.ceil(pos);
+      return lo === hi ? vals[lo] : vals[lo] + (pos - lo) * (vals[hi] - vals[lo]);
+    }
+
+    // ── Lookup ────────────────────────────────────────────────────────────
+    case "LOOKUP": {
+      // Vector form: LOOKUP(value, lookup_vector, [result_vector]).
+      // Returns the LAST value not greater than the search key (assumes the
+      // vector is sorted ascending, as Excel documents).
+      const key = e(rawArgs[0]);
+      const lookup = getVals(rawArgs[1]);
+      const result = rawArgs[2] ? getVals(rawArgs[2]) : lookup;
+      let found = -1;
+      for (let i = 0; i < lookup.length; i++) {
+        const v = lookup[i];
+        if (v === null || v === "") continue;
+        const cmp = typeof key === "number" ? toN(v) <= toN(key) : toStr(v) <= toStr(key);
+        if (cmp) found = i; else break;
+      }
+      return found === -1 ? "#N/A" : (result[found] ?? "#N/A");
+    }
+    case "XMATCH": {
+      // XMATCH(value, array, [match_mode]) — 0 exact (default), -1 exact or
+      // next smaller, 1 exact or next larger.
+      const key = e(rawArgs[0]);
+      const arr = getVals(rawArgs[1]);
+      const mode = rawArgs[2] ? toN(e(rawArgs[2])) : 0;
+      let best = -1;
+      for (let i = 0; i < arr.length; i++) {
+        const v = arr[i];
+        if (toStr(v).toLowerCase() === toStr(key).toLowerCase()) return i + 1;
+        if (mode === -1 && toN(v) <= toN(key)) { if (best === -1 || toN(v) > toN(arr[best])) best = i; }
+        if (mode === 1  && toN(v) >= toN(key)) { if (best === -1 || toN(v) < toN(arr[best])) best = i; }
+      }
+      return best === -1 ? "#N/A" : best + 1;
+    }
+
+    // ── Date / time ───────────────────────────────────────────────────────
+    case "SECOND": return new Date(toStr(e(rawArgs[0]))).getSeconds();
+    case "WORKDAY": {
+      // WORKDAY(start, days) — skips weekends. Holiday lists aren't supported;
+      // NETWORKDAYS has the same limitation, so the pair stays consistent.
+      const d = new Date(toStr(e(rawArgs[0])));
+      let remaining = Math.trunc(toN(e(rawArgs[1])));
+      const step = remaining >= 0 ? 1 : -1;
+      while (remaining !== 0) {
+        d.setDate(d.getDate() + step);
+        if (d.getDay() !== 0 && d.getDay() !== 6) remaining -= step;
+      }
+      return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`;
+    }
+
+    // ── Financial ─────────────────────────────────────────────────────────
+    case "IRR": {
+      // Newton-Raphson, falling back to bisection. Excel's own IRR is also
+      // iterative and can fail to converge — mirror that with #NUM!.
+      const flows = nums(rawArgs[0]);
+      if (flows.length < 2) return "#NUM!";
+      const npvAt = (r: number) => flows.reduce((s, cf, i) => s + cf / Math.pow(1 + r, i), 0);
+      let rate = rawArgs[1] ? toN(e(rawArgs[1])) : 0.1;
+      for (let i = 0; i < 100; i++) {
+        const f = npvAt(rate);
+        if (Math.abs(f) < 1e-9) return rate;
+        const dfdr = (npvAt(rate + 1e-6) - f) / 1e-6;
+        if (!isFinite(dfdr) || dfdr === 0) break;
+        const next = rate - f / dfdr;
+        if (!isFinite(next)) break;
+        if (Math.abs(next - rate) < 1e-10) return next;
+        rate = next;
+      }
+      let lo = -0.9999, hi = 10;
+      if (npvAt(lo) * npvAt(hi) > 0) return "#NUM!";
+      for (let i = 0; i < 200; i++) {
+        const mid = (lo + hi) / 2;
+        if (npvAt(lo) * npvAt(mid) <= 0) hi = mid; else lo = mid;
+      }
+      return (lo + hi) / 2;
+    }
+    case "IPMT": case "PPMT": {
+      // Interest / principal portion of the payment in period `per`.
+      const [rate, per, nper, pv] = rawArgs.slice(0, 4).map(a => toN(e(a)));
+      const fv = rawArgs[4] ? toN(e(rawArgs[4])) : 0;
+      const type = rawArgs[5] ? toN(e(rawArgs[5])) : 0;
+      if (per < 1 || per > nper) return "#NUM!";
+      const pmt = rate === 0
+        ? -(pv + fv) / nper
+        : -(pv * Math.pow(1 + rate, nper) + fv) * rate /
+          ((Math.pow(1 + rate, nper) - 1) * (1 + rate * type));
+      // Balance carried into this period.
+      let balance = pv;
+      for (let i = 1; i < per; i++) {
+        const interest = rate === 0 ? 0 : balance * rate;
+        balance += interest + pmt;
+      }
+      const ipmt = rate === 0 ? 0 : -(balance * rate);
+      return fn === "IPMT" ? ipmt : pmt - ipmt;
+    }
+    case "SLN": {
+      const [cost, salvage, life] = rawArgs.slice(0, 3).map(a => toN(e(a)));
+      return life === 0 ? "#DIV/0!" : (cost - salvage) / life;
+    }
+    case "DB": {
+      // Fixed-declining-balance depreciation.
+      const [cost, salvage, life, period] = rawArgs.slice(0, 4).map(a => toN(e(a)));
+      const month = rawArgs[4] ? toN(e(rawArgs[4])) : 12;
+      if (cost === 0 || life === 0) return "#NUM!";
+      const rate = Number((1 - Math.pow(salvage / cost, 1 / life)).toFixed(3));
+      let total = 0, dep = 0;
+      for (let p = 1; p <= period; p++) {
+        if (p === 1) dep = cost * rate * month / 12;
+        else if (p === life + 1) dep = (cost - total) * rate * (12 - month) / 12;
+        else dep = (cost - total) * rate;
+        total += dep;
+      }
+      return dep;
+    }
+    case "DDB": {
+      // Double-declining balance, never depreciating below salvage.
+      const [cost, salvage, life, period] = rawArgs.slice(0, 4).map(a => toN(e(a)));
+      const factor = rawArgs[4] ? toN(e(rawArgs[4])) : 2;
+      if (life === 0) return "#NUM!";
+      let total = 0, dep = 0;
+      for (let p = 1; p <= period; p++) {
+        dep = Math.min((cost - total) * (factor / life), cost - salvage - total);
+        dep = Math.max(dep, 0);
+        total += dep;
+      }
+      return dep;
+    }
+
+    // ── Array ─────────────────────────────────────────────────────────────
+    case "SORTBY": {
+      // SORTBY(array, by_array1, [order1], …) — sorts `array` by parallel keys.
+      const target = parseRange(rawArgs[0]);
+      if (!target) return "#REF!";
+      const rows: CellValue[][] = [];
+      for (let row = target.startRow; row <= target.endRow; row++) {
+        const cells: CellValue[] = [];
+        for (let col = target.startCol; col <= target.endCol; col++) cells.push(g(row, col));
+        rows.push(cells);
+      }
+      const keySets: { vals: CellValue[]; asc: boolean }[] = [];
+      for (let p = 1; p < rawArgs.length; p += 2) {
+        keySets.push({
+          vals: getRangeVals(rawArgs[p], g),
+          asc: rawArgs[p + 1] ? toN(e(rawArgs[p + 1])) !== -1 : true,
+        });
+      }
+      if (!keySets.length) return "#VALUE!";
+      const order = rows.map((_, i) => i).sort((a, b) => {
+        for (const { vals, asc } of keySets) {
+          const av = vals[a] ?? null, bv = vals[b] ?? null;
+          const an = toN(av), bn = toN(bv);
+          const cmp = (!isNaN(an) && !isNaN(bn) && av !== null && bv !== null)
+            ? an - bn
+            : toStr(av).localeCompare(toStr(bv));
+          if (cmp !== 0) return asc ? cmp : -cmp;
+        }
+        return 0;
+      });
+      return spill(order.map(i => rows[i]));
+    }
+
+    // ── Database ──────────────────────────────────────────────────────────
+    // D-functions take (database, field, criteria). `field` may be a column
+    // header or a 1-based index; `criteria` is a range whose first row holds
+    // headers and whose remaining rows are OR-ed condition sets.
+    case "DSUM": case "DCOUNT": case "DAVERAGE": case "DMAX": case "DMIN": case "DGET": {
+      const db = parseRange(rawArgs[0]);
+      const crit = parseRange(rawArgs[2]);
+      if (!db || !crit) return "#REF!";
+
+      const grid: CellValue[][] = [];
+      for (let row = db.startRow; row <= db.endRow; row++) {
+        const cells: CellValue[] = [];
+        for (let col = db.startCol; col <= db.endCol; col++) cells.push(g(row, col));
+        grid.push(cells);
+      }
+      if (grid.length < 2) return "#VALUE!";
+      const headers = grid[0].map(h => toStr(h).toLowerCase());
+      const body = grid.slice(1);
+
+      const fieldRaw = e(rawArgs[1]);
+      const fieldIdx = typeof fieldRaw === "number"
+        ? Math.trunc(fieldRaw) - 1
+        : headers.indexOf(toStr(fieldRaw).toLowerCase());
+      if (fieldIdx < 0 || fieldIdx >= headers.length) return "#VALUE!";
+
+      const critGrid: CellValue[][] = [];
+      for (let row = crit.startRow; row <= crit.endRow; row++) {
+        const cells: CellValue[] = [];
+        for (let col = crit.startCol; col <= crit.endCol; col++) cells.push(g(row, col));
+        critGrid.push(cells);
+      }
+      if (critGrid.length < 2) return "#VALUE!";
+      const critHeaders = critGrid[0].map(h => toStr(h).toLowerCase());
+
+      const matches = body.filter(rowVals =>
+        // Each criteria row is a full condition set (AND within, OR across).
+        critGrid.slice(1).some(critRow =>
+          critRow.every((c, ci) => {
+            if (c === null || toStr(c) === "") return true;
+            const target = headers.indexOf(critHeaders[ci]);
+            if (target < 0) return false;
+            return matchCrit(rowVals[target] ?? null, c);
+          }),
+        ),
+      );
+
+      const picked = matches.map(r => r[fieldIdx] ?? null);
+      const numeric = picked.map(toN).filter(n => !isNaN(n));
+      switch (fn) {
+        case "DSUM":     return numeric.reduce((s, n) => s + n, 0);
+        case "DCOUNT":   return numeric.length;
+        case "DAVERAGE": return numeric.length ? numeric.reduce((s, n) => s + n, 0) / numeric.length : "#DIV/0!";
+        case "DMAX":     return numeric.length ? Math.max(...numeric) : 0;
+        case "DMIN":     return numeric.length ? Math.min(...numeric) : 0;
+        default:         return picked.length === 1 ? picked[0] : (picked.length ? "#NUM!" : "#VALUE!");
+      }
+    }
+
+    // ── Engineering / base conversion ─────────────────────────────────────
+    case "DECIMAL": {
+      const n = parseInt(toStr(e(rawArgs[0])), Math.trunc(toN(e(rawArgs[1]))));
+      return isNaN(n) ? "#NUM!" : n;
+    }
+    case "BASE": {
+      const n = Math.trunc(toN(e(rawArgs[0])));
+      const radix = Math.trunc(toN(e(rawArgs[1])));
+      if (radix < 2 || radix > 36) return "#NUM!";
+      const minLen = rawArgs[2] ? Math.trunc(toN(e(rawArgs[2]))) : 0;
+      return n.toString(radix).toUpperCase().padStart(minLen, "0");
+    }
+    case "HEX2DEC": case "BIN2DEC": case "OCT2DEC": {
+      const radix = fn === "HEX2DEC" ? 16 : fn === "BIN2DEC" ? 2 : 8;
+      const raw = toStr(e(rawArgs[0])).trim();
+      const n = parseInt(raw, radix);
+      if (isNaN(n)) return "#NUM!";
+      // Excel treats these as 10-digit two's-complement: the high bit is a sign.
+      const bits = radix === 16 ? 40 : radix === 2 ? 10 : 30;
+      return n >= Math.pow(2, bits - 1) ? n - Math.pow(2, bits) : n;
+    }
+    case "CONVERT": {
+      // Common unit families. Excel supports a much longer table; these cover
+      // the units that actually appear in business spreadsheets.
+      const value = toN(e(rawArgs[0]));
+      const from = toStr(e(rawArgs[1]));
+      const to = toStr(e(rawArgs[2]));
+      // Each family maps a unit to its size in the family's base unit.
+      const FAMILIES: Record<string, number>[] = [
+        { m: 1, km: 1000, cm: 0.01, mm: 0.001, mi: 1609.344, yd: 0.9144, ft: 0.3048, in: 0.0254, Nmi: 1852 },
+        { g: 1, kg: 1000, mg: 0.001, lbm: 453.59237, ozm: 28.349523125, stone: 6350.29318, ton: 907184.74 },
+        { sec: 1, s: 1, min: 60, hr: 3600, day: 86400, yr: 31557600 },
+        { J: 1, kJ: 1000, cal: 4.184, kcal: 4184, Wh: 3600, kWh: 3600000, BTU: 1055.05585262 },
+        { Pa: 1, kPa: 1000, atm: 101325, mmHg: 133.322387415, psi: 6894.757293168 },
+        { l: 1, L: 1, ml: 0.001, gal: 3.785411784, qt: 0.946352946, pt: 0.473176473, cup: 0.2365882365 },
+      ];
+      // Temperature is affine, not a simple ratio, so it's handled separately.
+      const TEMP = new Set(["C", "F", "K"]);
+      if (TEMP.has(from) && TEMP.has(to)) {
+        const celsius = from === "C" ? value : from === "F" ? (value - 32) * 5 / 9 : value - 273.15;
+        return to === "C" ? celsius : to === "F" ? celsius * 9 / 5 + 32 : celsius + 273.15;
+      }
+      for (const family of FAMILIES) {
+        if (from in family && to in family) return value * family[from] / family[to];
+      }
+      return "#N/A";
+    }
+
     default:
       return `#NAME?`;
   }
@@ -704,10 +1190,34 @@ export function evalE(expr: string, g: CellGetter): CellValue | SpillResult {
   const n = Number(expr);
   if (!isNaN(n) && expr !== "") return n;
 
+  // Bound variable from LET / LAMBDA. Checked BEFORE cell references, because
+  // a parameter may legitimately be named `x` — and before function calls,
+  // because a bare name is never a call. See § Lambda scope below.
+  if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(expr)) {
+    const bound = lookupVar(expr);
+    if (bound !== undefined) return bound;
+  }
+
   // Cell reference: A1, $A$1, A$1, $A1
   if (/^\$?[A-Za-z]+\$?\d+$/.test(expr)) {
     const ref = parseRef(expr);
     return ref ? g(ref.row, ref.col) : "#REF!";
+  }
+
+  // Immediately-invoked lambda: LAMBDA(x, x*2)(5)
+  // Matched before the generic call form, which would otherwise parse the
+  // whole thing as a function named LAMBDA and lose the argument list.
+  if (/^LAMBDA\s*\(/i.test(expr) && expr.endsWith(")")) {
+    const split = findLambdaCallSplit(expr);
+    if (split) {
+      const fn = parseLambda(split.lambdaText);
+      if (fn) {
+        const args = split.argsText.trim()
+          ? splitArgs(split.argsText).map(a => asVal(evalE(a, g)))
+          : [];
+        return applyLambda(fn, args, g);
+      }
+    }
   }
 
   // Function call: NAME(...)

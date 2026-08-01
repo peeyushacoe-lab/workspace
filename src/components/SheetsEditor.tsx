@@ -18,7 +18,7 @@ import {
   Undo2, Redo2, WrapText, EyeOff, Tag, ListChecks, Table, Grid2x2,
   Columns, LayoutGrid, Search, Replace, Brush,
   MessageSquare, CopyMinus, SplitSquareHorizontal,
-  Lock, ListFilter, History,
+  Lock, ListFilter, History, Target,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -29,8 +29,13 @@ import {
 } from "recharts";
 import { DocShareModal } from "./DocShareModal";
 import { DocVersionHistory, snapshotVersion } from "./DocVersionHistory";
+import { DocComments, type CommentAnchor } from "./DocComments";
 import { DocPresenceBar } from "./DocPresenceBar";
 import { useDocPresence } from "@/lib/use-doc-presence";
+import { useRecordOpen } from "@/lib/use-recent";
+import { ConflictBanner, useSaveConflict } from "./ConflictBanner";
+import { ShortcutHelp, SHEETS_SHORTCUTS } from "./ShortcutHelp";
+import { GoalSeekDialog } from "./GoalSeekDialog";
 import { evaluateFormula, formatValue, indexToCol, parseRange, parseRef, getRangeVals, isSpill, shiftFormulaRefs } from "@/lib/sheets/formula";
 import type { CellValue, NumberFormat, SpillResult } from "@/lib/sheets/formula";
 
@@ -357,6 +362,10 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
   // ── Named ranges (workbook-level) ────────────────────────────────────────
   // Server-persisted version history (shared with Docs & Slides).
   const [showVersions, setShowVersions] = useState(false);
+  // Threaded comments, anchored to the selected cell.
+  const [showComments, setShowComments] = useState(false);
+  // What-if analysis (Excel's Goal Seek).
+  const [showGoalSeek, setShowGoalSeek] = useState(false);
 
   const [namedRanges, setNamedRanges] = useState<Record<string, string>>({});
   const namedRangesRef = useRef<Record<string, string>>({});
@@ -421,6 +430,13 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
   // Broadcasts the focused cell (A1 notation) scoped to the active sheet tab,
   // so remote cursors only render on the tab the peer is actually looking at.
   // Redis-backed polling — works on Vercel, where there is no Socket.IO server.
+  // Feeds the Recent views across Drive and the Sheets home screen.
+  useRecordOpen("sheet", sheetId);
+
+  // Save-conflict detection. Autosave writes the whole workbook, so without
+  // this a second editor's save silently destroys the first's work.
+  const saveConflict = useSaveConflict();
+
   const peers = useDocPresence(
     sheetId,
     `${indexToCol(sel.c)}${sel.r + 1}`,
@@ -533,7 +549,10 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
   useEffect(() => {
     fetch(`/api/sheets/${sheetId}`)
       .then(r => r.json())
-      .then((data: { title?: string; content?: string }) => {
+      .then((data: { title?: string; content?: string; updatedAt?: string }) => {
+        // Baseline for conflict detection — every later save is checked
+        // against the version we loaded here.
+        saveConflict.setBase(data.updatedAt);
         if (data.title) setTitle(data.title);
         if (data.content) {
           try {
@@ -545,7 +564,7 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
         setLoaded(true);
       })
       .catch(() => setLoaded(true));
-  }, [sheetId]);
+  }, [sheetId, saveConflict]);
 
   // ── Auto-save ─────────────────────────────────────────────────────────────
   const scheduleSave = useCallback((sheetsToSave: SheetTab[], titleToSave: string) => {
@@ -554,11 +573,18 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
       setSaving(true);
       const payload = JSON.stringify({ sheets: sheetsToSave.map(serializeSheet), namedRanges: namedRangesRef.current });
       try {
-        await fetch(`/api/sheets/${sheetId}`, {
+        const res = await fetch(`/api/sheets/${sheetId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title: titleToSave, content: payload }),
+          body: JSON.stringify({
+            title: titleToSave,
+            content: payload,
+            ...saveConflict.saveFields(),
+          }),
         });
+        // 409 means someone else saved since we loaded — surface it rather than
+        // letting this write clobber theirs.
+        if (await saveConflict.handleResponse(res)) return;
         // Server-persisted version snapshot. Coalesced server-side into one row
         // per 5-minute window, so firing on every debounced save is cheap.
         snapshotVersion(sheetId, payload, titleToSave);
@@ -566,7 +592,7 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
         setSaving(false);
       }
     }, 1500);
-  }, [sheetId]);
+  }, [sheetId, saveConflict]);
 
   // ── History helpers ───────────────────────────────────────────────────────
   const pushHistory = useCallback((s: SheetTab[]) => {
@@ -688,7 +714,11 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
     else { setSel({ r: src.r1, c: src.c1 }); setSelEnd({ r: src.r2, c: to.c }); }
   }, [activeSheetId, pushHistory, scheduleSave, title]);
 
-  // Global mouseup ends a fill drag and applies it.
+  // These listen for POINTER events, not mouse events, so drag-select and the
+  // fill handle work with a finger or stylus as well as a mouse. With
+  // mouse-only listeners a touch drag did nothing and simply scrolled the page.
+
+  // Global pointerup ends a fill drag and applies it.
   useEffect(() => {
     if (!fillDrag) return;
     const onUp = () => {
@@ -696,23 +726,35 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
       setFillDrag(null);
       setFillTo(null);
     };
-    window.addEventListener("mouseup", onUp);
-    return () => window.removeEventListener("mouseup", onUp);
+    window.addEventListener("pointerup", onUp);
+    // A touch cancelled by a system gesture never fires pointerup; without
+    // this the sheet would stay stuck mid-fill.
+    window.addEventListener("pointercancel", onUp);
+    return () => {
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+    };
   }, [fillDrag, fillTo, applyFill]);
 
-  // End a drag-selection on mouseup anywhere.
+  // End a drag-selection on pointerup anywhere.
   useEffect(() => {
     const onUp = () => { selecting.current = false; };
-    window.addEventListener("mouseup", onUp);
-    return () => window.removeEventListener("mouseup", onUp);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+    return () => {
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+    };
   }, []);
 
-  // Global mousemove: reliable drag-select via elementFromPoint.
+  // Global pointermove: reliable drag-select via elementFromPoint.
   // More robust than the grid container's onMouseMove because it works even during
   // fast drags (where onMouseEnter per-cell misses cells) and outside the grid boundary.
   useEffect(() => {
-    const onMove = (e: MouseEvent) => {
+    const onMove = (e: PointerEvent) => {
       if (!selecting.current && !fillDragRef.current) return;
+      // Mid-drag, stop the browser scrolling the grid under the finger.
+      if (e.pointerType !== "mouse" && e.cancelable) e.preventDefault();
       let node = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null;
       while (node) {
         const cr = node.dataset?.cellrow;
@@ -730,8 +772,9 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
         node = node.parentElement;
       }
     };
-    window.addEventListener("mousemove", onMove);
-    return () => window.removeEventListener("mousemove", onMove);
+    // passive:false so preventDefault actually suppresses touch scrolling.
+    window.addEventListener("pointermove", onMove, { passive: false });
+    return () => window.removeEventListener("pointermove", onMove);
   }, []);
 
   // ── Clipboard: copy / paste / cut a range (TSV, Excel-compatible) ──────────
@@ -1738,7 +1781,46 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
   );
 
   return (
-    <div className="flex flex-col h-screen bg-surface overflow-hidden" onClick={() => { setColorPickerTarget(null); setSortMenuOpen(false); setFreezeMenuOpen(false); setDvDropdown(null); setCurrencyMenuOpen(false); setBorderMenuOpen(false); setCellCtx(null); }}>
+    <div className="relative flex flex-col h-screen bg-surface overflow-hidden" onClick={() => { setColorPickerTarget(null); setSortMenuOpen(false); setFreezeMenuOpen(false); setDvDropdown(null); setCurrencyMenuOpen(false); setBorderMenuOpen(false); setCellCtx(null); }}>
+
+      <ShortcutHelp groups={SHEETS_SHORTCUTS} />
+
+      {/* Save conflict — someone else saved while this tab had the file open */}
+      <ConflictBanner
+        conflict={saveConflict.conflict}
+        onReload={() => {
+          const server = saveConflict.conflict;
+          if (!server?.serverContent) { window.location.reload(); return; }
+          try {
+            const wb = JSON.parse(server.serverContent) as {
+              sheets?: unknown[];
+              namedRanges?: Record<string, string>;
+            };
+            if (wb.sheets?.length) {
+              const restored = (wb.sheets as Record<string, unknown>[]).map(deserializeSheet);
+              setSheets(restored);
+              pushHistory(restored);
+              setActiveSheetId(prev => restored.some(sh => sh.id === prev) ? prev : restored[0].id);
+              setSel({ r: 0, c: 0 });
+              setSelEnd(null);
+            }
+            if (wb.namedRanges) setNamedRanges(wb.namedRanges);
+            if (server.serverTitle) setTitle(server.serverTitle);
+            saveConflict.setBase(server.serverUpdatedAt);
+            saveConflict.dismiss();
+            toast.success("Loaded their version");
+          } catch {
+            window.location.reload();
+          }
+        }}
+        onOverwrite={() => {
+          saveConflict.overwrite();
+          // Re-run the save immediately with force set, so "Keep mine" takes
+          // effect now rather than on the user's next keystroke.
+          scheduleSave(sheets, title);
+          toast.success("Your version will be saved");
+        }}
+      />
 
       {/* ── Title bar ── */}
       <div className="flex items-center gap-2 px-4 py-2 border-b border-border bg-surface z-20">
@@ -1758,7 +1840,16 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
           {saving && <><Loader2 className="h-3 w-3 animate-spin" /> Saving…</>}
         </div>
         <button
-          onClick={() => setShowVersions(v => !v)}
+          onClick={() => { setShowComments(v => !v); setShowVersions(false); }}
+          title="Comments"
+          className={`flex items-center justify-center h-7 w-7 rounded-lg transition-colors ${
+            showComments ? "text-accent bg-accent-soft" : "text-muted hover:bg-surface-sunken"
+          }`}
+        >
+          <MessageSquare className="h-3.5 w-3.5" />
+        </button>
+        <button
+          onClick={() => { setShowVersions(v => !v); setShowComments(false); }}
           title="Version history"
           className={`flex items-center justify-center h-7 w-7 rounded-lg transition-colors ${
             showVersions ? "text-accent bg-accent-soft" : "text-muted hover:bg-surface-sunken"
@@ -2009,6 +2100,7 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
 
         {/* Pivot table */}
         <ToolBtn icon={<Table className="h-3.5 w-3.5" />} title="Pivot table" active={(activeSheet.pivots?.length ?? 0) > 0} onClick={() => setShowPivot(true)} />
+        <ToolBtn icon={<Target className="h-3.5 w-3.5" />} title="Goal Seek — solve for a value" onClick={() => setShowGoalSeek(true)} />
 
         {/* Chart */}
         <ToolBtn icon={<BarChart3 className="h-3.5 w-3.5" />} title="Insert chart" onClick={() => setShowChart(true)} />
@@ -2349,6 +2441,63 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
       {/* ── Modals ── */}
       {showShare && <DocShareModal docId={sheetId} docType="sheet" onClose={() => setShowShare(false)} />}
 
+      {/* ── Goal Seek (what-if analysis) ── */}
+      {showGoalSeek && (
+        <GoalSeekDialog
+          defaultTargetCell={`${indexToCol(sel.c)}${sel.r + 1}`}
+          getFormula={(r, c) => activeSheet.cells[ck(r, c)]?.v ?? ""}
+          getter={(r, c) => {
+            const raw = activeSheet.cells[ck(r, c)]?.v;
+            if (raw === undefined || raw === "") return null;
+            // Nested formulas must resolve, or the solver would see "=B2*2"
+            // as text and every candidate would evaluate the same.
+            return raw.startsWith("=")
+              ? computeCell(raw, activeSheet)
+              : (isNaN(Number(raw)) ? raw : Number(raw));
+          }}
+          onApply={(cell, value) => {
+            // Round-trip through the normal edit path so history, autosave and
+            // protection checks all apply exactly as if it were typed.
+            updateCell(cell.row, cell.col, String(Number(value.toFixed(10))));
+            setSel({ r: cell.row, c: cell.col });
+            toast.success(`Set ${indexToCol(cell.col)}${cell.row + 1} to ${Number(value.toFixed(6))}`);
+          }}
+          onClose={() => setShowGoalSeek(false)}
+        />
+      )}
+
+      {/* ── Comments (threaded, anchored to a cell) ── */}
+      {showComments && (
+        <div className="fixed right-0 top-0 bottom-0 w-[320px] z-40 bg-surface border-l border-border shadow-panel">
+          <DocComments
+            docId={sheetId}
+            onClose={() => setShowComments(false)}
+            currentAnchor={{ cell: `${indexToCol(sel.c)}${sel.r + 1}`, sheet: activeSheetId }}
+            anchorLabel={`${activeSheet?.name ?? "Sheet"}!${indexToCol(sel.c)}${sel.r + 1}`}
+            describeAnchor={(anchor: CommentAnchor) => {
+              if (!anchor || !("cell" in anchor)) return null;
+              const tab = sheets.find(sh => sh.id === anchor.sheet);
+              // Show the tab name only when the comment is on a different tab,
+              // so the common case stays short.
+              return tab && tab.id !== activeSheetId
+                ? `${tab.name}!${anchor.cell}`
+                : anchor.cell;
+            }}
+            onJumpToAnchor={(anchor: CommentAnchor) => {
+              if (!anchor || !("cell" in anchor)) return;
+              const ref = parseRef(anchor.cell);
+              if (!ref) return;
+              if (anchor.sheet && sheets.some(sh => sh.id === anchor.sheet)) {
+                setActiveSheetId(anchor.sheet);
+              }
+              setSel({ r: ref.row, c: ref.col });
+              setSelEnd(null);
+              focusGrid();
+            }}
+          />
+        </div>
+      )}
+
       {/* ── Version history (server-persisted, shared with Docs & Slides) ── */}
       {showVersions && (
         <div className="fixed right-0 top-0 bottom-0 w-[300px] z-40 bg-surface border-l border-border shadow-panel">
@@ -2563,16 +2712,24 @@ function ColHeader({ col: _col, label, width, hidden, selected, onResize, onAuto
         className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-accent"
         title="Drag to resize · double-click to autofit"
         onDoubleClick={e => { e.stopPropagation(); onAutofit(); }}
-        onMouseDown={e => {
+        style={{ touchAction: "none" }}
+        onPointerDown={e => {
           e.preventDefault();
           resizing.current = { startX: e.clientX, startW: width };
-          const onMove = (ev: MouseEvent) => {
+          const onMove = (ev: PointerEvent) => {
             if (!resizing.current) return;
+            if (ev.cancelable) ev.preventDefault();
             onResize(Math.max(40, resizing.current.startW + ev.clientX - resizing.current.startX));
           };
-          const onUp = () => { resizing.current = null; window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
-          window.addEventListener("mousemove", onMove);
-          window.addEventListener("mouseup", onUp);
+          const onUp = () => {
+            resizing.current = null;
+            window.removeEventListener("pointermove", onMove);
+            window.removeEventListener("pointerup", onUp);
+            window.removeEventListener("pointercancel", onUp);
+          };
+          window.addEventListener("pointermove", onMove, { passive: false });
+          window.addEventListener("pointerup", onUp);
+          window.addEventListener("pointercancel", onUp);
         }}
       />
       {menu && (
@@ -2801,13 +2958,24 @@ function Row({ row, cols, sheet, sel, selEnd, editing, editVal, cellInputRef, co
         {row + 1}
         {/* Row resize */}
         <div className="absolute bottom-0 left-0 right-0 h-1 cursor-row-resize hover:bg-accent"
-          onMouseDown={e => {
+          style={{ touchAction: "none" }}
+          onPointerDown={e => {
             e.preventDefault();
             resizing.current = { startY: e.clientY, startH: rowHeight };
-            const onMove = (ev: MouseEvent) => { if (resizing.current) onRowResize(Math.max(16, resizing.current.startH + ev.clientY - resizing.current.startY)); };
-            const onUp = () => { resizing.current = null; window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
-            window.addEventListener("mousemove", onMove);
-            window.addEventListener("mouseup", onUp);
+            const onMove = (ev: PointerEvent) => {
+              if (!resizing.current) return;
+              if (ev.cancelable) ev.preventDefault();
+              onRowResize(Math.max(16, resizing.current.startH + ev.clientY - resizing.current.startY));
+            };
+            const onUp = () => {
+              resizing.current = null;
+              window.removeEventListener("pointermove", onMove);
+              window.removeEventListener("pointerup", onUp);
+              window.removeEventListener("pointercancel", onUp);
+            };
+            window.addEventListener("pointermove", onMove, { passive: false });
+            window.addEventListener("pointerup", onUp);
+            window.addEventListener("pointercancel", onUp);
           }}
         />
         {ctxMenu && (
@@ -2887,7 +3055,9 @@ function Row({ row, cols, sheet, sel, selEnd, editing, editVal, cellInputRef, co
             style={cellStyle}
             data-cellrow={row}
             data-cellcol={c}
-            onMouseDown={e => { if (e.button === 0) onCellMouseDown(row, c, e.shiftKey); }}
+            // Pointer, not mouse: `button === 0` is true for a primary touch
+            // as well as a left-click, so one handler covers both.
+            onPointerDown={e => { if (e.button === 0) onCellMouseDown(row, c, e.shiftKey); }}
             onClick={e => onCellClick(row, c, e.shiftKey)}
             onDoubleClick={() => onCellDoubleClick(row, c)}
             onContextMenu={e => { e.preventDefault(); onCellContextMenu(row, c, e.clientX, e.clientY); }}
@@ -2980,9 +3150,15 @@ function Row({ row, cols, sheet, sel, selEnd, editing, editVal, cellInputRef, co
             {isFillHandleCell && (
               <div
                 title="Drag to fill"
-                onMouseDown={e => { e.preventDefault(); e.stopPropagation(); onStartFill(); }}
-                className="absolute -bottom-[3px] -right-[3px] h-[7px] w-[7px] bg-accent border border-border cursor-crosshair z-[8]"
-              />
+                onPointerDown={e => { e.preventDefault(); e.stopPropagation(); onStartFill(); }}
+                // The padding widens the hit area to ~23px for fingers while the
+                // visible handle inside stays 7px. touch-action stops the grid
+                // scrolling instead of starting a fill.
+                style={{ touchAction: "none" }}
+                className="absolute -bottom-2 -right-2 p-2 cursor-crosshair z-[8]"
+              >
+                <div className="h-[7px] w-[7px] bg-accent border border-border" />
+              </div>
             )}
           </div>
         );
