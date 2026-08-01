@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Nexus Docs — Google Docs + Word competitor
+ * Sage Docs — Google Docs + Word competitor
  * Features: full Tiptap editor, AI panel, outline, comments, version history,
  * export PDF/HTML, security labels, share, real-time collaboration
  */
@@ -1994,7 +1994,7 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
             <FileText className="h-8 w-8 text-accent" />
           </div>
           <div className="text-center">
-            <h2 className="text-xl font-semibold text-foreground mb-1">Nexus Docs</h2>
+            <h2 className="text-xl font-semibold text-foreground mb-1">Sage Docs</h2>
             <p className="text-sm text-muted mb-4">Rich text documents with AI, collaboration & version history</p>
             <button onClick={() => void createDoc()}
               className="flex items-center gap-2 px-5 py-2.5 bg-accent text-accent-foreground text-sm font-semibold rounded-lg hover:bg-accent-hover transition-colors mx-auto">

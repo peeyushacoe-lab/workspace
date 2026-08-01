@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Nexus Sheets — advanced chart types
+ * Sage Sheets — advanced chart types
  * ===================================
  *
  * Waterfall, funnel, treemap and gauge, built on the same Recharts 2.15 that

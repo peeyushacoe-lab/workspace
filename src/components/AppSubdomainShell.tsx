@@ -130,12 +130,12 @@ export function AppSubdomainShell({
   const brand = (
     <Link
       href={subdomain.home}
-      aria-label={`Nexus ${subdomain.label} home`}
+      aria-label={`${subdomain.label} home`}
       className="flex h-[56px] flex-shrink-0 items-center gap-2.5 px-4"
     >
       <img src="/nexus.png" alt="" className="h-6 w-6 flex-shrink-0 object-contain" />
       <span className="truncate text-[13.5px] font-semibold text-foreground">
-        Nexus <span className="text-muted font-normal">{subdomain.label}</span>
+        {subdomain.label}
       </span>
     </Link>
   );
@@ -165,7 +165,7 @@ export function AppSubdomainShell({
           {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
         <span className="text-[13.5px] font-semibold text-foreground">
-          Nexus <span className="text-muted font-normal">{subdomain.label}</span>
+          {subdomain.label}
         </span>
       </div>
 

@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Nexus Sheets — Professional spreadsheet editor
+ * Sage Sheets — Professional spreadsheet editor
  * Features: 50+ formulas, charts, sort/filter, conditional formatting,
  * number formats, column/row resize, freeze panes, merge cells, AI assistant
  */
@@ -1828,7 +1828,7 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
       <div className="flex items-center gap-2 px-4 py-2 border-b border-border bg-surface z-20">
         <button
           onClick={() => router.push("/apps/sheets")}
-          title="Back to spreadsheets"
+          title="Back to Sage Sheets"
           className="flex items-center justify-center h-8 w-8 rounded-lg text-muted hover:bg-surface-sunken transition-colors flex-shrink-0"
         >
           <ArrowLeft className="h-4 w-4" />

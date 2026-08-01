@@ -1,5 +1,5 @@
 /**
- * Nexus Sheets — Formula Engine
+ * Sage Sheets — Formula Engine
  * Supports 50+ Excel/Google Sheets-compatible functions.
  */
 

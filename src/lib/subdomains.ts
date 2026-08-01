@@ -48,7 +48,7 @@ export type AppSubdomain = {
 export const APP_SUBDOMAINS: AppSubdomain[] = [
   {
     host: "docs",
-    label: "Docs",
+    label: "Sage Docs",
     home: "/docs",
     owns: ["/docs", "/apps/sheets", "/apps/slides"],
     aliases: [
@@ -68,9 +68,9 @@ export const APP_SUBDOMAINS: AppSubdomain[] = [
  */
 export const SUBDOMAIN_NAV: Record<string, { href: string; label: string }[]> = {
   docs: [
-    { href: "/docs", label: "Documents" },
-    { href: "/apps/sheets", label: "Sheets" },
-    { href: "/apps/slides", label: "Slides" },
+    { href: "/docs", label: "Sage Docs" },
+    { href: "/apps/sheets", label: "Sage Sheets" },
+    { href: "/apps/slides", label: "Sage Slides" },
   ],
   drive: [
     { href: "/drive", label: "My Drive" },

@@ -3,7 +3,7 @@
 /**
  * HTML → .docx (WordprocessingML) writer.
  *
- * Nexus Docs stores content as Tiptap HTML. Word cannot open HTML-renamed-to-docx
+ * Sage Docs stores content as Tiptap HTML. Word cannot open HTML-renamed-to-docx
  * (it warns, and Google Docs / Pages reject it outright), so this builds a real
  * OOXML package with JSZip — already a dependency, so no new install.
  *

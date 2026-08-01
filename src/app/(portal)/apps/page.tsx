@@ -32,7 +32,7 @@ type AppEntry = {
 const BUILTIN_APPS = [
   {
     id: "sheets",
-    name: "Sheets",
+    name: "Sage Sheets",
     description: "Collaborative spreadsheets with formulas, formatting, and real-time editing",
     href: "/apps/sheets",
     icon: FileSpreadsheet,
@@ -41,7 +41,7 @@ const BUILTIN_APPS = [
   },
   {
     id: "slides",
-    name: "Slides",
+    name: "Sage Slides",
     description: "Build beautiful presentations with drag-and-drop elements and live collaboration",
     href: "/apps/slides",
     icon: Presentation,
@@ -50,7 +50,7 @@ const BUILTIN_APPS = [
   },
   {
     id: "docs",
-    name: "Docs",
+    name: "Sage Docs",
     description: "Rich collaborative documents powered by Tiptap with version history",
     href: "/docs",
     icon: FileText,

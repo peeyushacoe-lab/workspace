@@ -2,7 +2,7 @@
 "use client";
 
 /**
- * Nexus Slides — Google Slides + PowerPoint competitor
+ * Sage Slides — Google Slides + PowerPoint competitor
  * Features: themes, templates, drag-and-drop canvas, text/shape/image/chart/table/code,
  * layer ordering, alignment, presenter mode, speaker notes, AI generation, export, share
  */
@@ -1370,7 +1370,7 @@ export default function SlidesEditor({ presId }: { presId: string }) {
       <div className="flex items-center gap-2 px-4 py-2 border-b border-border bg-surface z-20">
         <button
           onClick={() => router.push("/apps/slides")}
-          title="Back to presentations"
+          title="Back to Sage Slides"
           className="flex items-center justify-center h-8 w-8 rounded-lg text-muted hover:bg-surface-sunken transition-colors flex-shrink-0"
         >
           <ArrowLeft className="h-4 w-4" />

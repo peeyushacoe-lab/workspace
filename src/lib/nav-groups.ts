@@ -67,21 +67,11 @@ export const NAV_GROUPS: GroupDef[] = [
   { id: "meet", label: "Meet", icon: "meet", owns: ["/meet"] },
   { id: "calendar", label: "Calendar", icon: "calendar", owns: ["/calendar"] },
   {
-    id: "drive", label: "Drive", icon: "drive", selfNav: true,
-    owns: [],
-    extra: [{ href: "/drive", label: "My drive", roles: "all" }],
-  },
-  {
-    // No selfNav: the office apps are separate destinations, so the rail must
-    // list them. Order matters — items[0] is where the spine icon navigates,
-    // so Documents leads, not Whiteboard.
-    id: "docs", label: "Docs", icon: "docs", lead: "/docs",
+    // Whiteboard and Notes stay on the hub; Docs/Sheets/Slides/Drive do not —
+    // see the "more" group below.
+    id: "docs", label: "Notes", icon: "docs", lead: "/notes",
     owns: ["/whiteboard"],
     extra: [
-      { href: "/docs", label: "Documents", roles: "all" },
-      // /apps is gated to non-HR in pathAccess — match it or HR gets a 403 link.
-      { href: "/apps/sheets", label: "Sheets", roles: "non-hr" },
-      { href: "/apps/slides", label: "Slides", roles: "non-hr" },
       { href: "/notes", label: "Notes", roles: "all" },
     ],
   },
@@ -109,7 +99,21 @@ export const NAV_GROUPS: GroupDef[] = [
   // "My HR" and "Apps" live here deliberately — My HR is personal (leave,
   // documents) not internship admin, and Apps is a user-facing marketplace,
   // not a system-administration screen.
-  { id: "more", label: "More", icon: "more", owns: ["/notifications", "/hr", "/apps"] },
+  // Docs, Sheets, Slides and Drive live here rather than on the spine: each is
+  // now a separate app on its own hostname (docs./drive.cybersage.uk), so the
+  // spine — which is for moving *within* the workspace — is the wrong place for
+  // them. Selecting one is a launch, not a tab switch, and AppLink turns these
+  // hrefs into full navigations to the right subdomain.
+  {
+    id: "more", label: "More", icon: "more",
+    owns: ["/notifications", "/hr", "/apps"],
+    extra: [
+      { href: "/docs", label: "Sage Docs", roles: "all", section: "Apps" },
+      { href: "/apps/sheets", label: "Sage Sheets", roles: "non-hr", section: "Apps" },
+      { href: "/apps/slides", label: "Sage Slides", roles: "non-hr", section: "Apps" },
+      { href: "/drive", label: "Drive", roles: "all", section: "Apps" },
+    ],
+  },
 ];
 
 /** Groups pinned to the bottom of the spine, above the avatar. */
