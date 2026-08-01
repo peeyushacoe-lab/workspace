@@ -62,5 +62,20 @@ t("escapes HTML in content",
   slidesToOutlineHtml([{ elements: [{ content: "<script>x</script>" }], notes: "" }], "T")
     .includes("&lt;script&gt;"));
 
+console.log("round-trip: doc → slides → doc");
+// Content must survive a full loop. Not identical HTML — the shapes differ —
+// but no heading or bullet should be silently lost along the way.
+const original = `<h1>Alpha</h1><ul><li>one</li><li>two</li></ul><h1>Beta</h1><p>Short line.</p>`;
+const deck = docToSlides(original, "Doc");
+const back = slidesToOutlineHtml(
+  deck.map(s => ({ elements: s.elements.map(e => ({ content: e.content })), notes: s.notes })),
+  "Doc",
+);
+t("section headings survive the loop", back.includes("Alpha") && back.includes("Beta"), back.slice(0, 200));
+t("bullets survive the loop", back.includes("one") && back.includes("two"), back.slice(0, 200));
+t("body text survives the loop", back.includes("Short line."), back.slice(0, 240));
+t("output is valid-ish HTML", /^<h1>/.test(back) && back.includes("</h2>"));
+t("no bullet glyphs leak into the doc", !back.includes("•"), back.slice(0, 200));
+
 console.log(`\nRESULT: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

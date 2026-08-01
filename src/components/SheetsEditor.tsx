@@ -36,6 +36,7 @@ import { useRecordOpen } from "@/lib/use-recent";
 import { ConflictBanner, useSaveConflict } from "./ConflictBanner";
 import { ShortcutHelp, SHEETS_SHORTCUTS } from "./ShortcutHelp";
 import { GoalSeekDialog } from "./GoalSeekDialog";
+import { AdvancedChart } from "./sheets/AdvancedCharts";
 import { evaluateFormula, formatValue, indexToCol, parseRange, parseRef, getRangeVals, isSpill, shiftFormulaRefs } from "@/lib/sheets/formula";
 import type { CellValue, NumberFormat, SpillResult } from "@/lib/sheets/formula";
 
@@ -80,7 +81,8 @@ type ConditionalRule = {
 
 type ChartDef = {
   id: string;
-  type: "bar" | "line" | "pie" | "area" | "scatter" | "donut" | "combo" | "radar";
+  type: "bar" | "line" | "pie" | "area" | "scatter" | "donut" | "combo" | "radar"
+      | "waterfall" | "funnel" | "treemap" | "gauge";
   title: string;
   range: string;
   hasHeader: boolean;
@@ -3198,6 +3200,19 @@ function ChartWidget({ chart, sheet, computeCell, onRemove }: {
   const keys = headers.slice(1).map(String);
   const colors = chart.colors.length ? chart.colors : CHART_COLORS;
 
+  // Waterfall / funnel / treemap / gauge need computed series (running totals,
+  // conversion rates) rather than a direct Recharts mapping, and take a single
+  // {name,value} series — so the first numeric column is used.
+  const isAdvanced = ["waterfall", "funnel", "treemap", "gauge"].includes(chart.type);
+  const advancedSeries = isAdvanced
+    ? chartData
+        .map(row => ({
+          name: String(row.name ?? ""),
+          value: Number(row[keys[0]] ?? 0),
+        }))
+        .filter(d => Number.isFinite(d.value))
+    : [];
+
   const renderChart = () => {
     switch (chart.type) {
       case "bar": return (
@@ -3288,9 +3303,21 @@ function ChartWidget({ chart, sheet, computeCell, onRemove }: {
         <span className="text-xs font-semibold text-foreground">{chart.title}</span>
         <button onClick={onRemove} className="text-subtle hover:text-crit"><X className="h-3.5 w-3.5" /></button>
       </div>
-      <ResponsiveContainer width="100%" height={220}>
-        {renderChart() ?? <div />}
-      </ResponsiveContainer>
+      {isAdvanced ? (
+        // AdvancedChart renders its own sized container. ResponsiveContainer
+        // clones its child with width/height expecting a Recharts element, so
+        // wrapping a plain div in it produces a zero-height chart.
+        <AdvancedChart
+          type={chart.type as "waterfall" | "funnel" | "treemap" | "gauge"}
+          data={advancedSeries}
+          width={460}
+          height={220}
+        />
+      ) : (
+        <ResponsiveContainer width="100%" height={220}>
+          {renderChart() ?? <div />}
+        </ResponsiveContainer>
+      )}
     </div>
   );
 }
@@ -3312,7 +3339,7 @@ function ChartDialog({ defaultRange, onClose, onInsert }: {
         <div>
           <label className="text-xs font-medium text-muted mb-1 block">Chart type</label>
           <div className="flex gap-2 flex-wrap">
-            {(["bar","line","area","pie","donut","combo","radar","scatter"] as const).map(t => (
+            {(["bar","line","area","pie","donut","combo","radar","scatter","waterfall","funnel","treemap","gauge"] as const).map(t => (
               <button key={t} onClick={() => setType(t)}
                 className={`px-3 py-1.5 text-xs rounded-lg border transition-colors capitalize ${type === t ? "bg-accent-soft text-accent border-accent/30" : "border-border text-muted hover:border-border-strong"}`}>
                 {t}

@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { canAccessPath, canAccessPathByPerms, getPortalHome, type SessionUser } from "@/lib/auth";
-import { matchSubdomain, subdomainToPath, isPassthrough } from "@/lib/subdomains";
+import { matchSubdomain, subdomainToPath, isPassthrough, shouldRedirectToHub, hubUrl } from "@/lib/subdomains";
 
 const protectedRoutes = [
   "/dashboard",
@@ -172,6 +172,15 @@ export async function middleware(request: NextRequest) {
   let rewriteUrl: URL | null = null;
 
   if (subdomain && !isPassthrough(pathname)) {
+    // An app subdomain serves ITS apps, not the whole product. Anything else
+    // bounces to the hub — otherwise docs.cybersage.uk/drive rendered Drive
+    // with the full workspace sidebar, and the subdomain was just Nexus
+    // wearing a different hostname.
+    if (shouldRedirectToHub(subdomain, pathname)) {
+      const target = hubUrl(request.nextUrl.pathname + request.nextUrl.search);
+      if (target) return withCsp(NextResponse.redirect(target), nonce);
+    }
+
     const mapped = subdomainToPath(subdomain, pathname);
     if (mapped !== pathname) {
       pathname = mapped;

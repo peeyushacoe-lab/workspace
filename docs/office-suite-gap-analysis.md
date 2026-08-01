@@ -19,7 +19,7 @@ Status key: **Done** · **Partial** — usable but incomplete · **Missing** ·
 | Area | State |
 |---|---|
 | Formula engine | **159 functions — 122/122, 100% of the checklist** |
-| Test coverage | **153 automated tests** — `npm test` |
+| Test coverage | **158 automated tests** — `npm test` |
 | Docs editing/formatting | ~85% — the daily-use surface is complete |
 | Sheets data tools | ~80% — pivots, charts, validation, CF all real |
 | Slides | ~75% — animations, transitions, presenter mode, master slides |
@@ -117,9 +117,8 @@ Docs already has Yjs CRDTs loaded and unused, so it would be first to land.
 3. **Scenario Manager and Solver** — Goal Seek ships; multi-variable
    optimisation does not.
 4. **Advanced charts** — waterfall, funnel, treemap, sunburst, geo/map.
-5. **Cross-app linking, remaining half** — live sheet ranges and doc→deck
-   conversion ship; charts-into-slides and slide-outline→doc are still to wire
-   up.
+5. **Charts into Slides** — the last cross-app gap. Sheet ranges into Docs,
+   doc→deck and deck→doc all ship; embedding a live *chart* does not.
 6. **ODF formats** (ODT/ODS/ODP) — only matters for EU public-sector tenders.
 
 ---
@@ -144,7 +143,8 @@ Deliberately not "everything":
 1. ~~Accessibility checker + voice typing~~ — **done**. Next: a manual
    screen-reader pass, which is the part automation can't cover.
 2. ~~Spell/grammar check~~ — **done** (native spellcheck + AI proofreading).
-3. ~~Cross-app linking~~ — **half done**: live sheet ranges and doc→deck.
+3. ~~Cross-app linking~~ — **done** except live charts: sheet ranges into
+   Docs (with refresh), doc→deck and deck→doc outline all ship.
 4. ~~Lambda formula family~~ — **done**; the engine is at 100% of the checklist.
 5. ~~Goal Seek~~ — **done**. ~~Mobile/touch~~ — **done** (pointer events
    throughout Sheets and Slides).

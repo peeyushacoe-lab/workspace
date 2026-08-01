@@ -46,8 +46,11 @@
     "test:formulas": "tsx scripts/test-formulas.ts",
     "test:a11y": "tsx scripts/test-a11y.ts",
     "test:cross-app": "tsx scripts/test-cross-app.ts",
-    "test": "npm run test:office-io && npm run test:formulas && npm run test:a11y && npm run test:cross-app && npm run test:goal-seek",
-    "test:goal-seek": "tsx scripts/test-goal-seek.ts"
+    "test": "npm run test:office-io && npm run test:formulas && npm run test:a11y && npm run test:cross-app && npm run test:goal-seek && npm run test:custom-fn && npm run test:advanced-charts && npm run test:subdomains",
+    "test:goal-seek": "tsx scripts/test-goal-seek.ts",
+    "test:custom-fn": "tsx scripts/test-custom-fn.ts",
+    "test:advanced-charts": "tsx scripts/test-advanced-charts.ts",
+    "test:subdomains": "tsx scripts/test-subdomains.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.99.0",

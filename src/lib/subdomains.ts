@@ -61,6 +61,26 @@ export const APP_SUBDOMAINS: AppSubdomain[] = [
   { host: "meet",  label: "Meet",  home: "/meet",  owns: ["/meet"] },
 ];
 
+/**
+ * The slim nav an app subdomain shows instead of the full Nexus workspace
+ * spine — the docs.google.com model, where the sidebar lists Docs / Sheets /
+ * Slides and nothing else.
+ */
+export const SUBDOMAIN_NAV: Record<string, { href: string; label: string }[]> = {
+  docs: [
+    { href: "/docs", label: "Documents" },
+    { href: "/apps/sheets", label: "Sheets" },
+    { href: "/apps/slides", label: "Slides" },
+  ],
+  drive: [
+    { href: "/drive", label: "My Drive" },
+  ],
+  meet: [
+    { href: "/meet", label: "Meetings" },
+    { href: "/meet/intelligence", label: "Meeting intelligence" },
+  ],
+};
+
 /** Portal path → the subdomain that owns it, if any. */
 export function subdomainForPath(path: string): AppSubdomain | null {
   return (
@@ -186,9 +206,52 @@ export function subdomainToPath(sub: AppSubdomain, pathname: string): string {
     return `${sub.home}${pathname}`;
   }
 
-  // Multi-app subdomain (docs) with an unrecognised path — leave it alone so
-  // shared hub routes (/settings, /profile, /notifications) still resolve.
+  // Multi-app subdomain (docs) with an unrecognised path — leave it alone.
+  // `shouldRedirectToHub` decides whether it belongs here at all.
   return pathname;
+}
+
+/**
+ * Paths a subdomain will render even though it doesn't "own" them, because
+ * they're part of being signed in anywhere.
+ */
+const SHARED_PATHS = [
+  "/settings", "/profile", "/notifications", "/setup-passkey", "/download",
+];
+
+/**
+ * True when a path should bounce to the hub rather than render on this
+ * subdomain.
+ *
+ * Without this, every Nexus route resolved on every subdomain:
+ * `docs.cybersage.uk/drive` rendered Drive, complete with the full workspace
+ * sidebar, so the "app" was really the whole product wearing a different
+ * hostname. An app subdomain should behave like docs.google.com — its own
+ * apps and nothing else.
+ */
+export function shouldRedirectToHub(sub: AppSubdomain, pathname: string): boolean {
+  if (pathname === "/") return false;
+  if (isPassthrough(pathname)) return false;
+  if (SHARED_PATHS.some(p => pathname === p || pathname.startsWith(`${p}/`))) return false;
+
+  const owned = sub.owns.some(o => pathname === o || pathname.startsWith(`${o}/`));
+  const aliased = (sub.aliases ?? []).some(
+    a => pathname === a.from || pathname.startsWith(`${a.from}/`),
+  );
+  return !owned && !aliased;
+}
+
+/** Absolute hub URL for a path, used for those redirects. */
+export function hubUrl(path: string): string | null {
+  const root = rootDomain();
+  if (!root || root === "localhost") return null;
+  const appUrlEnv = process.env.NEXT_PUBLIC_APP_URL;
+  try {
+    const host = appUrlEnv ? new URL(appUrlEnv).host : `nexus.${root}`;
+    return `https://${host}${path}`;
+  } catch {
+    return `https://nexus.${root}${path}`;
+  }
 }
 
 /**

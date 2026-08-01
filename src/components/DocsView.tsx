@@ -48,6 +48,7 @@ import { useRecordOpen } from "@/lib/use-recent";
 import { ConflictBanner, useSaveConflict } from "./ConflictBanner";
 import { ShortcutHelp, DOCS_SHORTCUTS } from "./ShortcutHelp";
 import { AccessibilityPanel } from "./AccessibilityPanel";
+import { InsertRangeDialog } from "./InsertRangeDialog";
 import { useVoiceTyping } from "@/lib/use-voice-typing";
 import { docToSlides } from "@/lib/doc-to-slides";
 import { appUrl } from "@/lib/subdomains";
@@ -463,6 +464,8 @@ export function DocsView() {
   const [showStats, setShowStats] = useState(false);
   // WCAG 2.1 AA checker — see src/lib/a11y-check.ts.
   const [showA11y, setShowA11y] = useState(false);
+  // Cross-app: insert a live range from a spreadsheet.
+  const [showInsertRange, setShowInsertRange] = useState(false);
   const [lineHeight, setLineHeight] = useState("1.5");
   const [showLineSpacing, setShowLineSpacing] = useState(false);
   const [showSymbols, setShowSymbols] = useState(false);
@@ -851,6 +854,59 @@ table{border-collapse:collapse;width:100%}td,th{border:1px solid #e7e6e1;padding
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `${title}.txt`; a.click();
   };
 
+  // ── Cross-app: refresh every linked spreadsheet table ─────────────────────
+  // Re-reads each table tagged with `data-linked-range` and replaces its rows
+  // with current values. Tables are matched by their marker attribute rather
+  // than by position, so editing around them doesn't break the link.
+  const refreshLinkedTables = async () => {
+    if (!editor) return;
+    const html = editor.getHTML();
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    const linked = Array.from(doc.querySelectorAll("table[data-linked-range]"));
+    if (!linked.length) {
+      toast.info("This document has no linked spreadsheet tables");
+      return;
+    }
+
+    const toastId = toast.loading(`Refreshing ${linked.length} linked table${linked.length === 1 ? "" : "s"}…`);
+    let updated = 0;
+    let failed = 0;
+
+    for (const table of linked) {
+      const marker = table.getAttribute("data-linked-range") ?? "";
+      const [sheetId, sheetTab, range] = marker.split("|");
+      if (!sheetId || !range) { failed++; continue; }
+      try {
+        const params = new URLSearchParams({ sheet: sheetTab ?? "", range });
+        const res = await fetch(`/api/documents/${sheetId}/range?${params}`);
+        if (!res.ok) { failed++; continue; }
+        const data = await res.json() as { rows: (string | number | boolean | null)[][] };
+        const esc = (v: unknown) =>
+          String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        table.innerHTML = data.rows
+          .map((row, r) =>
+            `<tr>${row.map(v => (r === 0 ? `<th>${esc(v)}</th>` : `<td>${esc(v)}</td>`)).join("")}</tr>`,
+          )
+          .join("");
+        updated++;
+      } catch {
+        failed++;
+      }
+    }
+
+    if (updated) {
+      editor.commands.setContent(doc.body.innerHTML, { emitUpdate: true });
+    }
+    if (failed) {
+      toast.warning(
+        `Refreshed ${updated}; ${failed} could not be read — the spreadsheet may have been deleted or unshared.`,
+        { id: toastId },
+      );
+    } else {
+      toast.success(`Refreshed ${updated} linked table${updated === 1 ? "" : "s"}`, { id: toastId });
+    }
+  };
+
   // ── Cross-app: turn this document into a presentation ─────────────────────
   // Each top-level heading becomes a slide; prose too long for a slide is kept
   // as speaker notes rather than dropped. See src/lib/doc-to-slides.ts.
@@ -1214,6 +1270,16 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
         </div>
       )}
 
+      {showInsertRange && (
+        <InsertRangeDialog
+          onInsert={result => {
+            editor?.chain().focus().insertContent(result.html).run();
+            toast.success("Spreadsheet range inserted");
+          }}
+          onClose={() => setShowInsertRange(false)}
+        />
+      )}
+
       {/* Save conflict — someone else saved while this tab had the doc open */}
       <ConflictBanner
         conflict={saveConflict.conflict}
@@ -1501,6 +1567,8 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
                     <MenuItm onClick={() => { exportHTML(); setShowExportMenu(false); }}>Web page (.html)</MenuItm>
                     <MenuItm onClick={() => { exportText(); setShowExportMenu(false); }}>Plain text (.txt)</MenuItm>
                     <div className="my-1 h-px bg-border-soft" />
+                    <MenuItm onClick={() => { setShowInsertRange(true); setShowExportMenu(false); }}>Insert spreadsheet range…</MenuItm>
+                    <MenuItm onClick={() => { void refreshLinkedTables(); setShowExportMenu(false); }}>Refresh linked tables</MenuItm>
                     <MenuItm onClick={() => { void convertToSlides(); setShowExportMenu(false); }}>Convert to presentation</MenuItm>
                     <div className="my-1 h-px bg-border-soft" />
                     <label className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-foreground hover:bg-hover cursor-pointer transition-colors">

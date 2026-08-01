@@ -22,5 +22,10 @@ export default async function PortalLayout({ children }: { children: React.React
     redirect(`/api/session/refresh?next=${encodeURIComponent(pathname)}`);
   }
 
-  return <Shell currentUser={user}>{children}</Shell>;
+  // Host drives the subdomain-aware shell. Read here (a Server Component) so
+  // the correct sidebar is in the very first HTML — resolving it client-side
+  // would flash the full workspace nav on docs./drive./meet. first.
+  const host = (await headers()).get("host");
+
+  return <Shell currentUser={user} host={host}>{children}</Shell>;
 }

@@ -32,6 +32,8 @@ import { useDocPresence } from "@/lib/use-doc-presence";
 import { useRecordOpen } from "@/lib/use-recent";
 import { ConflictBanner, useSaveConflict } from "./ConflictBanner";
 import { ShortcutHelp, SLIDES_SHORTCUTS } from "./ShortcutHelp";
+import { slidesToOutlineHtml } from "@/lib/doc-to-slides";
+import { appUrl } from "@/lib/subdomains";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -799,6 +801,34 @@ export default function SlidesEditor({ presId }: { presId: string }) {
     window.addEventListener("pointercancel", onUp);
   };
 
+  // ── Cross-app: send this deck's outline to a document ─────────────────────
+  // The reverse of Docs' "Convert to presentation". Slide titles become
+  // headings, bullet text becomes lists, and speaker notes become block
+  // quotes — so a deck can be turned back into a written report.
+  const exportOutlineToDoc = async () => {
+    const html = slidesToOutlineHtml(
+      slides.map(sl => ({
+        elements: sl.elements.map(el => ({ content: el.content })),
+        notes: sl.notes,
+      })),
+      title,
+    );
+    const toastId = toast.loading("Creating document…");
+    try {
+      const res = await fetch("/api/docs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: `${title} — outline`, content: html }),
+      });
+      if (!res.ok) throw new Error();
+      const { id } = await res.json() as { id: string };
+      toast.success("Outline document created", { id: toastId });
+      window.location.href = appUrl(`/docs?open=${id}`);
+    } catch {
+      toast.error("Could not create the document", { id: toastId });
+    }
+  };
+
   // ── Import PPTX ───────────────────────────────────────────────────────────
   // Real OOXML parse (src/lib/pptx-import.ts) — text boxes, pictures, tables,
   // autoshapes, positions and speaker notes. Previously this was a stub that
@@ -1392,6 +1422,13 @@ export default function SlidesEditor({ presId }: { presId: string }) {
           </button>
           <button onClick={() => void exportPPTX(slides, title)} className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-muted hover:bg-surface-sunken rounded-lg">
             <Download className="h-3.5 w-3.5" /> Export
+          </button>
+          <button
+            onClick={() => void exportOutlineToDoc()}
+            title="Create a document from this deck's outline"
+            className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-muted hover:bg-surface-sunken rounded-lg"
+          >
+            <FileText className="h-3.5 w-3.5" /> To doc
           </button>
           <button
             onClick={() => { setShowComments(v => !v); setShowVersions(false); }}

@@ -5,25 +5,53 @@ import { getNavGroups } from "@/lib/nav-groups";
 import { DesktopBridge } from "./DesktopBridge";
 import { CallProvider } from "./call/CallProvider";
 import { PushNotificationSetup } from "./PushNotificationSetup";
+import { AppSubdomainShell } from "./AppSubdomainShell";
+import { matchSubdomain, hubUrl } from "@/lib/subdomains";
 
 export function Shell({
   children,
   currentUser,
+  /** Request Host header — lets the server pick the right shell before paint. */
+  host,
 }: {
   children: React.ReactNode;
   currentUser?: SessionUser | null;
+  host?: string | null;
 }) {
   const nav = currentUser ? getPortalNavForRole(currentUser.role) : [];
   // Spine + rail model. Derived from `nav`, so access control is unchanged.
   const groups = currentUser ? getNavGroups(currentUser.role) : [];
 
-  return (
-    <SidebarLayout nav={nav} groups={groups} currentUser={currentUser}>
+  const inner = (
+    <>
       <DesktopBridge />
       <PushNotificationSetup />
       <CallProvider currentUserName={currentUser?.fullName ?? "Me"}>
         {children}
       </CallProvider>
+    </>
+  );
+
+  // On an app subdomain (docs./drive./meet.) render that app's own slim shell
+  // rather than the full workspace spine — see AppSubdomainShell for why.
+  // Resolved on the server from the Host header so there's no flash of the
+  // wrong sidebar before hydration.
+  const subdomain = matchSubdomain(host);
+  if (subdomain) {
+    return (
+      <AppSubdomainShell
+        subdomain={subdomain}
+        currentUser={currentUser}
+        hubHref={hubUrl("/inbox")}
+      >
+        {inner}
+      </AppSubdomainShell>
+    );
+  }
+
+  return (
+    <SidebarLayout nav={nav} groups={groups} currentUser={currentUser}>
+      {inner}
     </SidebarLayout>
   );
 }

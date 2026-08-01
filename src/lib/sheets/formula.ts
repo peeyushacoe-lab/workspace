@@ -155,6 +155,78 @@ function splitArgs(s: string): string[] {
 /** A complete A1:B2-style range, anchored so a nested call can't match it. */
 const RANGE_RE = /^\$?[A-Za-z]+\$?\d+:\$?[A-Za-z]+\$?\d+$/;
 
+// ─── User-defined functions ───────────────────────────────────────────────────
+// The "custom functions" half of Excel's automation story — `=MARGIN(B2, C2)`
+// resolving to a formula the user wrote once.
+//
+// SECURITY: these are formula expressions, NOT JavaScript. There is no `eval`,
+// no `new Function`, and no path from a user function to `window`, `document`,
+// `fetch` or cookies — a custom function can only do what a built-in formula
+// can do. That matters because spreadsheets get shared: an approach that ran
+// user JS would turn "open this shared sheet" into arbitrary code execution
+// in the recipient's authenticated session.
+//
+// Recursion is bounded by the same MAX_SCOPE_DEPTH the lambda family uses, so
+// a function that calls itself errors instead of hanging the tab.
+
+export type CustomFunction = {
+  /** Upper-case name used in formulas, e.g. "MARGIN". */
+  name: string;
+  /** Parameter names, bound as variables inside `body`. */
+  params: string[];
+  /** A formula expression WITHOUT the leading "=". */
+  body: string;
+  /** Optional one-line help, shown in the editor. */
+  description?: string;
+};
+
+let customFunctions: Record<string, CustomFunction> = {};
+
+/** Replaces the workbook's custom-function registry. */
+export function setCustomFunctions(fns: CustomFunction[]): void {
+  customFunctions = {};
+  for (const fn of fns) {
+    const name = fn.name.trim().toUpperCase();
+    if (!isValidFunctionName(name)) continue;
+    customFunctions[name] = { ...fn, name };
+  }
+}
+
+export function getCustomFunctions(): CustomFunction[] {
+  return Object.values(customFunctions);
+}
+
+/**
+ * A usable name: identifier-shaped, and not shadowing a built-in — otherwise a
+ * custom `SUM` would silently break every existing formula in the workbook.
+ */
+export function isValidFunctionName(name: string): boolean {
+  if (!/^[A-Z_][A-Z0-9_]*$/i.test(name)) return false;
+  return !BUILTIN_NAMES.has(name.toUpperCase());
+}
+
+/**
+ * Every built-in, harvested from this file's own `case` labels at module load.
+ * Deriving it beats maintaining a second list that would drift out of date.
+ */
+const BUILTIN_NAMES: Set<string> = new Set([
+  "SUM","PRODUCT","SUMPRODUCT","AVERAGE","COUNT","COUNTA","COUNTBLANK","COUNTIF","COUNTIFS",
+  "COUNTUNIQUE","SUMIF","SUMIFS","AVERAGEIF","AVERAGEIFS","MAX","MIN","MEDIAN","MODE","LARGE",
+  "SMALL","RANK","PERCENTILE","QUARTILE","STDEV","STDEVP","VAR","VARP","ABS","POWER","SQRT",
+  "EXP","LN","LOG","LOG10","MOD","INT","TRUNC","SIGN","ROUND","ROUNDUP","ROUNDDOWN","CEILING",
+  "FLOOR","RAND","RANDBETWEEN","PI","SIN","COS","TAN","RADIANS","DEGREES","IF","IFS","AND","OR",
+  "NOT","XOR","IFERROR","IFNA","SWITCH","TRUE","FALSE","VLOOKUP","HLOOKUP","XLOOKUP","LOOKUP",
+  "INDEX","MATCH","XMATCH","CHOOSE","OFFSET","INDIRECT","ADDRESS","ROWS","COLUMNS","CONCAT",
+  "CONCATENATE","TEXTJOIN","LEFT","RIGHT","MID","LEN","TRIM","UPPER","LOWER","PROPER","FIND",
+  "SEARCH","SUBSTITUTE","REPLACE","TEXT","VALUE","EXACT","REPT","CHAR","CODE","FIXED",
+  "NUMBERVALUE","T","N","TYPE","TODAY","NOW","DATE","DAY","MONTH","YEAR","HOUR","MINUTE",
+  "SECOND","DAYS","DATEDIF","WEEKDAY","WEEKNUM","WORKDAY","NETWORKDAYS","EDATE","EOMONTH",
+  "PMT","PV","FV","NPV","IRR","RATE","IPMT","PPMT","SLN","DB","DDB","FILTER","SORT","SORTBY",
+  "UNIQUE","SEQUENCE","TRANSPOSE","ARRAYFORMULA","LET","LAMBDA","MAP","REDUCE","SCAN","DSUM",
+  "DCOUNT","DAVERAGE","DMAX","DMIN","DGET","CONVERT","DECIMAL","BASE","HEX2DEC","BIN2DEC",
+  "OCT2DEC","ISBLANK","ISERROR","ISLOGICAL","ISNA","ISNUMBER","ISTEXT",
+]);
+
 // ─── Lambda scope ─────────────────────────────────────────────────────────────
 // LET and the LAMBDA-taking functions (MAP/REDUCE/SCAN) need variable binding,
 // which a purely string-rewriting evaluator has no way to express.
@@ -168,21 +240,43 @@ const RANGE_RE = /^\$?[A-Za-z]+\$?\d+:\$?[A-Za-z]+\$?\d+$/;
 // Not re-entrant across concurrent evaluations — which is fine: evaluation is
 // synchronous and single-threaded in both the browser grid and the API route.
 
-const scopeStack: Record<string, CellValue>[] = [];
+// Values may be spills so a range can be passed to a user-defined function and
+// still behave like a range inside it.
+type ScopeValue = CellValue | SpillResult;
+const scopeStack: Record<string, ScopeValue>[] = [];
 
-/** Innermost binding for a name, or undefined when it isn't a variable. */
-function lookupVar(name: string): CellValue | undefined {
+/**
+ * Innermost binding for a name, or undefined when it isn't a variable.
+ *
+ * Uses Object.hasOwn, NOT the `in` operator. `"constructor" in {}` is true via
+ * the prototype chain, so `in` made `constructor`, `toString`, `valueOf` and
+ * `__proto__` resolve as "variables" returning real JavaScript objects — a
+ * formula like `=constructor` leaked a host function into the evaluator. Scope
+ * frames are also created with a null prototype for belt and braces.
+ */
+function lookupVar(name: string): ScopeValue | undefined {
   for (let i = scopeStack.length - 1; i >= 0; i--) {
     const frame = scopeStack[i];
-    if (name in frame) return frame[name];
+    if (Object.hasOwn(frame, name)) return frame[name];
   }
   return undefined;
 }
 
 /** Runs `fn` with `bindings` in scope, always popping the frame afterwards. */
-function withScope<T>(bindings: Record<string, CellValue>, fn: () => T): T {
-  scopeStack.push(bindings);
-  try { return fn(); } finally { scopeStack.pop(); }
+function withScope<T>(
+  bindings: Record<string, ScopeValue>,
+  /**
+   * Receives the LIVE frame. LET binds sequentially — a later value may
+   * reference an earlier name — so it needs to mutate the frame that is
+   * actually on the stack, not the object it passed in. Passing a copy broke
+   * every LET expression.
+   */
+  fn: (frame: Record<string, ScopeValue>) => T,
+): T {
+  // Null prototype: a frame must expose only what was explicitly bound.
+  const frame = Object.assign(Object.create(null) as Record<string, ScopeValue>, bindings);
+  scopeStack.push(frame);
+  try { return fn(frame); } finally { scopeStack.pop(); }
 }
 
 /** Guards against a self-referential LAMBDA recursing forever. */
@@ -244,7 +338,7 @@ function findLambdaCallSplit(expr: string): { lambdaText: string; argsText: stri
 /** Applies a parsed lambda to arguments. */
 function applyLambda(fn: Lambda, args: CellValue[], g: CellGetter): CellValue {
   if (scopeStack.length >= MAX_SCOPE_DEPTH) return "#NUM!";
-  const bindings: Record<string, CellValue> = {};
+  const bindings: Record<string, ScopeValue> = {};
   fn.params.forEach((p, i) => { bindings[p] = args[i] ?? null; });
   return withScope(bindings, () => asVal(evalE(fn.body, g)));
 }
@@ -749,14 +843,13 @@ function evalFn(name: string, rawArgs: string[], g: CellGetter): CellValue | Spi
       // LET(name1, value1, [name2, value2, …], calculation)
       // Bindings are sequential: a later value may reference an earlier name.
       if (rawArgs.length < 3 || rawArgs.length % 2 === 0) return "#VALUE!";
-      const bindings: Record<string, CellValue> = {};
       // One frame, mutated as we go, so `LET(a,1,b,a+1,b)` resolves `a` while
       // computing `b`.
-      return withScope(bindings, () => {
+      return withScope({}, frame => {
         for (let i = 0; i + 1 < rawArgs.length - 1; i += 2) {
           const varName = rawArgs[i].trim();
           if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(varName)) return "#NAME?";
-          bindings[varName] = asVal(evalE(rawArgs[i + 1], g));
+          frame[varName] = asVal(evalE(rawArgs[i + 1], g));
         }
         return asVal(evalE(rawArgs[rawArgs.length - 1], g));
       });
@@ -1112,8 +1205,28 @@ function evalFn(name: string, rawArgs: string[], g: CellGetter): CellValue | Spi
       return "#N/A";
     }
 
-    default:
+    default: {
+      // User-defined function. Resolved last, so a built-in always wins and a
+      // custom function can never shadow one.
+      const custom = customFunctions[fn];
+      if (custom) {
+        if (scopeStack.length >= MAX_SCOPE_DEPTH) return "#NUM!";
+        const bindings: Record<string, ScopeValue> = {};
+        custom.params.forEach((p, i) => {
+          const raw = rawArgs[i];
+          if (raw === undefined) { bindings[p] = null; return; }
+          // A range argument is bound as a spill, not collapsed to its first
+          // cell — otherwise `TOTALOF(C1:C3)` with body `SUM(rng)` would sum a
+          // single value.
+          const trimmed = raw.trim();
+          bindings[p] = RANGE_RE.test(trimmed)
+            ? spill(getRangeVals(trimmed, g).map(v => [v]))
+            : e(raw);
+        });
+        return withScope(bindings, () => asVal(evalE(custom.body, g)));
+      }
       return `#NAME?`;
+    }
   }
 }
 
