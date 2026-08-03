@@ -1783,7 +1783,12 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
   );
 
   return (
-    <div className="relative flex flex-col h-screen bg-surface overflow-hidden" onClick={() => { setColorPickerTarget(null); setSortMenuOpen(false); setFreezeMenuOpen(false); setDvDropdown(null); setCurrencyMenuOpen(false); setBorderMenuOpen(false); setCellCtx(null); }}>
+    /* Immersive: an open spreadsheet owns the whole viewport, escaping both the
+       workspace shell and the app sidebar — matching Sage Docs. `fixed` still
+       establishes a containing block, so the absolutely-positioned menus inside
+       anchor exactly as they did under `relative`. z-40 keeps it beneath the
+       dialogs at z-50. */
+    <div className="fixed inset-0 z-40 flex flex-col bg-surface overflow-hidden" onClick={() => { setColorPickerTarget(null); setSortMenuOpen(false); setFreezeMenuOpen(false); setDvDropdown(null); setCurrencyMenuOpen(false); setBorderMenuOpen(false); setCellCtx(null); }}>
 
       <ShortcutHelp groups={SHEETS_SHORTCUTS} />
 

@@ -19,7 +19,7 @@ import {
   BookOpen, LayoutTemplate, WifiOff,
   Superscript as SuperscriptIcon, Subscript as SubscriptIcon, RemoveFormatting, Highlighter,
   FileCog, PanelTop, BarChart3, AlignVerticalSpaceAround, Sigma, ListTree,
-  BookmarkPlus, GitMerge, Accessibility, Mic,
+  BookmarkPlus, GitMerge, Accessibility, Mic, ArrowLeft,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -395,14 +395,19 @@ function TB({ icon, title, active, onClick }: {
   onClick?: (e: React.MouseEvent) => void;
 }) {
   return (
-    <button title={title} onClick={onClick}
-      className={`flex items-center justify-center h-7 w-7 rounded text-sm transition-colors ${active ? "bg-accent-soft text-accent" : "text-muted hover:bg-surface-sunken"}`}>
+    // hover is `bg-surface`, not `bg-surface-sunken`: these buttons sit *on* a
+    // sunken pill, so a sunken hover was the same colour as the track and the
+    // button looked dead on hover.
+    <button title={title} aria-label={title} onClick={onClick}
+      className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md text-sm transition-colors ${
+        active ? "bg-accent-soft text-accent" : "text-muted hover:bg-surface hover:text-foreground"
+      }`}>
       {icon}
     </button>
   );
 }
 
-function TSep() { return <div className="w-px h-5 bg-border mx-0.5" />; }
+function TSep() { return <div className="mx-1 h-5 w-px flex-shrink-0 bg-border" />; }
 
 function PanelTab({ active, icon, label, onClick }: { active: boolean; icon: React.ReactNode; label: string; onClick: () => void }) {
   return (
@@ -1363,12 +1368,12 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
       />
 
       {/* ── Doc list sidebar ── */}
-      {/* Document list. Hidden on the home view so the template gallery and file
-          grid get the full width — Google shows the list only once you're
-          inside a document. */}
-      <aside className={`w-64 flex-col border-r border-border bg-surface overflow-hidden flex-shrink-0 ${
-        selectedId ? "flex" : "hidden"
-      }`}>
+      {/* Retained but never shown. An open document now takes the whole window
+          (see the fixed wrapper below), which is what Docs and Word both do —
+          a file list beside the page competes with the page for attention and
+          costs ~256px of writing width. The home screen is the file browser;
+          the back arrow in the title bar returns to it. */}
+      <aside className="hidden w-64 flex-col border-r border-border bg-surface overflow-hidden flex-shrink-0">
         <div className="px-3 pt-3">
           <a href="/apps" title="Back to Apps"
             className="inline-flex items-center gap-1.5 text-xs font-medium text-muted hover:text-foreground hover:bg-surface-sunken rounded-md px-2 py-1 -ml-1 transition-colors">
@@ -1414,10 +1419,35 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
 
       {/* ── Main editor ── */}
       {selectedId ? (
-        <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+        /* Immersive: an open document owns the whole viewport, escaping both
+           the workspace shell and the app sidebar. Fixed rather than a CSS
+           handshake with the shell, so it behaves the same on
+           docs.cybersage.uk and inside Nexus. z-40 keeps it under the dialogs
+           at z-50, which are siblings of this node. */
+        <div className="fixed inset-0 z-40 flex flex-col overflow-hidden bg-surface">
 
           {/* Title & action bar */}
-          <div className="flex items-center gap-2.5 px-4 py-2.5 border-b border-border bg-surface z-10 flex-wrap">
+          {/* No flex-wrap. With it, the action cluster dropped onto a line of
+              its own, so the editor showed a title row, an orphan action row,
+              and then the toolbar — three bars where there should be two. */}
+          <div className="flex items-center gap-2.5 px-4 py-2.5 border-b border-border bg-surface z-10">
+            {/* The only way back out of immersive mode, so it comes first and
+                flushes the pending autosave rather than trusting the debounce
+                to fire before the editor unmounts. */}
+            <button
+              onClick={() => {
+                if (editor) void autoSave(editor.getHTML());
+                setSelectedId(null);
+                setShowOutline(false); setShowAI(false); setShowComments(false);
+                setShowHistory(false); setShowSuggestions(false); setShowA11y(false);
+              }}
+              title="All documents"
+              aria-label="Back to all documents"
+              className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-muted
+                         transition-colors hover:bg-hover hover:text-foreground"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </button>
             {/* App mark — the same indigo Sage Docs carries on its home and in
                 the subdomain sidebar, so the editor reads as the same product
                 rather than an anonymous text box. */}
@@ -1492,17 +1522,15 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
               </span>
             )}
 
-            <div className="flex items-center gap-0.5">
+            {/* Actions. flex-nowrap: these must stay on one line — when they
+                wrapped, the bar grew a second ragged row above the toolbar. */}
+            <div className="flex min-w-0 flex-nowrap items-center gap-0.5 overflow-x-auto">
               {/* Find & replace */}
               <IconBtn icon={<Search className="h-4 w-4" />} title="Find & replace (⌘H)" onClick={() => setShowFindReplace(true)} />
-              {/* Columns */}
-              <select value={docColumns} onChange={e => setDocColumns(Number(e.target.value))} title="Text columns"
-                className="text-xs border border-border rounded px-1 h-7 bg-surface text-muted cursor-pointer">
-                <option value={1}>1 col</option>
-                <option value={2}>2 cols</option>
-                <option value={3}>3 cols</option>
-              </select>
-              {/* Page setup */}
+              {/* Page setup — text columns live inside it now. A bare <select>
+                  in the title bar rendered as an OS-chrome dropdown that
+                  matched nothing else on screen, and column count is a page
+                  layout setting, so this is also where it belongs. */}
               <div className="relative" onClick={e => e.stopPropagation()}>
                 <IconBtn icon={<FileCog className="h-4 w-4" />} title="Page setup" active={showPageSetupMenu} onClick={() => { setShowPageSetupMenu(v => !v); setShowStats(false); }} />
                 {showPageSetupMenu && (
@@ -1541,6 +1569,17 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
                         ))}
                       </div>
                     </div>
+                    <div className="space-y-1">
+                      <p className="text-[11px] font-medium text-muted">Text columns</p>
+                      <div className="grid grid-cols-3 gap-1">
+                        {([1, 2, 3] as const).map(c => (
+                          <button key={c} onClick={() => setDocColumns(c)}
+                            className={`px-2 py-1 text-[11px] font-medium rounded border transition-colors ${docColumns === c ? "bg-accent-soft text-accent border-accent/40" : "border-border text-muted hover:bg-surface-sunken"}`}>
+                            {c === 1 ? "1 col" : `${c} cols`}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
@@ -1548,31 +1587,14 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
               {/* Header / footer toggle */}
               <IconBtn icon={<PanelTop className="h-4 w-4" />} title="Header & footer" active={headerFooter.enabled} onClick={() => updateHeaderFooter({ enabled: !headerFooter.enabled })} />
 
-              {/* Document stats */}
+              {/* Document stats.
+                  This wrapper is `relative` purely to anchor the popover, and
+                  it is a block box — so the voice and accessibility buttons
+                  that used to live inside it stacked *vertically*, throwing one
+                  icon above the toolbar row and one below it. They are siblings
+                  now; only the button that owns the popover stays inside. */}
               <div className="relative" onClick={e => e.stopPropagation()}>
                 <IconBtn icon={<BarChart3 className="h-4 w-4" />} title="Word count & stats" active={showStats} onClick={() => { const open = !showStats; setShowStats(open); setShowPageSetupMenu(false); if (open) refreshStats(); }} />
-                {/* Voice typing — hidden entirely when the browser has no
-                    SpeechRecognition (Firefox), rather than offering a button
-                    that silently does nothing. */}
-                {voice.supported && (
-                  <IconBtn
-                    icon={<Mic className="h-4 w-4" />}
-                    title={voice.listening ? "Stop voice typing" : "Voice typing"}
-                    active={voice.listening}
-                    activeClass="text-crit bg-crit-soft"
-                    onClick={() => voice.toggle()}
-                  />
-                )}
-                <IconBtn
-                  icon={<Accessibility className="h-4 w-4" />}
-                  title="Accessibility checker"
-                  active={showA11y}
-                  onClick={() => {
-                    setShowA11y(v => !v);
-                    setShowAI(false); setShowComments(false);
-                    setShowHistory(false); setShowSuggestions(false);
-                  }}
-                />
                 {showStats && (
                   <div className="absolute right-0 top-full mt-1 w-60 bg-surface border border-border rounded-lg shadow-lg z-50 p-3">
                     <div className="flex items-center gap-2 mb-2">
@@ -1598,6 +1620,31 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
                 )}
               </div>
 
+              {/* Voice typing — hidden entirely when the browser has no
+                  SpeechRecognition (Firefox), rather than offering a button
+                  that silently does nothing. */}
+              {voice.supported && (
+                <IconBtn
+                  icon={<Mic className="h-4 w-4" />}
+                  title={voice.listening ? "Stop voice typing" : "Voice typing"}
+                  active={voice.listening}
+                  activeClass="text-crit bg-crit-soft"
+                  onClick={() => voice.toggle()}
+                />
+              )}
+              <IconBtn
+                icon={<Accessibility className="h-4 w-4" />}
+                title="Accessibility checker"
+                active={showA11y}
+                onClick={() => {
+                  setShowA11y(v => !v);
+                  setShowAI(false); setShowComments(false);
+                  setShowHistory(false); setShowSuggestions(false);
+                }}
+              />
+
+              <TSep />
+
               {/* Templates */}
               <div className="relative" onClick={e => e.stopPropagation()}>
                 <IconBtn icon={<LayoutTemplate className="h-4 w-4" />} title="Templates" active={showTemplateMenu} onClick={() => setShowTemplateMenu(v => !v)} />
@@ -1618,6 +1665,8 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
                   the server round-trip and refreshes its own list afterwards. */}
               <IconBtn icon={<BookmarkPlus className="h-4 w-4" />} title="Save a version" onClick={() => { setShowHistory(true); setShowAI(false); setShowComments(false); setShowSuggestions(false); }} />
               <IconBtn icon={<History className="h-4 w-4" />} title="Version history" active={showHistory} onClick={() => { setShowHistory(v => !v); setShowAI(false); setShowComments(false); setShowSuggestions(false); }} />
+              <TSep />
+
               {/* Suggest mode toggle */}
               <button
                 title={suggestMode ? "Exit suggesting mode" : "Suggesting mode — track changes"}
@@ -1637,6 +1686,8 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
                 {suggestMode ? "Suggesting" : "Suggest"}
               </button>
               <IconBtn icon={<Sparkles className="h-4 w-4" />} title="AI assistant" active={showAI} activeClass="text-violet bg-violet/10" onClick={() => { setShowAI(v => !v); setShowComments(false); setShowHistory(false); setShowSuggestions(false); }} />
+              <TSep />
+
               <div className="relative" onClick={e => e.stopPropagation()}>
                 <IconBtn icon={<Download className="h-4 w-4" />} title="Export" onClick={() => setShowExportMenu(v => !v)} />
                 {showExportMenu && (
@@ -1669,16 +1720,23 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
             </div>
           </div>
 
-          {/* Formatting toolbar */}
-          <div className="flex flex-wrap items-center gap-0.5 px-2 py-1 border-b border-border bg-surface z-10 overflow-x-auto" onClick={e => e.stopPropagation()}>
+          {/* Formatting toolbar.
+              One row that scrolls sideways rather than wrapping — wrapping is
+              what produced the ragged three-row bar, where the same control sat
+              in a different place depending on window width. The tools live in
+              a sunken pill (Docs and Word both do this) so the toolbar reads as
+              one object instead of loose icons floating on the chrome. */}
+          <div className="flex items-center gap-2 px-3 py-1.5 border-b border-border bg-surface z-10" onClick={e => e.stopPropagation()}>
+            <div className="flex min-w-0 flex-1 flex-nowrap items-center gap-0.5 overflow-x-auto rounded-full bg-surface-sunken px-2 py-1">
             <TB icon={<Undo2 className="h-3.5 w-3.5" />} title="Undo (⌘Z)" onClick={() => editor?.commands.undo()} />
             <TB icon={<Redo2 className="h-3.5 w-3.5" />} title="Redo (⌘⇧Z)" onClick={() => editor?.commands.redo()} />
             <TSep />
 
             {/* Heading picker */}
-            <div className="relative">
+            <div className="relative flex-shrink-0">
               <button onClick={() => setHeadingMenu(v => !v)}
-                className="flex items-center gap-1 px-2 py-1 text-xs border border-border rounded h-7 text-muted hover:bg-surface-sunken min-w-[96px]">
+                className="flex h-7 min-w-[104px] items-center gap-1 rounded-md border border-border bg-surface px-2
+                           text-xs text-foreground transition-colors hover:bg-hover">
                 {[1,2,3,4,5,6].find(l => editor?.isActive("heading", { level: l }))
                   ? `Heading ${[1,2,3,4,5,6].find(l => editor?.isActive("heading", { level: l }))}`
                   : "Normal text"}
@@ -1699,10 +1757,15 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
             </div>
             <TSep />
 
-            {/* Font family */}
+            {/* Font family. appearance-none + our own chevron: the native
+                control renders OS chrome that matches nothing else on screen
+                and showed a bare "Font" placeholder box. */}
+            <div className="relative flex-shrink-0">
             <select
               title="Font"
-              className="h-7 px-1.5 text-xs border border-border rounded text-muted bg-surface hover:bg-surface-sunken focus:outline-none focus:border-accent/60 cursor-pointer"
+              aria-label="Font"
+              className="h-7 w-[104px] cursor-pointer appearance-none rounded-md border border-border bg-surface pl-2 pr-6
+                         text-xs text-foreground hover:bg-hover focus:border-accent/60 focus:outline-none"
               value={(editor?.getAttributes("textStyle").fontFamily as string) ?? ""}
               onChange={e => {
                 const v = e.target.value;
@@ -1710,16 +1773,21 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
                 if (v) c?.setFontFamily(v).run();
                 else c?.unsetFontFamily().run();
               }}>
-              <option value="">Font</option>
+              <option value="">Default font</option>
               {["Arial", "Georgia", "Times New Roman", "Courier New", "Verdana", "Roboto"].map(f => (
                 <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>
               ))}
             </select>
+            <ChevronDown className="pointer-events-none absolute right-1.5 top-1/2 h-3 w-3 -translate-y-1/2 text-subtle" />
+            </div>
 
             {/* Font size */}
+            <div className="relative flex-shrink-0">
             <select
               title="Font size"
-              className="h-7 px-1.5 text-xs border border-border rounded text-muted bg-surface hover:bg-surface-sunken focus:outline-none focus:border-accent/60 cursor-pointer"
+              aria-label="Font size"
+              className="h-7 w-[62px] cursor-pointer appearance-none rounded-md border border-border bg-surface pl-2 pr-5
+                         text-xs text-foreground hover:bg-hover focus:border-accent/60 focus:outline-none"
               value={((editor?.getAttributes("textStyle").fontSize as string) ?? "").replace("px", "")}
               onChange={e => {
                 const v = e.target.value;
@@ -1727,14 +1795,16 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
                 if (v) c?.setFontSize(v + "px").run();
                 else c?.unsetFontSize().run();
               }}>
-              <option value="">Size</option>
+              <option value="">11</option>
               {[10, 12, 14, 16, 18, 24, 30, 36].map(s => (
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
+            <ChevronDown className="pointer-events-none absolute right-1 top-1/2 h-3 w-3 -translate-y-1/2 text-subtle" />
+            </div>
 
             {/* Text color */}
-            <label title="Text color" className="flex items-center justify-center h-7 w-7 rounded text-muted hover:bg-surface-sunken cursor-pointer relative">
+            <label title="Text color" className="relative flex h-7 w-7 flex-shrink-0 cursor-pointer items-center justify-center rounded-md text-muted transition-colors hover:bg-surface hover:text-foreground">
               <Type className="h-3.5 w-3.5" />
               <input type="color" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 value={(editor?.getAttributes("textStyle").color as string) ?? "#1a1a18"}
@@ -1743,7 +1813,7 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
 
             {/* Highlight color */}
             <label title="Highlight color"
-              className={`flex items-center justify-center h-7 w-7 rounded cursor-pointer relative ${editor?.isActive("highlight") ? "bg-accent-soft text-accent" : "text-muted hover:bg-surface-sunken"}`}>
+              className={`relative flex h-7 w-7 flex-shrink-0 cursor-pointer items-center justify-center rounded-md transition-colors ${editor?.isActive("highlight") ? "bg-accent-soft text-accent" : "text-muted hover:bg-surface hover:text-foreground"}`}>
               <Highlighter className="h-3.5 w-3.5" />
               <input type="color" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 value={(editor?.getAttributes("highlight").color as string) ?? "#fff176"}
@@ -1776,7 +1846,7 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
             <TB icon={<Type className="h-3.5 w-3.5" />} title="Code block" active={editor?.isActive("codeBlock")} onClick={() => editor?.chain().focus().toggleCodeBlock().run()} />
             <TB icon={<Minus className="h-3.5 w-3.5" />} title="Horizontal rule" onClick={() => editor?.chain().focus().setHorizontalRule().run()} />
             <TB icon={<Table className="h-3.5 w-3.5" />} title="Insert table (3×3)" onClick={() => { (editor?.chain().focus() as unknown as { insertTable?: (o: { rows: number; cols: number; withHeaderRow: boolean }) => { run: () => boolean } })?.insertTable?.({ rows: 3, cols: 3, withHeaderRow: true })?.run?.(); }} />
-            <label title="Insert image (upload)" className="flex items-center justify-center h-7 w-7 rounded text-sm text-muted hover:bg-surface-sunken cursor-pointer transition-colors">
+            <label title="Insert image (upload)" className="flex h-7 w-7 flex-shrink-0 cursor-pointer items-center justify-center rounded-md text-sm text-muted transition-colors hover:bg-surface hover:text-foreground">
               <ImageIcon className="h-3.5 w-3.5" />
               <input type="file" accept="image/*" className="hidden" onChange={e => {
                 const f = e.target.files?.[0];
@@ -1846,9 +1916,11 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
 
             {/* Table of contents */}
             <TB icon={<ListTree className="h-3.5 w-3.5" />} title="Insert table of contents" onClick={insertTOC} />
-            <TSep />
+            </div>
 
-            <span className="text-[11px] text-subtle px-1 whitespace-nowrap">{wordCount} words</span>
+            {/* Meta sits outside the tool pill and right-aligned. Inside, it
+                read as a broken button wedged between the icons. */}
+            <span className="flex-shrink-0 whitespace-nowrap text-[11px] text-subtle">{wordCount} words</span>
           </div>
 
           {/* Content row */}
@@ -1871,8 +1943,11 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
 
             {/* Paper editor */}
             <div className="flex-1 overflow-y-auto overflow-x-hidden bg-surface-sunken">
+              {/* Paper: shadow only, square corners, no hairline. A rounded,
+                  bordered box reads as a card; a sheet of paper reads as a
+                  document. Word and Docs both do the plain-shadow version. */}
               <div
-                className="mx-auto my-8 bg-surface shadow border border-border rounded-lg flex flex-col"
+                className="mx-auto my-8 flex flex-col bg-surface shadow-panel"
                 style={{ width: paperW, maxWidth: "100%", minHeight: paperH }}
               >
                 {headerFooter.enabled && (

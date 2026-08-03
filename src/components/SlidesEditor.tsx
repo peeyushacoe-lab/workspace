@@ -1321,7 +1321,12 @@ export default function SlidesEditor({ presId }: { presId: string }) {
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div className="relative flex flex-col h-screen bg-surface overflow-hidden text-foreground">
+    /* Immersive: an open deck owns the whole viewport, escaping both the
+       workspace shell and the app sidebar — matching Sage Docs. `fixed` still
+       establishes a containing block, so the absolutely-positioned menus inside
+       anchor exactly as they did under `relative`. z-40 keeps it beneath the
+       dialogs at z-50. */
+    <div className="fixed inset-0 z-40 flex flex-col bg-surface overflow-hidden text-foreground">
 
       <ShortcutHelp groups={SLIDES_SHORTCUTS} />
 
