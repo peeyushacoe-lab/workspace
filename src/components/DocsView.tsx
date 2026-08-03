@@ -38,7 +38,6 @@ import Subscript from "@tiptap/extension-subscript";
 import Superscript from "@tiptap/extension-superscript";
 import * as Y from "yjs";
 
-import Collaboration from "@tiptap/extension-collaboration";
 // CollaborationCursor imported lazily to avoid CRDT hydration issues
 // import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
 
@@ -490,6 +489,7 @@ export function DocsView() {
   const [isOffline, setIsOffline] = useState(false);
   const [showPageSetupMenu, setShowPageSetupMenu] = useState(false);
   const [docColumns, setDocColumns] = useState(1);
+  const [zoom, setZoom] = useState(1);
   const [showFindReplace, setShowFindReplace] = useState(false);
   const [frFind, setFrFind] = useState("");
   const [frReplace, setFrReplace] = useState("");
@@ -525,7 +525,9 @@ export function DocsView() {
   suggestModeRef.current = suggestMode;
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const { ydoc, collaborators } = useDocCollab(selectedId);
+  // `ydoc` is intentionally not destructured — the hook still drives presence
+  // (collaborator avatars), but nothing binds the editor to the Y.Doc.
+  const { collaborators } = useDocCollab(selectedId);
 
   // Feeds the Recent views across Drive and the Docs home screen.
   useRecordOpen("doc", selectedId);
@@ -539,11 +541,8 @@ export function DocsView() {
     extensions: [
       StarterKit.configure({
         heading: { levels: [1, 2, 3, 4, 5, 6] },
-        // MUST be false while Collaboration is registered. Collaboration ships
-        // its own undo/redo backed by the Yjs UndoManager; leaving ProseMirror's
-        // history plugin installed alongside it means two history stacks fight
-        // over the same document and undo behaves erratically or not at all.
-        undoRedo: false,
+        // Left enabled: ProseMirror's history is the only undo stack now that
+        // Collaboration (which ships its own) is no longer registered.
       }),
       // Alignment has to list every node type it can apply to. With only
       // heading and paragraph, the four align buttons silently did nothing
@@ -570,7 +569,17 @@ export function DocsView() {
       }),
       TrackInsert,
       TrackDelete,
-      Collaboration.configure({ document: ydoc }),
+      // Collaboration is deliberately NOT registered.
+      //
+      // It binds the editor to `ydoc`, but there is no sync provider, so the
+      // Y.Doc is always empty. On mount y-prosemirror syncs that empty doc
+      // into the editor state — overwriting the content setContent had just
+      // loaded. The document rendered blank while the real content sat safely
+      // in the database, which is why thumbnails showed text the editor did
+      // not. Autosave then wrote the blank page back over it.
+      //
+      // Re-adding this requires a real provider (y-websocket / Hocuspocus) AND
+      // seeding the Y.Doc from the server copy — not just the extension.
     ],
     content: "",
     editorProps: {
@@ -640,7 +649,7 @@ export function DocsView() {
       if (saveTimer.current) clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(() => { void autoSaveRef.current(ed.getHTML()); }, 2000);
     },
-  }, [ydoc]);
+  }, []);
 
   // ── Load docs ─────────────────────────────────────────────────────────────
   const openIdFromUrl = searchParams?.get("open") ?? null;
@@ -1325,6 +1334,16 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
     return () => window.removeEventListener("keydown", onKey);
   }, [topMenu]);
 
+  /** Clamped so a stepper held down can't produce a 0pt or 900pt document. */
+  const applyFontSize = (n: number) => {
+    const size = Math.min(96, Math.max(6, Math.round(n)));
+    (editor?.chain().focus() as unknown as { setFontSize: (v: string) => { run: () => void } } | undefined)
+      ?.setFontSize(`${size}px`).run();
+  };
+  const currentFontSize = Number(
+    ((editor?.getAttributes("textStyle").fontSize as string) ?? "").replace("px", ""),
+  ) || 11;
+
   const closeMenus = () => { setHeadingMenu(false); setShowExportMenu(false); setShowSecurityMenu(false); setShowTemplateMenu(false); setShowPageSetupMenu(false); setShowStats(false); setShowLineSpacing(false); setShowSymbols(false); setTopMenu(null); };
 
   // ── Symbols ───────────────────────────────────────────────────────────────
@@ -1769,41 +1788,41 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
             menus={[
               {
                 id: "file", label: "File", entries: [
-                  { kind: "item", label: "New document", onSelect: () => void createDoc() },
-                  { kind: "file", label: "Import Word (.docx)\u2026", accept: ".docx", onFile: e => void importDocx(e) },
+                  { kind: "item", label: "New document", icon: FileText, onSelect: () => void createDoc() },
+                  { kind: "file", label: "Import Word (.docx)\u2026", icon: Download, accept: ".docx", onFile: e => void importDocx(e) },
                   { kind: "sep" },
                   { kind: "label", label: "Download" },
-                  { kind: "item", label: "Microsoft Word (.docx)", onSelect: () => void exportDocx() },
-                  { kind: "item", label: "Web page (.html)", onSelect: exportHTML },
-                  { kind: "item", label: "Plain text (.txt)", onSelect: exportText },
-                  { kind: "item", label: "PDF (.pdf)", onSelect: () => {
+                  { kind: "item", label: "Microsoft Word (.docx)", icon: FileText, onSelect: () => void exportDocx() },
+                  { kind: "item", label: "Web page (.html)", icon: Code, onSelect: exportHTML },
+                  { kind: "item", label: "Plain text (.txt)", icon: Type, onSelect: exportText },
+                  { kind: "item", label: "PDF (.pdf)", icon: Download, onSelect: () => {
                       if (!editor) return;
                       void docToPdf(title || "Document", editor.getHTML())
                         .then(b => downloadPdf(b, title || "Document"))
                         .catch(() => toast.error("Could not build the PDF"));
                     } },
                   { kind: "sep" },
-                  { kind: "item", label: "Print / Save as PDF", hint: "\u2318P", onSelect: printDoc },
+                  { kind: "item", label: "Print / Save as PDF", icon: Download, hint: "\u2318P", onSelect: printDoc },
                   { kind: "sep" },
-                  { kind: "item", label: "Version history", onSelect: () => { setShowHistory(true); setShowAI(false); setShowComments(false); setShowSuggestions(false); } },
-                  { kind: "item", label: "Page setup\u2026", onSelect: () => { setShowPageSetupMenu(true); setShowStats(false); } },
+                  { kind: "item", label: "Version history", icon: History, onSelect: () => { setShowHistory(true); setShowAI(false); setShowComments(false); setShowSuggestions(false); } },
+                  { kind: "item", label: "Page setup\u2026", icon: FileCog, onSelect: () => { setShowPageSetupMenu(true); setShowStats(false); } },
                 ],
               },
               {
                 id: "edit", label: "Edit", entries: [
-                  { kind: "item", label: "Undo", hint: "\u2318Z", onSelect: () => editor?.commands.undo() },
-                  { kind: "item", label: "Redo", hint: "\u2318\u21e7Z", onSelect: () => editor?.commands.redo() },
+                  { kind: "item", label: "Undo", icon: Undo2, hint: "\u2318Z", onSelect: () => editor?.commands.undo() },
+                  { kind: "item", label: "Redo", icon: Redo2, hint: "\u2318\u21e7Z", onSelect: () => editor?.commands.redo() },
                   { kind: "sep" },
-                  { kind: "item", label: "Find and replace\u2026", hint: "\u2318H", onSelect: () => setShowFindReplace(true) },
+                  { kind: "item", label: "Find and replace\u2026", icon: Search, hint: "\u2318H", onSelect: () => setShowFindReplace(true) },
                 ],
               },
               {
                 id: "view", label: "View", entries: [
-                  { kind: "item", label: "Document outline", checked: showOutline, onSelect: () => setShowOutline(v => !v) },
-                  { kind: "item", label: "Header and footer", checked: headerFooter.enabled, onSelect: () => updateHeaderFooter({ enabled: !headerFooter.enabled }) },
+                  { kind: "item", label: "Document outline", icon: BookOpen, checked: showOutline, onSelect: () => setShowOutline(v => !v) },
+                  { kind: "item", label: "Header and footer", icon: LayoutTemplate, checked: headerFooter.enabled, onSelect: () => updateHeaderFooter({ enabled: !headerFooter.enabled }) },
                   { kind: "sep" },
                   {
-                    kind: "item", label: "Suggesting mode", checked: suggestMode,
+                    kind: "item", label: "Suggesting mode", icon: GitMerge, checked: suggestMode,
                     onSelect: () => {
                       const next = !suggestMode;
                       setSuggestMode(next);
@@ -1815,20 +1834,20 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
               },
               {
                 id: "insert", label: "Insert", entries: [
-                  { kind: "item", label: "Table (3\u00d73)", onSelect: () => { (editor?.chain().focus() as unknown as { insertTable?: (o: { rows: number; cols: number; withHeaderRow: boolean }) => { run: () => boolean } })?.insertTable?.({ rows: 3, cols: 3, withHeaderRow: true })?.run?.(); } },
-                  { kind: "item", label: "Horizontal rule", onSelect: () => editor?.chain().focus().setHorizontalRule().run() },
-                  { kind: "item", label: "Table of contents", onSelect: insertTOC },
+                  { kind: "item", label: "Table (3\u00d73)", icon: Table, onSelect: () => { (editor?.chain().focus() as unknown as { insertTable?: (o: { rows: number; cols: number; withHeaderRow: boolean }) => { run: () => boolean } })?.insertTable?.({ rows: 3, cols: 3, withHeaderRow: true })?.run?.(); } },
+                  { kind: "item", label: "Horizontal rule", icon: Minus, onSelect: () => editor?.chain().focus().setHorizontalRule().run() },
+                  { kind: "item", label: "Table of contents", icon: ListTree, onSelect: insertTOC },
                   { kind: "sep" },
-                  { kind: "item", label: "Spreadsheet range\u2026", onSelect: () => setShowInsertRange(true) },
-                  { kind: "item", label: "Refresh linked tables", onSelect: () => void refreshLinkedTables() },
+                  { kind: "item", label: "Spreadsheet range\u2026", icon: Sigma, onSelect: () => setShowInsertRange(true) },
+                  { kind: "item", label: "Refresh linked tables", icon: BarChart3, onSelect: () => void refreshLinkedTables() },
                 ],
               },
               {
                 id: "format", label: "Format", entries: [
-                  { kind: "item", label: "Bold", hint: "\u2318B", onSelect: () => editor?.chain().focus().toggleBold().run() },
-                  { kind: "item", label: "Italic", hint: "\u2318I", onSelect: () => editor?.chain().focus().toggleItalic().run() },
-                  { kind: "item", label: "Strikethrough", onSelect: () => editor?.chain().focus().toggleStrike().run() },
-                  { kind: "item", label: "Clear formatting", onSelect: () => editor?.chain().focus().unsetAllMarks().run() },
+                  { kind: "item", label: "Bold", icon: Bold, hint: "\u2318B", onSelect: () => editor?.chain().focus().toggleBold().run() },
+                  { kind: "item", label: "Italic", icon: Italic, hint: "\u2318I", onSelect: () => editor?.chain().focus().toggleItalic().run() },
+                  { kind: "item", label: "Strikethrough", icon: Strikethrough, onSelect: () => editor?.chain().focus().toggleStrike().run() },
+                  { kind: "item", label: "Clear formatting", icon: RemoveFormatting, onSelect: () => editor?.chain().focus().unsetAllMarks().run() },
                   { kind: "sep" },
                   { kind: "label", label: "Text columns" },
                   { kind: "item", label: "One column", checked: docColumns === 1, onSelect: () => setDocColumns(1) },
@@ -1838,14 +1857,14 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
               },
               {
                 id: "tools", label: "Tools", entries: [
-                  { kind: "item", label: "Word count\u2026", onSelect: () => { refreshStats(); setShowStats(true); setShowPageSetupMenu(false); } },
-                  ...(voice.supported ? [{ kind: "item" as const, label: voice.listening ? "Stop voice typing" : "Voice typing", onSelect: () => voice.toggle() }] : []),
-                  { kind: "item", label: "Accessibility checker", checked: showA11y, onSelect: () => { setShowA11y(true); setShowAI(false); setShowComments(false); setShowHistory(false); setShowSuggestions(false); } },
+                  { kind: "item", label: "Word count\u2026", icon: BarChart3, onSelect: () => { refreshStats(); setShowStats(true); setShowPageSetupMenu(false); } },
+                  ...(voice.supported ? [{ kind: "item" as const, label: voice.listening ? "Stop voice typing" : "Voice typing", icon: Sparkles, onSelect: () => voice.toggle() }] : []),
+                  { kind: "item", label: "Accessibility checker", icon: CheckCheck, checked: showA11y, onSelect: () => { setShowA11y(true); setShowAI(false); setShowComments(false); setShowHistory(false); setShowSuggestions(false); } },
                   { kind: "sep" },
-                  { kind: "item", label: "AI assistant", onSelect: () => { setShowAI(true); setShowComments(false); setShowHistory(false); setShowSuggestions(false); } },
-                  { kind: "item", label: "Comments", onSelect: () => { setShowComments(true); setShowAI(false); setShowHistory(false); setShowSuggestions(false); } },
+                  { kind: "item", label: "AI assistant", icon: Sparkles, onSelect: () => { setShowAI(true); setShowComments(false); setShowHistory(false); setShowSuggestions(false); } },
+                  { kind: "item", label: "Comments", icon: MessageSquare, onSelect: () => { setShowComments(true); setShowAI(false); setShowHistory(false); setShowSuggestions(false); } },
                   { kind: "sep" },
-                  { kind: "item", label: "Convert to presentation", onSelect: () => void convertToSlides() },
+                  { kind: "item", label: "Convert to presentation", icon: LayoutTemplate, onSelect: () => void convertToSlides() },
                 ],
               },
             ]}
@@ -1861,6 +1880,23 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
             <div className="flex min-w-0 flex-1 flex-nowrap items-center gap-0.5 rounded-full bg-surface-sunken px-2 py-1">
             <TB icon={<Undo2 className="h-3.5 w-3.5" />} title="Undo (⌘Z)" onClick={() => editor?.commands.undo()} />
             <TB icon={<Redo2 className="h-3.5 w-3.5" />} title="Redo (⌘⇧Z)" onClick={() => editor?.commands.redo()} />
+            <TSep />
+
+            {/* Zoom. Uses the CSS `zoom` property rather than a transform:
+                transform scales pixels but leaves layout at 100%, so the
+                scroll container would size itself to the unscaled page and
+                clip the bottom at any zoom above 100%. */}
+            <select
+              aria-label="Zoom" title="Zoom"
+              value={zoom}
+              onChange={e => setZoom(Number(e.target.value))}
+              className="h-7 w-[70px] flex-shrink-0 cursor-pointer rounded-md border border-border bg-surface px-1.5
+                         text-xs text-foreground hover:bg-hover focus:border-accent/60 focus:outline-none"
+            >
+              {[0.5, 0.75, 0.9, 1, 1.25, 1.5, 2].map(z => (
+                <option key={z} value={z}>{Math.round(z * 100)}%</option>
+              ))}
+            </select>
             <TSep />
 
             {/* Heading picker */}
@@ -1920,26 +1956,30 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
             <ChevronDown className="pointer-events-none absolute right-1.5 top-1/2 h-3 w-3 -translate-y-1/2 text-subtle" />
             </div>
 
-            {/* Font size */}
-            <div className="relative flex-shrink-0">
-            <select
-              title="Font size"
-              aria-label="Font size"
-              className="h-7 w-[62px] cursor-pointer appearance-none rounded-md border border-border bg-surface pl-2 pr-5
-                         text-xs text-foreground hover:bg-hover focus:border-accent/60 focus:outline-none"
-              value={((editor?.getAttributes("textStyle").fontSize as string) ?? "").replace("px", "")}
-              onChange={e => {
-                const v = e.target.value;
-                const c = editor?.chain().focus() as unknown as { setFontSize: (v: string) => { run: () => void }; unsetFontSize: () => { run: () => void } } | undefined;
-                if (v) c?.setFontSize(v + "px").run();
-                else c?.unsetFontSize().run();
-              }}>
-              <option value="">11</option>
-              {[10, 12, 14, 16, 18, 24, 30, 36].map(s => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-            <ChevronDown className="pointer-events-none absolute right-1 top-1/2 h-3 w-3 -translate-y-1/2 text-subtle" />
+            {/* Font size — a stepper, the way Docs and Word present it. A bare
+                dropdown makes the common action (nudge one step) a two-click
+                menu hunt. */}
+            <div className="flex flex-shrink-0 items-center rounded-md border border-border bg-surface">
+              <button
+                onClick={() => applyFontSize(currentFontSize - 1)}
+                aria-label="Decrease font size"
+                className="flex h-7 w-6 items-center justify-center rounded-l-md text-muted transition-colors hover:bg-hover hover:text-foreground"
+              >
+                <Minus className="h-3 w-3" />
+              </button>
+              <input
+                aria-label="Font size"
+                value={currentFontSize}
+                onChange={e => { const n = parseInt(e.target.value, 10); if (!Number.isNaN(n)) applyFontSize(n); }}
+                className="h-7 w-8 border-x border-border bg-transparent text-center text-xs text-foreground outline-none"
+              />
+              <button
+                onClick={() => applyFontSize(currentFontSize + 1)}
+                aria-label="Increase font size"
+                className="flex h-7 w-6 items-center justify-center rounded-r-md text-muted transition-colors hover:bg-hover hover:text-foreground"
+              >
+                <Plus className="h-3 w-3" />
+              </button>
             </div>
 
             {/* Text color */}
@@ -2099,12 +2139,43 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
 
             {/* Paper editor */}
             <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden bg-surface-sunken">
+              {/* ── Ruler ──
+                  The single strongest "this is a word processor" signal on
+                  screen, and the only place the current margins are visible at
+                  a glance. Sticky so it stays put while the page scrolls, and
+                  it scales with zoom so the inch marks stay honest. 96px = 1in,
+                  which is what PAGE_SIZES and MARGIN_PRESETS are expressed in. */}
+              <div className="sticky top-0 z-10 flex justify-center bg-surface-sunken pb-1 pt-3">
+                <div
+                  className="relative h-[18px] overflow-hidden rounded-sm border border-border-soft bg-surface"
+                  style={{ width: paperW * zoom, maxWidth: "100%" }}
+                  aria-hidden
+                >
+                  {/* Margins render as sunken gutters, the way Word shades them. */}
+                  <div className="absolute inset-y-0 left-0 bg-surface-sunken" style={{ width: marginPx.h * zoom }} />
+                  <div className="absolute inset-y-0 right-0 bg-surface-sunken" style={{ width: marginPx.h * zoom }} />
+                  {Array.from({ length: Math.floor(paperW / 96) + 1 }, (_, i) => (
+                    <div key={i} className="absolute inset-y-0" style={{ left: i * 96 * zoom }}>
+                      <div className="h-full w-px bg-border" />
+                      {i > 0 && (
+                        <span className="absolute left-1 top-[1px] text-[9px] leading-none text-subtle">{i}</span>
+                      )}
+                    </div>
+                  ))}
+                  {/* Half-inch ticks, short, for the finer sense of scale. */}
+                  {Array.from({ length: Math.floor(paperW / 48) }, (_, i) => i).filter(i => i % 2 === 1).map(i => (
+                    <div key={`h${i}`} className="absolute top-1/2 h-1.5 w-px -translate-y-1/2 bg-border"
+                         style={{ left: i * 48 * zoom }} />
+                  ))}
+                </div>
+              </div>
+
               {/* Paper: shadow only, square corners, no hairline. A rounded,
                   bordered box reads as a card; a sheet of paper reads as a
                   document. Word and Docs both do the plain-shadow version. */}
               <div
                 className="mx-auto my-8 flex flex-col bg-surface shadow-panel"
-                style={{ width: paperW, maxWidth: "100%", minHeight: paperH }}
+                style={{ width: paperW, maxWidth: "100%", minHeight: paperH, zoom }}
               >
                 {headerFooter.enabled && (
                   <div

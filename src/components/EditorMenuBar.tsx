@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Check } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 /**
  * The named menu bar shared by Sage Docs, Sheets and Slides.
@@ -28,9 +29,13 @@ export type MenuEntry =
       checked?: boolean;
       danger?: boolean;
       disabled?: boolean;
+      /** Leading glyph. Menus without icons read as a prototype; every desktop
+       *  editor since System 7 has had them, and they make a long menu
+       *  scannable by shape rather than by reading every line. */
+      icon?: LucideIcon;
     }
   /** A file picker rendered as a menu row, for Import. */
-  | { kind: "file"; label: string; accept: string; onFile: (e: React.ChangeEvent<HTMLInputElement>) => void }
+  | { kind: "file"; label: string; accept: string; icon?: LucideIcon; onFile: (e: React.ChangeEvent<HTMLInputElement>) => void }
   | { kind: "sep" }
   | { kind: "label"; label: string };
 
@@ -88,7 +93,7 @@ export function EditorMenuBar({ menus, width = 264 }: { menus: EditorMenu[]; wid
                 }
                 if (entry.kind === "label") {
                   return (
-                    <p key={i} className="px-3 pb-0.5 pt-1.5 text-[11px] font-medium text-subtle">
+                    <p key={i} className="px-3 pb-0.5 pt-1.5 pl-[34px] text-[11px] font-medium text-subtle">
                       {entry.label}
                     </p>
                   );
@@ -100,6 +105,9 @@ export function EditorMenuBar({ menus, width = 264 }: { menus: EditorMenu[]; wid
                       className="flex w-full cursor-pointer items-center gap-2.5 px-3 py-1.5 text-[13px]
                                  text-foreground transition-colors hover:bg-hover"
                     >
+                      {entry.icon
+                        ? <entry.icon className="h-3.5 w-3.5 flex-shrink-0 text-muted" />
+                        : <span className="w-3.5 flex-shrink-0" />}
                       {entry.label}
                       <input
                         type="file"
@@ -121,6 +129,9 @@ export function EditorMenuBar({ menus, width = 264 }: { menus: EditorMenu[]; wid
                       entry.danger ? "text-crit hover:bg-crit-soft" : "text-foreground hover:bg-hover"
                     }`}
                   >
+                    {entry.icon
+                      ? <entry.icon className={`h-3.5 w-3.5 flex-shrink-0 ${entry.danger ? "" : "text-muted"}`} />
+                      : <span className="w-3.5 flex-shrink-0" />}
                     {entry.label}
                     {entry.checked && <Check className="ml-auto h-3.5 w-3.5 text-accent" />}
                     {entry.hint && !entry.checked && (

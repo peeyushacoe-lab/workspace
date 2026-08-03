@@ -1591,45 +1591,45 @@ body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#1a1a18}
         menus={[
           {
             id: "file", label: "File", entries: [
-              { kind: "item", label: "New slide", onSelect: () => addSlide() },
-              { kind: "file", label: "Import PowerPoint (.pptx)\u2026", accept: ".pptx", onFile: e => void importFile(e) },
+              { kind: "item", label: "New slide", icon: Plus, onSelect: () => addSlide() },
+              { kind: "file", label: "Import PowerPoint (.pptx)\u2026", icon: Upload, accept: ".pptx", onFile: e => void importFile(e) },
               { kind: "sep" },
               { kind: "label", label: "Download" },
-              { kind: "item", label: "PowerPoint (.pptx)", onSelect: () => void exportPPTX(slides, title) },
-              { kind: "item", label: "PDF (.pdf)", onSelect: () => exportDeckPdf() },
-              { kind: "item", label: "Outline to Sage Docs", onSelect: () => void exportOutlineToDoc() },
+              { kind: "item", label: "PowerPoint (.pptx)", icon: Presentation, onSelect: () => void exportPPTX(slides, title) },
+              { kind: "item", label: "PDF (.pdf)", icon: Download, onSelect: () => exportDeckPdf() },
+              { kind: "item", label: "Outline to Sage Docs", icon: FileText, onSelect: () => void exportOutlineToDoc() },
               { kind: "sep" },
-              { kind: "item", label: "Print / Save as PDF", onSelect: () => printDeck() },
+              { kind: "item", label: "Print / Save as PDF", icon: Download, onSelect: () => printDeck() },
               { kind: "sep" },
-              { kind: "item", label: "Version history", onSelect: () => { setShowVersions(true); setShowComments(false); } },
-              { kind: "item", label: "Templates\u2026", onSelect: () => setShowTemplates(true) },
+              { kind: "item", label: "Version history", icon: History, onSelect: () => { setShowVersions(true); setShowComments(false); } },
+              { kind: "item", label: "Templates\u2026", icon: Grid3x3, onSelect: () => setShowTemplates(true) },
             ],
           },
           {
             id: "edit", label: "Edit", entries: [
-              { kind: "item", label: "Find and replace\u2026", onSelect: () => setShowFindReplace(true) },
+              { kind: "item", label: "Find and replace\u2026", icon: Search, onSelect: () => setShowFindReplace(true) },
             ],
           },
           {
             id: "view", label: "View", entries: [
-              { kind: "item", label: "Speaker notes", checked: showNotes, onSelect: () => setShowNotes(v => !v) },
-              { kind: "item", label: "Slide numbers", checked: showNumbers, onSelect: () => setShowNumbers(v => !v) },
-              { kind: "item", label: "Footer", checked: showFooter, onSelect: () => setShowFooter(v => !v) },
+              { kind: "item", label: "Speaker notes", icon: MessageSquare, checked: showNotes, onSelect: () => setShowNotes(v => !v) },
+              { kind: "item", label: "Slide numbers", icon: Hash, checked: showNumbers, onSelect: () => setShowNumbers(v => !v) },
+              { kind: "item", label: "Footer", icon: Hash, checked: showFooter, onSelect: () => setShowFooter(v => !v) },
               { kind: "sep" },
-              { kind: "item", label: "Present", onSelect: () => setPresenterMode(true) },
+              { kind: "item", label: "Present", icon: Play, onSelect: () => setPresenterMode(true) },
             ],
           },
           {
             id: "format", label: "Format", entries: [
-              { kind: "item", label: "Slide layout\u2026", onSelect: () => setShowLayout(true) },
-              { kind: "item", label: "Theme\u2026", onSelect: () => setShowThemes(true) },
-              { kind: "item", label: "Deck settings\u2026", onSelect: () => setShowDeckSettings(true) },
+              { kind: "item", label: "Slide layout\u2026", icon: LayoutTemplate, onSelect: () => setShowLayout(true) },
+              { kind: "item", label: "Theme\u2026", icon: Layers, onSelect: () => setShowThemes(true) },
+              { kind: "item", label: "Deck settings\u2026", icon: Hash, onSelect: () => setShowDeckSettings(true) },
             ],
           },
           {
             id: "tools", label: "Tools", entries: [
-              { kind: "item", label: "AI assistant", onSelect: () => setShowAI(true) },
-              { kind: "item", label: "Comments", onSelect: () => { setShowComments(true); setShowVersions(false); } },
+              { kind: "item", label: "AI assistant", icon: Sparkles, onSelect: () => setShowAI(true) },
+              { kind: "item", label: "Comments", icon: MessageSquare, onSelect: () => { setShowComments(true); setShowVersions(false); } },
             ],
           },
         ]}
