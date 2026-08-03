@@ -22,6 +22,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { EditorMenuBar } from "./EditorMenuBar";
+import { DOCUMENT_FONTS } from "@/lib/document-fonts";
+import { sheetToPdf, downloadPdf } from "@/lib/pdf-export";
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell as PieCell,
   AreaChart, Area, ScatterChart, Scatter, ComposedChart,
@@ -148,7 +150,9 @@ const DEFAULT_ROW_H = 24;
 const ROW_HEADER_W = 48;
 const COL_HEADER_H = 24;
 
-const FONTS = ["Arial", "Roboto", "Georgia", "Courier New", "Times New Roman", "Verdana"];
+// Same registry Docs and Slides use — a workbook opened in one app and styled
+// in another must not offer a different set of fonts.
+const FONTS = DOCUMENT_FONTS.map(f => f.name);
 const FONT_SIZES = [8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 36, 48, 72];
 const CHART_COLORS = ["#4f46e5", "#0e7c5a", "#b45309", "#c0362c", "#9334e6", "#00897b", "#f57c00", "#3949ab"];
 
@@ -1495,6 +1499,25 @@ tr{break-inside:avoid}
     w.print();
   }, [activeSheet, getCellDisplayValue, title]);
 
+  /** Export the used range as a real .pdf, no print dialog. */
+  const exportSheetPdf = useCallback(() => {
+    const sheet = activeSheet;
+    let maxR = -1, maxC = -1;
+    for (const key of Object.keys(sheet.cells)) {
+      if (!sheet.cells[key]?.v) continue;
+      const [r, c] = key.split(":").map(Number);
+      if (r > maxR) maxR = r;
+      if (c > maxC) maxC = c;
+    }
+    if (maxR < 0) { toast.error("Nothing to export — this sheet is empty"); return; }
+    const columns = Array.from({ length: maxC + 1 }, (_, c) => indexToCol(c));
+    const rows = Array.from({ length: maxR + 1 }, (_, r) =>
+      Array.from({ length: maxC + 1 }, (_, c) => getCellDisplayValue(r, c, sheet)));
+    void sheetToPdf(title || "Spreadsheet", sheet.name, columns, rows)
+      .then(b => downloadPdf(b, `${title || "Spreadsheet"} - ${sheet.name}`))
+      .catch(() => toast.error("Could not build the PDF"));
+  }, [activeSheet, getCellDisplayValue, title]);
+
   const exportXLSX = async () => {
     const XLSX = await import("xlsx");
     const wb = XLSX.utils.book_new();
@@ -1966,6 +1989,7 @@ tr{break-inside:avoid}
               { kind: "sep" },
               { kind: "label", label: "Download" },
               { kind: "item", label: "Microsoft Excel (.xlsx)", onSelect: () => void exportXLSX() },
+              { kind: "item", label: "PDF (.pdf)", onSelect: () => exportSheetPdf() },
               { kind: "sep" },
               { kind: "item", label: "Print / Save as PDF", onSelect: () => printSheet() },
               { kind: "sep" },

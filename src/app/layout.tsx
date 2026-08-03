@@ -2,6 +2,8 @@
 import { DM_Sans, Inter, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
+// Webfonts for Sage Docs / Sheets / Slides. Self-hosted; see the file header.
+import "./document-fonts";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { OfflineIndicator } from "@/components/OfflineIndicator";

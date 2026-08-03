@@ -22,6 +22,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { EditorMenuBar } from "./EditorMenuBar";
+import { FONTS_BY_CATEGORY, fontStack } from "@/lib/document-fonts";
+import { deckToPdf, downloadPdf, type PdfSlide } from "@/lib/pdf-export";
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell as PieCell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -325,7 +327,7 @@ function SlideElementView({ el, zoom, theme, anim, animDelay = 0, editMode = fal
 
   if (el.type === "text") {
     return (
-      <div style={{ ...base, display: "flex", flexDirection: "column", justifyContent: VALIGN_JUSTIFY[s.valign ?? "top"], fontSize: (s.fontSize ?? 18) * zoom, fontWeight: s.bold ? "bold" : "normal", fontStyle: s.italic ? "italic" : "normal", textDecoration: s.underline ? "underline" : "none", color: s.color ?? theme.text, textAlign: s.align ?? "left", whiteSpace: "pre-wrap", lineHeight: 1.4, overflow: "hidden" }}>
+      <div style={{ ...base, display: "flex", flexDirection: "column", justifyContent: VALIGN_JUSTIFY[s.valign ?? "top"], fontFamily: fontStack(s.fontFamily) || undefined, fontSize: (s.fontSize ?? 18) * zoom, fontWeight: s.bold ? "bold" : "normal", fontStyle: s.italic ? "italic" : "normal", textDecoration: s.underline ? "underline" : "none", color: s.color ?? theme.text, textAlign: s.align ?? "left", whiteSpace: "pre-wrap", lineHeight: 1.4, overflow: "hidden" }}>
         {el.content}
       </div>
     );
@@ -388,7 +390,7 @@ function SlideElementView({ el, zoom, theme, anim, animDelay = 0, editMode = fal
   if (el.type === "table" && el.tableRows) {
     return (
       <div style={{ ...base, overflow: "hidden" }}>
-        <table style={{ width: "100%", height: "100%", borderCollapse: "collapse", fontSize: (s.fontSize ?? 14) * zoom }}>
+        <table style={{ width: "100%", height: "100%", borderCollapse: "collapse", fontFamily: fontStack(s.fontFamily) || undefined, fontSize: (s.fontSize ?? 14) * zoom }}>
           {el.tableRows.map((row, ri) => (
             <tr key={ri} style={{ background: ri === 0 ? (s.bg ?? theme.accent) : "transparent" }}>
               {row.map((cell, ci) => (
@@ -877,6 +879,28 @@ body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#1a1a18}
     w.document.close();
     w.focus();
     w.print();
+  }, [slides, title]);
+
+  /**
+   * Export the deck as a real .pdf. Text only — the first text element on a
+   * slide is treated as its title and the rest as body, which is how decks are
+   * actually built. Shapes and images belong to Print, which renders the real
+   * canvas.
+   */
+  const exportDeckPdf = useCallback(() => {
+    const visible = slides.filter(s => !s.hidden);
+    if (visible.length === 0) { toast.error("Nothing to export — every slide is hidden"); return; }
+    const pages: PdfSlide[] = visible.map(slide => {
+      const texts = [...slide.elements]
+        .filter(el => el.type === "text" && el.content?.trim())
+        .sort((a, b) => a.y - b.y)
+        .map(el => el.content as string);
+      const [first, ...rest] = texts;
+      return { title: first, lines: rest.flatMap(t => t.split("\n")), notes: slide.notes };
+    });
+    void deckToPdf(title || "Presentation", pages)
+      .then(b => downloadPdf(b, title || "Presentation"))
+      .catch(() => toast.error("Could not build the PDF"));
   }, [slides, title]);
 
   const exportOutlineToDoc = async () => {
@@ -1572,6 +1596,7 @@ body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#1a1a18}
               { kind: "sep" },
               { kind: "label", label: "Download" },
               { kind: "item", label: "PowerPoint (.pptx)", onSelect: () => void exportPPTX(slides, title) },
+              { kind: "item", label: "PDF (.pdf)", onSelect: () => exportDeckPdf() },
               { kind: "item", label: "Outline to Sage Docs", onSelect: () => void exportOutlineToDoc() },
               { kind: "sep" },
               { kind: "item", label: "Print / Save as PDF", onSelect: () => printDeck() },
@@ -1656,6 +1681,22 @@ body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#1a1a18}
         {/* Element style (when selected) */}
         {selectedEl && selectedEl.type === "text" && (
           <>
+            {/* Font family. ElementStyle already carried fontFamily and PPTX
+                export already wrote it, but nothing ever set it and the canvas
+                never rendered it — the field was dead on both ends. */}
+            <select
+              aria-label="Font"
+              value={selectedEl.style?.fontFamily ?? ""}
+              onChange={e => updateElement(selectedEl.id, { style: { ...selectedEl.style, fontFamily: e.target.value || undefined } })}
+              className="h-7 w-[120px] cursor-pointer rounded-md border border-border bg-surface px-1.5 text-xs text-foreground hover:bg-hover focus:border-accent/60 focus:outline-none"
+            >
+              <option value="">Theme font</option>
+              {FONTS_BY_CATEGORY.map(g => (
+                <optgroup key={g.category} label={g.category}>
+                  {g.fonts.map(f => <option key={f.name} value={f.name} style={{ fontFamily: f.stack }}>{f.name}</option>)}
+                </optgroup>
+              ))}
+            </select>
             <ToolBtn icon={<Bold className="h-3.5 w-3.5" />} title="Bold" active={selectedEl.style?.bold} onClick={() => updateElement(selectedEl.id, { style: { ...selectedEl.style, bold: !selectedEl.style?.bold } })} />
             <ToolBtn icon={<Italic className="h-3.5 w-3.5" />} title="Italic" active={selectedEl.style?.italic} onClick={() => updateElement(selectedEl.id, { style: { ...selectedEl.style, italic: !selectedEl.style?.italic } })} />
             <ToolBtn icon={<Underline className="h-3.5 w-3.5" />} title="Underline" active={selectedEl.style?.underline} onClick={() => updateElement(selectedEl.id, { style: { ...selectedEl.style, underline: !selectedEl.style?.underline } })} />
@@ -1947,7 +1988,7 @@ body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#1a1a18}
                         spellCheck
                         autoFocus
                         className="w-full h-full resize-none outline-none bg-transparent"
-                        style={{ fontSize: (s.fontSize ?? 18) * zoom, fontWeight: s.bold ? "bold" : "normal", fontStyle: s.italic ? "italic" : "normal", color: s.color ?? theme.text, textAlign: s.align ?? "left", lineHeight: 1.4 }}
+                        style={{ fontFamily: fontStack(s.fontFamily) || undefined, fontSize: (s.fontSize ?? 18) * zoom, fontWeight: s.bold ? "bold" : "normal", fontStyle: s.italic ? "italic" : "normal", color: s.color ?? theme.text, textAlign: s.align ?? "left", lineHeight: 1.4 }}
                         value={el.content ?? ""}
                         onChange={e2 => updateElement(el.id, { content: e2.target.value })}
                         onClick={e2 => e2.stopPropagation()}
@@ -1960,7 +2001,7 @@ body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#1a1a18}
                         }}
                       />
                     ) : (
-                      <div style={{ display: "flex", flexDirection: "column", justifyContent: VALIGN_JUSTIFY[s.valign ?? "top"], fontSize: (s.fontSize ?? 18) * zoom, fontWeight: s.bold ? "bold" : "normal", fontStyle: s.italic ? "italic" : "normal", textDecoration: s.underline ? "underline" : "none", color: s.color ?? theme.text, textAlign: s.align ?? "left", whiteSpace: "pre-wrap", lineHeight: 1.4, width: "100%", height: "100%", overflow: "hidden" }}>
+                      <div style={{ display: "flex", flexDirection: "column", justifyContent: VALIGN_JUSTIFY[s.valign ?? "top"], fontFamily: fontStack(s.fontFamily) || undefined, fontSize: (s.fontSize ?? 18) * zoom, fontWeight: s.bold ? "bold" : "normal", fontStyle: s.italic ? "italic" : "normal", textDecoration: s.underline ? "underline" : "none", color: s.color ?? theme.text, textAlign: s.align ?? "left", whiteSpace: "pre-wrap", lineHeight: 1.4, width: "100%", height: "100%", overflow: "hidden" }}>
                         {el.content}
                       </div>
                     )}

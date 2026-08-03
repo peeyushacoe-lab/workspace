@@ -24,6 +24,7 @@ import {
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { useEditor, EditorContent } from "@tiptap/react";
+import { Placeholder } from "@tiptap/extensions";
 import { Mark } from "@tiptap/core";
 import { ReplaceStep } from "prosemirror-transform";
 import StarterKit from "@tiptap/starter-kit";
@@ -51,6 +52,8 @@ import { AccessibilityPanel } from "./AccessibilityPanel";
 import { InsertRangeDialog } from "./InsertRangeDialog";
 import { AppHome, type HomeTemplate } from "./AppHome";
 import { EditorMenuBar } from "./EditorMenuBar";
+import { FONTS_BY_CATEGORY } from "@/lib/document-fonts";
+import { docToPdf, downloadPdf } from "@/lib/pdf-export";
 import { docPreviewLines } from "@/lib/home-preview";
 import { useVoiceTyping } from "@/lib/use-voice-typing";
 import { docToSlides } from "@/lib/doc-to-slides";
@@ -559,6 +562,12 @@ export function DocsView() {
       Highlight.configure({ multicolor: true }),
       Subscript,
       Superscript,
+      // An empty page that says nothing is the most common reason people
+      // close a document editor without writing anything.
+      Placeholder.configure({
+        placeholder: "Start writing, or pick a template from File \u2192 New",
+        showOnlyWhenEditable: true,
+      }),
       TrackInsert,
       TrackDelete,
       Collaboration.configure({ document: ydoc }),
@@ -1756,6 +1765,12 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
                   { kind: "item", label: "Microsoft Word (.docx)", onSelect: () => void exportDocx() },
                   { kind: "item", label: "Web page (.html)", onSelect: exportHTML },
                   { kind: "item", label: "Plain text (.txt)", onSelect: exportText },
+                  { kind: "item", label: "PDF (.pdf)", onSelect: () => {
+                      if (!editor) return;
+                      void docToPdf(title || "Document", editor.getHTML())
+                        .then(b => downloadPdf(b, title || "Document"))
+                        .catch(() => toast.error("Could not build the PDF"));
+                    } },
                   { kind: "sep" },
                   { kind: "item", label: "Print / Save as PDF", hint: "\u2318P", onSelect: printDoc },
                   { kind: "sep" },
@@ -1879,8 +1894,16 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
                 else c?.unsetFontFamily().run();
               }}>
               <option value="">Default font</option>
-              {["Arial", "Georgia", "Times New Roman", "Courier New", "Verdana", "Roboto"].map(f => (
-                <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>
+              {/* Grouped by category, and each option previews in its own face.
+                  The stored value is the bare family name, never the full
+                  stack — DOCX export writes this straight into the document as
+                  a font name, and "Lora, Georgia, serif" is not a font. */}
+              {FONTS_BY_CATEGORY.map(group => (
+                <optgroup key={group.category} label={group.category}>
+                  {group.fonts.map(f => (
+                    <option key={f.name} value={f.name} style={{ fontFamily: f.stack }}>{f.name}</option>
+                  ))}
+                </optgroup>
               ))}
             </select>
             <ChevronDown className="pointer-events-none absolute right-1.5 top-1/2 h-3 w-3 -translate-y-1/2 text-subtle" />
@@ -2086,6 +2109,9 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
                   </div>
                 )}
                 <div className="flex-1" style={{ paddingLeft: marginPx.h, paddingRight: marginPx.h, paddingTop: marginPx.v, paddingBottom: marginPx.v, columnCount: docColumns > 1 ? docColumns : undefined, columnGap: docColumns > 1 ? "32px" : undefined, lineHeight: lineHeight }}>
+                  {/* Selection toolbar. The formatting bar is ~1000px away
+                      from where you're actually typing; this puts the six
+                      controls people reach for most under the selection. */}
                   <EditorContent editor={editor} />
                 </div>
                 {headerFooter.enabled && (
