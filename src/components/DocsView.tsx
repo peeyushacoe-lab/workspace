@@ -18,8 +18,8 @@ import {
   IndentDecrease, IndentIncrease, Type,
   BookOpen, LayoutTemplate, WifiOff,
   Superscript as SuperscriptIcon, Subscript as SubscriptIcon, RemoveFormatting, Highlighter,
-  FileCog, PanelTop, BarChart3, AlignVerticalSpaceAround, Sigma, ListTree,
-  BookmarkPlus, GitMerge, Accessibility, Mic, ArrowLeft,
+  FileCog, BarChart3, AlignVerticalSpaceAround, Sigma, ListTree,
+  BookmarkPlus, GitMerge, ArrowLeft,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -50,6 +50,7 @@ import { ShortcutHelp, DOCS_SHORTCUTS } from "./ShortcutHelp";
 import { AccessibilityPanel } from "./AccessibilityPanel";
 import { InsertRangeDialog } from "./InsertRangeDialog";
 import { AppHome, type HomeTemplate } from "./AppHome";
+import { EditorMenuBar } from "./EditorMenuBar";
 import { docPreviewLines } from "@/lib/home-preview";
 import { useVoiceTyping } from "@/lib/use-voice-typing";
 import { docToSlides } from "@/lib/doc-to-slides";
@@ -476,6 +477,10 @@ export function DocsView() {
   const [showShare, setShowShare] = useState(false);
   const [showOutline, setShowOutline] = useState(true);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  // Named menu bar (File / Edit / View / …). Holds the id of the open menu, so
+  // only one can be open and hovering across the bar moves between them the way
+  // a desktop menu bar does.
+  const [topMenu, setTopMenu] = useState<string | null>(null);
   const [showSecurityMenu, setShowSecurityMenu] = useState(false);
   const [showTemplateMenu, setShowTemplateMenu] = useState(false);
   const [headingMenu, setHeadingMenu] = useState(false);
@@ -531,8 +536,18 @@ export function DocsView() {
     extensions: [
       StarterKit.configure({
         heading: { levels: [1, 2, 3, 4, 5, 6] },
+        // MUST be false while Collaboration is registered. Collaboration ships
+        // its own undo/redo backed by the Yjs UndoManager; leaving ProseMirror's
+        // history plugin installed alongside it means two history stacks fight
+        // over the same document and undo behaves erratically or not at all.
+        undoRedo: false,
       }),
-      TextAlign.configure({ types: ["heading", "paragraph"] }),
+      // Alignment has to list every node type it can apply to. With only
+      // heading and paragraph, the four align buttons silently did nothing
+      // inside list items, checklists and table cells.
+      TextAlign.configure({
+        types: ["heading", "paragraph", "listItem", "taskItem", "tableCell", "tableHeader"],
+      }),
       Image.configure({ inline: false, allowBase64: true }),
       TableKit.configure({ table: { resizable: true } }),
       TaskList,
@@ -1266,7 +1281,31 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
   };
 
   // Close menus on outside click
-  const closeMenus = () => { setHeadingMenu(false); setShowExportMenu(false); setShowSecurityMenu(false); setShowTemplateMenu(false); setShowPageSetupMenu(false); setShowStats(false); setShowLineSpacing(false); setShowSymbols(false); };
+  // A menu that advertises a shortcut has to honour it. ⌘Z/⌘⇧Z/⌘B/⌘I come free
+  // from Tiptap, but nothing was listening for ⌘H, and ⌘P went to the browser's
+  // raw print rather than our paginated print view.
+  useEffect(() => {
+    if (!selectedId) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey) || e.altKey) return;
+      const k = e.key.toLowerCase();
+      if (k === "h") { e.preventDefault(); setShowFindReplace(true); setTopMenu(null); }
+      else if (k === "p") { e.preventDefault(); printDoc(); setTopMenu(null); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selectedId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Escape closes an open menu — otherwise the only way out is a click
+  // elsewhere, which strands keyboard users inside it.
+  useEffect(() => {
+    if (!topMenu) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setTopMenu(null); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [topMenu]);
+
+  const closeMenus = () => { setHeadingMenu(false); setShowExportMenu(false); setShowSecurityMenu(false); setShowTemplateMenu(false); setShowPageSetupMenu(false); setShowStats(false); setShowLineSpacing(false); setShowSymbols(false); setTopMenu(null); };
 
   // ── Symbols ───────────────────────────────────────────────────────────────
   const insertSymbol = (sym: string) => {
@@ -1524,7 +1563,12 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
 
             {/* Actions. flex-nowrap: these must stay on one line — when they
                 wrapped, the bar grew a second ragged row above the toolbar. */}
-            <div className="flex min-w-0 flex-nowrap items-center gap-0.5 overflow-x-auto">
+            {/* No overflow-x here. `overflow-x: auto` forces overflow-y to
+                compute as auto too, which turns this row into a clipping box —
+                and every dropdown anchored inside it (Export, Page setup,
+                Templates, Stats) rendered *below* the row and was clipped to
+                nothing. The Download button worked; its menu was invisible. */}
+            <div className="flex flex-nowrap items-center gap-0.5">
               {/* Find & replace */}
               <IconBtn icon={<Search className="h-4 w-4" />} title="Find & replace (⌘H)" onClick={() => setShowFindReplace(true)} />
               {/* Page setup — text columns live inside it now. A bare <select>
@@ -1584,9 +1628,6 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
                 )}
               </div>
 
-              {/* Header / footer toggle */}
-              <IconBtn icon={<PanelTop className="h-4 w-4" />} title="Header & footer" active={headerFooter.enabled} onClick={() => updateHeaderFooter({ enabled: !headerFooter.enabled })} />
-
               {/* Document stats.
                   This wrapper is `relative` purely to anchor the popover, and
                   it is a block box — so the voice and accessibility buttons
@@ -1620,28 +1661,6 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
                 )}
               </div>
 
-              {/* Voice typing — hidden entirely when the browser has no
-                  SpeechRecognition (Firefox), rather than offering a button
-                  that silently does nothing. */}
-              {voice.supported && (
-                <IconBtn
-                  icon={<Mic className="h-4 w-4" />}
-                  title={voice.listening ? "Stop voice typing" : "Voice typing"}
-                  active={voice.listening}
-                  activeClass="text-crit bg-crit-soft"
-                  onClick={() => voice.toggle()}
-                />
-              )}
-              <IconBtn
-                icon={<Accessibility className="h-4 w-4" />}
-                title="Accessibility checker"
-                active={showA11y}
-                onClick={() => {
-                  setShowA11y(v => !v);
-                  setShowAI(false); setShowComments(false);
-                  setShowHistory(false); setShowSuggestions(false);
-                }}
-              />
 
               <TSep />
 
@@ -1720,6 +1739,92 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
             </div>
           </div>
 
+          {/* ── Menu bar ──
+              Named menus, the way Docs, Word and every desktop editor since
+              1984 do it. Icon-only chrome hides whole features: Import and
+              Download existed but lived behind an unlabelled download glyph,
+              which is functionally the same as not shipping them. Shared with
+              Sage Sheets and Slides so the three can't drift apart. */}
+          <EditorMenuBar
+            menus={[
+              {
+                id: "file", label: "File", entries: [
+                  { kind: "item", label: "New document", onSelect: () => void createDoc() },
+                  { kind: "file", label: "Import Word (.docx)\u2026", accept: ".docx", onFile: e => void importDocx(e) },
+                  { kind: "sep" },
+                  { kind: "label", label: "Download" },
+                  { kind: "item", label: "Microsoft Word (.docx)", onSelect: () => void exportDocx() },
+                  { kind: "item", label: "Web page (.html)", onSelect: exportHTML },
+                  { kind: "item", label: "Plain text (.txt)", onSelect: exportText },
+                  { kind: "sep" },
+                  { kind: "item", label: "Print / Save as PDF", hint: "\u2318P", onSelect: printDoc },
+                  { kind: "sep" },
+                  { kind: "item", label: "Version history", onSelect: () => { setShowHistory(true); setShowAI(false); setShowComments(false); setShowSuggestions(false); } },
+                  { kind: "item", label: "Page setup\u2026", onSelect: () => { setShowPageSetupMenu(true); setShowStats(false); } },
+                ],
+              },
+              {
+                id: "edit", label: "Edit", entries: [
+                  { kind: "item", label: "Undo", hint: "\u2318Z", onSelect: () => editor?.commands.undo() },
+                  { kind: "item", label: "Redo", hint: "\u2318\u21e7Z", onSelect: () => editor?.commands.redo() },
+                  { kind: "sep" },
+                  { kind: "item", label: "Find and replace\u2026", hint: "\u2318H", onSelect: () => setShowFindReplace(true) },
+                ],
+              },
+              {
+                id: "view", label: "View", entries: [
+                  { kind: "item", label: "Document outline", checked: showOutline, onSelect: () => setShowOutline(v => !v) },
+                  { kind: "item", label: "Header and footer", checked: headerFooter.enabled, onSelect: () => updateHeaderFooter({ enabled: !headerFooter.enabled }) },
+                  { kind: "sep" },
+                  {
+                    kind: "item", label: "Suggesting mode", checked: suggestMode,
+                    onSelect: () => {
+                      const next = !suggestMode;
+                      setSuggestMode(next);
+                      if (next) { setShowSuggestions(true); setShowAI(false); setShowComments(false); setShowHistory(false); }
+                      toast(next ? "Suggesting mode on \u2014 changes are tracked" : "Suggesting mode off");
+                    },
+                  },
+                ],
+              },
+              {
+                id: "insert", label: "Insert", entries: [
+                  { kind: "item", label: "Table (3\u00d73)", onSelect: () => { (editor?.chain().focus() as unknown as { insertTable?: (o: { rows: number; cols: number; withHeaderRow: boolean }) => { run: () => boolean } })?.insertTable?.({ rows: 3, cols: 3, withHeaderRow: true })?.run?.(); } },
+                  { kind: "item", label: "Horizontal rule", onSelect: () => editor?.chain().focus().setHorizontalRule().run() },
+                  { kind: "item", label: "Table of contents", onSelect: insertTOC },
+                  { kind: "sep" },
+                  { kind: "item", label: "Spreadsheet range\u2026", onSelect: () => setShowInsertRange(true) },
+                  { kind: "item", label: "Refresh linked tables", onSelect: () => void refreshLinkedTables() },
+                ],
+              },
+              {
+                id: "format", label: "Format", entries: [
+                  { kind: "item", label: "Bold", hint: "\u2318B", onSelect: () => editor?.chain().focus().toggleBold().run() },
+                  { kind: "item", label: "Italic", hint: "\u2318I", onSelect: () => editor?.chain().focus().toggleItalic().run() },
+                  { kind: "item", label: "Strikethrough", onSelect: () => editor?.chain().focus().toggleStrike().run() },
+                  { kind: "item", label: "Clear formatting", onSelect: () => editor?.chain().focus().unsetAllMarks().run() },
+                  { kind: "sep" },
+                  { kind: "label", label: "Text columns" },
+                  { kind: "item", label: "One column", checked: docColumns === 1, onSelect: () => setDocColumns(1) },
+                  { kind: "item", label: "Two columns", checked: docColumns === 2, onSelect: () => setDocColumns(2) },
+                  { kind: "item", label: "Three columns", checked: docColumns === 3, onSelect: () => setDocColumns(3) },
+                ],
+              },
+              {
+                id: "tools", label: "Tools", entries: [
+                  { kind: "item", label: "Word count\u2026", onSelect: () => { refreshStats(); setShowStats(true); setShowPageSetupMenu(false); } },
+                  ...(voice.supported ? [{ kind: "item" as const, label: voice.listening ? "Stop voice typing" : "Voice typing", onSelect: () => voice.toggle() }] : []),
+                  { kind: "item", label: "Accessibility checker", checked: showA11y, onSelect: () => { setShowA11y(true); setShowAI(false); setShowComments(false); setShowHistory(false); setShowSuggestions(false); } },
+                  { kind: "sep" },
+                  { kind: "item", label: "AI assistant", onSelect: () => { setShowAI(true); setShowComments(false); setShowHistory(false); setShowSuggestions(false); } },
+                  { kind: "item", label: "Comments", onSelect: () => { setShowComments(true); setShowAI(false); setShowHistory(false); setShowSuggestions(false); } },
+                  { kind: "sep" },
+                  { kind: "item", label: "Convert to presentation", onSelect: () => void convertToSlides() },
+                ],
+              },
+            ]}
+          />
+
           {/* Formatting toolbar.
               One row that scrolls sideways rather than wrapping — wrapping is
               what produced the ragged three-row bar, where the same control sat
@@ -1727,7 +1832,7 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
               a sunken pill (Docs and Word both do this) so the toolbar reads as
               one object instead of loose icons floating on the chrome. */}
           <div className="flex items-center gap-2 px-3 py-1.5 border-b border-border bg-surface z-10" onClick={e => e.stopPropagation()}>
-            <div className="flex min-w-0 flex-1 flex-nowrap items-center gap-0.5 overflow-x-auto rounded-full bg-surface-sunken px-2 py-1">
+            <div className="flex min-w-0 flex-1 flex-nowrap items-center gap-0.5 rounded-full bg-surface-sunken px-2 py-1">
             <TB icon={<Undo2 className="h-3.5 w-3.5" />} title="Undo (⌘Z)" onClick={() => editor?.commands.undo()} />
             <TB icon={<Redo2 className="h-3.5 w-3.5" />} title="Redo (⌘⇧Z)" onClick={() => editor?.commands.redo()} />
             <TSep />
@@ -1824,7 +1929,11 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
 
             <TB icon={<Bold className="h-3.5 w-3.5" />} title="Bold (⌘B)" active={editor?.isActive("bold")} onClick={() => editor?.chain().focus().toggleBold().run()} />
             <TB icon={<Italic className="h-3.5 w-3.5" />} title="Italic (⌘I)" active={editor?.isActive("italic")} onClick={() => editor?.chain().focus().toggleItalic().run()} />
-            <TB icon={<Underline className="h-3.5 w-3.5" />} title="Underline" onClick={() => editor?.chain().focus().toggleMark?.("underline").run()} />
+            {/* toggleUnderline, not toggleMark("underline"): StarterKit 3 ships
+                the Underline extension, and the named command carries types.
+                The optional-chained toggleMark also meant a typo here would
+                fail silently instead of at build time. */}
+            <TB icon={<Underline className="h-3.5 w-3.5" />} title="Underline (⌘U)" active={editor?.isActive("underline")} onClick={() => editor?.chain().focus().toggleUnderline().run()} />
             <TB icon={<Strikethrough className="h-3.5 w-3.5" />} title="Strikethrough" active={editor?.isActive("strike")} onClick={() => editor?.chain().focus().toggleStrike().run()} />
             <TB icon={<Code className="h-3.5 w-3.5" />} title="Code" active={editor?.isActive("code")} onClick={() => editor?.chain().focus().toggleCode().run()} />
             <TSep />
@@ -1838,8 +1947,21 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
             <TB icon={<List className="h-3.5 w-3.5" />} title="Bullet list" active={editor?.isActive("bulletList")} onClick={() => editor?.chain().focus().toggleBulletList().run()} />
             <TB icon={<ListOrdered className="h-3.5 w-3.5" />} title="Numbered list" active={editor?.isActive("orderedList")} onClick={() => editor?.chain().focus().toggleOrderedList().run()} />
             <TB icon={<ListChecks className="h-3.5 w-3.5" />} title="Checklist" active={editor?.isActive("taskList")} onClick={() => (editor?.chain().focus() as unknown as { toggleTaskList?: () => { run: () => boolean } })?.toggleTaskList?.()?.run?.()} />
-            <TB icon={<IndentDecrease className="h-3.5 w-3.5" />} title="Decrease indent" onClick={() => editor?.chain().focus().liftListItem("listItem").run()} />
-            <TB icon={<IndentIncrease className="h-3.5 w-3.5" />} title="Increase indent" onClick={() => editor?.chain().focus().sinkListItem("listItem").run()} />
+            {/* A checklist is made of taskItem nodes, not listItem, so the
+                hard-coded "listItem" made both indent buttons dead inside
+                checklists. Try the task type first, fall back to the bullet /
+                numbered type — the command returns false when it doesn't
+                apply, so this picks whichever the cursor is actually in. */}
+            <TB icon={<IndentDecrease className="h-3.5 w-3.5" />} title="Decrease indent" onClick={() => {
+              if (!editor?.chain().focus().liftListItem("taskItem").run()) {
+                editor?.chain().focus().liftListItem("listItem").run();
+              }
+            }} />
+            <TB icon={<IndentIncrease className="h-3.5 w-3.5" />} title="Increase indent" onClick={() => {
+              if (!editor?.chain().focus().sinkListItem("taskItem").run()) {
+                editor?.chain().focus().sinkListItem("listItem").run();
+              }
+            }} />
             <TSep />
 
             <TB icon={<Quote className="h-3.5 w-3.5" />} title="Blockquote" active={editor?.isActive("blockquote")} onClick={() => editor?.chain().focus().toggleBlockquote().run()} />
@@ -2173,7 +2295,7 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
       )}
 
       {showFindReplace && (
-        <div className="fixed inset-0 bg-black/30 z-50 flex items-start justify-center pt-24" onClick={() => setShowFindReplace(false)}>
+        <div className="fixed inset-0 bg-overlay z-50 flex items-start justify-center pt-24" onClick={() => setShowFindReplace(false)}>
           <div className="bg-surface rounded-xl border border-border shadow-xl w-full max-w-sm p-4" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-foreground">Find & replace</h3>
@@ -2217,10 +2339,21 @@ function IconBtn({ icon, title, active, activeClass, onClick }: {
   );
 }
 
-function MenuItm({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
+function MenuItm({ children, onClick, hint, danger }: {
+  children: React.ReactNode; onClick: () => void;
+  /** Right-aligned shortcut, e.g. "⌘P". Menus that show their shortcuts are
+   *  how people learn them — the reason every desktop app does it. */
+  hint?: string;
+  danger?: boolean;
+}) {
   return (
-    <button onClick={onClick} className="w-full text-left flex items-center gap-2 px-3 py-1.5 text-xs text-foreground hover:bg-surface-sunken">
+    <button onClick={onClick}
+      className={`flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-[13px] transition-colors ${
+        danger ? "text-crit hover:bg-crit-soft" : "text-foreground hover:bg-hover"
+      }`}>
       {children}
+      {hint && <span className="ml-auto pl-4 text-[11px] text-subtle">{hint}</span>}
     </button>
   );
 }
+

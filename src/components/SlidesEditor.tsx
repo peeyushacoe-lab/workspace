@@ -21,6 +21,7 @@ import {
   Presentation,
 } from "lucide-react";
 import { toast } from "sonner";
+import { EditorMenuBar } from "./EditorMenuBar";
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell as PieCell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -806,6 +807,78 @@ export default function SlidesEditor({ presId }: { presId: string }) {
   // The reverse of Docs' "Convert to presentation". Slide titles become
   // headings, bullet text becomes lists, and speaker notes become block
   // quotes — so a deck can be turned back into a written report.
+  /**
+   * Print / PDF the deck, one slide per page.
+   *
+   * `window.print()` printed the editor chrome. This lays each slide out at a
+   * fixed 16:9 print size and positions elements by percentage of the canvas,
+   * so what prints matches what you edited. Font sizes are converted from
+   * canvas pixels to millimetres against the printed slide height — using pt
+   * directly would render text at roughly a third of the intended size.
+   */
+  const printDeck = useCallback(() => {
+    const visible = slides.filter(s => !s.hidden);
+    if (visible.length === 0) { toast.error("Nothing to print — every slide is hidden"); return; }
+
+    // 16:9 landscape, sized to sit inside A4/Letter landscape with margins.
+    const SLIDE_W_MM = 254, SLIDE_H_MM = 142.875;
+    const esc = (v: string) => v.replace(/[&<>]/g, ch => (ch === "&" ? "&amp;" : ch === "<" ? "&lt;" : "&gt;"));
+    const pct = (n: number, of: number) => `${((n / of) * 100).toFixed(3)}%`;
+    const mm = (px: number) => `${((px / CANVAS_H) * SLIDE_H_MM).toFixed(2)}mm`;
+
+    const pages = visible.map((slide, i) => {
+      const els = [...slide.elements]
+        .sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0))
+        .map(el => {
+          const box =
+            `position:absolute;left:${pct(el.x, CANVAS_W)};top:${pct(el.y, CANVAS_H)};` +
+            `width:${pct(el.w, CANVAS_W)};height:${pct(el.h, CANVAS_H)};`;
+
+          if (el.type === "image" && el.src) {
+            return `<img src="${el.src}" alt="" style="${box}object-fit:contain">`;
+          }
+          if (el.type === "table" && el.tableRows?.length) {
+            const rows = el.tableRows
+              .map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join("")}</tr>`).join("");
+            return `<div style="${box}"><table class="tbl">${rows}</table></div>`;
+          }
+          if (el.content) {
+            const st = el.style ?? {};
+            const text = [
+              `font-size:${mm(st.fontSize ?? 18)}`,
+              st.bold ? "font-weight:700" : "",
+              st.italic ? "font-style:italic" : "",
+              st.underline ? "text-decoration:underline" : "",
+              st.color ? `color:${st.color}` : "",
+              st.fontFamily ? `font-family:${st.fontFamily}` : "",
+            ].filter(Boolean).join(";");
+            return `<div style="${box}${text};overflow:hidden">${esc(el.content)}</div>`;
+          }
+          return "";
+        }).join("");
+
+      return `<section class="slide" style="background:${slide.background}">${els}` +
+             `<span class="num">${i + 1}</span></section>`;
+    }).join("");
+
+    const w = window.open("", "_blank");
+    if (!w) { toast.error("Allow pop-ups to print this deck"); return; }
+    w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(title)}</title>
+<style>
+body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#1a1a18}
+.slide{position:relative;width:${SLIDE_W_MM}mm;height:${SLIDE_H_MM}mm;overflow:hidden;
+       break-after:page;page-break-after:always;border:1px solid #c9c7c0}
+.slide:last-child{break-after:auto;page-break-after:auto}
+.num{position:absolute;right:4mm;bottom:3mm;font-size:3mm;color:#6b6a65}
+.tbl{width:100%;height:100%;border-collapse:collapse;font-size:3.2mm}
+.tbl td{border:0.3mm solid #c9c7c0;padding:1mm 1.5mm}
+@page{size:landscape;margin:8mm}
+</style></head><body>${pages}</body></html>`);
+    w.document.close();
+    w.focus();
+    w.print();
+  }, [slides, title]);
+
   const exportOutlineToDoc = async () => {
     const html = slidesToOutlineHtml(
       slides.map(sl => ({
@@ -1487,6 +1560,55 @@ export default function SlidesEditor({ presId }: { presId: string }) {
           </button>
         </div>
       </div>
+
+      {/* ── Menu bar ──
+          Named menus, shared with Sage Docs and Sheets. */}
+      <EditorMenuBar
+        menus={[
+          {
+            id: "file", label: "File", entries: [
+              { kind: "item", label: "New slide", onSelect: () => addSlide() },
+              { kind: "file", label: "Import PowerPoint (.pptx)\u2026", accept: ".pptx", onFile: e => void importFile(e) },
+              { kind: "sep" },
+              { kind: "label", label: "Download" },
+              { kind: "item", label: "PowerPoint (.pptx)", onSelect: () => void exportPPTX(slides, title) },
+              { kind: "item", label: "Outline to Sage Docs", onSelect: () => void exportOutlineToDoc() },
+              { kind: "sep" },
+              { kind: "item", label: "Print / Save as PDF", onSelect: () => printDeck() },
+              { kind: "sep" },
+              { kind: "item", label: "Version history", onSelect: () => { setShowVersions(true); setShowComments(false); } },
+              { kind: "item", label: "Templates\u2026", onSelect: () => setShowTemplates(true) },
+            ],
+          },
+          {
+            id: "edit", label: "Edit", entries: [
+              { kind: "item", label: "Find and replace\u2026", onSelect: () => setShowFindReplace(true) },
+            ],
+          },
+          {
+            id: "view", label: "View", entries: [
+              { kind: "item", label: "Speaker notes", checked: showNotes, onSelect: () => setShowNotes(v => !v) },
+              { kind: "item", label: "Slide numbers", checked: showNumbers, onSelect: () => setShowNumbers(v => !v) },
+              { kind: "item", label: "Footer", checked: showFooter, onSelect: () => setShowFooter(v => !v) },
+              { kind: "sep" },
+              { kind: "item", label: "Present", onSelect: () => setPresenterMode(true) },
+            ],
+          },
+          {
+            id: "format", label: "Format", entries: [
+              { kind: "item", label: "Slide layout\u2026", onSelect: () => setShowLayout(true) },
+              { kind: "item", label: "Theme\u2026", onSelect: () => setShowThemes(true) },
+              { kind: "item", label: "Deck settings\u2026", onSelect: () => setShowDeckSettings(true) },
+            ],
+          },
+          {
+            id: "tools", label: "Tools", entries: [
+              { kind: "item", label: "AI assistant", onSelect: () => setShowAI(true) },
+              { kind: "item", label: "Comments", onSelect: () => { setShowComments(true); setShowVersions(false); } },
+            ],
+          },
+        ]}
+      />
 
       {/* ── Toolbar ── */}
       <div className="flex flex-wrap items-center gap-0.5 px-2 py-1 border-b border-border bg-surface z-10">

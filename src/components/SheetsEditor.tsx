@@ -21,6 +21,7 @@ import {
   Lock, ListFilter, History, Target, FileSpreadsheet,
 } from "lucide-react";
 import { toast } from "sonner";
+import { EditorMenuBar } from "./EditorMenuBar";
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell as PieCell,
   AreaChart, Area, ScatterChart, Scatter, ComposedChart,
@@ -1431,6 +1432,69 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
   };
 
   // ── XLSX export ───────────────────────────────────────────────────────────
+  /**
+   * Paginated print view.
+   *
+   * `window.print()` prints the *application* — menu bar, toolbar, formula bar,
+   * sheet tabs — which is not something anyone hands to an auditor. This walks
+   * the used range and renders it as a plain table in a new window, in
+   * landscape, with the column header row repeated on every page.
+   */
+  const printSheet = useCallback(() => {
+    const sheet = activeSheet;
+
+    // Print the used range, not the full virtual grid — otherwise a sheet with
+    // one value in it prints a thousand empty rows.
+    let maxR = -1, maxC = -1;
+    for (const key of Object.keys(sheet.cells)) {
+      if (!sheet.cells[key]?.v) continue;
+      const [r, c] = key.split(":").map(Number);
+      if (r > maxR) maxR = r;
+      if (c > maxC) maxC = c;
+    }
+    if (maxR < 0) { toast.error("Nothing to print — this sheet is empty"); return; }
+
+    const esc = (v: string) => v.replace(/[&<>]/g, ch => (ch === "&" ? "&amp;" : ch === "<" ? "&lt;" : "&gt;"));
+
+    const head = `<tr><th></th>${Array.from({ length: maxC + 1 }, (_, c) => `<th>${indexToCol(c)}</th>`).join("")}</tr>`;
+    const body = Array.from({ length: maxR + 1 }, (_, r) => {
+      const tds = Array.from({ length: maxC + 1 }, (_, c) => {
+        const st = sheet.cells[ck(r, c)]?.s;
+        const style = [
+          st?.align ? `text-align:${st.align}` : "",
+          st?.bold ? "font-weight:600" : "",
+          st?.italic ? "font-style:italic" : "",
+        ].filter(Boolean).join(";");
+        // Printed cells show computed values, never raw formulas.
+        return `<td${style ? ` style="${style}"` : ""}>${esc(getCellDisplayValue(r, c, sheet))}</td>`;
+      }).join("");
+      return `<tr><th>${r + 1}</th>${tds}</tr>`;
+    }).join("");
+
+    const w = window.open("", "_blank");
+    if (!w) { toast.error("Allow pop-ups to print this sheet"); return; }
+    w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(title)}</title>
+<style>
+body{font-family:Arial,Helvetica,sans-serif;margin:0;padding:24px;color:#1a1a18}
+h1{font-size:16pt;margin:0 0 2px}
+p.meta{font-size:9pt;color:#6b6a65;margin:0 0 16px}
+table{border-collapse:collapse;width:100%;font-size:9pt}
+th,td{border:1px solid #c9c7c0;padding:3px 6px;vertical-align:top}
+thead th{background:#efeee9;font-weight:600;text-align:center}
+tbody th{background:#efeee9;font-weight:400;text-align:center;color:#6b6a65;width:34px}
+thead{display:table-header-group}
+tr{break-inside:avoid}
+@page{size:landscape;margin:12mm}
+</style></head><body>
+<h1>${esc(title)}</h1>
+<p class="meta">${esc(sheet.name)} · ${maxR + 1} rows × ${maxC + 1} columns</p>
+<table><thead>${head}</thead><tbody>${body}</tbody></table>
+</body></html>`);
+    w.document.close();
+    w.focus();
+    w.print();
+  }, [activeSheet, getCellDisplayValue, title]);
+
   const exportXLSX = async () => {
     const XLSX = await import("xlsx");
     const wb = XLSX.utils.book_new();
@@ -1890,6 +1954,68 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
           <Share2 className="h-3.5 w-3.5" /> Share
         </button>
       </div>
+
+      {/* ── Menu bar ──
+          Named menus, shared with Sage Docs and Slides. Import and export were
+          previously reachable only through unlabelled toolbar glyphs. */}
+      <EditorMenuBar
+        menus={[
+          {
+            id: "file", label: "File", entries: [
+              { kind: "file", label: "Import Excel (.xlsx)\u2026", accept: ".xlsx,.xls", onFile: e => importXLSX(e) },
+              { kind: "sep" },
+              { kind: "label", label: "Download" },
+              { kind: "item", label: "Microsoft Excel (.xlsx)", onSelect: () => void exportXLSX() },
+              { kind: "sep" },
+              { kind: "item", label: "Print / Save as PDF", onSelect: () => printSheet() },
+              { kind: "sep" },
+              { kind: "item", label: "Version history", onSelect: () => { setShowVersions(true); setShowComments(false); } },
+              { kind: "item", label: "Templates\u2026", onSelect: () => setShowTemplates(true) },
+            ],
+          },
+          {
+            id: "edit", label: "Edit", entries: [
+              { kind: "item", label: "Undo", hint: "\u2318Z", onSelect: () => undo() },
+              { kind: "item", label: "Redo", hint: "\u2318\u21e7Z", onSelect: () => redo() },
+              { kind: "sep" },
+              { kind: "item", label: "Find and replace\u2026", onSelect: () => setShowFindReplace(true) },
+              { kind: "item", label: "Remove duplicates\u2026", onSelect: () => setShowRemoveDupes(true) },
+              { kind: "item", label: "Split text to columns\u2026", onSelect: () => setShowSplitText(true) },
+            ],
+          },
+          {
+            id: "insert", label: "Insert", entries: [
+              { kind: "item", label: "New sheet", onSelect: () => addSheet() },
+              { kind: "item", label: "Chart\u2026", onSelect: () => setShowChart(true) },
+              { kind: "item", label: "Sparkline", onSelect: () => insertSparkline() },
+              { kind: "item", label: "Note on cell\u2026", onSelect: () => setShowNote(true) },
+              { kind: "item", label: "Pivot table\u2026", onSelect: () => setShowPivot(true) },
+            ],
+          },
+          {
+            id: "format", label: "Format", entries: [
+              { kind: "item", label: "Conditional formatting\u2026", onSelect: () => setShowCF(true) },
+              { kind: "item", label: "Data validation\u2026", onSelect: () => setShowValidation(true) },
+            ],
+          },
+          {
+            id: "data", label: "Data", entries: [
+              { kind: "item", label: "Sort and filter\u2026", onSelect: () => setShowFilter(true) },
+              { kind: "item", label: "Named ranges\u2026", onSelect: () => setShowNames(true) },
+              { kind: "sep" },
+              { kind: "item", label: "Goal seek\u2026", onSelect: () => setShowGoalSeek(true) },
+            ],
+          },
+          {
+            id: "tools", label: "Tools", entries: [
+              { kind: "item", label: "AI assistant", onSelect: () => setShowAI(true) },
+              { kind: "item", label: "Comments", onSelect: () => { setShowComments(true); setShowVersions(false); } },
+              { kind: "sep" },
+              { kind: "item", label: "Protect sheet", onSelect: () => toggleSheetProtect() },
+            ],
+          },
+        ]}
+      />
 
       {/* ── Toolbar ── */}
       <div className="flex flex-wrap items-center gap-0.5 px-2 py-1 border-b border-border bg-surface z-10 overflow-x-auto">
