@@ -115,30 +115,24 @@ function Spinner() {
   );
 }
 
+/**
+ * Availability indicator.
+ *
+ * Deliberately does NOT name the provider or model. Which vendor and which
+ * model are answering is an operational detail — it means nothing to the person
+ * writing an email, it leaks part of the stack to anyone who opens the page,
+ * and it belongs in the AI Status tab and the server logs, both of which still
+ * have it. All the user needs here is: can I use this right now.
+ */
 function StatusBar({ status }: { status: AIStatus | null }) {
-  if (!status) return null;
+  if (!status || status.available) return null;
   return (
-    <div className="flex items-center gap-3 px-4 py-2.5 bg-surface border-b border-border text-xs">
-      <Bot className="w-4 h-4 text-accent" />
-      <span className="text-muted">Provider:</span>
-      <span className="text-foreground font-semibold">{status.provider}</span>
-      <span className="text-muted">|</span>
-      <span className="text-muted">Model:</span>
-      <span className="text-accent font-mono">{status.model}</span>
-      <span className="text-muted">|</span>
-      <span className="flex items-center gap-1.5">
-        {status.available ? (
-          <>
-            <span className="w-2 h-2 rounded-full bg-ok animate-pulse" />
-            <span className="text-ok">Online</span>
-          </>
-        ) : (
-          <>
-            <span className="w-2 h-2 rounded-full bg-crit" />
-            <span className="text-crit">Offline</span>
-          </>
-        )}
+    <div className="flex items-center gap-2 border-b border-border bg-warn-soft px-4 py-2 text-xs">
+      <Bot className="h-4 w-4 text-warn" />
+      <span className="font-medium text-warn">
+        The AI assistant is unavailable right now.
       </span>
+      <span className="text-muted">An administrator can check the AI Status tab for details.</span>
     </div>
   );
 }

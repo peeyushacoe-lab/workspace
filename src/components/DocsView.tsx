@@ -440,7 +440,9 @@ function DocItem({ doc, selected, onSelect, onPin, onDelete }: {
       <div className="flex-1 min-w-0">
         <p className={`text-xs font-medium truncate ${selected ? "text-accent" : "text-foreground"}`}>{doc.title}</p>
         <p className="text-[10px] text-subtle truncate">{docPreview(doc.content)}</p>
-        <p className="text-[10px] text-subtle">{formatDistanceToNow(new Date(doc.updatedAt), { addSuffix: true })}</p>
+        {/* Clock-derived text: server and client can disagree by a tick, which
+            is React error #418. suppressHydrationWarning exists for exactly this. */}
+        <p suppressHydrationWarning className="text-[10px] text-subtle">{formatDistanceToNow(new Date(doc.updatedAt), { addSuffix: true })}</p>
       </div>
       {hover && (
         <div className="flex flex-col gap-0.5">

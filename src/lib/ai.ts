@@ -55,6 +55,30 @@ const DEFAULT_MODEL: Record<AIProvider, string> = {
 
 export const AI_MODEL = process.env.AI_MODEL ?? DEFAULT_MODEL[AI_PROVIDER];
 
+/**
+ * Provider/model mismatch guard.
+ *
+ * Setting AI_MODEL without AI_PROVIDER is the easiest way to break this: the
+ * model name reaches the client but the provider resolves from whichever key
+ * happens to be present, so a Gemini model gets posted to api.openai.com and
+ * every AI feature 404s behind a generic 503. Loud at boot beats silent at
+ * runtime — the status endpoint surfaces it too.
+ */
+export const AI_MISCONFIGURED: string | null = (() => {
+  const m = AI_MODEL.toLowerCase();
+  if (m.startsWith("gemini") && AI_PROVIDER !== "gemini") {
+    return `AI_MODEL is "${AI_MODEL}" but the active provider is "${AI_PROVIDER}". ` +
+      `GEMINI_API_KEY is not visible to this process — check it is set for THIS ` +
+      `environment in Vercel and that you redeployed after adding it.`;
+  }
+  if (m.startsWith("gpt") && AI_PROVIDER !== "openai") {
+    return `AI_MODEL is "${AI_MODEL}" but the active provider is "${AI_PROVIDER}".`;
+  }
+  return null;
+})();
+
+if (AI_MISCONFIGURED) console.error(`[ai] ${AI_MISCONFIGURED}`);
+
 export function getAIClient(): OpenAI {
   switch (AI_PROVIDER) {
     case "gemini":

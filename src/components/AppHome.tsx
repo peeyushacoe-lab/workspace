@@ -601,7 +601,12 @@ export function AppHome({
                     {item.isOwner === false
                       ? <Users className="h-3 w-3 flex-shrink-0 text-subtle" />
                       : <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: accent }} />}
-                    <span className="truncate text-[11px] text-subtle">
+                    {/* suppressHydrationWarning: this text is a function of the
+                        clock, so the server's "3 hours ago" and the client's
+                        can legitimately differ by a tick. That mismatch is
+                        React error #418. Timestamps are the case this API
+                        exists for. */}
+                    <span suppressHydrationWarning className="truncate text-[11px] text-subtle">
                       {formatDistanceToNow(new Date(item.updatedAt), { addSuffix: true })}
                     </span>
                     {item.pinned && <Star className="ml-auto h-3 w-3 flex-shrink-0 text-warn" />}
@@ -673,7 +678,9 @@ export function AppHome({
                     {item.title || "Untitled"}
                   </span>
                   {item.isOwner === false && <Users className="h-3.5 w-3.5 flex-shrink-0 text-subtle" />}
-                  <span className="hidden flex-shrink-0 text-[11px] text-subtle sm:block">
+                  {/* Also hydration-unstable: the server formats in UTC and the
+                      browser in the user's zone, so this can differ by a day. */}
+                  <span suppressHydrationWarning className="hidden flex-shrink-0 text-[11px] text-subtle sm:block">
                     {format(new Date(item.updatedAt), "d MMM yyyy")}
                   </span>
                   {onDelete && (
