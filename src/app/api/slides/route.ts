@@ -4,6 +4,7 @@ import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redis } from "@/lib/redis";
 import { SLIDE_MARKER } from "@/lib/doc-markers";
+import { slidePreviewLines } from "@/lib/home-preview";
 
 const defaultSlide = {
   id: "slide-1",
@@ -23,7 +24,7 @@ export async function GET() {
   const ownPres = await prisma.note.findMany({
     where: { userId: user.id, color: SLIDE_MARKER },
     orderBy: [{ pinned: "desc" }, { updatedAt: "desc" }],
-    select: { id: true, title: true, pinned: true, createdAt: true, updatedAt: true, userId: true },
+    select: { id: true, title: true, pinned: true, createdAt: true, updatedAt: true, userId: true, content: true },
   });
 
   const sharedPres: (typeof ownPres[number] & { sharedRole: string })[] = [];
@@ -35,16 +36,22 @@ export async function GET() {
         const docId = key.replace("doc:share:pres:", "");
         const doc = await prisma.note.findFirst({
           where: { id: docId, color: SLIDE_MARKER },
-          select: { id: true, title: true, pinned: true, createdAt: true, updatedAt: true, userId: true },
+          select: { id: true, title: true, pinned: true, createdAt: true, updatedAt: true, userId: true, content: true },
         });
         if (doc) sharedPres.push({ ...doc, pinned: false, sharedRole: role });
       }
     }
   } catch { /* Redis unavailable */ }
 
+  // Swap `content` for a small derived thumbnail — see the sheets route for why.
+  const withPreview = <T extends { content: string }>(row: T) => {
+    const { content, ...rest } = row;
+    return { ...rest, previewLines: slidePreviewLines(content) };
+  };
+
   const all = [
-    ...ownPres.map((p) => ({ ...p, isOwner: true, sharedRole: null as string | null })),
-    ...sharedPres.map((p) => ({ ...p, isOwner: false })),
+    ...ownPres.map((p) => ({ ...withPreview(p), isOwner: true, sharedRole: null as string | null })),
+    ...sharedPres.map((p) => ({ ...withPreview(p), isOwner: false })),
   ];
 
   return NextResponse.json(all);

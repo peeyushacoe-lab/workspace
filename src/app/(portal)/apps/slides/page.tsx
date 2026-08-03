@@ -9,6 +9,8 @@ import { AppHome, type HomeTemplate } from "@/components/AppHome";
 type PresItem = {
   id: string; title: string; updatedAt: string;
   isOwner: boolean; sharedRole: string | null;
+  /** First slide's text, computed server-side for the card thumbnail. */
+  previewLines?: string[];
 };
 
 /**
@@ -78,6 +80,8 @@ export default function SlidesPage() {
   return (
     <AppHome
       noun="presentation"
+      appName="Sage Slides"
+      thumb="slide"
       templates={TEMPLATES}
       items={decks}
       loading={loading}

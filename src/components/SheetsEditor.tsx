@@ -18,7 +18,7 @@ import {
   Undo2, Redo2, WrapText, EyeOff, Tag, ListChecks, Table, Grid2x2,
   Columns, LayoutGrid, Search, Replace, Brush,
   MessageSquare, CopyMinus, SplitSquareHorizontal,
-  Lock, ListFilter, History, Target,
+  Lock, ListFilter, History, Target, FileSpreadsheet,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -1825,21 +1825,41 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
       />
 
       {/* ── Title bar ── */}
-      <div className="flex items-center gap-2 px-4 py-2 border-b border-border bg-surface z-20">
+      <div className="flex items-center gap-2.5 px-4 py-2.5 border-b border-border bg-surface z-20">
         <button
           onClick={() => router.push("/apps/sheets")}
           title="Back to Sage Sheets"
-          className="flex items-center justify-center h-8 w-8 rounded-lg text-muted hover:bg-surface-sunken transition-colors flex-shrink-0"
+          aria-label="Back to Sage Sheets"
+          className="flex items-center justify-center h-8 w-8 rounded-lg text-muted hover:bg-hover hover:text-foreground transition-colors flex-shrink-0"
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
+        {/* App mark — Sheets green, matching its home gallery and the
+            subdomain sidebar, so the editor reads as the same product. */}
+        <span
+          className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg"
+          style={{ background: "color-mix(in srgb, var(--ok) 14%, var(--surface))" }}
+        >
+          <FileSpreadsheet className="h-4 w-4 text-ok" />
+        </span>
         <input
-          className="text-sm font-semibold text-foreground bg-transparent border-none outline-none focus:bg-surface-sunken rounded px-1 min-w-0 w-48"
+          aria-label="Spreadsheet title"
+          className="min-w-0 w-56 px-1.5 py-1 rounded-md border border-transparent bg-transparent
+                     text-[15px] font-semibold tracking-tight text-foreground outline-none transition-colors
+                     hover:bg-hover focus:bg-surface focus:border-border"
           value={title}
           onChange={e => { setTitle(e.target.value); scheduleSave(sheets, e.target.value); }}
         />
-        <div className="flex items-center gap-1 ml-auto text-xs text-subtle">
-          {saving && <><Loader2 className="h-3 w-3 animate-spin" /> Saving…</>}
+        <div className="ml-auto flex items-center gap-1">
+          {saving ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-surface-sunken px-2 py-0.5 text-[11px] text-muted">
+              <Loader2 className="h-3 w-3 animate-spin" /> Saving…
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 rounded-full bg-ok-soft px-2 py-0.5 text-[11px] font-medium text-ok">
+              <Check className="h-3 w-3" /> Saved
+            </span>
+          )}
         </div>
         <button
           onClick={() => { setShowComments(v => !v); setShowVersions(false); }}

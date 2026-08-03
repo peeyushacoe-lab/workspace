@@ -18,6 +18,7 @@ import {
   LayoutTemplate, Eye, EyeOff, FolderPlus, ChevronRight as ChevronRightIcon, Images,
   Triangle, Star, MoveRight, Minus, Grid, Timer, RotateCcw,
   Search, Video, Hash, Lock, Unlock, Music, Volume2, History, MessageSquare,
+  Presentation,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -1367,16 +1368,28 @@ export default function SlidesEditor({ presId }: { presId: string }) {
       />
 
       {/* ── Title bar ── */}
-      <div className="flex items-center gap-2 px-4 py-2 border-b border-border bg-surface z-20">
+      <div className="flex items-center gap-2.5 px-4 py-2.5 border-b border-border bg-surface z-20">
         <button
           onClick={() => router.push("/apps/slides")}
           title="Back to Sage Slides"
-          className="flex items-center justify-center h-8 w-8 rounded-lg text-muted hover:bg-surface-sunken transition-colors flex-shrink-0"
+          aria-label="Back to Sage Slides"
+          className="flex items-center justify-center h-8 w-8 rounded-lg text-muted hover:bg-hover hover:text-foreground transition-colors flex-shrink-0"
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
+        {/* App mark — Slides amber, matching its home gallery and the
+            subdomain sidebar, so the editor reads as the same product. */}
+        <span
+          className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg"
+          style={{ background: "color-mix(in srgb, var(--warn) 14%, var(--surface))" }}
+        >
+          <Presentation className="h-4 w-4 text-warn" />
+        </span>
         <input
-          className="text-sm font-semibold text-foreground bg-transparent border-none outline-none focus:bg-surface-sunken rounded px-1 min-w-0 w-52"
+          aria-label="Presentation title"
+          className="min-w-0 w-56 px-1.5 py-1 rounded-md border border-transparent bg-transparent
+                     text-[15px] font-semibold tracking-tight text-foreground outline-none transition-colors
+                     hover:bg-hover focus:bg-surface focus:border-border"
           value={title}
           onChange={e => { setTitle(e.target.value); scheduleSave(slides, e.target.value); }}
         />
@@ -1386,7 +1399,15 @@ export default function SlidesEditor({ presId }: { presId: string }) {
           <div key={c.userId} title={c.name} className="h-6 w-6 rounded-full bg-accent text-accent-foreground text-[9px] font-bold flex items-center justify-center">{c.name[0]?.toUpperCase()}</div>
         ))}
 
-        <div className="text-[11px] text-subtle">{saving ? "Saving…" : <span className="text-ok">Saved</span>}</div>
+        {saving ? (
+          <span className="inline-flex items-center gap-1 rounded-full bg-surface-sunken px-2 py-0.5 text-[11px] text-muted">
+            Saving…
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 rounded-full bg-ok-soft px-2 py-0.5 text-[11px] font-medium text-ok">
+            Saved
+          </span>
+        )}
 
         <div className="flex items-center gap-1 ml-auto">
           <button onClick={() => setShowAI(v => !v)} className={`flex items-center gap-1 px-2 py-1.5 text-xs font-medium rounded-lg transition-colors ${showAI ? "bg-violet/15 text-violet" : "text-muted hover:bg-surface-sunken"}`}>

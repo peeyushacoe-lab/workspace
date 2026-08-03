@@ -49,6 +49,8 @@ import { ConflictBanner, useSaveConflict } from "./ConflictBanner";
 import { ShortcutHelp, DOCS_SHORTCUTS } from "./ShortcutHelp";
 import { AccessibilityPanel } from "./AccessibilityPanel";
 import { InsertRangeDialog } from "./InsertRangeDialog";
+import { AppHome, type HomeTemplate } from "./AppHome";
+import { docPreviewLines } from "@/lib/home-preview";
 import { useVoiceTyping } from "@/lib/use-voice-typing";
 import { docToSlides } from "@/lib/doc-to-slides";
 import { appUrl } from "@/lib/subdomains";
@@ -99,6 +101,9 @@ type Doc = {
   pinned: boolean;
   createdAt: string;
   updatedAt: string;
+  /** Present on /api/docs responses; false for docs shared with the user. */
+  isOwner?: boolean;
+  sharedRole?: string | null;
 };
 
 type SecurityLabel = "PUBLIC" | "INTERNAL" | "CONFIDENTIAL" | "RESTRICTED";
@@ -188,6 +193,20 @@ const DOC_TEMPLATES: { id: string; label: string; html: string }[] = [
       "<p>Summary of the report and next steps.</p>",
     ].join(""),
   },
+];
+
+/**
+ * Gallery entries for the home screen. Derived from DOC_TEMPLATES so the
+ * gallery and the in-editor template menu can never list different things;
+ * "Blank" is prepended because it has no template HTML.
+ */
+const HOME_TEMPLATES: HomeTemplate[] = [
+  { id: "blank", label: "Blank", preview: "blank" },
+  ...DOC_TEMPLATES.map(t => ({
+    id: t.id,
+    label: t.label,
+    preview: "doc" as const,
+  })),
 ];
 
 function docsDraftKey(id: string): string {
@@ -434,6 +453,7 @@ function DocItem({ doc, selected, onSelect, onPin, onDelete }: {
 export function DocsView() {
   const searchParams = useSearchParams();
   const [docs, setDocs] = useState<Doc[]>([]);
+  const [creatingDoc, setCreatingDoc] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -695,6 +715,44 @@ export function DocsView() {
   }, [editor, saveConflict]);
 
   // ── Create doc ────────────────────────────────────────────────────────────
+  /**
+   * Creates a document and applies a starter template in one step, so the home
+   * gallery lands the user in a populated doc rather than a blank one they then
+   * have to find the template menu for.
+   */
+  const createFromTemplate = async (templateId: string) => {
+    setCreatingDoc(true);
+    try {
+      const tpl = DOC_TEMPLATES.find(t => t.id === templateId);
+      const res = await fetch("/api/docs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: tpl && templateId !== "blank" ? tpl.label : "Untitled Document",
+          content: tpl && templateId !== "blank" ? tpl.html : "",
+        }),
+      });
+      if (!res.ok) { toast.error("Failed to create document"); return; }
+      const doc = await res.json() as Doc;
+      setDocs(prev => [doc, ...prev]);
+      selectDoc(doc);
+    } finally {
+      setCreatingDoc(false);
+    }
+  };
+
+  const deleteDocById = async (id: string) => {
+    // Optimistic — the home grid is the only thing showing it.
+    setDocs(prev => prev.filter(d => d.id !== id));
+    try {
+      const res = await fetch(`/api/docs/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      toast.success("Document deleted");
+    } catch {
+      toast.error("Could not delete that document");
+    }
+  };
+
   const createDoc = async () => {
     const res = await fetch("/api/docs", {
       method: "POST",
@@ -1305,7 +1363,12 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
       />
 
       {/* ── Doc list sidebar ── */}
-      <aside className="w-64 flex flex-col border-r border-border bg-surface overflow-hidden flex-shrink-0">
+      {/* Document list. Hidden on the home view so the template gallery and file
+          grid get the full width — Google shows the list only once you're
+          inside a document. */}
+      <aside className={`w-64 flex-col border-r border-border bg-surface overflow-hidden flex-shrink-0 ${
+        selectedId ? "flex" : "hidden"
+      }`}>
         <div className="px-3 pt-3">
           <a href="/apps" title="Back to Apps"
             className="inline-flex items-center gap-1.5 text-xs font-medium text-muted hover:text-foreground hover:bg-surface-sunken rounded-md px-2 py-1 -ml-1 transition-colors">
@@ -1354,9 +1417,17 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
         <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
 
           {/* Title & action bar */}
-          <div className="flex items-center gap-2 px-4 py-2 border-b border-border bg-surface z-10 flex-wrap">
+          <div className="flex items-center gap-2.5 px-4 py-2.5 border-b border-border bg-surface z-10 flex-wrap">
+            {/* App mark — the same indigo Sage Docs carries on its home and in
+                the subdomain sidebar, so the editor reads as the same product
+                rather than an anonymous text box. */}
+            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-accent-soft">
+              <FileText className="h-4 w-4 text-accent" />
+            </span>
             <input
-              className="flex-1 min-w-32 text-base font-semibold text-foreground bg-transparent border-none outline-none focus:bg-surface-sunken rounded px-1"
+              className="flex-1 min-w-32 px-1.5 py-1 rounded-md border border-transparent bg-transparent
+                         text-[15px] font-semibold tracking-tight text-foreground outline-none transition-colors
+                         hover:bg-hover focus:bg-surface focus:border-border"
               value={title}
               onChange={e => setTitle(e.target.value)}
               onBlur={e => void saveTitle(e.target.value)}
@@ -1409,9 +1480,17 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
               </span>
             )}
 
-            <span className="text-[11px] text-subtle">
-              {saving ? <span className="flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" />Saving…</span> : <span className="text-ok">Saved</span>}
-            </span>
+            {/* Save state as a chip rather than loose grey text — at a glance
+                it's the difference between "is my work safe" and squinting. */}
+            {saving ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-surface-sunken px-2 py-0.5 text-[11px] text-muted">
+                <Loader2 className="h-3 w-3 animate-spin" /> Saving…
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 rounded-full bg-ok-soft px-2 py-0.5 text-[11px] font-medium text-ok">
+                <Check className="h-3 w-3" /> Saved
+              </span>
+            )}
 
             <div className="flex items-center gap-0.5">
               {/* Find & replace */}
@@ -1988,28 +2067,30 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
           </div>
         </div>
       ) : (
-        /* Empty / welcome state */
-        <div className="flex-1 flex flex-col items-center justify-center bg-surface-sunken gap-4">
-          <div className="w-16 h-16 bg-accent/10 rounded-2xl flex items-center justify-center">
-            <FileText className="h-8 w-8 text-accent" />
-          </div>
-          <div className="text-center">
-            <h2 className="text-xl font-semibold text-foreground mb-1">Sage Docs</h2>
-            <p className="text-sm text-muted mb-4">Rich text documents with AI, collaboration & version history</p>
-            <button onClick={() => void createDoc()}
-              className="flex items-center gap-2 px-5 py-2.5 bg-accent text-accent-foreground text-sm font-semibold rounded-lg hover:bg-accent-hover transition-colors mx-auto">
-              <Plus className="h-4 w-4" /> New document
-            </button>
-          </div>
-          <div className="grid grid-cols-3 gap-3 mt-2 max-w-md">
-            {["Blank document","Meeting notes","Project SOP","Policy document","Technical spec","Team handbook"].map(t => (
-              <button key={t} onClick={() => void createDoc()}
-                className="px-3 py-3 bg-surface border border-border rounded-xl text-xs font-medium text-muted hover:border-accent/30 hover:text-accent transition-colors text-center shadow-sm">
-                {t}
-              </button>
-            ))}
-          </div>
-        </div>
+        /* Home — the same template-gallery + file-grid layout Sage Sheets and
+           Sage Slides use. Rendered instead of the editor when no document is
+           open, and the list sidebar is hidden so it gets the full width. */
+        <AppHome
+          noun="document"
+          appName="Sage Docs"
+          templates={HOME_TEMPLATES}
+          items={docs.map(d => ({
+            id: d.id,
+            title: d.title,
+            updatedAt: d.updatedAt,
+            isOwner: d.isOwner,
+            pinned: d.pinned,
+            // /api/docs already returns full content, so the thumbnail is
+            // derived here rather than adding a server round-trip.
+            previewLines: docPreviewLines(d.content),
+          }))}
+          loading={loading}
+          creating={creatingDoc}
+          onCreate={tplId => void createFromTemplate(tplId)}
+          onOpen={id => { const d = docs.find(x => x.id === id); if (d) selectDoc(d); }}
+          onDelete={id => void deleteDocById(id)}
+          emptyIcon={FileText}
+        />
       )}
 
       {showShare && selectedDoc && (
@@ -2050,8 +2131,12 @@ function IconBtn({ icon, title, active, activeClass, onClick }: {
   icon: React.ReactNode; title: string; active?: boolean; activeClass?: string; onClick: () => void;
 }) {
   return (
-    <button title={title} onClick={onClick}
-      className={`p-1.5 rounded transition-colors ${active ? (activeClass ?? "bg-accent-soft text-accent") : "text-muted hover:bg-surface-sunken"}`}>
+    // A 30px square target with a soft radius. The old 1.5-padding button gave
+    // a ragged hit area and the active state barely read against the bar.
+    <button title={title} aria-label={title} onClick={onClick}
+      className={`flex h-[30px] w-[30px] items-center justify-center rounded-md transition-colors ${
+        active ? (activeClass ?? "bg-accent-soft text-accent") : "text-muted hover:bg-hover hover:text-foreground"
+      }`}>
       {icon}
     </button>
   );

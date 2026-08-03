@@ -34,6 +34,20 @@ const ICONS: Record<string, React.ElementType> = {
   "/meet/intelligence": Sparkles,
 };
 
+/**
+ * Per-app accent, matching each app's home gallery. Google leans on colour
+ * (blue / green / yellow) to tell Docs, Sheets and Slides apart at a glance;
+ * three identical grey glyphs give the eye nothing to latch onto.
+ */
+const ACCENTS: Record<string, string> = {
+  "/docs": "var(--accent)",
+  "/apps/sheets": "var(--ok)",
+  "/apps/slides": "var(--warn)",
+  "/drive": "var(--accent)",
+  "/meet": "var(--violet)",
+  "/meet/intelligence": "var(--violet)",
+};
+
 export function AppSubdomainShell({
   subdomain,
   currentUser,
@@ -70,7 +84,10 @@ export function AppSubdomainShell({
                 : "text-muted hover:bg-hover hover:text-foreground"
             }`}
           >
-            <Icon className="h-4 w-4 flex-shrink-0" />
+            <Icon
+              className="h-4 w-4 flex-shrink-0"
+              style={{ color: active ? undefined : ACCENTS[item.href] }}
+            />
             {item.label}
           </Link>
         );

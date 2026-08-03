@@ -9,6 +9,8 @@ import { AppHome, type HomeTemplate } from "@/components/AppHome";
 type SheetItem = {
   id: string; title: string; updatedAt: string;
   isOwner: boolean; sharedRole: string | null;
+  /** Top-left cells, computed server-side for the card thumbnail. */
+  previewCells?: string[][];
 };
 
 /**
@@ -81,6 +83,7 @@ export default function SheetsPage() {
   return (
     <AppHome
       noun="spreadsheet"
+      appName="Sage Sheets"
       templates={TEMPLATES}
       items={sheets}
       loading={loading}
