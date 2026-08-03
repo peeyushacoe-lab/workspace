@@ -1,7 +1,7 @@
 ﻿import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getSessionUserFromCookieStore } from "@/lib/auth";
-import { getAIClient, AI_MODEL } from "@/lib/ai";
+import { getAIClient, AI_MODEL, AI_PROVIDER, AI_CONFIGURED } from "@/lib/ai";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rate-limit";
 
@@ -40,11 +40,26 @@ export async function POST(request: Request) {
     "Answer questions concisely and helpfully. You can help with emails, scheduling, " +
     "document writing, and general productivity tasks.";
 
-  const messages: Array<{ role: "user" | "assistant"; content: string }> = [
-    { role: "user", content: systemContent },
+  // The system prompt goes in the system role. It was being sent as a user
+  // turn, which burns the slot the model treats as instructions and leaves the
+  // persona competing with the user's own message for priority.
+  const messages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
+    { role: "system", content: systemContent },
     ...sanitizedHistory,
     { role: "user", content: message },
   ];
+
+  // Fail fast with something actionable. Without this the request goes out to
+  // whatever base URL the fallback picked — on Vercel that used to be
+  // localhost:11434, which does not exist there, so every AI call became an
+  // unexplained 503.
+  if (!AI_CONFIGURED) {
+    console.error(`AI not configured: provider="${AI_PROVIDER}" has no API key.`);
+    return NextResponse.json(
+      { error: "AI is not configured on this server. Set GEMINI_API_KEY (or OPENAI_API_KEY) and redeploy." },
+      { status: 503 },
+    );
+  }
 
   try {
     const ai = getAIClient();
@@ -70,7 +85,36 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ reply });
   } catch (err) {
-    console.error("AI chat request failed:", err);
+    // Log what actually failed. The previous version swallowed the provider's
+    // own message, so a wrong model name, a bad key and an unreachable host
+    // were indistinguishable in the logs — all three just read "AI request
+    // failed".
+    const e = err as { status?: number; message?: string; error?: { message?: string } };
+    const upstream = e?.error?.message ?? e?.message ?? String(err);
+    console.error(
+      `AI chat failed — provider=${AI_PROVIDER} model=${AI_MODEL} status=${e?.status ?? "n/a"}: ${upstream}`,
+    );
+
+    // 401/403 is our misconfiguration, not a transient upstream fault, so it
+    // must not tell the user to "try again" — it never gets better on its own.
+    if (e?.status === 401 || e?.status === 403) {
+      return NextResponse.json(
+        { error: "The AI provider rejected our credentials. Check the API key on the server." },
+        { status: 503 },
+      );
+    }
+    if (e?.status === 404) {
+      return NextResponse.json(
+        { error: `The model "${AI_MODEL}" was not found for this provider. Set AI_MODEL to a valid name.` },
+        { status: 503 },
+      );
+    }
+    if (e?.status === 429) {
+      return NextResponse.json(
+        { error: "The AI provider is rate limiting us. Try again shortly." },
+        { status: 429 },
+      );
+    }
     return NextResponse.json({ error: "AI request failed. Please try again." }, { status: 503 });
   }
 }

@@ -638,7 +638,7 @@ export function DocsView() {
       setOutline(heads);
       setStats(computeStats(ed.getText()));
       if (saveTimer.current) clearTimeout(saveTimer.current);
-      saveTimer.current = setTimeout(() => { void autoSave(ed.getHTML()); }, 2000);
+      saveTimer.current = setTimeout(() => { void autoSaveRef.current(ed.getHTML()); }, 2000);
     },
   }, [ydoc]);
 
@@ -1290,6 +1290,17 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
   };
 
   // Close menus on outside click
+  /**
+   * `useEditor` is created with deps `[ydoc]`, so it is NOT rebuilt when the
+   * selected document changes — but `onUpdate` closes over `autoSave`, which
+   * begins `if (!selectedId) return`. The editor therefore kept calling the
+   * callback captured at creation time, and every keystroke scheduled a save
+   * that bailed out immediately. Routing through a ref means onUpdate always
+   * reaches the current one.
+   */
+  const autoSaveRef = useRef(autoSave);
+  useEffect(() => { autoSaveRef.current = autoSave; }, [autoSave]);
+
   // A menu that advertises a shortcut has to honour it. ⌘Z/⌘⇧Z/⌘B/⌘I come free
   // from Tiptap, but nothing was listening for ⌘H, and ⌘P went to the browser's
   // raw print rather than our paginated print view.
@@ -2087,7 +2098,7 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
             )}
 
             {/* Paper editor */}
-            <div className="flex-1 overflow-y-auto overflow-x-hidden bg-surface-sunken">
+            <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden bg-surface-sunken">
               {/* Paper: shadow only, square corners, no hairline. A rounded,
                   bordered box reads as a card; a sheet of paper reads as a
                   document. Word and Docs both do the plain-shadow version. */}
