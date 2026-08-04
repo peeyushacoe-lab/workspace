@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { PageHeader } from "@/components/Shell";
 import { avatarGradient } from "@/lib/avatar";
-import type { TeamWithMembers } from "@/app/api/teams/route";
+import type { TeamWithMembers, TeamsResponse } from "@/app/api/teams/route";
 
 // ── Icon map ───────────────────────────────────────────────────────────────────
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -267,12 +267,6 @@ function SectionLabel({ label, count }: { label: string; count?: number }) {
 }
 
 // ── Page ───────────────────────────────────────────────────────────────────────
-type TeamsResponse = {
-  teams: TeamWithMembers[];
-  myTeamIds: string[];
-  currentUserRole: string;
-};
-
 export default function TeamsPage() {
   const [data, setData] = useState<TeamsResponse | null>(null);
   const [loading, setLoading] = useState(true);

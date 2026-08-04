@@ -522,6 +522,11 @@ export function DocsView() {
 
   // Track-changes / Suggest mode
   const [suggestMode, setSuggestMode] = useState(false);
+  /** Viewing mode makes the editor read-only, the way Google's third mode does.
+   *  Kept separate from suggestMode so switching back restores the previous
+   *  editing/suggesting choice rather than silently dropping it. */
+  const [viewOnly, setViewOnly] = useState(false);
+  const [modeMenu, setModeMenu] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const suggestModeRef = useRef(false);
   suggestModeRef.current = suggestMode;
@@ -1102,11 +1107,35 @@ table{border-collapse:collapse;width:100%}td,th{border:1px solid #e7e6e1;padding
     const w = window.open("", "_blank");
     if (!w) return;
     w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title>
-<style>body{font-family:Arial,sans-serif;max-width:820px;margin:40px auto;padding:20px 40px;line-height:1.7}
-h1{font-size:2rem}h2{font-size:1.5rem}h3{font-size:1.2rem}
-pre{background:#f4f4f4;padding:12px;border-radius:6px}
-blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65}
-@media print{body{margin:0}}</style></head>
+<style>
+/* Mirrors the .tiptap document styles in globals.css. A printed page that
+   doesn't match the screen makes the whole product feel unfinished — and this
+   window cannot read CSS variables, so the Atrium values are literal here. */
+body{font-family:Arial,Helvetica,sans-serif;max-width:820px;margin:40px auto;padding:20px 40px;
+     line-height:1.75;color:#1a1a18}
+h1,h2,h3,h4{font-weight:600;letter-spacing:-0.02em;line-height:1.25;color:#1a1a18}
+h1{font-size:2rem;margin:1.6em 0 .5em}
+h2{font-size:1.45rem;margin:1.5em 0 .45em;padding-bottom:.28em;border-bottom:1px solid #e2e0da}
+h3{font-size:1.15rem;margin:1.3em 0 .4em}
+h4{font-size:1rem;margin:1.2em 0 .35em;color:#6b6a65}
+p{margin:0 0 .85em}
+a{color:#4f46e5;text-decoration:underline;text-underline-offset:2px}
+ul,ol{margin:0 0 .9em;padding-left:1.5em}
+table{width:100%;border-collapse:collapse;margin:1.1em 0}
+th{background:#1a1a18;color:#fff;font-weight:600;text-align:left;padding:.55em .75em;border:1px solid #1a1a18}
+td{padding:.5em .75em;border:1px solid #e2e0da;vertical-align:top}
+tbody tr:nth-child(even) td{background:#f5f4f1}
+tr,table{break-inside:avoid}
+blockquote{border-left:3px solid #4f46e5;margin:1.1em 0;padding:.1em 0 .1em 1em;color:#6b6a65;font-style:italic}
+code{background:#f5f4f1;border:1px solid #ebe9e4;border-radius:4px;padding:.1em .35em;font-size:.9em}
+pre{background:#f5f4f1;border:1px solid #e2e0da;border-radius:8px;padding:.9em 1.1em;margin:1.1em 0;overflow-x:auto}
+pre code{background:none;border:0;padding:0}
+hr{border:0;border-top:1px solid #e2e0da;margin:1.8em 0}
+img{max-width:100%;height:auto;border-radius:6px}
+h1,h2,h3,h4{break-after:avoid}
+@page{margin:18mm}
+@media print{body{margin:0;max-width:none;padding:0}}
+</style></head>
 <body><h1>${title}</h1>${editor.getHTML()}</body></html>`);
     w.document.close(); w.print();
   };
@@ -1346,7 +1375,12 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
     ((editor?.getAttributes("textStyle").fontSize as string) ?? "").replace("px", ""),
   ) || 11;
 
-  const closeMenus = () => { setHeadingMenu(false); setShowExportMenu(false); setShowSecurityMenu(false); setShowTemplateMenu(false); setShowPageSetupMenu(false); setShowStats(false); setShowLineSpacing(false); setShowSymbols(false); setTopMenu(null); };
+  // ProseMirror owns editability, so this has to be pushed into the editor
+  // rather than only styled — a "read-only" mode you can still type into is
+  // worse than not having one.
+  useEffect(() => { editor?.setEditable(!viewOnly); }, [editor, viewOnly]);
+
+  const closeMenus = () => { setHeadingMenu(false); setShowExportMenu(false); setShowSecurityMenu(false); setShowTemplateMenu(false); setShowPageSetupMenu(false); setShowStats(false); setShowLineSpacing(false); setShowSymbols(false); setTopMenu(null); setModeMenu(false); };
 
   // ── Symbols ───────────────────────────────────────────────────────────────
   const insertSymbol = (sym: string) => {
@@ -1375,7 +1409,25 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div className="relative flex h-[calc(100vh-7.25rem)] lg:h-full bg-surface overflow-hidden text-foreground" onClick={closeMenus}>
+    /* This root is shared by two views that need opposite overflow behaviour.
+     *
+     * Editor: a fixed-height paned layout whose panes scroll individually, so
+     * the root must clamp its height and clip — otherwise the panes have no
+     * bounded parent to scroll against.
+     *
+     * Home: one long page. Clamping it to the viewport and clipping meant the
+     * file grid was cut off with no scrollbar anywhere — the root was exactly
+     * the panel's height, so the shell's scroll container never saw any
+     * overflow to scroll, and the root itself hid the rest.
+     */
+    <div
+      className={`relative flex bg-surface text-foreground ${
+        selectedId
+          ? "h-[calc(100vh-7.25rem)] lg:h-full overflow-hidden"
+          : "min-h-full"
+      }`}
+      onClick={closeMenus}
+    >
 
       <ShortcutHelp groups={DOCS_SHORTCUTS} />
 
@@ -1727,24 +1779,60 @@ blockquote{border-left:4px solid #4f46e5;margin:0;padding-left:1em;color:#6b6a65
               <IconBtn icon={<History className="h-4 w-4" />} title="Version history" active={showHistory} onClick={() => { setShowHistory(v => !v); setShowAI(false); setShowComments(false); setShowSuggestions(false); }} />
               <TSep />
 
-              {/* Suggest mode toggle */}
-              <button
-                title={suggestMode ? "Exit suggesting mode" : "Suggesting mode — track changes"}
-                onClick={() => {
-                  const next = !suggestMode;
-                  setSuggestMode(next);
-                  if (next) { setShowSuggestions(true); setShowAI(false); setShowComments(false); setShowHistory(false); }
-                  toast(next ? "Suggesting mode on — changes are tracked" : "Suggesting mode off");
-                }}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
-                  suggestMode
-                    ? "bg-ok-soft text-ok border-ok/30"
-                    : "border-border text-muted hover:bg-surface-sunken"
-                }`}
-              >
-                <GitMerge className="h-3.5 w-3.5" />
-                {suggestMode ? "Suggesting" : "Suggest"}
-              </button>
+              {/* Mode selector — Editing / Suggesting / Viewing.
+                  A single "Suggest" toggle can't express view-only, and it hid
+                  the current mode: you had to read the button's colour to know
+                  whether your edits were being tracked. */}
+              <div className="relative flex-shrink-0" onClick={e => e.stopPropagation()}>
+                <button
+                  onClick={() => { setModeMenu(v => !v); setTopMenu(null); }}
+                  aria-haspopup="menu"
+                  aria-expanded={modeMenu}
+                  className={`flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition-colors ${
+                    viewOnly    ? "border-border bg-surface-sunken text-muted"
+                    : suggestMode ? "border-ok/30 bg-ok-soft text-ok"
+                    : "border-border text-muted hover:bg-hover hover:text-foreground"
+                  }`}
+                >
+                  {viewOnly ? <BookOpen className="h-3.5 w-3.5" />
+                    : suggestMode ? <GitMerge className="h-3.5 w-3.5" />
+                    : <Type className="h-3.5 w-3.5" />}
+                  {viewOnly ? "Viewing" : suggestMode ? "Suggesting" : "Editing"}
+                  <ChevronDown className="h-3 w-3" />
+                </button>
+                {modeMenu && (
+                  <div role="menu" className="absolute right-0 top-full z-50 mt-1 w-56 rounded-lg border border-border bg-surface py-1 shadow-pop">
+                    {([
+                      ["edit",    "Editing",    "Edit the document directly",       Type],
+                      ["suggest", "Suggesting", "Changes are tracked for review",   GitMerge],
+                      ["view",    "Viewing",    "Read only \u2014 no accidental edits", BookOpen],
+                    ] as const).map(([id, label, desc, Icon]) => {
+                      const active = id === "view" ? viewOnly : id === "suggest" ? (suggestMode && !viewOnly) : (!suggestMode && !viewOnly);
+                      return (
+                        <button
+                          key={id}
+                          onClick={() => {
+                            setModeMenu(false);
+                            if (id === "view") { setViewOnly(true); return; }
+                            setViewOnly(false);
+                            const next = id === "suggest";
+                            setSuggestMode(next);
+                            if (next) { setShowSuggestions(true); setShowAI(false); setShowComments(false); setShowHistory(false); }
+                          }}
+                          className="flex w-full items-start gap-2.5 px-3 py-2 text-left transition-colors hover:bg-hover"
+                        >
+                          <Icon className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-muted" />
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-[13px] text-foreground">{label}</span>
+                            <span className="block text-[11px] text-subtle">{desc}</span>
+                          </span>
+                          {active && <Check className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-accent" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
               <IconBtn icon={<Sparkles className="h-4 w-4" />} title="AI assistant" active={showAI} activeClass="text-violet bg-violet/10" onClick={() => { setShowAI(v => !v); setShowComments(false); setShowHistory(false); setShowSuggestions(false); }} />
               <TSep />
 

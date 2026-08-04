@@ -347,6 +347,13 @@ model Team {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   department   Department?  @relation(fields: [departmentId], references: [id], onDelete: SetNull)
   members      TeamMember[]
+  // Channels owned by this team. A team without channels is just a list of
+  // people; the channels are what make it a place to work.
+  channels     ChatChannel[]
+  // Every team gets one Drive folder. Files shared into a team channel land
+  // here instead of in the sharer's personal Drive, which is the difference
+  // between "I sent you a file" and "the team has this file".
+  driveFolderId String?
 
   @@unique([organizationId, slug])
   @@index([organizationId])
@@ -820,11 +827,51 @@ model ChatChannel {
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 
+  // A channel may belong to a team (Teams' "Team > Channel" model) or stand
+  // alone (a DM, or an org-wide channel). Nullable so existing channels keep
+  // working untouched — this migration must not orphan live conversations.
+  teamId          String?
+  team            Team?           @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  // Ordering within the team's channel list. General sorts first at 0.
+  position        Int             @default(0)
+
   members  ChatMember[]
   messages ChatMessage[]
+  tabs     ChannelTab[]
 
   @@index([type])
   @@index([organizationId])
+  @@index([teamId, position])
+}
+
+/// A pinned surface across the top of a channel — Files, a Doc, a Sheet, a
+/// task board, or an external URL. This is the single biggest structural thing
+/// Teams has that Nexus does not: it turns a channel from a chat log into a
+/// workspace for one piece of work.
+model ChannelTab {
+  id        String         @id @default(cuid())
+  channelId String
+  kind      ChannelTabKind
+  label     String
+  /// Target of the tab. For DOC/SHEET/SLIDE/BOARD this is the record id; for
+  /// LINK it is an absolute URL; for FILES it is null (the channel folder).
+  target    String?
+  position  Int            @default(0)
+  createdById String?
+  createdAt DateTime       @default(now())
+
+  channel ChatChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@index([channelId, position])
+}
+
+enum ChannelTabKind {
+  FILES
+  DOC
+  SHEET
+  SLIDE
+  BOARD
+  LINK
 }
 
 model ChatMember {

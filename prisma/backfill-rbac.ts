@@ -2,13 +2,14 @@ import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { SYSTEM_ROLES } from "../src/lib/rbac/system-roles";
+import { TEAM_SEEDS } from "../src/lib/teams";
 
 // ─── RBAC backfill (RFC-001) ──────────────────────────────────────────────────
 // Idempotent one-time migration of existing data into the new RBAC + org tables.
 //   1. Assign every user their system role (from User.role enum).
 //   2. Migrate legacy per-user Permission rows → UserPermissionOverride.
 //   3. Seed Departments from distinct User.department strings (per org).
-//   4. Seed Teams + TeamMembers from the static DEFAULT_TEAMS (per org).
+//   4. Seed Teams + TeamMembers from TEAM_SEEDS (per org).
 //
 //   npm run backfill:rbac
 //
@@ -23,20 +24,10 @@ const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString }) })
 const slugify = (s: string) =>
   s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 
-// Mirror of DEFAULT_TEAMS in src/app/api/teams/route.ts (inlined to avoid importing
-// a route module). Each team seeds per-organization; membership resolves by role.
-const DEFAULT_TEAMS: { slug: string; name: string; icon: string; color: string; roles: string[] }[] = [
-  { slug: "leadership",  name: "Leadership",   icon: "crown",       color: "#ef4444", roles: ["CEO", "ADMIN", "CISO", "COO"] },
-  { slug: "engineering", name: "Engineering",  icon: "code",        color: "#3b82f6", roles: ["DEVELOPER", "R_AND_D"] },
-  { slug: "security",    name: "Security",     icon: "shield",      color: "#00d2ff", roles: ["CYBER_SECURITY", "CISO"] },
-  { slug: "operations",  name: "Operations",   icon: "settings",    color: "#8b5cf6", roles: ["OPS_MANAGER", "OPERATIONS", "COO"] },
-  { slug: "finance",     name: "Finance",      icon: "dollar-sign", color: "#f59e0b", roles: ["FINANCE"] },
-  { slug: "marketing",   name: "Marketing",    icon: "megaphone",   color: "#f97316", roles: ["MARKETING"] },
-  { slug: "research",    name: "Research",     icon: "flask",       color: "#a855f7", roles: ["RESEARCH"] },
-  { slug: "qa",          name: "QA & Testing", icon: "clipboard",   color: "#22c55e", roles: ["QA"] },
-  { slug: "support",     name: "Support",      icon: "headphones",  color: "#06b6d4", roles: ["SUPPORT"] },
-  { slug: "interns",     name: "Interns",      icon: "graduation",  color: "#ec4899", roles: ["INTERNSHIP"] },
-];
+// Team definitions now come from src/lib/teams.ts — the single source of truth
+// shared with /api/teams. The list used to be duplicated here and had drifted:
+// it was missing the HR and All Hands teams and still carried the pre-Atrium
+// colours, so a freshly backfilled database disagreed with what /teams rendered.
 
 async function assignSystemRoles() {
   const roles = await prisma.role.findMany({ where: { isSystem: true, organizationId: null } });
@@ -109,16 +100,30 @@ async function seedDepartments() {
   console.log(`  ✓ departments: ${created} created across ${orgs.length} org(s)`);
 }
 
+// Seed the system teams and their initial memberships, per organisation.
+//
+// Two properties this must hold, because it is expected to be re-run:
+//   * Presentation is repaired. Name/icon/colour are rewritten from TEAM_SEEDS
+//     on every run, so a database seeded by the older drifted copy of the list
+//     converges instead of staying stale. Only `isSystem` teams are touched —
+//     custom teams created through /org are never rewritten.
+//   * Membership is additive, never subtractive. Roles decide who gets enrolled
+//     the first time; after that membership is data. Someone added to
+//     Engineering by hand keeps their seat even though their User.role never
+//     said DEVELOPER, and someone removed from a team is not silently re-added.
 async function seedTeams() {
   const orgs = await prisma.organization.findMany({ select: { id: true } });
   let teamsCreated = 0;
+  let teamsRepaired = 0;
   let membersCreated = 0;
 
   for (const org of orgs) {
-    for (const t of DEFAULT_TEAMS) {
-      let team = await prisma.team.findFirst({
+    for (const t of TEAM_SEEDS) {
+      const existingTeam = await prisma.team.findFirst({
         where: { organizationId: org.id, slug: t.slug },
       });
+
+      let team = existingTeam;
       if (!team) {
         team = await prisma.team.create({
           data: {
@@ -131,24 +136,50 @@ async function seedTeams() {
           },
         });
         teamsCreated++;
+      } else if (
+        team.isSystem &&
+        (team.name !== t.name || team.icon !== t.icon || team.color !== t.color)
+      ) {
+        team = await prisma.team.update({
+          where: { id: team.id },
+          data: { name: t.name, icon: t.icon, color: t.color },
+        });
+        teamsRepaired++;
       }
 
-      const members = await prisma.user.findMany({
-        where: { organizationId: org.id, role: { in: t.roles as never } },
+      // `everyone` teams enrol all active users. Note this differs from
+      // `roles: []`, which would match nobody — Prisma's `in: []` returns zero
+      // rows, so the distinction has to be explicit.
+      const memberWhere = t.everyone
+        ? { organizationId: org.id, isActive: true }
+        : { organizationId: org.id, isActive: true, role: { in: t.roles as never } };
+
+      const candidates = await prisma.user.findMany({
+        where: memberWhere,
         select: { id: true },
       });
-      for (const m of members) {
-        const existing = await prisma.teamMember.findUnique({
-          where: { teamId_userId: { teamId: team.id, userId: m.id } },
+      if (candidates.length === 0) continue;
+
+      const alreadyIn = await prisma.teamMember.findMany({
+        where: { teamId: team.id, userId: { in: candidates.map((c) => c.id) } },
+        select: { userId: true },
+      });
+      const have = new Set(alreadyIn.map((m) => m.userId));
+      const missing = candidates.filter((c) => !have.has(c.id));
+
+      if (missing.length > 0) {
+        await prisma.teamMember.createMany({
+          data: missing.map((m) => ({ teamId: team.id, userId: m.id })),
+          skipDuplicates: true,
         });
-        if (!existing) {
-          await prisma.teamMember.create({ data: { teamId: team.id, userId: m.id } });
-          membersCreated++;
-        }
+        membersCreated += missing.length;
       }
     }
   }
-  console.log(`  ✓ teams: ${teamsCreated} created, ${membersCreated} memberships added`);
+
+  console.log(
+    `  ✓ teams: ${teamsCreated} created, ${teamsRepaired} repaired, ${membersCreated} memberships added`,
+  );
   if (orgs.length === 0) {
     console.log("    (no organizations exist — teams/departments skipped; run again after creating an org)");
   }

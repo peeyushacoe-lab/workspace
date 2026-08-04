@@ -591,3 +591,112 @@ button, a, [role="button"], input, textarea, select {
   height: 0;
   pointer-events: none;
 }
+
+/* ── Document typography (Sage Docs) ────────────────────────────────────────
+   Most of what makes a rich document *look* rich is the document, not the
+   chrome. A Google Docs screenshot reads as premium largely because of styled
+   headings, ruled section breaks and tables with a solid header row — none of
+   which is toolbar work.
+
+   These are the default styles every Sage document gets for free, so a page
+   looks composed the moment someone types a heading. Every value is a token,
+   so both themes stay correct and `npm run check:atrium` stays green. */
+
+.tiptap { color: var(--foreground); line-height: 1.75; }
+
+.tiptap h1,
+.tiptap h2,
+.tiptap h3,
+.tiptap h4 {
+  color: var(--foreground);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+.tiptap h1 { font-size: 2rem;    margin: 1.6em 0 0.5em; }
+.tiptap h2 { font-size: 1.45rem; margin: 1.5em 0 0.45em; padding-bottom: 0.28em;
+             border-bottom: 1px solid var(--border); }
+.tiptap h3 { font-size: 1.15rem; margin: 1.3em 0 0.4em; }
+.tiptap h4 { font-size: 1rem;    margin: 1.2em 0 0.35em; color: var(--muted); }
+.tiptap > :first-child { margin-top: 0; }
+
+.tiptap p { margin: 0 0 0.85em; }
+.tiptap a { color: var(--accent); text-decoration: underline;
+            text-underline-offset: 2px; text-decoration-thickness: 1px; }
+.tiptap a:hover { color: var(--accent-hover); }
+
+.tiptap ul, .tiptap ol { margin: 0 0 0.9em; padding-left: 1.5em; }
+.tiptap li { margin: 0.2em 0; }
+.tiptap li::marker { color: var(--subtle); }
+
+/* Tables: a solid header row is the single biggest "this was designed" signal
+   in a document. Google's default table is unstyled; ours is not. */
+.tiptap table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.1em 0;
+  overflow: hidden;
+  border-radius: 8px;
+  box-shadow: 0 0 0 1px var(--border);
+}
+.tiptap th {
+  background: var(--foreground);
+  color: var(--surface);
+  font-weight: 600;
+  text-align: left;
+  padding: 0.55em 0.75em;
+  border: 1px solid var(--foreground);
+}
+.tiptap td {
+  padding: 0.5em 0.75em;
+  border: 1px solid var(--border);
+  vertical-align: top;
+}
+.tiptap tbody tr:nth-child(even) td { background: var(--surface-sunken); }
+.tiptap .selectedCell::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: var(--accent-soft); mix-blend-mode: multiply;
+}
+
+.tiptap blockquote {
+  margin: 1.1em 0;
+  padding: 0.1em 0 0.1em 1em;
+  border-left: 3px solid var(--accent);
+  color: var(--muted);
+  font-style: italic;
+}
+
+.tiptap code {
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-soft);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  font-size: 0.9em;
+}
+.tiptap pre {
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.9em 1.1em;
+  margin: 1.1em 0;
+  overflow-x: auto;
+}
+.tiptap pre code { background: none; border: 0; padding: 0; }
+
+.tiptap hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 1.8em 0;
+}
+
+.tiptap img { border-radius: 6px; max-width: 100%; height: auto; }
+
+/* Checklists: the default ProseMirror task list is an unaligned checkbox and a
+   paragraph. This lines them up and mutes completed items. */
+.tiptap ul[data-type="taskList"] { list-style: none; padding-left: 0.2em; }
+.tiptap ul[data-type="taskList"] li { display: flex; gap: 0.55em; align-items: flex-start; }
+.tiptap ul[data-type="taskList"] li > label { margin-top: 0.32em; }
+.tiptap ul[data-type="taskList"] li > div { flex: 1 1 auto; }
+.tiptap ul[data-type="taskList"] li[data-checked="true"] > div {
+  color: var(--subtle); text-decoration: line-through;
+}
