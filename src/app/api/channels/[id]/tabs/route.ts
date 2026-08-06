@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { enforceChatLimit } from "@/lib/chat/limits";
 
 /**
  * Channel tabs — the surfaces pinned across the top of a channel.
@@ -52,6 +53,9 @@ export async function POST(
 ) {
   const user = getSessionUserFromCookieStore(await cookies());
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const limited = await enforceChatLimit("tab.create", user.id);
+  if (limited) return limited;
 
   const { id: channelId } = await params;
   const denied = await denyIfNotMember(channelId, user.id);

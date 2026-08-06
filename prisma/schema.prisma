@@ -941,6 +941,46 @@ model ChatMessage {
   @@index([quotedMessageId])
 }
 
+/// A message written now and delivered later.
+///
+/// Deliberately modelled on `ScheduledEmail` rather than as a `ChatMessage`
+/// with a `scheduledAt` column: a pending scheduled message must be invisible
+/// to every message query in the app (timeline, thread panel, search index,
+/// unread counts, read receipts), and a flag on ChatMessage would mean every
+/// one of those queries has to remember to exclude it. A separate table is
+/// exclusion by construction.
+///
+/// Like ScheduledEmail there are no relations here — `sentAt: null` is the
+/// only status, and the worker tolerates a channel or user that has since
+/// been deleted. Adding relations would require back-relation fields on User
+/// and ChatChannel for no behavioural gain.
+model ChatScheduledMessage {
+  id              String    @id @default(cuid())
+  channelId       String
+  userId          String
+  content         String
+  scheduledAt     DateTime
+  sentAt          DateTime?
+  /// Set when a fire attempt failed terminally — surfaces in the UI instead of
+  /// the row silently retrying forever.
+  failedAt        DateTime?
+  failureReason   String?
+  /// Mirrors the live POST /messages body so a scheduled send is byte-for-byte
+  /// the same message it would have been had it been sent immediately.
+  parentId        String?
+  quotedMessageId String?
+  isUrgent        Boolean   @default(false)
+  attachmentUrl   String?
+  attachmentName  String?
+  attachmentMime  String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([channelId, userId])
+  @@index([scheduledAt, sentAt])
+}
+
 model ChatReaction {
   id        String   @id @default(cuid())
   messageId String

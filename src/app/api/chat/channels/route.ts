@@ -3,6 +3,72 @@ import { cookies } from "next/headers";
 import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { ChatChannelType } from "@/generated/prisma/enums";
+import { enforceChatLimit } from "@/lib/chat/limits";
+
+/**
+ * Unread count per channel for one user, in a single query.
+ *
+ * "Unread" means messages from *other people* since this user last read the
+ * channel — own messages never light the badge, and a never-opened channel
+ * falls back to `joinedAt` so an auto-joined public channel doesn't report its
+ * entire history as unread. The read floor differs per channel, which is why
+ * this can't be expressed as one Prisma `groupBy` and drops to SQL.
+ */
+async function fetchUnreadCounts(userId: string): Promise<Map<string, number>> {
+  try {
+    const rows = await prisma.$queryRaw<{ channelId: string; count: bigint }[]>`
+      SELECT m."channelId" AS "channelId", COUNT(msg.id) AS count
+      FROM "ChatMember" m
+      LEFT JOIN "ChatMessage" msg
+        ON msg."channelId" = m."channelId"
+       AND msg."deletedAt" IS NULL
+       AND msg."userId" <> m."userId"
+       AND msg."createdAt" > COALESCE(m."lastReadAt", m."joinedAt")
+      WHERE m."userId" = ${userId}
+      GROUP BY m."channelId"
+    `;
+    return new Map(rows.map((r) => [r.channelId, Number(r.count)]));
+  } catch (err) {
+    // A badge that reads zero is far better than a conversation list that
+    // fails to load, so this degrades rather than throws.
+    console.error("[chat/channels] unread count query failed:", err);
+    return new Map();
+  }
+}
+
+type LastMessageRow = {
+  channelId: string;
+  content: string;
+  createdAt: Date;
+  userId: string;
+  fullName: string;
+};
+
+/**
+ * Most recent message per channel for one user, in a single query.
+ * `DISTINCT ON` is Postgres-specific and this app is Postgres-only.
+ */
+async function fetchLastMessages(userId: string): Promise<Map<string, LastMessageRow>> {
+  try {
+    const rows = await prisma.$queryRaw<LastMessageRow[]>`
+      SELECT DISTINCT ON (msg."channelId")
+        msg."channelId" AS "channelId",
+        msg.content      AS content,
+        msg."createdAt"  AS "createdAt",
+        msg."userId"     AS "userId",
+        u."fullName"     AS "fullName"
+      FROM "ChatMessage" msg
+      JOIN "ChatMember" m ON m."channelId" = msg."channelId" AND m."userId" = ${userId}
+      JOIN "User" u ON u.id = msg."userId"
+      WHERE msg."deletedAt" IS NULL
+      ORDER BY msg."channelId", msg."createdAt" DESC
+    `;
+    return new Map(rows.map((r) => [r.channelId, r]));
+  } catch (err) {
+    console.error("[chat/channels] last message query failed:", err);
+    return new Map();
+  }
+}
 
 export async function GET() {
   try {
@@ -17,15 +83,31 @@ export async function GET() {
     // channels the next time they loaded their chat list. Team channel
     // membership instead tracks TeamMember — see /api/teams/[id]/channels and
     // the join/leave sync in /api/teams/[id]/members.
-    const allPublic = await prisma.chatChannel.findMany({
-      where: { isPrivate: false, teamId: null },
-      select: { id: true },
-    });
-    for (const ch of allPublic) {
-      await prisma.chatMember.upsert({
-        where: { channelId_userId: { channelId: ch.id, userId: user.id } },
-        update: {},
-        create: { channelId: ch.id, userId: user.id, role: "MEMBER" },
+    //
+    // This used to `upsert` once per public channel in a sequential `await`
+    // loop, on the single hottest read path in Connect — the client polls this
+    // route every 30 s and hits it on every navigation. With 20 public
+    // channels that was 20 serial round-trips per poll per user, essentially
+    // all of them no-ops because the membership already existed. Read the
+    // memberships once, diff in memory, and write only what's actually
+    // missing: 2 queries in the steady state, and the second one usually
+    // writes nothing.
+    const [allPublic, existingMemberships] = await Promise.all([
+      prisma.chatChannel.findMany({
+        where: { isPrivate: false, teamId: null },
+        select: { id: true },
+      }),
+      prisma.chatMember.findMany({
+        where: { userId: user.id },
+        select: { channelId: true },
+      }),
+    ]);
+    const joined = new Set(existingMemberships.map((m) => m.channelId));
+    const missing = allPublic.filter((ch) => !joined.has(ch.id));
+    if (missing.length) {
+      await prisma.chatMember.createMany({
+        data: missing.map((ch) => ({ channelId: ch.id, userId: user.id, role: "MEMBER" })),
+        skipDuplicates: true,
       }).catch(() => {});
     }
 
@@ -42,62 +124,33 @@ export async function GET() {
       orderBy: { updatedAt: "desc" },
     });
 
-    // Compute unread count — fall back gracefully if deletedAt column doesn't exist yet
-    const channelsWithUnread = await Promise.all(
-      channels.map(async (ch) => {
-        const membership = ch.members.find((m) => m.userId === user.id);
-        // Unread = messages from OTHERS since the channel was last read.
-        // - own messages never count as unread (sending shouldn't light the badge)
-        // - never-opened channels fall back to joinedAt so auto-joined public
-        //   channels don't report their entire history as unread
-        const readFloor = membership?.lastReadAt ?? membership?.joinedAt ?? null;
-        const unreadCount = await prisma.chatMessage.count({
-          where: {
-            channelId: ch.id,
-            deletedAt: null,
-            userId: { not: user.id },
-            ...(readFloor ? { createdAt: { gt: readFloor } } : {}),
-          },
-        }).catch(() =>
-          prisma.chatMessage.count({
-            where: {
-              channelId: ch.id,
-              userId: { not: user.id },
-              ...(readFloor ? { createdAt: { gt: readFloor } } : {}),
-            },
-          }).catch(() => 0)
-        );
-        // Last message preview for the conversation list row — a list of bare
-        // names with no sense of what was last said or when is unusable once
-        // there are more than a handful of conversations.
-        const last = await prisma.chatMessage.findFirst({
-          where: { channelId: ch.id, deletedAt: null },
-          orderBy: { createdAt: "desc" },
-          select: {
-            content: true,
-            createdAt: true,
-            userId: true,
-            user: { select: { fullName: true } },
-          },
-        }).catch(() => null);
+    // Unread counts and last-message previews were also one query *each* per
+    // channel — 2N queries to render a list. Both are now a single set-based
+    // query across every channel the user is in, so the cost is flat in the
+    // number of conversations rather than linear.
+    const [unreadByChannel, lastByChannel] = await Promise.all([
+      fetchUnreadCounts(user.id),
+      fetchLastMessages(user.id),
+    ]);
 
-        const lastMessage = last
-          ? {
-              content: last.content.startsWith("[FILE_ATTACHMENT] ")
-                ? "📎 Attachment"
-                : last.content.startsWith("[BOT_RESPONSE] ")
-                  ? last.content.replace("[BOT_RESPONSE] ", "").slice(0, 120)
-                  : last.content.startsWith("[CALL_LOG] ")
-                    ? "Call"
-                    : last.content,
-              createdAt: last.createdAt,
-              authorName: last.userId === user.id ? "You" : last.user.fullName.split(" ")[0],
-            }
-          : null;
+    const channelsWithUnread = channels.map((ch) => {
+      const last = lastByChannel.get(ch.id) ?? null;
+      const lastMessage = last
+        ? {
+            content: last.content.startsWith("[FILE_ATTACHMENT] ")
+              ? "📎 Attachment"
+              : last.content.startsWith("[BOT_RESPONSE] ")
+                ? last.content.replace("[BOT_RESPONSE] ", "").slice(0, 120)
+                : last.content.startsWith("[CALL_LOG] ")
+                  ? "Call"
+                  : last.content,
+            createdAt: last.createdAt,
+            authorName: last.userId === user.id ? "You" : last.fullName.split(" ")[0],
+          }
+        : null;
 
-        return { ...ch, unreadCount, lastMessage };
-      })
-    );
+      return { ...ch, unreadCount: unreadByChannel.get(ch.id) ?? 0, lastMessage };
+    });
 
     return NextResponse.json(channelsWithUnread, {
       headers: { "Cache-Control": "private, no-store" },
@@ -111,6 +164,11 @@ export async function GET() {
 export async function POST(request: Request) {
   const user = getSessionUserFromCookieStore(await cookies());
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  // Creating a channel seeds a ChatMember row per participant, so an unbounded
+  // create loop writes rows proportional to org size each time.
+  const limited = await enforceChatLimit("channel.create", user.id);
+  if (limited) return limited;
 
   let body: {
     name: string;

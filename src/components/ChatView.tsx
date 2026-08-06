@@ -10,6 +10,9 @@ import {
   MessageSquare,
   Plus,
   Send,
+  Clock,
+  CalendarClock,
+  AlertTriangle,
   Smile,
   Trash2,
   Edit3,
@@ -132,6 +135,65 @@ type QuotedMessagePreview = {
 };
 
 type ReadReceipt = { userId: string; readAt: string; user: { fullName: string } };
+
+/** `<input type="datetime-local">` wants a local wall-clock string, not an ISO
+ *  instant — `toISOString()` here would silently shift the value by the user's
+ *  UTC offset and show them a time they didn't pick. */
+function toLocalInputValue(d: Date) {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/** "Tomorrow at 09:00" reads better than a raw timestamp for something that is,
+ *  by definition, always in the near future. */
+function formatScheduleTime(iso: string) {
+  const d = new Date(iso);
+  const time = d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+  const sameDay = (a: Date, b: Date) => a.toDateString() === b.toDateString();
+  if (sameDay(d, today)) return `today at ${time}`;
+  if (sameDay(d, tomorrow)) return `tomorrow at ${time}`;
+  return `${d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })} at ${time}`;
+}
+
+/** The three times people actually pick, so the common case is one click and
+ *  the date field is the escape hatch rather than the only path. */
+function schedulePresets(): { label: string; at: Date }[] {
+  const now = new Date();
+  const inAnHour = new Date(now.getTime() + 60 * 60 * 1000);
+
+  const tomorrowMorning = new Date(now);
+  tomorrowMorning.setDate(now.getDate() + 1);
+  tomorrowMorning.setHours(9, 0, 0, 0);
+
+  // "Monday morning" means the *next* Monday — if today is Monday, next week's.
+  const mondayMorning = new Date(now);
+  mondayMorning.setHours(9, 0, 0, 0);
+  const daysUntilMonday = ((1 - now.getDay() + 7) % 7) || 7;
+  mondayMorning.setDate(now.getDate() + daysUntilMonday);
+
+  return [
+    { label: "In an hour", at: inAnHour },
+    { label: "Tomorrow morning", at: tomorrowMorning },
+    { label: "Monday morning", at: mondayMorning },
+  ];
+}
+
+/** A message written but not yet delivered. Lives in its own table, not as a
+ *  flag on ChatMessage — see the ChatScheduledMessage model comment. */
+type ScheduledChatMessage = {
+  id: string;
+  channelId: string;
+  content: string;
+  scheduledAt: string;
+  sentAt: string | null;
+  failedAt: string | null;
+  failureReason: string | null;
+  isUrgent: boolean;
+  attachmentName: string | null;
+};
 
 type Message = {
   id: string;
@@ -576,17 +638,64 @@ function ReactionPill({
 
 // ─── File Attachment Card ─────────────────────────────────────────────────────
 
+/**
+ * Attachment cards are built from a magic `[FILE_ATTACHMENT] {json}` prefix in
+ * the message body — which means the JSON is *entirely attacker-controlled*.
+ * Anyone can POST a message whose body claims to be a 2 MB PDF pointing
+ * wherever they like, and it renders as a legitimate-looking upload card.
+ *
+ * React does not block a `javascript:` or `data:` href, so a forged card was a
+ * one-click script-execution / credential-phishing vector inside a security
+ * product's own chat. Everything that reaches an `href` or `src` goes through
+ * here first: same-origin relative paths and http(s) absolute URLs only.
+ */
+function safeAttachmentUrl(url: string | undefined): string | null {
+  if (!url) return null;
+  // A relative path can only ever resolve against our own origin.
+  if (url.startsWith("/") && !url.startsWith("//")) return url;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "https:" || parsed.protocol === "http:" ? url : null;
+  } catch {
+    return null;
+  }
+}
+
+/** A forged card can also carry a filename like `report.pdf.exe` or one padded
+ *  with RTL overrides to disguise the real extension. Strip control characters
+ *  and path separators, and cap the length. */
+function safeAttachmentName(name: unknown): string {
+  if (typeof name !== "string") return "Attachment";
+  const cleaned = name
+    // Control characters.
+    .replace(/[\u0000-\u001f\u007f]/g, "")
+    // Bidi overrides — the classic "gnp.exe" rendered as "exe.png" trick.
+    .replace(/[\u202a-\u202e\u2066-\u2069]/g, "")
+    // Path separators, so a name can never be read as a path.
+    .replace(/[/\\]/g, "")
+    .trim();
+  return cleaned.slice(0, 120) || "Attachment";
+}
+
 function FileAttachmentCard({ content }: { content: string }) {
   // Parse the special file attachment format from message content
   // Format: [FILE_ATTACHMENT] JSON_DATA
   try {
     const jsonStr = content.replace("[FILE_ATTACHMENT] ", "");
-    const data = JSON.parse(jsonStr) as {
+    const raw = JSON.parse(jsonStr) as {
       name: string;
       size: number;
       mimeType: string;
       url?: string;
       fileId?: string;
+    };
+    const data = {
+      ...raw,
+      name: safeAttachmentName(raw.name),
+      mimeType: typeof raw.mimeType === "string" ? raw.mimeType : "application/octet-stream",
+      // A `fileId` routes through our own authorization-checked download proxy,
+      // so it's the trusted path; a bare `url` is only used once vetted.
+      url: safeAttachmentUrl(raw.url) ?? undefined,
     };
 
     // Audio files (voice notes, audio uploads) → inline player
@@ -679,7 +788,21 @@ function FileAttachmentCard({ content }: { content: string }) {
 
 // ─── Bot Response Card ────────────────────────────────────────────────────────
 
-function BotResponseCard({ content }: { content: string }) {
+/**
+ * `[BOT_RESPONSE]` is the same forgeable-prefix problem as attachment cards:
+ * the card is built from the message body, and a bot reply is posted under the
+ * *invoking user's* own account, so there is no server-side signal that
+ * distinguishes a real AI reply from one a person typed by hand.
+ *
+ * The card therefore no longer renders a free-text `from` — an attacker could
+ * put "Security Team" or "IT Helpdesk" there and have it styled as a system
+ * voice. The label is fixed, and the human whose account posted it is named,
+ * so an impersonation attempt is attributable rather than anonymous.
+ *
+ * A full fix needs a real system account posting bot replies server-side; this
+ * closes the impersonation surface in the meantime.
+ */
+function BotResponseCard({ content, senderName }: { content: string; senderName?: string }) {
   try {
     const jsonStr = content.replace("[BOT_RESPONSE] ", "");
     const data = JSON.parse(jsonStr) as { from: string; text: string };
@@ -689,7 +812,10 @@ function BotResponseCard({ content }: { content: string }) {
           <Sparkles className="h-4 w-4 text-accent" />
         </div>
         <div className="flex-1 min-w-0 bg-surface-sunken border border-border rounded-xl p-4 max-w-xl">
-          <p className="text-accent font-semibold text-sm mb-1">{data.from}</p>
+          <p className="text-accent font-semibold text-sm mb-1">
+            CyberSage AI
+            {senderName && <span className="ml-1.5 font-normal text-subtle">· requested by {senderName}</span>}
+          </p>
           <p className="text-sm text-foreground whitespace-pre-wrap break-words leading-relaxed">{data.text}</p>
         </div>
       </div>
@@ -976,15 +1102,23 @@ const MessageItem = memo(function MessageItem({
         ) : isFileAttachment ? (
           <FileAttachmentCard content={msg.content} />
         ) : isBotResponse ? (
-          <BotResponseCard content={msg.content} />
+          <BotResponseCard content={msg.content} senderName={msg.user?.fullName} />
         ) : (
           <>
             {msg.content && renderMessageBody(msg.content, currentUserId, memberNames)}
-            {msg.attachmentUrl && msg.attachmentMime?.startsWith("image/") && (
-              <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer" className="inline-block mt-1.5">
+            {/* `attachmentUrl` is accepted verbatim from the client by the send
+                and schedule endpoints, so it is no more trustworthy than the
+                message body — same scheme guard as the attachment card. */}
+            {safeAttachmentUrl(msg.attachmentUrl ?? undefined) && msg.attachmentMime?.startsWith("image/") && (
+              <a
+                href={safeAttachmentUrl(msg.attachmentUrl ?? undefined) as string}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block mt-1.5"
+              >
                 <img
-                  src={msg.attachmentUrl}
-                  alt={msg.attachmentName ?? "image"}
+                  src={safeAttachmentUrl(msg.attachmentUrl ?? undefined) as string}
+                  alt={safeAttachmentName(msg.attachmentName)}
                   className="rounded-xl max-w-xs max-h-64 object-cover border border-accent/[0.1] hover:opacity-90 transition-opacity"
                 />
               </a>
@@ -2705,6 +2839,17 @@ export function ChatView({
   const [composerText, setComposerText] = useState("");
   const [sending, setSending] = useState(false);
   const [composerUrgent, setComposerUrgent] = useState(false);
+  // Scheduled send — pending (unsent) messages this user has queued for the
+  // open conversation, plus the two bits of dialog state the picker needs.
+  const [scheduled, setScheduled] = useState<ScheduledChatMessage[]>([]);
+  const [showSchedulePicker, setShowSchedulePicker] = useState(false);
+  const [showScheduledList, setShowScheduledList] = useState(false);
+  const [scheduleAt, setScheduleAt] = useState("");
+  const [scheduling, setScheduling] = useState(false);
+  // Live-delivery health. `true` optimistically — a channel that announces
+  // "Reconnecting" for the split second before the stream opens reads as
+  // broken when it isn't.
+  const [liveConnected, setLiveConnected] = useState(true);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [showNewChannel, setShowNewChannel] = useState(false);
   const [showNewGroupDM, setShowNewGroupDM] = useState(false);
@@ -3248,6 +3393,73 @@ export function ChatView({
     return () => clearInterval(interval);
   }, [selectedChannelId]);
 
+  // Reconciliation poll — the append poll above only ever *adds* messages.
+  //
+  // Redis pub/sub is fire-and-forget with no replay, so anything published
+  // while the SSE stream was down is gone. For a new message that's covered:
+  // the `after` cursor picks it up within 5 s. For an **edit or a delete**
+  // nothing did — the cursor is `createdAt`, and editing a message doesn't
+  // change when it was created. A message deleted during a 20-second network
+  // blip stayed on screen indefinitely, and an edited one kept showing its
+  // original text, until a hard reload. On a deletion that's not a stale
+  // cache, it's a moderation failure: someone removes a message and it stays
+  // visible to whoever happened to be disconnected at that moment.
+  //
+  // So every 20 s, re-read the recent window and merge changed fields for
+  // messages already on screen. Slower than the append poll because it's
+  // repairing an edge case rather than carrying the common path.
+  useEffect(() => {
+    if (!selectedChannelId) return;
+
+    const reconcile = async () => {
+      if (document.visibilityState !== "visible") return;
+      try {
+        const res = await fetch(`/api/chat/channels/${selectedChannelId}/messages`);
+        if (!res.ok) return;
+        const recent = (await res.json()) as Message[];
+        if (!recent.length) return;
+        const byId = new Map(recent.map((m) => [m.id, m]));
+
+        const merge = (prev: Message[]) => {
+          let changed = false;
+          const next = prev.map((m) => {
+            const server = byId.get(m.id);
+            if (!server) return m;
+            // Only the fields a late-arriving event would have carried. Not a
+            // wholesale replace — that would clobber locally-applied optimistic
+            // state (reactions, read receipts) with a snapshot that may be
+            // marginally older than what the stream already delivered.
+            if (
+              server.content === m.content &&
+              server.editedAt === m.editedAt &&
+              server.deletedAt === m.deletedAt &&
+              server.isPinned === m.isPinned
+            ) {
+              return m;
+            }
+            changed = true;
+            return {
+              ...m,
+              content: server.content,
+              editedAt: server.editedAt,
+              deletedAt: server.deletedAt,
+              isPinned: server.isPinned,
+            };
+          });
+          return changed ? next : prev;
+        };
+
+        setMessages(merge);
+        setThreadMessages(merge);
+      } catch {
+        // Non-fatal — the next pass tries again.
+      }
+    };
+
+    const interval = setInterval(() => void reconcile(), 20_000);
+    return () => clearInterval(interval);
+  }, [selectedChannelId]);
+
   // Socket.IO channel subscription — join/leave rooms, register event handlers
   useEffect(() => {
     if (!selectedChannelId) return;
@@ -3374,6 +3586,9 @@ export function ChatView({
 
     const source = new EventSource(`/api/chat/channels/${selectedChannelId}/stream`);
 
+    source.addEventListener("connected", () => setLiveConnected(true));
+    source.onopen = () => setLiveConnected(true);
+
     source.addEventListener("message", (e) => {
       const msg = JSON.parse((e as MessageEvent).data) as Message;
       if (msg.channelId !== selectedChannelId) return;
@@ -3431,11 +3646,32 @@ export function ChatView({
 
     source.onerror = () => {
       // EventSource auto-reconnects on transient errors/timeouts (e.g. the 30s
-      // Vercel function duration cap); nothing to do here but avoid noisy logs.
+      // Vercel function duration cap), so this is usually a non-event and must
+      // not be treated as an error. But `readyState === CONNECTING` after an
+      // error means the connection actually dropped and is being retried — the
+      // one case where the user needs to know live delivery has paused, rather
+      // than staring at a channel that has silently stopped moving.
+      if (source.readyState === EventSource.CONNECTING) setLiveConnected(false);
     };
 
-    return () => source.close();
+    return () => {
+      setLiveConnected(true);
+      source.close();
+    };
   }, [selectedChannelId]);
+
+  // Browser-level offline detection, which fires immediately on network loss
+  // rather than waiting for a stream timeout to notice.
+  useEffect(() => {
+    const onOffline = () => setLiveConnected(false);
+    const onOnline = () => setLiveConnected(true);
+    window.addEventListener("offline", onOffline);
+    window.addEventListener("online", onOnline);
+    return () => {
+      window.removeEventListener("offline", onOffline);
+      window.removeEventListener("online", onOnline);
+    };
+  }, []);
 
   // Auto-scroll on new messages.
   //
@@ -3474,7 +3710,13 @@ export function ChatView({
           ...(attachment ? { attachmentUrl: attachment.url, attachmentMime: attachment.mime, attachmentName: attachment.name } : {}),
         }),
       });
-      if (!res.ok) throw new Error("Failed");
+      if (!res.ok) {
+        // Surface the server's own reason. A rate limit or a broadcast-channel
+        // rejection is actionable; "Failed to send message" is not, and it's
+        // what every one of those used to look like.
+        const e = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(e.error ?? "Failed to send message");
+      }
 
       // Add sent message to UI immediately (socket may be delayed or unavailable)
       const newMsg = (await res.json()) as Message;
@@ -3506,11 +3748,118 @@ export function ChatView({
           setBotResponding(false);
         }
       }
-    } catch {
-      toast.error("Failed to send message");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to send message");
+      // Put the text back rather than losing it — a rejected send is usually
+      // retryable in a few seconds.
       setComposerText(text);
+      setComposerAttachment(attachment);
+      setComposerUrgent(composerUrgent);
     } finally {
       setSending(false);
+    }
+  };
+
+  // --- Scheduled send -------------------------------------------------------
+  // Pending messages are the user's own, scoped to the open conversation. The
+  // worker polls every 60s, so refreshing on the same cadence keeps the
+  // "1 scheduled" banner from claiming something is still pending after it
+  // has already been delivered.
+  const loadScheduled = useCallback(async () => {
+    if (!selectedChannelId) { setScheduled([]); return; }
+    try {
+      const res = await fetch(`/api/chat/scheduled?channelId=${selectedChannelId}`);
+      if (!res.ok) return;
+      setScheduled((await res.json()) as ScheduledChatMessage[]);
+    } catch {
+      // non-fatal — the banner is informational
+    }
+  }, [selectedChannelId]);
+
+  useEffect(() => {
+    void loadScheduled();
+    const t = setInterval(() => void loadScheduled(), 60_000);
+    return () => clearInterval(t);
+  }, [loadScheduled]);
+
+  const scheduleMessage = async () => {
+    if (!selectedChannelId || !scheduleAt) return;
+    if (!composerText.trim() && !composerAttachment) return;
+    setScheduling(true);
+    try {
+      const res = await fetch("/api/chat/scheduled", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          channelId: selectedChannelId,
+          content: composerText,
+          // datetime-local gives a local wall-clock string with no zone; the
+          // Date constructor reads it in the browser's zone, which is what the
+          // user meant, and toISOString hands the server an unambiguous instant.
+          scheduledAt: new Date(scheduleAt).toISOString(),
+          isUrgent: composerUrgent,
+          ...(replyingTo ? { quotedMessageId: replyingTo.id } : {}),
+          ...(composerAttachment
+            ? {
+                attachmentUrl: composerAttachment.url,
+                attachmentMime: composerAttachment.mime,
+                attachmentName: composerAttachment.name,
+              }
+            : {}),
+        }),
+      });
+      if (!res.ok) {
+        const e = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(e.error ?? "Could not schedule that message");
+      }
+      const row = (await res.json()) as ScheduledChatMessage;
+      setScheduled((prev) => [...prev, row].sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt)));
+      setComposerText("");
+      setComposerAttachment(null);
+      setComposerUrgent(false);
+      setReplyingTo(null);
+      setShowSchedulePicker(false);
+      setScheduleAt("");
+      toast.success(`Scheduled for ${formatScheduleTime(row.scheduledAt)}`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not schedule that message");
+    } finally {
+      setScheduling(false);
+    }
+  };
+
+  const cancelScheduled = async (id: string) => {
+    // Optimistic: a cancel that appears to hang is worse than one that has to
+    // be re-listed on failure.
+    const prev = scheduled;
+    setScheduled((s) => s.filter((r) => r.id !== id));
+    try {
+      const res = await fetch(`/api/chat/scheduled/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed");
+      toast.success("Scheduled message cancelled");
+    } catch {
+      setScheduled(prev);
+      toast.error("Could not cancel that message");
+    }
+  };
+
+  const sendScheduledNow = async (id: string) => {
+    try {
+      const res = await fetch(`/api/chat/scheduled/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sendNow: true }),
+      });
+      if (!res.ok) {
+        const e = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(e.error ?? "Failed");
+      }
+      const { message } = (await res.json()) as { message: Message };
+      setScheduled((s) => s.filter((r) => r.id !== id));
+      setMessages((prev) => (prev.some((m) => m.id === message.id) ? prev : [...prev, message]));
+      toast.success("Sent");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not send that message");
     }
   };
 
@@ -4677,6 +5026,51 @@ export function ChatView({
                   </div>
                 )}
 
+                {/* Live-delivery status. Without this, a dropped stream looks
+                    exactly like a quiet channel — you keep typing into what
+                    you assume is a working conversation. Says "still sending"
+                    explicitly because it's true: the composer posts over
+                    fetch, which works fine while the push stream is down, and
+                    the 5s poll backfills. The thing that's degraded is
+                    *instant* delivery, not delivery. */}
+                {!liveConnected && (
+                  <div
+                    role="status"
+                    className="mb-2 flex items-center gap-2 rounded-lg border border-warn/25 bg-warn-soft px-3 py-1.5 text-xs text-warn"
+                  >
+                    <Loader2 className="h-3.5 w-3.5 flex-shrink-0 animate-spin" />
+                    <span className="font-medium">Reconnecting…</span>
+                    <span className="opacity-80">New messages may be delayed. You can still send.</span>
+                  </div>
+                )}
+
+                {/* Pending scheduled messages for this conversation. Sits above
+                    the composer rather than in the timeline: an undelivered
+                    message isn't part of the conversation yet, and putting a
+                    ghost bubble in the transcript makes people think it sent. */}
+                {scheduled.length > 0 && (
+                  <button
+                    onClick={() => setShowScheduledList(true)}
+                    className={`mb-2 flex w-full items-center gap-2 rounded-lg border px-3 py-1.5 text-left text-xs transition-colors ${
+                      scheduled.some((s) => s.failedAt)
+                        ? "border-crit/25 bg-crit-soft text-crit hover:bg-crit-soft/80"
+                        : "border-accent/25 bg-accent-soft text-accent-strong hover:bg-accent-soft/80"
+                    }`}
+                  >
+                    {scheduled.some((s) => s.failedAt)
+                      ? <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
+                      : <CalendarClock className="w-3.5 h-3.5 flex-shrink-0" />}
+                    <span className="font-medium">
+                      {scheduled.some((s) => s.failedAt)
+                        ? `${scheduled.filter((s) => s.failedAt).length} scheduled message${scheduled.filter((s) => s.failedAt).length === 1 ? "" : "s"} didn't send`
+                        : scheduled.length === 1
+                          ? `1 message scheduled for ${formatScheduleTime(scheduled[0].scheduledAt)}`
+                          : `${scheduled.length} messages scheduled`}
+                    </span>
+                    <span className="ml-auto text-[11px] opacity-70">View</span>
+                  </button>
+                )}
+
                 {/* Composer: sunken well that lifts to a focused surface — the
                     focus-within ring is the same accent treatment as every other
                     input in the system, so the primary control reads as primary. */}
@@ -4792,6 +5186,24 @@ export function ChatView({
                     title={recording ? "Stop recording" : "Record voice note"}
                   >
                     {recording ? <Square className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                  </button>
+                  {/* Schedule send — deliberately a sibling of Send rather than
+                      a dropdown on it. Gmail hides "Schedule send" behind a
+                      caret and most people never find it; a message you meant
+                      to send at 9am is worth one visible button. */}
+                  <button
+                    onClick={() => {
+                      // Seed with the first preset so the dialog opens on a
+                      // valid, sendable time rather than an empty field.
+                      if (!scheduleAt) setScheduleAt(toLocalInputValue(schedulePresets()[0].at));
+                      setShowSchedulePicker(true);
+                    }}
+                    disabled={(!composerText.trim() && !composerAttachment) || sending}
+                    title="Schedule for later"
+                    aria-label="Schedule for later"
+                    className="nx-press p-1.5 mb-1 rounded-lg transition-colors flex-shrink-0 text-subtle hover:text-foreground hover:bg-hover disabled:opacity-40"
+                  >
+                    <Clock className="w-4 h-4" />
                   </button>
                   <button
                     onClick={sendMessage}
@@ -4962,6 +5374,143 @@ export function ChatView({
           summary={summaryResult}
           onClose={() => setSummaryResult(null)}
         />
+      )}
+
+      {showSchedulePicker && (
+        <Dialog
+          title="Schedule message"
+          size="sm"
+          onClose={() => setShowSchedulePicker(false)}
+          footer={
+            <>
+              <Button variant="secondary" className="flex-1" onClick={() => setShowSchedulePicker(false)}>
+                Cancel
+              </Button>
+              <Button
+                className="flex-1"
+                loading={scheduling}
+                disabled={!scheduleAt}
+                onClick={() => void scheduleMessage()}
+              >
+                Schedule
+              </Button>
+            </>
+          }
+        >
+          <div className="space-y-4">
+            {/* Show what's actually being scheduled — the composer is hidden
+                behind the backdrop, and confirming a send you can't see is how
+                the wrong message goes out at 6am. */}
+            <div className="rounded-lg border border-border bg-surface-sunken px-3 py-2">
+              <p className="mb-1 text-[11px] font-medium text-subtle">Message</p>
+              <p className="max-h-24 overflow-y-auto whitespace-pre-wrap break-words text-[13px] text-foreground">
+                {composerText.trim() || composerAttachment?.name || "(attachment)"}
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {schedulePresets().map((p) => {
+                const value = toLocalInputValue(p.at);
+                const active = scheduleAt === value;
+                return (
+                  <button
+                    key={p.label}
+                    onClick={() => setScheduleAt(value)}
+                    className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                      active
+                        ? "border-accent/40 bg-accent-soft text-accent-strong"
+                        : "border-border text-muted hover:bg-hover hover:text-foreground"
+                    }`}
+                  >
+                    {p.label}
+                    <span className="ml-1.5 opacity-60">
+                      {p.at.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div>
+              <label htmlFor="chat-schedule-at" className="mb-1.5 block text-xs font-medium text-muted">
+                Or pick a time
+              </label>
+              <input
+                id="chat-schedule-at"
+                type="datetime-local"
+                value={scheduleAt}
+                min={toLocalInputValue(new Date(Date.now() + 60_000))}
+                onChange={(e) => setScheduleAt(e.target.value)}
+                className="w-full rounded-lg border border-border bg-surface-sunken px-3 py-2 text-sm text-foreground transition-colors placeholder:text-subtle focus:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent/20"
+              />
+              {scheduleAt && (
+                <p className="mt-1.5 text-[11px] text-subtle">
+                  Sends {formatScheduleTime(new Date(scheduleAt).toISOString())}
+                </p>
+              )}
+            </div>
+          </div>
+        </Dialog>
+      )}
+
+      {showScheduledList && (
+        <Dialog
+          title={`Scheduled messages (${scheduled.length})`}
+          size="md"
+          onClose={() => setShowScheduledList(false)}
+          footer={
+            <Button variant="secondary" className="flex-1" onClick={() => setShowScheduledList(false)}>
+              Close
+            </Button>
+          }
+        >
+          <div className="max-h-80 space-y-2 overflow-y-auto">
+            {scheduled.length === 0 && (
+              <p className="py-6 text-center text-sm text-subtle">Nothing scheduled here.</p>
+            )}
+            {scheduled.map((s) => (
+              <div
+                key={s.id}
+                className={`rounded-lg border px-3 py-2.5 ${
+                  s.failedAt ? "border-crit/25 bg-crit-soft" : "border-border bg-surface-sunken"
+                }`}
+              >
+                <div className="mb-1 flex items-center gap-2">
+                  {s.failedAt
+                    ? <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 text-crit" />
+                    : <CalendarClock className="w-3.5 h-3.5 flex-shrink-0 text-accent" />}
+                  <span className={`text-[11px] font-medium ${s.failedAt ? "text-crit" : "text-accent-strong"}`}>
+                    {s.failedAt ? (s.failureReason ?? "Didn't send") : formatScheduleTime(s.scheduledAt)}
+                  </span>
+                  {s.isUrgent && (
+                    <span className="rounded-full bg-crit-soft px-1.5 py-0.5 text-[10px] font-semibold text-crit">
+                      Urgent
+                    </span>
+                  )}
+                </div>
+                <p className="mb-2 line-clamp-3 whitespace-pre-wrap break-words text-[13px] text-foreground">
+                  {s.content || s.attachmentName || "(attachment)"}
+                </p>
+                <div className="flex gap-2">
+                  {!s.failedAt && (
+                    <button
+                      onClick={() => void sendScheduledNow(s.id)}
+                      className="rounded-md px-2 py-1 text-[12px] font-medium text-muted transition-colors hover:bg-hover hover:text-foreground"
+                    >
+                      Send now
+                    </button>
+                  )}
+                  <button
+                    onClick={() => void cancelScheduled(s.id)}
+                    className="rounded-md px-2 py-1 text-[12px] font-medium text-muted transition-colors hover:bg-crit-soft hover:text-crit"
+                  >
+                    {s.failedAt ? "Dismiss" : "Cancel"}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Dialog>
       )}
     </div>
   );

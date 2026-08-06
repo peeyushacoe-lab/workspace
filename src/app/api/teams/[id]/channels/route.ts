@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { enforceChatLimit } from "@/lib/chat/limits";
 
 // ─── Team channel list ────────────────────────────────────────────────────────
 // The piece RFC-003 called "build pending": ChatChannel.teamId has existed in
@@ -97,6 +98,11 @@ const createSchema = z.object({
 export async function POST(request: Request, { params }: Params) {
   const currentUser = await getCurrentUser();
   if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  // Shares the channel-create budget with /api/chat/channels — the limit is on
+  // the act of creating a conversation, not on which route you used to do it.
+  const limited = await enforceChatLimit("channel.create", currentUser.id);
+  if (limited) return limited;
 
   const { id } = await params;
   const team = await resolveTeam(id, currentUser.organizationId);

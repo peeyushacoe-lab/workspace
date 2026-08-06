@@ -12,6 +12,7 @@ import { createMailRulesWorker } from "../src/workers/mail-rules.worker";
 import { createImportWorker } from "../src/workers/import.worker";
 import { createExportWorker } from "../src/workers/export.worker";
 import { processScheduledEmails } from "../src/workers/scheduled-send.worker";
+import { processScheduledChatMessages } from "../src/workers/scheduled-chat-send.worker";
 import { cleanupQueue } from "../src/lib/queues/cleanup.queue";
 import { attachFailedJobAlerts } from "../src/lib/queues/failed-job-monitor";
 import { logger } from "../src/lib/logger";
@@ -148,11 +149,15 @@ async function scheduleCleanupJobs() {
 
 scheduleCleanupJobs().catch((err) => logger.error({ err }, "Failed to schedule cleanup jobs"));
 
-// Poll for scheduled emails every 60 seconds
+// Poll for scheduled emails and scheduled chat messages every 60 seconds.
+// Both are DB-backed cron polls rather than BullMQ delayed jobs — see
+// src/workers/scheduled-chat-send.worker.ts for why.
 setInterval(() => {
   processScheduledEmails().catch((err) => logger.error({ err }, "[scheduled-send] Poll failed"));
+  processScheduledChatMessages().catch((err) => logger.error({ err }, "[scheduled-chat] Poll failed"));
 }, 60_000);
 processScheduledEmails().catch(() => {});
+processScheduledChatMessages().catch(() => {});
 
 // ---------------------------------------------------------------------------
 // Graceful shutdown

@@ -3,13 +3,8 @@ import { cookies } from "next/headers";
 import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redis } from "@/lib/redis";
-import { emitEvent } from "@/lib/events";
-import { getTokensForUser, sendExpoPush } from "@/lib/expo-push";
-import { sendWebPush } from "@/lib/web-push";
-import type { PushSubscriptionJSON } from "@/lib/web-push";
-import { shouldNotify } from "@/lib/notif-prefs";
-import { createNotification } from "@/lib/notifications";
-import { indexingQueue } from "@/lib/queues/indexing.queue";
+import { deliverChatMessage } from "@/lib/chat/deliver";
+import { enforceChatLimit } from "@/lib/chat/limits";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -138,6 +133,11 @@ export async function POST(request: Request, { params }: Params) {
   const user = getSessionUserFromCookieStore(await cookies());
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  // Each send writes a row, indexes it, and fans out push + in-app
+  // notifications per recipient — the most expensive request in Connect.
+  const limited = await enforceChatLimit("message.send", user.id);
+  if (limited) return limited;
+
   const { id: channelId } = await params;
 
   const [membership, channel] = await Promise.all([
@@ -168,168 +168,21 @@ export async function POST(request: Request, { params }: Params) {
     return NextResponse.json({ error: "Message too long (max 10,000 characters)" }, { status: 400 });
   }
 
-  const message = await prisma.chatMessage.create({
-    data: {
+  // Create + broadcast + index + notify. Shared with the scheduled-send worker
+  // so a message delivered an hour late is indistinguishable from one sent now.
+  const message = await deliverChatMessage(
+    { id: user.id, fullName: user.fullName },
+    {
       channelId,
-      userId: user.id,
-      content: content?.trim() ?? "",
-      parentId: parentId ?? null,
-      quotedMessageId: quotedMessageId ?? null,
-      isUrgent: isUrgent === true,
-      ...(attachmentUrl ? { attachmentUrl, attachmentMime: attachmentMime ?? null, attachmentName: attachmentName ?? null } : {}),
+      content: content ?? "",
+      parentId,
+      quotedMessageId,
+      isUrgent,
+      attachmentUrl,
+      attachmentMime,
+      attachmentName,
     },
-    include: {
-      user: { select: { id: true, fullName: true, avatarUrl: true, role: true } },
-      reactions: true,
-      replies: { select: { id: true } },
-      quotedMessage: {
-        select: {
-          id: true,
-          content: true,
-          deletedAt: true,
-          user: { select: { id: true, fullName: true } },
-        },
-      },
-      readBy: {
-        select: { userId: true, readAt: true, user: { select: { fullName: true } } },
-      },
-    },
-  });
-
-  // Update channel timestamp for ordering — fire-and-forget, not on critical path.
-  prisma.chatChannel.update({
-    where: { id: channelId },
-    data: { updatedAt: new Date() },
-    select: { id: true },
-  }).catch(() => {});
-
-  // Broadcast to SSE subscribers via Redis pub/sub — non-fatal if Redis is unavailable
-  await redis.publish(`chat:channel:${channelId}`, JSON.stringify({ type: "message", data: message })).catch((err: Error) => {
-    console.error("[chat/messages] Redis publish failed:", err.message);
-  });
-
-  emitEvent("CHAT_MESSAGE_CREATED", {
-    channelId,
-    messageId: message.id,
-    actorId: user.id,
-    hasAttachment: false,
-    content: (content ?? "").trim().slice(0, 200),
-  });
-
-  // Queue for full-text search indexing — fire-and-forget
-  if (content?.trim()) {
-    indexingQueue.add("index-chat-message", {
-      type: "INDEX",
-      resource: "chat_message",
-      resourceId: message.id,
-      content: content.trim(),
-      metadata: {
-        channelId,
-        senderName: user.fullName,
-        createdAt: message.createdAt.toISOString(),
-      },
-    }).catch(() => {});
-  }
-
-  // Fire push to other channel members (non-fatal)
-  void (async () => {
-    const [members, channel] = await Promise.all([
-      prisma.chatMember.findMany({
-        where: { channelId, NOT: { userId: user.id } },
-        select: { userId: true },
-      }).catch(() => [] as { userId: string }[]),
-      prisma.chatChannel.findUnique({ where: { id: channelId }, select: { name: true, type: true } }).catch(() => null),
-    ]);
-
-    const memberIds = members.map((m) => m.userId);
-    const displayContent = (content?.trim() || attachmentName || "Attachment").slice(0, 100);
-    const pushTitle = `${isUrgent ? "🚨 " : ""}#${channel?.name ?? "Chat"}: ${user.fullName}`;
-
-    // Expo mobile push
-    const tokenArrays = await Promise.all(members.map((m) => getTokensForUser(m.userId)));
-    const allTokens = tokenArrays.flat();
-    if (allTokens.length) {
-      await sendExpoPush(allTokens, {
-        title: pushTitle,
-        body: displayContent,
-        data: { type: "chat", channelId },
-      });
-    }
-
-    // Web push — always for DMs; urgent-only for group channels
-    // Respects each recipient's notification preferences
-    const isDM = channel?.type === "DIRECT";
-    if ((isDM || isUrgent) && memberIds.length) {
-      // Fetch preferences for all recipients in one query
-      const memberUsers = await prisma.user.findMany({
-        where: { id: { in: memberIds } },
-        select: { id: true, preferences: true },
-      }).catch(() => [] as { id: string; preferences: unknown }[]);
-      const prefsByUserId = new Map(memberUsers.map((u) => [u.id, (u.preferences ?? {}) as Record<string, unknown>]));
-
-      // notifType: DM → chatMentions, group channel → chatMentions (both use same key)
-      const notifType = "chatMentions" as const;
-
-      // In-app notification — creates a Notification row AND publishes to the
-      // per-user Redis channel that feeds the app-wide NotificationCenter SSE
-      // stream. This is what makes a new DM / urgent message pop up on screen
-      // no matter which page the recipient is on. `metadata.urgent` drives the
-      // persistent urgent prompt; `metadata.channelId` lets the client suppress
-      // the popup when the recipient is already viewing that conversation.
-      const inAppIds = memberIds.filter((id) => shouldNotify(prefsByUserId.get(id) ?? {}, notifType, "inApp"));
-      await Promise.all(
-        inAppIds.map((recipientId) =>
-          createNotification({
-            userId: recipientId,
-            type: "NEW_MESSAGE",
-            title: isUrgent
-              ? isDM
-                ? `Urgent message from ${user.fullName}`
-                : `Urgent in #${channel?.name ?? "channel"} — ${user.fullName}`
-              : `New message from ${user.fullName}`,
-            body: displayContent,
-            // Route to the page that actually lists this conversation kind —
-            // Connect splits DMs, groups and channels into separate sections.
-            link: `${
-              channel?.type === "CHANNEL" ? "/connect/channels"
-              : channel?.type === "GROUP" ? "/connect/groups"
-              : "/connect/chat"
-            }?channel=${channelId}`,
-            metadata: { channelId, urgent: isUrgent === true, senderId: user.id },
-          }).catch(() => {})
-        )
-      );
-
-      const eligibleIds = memberIds.filter((id) => shouldNotify(prefsByUserId.get(id) ?? {}, notifType, "push"));
-
-      if (eligibleIds.length) {
-        const pushLogs = await prisma.auditLog.findMany({
-          where: { actorId: { in: eligibleIds }, action: "PUSH_SUBSCRIBE" },
-          select: { id: true, actorId: true, metadata: true },
-        }).catch(() => []);
-        const stale: string[] = [];
-        await Promise.all(
-          pushLogs.map(async (log) => {
-            const sub = log.metadata as unknown as PushSubscriptionJSON;
-            if (!sub?.endpoint) return;
-            try {
-              await sendWebPush(sub, {
-                title: isDM ? `💬 ${user.fullName}` : pushTitle,
-                body: displayContent,
-                url: "/connect/chat",
-                tag: `chat-${channelId}`,
-              });
-            } catch {
-              stale.push(log.id);
-            }
-          })
-        );
-        if (stale.length) {
-          await prisma.auditLog.deleteMany({ where: { id: { in: stale } } }).catch(() => {});
-        }
-      }
-    }
-  })();
+  );
 
   return NextResponse.json(message, { status: 201 });
 }

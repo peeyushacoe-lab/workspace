@@ -60,8 +60,12 @@ export async function DELETE(_request: Request, { params }: Params) {
     return NextResponse.json({ error: "Only the channel creator can delete this channel" }, { status: 403 });
   }
 
-  // Cascade delete: messages → reactions, members, then channel
+  // Cascade delete: messages → reactions, members, then channel.
+  // ChatScheduledMessage has no FK to the channel (mirroring ScheduledEmail),
+  // so it has to be cleaned up explicitly — otherwise the send worker keeps
+  // finding rows for a channel that no longer exists and marks each one failed.
   await prisma.chatMessage.deleteMany({ where: { channelId } });
+  await prisma.chatScheduledMessage.deleteMany({ where: { channelId } }).catch(() => {});
   await prisma.chatMember.deleteMany({ where: { channelId } });
   await prisma.chatChannel.delete({ where: { id: channelId } });
 

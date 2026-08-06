@@ -3,12 +3,16 @@ import { cookies } from "next/headers";
 import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redis } from "@/lib/redis";
+import { enforceChatLimit } from "@/lib/chat/limits";
 
 type Params = { params: Promise<{ id: string }> };
 
 export async function POST(_request: Request, { params }: Params) {
   const user = getSessionUserFromCookieStore(await cookies());
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const limited = await enforceChatLimit("message.pin", user.id);
+  if (limited) return limited;
 
   const { id } = await params;
   const msg = await prisma.chatMessage.findUnique({ where: { id } });

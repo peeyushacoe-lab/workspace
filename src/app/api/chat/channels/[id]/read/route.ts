@@ -2,12 +2,17 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { enforceChatLimit } from "@/lib/chat/limits";
 
 type Params = { params: Promise<{ id: string }> };
 
 export async function POST(_request: Request, { params }: Params) {
   const user = getSessionUserFromCookieStore(await cookies());
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  // Each call can write up to 500 read rows.
+  const limited = await enforceChatLimit("read.mark", user.id);
+  if (limited) return limited;
 
   const { id: channelId } = await params;
 
@@ -53,8 +58,19 @@ export async function GET(request: Request, { params }: Params) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id: channelId } = await params;
+
+  // This handler had no membership check while every sibling did: given a
+  // message id, anyone authenticated could read who had seen it in any channel
+  // in the workspace. Read receipts are behavioural data — who is online, who
+  // is reading whose messages — so this is a real leak, not a cosmetic one.
+  const membership = await prisma.chatMember.findUnique({
+    where: { channelId_userId: { channelId, userId: user.id } },
+    select: { id: true },
+  });
+  if (!membership) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
   const { searchParams } = new URL(request.url);
-  const ids = searchParams.get("messageIds")?.split(",").filter(Boolean) ?? [];
+  const ids = (searchParams.get("messageIds")?.split(",").filter(Boolean) ?? []).slice(0, 500);
   if (ids.length === 0) return NextResponse.json({ reads: {} });
 
   const reads = await prisma.chatMessageRead.findMany({

@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redis } from "@/lib/redis";
+import { enforceChatLimit } from "@/lib/chat/limits";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -10,11 +11,21 @@ export async function POST(request: Request, { params }: Params) {
   const user = getSessionUserFromCookieStore(await cookies());
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  // Toggling a reaction publishes to every SSE subscriber on the channel, so
+  // it's cheap to send and not cheap to receive.
+  const limited = await enforceChatLimit("message.react", user.id);
+  if (limited) return limited;
+
   const { id: messageId } = await params;
   const { emoji } = (await request.json()) as { emoji: string };
 
   if (!emoji?.trim()) {
     return NextResponse.json({ error: "Emoji is required" }, { status: 400 });
+  }
+  // An "emoji" is a handful of codepoints. Without a cap this is a free
+  // arbitrary-length string written to the DB and broadcast to the room.
+  if (emoji.length > 32) {
+    return NextResponse.json({ error: "That is not an emoji" }, { status: 400 });
   }
 
   const message = await prisma.chatMessage.findUnique({

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { enforceChatLimit } from "@/lib/chat/limits";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -15,16 +16,70 @@ export async function POST(request: Request, { params }: Params) {
   const user = getSessionUserFromCookieStore(await cookies());
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const limited = await enforceChatLimit("member.add", user.id);
+  if (limited) return limited;
+
   const { id: channelId } = await params;
 
-  const membership = await prisma.chatMember.findUnique({
-    where: { channelId_userId: { channelId, userId: user.id } },
-  });
-  if (!membership) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const [membership, channel] = await Promise.all([
+    prisma.chatMember.findUnique({
+      where: { channelId_userId: { channelId, userId: user.id } },
+    }),
+    prisma.chatChannel.findUnique({
+      where: { id: channelId },
+      select: { type: true, isPrivate: true, teamId: true },
+    }),
+  ]);
+  if (!membership || !channel) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  // A DM is a two-person conversation with an expectation of privacy. Adding a
+  // third party to it silently hands them the entire back history — the other
+  // participant never consented and gets no prompt. Promoting a DM to a group
+  // has to be an explicit action that creates a *new* channel, not a member
+  // append on the existing one.
+  if (channel.type === "DIRECT") {
+    return NextResponse.json(
+      { error: "Start a group conversation instead — people can't be added to a direct message" },
+      { status: 400 },
+    );
+  }
+
+  // In a private channel, any member could previously add anyone, which makes
+  // "private" mean nothing more than "unlisted". Gate it on channel admin.
+  const isWorkspaceAdmin = ["ADMIN", "CEO", "CISO"].includes(user.role);
+  if (channel.isPrivate && membership.role !== "ADMIN" && !isWorkspaceAdmin) {
+    return NextResponse.json(
+      { error: "Only a channel admin can add people to a private channel" },
+      { status: 403 },
+    );
+  }
 
   const body = (await request.json()) as { userIds: string[] };
   if (!Array.isArray(body.userIds) || body.userIds.length === 0) {
     return NextResponse.json({ error: "userIds is required" }, { status: 400 });
+  }
+  // Bound the batch — an unbounded array is a cheap way to write thousands of
+  // rows in one request.
+  if (body.userIds.length > 100) {
+    return NextResponse.json({ error: "Add at most 100 people at a time" }, { status: 400 });
+  }
+
+  // A team channel's roster follows TeamMember. Adding an outsider directly
+  // would put someone in a team's channel who isn't in the team — the exact
+  // cross-team boundary RFC-003 defines.
+  if (channel.teamId) {
+    const teamMembers = await prisma.teamMember.findMany({
+      where: { teamId: channel.teamId, userId: { in: body.userIds } },
+      select: { userId: true },
+    });
+    const inTeam = new Set(teamMembers.map((m) => m.userId));
+    const outsiders = body.userIds.filter((id) => !inTeam.has(id));
+    if (outsiders.length) {
+      return NextResponse.json(
+        { error: "Add them to the team first — team channels follow team membership" },
+        { status: 400 },
+      );
+    }
   }
 
   // Skip users already in the channel
@@ -42,12 +97,12 @@ export async function POST(request: Request, { params }: Params) {
     });
   }
 
-  const channel = await prisma.chatChannel.findUnique({
+  const updatedChannel = await prisma.chatChannel.findUnique({
     where: { id: channelId },
     include: channelInclude,
   });
 
-  return NextResponse.json({ ok: true, added: newIds.length, channel });
+  return NextResponse.json({ ok: true, added: newIds.length, channel: updatedChannel });
 }
 
 // PATCH — change a member's role (promote/demote admin)
