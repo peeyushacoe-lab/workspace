@@ -12,6 +12,7 @@ import type { SessionUser } from "@/lib/auth";
 import { SearchTrigger } from "@/components/GlobalSearch";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import { ConnectProfileMenu } from "@/components/connect/ConnectProfileMenu";
+import { ConnectWordmark } from "@/components/connect/ConnectBrand";
 import type { ConnectHomeCounts, ConnectHomeResponse } from "@/app/api/connect/home/route";
 
 /**
@@ -202,14 +203,14 @@ export function ConnectShell({
         >
           <Link
             href="/connect"
-            className={`flex h-14 flex-shrink-0 items-center gap-2.5 px-4 ${focusRing}`}
+            aria-label="Sage Connect home"
+            className={`flex h-14 flex-shrink-0 items-center px-4 ${focusRing}`}
           >
-            <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-accent">
-              <MessageSquare className="h-4 w-4 text-accent-foreground" />
-            </span>
-            <span className="truncate text-[13.5px] font-semibold tracking-tight text-foreground">
-              Sage Connect
-            </span>
+            {/* The real wordmark, not an icon-in-a-square placeholder. Two
+                theme-specific files per the Atrium rule: the navy artwork is
+                ~2.5:1 on a dark surface, so dark mode gets a lifted variant
+                rather than the same file at lower opacity. */}
+            <ConnectWordmark className="h-[22px] w-auto" />
           </Link>
 
           <div className="flex w-full flex-1 flex-col gap-3 overflow-y-auto px-2.5 py-2">
@@ -278,12 +279,7 @@ export function ConnectShell({
             />
             <aside className="relative flex w-64 flex-col border-r border-border bg-surface shadow-pop">
               <div className="flex h-14 flex-shrink-0 items-center gap-2.5 px-4">
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent">
-                  <MessageSquare className="h-4 w-4 text-accent-foreground" />
-                </span>
-                <span className="flex-1 truncate text-[13px] font-semibold tracking-tight">
-                  Sage Connect
-                </span>
+                <ConnectWordmark className="h-5 w-auto flex-1" />
                 <button
                   onClick={() => setMobileOpen(false)}
                   aria-label="Close navigation"

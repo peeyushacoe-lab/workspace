@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { connectItem, isLive, CURRENT_PHASE } from "@/lib/connect";
+import { ConnectMark } from "@/components/connect/ConnectBrand";
 
 /**
  * Stands in for a Connect section whose roadmap phase hasn't landed.
@@ -31,6 +32,10 @@ export function ConnectPlaceholder({
 
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center px-6 py-16 text-center">
+      {/* The mark at low opacity — an unbuilt section should still read as part
+          of the product rather than as a blank error page. */}
+      <ConnectMark className="mb-5 h-12 w-12 opacity-25" decorative />
+
       <span className="mb-4 rounded-full border border-border bg-surface-sunken px-2.5 py-1 text-[10px] font-semibold text-muted">
         {isLive(item) ? "In progress" : `Phase ${item.phase}`}
       </span>

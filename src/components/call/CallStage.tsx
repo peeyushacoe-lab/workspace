@@ -3,8 +3,7 @@
 import { useEffect, useRef } from "react";
 import { Phone, Video, PhoneOff } from "lucide-react";
 import type { CallMedia } from "@/lib/call-signaling";
-
-const JITSI_DOMAIN = process.env.NEXT_PUBLIC_JITSI_DOMAIN ?? "meet.jit.si";
+import { JITSI_DOMAIN } from "@/lib/jitsi";
 
 type JitsiApi = {
   dispose: () => void;

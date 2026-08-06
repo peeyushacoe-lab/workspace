@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { JITSI_DOMAIN, jitsiRoomUrl } from "@/lib/jitsi";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -40,9 +41,9 @@ export async function POST(_request: Request, { params }: Params) {
     await prisma.meeting.update({ where: { id }, data: { status: "LIVE", startedAt: new Date() } });
   }
 
-  // Jitsi Meet — use configurable domain (default: public meet.jit.si)
-  const jitsiDomain = process.env.JITSI_DOMAIN ?? "meet.jit.si";
-  const jitsiUrl = `https://${jitsiDomain}/${encodeURIComponent(meeting.roomName)}`;
+  // Resolved via @/lib/jitsi so this agrees with the embed and the CSP.
+  const jitsiDomain = JITSI_DOMAIN;
+  const jitsiUrl = jitsiRoomUrl(meeting.roomName);
 
   return NextResponse.json({
     roomName: meeting.roomName,

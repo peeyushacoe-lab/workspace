@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { canAccessPath, canAccessPathByPerms, getPortalHome, type SessionUser } from "@/lib/auth";
 import { matchSubdomain, subdomainToPath, isPassthrough, shouldRedirectToHub, hubUrl } from "@/lib/subdomains";
+import { jitsiCspHosts } from "@/lib/jitsi";
 
 const protectedRoutes = [
   "/dashboard",
@@ -95,7 +96,11 @@ async function verifyHmacCookie(signed: string, secret: string): Promise<string 
 const isProd = process.env.NODE_ENV === "production";
 
 function buildCsp(nonce: string): string {
-  const jitsiHost = process.env.JITSI_DOMAIN ? `https://${process.env.JITSI_DOMAIN}` : "";
+  // Resolved from the shared helper so a self-hosted domain configured for the
+  // embed is automatically allow-listed here too — previously the CSP read a
+  // different env var than the iframe, so configuring one without the other
+  // produced a silently blank meeting.
+  const jitsiHost = jitsiCspHosts().join(" ");
   return [
     "default-src 'self'",
     // 'strict-dynamic' lets nonce'd scripts load further scripts (e.g. Sentry's
@@ -103,7 +108,7 @@ function buildCsp(nonce: string): string {
     // rare browser that doesn't support strict-dynamic. unsafe-eval only in
     // dev, for Turbopack/webpack HMR.
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' ${isProd ? "" : "'unsafe-eval' "}https://browser.sentry-cdn.com`,
-    `script-src-elem 'self' 'nonce-${nonce}' 'strict-dynamic' https://browser.sentry-cdn.com https://meet.jit.si ${jitsiHost}`,
+    `script-src-elem 'self' 'nonce-${nonce}' 'strict-dynamic' https://browser.sentry-cdn.com ${jitsiHost}`,
     // style-src keeps 'unsafe-inline' — inline styles are used widely and are
     // lower-severity (no code execution) than inline scripts.
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
@@ -112,7 +117,7 @@ function buildCsp(nonce: string): string {
     "connect-src 'self' https://*.sentry.io wss: ws: https://fonts.googleapis.com",
     "media-src 'self' blob:",
     "object-src 'none'",
-    `frame-src 'self' https://meet.jit.si ${jitsiHost}`,
+    `frame-src 'self' ${jitsiHost}`,
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",

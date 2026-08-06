@@ -49,6 +49,16 @@ import {
   BellOff,
   Info,
   MoreHorizontal,
+  Copy,
+  Languages,
+  ExternalLink,
+  Type,
+  Bold,
+  Italic,
+  Strikethrough,
+  Code as CodeIcon,
+  SquareCode,
+  Quote,
   type LucideIcon,
 } from "lucide-react";
 import { formatDistanceToNow, isToday, isYesterday, format } from "date-fns";
@@ -293,6 +303,31 @@ function dateSeparatorLabel(dateStr: string) {
   return format(d, "MMMM d, yyyy");
 }
 
+/**
+ * Human-readable file kind. "Word document" beats
+ * "VND.OPENXMLFORMATS-OFFICEDOCUMENT.WORDPROCESSINGML.DOCUMENT", which is what
+ * splitting the MIME type produced — a string long enough to wrap the card.
+ */
+function describeFileKind(name: string, mimeType: string): string {
+  const ext = name.split(".").pop()?.toLowerCase() ?? "";
+  const byExt: Record<string, string> = {
+    doc: "Word document", docx: "Word document",
+    xls: "Spreadsheet", xlsx: "Spreadsheet", csv: "Spreadsheet",
+    ppt: "Presentation", pptx: "Presentation",
+    pdf: "PDF", txt: "Text file", md: "Markdown",
+    zip: "Archive", rar: "Archive", "7z": "Archive", tar: "Archive", gz: "Archive",
+    mp4: "Video", mov: "Video", webm: "Video",
+    mp3: "Audio", wav: "Audio", m4a: "Audio",
+    json: "JSON", xml: "XML", sql: "SQL",
+  };
+  if (byExt[ext]) return byExt[ext];
+  if (mimeType.startsWith("image/")) return "Image";
+  if (mimeType.startsWith("video/")) return "Video";
+  if (mimeType.startsWith("audio/")) return "Audio";
+  if (mimeType.startsWith("text/")) return "Text file";
+  return ext ? `${ext.toUpperCase()} file` : "File";
+}
+
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -316,6 +351,51 @@ function Avatar({ name, avatarUrl, size = "sm" }: { name: string; avatarUrl?: st
       style={{ background: avatarGradient(name) }}
     >
       {name.charAt(0).toUpperCase()}
+    </div>
+  );
+}
+
+// ─── Code block ───────────────────────────────────────────────────────────────
+
+/**
+ * Fenced code block with a copy button.
+ *
+ * Worth building properly rather than rendering as plain text: this is a
+ * cybersecurity workspace, so a large share of the messages people paste are
+ * commands, log lines and queries. Those need a monospace face, preserved
+ * whitespace, horizontal scrolling instead of wrapping (a wrapped nmap command
+ * is a wrong nmap command), and one-click copy.
+ */
+function CodeBlock({ code, lang }: { code: string; lang?: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
+    } catch {
+      toast.error("Couldn't copy");
+    }
+  };
+
+  return (
+    <div className="my-1.5 max-w-full overflow-hidden rounded-lg border border-border bg-surface-sunken">
+      <div className="flex items-center justify-between border-b border-border-soft px-2.5 py-1">
+        <span className="font-mono text-[10.5px] font-medium uppercase tracking-wide text-subtle">
+          {lang || "code"}
+        </span>
+        <button
+          onClick={() => void copy()}
+          className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10.5px] font-medium text-subtle transition-colors duration-fast ease-standard hover:bg-hover hover:text-foreground"
+        >
+          {copied ? <Check className="h-3 w-3 text-ok" /> : <Copy className="h-3 w-3" />}
+          {copied ? "Copied" : "Copy"}
+        </button>
+      </div>
+      <pre className="overflow-x-auto px-3 py-2.5">
+        <code className="font-mono text-[12.5px] leading-[1.55] text-foreground">{code}</code>
+      </pre>
     </div>
   );
 }
@@ -345,6 +425,104 @@ function renderWithMentions(content: string, currentUserId: string, memberNames:
     }
     return <span key={i}>{part}</span>;
   });
+}
+
+// ─── Rich text renderer ───────────────────────────────────────────────────────
+
+/**
+ * Inline formatting: **bold**, *italic*, ~~strike~~, `code`, and links.
+ *
+ * Deliberately a small hand-rolled tokeniser rather than a markdown library.
+ * Chat is not a document: supporting headings, tables and images would let a
+ * pasted message restructure the conversation, and pulling in a parser plus a
+ * sanitiser for five inline marks is a poor trade. Mentions still run last, so
+ * @name keeps working inside formatted text.
+ */
+const INLINE_PATTERN = /(\*\*[^*\n]+\*\*|(?<!\*)\*[^*\n]+\*(?!\*)|~~[^~\n]+~~|`[^`\n]+`|https?:\/\/[^\s<]+)/g;
+
+function renderInline(
+  text: string,
+  keyPrefix: string,
+  currentUserId: string,
+  memberNames: string[],
+): React.ReactNode[] {
+  const out: React.ReactNode[] = [];
+  const parts = text.split(INLINE_PATTERN).filter((p) => p !== undefined && p !== "");
+
+  parts.forEach((part, i) => {
+    const key = `${keyPrefix}-${i}`;
+    if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
+      out.push(<strong key={key} className="font-semibold">{part.slice(2, -2)}</strong>);
+    } else if (part.startsWith("~~") && part.endsWith("~~") && part.length > 4) {
+      out.push(<s key={key} className="opacity-80">{part.slice(2, -2)}</s>);
+    } else if (part.startsWith("`") && part.endsWith("`") && part.length > 2) {
+      out.push(
+        <code key={key} className="rounded bg-surface-sunken px-1 py-0.5 font-mono text-[12.5px] text-foreground">
+          {part.slice(1, -1)}
+        </code>,
+      );
+    } else if (/^https?:\/\//.test(part)) {
+      out.push(
+        <a
+          key={key}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-accent underline underline-offset-2 hover:opacity-80"
+        >
+          {part}
+        </a>,
+      );
+    } else if (part.startsWith("*") && part.endsWith("*") && part.length > 2) {
+      out.push(<em key={key}>{part.slice(1, -1)}</em>);
+    } else {
+      out.push(<span key={key}>{renderWithMentions(part, currentUserId, memberNames)}</span>);
+    }
+  });
+
+  return out;
+}
+
+/**
+ * Full message body: splits fenced ```code``` blocks out first, then renders
+ * inline formatting in the prose between them.
+ */
+function renderMessageBody(
+  content: string,
+  currentUserId: string,
+  memberNames: string[],
+): React.ReactNode {
+  if (!content.includes("```")) {
+    return (
+      <p className="text-[14px] leading-[1.55] text-foreground whitespace-pre-wrap break-words">
+        {renderInline(content, "t", currentUserId, memberNames)}
+      </p>
+    );
+  }
+
+  // Odd indices are the fenced blocks; even indices are the prose around them.
+  const segments = content.split(/```/);
+  return (
+    <>
+      {segments.map((seg, i) => {
+        if (i % 2 === 1) {
+          const nl = seg.indexOf("\n");
+          const firstLine = (nl === -1 ? seg : seg.slice(0, nl)).trim();
+          // A short first word is a language tag ("bash"); anything else is code.
+          const isLang = nl !== -1 && /^[a-z0-9+#-]{1,15}$/i.test(firstLine);
+          const lang = isLang ? firstLine : undefined;
+          const code = (isLang ? seg.slice(nl + 1) : seg).replace(/\n$/, "");
+          return <CodeBlock key={`c-${i}`} code={code} lang={lang} />;
+        }
+        if (!seg) return null;
+        return (
+          <p key={`p-${i}`} className="text-[14px] leading-[1.55] text-foreground whitespace-pre-wrap break-words">
+            {renderInline(seg, `t${i}`, currentUserId, memberNames)}
+          </p>
+        );
+      })}
+    </>
+  );
 }
 
 // ─── Reaction Tooltip ─────────────────────────────────────────────────────────
@@ -428,41 +606,65 @@ function FileAttachmentCard({ content }: { content: string }) {
       );
     }
 
-    // Image files → inline preview
+    // Image files → inline preview, clickable to open full size
     if (data.mimeType.startsWith("image/") && data.url) {
       const previewUrl = data.fileId
         ? `/api/drive/files/${data.fileId}/download?preview=1`
         : data.url;
       return (
-        <div className="mt-1.5">
-          <img
-            src={previewUrl}
-            alt={data.name}
-            className="rounded-xl max-w-xs max-h-48 object-cover border border-border"
-          />
-          <p className="text-[10px] text-muted mt-1">{data.name} · {formatFileSize(data.size)}</p>
+        <div className="mt-1.5 max-w-xs">
+          <a href={previewUrl} target="_blank" rel="noopener noreferrer" className="block group/img">
+            <img
+              src={previewUrl}
+              alt={data.name}
+              className="rounded-xl max-h-64 w-auto object-cover border border-border transition-opacity group-hover/img:opacity-95"
+            />
+          </a>
+          <p className="mt-1 truncate text-[11px] text-subtle">
+            {data.name} · {formatFileSize(data.size)}
+          </p>
         </div>
       );
     }
 
-    // All other files → download card
+    // All other files → a real card with named actions.
+    // A bare download glyph made people guess; "Open" and "Download" are the
+    // two things anyone actually wants, and naming them is what makes an
+    // attachment feel native rather than like a link dumped in a bubble.
+    const kind = describeFileKind(data.name, data.mimeType);
     return (
-      <div className="mt-1.5 inline-flex items-center gap-3 bg-surface border border-border rounded-xl px-3 py-2.5 max-w-xs">
-        <FileText className="w-7 h-7 text-accent flex-shrink-0" />
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-foreground truncate">{data.name}</p>
-          <p className="text-[10px] text-muted">{formatFileSize(data.size)} · {data.mimeType.split("/")[1]?.toUpperCase()}</p>
+      <div className="mt-1.5 w-full max-w-sm rounded-xl border border-border bg-surface overflow-hidden">
+        <div className="flex items-center gap-3 px-3 py-2.5">
+          <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-accent-soft">
+            <FileText className="h-[18px] w-[18px] text-accent" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[13.5px] font-semibold text-foreground">{data.name}</p>
+            <p className="text-[11px] text-subtle">
+              {formatFileSize(data.size)} · {kind}
+            </p>
+          </div>
         </div>
         {data.url && (
-          <a
-            href={data.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-accent hover:text-accent flex-shrink-0"
-            title="Download"
-          >
-            <Download className="w-4 h-4" />
-          </a>
+          <div className="flex items-center gap-1 border-t border-border-soft px-1.5 py-1">
+            <a
+              href={data.fileId ? `/api/drive/files/${data.fileId}/download?preview=1` : data.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[12.5px] font-medium text-muted transition-colors hover:bg-hover hover:text-foreground"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+              Open
+            </a>
+            <a
+              href={data.url}
+              download={data.name}
+              className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[12.5px] font-medium text-muted transition-colors hover:bg-hover hover:text-foreground"
+            >
+              <Download className="h-3.5 w-3.5" />
+              Download
+            </a>
+          </div>
         )}
       </div>
     );
@@ -527,6 +729,11 @@ const MessageItem = memo(function MessageItem({
 }) {
   const [showActions, setShowActions] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  // Context menu. One menu, two openers: the toolbar's "⋯" and right-click on
+  // the message body. Anchored in viewport coordinates so it works from either.
+  const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
+  const [translation, setTranslation] = useState<string | null>(null);
+  const [translating, setTranslating] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editContent, setEditContent] = useState(msg.content);
   const [creatingTask, setCreatingTask] = useState(false);
@@ -559,6 +766,51 @@ const MessageItem = memo(function MessageItem({
     }
   };
   const isBotResponse = msg.content.startsWith("[BOT_RESPONSE] ");
+
+  // Close the context menu on outside click, Escape, or scroll — a fixed-position
+  // menu would otherwise float detached from its message as the list moves.
+  useEffect(() => {
+    if (!menuPos) return;
+    const close = () => setMenuPos(null);
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && close();
+    document.addEventListener("mousedown", close);
+    document.addEventListener("keydown", onKey);
+    window.addEventListener("scroll", close, true);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      document.removeEventListener("keydown", onKey);
+      window.removeEventListener("scroll", close, true);
+    };
+  }, [menuPos]);
+
+  const copyText = async () => {
+    try {
+      await navigator.clipboard.writeText(msg.content);
+      toast.success("Copied to clipboard");
+    } catch {
+      toast.error("Couldn't copy");
+    }
+  };
+
+  const translateMessage = async () => {
+    if (translating) return;
+    setTranslating(true);
+    try {
+      const res = await fetch("/api/ai/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: msg.content, targetLanguage: "English" }),
+      });
+      if (!res.ok) throw new Error();
+      const data = (await res.json()) as { translated?: string };
+      if (data.translated?.trim()) setTranslation(data.translated.trim());
+      else toast.error("Nothing to translate");
+    } catch {
+      toast.error("Translation failed");
+    } finally {
+      setTranslating(false);
+    }
+  };
 
   // Close picker when clicking outside
   useEffect(() => {
@@ -644,7 +896,15 @@ const MessageItem = memo(function MessageItem({
       }`}
       onMouseEnter={() => !isDeleted && setShowActions(true)}
       onMouseLeave={() => {
-        if (!showEmojiPicker) setShowActions(false);
+        if (!showEmojiPicker && !menuPos) setShowActions(false);
+      }}
+      onContextMenu={(e) => {
+        // Right-click is what people reach for first in a desktop messaging
+        // app; without it the only route to these actions was a hover toolbar
+        // that doesn't exist on touch.
+        if (isDeleted) return;
+        e.preventDefault();
+        setMenuPos({ x: e.clientX, y: e.clientY });
       }}
     >
       <div className="w-[38px] flex-shrink-0 flex justify-center">
@@ -731,11 +991,7 @@ const MessageItem = memo(function MessageItem({
           <BotResponseCard content={msg.content} />
         ) : (
           <>
-            {msg.content && (
-              <p className="text-[14px] leading-[1.55] text-foreground whitespace-pre-wrap break-words">
-                {renderWithMentions(msg.content, currentUserId, memberNames)}
-              </p>
-            )}
+            {msg.content && renderMessageBody(msg.content, currentUserId, memberNames)}
             {msg.attachmentUrl && msg.attachmentMime?.startsWith("image/") && (
               <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer" className="inline-block mt-1.5">
                 <img
@@ -746,6 +1002,25 @@ const MessageItem = memo(function MessageItem({
               </a>
             )}
           </>
+        )}
+
+        {/* Inline translation — shown beneath the original rather than
+            replacing it, so the source text stays readable and verifiable. */}
+        {translation && (
+          <div className="mt-1.5 flex max-w-2xl items-start gap-2 rounded-lg border-l-2 border-accent bg-surface-sunken px-2.5 py-1.5">
+            <Languages className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-accent" />
+            <div className="min-w-0 flex-1">
+              <p className="text-[13.5px] leading-[1.5] text-foreground whitespace-pre-wrap break-words">
+                {translation}
+              </p>
+              <button
+                onClick={() => setTranslation(null)}
+                className="mt-1 text-[10.5px] font-medium text-subtle transition-colors hover:text-muted"
+              >
+                Hide translation
+              </button>
+            </div>
+          </div>
         )}
 
         {/* Reactions — only on non-deleted messages */}
@@ -867,41 +1142,67 @@ const MessageItem = memo(function MessageItem({
               <CornerDownRight className="w-4 h-4" />
             </button>
           )}
-          {!isDeleted && !isFileAttachment && (
-            <button
-              onClick={() => void createTaskFromMessage()}
+          {/* Everything else lives in the context menu — also reachable by
+              right-clicking the message, which is what people try first. */}
+          <button
+            onClick={(e) => {
+              const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+              setMenuPos({ x: r.right, y: r.bottom + 4 });
+            }}
+            className="p-1.5 hover:bg-surface-sunken hover:text-foreground rounded-md text-xs transition-colors text-muted"
+            title="More actions"
+            aria-label="More actions"
+          >
+            <MoreHorizontal className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {menuPos && (
+        <div
+          role="menu"
+          onMouseDown={(e) => e.stopPropagation()}
+          style={{
+            position: "fixed",
+            // Keep the menu on-screen when the message sits near an edge.
+            left: Math.min(menuPos.x, (typeof window !== "undefined" ? window.innerWidth : 0) - 208),
+            top: Math.min(menuPos.y, (typeof window !== "undefined" ? window.innerHeight : 0) - 300),
+          }}
+          className="z-50 w-52 rounded-xl border border-border bg-surface py-1.5 shadow-pop"
+        >
+          {onQuoteReply && (
+            <MessageMenuItem icon={ReplyIcon} label="Reply" onClick={() => { setMenuPos(null); onQuoteReply(msg); }} />
+          )}
+          {onReply && (
+            <MessageMenuItem icon={CornerDownRight} label="Reply in thread" onClick={() => { setMenuPos(null); onReply(msg); }} />
+          )}
+          <MessageMenuItem icon={Copy} label="Copy text" onClick={() => { setMenuPos(null); void copyText(); }} />
+          <MessageMenuItem
+            icon={Languages}
+            label={translating ? "Translating…" : "Translate"}
+            disabled={translating}
+            onClick={() => { setMenuPos(null); void translateMessage(); }}
+          />
+          {!isFileAttachment && (
+            <MessageMenuItem
+              icon={ListPlus}
+              label={taskCreated ? "Task created" : "Create task"}
               disabled={creatingTask || taskCreated}
-              className={`p-1.5 hover:bg-surface-sunken rounded-md text-xs transition-colors disabled:opacity-60 ${taskCreated ? "text-ok" : "text-muted hover:text-foreground"}`}
-              title={taskCreated ? "Task created" : "Create task from this message"}
-            >
-              {creatingTask ? <Loader2 className="w-4 h-4 animate-spin" /> : <ListPlus className="w-4 h-4" />}
-            </button>
+              onClick={() => { setMenuPos(null); void createTaskFromMessage(); }}
+            />
           )}
           {onPin && (
-            <button
-              onClick={() => onPin(msg.id, !msg.isPinned)}
-              className={`p-1.5 rounded-md text-xs transition-colors ${msg.isPinned ? "text-accent" : "text-muted hover:bg-surface-sunken hover:text-foreground"}`}
-              title={msg.isPinned ? "Unpin message" : "Pin message"}
-            >
-              {msg.isPinned ? <PinOff className="w-4 h-4" /> : <Pin className="w-4 h-4" />}
-            </button>
+            <MessageMenuItem
+              icon={msg.isPinned ? PinOff : Pin}
+              label={msg.isPinned ? "Unpin" : "Pin to conversation"}
+              onClick={() => { setMenuPos(null); onPin(msg.id, !msg.isPinned); }}
+            />
           )}
           {isOwn && (
             <>
-              <button
-                onClick={() => { setEditing(true); setShowActions(false); }}
-                className="p-1.5 hover:bg-surface-sunken hover:text-foreground rounded-md text-xs transition-colors text-muted"
-                title="Edit"
-              >
-                <Edit3 className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => onDelete(msg.id)}
-                className="p-1.5 hover:bg-crit/10 rounded-md text-xs transition-colors text-muted hover:text-crit"
-                title="Delete"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
+              <div className="my-1 h-px bg-border-soft" />
+              <MessageMenuItem icon={Edit3} label="Edit" onClick={() => { setMenuPos(null); setEditing(true); setShowActions(false); }} />
+              <MessageMenuItem icon={Trash2} label="Delete" destructive onClick={() => { setMenuPos(null); onDelete(msg.id); }} />
             </>
           )}
         </div>
@@ -909,6 +1210,35 @@ const MessageItem = memo(function MessageItem({
     </div>
   );
 });
+
+/** One row of the message context menu. */
+function MessageMenuItem({
+  icon: Icon,
+  label,
+  onClick,
+  disabled = false,
+  destructive = false,
+}: {
+  icon: LucideIcon;
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  destructive?: boolean;
+}) {
+  return (
+    <button
+      role="menuitem"
+      onClick={onClick}
+      disabled={disabled}
+      className={`flex w-full items-center gap-3 px-3.5 py-1.5 text-[13px] font-medium transition-colors disabled:opacity-40 ${
+        destructive ? "text-muted hover:bg-crit-soft hover:text-crit" : "text-muted hover:bg-hover hover:text-foreground"
+      }`}
+    >
+      <Icon className="h-4 w-4 flex-shrink-0" />
+      {label}
+    </button>
+  );
+}
 
 // ─── Date Separator ───────────────────────────────────────────────────────────
 
@@ -1213,11 +1543,13 @@ function ChannelInfoPanel({
                 onClick={() => onJumpTo(f.messageId)}
                 className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-surface-sunken transition-colors text-left"
               >
-                <FileText className="w-6 h-6 text-accent flex-shrink-0" />
+                <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-accent-soft">
+                  <FileText className="h-4 w-4 text-accent" />
+                </span>
                 <div className="min-w-0 flex-1">
                   <p className="text-[13px] font-medium text-foreground truncate">{f.name}</p>
                   <p className="text-[10.5px] text-subtle truncate">
-                    {formatFileSize(f.size)} · {f.authorName}
+                    {describeFileKind(f.name, f.mimeType)} · {formatFileSize(f.size)} · {f.authorName}
                   </p>
                 </div>
               </button>
@@ -2437,6 +2769,30 @@ export function ChatView({
   // quick jump for people who just want the pins.
   const [showChannelInfo, setShowChannelInfo] = useState(false);
   const [infoTab, setInfoTab] = useState<"members" | "shared" | "pinned">("members");
+
+  // Composer formatting bar — hidden by default. The advice was explicit:
+  // support the marks, don't show ten buttons permanently.
+  const [showFormatting, setShowFormatting] = useState(false);
+
+  /**
+   * Wrap the current selection in a marker, or insert the pair and place the
+   * caret between them when nothing is selected.
+   */
+  const applyFormat = (before: string, after: string = before) => {
+    const el = composerRef.current;
+    if (!el) return;
+    const start = el.selectionStart ?? 0;
+    const end = el.selectionEnd ?? 0;
+    const selected = composerText.slice(start, end);
+    const next =
+      composerText.slice(0, start) + before + selected + after + composerText.slice(end);
+    setComposerText(next);
+    requestAnimationFrame(() => {
+      el.focus();
+      const caret = start + before.length + selected.length;
+      el.setSelectionRange(selected ? caret : start + before.length, caret);
+    });
+  };
 
   // Conversation header overflow menu.
   const [showHeaderMenu, setShowHeaderMenu] = useState(false);
@@ -4269,6 +4625,47 @@ export function ChatView({
                 </div>
               )}
 
+              {/* Formatting bar — sits above the composer, only when asked for. */}
+              {showFormatting && (
+                <div className="mb-1.5 flex items-center gap-0.5 rounded-lg border border-border bg-surface-sunken px-1.5 py-1">
+                  {([
+                    { icon: Bold, label: "Bold", before: "**" },
+                    { icon: Italic, label: "Italic", before: "*" },
+                    { icon: Strikethrough, label: "Strikethrough", before: "~~" },
+                    { icon: CodeIcon, label: "Inline code", before: "`" },
+                  ] as const).map((f) => (
+                    <button
+                      key={f.label}
+                      onClick={() => applyFormat(f.before)}
+                      title={f.label}
+                      aria-label={f.label}
+                      className="p-1.5 rounded-md text-subtle transition-colors duration-fast ease-standard hover:bg-hover hover:text-foreground"
+                    >
+                      <f.icon className="w-4 h-4" />
+                    </button>
+                  ))}
+                  <span aria-hidden className="mx-1 h-4 w-px bg-border" />
+                  <button
+                    onClick={() => applyFormat("\n```\n", "\n```\n")}
+                    title="Code block"
+                    aria-label="Code block"
+                    className="flex items-center gap-1.5 rounded-md px-2 py-1 text-[12px] font-medium text-subtle transition-colors duration-fast ease-standard hover:bg-hover hover:text-foreground"
+                  >
+                    <SquareCode className="w-4 h-4" />
+                    Code block
+                  </button>
+                  <button
+                    onClick={() => applyFormat("> ", "")}
+                    title="Quote"
+                    aria-label="Quote"
+                    className="flex items-center gap-1.5 rounded-md px-2 py-1 text-[12px] font-medium text-subtle transition-colors duration-fast ease-standard hover:bg-hover hover:text-foreground"
+                  >
+                    <Quote className="w-4 h-4" />
+                    Quote
+                  </button>
+                </div>
+              )}
+
               <div className="relative">
                 {/* @mention autocomplete */}
                 {mentionQuery !== null && mentionResults.length > 0 && (
@@ -4311,6 +4708,17 @@ export function ChatView({
                 >
                   {/* Hidden file input for attachments */}
                   <input ref={chatFileInputRef} type="file" className="hidden" onChange={(e) => void handleChatFileSelect(e)} />
+                  {/* Formatting toggle */}
+                  <button
+                    onClick={() => setShowFormatting((p) => !p)}
+                    title={showFormatting ? "Hide formatting" : "Formatting"}
+                    aria-label="Formatting"
+                    className={`nx-press p-1 mb-1 rounded-lg transition-colors duration-fast ease-standard flex-shrink-0 ${
+                      showFormatting ? "bg-accent-soft text-accent" : "text-subtle hover:text-foreground hover:bg-hover"
+                    }`}
+                  >
+                    <Type className="w-[18px] h-[18px]" />
+                  </button>
                   {/* File attach button */}
                   <button
                     onClick={() => chatFileInputRef.current?.click()}

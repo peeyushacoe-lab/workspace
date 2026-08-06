@@ -4,6 +4,31 @@ import { getCurrentUser } from "@/lib/session";
 import { getUserPermEpoch } from "@/lib/rbac/session-perms";
 import { ConnectShell } from "@/components/connect/ConnectShell";
 import { hubUrl } from "@/lib/subdomains";
+import type { Metadata } from "next";
+
+/**
+ * Connect's own identity in the browser chrome.
+ *
+ * Declared here rather than by dropping a favicon.ico into the route group,
+ * because Connect and Nexus are one deployment: replacing the root icon would
+ * relabel Nexus too. Scoping the metadata to this layout gives Connect its own
+ * tab icon and title while /inbox keeps the Nexus mark.
+ */
+export const metadata: Metadata = {
+  title: { default: "Sage Connect", template: "%s · Sage Connect" },
+  description: "Chat, channels and meetings for the Cybersage workspace.",
+  icons: {
+    icon: [
+      { url: "/connect/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/connect/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/connect/favicon.ico" },
+    ],
+    apple: [{ url: "/connect/apple-touch-icon.png", sizes: "180x180" }],
+  },
+  // Scoped to /connect, so installing from connect.cybersage.uk gives a
+  // Connect app icon rather than Nexus's.
+  manifest: "/connect/manifest.json",
+};
 
 /**
  * Sage Connect route group.

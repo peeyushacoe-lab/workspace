@@ -4,10 +4,8 @@ import { useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Phone } from "lucide-react";
 
-// Set NEXT_PUBLIC_JITSI_DOMAIN in your env to point at a self-hosted Jitsi instance
-// (e.g. "meet.yourdomain.com"). Without it the public meet.jit.si is used, which
-// cannot fully suppress third-party branding from the client side.
-const JITSI_DOMAIN = process.env.NEXT_PUBLIC_JITSI_DOMAIN ?? "meet.jit.si";
+// Host resolution lives in @/lib/jitsi — see there for why NEXT_PUBLIC_ matters.
+import { JITSI_DOMAIN } from "@/lib/jitsi";
 
 export default function MeetRoomPage() {
   const { roomId } = useParams<{ roomId: string }>();
