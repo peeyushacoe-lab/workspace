@@ -24,6 +24,10 @@ import {
 import { formatDistanceToNow, format, parseISO } from "date-fns";
 import { toast } from "sonner";
 import { avatarGradient } from "@/lib/avatar";
+import { loadJitsiExternalApi, type JitsiExternalApi } from "@/lib/jitsi";
+import { IconButton } from "@/components/ui/icon-button";
+import { Panel } from "@/components/ui/panel";
+import { Mic, MicOff, VideoOff, MonitorUp, Users as UsersIcon } from "lucide-react";
 
 type MeetingStatus = "SCHEDULED" | "LIVE" | "ENDED" | "CANCELLED";
 
@@ -218,6 +222,22 @@ function NewMeetingModal({
   );
 }
 
+type MeetingParticipant = { id: string; displayName: string };
+
+/**
+ * The live meeting room — Connect's own chrome around the Jitsi surface.
+ *
+ * Previously a raw `<iframe src="{url}#config.foo=bar&...">` — hash-param
+ * config, no script, no JitsiMeetExternalAPI instance. That embeds Jitsi's own
+ * default toolbar with no way to react to state (mute, camera, who's in the
+ * call) or drive it programmatically; the only integration point was
+ * `postMessage`-free, one-way. Rebuilt on the External API (already used by
+ * CallStage.tsx for 1:1 calls, via the shared `loadJitsiExternalApi()`
+ * loader) specifically so this header/control-bar/participants-panel chrome
+ * can exist at all — Jitsi's own toolbar is turned off
+ * (`TOOLBAR_BUTTONS: []`) and every control below is this app's own,
+ * talking to the call over `executeCommand`/`addListener`.
+ */
 function InMeetingRoom({
   state,
   onLeave,
@@ -232,6 +252,14 @@ function InMeetingRoom({
   const { meeting, joinInfo, elapsed } = state;
   const isHost = meeting.organizer.id === currentUserId;
   const [copied, setCopied] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [videoOff, setVideoOff] = useState(false);
+  const [sharingScreen, setSharingScreen] = useState(false);
+  const [showParticipants, setShowParticipants] = useState(false);
+  const [participants, setParticipants] = useState<MeetingParticipant[]>([]);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const apiRef = useRef<JitsiExternalApi | null>(null);
 
   const formatElapsed = (s: number) => {
     const m = Math.floor(s / 60);
@@ -246,37 +274,86 @@ function InMeetingRoom({
     });
   };
 
-  // Build Jitsi embed URL. All branding/timer config is passed via hash params.
-  // For full white-label (no watermark, no timer), set NEXT_PUBLIC_JITSI_DOMAIN to
-  // your self-hosted Jitsi instance. The public meet.jit.si server overrides some
-  // interface configs server-side, so self-hosting is the only complete solution.
-  const jitsiSrc = [
-    joinInfo.jitsiUrl,
-    "#",
-    [
-      `userInfo.displayName=${encodeURIComponent(joinInfo.userName)}`,
-      "config.prejoinPageEnabled=false",
-      "config.startWithAudioMuted=false",
-      "config.startWithVideoMuted=false",
-      "config.hideConferenceTimer=true",
-      "config.disableDeepLinking=true",
-      "config.enableWelcomePage=false",
-      "config.disableThirdPartyRequests=true",
-      "config.defaultBackground=%230f1321",
-      "interfaceConfig.SHOW_JITSI_WATERMARK=false",
-      "interfaceConfig.SHOW_WATERMARK_FOR_GUESTS=false",
-      "interfaceConfig.SHOW_BRAND_WATERMARK=false",
-      "interfaceConfig.SHOW_POWERED_BY=false",
-      "interfaceConfig.DISPLAY_WELCOME_FOOTER=false",
-      `interfaceConfig.APP_NAME=${encodeURIComponent("CyberSage Meet")}`,
-      `interfaceConfig.PROVIDER_NAME=${encodeURIComponent("CyberSage")}`,
-      `interfaceConfig.TOOLBAR_BUTTONS=${encodeURIComponent(JSON.stringify([
-        "microphone","camera","closedcaptions","desktop","fullscreen",
-        "fodeviceselection","hangup","chat","settings","raisehand",
-        "videoquality","filmstrip","tileview","help","mute-everyone","security",
-      ]))}`,
-    ].join("&"),
-  ].join("");
+  useEffect(() => {
+    let disposed = false;
+
+    loadJitsiExternalApi()
+      .then((JitsiMeetExternalAPI) => {
+        if (disposed || !containerRef.current) return;
+
+        const api = new JitsiMeetExternalAPI(joinInfo.jitsiDomain, {
+          roomName: joinInfo.roomName,
+          parentNode: containerRef.current,
+          width: "100%",
+          height: "100%",
+          userInfo: { displayName: joinInfo.userName },
+          configOverwrite: {
+            prejoinPageEnabled: false,
+            startWithAudioMuted: false,
+            startWithVideoMuted: false,
+            disableDeepLinking: true,
+            enableWelcomePage: false,
+            disableThirdPartyRequests: true,
+            // The header above already carries a running timer — a second one
+            // baked into the Jitsi surface itself would be a duplicate clock.
+            hideConferenceTimer: true,
+            defaultBackground: "#0f1321",
+          },
+          interfaceConfigOverwrite: {
+            // The whole point of moving off the hash-param iframe: this app's
+            // own control bar replaces Jitsi's, rather than living alongside it.
+            TOOLBAR_BUTTONS: [],
+            SHOW_JITSI_WATERMARK: false,
+            SHOW_WATERMARK_FOR_GUESTS: false,
+            SHOW_BRAND_WATERMARK: false,
+            SHOW_POWERED_BY: false,
+            DISPLAY_WELCOME_FOOTER: false,
+            APP_NAME: "Sage Connect",
+            NATIVE_APP_NAME: "Sage Connect",
+            PROVIDER_NAME: "Cybersage",
+            DEFAULT_BACKGROUND: "#0f1321",
+          },
+        });
+        apiRef.current = api;
+
+        const refreshRoster = () => {
+          try {
+            setParticipants(api.getParticipantsInfo().map((p) => ({ id: p.participantId, displayName: p.displayName || "Guest" })));
+          } catch {
+            /* API not ready for this call yet — next event will retry */
+          }
+        };
+
+        api.addListener("videoConferenceJoined", refreshRoster);
+        api.addListener("participantJoined", refreshRoster);
+        api.addListener("participantLeft", refreshRoster);
+        api.addListener("audioMuteStatusChanged", (e) => setMuted(Boolean((e as { muted?: boolean })?.muted)));
+        api.addListener("videoMuteStatusChanged", (e) => setVideoOff(Boolean((e as { muted?: boolean })?.muted)));
+        api.addListener("screenSharingStatusChanged", (e) => setSharingScreen(Boolean((e as { on?: boolean })?.on)));
+        // A safety net, not the primary exit path — with our own toolbar
+        // replacing Jitsi's, there's no in-call hangup button to trigger this,
+        // but a dropped connection or host-ended call still fires it.
+        api.addListener("readyToClose", () => onLeave());
+      })
+      .catch((err) => {
+        console.error("[MeetView] Failed to load Jitsi External API:", err);
+        toast.error("Couldn't connect to the meeting server");
+      });
+
+    return () => {
+      disposed = true;
+      apiRef.current?.dispose();
+      apiRef.current = null;
+    };
+    // roomName/domain are stable for the lifetime of a call; intentionally not re-running.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [joinInfo.roomName]);
+
+  const handleLeaveClick = () => {
+    apiRef.current?.dispose();
+    apiRef.current = null;
+    onLeave();
+  };
 
   return (
     <div className="fixed inset-0 z-50 bg-surface flex flex-col">
@@ -295,13 +372,6 @@ function InMeetingRoom({
             {copied ? <Check className="w-3.5 h-3.5 text-ok" /> : <Copy className="w-3.5 h-3.5" />}
             {copied ? "Copied" : "Copy invite link"}
           </button>
-          <button
-            onClick={onLeave}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-crit text-white text-xs font-medium hover:bg-crit transition-colors"
-          >
-            <PhoneOff className="w-3.5 h-3.5" />
-            Leave
-          </button>
           {isHost && (
             <button
               onClick={onEnd}
@@ -313,13 +383,65 @@ function InMeetingRoom({
         </div>
       </div>
 
-      {/* Jitsi Meet iframe — full remaining height */}
-      <iframe
-        src={jitsiSrc}
-        allow="camera; microphone; fullscreen; display-capture; autoplay; clipboard-write"
-        className="flex-1 border-0 w-full"
-        title={meeting.title}
-      />
+      {/* Jitsi surface + participants panel */}
+      <div className="flex flex-1 min-h-0">
+        <div ref={containerRef} className="flex-1 min-w-0" />
+        {showParticipants && (
+          <Panel title={`Participants (${participants.length})`} onClose={() => setShowParticipants(false)}>
+            {participants.length === 0 ? (
+              <p className="px-1 py-4 text-center text-xs text-subtle">Waiting for others to join…</p>
+            ) : (
+              <ul className="space-y-1">
+                {participants.map((p) => (
+                  <li key={p.id} className="flex items-center gap-2.5 rounded-lg px-2 py-1.5">
+                    <div
+                      className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-[10.5px] font-bold text-white"
+                      style={{ background: avatarGradient(p.displayName) }}
+                    >
+                      {p.displayName.split(" ").map((s) => s[0]).join("").slice(0, 2).toUpperCase()}
+                    </div>
+                    <span className="truncate text-[13px] text-foreground">{p.displayName}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Panel>
+        )}
+      </div>
+
+      {/* This app's own control bar — Jitsi's is switched off above */}
+      <div className="flex flex-shrink-0 items-center justify-center gap-2 border-t border-border-soft bg-surface px-4 py-3">
+        <IconButton
+          icon={muted ? MicOff : Mic}
+          label={muted ? "Unmute" : "Mute"}
+          size="lg"
+          destructive={muted}
+          onClick={() => apiRef.current?.executeCommand("toggleAudio")}
+        />
+        <IconButton
+          icon={videoOff ? VideoOff : Video}
+          label={videoOff ? "Turn camera on" : "Turn camera off"}
+          size="lg"
+          destructive={videoOff}
+          onClick={() => apiRef.current?.executeCommand("toggleVideo")}
+        />
+        <IconButton
+          icon={MonitorUp}
+          label={sharingScreen ? "Stop sharing screen" : "Share screen"}
+          size="lg"
+          active={sharingScreen}
+          onClick={() => apiRef.current?.executeCommand("toggleShareScreen")}
+        />
+        <IconButton
+          icon={UsersIcon}
+          label={showParticipants ? "Hide participants" : "Show participants"}
+          size="lg"
+          active={showParticipants}
+          onClick={() => setShowParticipants((v) => !v)}
+        />
+        <div className="mx-1 h-6 w-px bg-border-soft" />
+        <IconButton icon={PhoneOff} label="Leave call" size="lg" destructive onClick={handleLeaveClick} />
+      </div>
     </div>
   );
 }

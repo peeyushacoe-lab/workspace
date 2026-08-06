@@ -75,3 +75,57 @@ if (
       `Set NEXT_PUBLIC_JITSI_DOMAIN at build time.`,
   );
 }
+
+// ─── External API loader ───────────────────────────────────────────────────
+//
+// Three call sites (CallStage, /meet/[roomId], and now MeetView's in-meeting
+// room) each need `window.JitsiMeetExternalAPI`, which only exists once
+// `https://{domain}/external_api.js` has loaded. Before this helper, two of
+// those three sites injected that `<script>` tag independently — the same
+// script, resolved the same way, duplicated. A raw `<iframe src=...>` embed
+// (which the third site used) can't offer any of this: no mute/camera state,
+// no participant roster, no programmatic control — postMessage commands only
+// exist once the page is owned by the External API's own iframe wrapper.
+//
+// A module-scoped promise makes this idempotent: mounting two Jitsi surfaces
+// in the same session (unlikely today, but a participants-panel-in-a-panel
+// future isn't) reuses one script load instead of racing two.
+
+export type JitsiExternalApi = {
+  dispose: () => void;
+  addListener: (event: string, cb: (...args: unknown[]) => void) => void;
+  removeListener: (event: string, cb: (...args: unknown[]) => void) => void;
+  executeCommand: (command: string, ...args: unknown[]) => void;
+  isAudioMuted: () => Promise<boolean>;
+  isVideoMuted: () => Promise<boolean>;
+  getParticipantsInfo: () => { participantId: string; displayName: string }[];
+};
+
+type JitsiExternalApiCtor = new (domain: string, options: Record<string, unknown>) => JitsiExternalApi;
+
+let jitsiScriptPromise: Promise<JitsiExternalApiCtor> | null = null;
+
+/** Loads the Jitsi External API script once and resolves with its constructor. */
+export function loadJitsiExternalApi(): Promise<JitsiExternalApiCtor> {
+  if (typeof window === "undefined") {
+    return Promise.reject(new Error("loadJitsiExternalApi called during SSR"));
+  }
+  const existing = (window as unknown as { JitsiMeetExternalAPI?: JitsiExternalApiCtor }).JitsiMeetExternalAPI;
+  if (existing) return Promise.resolve(existing);
+
+  if (!jitsiScriptPromise) {
+    jitsiScriptPromise = new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = `${jitsiOrigin()}/external_api.js`;
+      script.async = true;
+      script.onload = () => {
+        const ctor = (window as unknown as { JitsiMeetExternalAPI?: JitsiExternalApiCtor }).JitsiMeetExternalAPI;
+        if (ctor) resolve(ctor);
+        else reject(new Error("external_api.js loaded but did not define JitsiMeetExternalAPI"));
+      };
+      script.onerror = () => reject(new Error(`Failed to load ${script.src}`));
+      document.head.appendChild(script);
+    });
+  }
+  return jitsiScriptPromise;
+}

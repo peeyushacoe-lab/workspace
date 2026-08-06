@@ -31,6 +31,7 @@ EXEMPT_LITERAL = (
     'src/lib/email', 'src/emails/', 'src/lib/hr-letters',
     'src/app/(portal)/whiteboard/', 'src/app/layout.tsx',
     'src/app/(portal)/meet/', 'src/components/call/CallStage.tsx',
+    'src/components/MeetView.tsx',
     'src/app/api/', 'src/lib/avatar.ts', 'src/components/ui/tokens.ts',
     'src/generated/',
 )

@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "noEmit": true },
+  "include": [
+    "next-env.d.ts",
+    "src/lib/jitsi.ts",
+    "src/components/MeetView.tsx",
+    "src/components/call/CallStage.tsx",
+    "src/components/ui/icon-button.tsx",
+    "src/components/ui/panel.tsx",
+    "src/components/ui/index.ts"
+  ]
+}

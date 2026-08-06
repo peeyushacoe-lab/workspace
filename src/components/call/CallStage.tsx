@@ -3,12 +3,7 @@
 import { useEffect, useRef } from "react";
 import { Phone, Video, PhoneOff } from "lucide-react";
 import type { CallMedia } from "@/lib/call-signaling";
-import { JITSI_DOMAIN } from "@/lib/jitsi";
-
-type JitsiApi = {
-  dispose: () => void;
-  addListener: (event: string, cb: () => void) => void;
-};
+import { JITSI_DOMAIN, loadJitsiExternalApi, type JitsiExternalApi } from "@/lib/jitsi";
 
 // Full-screen Jitsi overlay for an active 1:1 call. Audio calls start with the
 // camera off (the user can still turn it on). Hanging up here closes the stage.
@@ -26,23 +21,17 @@ export function CallStage({
   onEnd: () => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const apiRef = useRef<JitsiApi | null>(null);
+  const apiRef = useRef<JitsiExternalApi | null>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
     const domain = JITSI_DOMAIN;
+    let disposed = false;
 
-    const script = document.createElement("script");
-    script.src = "https://" + domain + "/external_api.js";
-    script.async = true;
-    script.onload = () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const JitsiAPI = (window as any).JitsiMeetExternalAPI as
-        | (new (domain: string, opts: unknown) => JitsiApi)
-        | undefined;
-      if (!containerRef.current || !JitsiAPI) return;
+    loadJitsiExternalApi().then((JitsiMeetExternalAPI) => {
+      if (disposed || !containerRef.current) return;
 
-      const api = new JitsiAPI(domain, {
+      const api = new JitsiMeetExternalAPI(domain, {
         roomName,
         parentNode: containerRef.current,
         width: "100%",
@@ -80,17 +69,14 @@ export function CallStage({
 
       apiRef.current = api;
       api.addListener("readyToClose", () => onEnd());
-    };
+    }).catch((err) => {
+      console.error("[CallStage] Failed to load Jitsi External API:", err);
+    });
 
-    document.head.appendChild(script);
     return () => {
+      disposed = true;
       apiRef.current?.dispose();
       apiRef.current = null;
-      try {
-        document.head.removeChild(script);
-      } catch {
-        /* already removed */
-      }
     };
     // roomName is stable for the lifetime of a call; intentionally not re-running.
     // eslint-disable-next-line react-hooks/exhaustive-deps

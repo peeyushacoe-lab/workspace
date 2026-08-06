@@ -10,6 +10,9 @@ export { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from ".
 
 // New design system components
 export { Modal, ConfirmModal } from "./modal";
+export { IconButton } from "./icon-button";
+export type { IconButtonProps, IconButtonSize } from "./icon-button";
+export { Panel } from "./panel";
 export { DataTable } from "./data-table";
 export { FormField, TextInput, Textarea, SelectInput, Checkbox, FormRow, FormSection } from "./form";
 export { Skeleton, SkeletonText, SkeletonCard, SkeletonRow, SkeletonTable, SkeletonInboxItem, SkeletonPage } from "./skeleton";
