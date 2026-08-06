@@ -3,16 +3,16 @@ import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { ChatView } from "@/components/ChatView";
 
 /**
- * Chat inside Connect.
+ * Chat inside Connect — one-to-one direct messages only.
  *
- * Mounts the existing Nexus chat engine rather than forking it. Connect and
- * Nexus are one deployment over one database, so a second messaging
+ * Groups live at /connect/groups and channels at /connect/channels. All three
+ * mount the same engine with a different scope rather than forking it: Connect
+ * and Nexus are one deployment over one database, so a second messaging
  * implementation would mean two sets of unread counts, two socket handlers and
- * two bugs for every fix. Phase 2 reworks this view's presentation in place;
- * the engine underneath stays exactly the one /chat uses.
+ * two bugs for every fix.
  */
 export default async function ConnectChatPage() {
   const user = getSessionUserFromCookieStore(await cookies());
   // The layout redirects unauthenticated requests, so `user` is set by here.
-  return <ChatView currentUserId={user!.id} userRole={user!.role} />;
+  return <ChatView currentUserId={user!.id} userRole={user!.role} scope="direct" />;
 }

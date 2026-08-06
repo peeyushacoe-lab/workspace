@@ -288,7 +288,13 @@ export async function POST(request: Request, { params }: Params) {
                 : `Urgent in #${channel?.name ?? "channel"} — ${user.fullName}`
               : `New message from ${user.fullName}`,
             body: displayContent,
-            link: `/connect/chat?channel=${channelId}`,
+            // Route to the page that actually lists this conversation kind —
+            // Connect splits DMs, groups and channels into separate sections.
+            link: `${
+              channel?.type === "CHANNEL" ? "/connect/channels"
+              : channel?.type === "GROUP" ? "/connect/groups"
+              : "/connect/chat"
+            }?channel=${channelId}`,
             metadata: { channelId, urgent: isUrgent === true, senderId: user.id },
           }).catch(() => {})
         )

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  House, MessageSquare, Users, Hash, Video, Phone, FolderOpen, Bell, Contact,
+  House, MessageSquare, Users, UsersRound, Hash, Video, Phone, FolderOpen, Bell, Contact,
   Menu, X, Settings, ArrowUpRight, LogOut,
 } from "lucide-react";
 import { CONNECT_NAV, isLive, type ConnectNavItem } from "@/lib/connect";
@@ -33,14 +33,16 @@ import type { ConnectHomeCounts, ConnectHomeResponse } from "@/app/api/connect/h
  * rendering nothing, and so tree-shaking keeps working.
  */
 const ICONS: Record<string, React.ElementType> = {
-  House, MessageSquare, Users, Hash, Video, Phone, FolderOpen, Bell, Contact,
+  House, MessageSquare, Users, UsersRound, Hash, Video, Phone, FolderOpen, Bell, Contact,
 };
 
 /** Rail grouping. Presentation only — access still comes from CONNECT_NAV. */
 const GROUPS: string[][] = [
   ["/connect"],
-  ["/connect/chat", "/connect/channels", "/connect/teams"],
-  ["/connect/meetings", "/connect/calls"],
+  // The three conversation kinds, most-used first. Separate destinations, not
+  // three sections in one column — see CONNECT_NAV.
+  ["/connect/chat", "/connect/groups", "/connect/channels"],
+  ["/connect/teams", "/connect/meetings", "/connect/calls"],
   ["/connect/files", "/connect/activity", "/connect/contacts"],
 ];
 

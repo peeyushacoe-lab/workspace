@@ -48,6 +48,7 @@ import {
   Bell,
   BellOff,
   Info,
+  MoreHorizontal,
   type LucideIcon,
 } from "lucide-react";
 import { formatDistanceToNow, isToday, isYesterday, format } from "date-fns";
@@ -1654,6 +1655,7 @@ function SummaryModal({
 
 function ChannelSection({
   label,
+  hideLabel = false,
   channels,
   selectedChannelId,
   presenceData,
@@ -1663,6 +1665,9 @@ function ChannelSection({
   currentUserId,
 }: {
   label: string;
+  /** Scoped pages name themselves in the shell's top bar — a heading here
+   *  would just repeat it above a single list. */
+  hideLabel?: boolean;
   channels: Channel[];
   selectedChannelId: string | null;
   onlineUsers?: Map<string, string>;
@@ -1683,28 +1688,30 @@ function ChannelSection({
 
   return (
     <div className="mb-1">
-      <div className="flex items-center justify-between px-2.5 pt-3.5 pb-2">
-        <button
-          onClick={() => setCollapsed((p) => !p)}
-          className="flex items-center gap-1 text-subtle hover:text-muted transition-colors"
-        >
-          {collapsed ? (
-            <ChevronRight className="w-3 h-3" />
-          ) : (
-            <ChevronDown className="w-3 h-3" />
-          )}
-          <span className="text-[11px] font-semibold text-subtle">{label}</span>
-        </button>
-        {onNew && (
+      {!hideLabel && (
+        <div className="flex items-center justify-between px-2.5 pt-3.5 pb-2">
           <button
-            onClick={onNew}
-            className="text-subtle hover:text-muted transition-colors"
-            title={newTitle ?? "New"}
+            onClick={() => setCollapsed((p) => !p)}
+            className="flex items-center gap-1 text-subtle hover:text-muted transition-colors"
           >
-            <Plus className="w-4 h-4" />
+            {collapsed ? (
+              <ChevronRight className="w-3 h-3" />
+            ) : (
+              <ChevronDown className="w-3 h-3" />
+            )}
+            <span className="text-[11px] font-semibold text-subtle">{label}</span>
           </button>
-        )}
-      </div>
+          {onNew && (
+            <button
+              onClick={onNew}
+              className="text-subtle hover:text-muted transition-colors"
+              title={newTitle ?? "New"}
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      )}
 
       {!collapsed && (
         <div className="space-y-0.5">
@@ -2369,7 +2376,26 @@ function CommandPalette({
 
 // ─── Main ChatView ────────────────────────────────────────────────────────────
 
-export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId: string; userRole?: string }) {
+/**
+ * Which kind of conversation this mount is responsible for.
+ *
+ * Connect lists DMs, groups and channels as three separate destinations rather
+ * than three stacked sections in one column. They are different social objects:
+ * a DM is a person, a group is a few people, a channel is a topic anyone can
+ * join. Collapsing them into one scrolling list meant the most frequent thing
+ * (DMs) sat below whatever else happened to be above it.
+ */
+export type ChatScope = "all" | "direct" | "group" | "channel";
+
+export function ChatView({
+  currentUserId,
+  userRole: _userRole,
+  scope = "all",
+}: {
+  currentUserId: string;
+  userRole?: string;
+  scope?: ChatScope;
+}) {
   const canCall = true;
   const { startCall, busy: callBusy } = useCall();
   const [channels, setChannels] = useState<Channel[]>([]);
@@ -2411,6 +2437,25 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
   // quick jump for people who just want the pins.
   const [showChannelInfo, setShowChannelInfo] = useState(false);
   const [infoTab, setInfoTab] = useState<"members" | "shared" | "pinned">("members");
+
+  // Conversation header overflow menu.
+  const [showHeaderMenu, setShowHeaderMenu] = useState(false);
+  const headerMenuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!showHeaderMenu) return;
+    const onClick = (e: MouseEvent) => {
+      if (headerMenuRef.current && !headerMenuRef.current.contains(e.target as Node)) {
+        setShowHeaderMenu(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setShowHeaderMenu(false);
+    document.addEventListener("mousedown", onClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [showHeaderMenu]);
 
   // Group rename state
   const [renamingChannel, setRenamingChannel] = useState(false);
@@ -3667,6 +3712,51 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
       return withUnread(c);
     });
 
+  // ── Scope ──────────────────────────────────────────────────────────────────
+  // Everything below keys off this. A scoped mount shows exactly one kind of
+  // conversation and drops the section headings entirely — the shell's top bar
+  // already says which page you are on, so repeating it above the list is the
+  // "cramped" duplication this split was meant to remove.
+  const matchesFilter = (c: Channel) =>
+    !sidebarSearch || c.name.toLowerCase().includes(sidebarSearch.toLowerCase());
+
+  const scopedList =
+    scope === "direct" ? directChannels.filter(matchesFilter)
+    : scope === "group" ? groupChannels.filter(matchesFilter)
+    : scope === "channel" ? publicChannels.filter(matchesFilter)
+    : [];
+
+  const scopeMeta: Record<Exclude<ChatScope, "all">, {
+    filterLabel: string;
+    newTitle: string;
+    onNew: () => void;
+    emptyTitle: string;
+    emptyHint: string;
+  }> = {
+    direct: {
+      filterLabel: "Filter people",
+      newTitle: "New direct message",
+      onNew: () => setShowNewGroupDM(true),
+      emptyTitle: "No direct messages yet.",
+      emptyHint: "Start one to reach someone privately.",
+    },
+    group: {
+      filterLabel: "Filter groups",
+      newTitle: "New group",
+      onNew: () => setShowNewGroupDM(true),
+      emptyTitle: "No groups yet.",
+      emptyHint: "Create one to talk with a few people at once.",
+    },
+    channel: {
+      filterLabel: "Filter channels",
+      newTitle: "New channel",
+      onNew: () => setShowNewChannel(true),
+      emptyTitle: "No channels yet.",
+      emptyHint: "Create one to open a topic to the workspace.",
+    },
+  };
+  const meta = scope === "all" ? null : scopeMeta[scope];
+
   return (
     // One continuous surface, no inter-column gap. The `lg:gap-2` here was what
     // separated the five floating cards; with the columns flush and divided by
@@ -3684,15 +3774,15 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
             the same screen offered four ways to search and no clue which did
             what. The field below filters THIS list; ⌘K (still bound globally)
             searches everything. The redundant title bar is gone. */}
-        <div className="px-2.5 py-2.5 border-b border-border-soft flex-shrink-0">
-          <div className="flex items-center gap-2 bg-surface-sunken border border-border rounded-lg px-2.5 py-1.5 focus-within:border-accent/60 focus-within:ring-2 focus-within:ring-accent/20 transition-colors">
+        <div className="px-2.5 py-2.5 border-b border-border-soft flex-shrink-0 flex items-center gap-2">
+          <div className="flex flex-1 min-w-0 items-center gap-2 bg-surface-sunken border border-border rounded-lg px-2.5 py-1.5 focus-within:border-accent/60 focus-within:ring-2 focus-within:ring-accent/20 transition-colors">
             <Search className="w-3.5 h-3.5 text-subtle flex-shrink-0" />
             <input
               value={sidebarSearch}
               onChange={(e) => setSidebarSearch(e.target.value)}
-              placeholder="Filter conversations"
-              aria-label="Filter conversations"
-              className="flex-1 text-[13px] bg-transparent text-foreground placeholder-subtle outline-none"
+              placeholder={meta?.filterLabel ?? "Filter conversations"}
+              aria-label={meta?.filterLabel ?? "Filter conversations"}
+              className="flex-1 min-w-0 text-[13px] bg-transparent text-foreground placeholder-subtle outline-none"
             />
             {sidebarSearch && (
               <button
@@ -3704,51 +3794,89 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
               </button>
             )}
           </div>
+          {meta && (
+            <button
+              onClick={meta.onNew}
+              title={meta.newTitle}
+              aria-label={meta.newTitle}
+              className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg text-muted hover:bg-hover hover:text-foreground transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
         <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-2.5">
-          <ChannelSection
-            label="Channels"
-            channels={publicChannels.filter((c) => !sidebarSearch || c.name.toLowerCase().includes(sidebarSearch.toLowerCase()))}
-            selectedChannelId={selectedChannelId}
-            onlineUsers={onlineUsers}
-            presenceData={presenceData}
-            onSelect={setSelectedChannelId}
-            onNew={sidebarSearch ? undefined : () => setShowNewChannel(true)}
-            newTitle="New Channel"
-            currentUserId={currentUserId}
-          />
+          {meta ? (
+            // Scoped: one flat list, no section heading. The page title in the
+            // shell's top bar already names what you're looking at.
+            scopedList.length === 0 ? (
+              <div className="px-3 py-10 text-center">
+                <p className="text-xs text-muted">
+                  {sidebarSearch ? "Nothing matches that filter." : meta.emptyTitle}
+                </p>
+                {!sidebarSearch && (
+                  <p className="mt-1 text-[11px] text-subtle">{meta.emptyHint}</p>
+                )}
+              </div>
+            ) : (
+              <ChannelSection
+                label=""
+                hideLabel
+                channels={scopedList}
+                selectedChannelId={selectedChannelId}
+                onlineUsers={onlineUsers}
+                presenceData={presenceData}
+                onSelect={setSelectedChannelId}
+                currentUserId={currentUserId}
+              />
+            )
+          ) : (
+            <>
+              <ChannelSection
+                label="Channels"
+                channels={publicChannels.filter(matchesFilter)}
+                selectedChannelId={selectedChannelId}
+                onlineUsers={onlineUsers}
+                presenceData={presenceData}
+                onSelect={setSelectedChannelId}
+                onNew={sidebarSearch ? undefined : () => setShowNewChannel(true)}
+                newTitle="New Channel"
+                currentUserId={currentUserId}
+              />
 
-          <ChannelSection
-            label="Direct messages"
-            channels={directChannels.filter((c) => !sidebarSearch || c.name.toLowerCase().includes(sidebarSearch.toLowerCase()))}
-            selectedChannelId={selectedChannelId}
-            onlineUsers={onlineUsers}
-            presenceData={presenceData}
-            onSelect={setSelectedChannelId}
-            onNew={sidebarSearch ? undefined : () => setShowNewGroupDM(true)}
-            newTitle="New Direct Message"
-            currentUserId={currentUserId}
-          />
+              <ChannelSection
+                label="Direct messages"
+                channels={directChannels.filter(matchesFilter)}
+                selectedChannelId={selectedChannelId}
+                onlineUsers={onlineUsers}
+                presenceData={presenceData}
+                onSelect={setSelectedChannelId}
+                onNew={sidebarSearch ? undefined : () => setShowNewGroupDM(true)}
+                newTitle="New Direct Message"
+                currentUserId={currentUserId}
+              />
 
-          <ChannelSection
-            label="Groups"
-            channels={groupChannels.filter((c) => !sidebarSearch || c.name.toLowerCase().includes(sidebarSearch.toLowerCase()))}
-            selectedChannelId={selectedChannelId}
-            onlineUsers={onlineUsers}
-            presenceData={presenceData}
-            onSelect={setSelectedChannelId}
-            onNew={sidebarSearch ? undefined : () => setShowNewGroupDM(true)}
-            newTitle="New Group"
-            currentUserId={currentUserId}
-          />
+              <ChannelSection
+                label="Groups"
+                channels={groupChannels.filter(matchesFilter)}
+                selectedChannelId={selectedChannelId}
+                onlineUsers={onlineUsers}
+                presenceData={presenceData}
+                onSelect={setSelectedChannelId}
+                onNew={sidebarSearch ? undefined : () => setShowNewGroupDM(true)}
+                newTitle="New Group"
+                currentUserId={currentUserId}
+              />
 
-          {channels.length === 0 && (
-            <p className="text-muted text-xs px-3 py-4 text-center">
-              No channels yet.
-              <br />
-              Create one to get started.
-            </p>
+              {channels.length === 0 && (
+                <p className="text-muted text-xs px-3 py-4 text-center">
+                  No conversations yet.
+                  <br />
+                  Create one to get started.
+                </p>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -3921,44 +4049,6 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                   </button>
                 ) : null}
 
-                {/* AI Summarize dropdown */}
-                <div className="relative group">
-                  <button
-                    onClick={() => void handleSummarize("summary")}
-                    disabled={summarizing || messages.length === 0}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-border text-muted hover:bg-surface-sunken hover:text-foreground disabled:opacity-40 transition-colors"
-                    title="AI tools"
-                  >
-                    {summarizing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-accent" />}
-                    <span className="hidden sm:inline">{summarizing ? "Thinking…" : "AI"}</span>
-                    <ChevronDown className="w-3 h-3" />
-                  </button>
-                  <div className="absolute right-0 top-full mt-1 w-44 bg-surface border border-border rounded-xl shadow-xl z-20 py-1 hidden group-hover:block">
-                    {([
-                      { mode: "summary" as const,           label: "Summarize channel" },
-                      { mode: "action-items" as const,      label: "Extract action items" },
-                      { mode: "schedule-meeting" as const,  label: "Draft meeting agenda" },
-                    ]).map(({ mode, label }) => (
-                      <button
-                        key={mode}
-                        onClick={() => void handleSummarize(mode)}
-                        className="w-full text-left px-3 py-2 text-xs text-muted hover:bg-surface-sunken hover:text-foreground transition-colors"
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Pinned messages toggle */}
-                <button
-                  onClick={() => { if (showPins) setShowPins(false); else { setShowChannelInfo(false); void loadPinnedMessages(); } }}
-                  className={`w-9 h-9 flex items-center justify-center rounded-lg border transition-colors flex-shrink-0 ${showPins ? "border-accent text-accent bg-accent/10" : "border-border bg-surface text-muted hover:bg-surface-sunken hover:text-foreground"}`}
-                  title="Pinned messages"
-                >
-                  <Pin className="w-[18px] h-[18px]" />
-                </button>
-
                 {/* Channel info — Members / Shared / Pinned in one place */}
                 <button
                   onClick={() => {
@@ -3973,56 +4063,110 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                   <Info className="w-[18px] h-[18px]" />
                 </button>
 
-                {/* AI Summarize dropdown moved up; remaining utilities */}
-                {/* Pinned messages toggle */}
-                {/* Web Push toggle */}
-                <button
-                  onClick={() => void togglePush()}
-                  disabled={pushLoading}
-                  className={`w-9 h-9 flex items-center justify-center rounded-lg border transition-colors flex-shrink-0 ${pushEnabled ? "border-accent text-accent bg-accent/10" : "border-border bg-surface text-muted hover:bg-surface-sunken hover:text-foreground"} disabled:opacity-40`}
-                  title={pushEnabled ? "Disable urgent push notifications" : "Enable push for urgent messages"}
-                >
-                  {pushLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : (pushEnabled ? <Bell className="w-4 h-4" /> : <BellOff className="w-4 h-4" />)}
-                </button>
-                {selectedChannel?.type !== "DIRECT" && (
+                {/* Overflow.
+                    This row previously held ten controls side by side — call,
+                    video, AI, pin, info, push, add members, manage members,
+                    leave, delete — every one an equally-weighted 36px square.
+                    Calling someone and deleting the channel are not peers. Only
+                    the two things you reach for mid-conversation stay outside;
+                    everything else is one click deeper. */}
+                <div className="relative flex-shrink-0" ref={headerMenuRef}>
                   <button
-                    onClick={() => setShowAddMembers(true)}
-                    className="w-9 h-9 flex items-center justify-center rounded-lg border border-border bg-surface text-muted hover:bg-surface-sunken hover:text-foreground transition-colors flex-shrink-0"
-                    title="Add members"
+                    onClick={() => setShowHeaderMenu((p) => !p)}
+                    aria-haspopup="menu"
+                    aria-expanded={showHeaderMenu}
+                    aria-label="More actions"
+                    className={`w-9 h-9 flex items-center justify-center rounded-lg border transition-colors ${showHeaderMenu ? "border-accent text-accent bg-accent/10" : "border-border bg-surface text-muted hover:bg-surface-sunken hover:text-foreground"}`}
                   >
-                    <UserPlus className="w-[18px] h-[18px]" />
+                    <MoreHorizontal className="w-[18px] h-[18px]" />
                   </button>
-                )}
-              {/* Manage members — view roster, promote/demote, remove members */}
-              {selectedChannel?.type !== "DIRECT" && (
-                <button
-                  onClick={() => setShowManageMembers(true)}
-                  className="w-9 h-9 flex items-center justify-center rounded-lg border border-border bg-surface text-muted hover:bg-surface-sunken hover:text-foreground transition-colors flex-shrink-0"
-                  title="Manage members"
-                >
-                  <Settings className="w-[18px] h-[18px]" />
-                </button>
-              )}
-              {/* Leave group — available to any member of a GROUP channel */}
-              {selectedChannel?.type === "GROUP" && (
-                <button
-                  onClick={() => void handleLeaveChannel()}
-                  title="Leave group"
-                  className="w-9 h-9 flex items-center justify-center rounded-lg border border-border bg-surface text-muted hover:bg-crit/10 hover:text-crit hover:border-crit/40 transition-colors flex-shrink-0"
-                >
-                  <LogOut className="w-[18px] h-[18px]" />
-                </button>
-              )}
-              {/* Delete channel — only visible to channel admins */}
-              {selectedChannel?.type !== "DIRECT" && selectedChannel?.members?.find(m => m.userId === currentUserId)?.role === "ADMIN" && (
-                <button
-                  onClick={() => void handleDeleteChannel()}
-                  title="Delete channel"
-                  className="w-9 h-9 flex items-center justify-center rounded-lg border border-crit/40 text-crit hover:bg-crit/10 transition-colors flex-shrink-0"
-                >
-                  <Trash2 className="w-[18px] h-[18px]" />
-                </button>
-              )}
+
+                  {showHeaderMenu && (
+                    <div role="menu" className="absolute right-0 top-full mt-1.5 w-56 bg-surface border border-border rounded-xl shadow-pop z-30 py-1.5">
+                      <p className="px-3.5 pb-1 pt-0.5 text-[10px] font-semibold uppercase tracking-wide text-subtle">
+                        Sage Assist
+                      </p>
+                      {([
+                        { mode: "summary" as const, label: "Summarise conversation" },
+                        { mode: "action-items" as const, label: "Extract action items" },
+                        { mode: "schedule-meeting" as const, label: "Draft meeting agenda" },
+                      ]).map(({ mode, label }) => (
+                        <button
+                          key={mode}
+                          onClick={() => { setShowHeaderMenu(false); void handleSummarize(mode); }}
+                          disabled={summarizing || messages.length === 0}
+                          className="w-full flex items-center gap-3 px-3.5 py-2 text-[13px] text-muted hover:bg-hover hover:text-foreground disabled:opacity-40 transition-colors"
+                        >
+                          <Sparkles className="w-4 h-4 text-accent flex-shrink-0" />
+                          {label}
+                        </button>
+                      ))}
+
+                      <div className="my-1 h-px bg-border-soft" />
+
+                      <button
+                        onClick={() => { setShowHeaderMenu(false); setShowChannelInfo(false); void loadPinnedMessages(); }}
+                        className="w-full flex items-center gap-3 px-3.5 py-2 text-[13px] text-muted hover:bg-hover hover:text-foreground transition-colors"
+                      >
+                        <Pin className="w-4 h-4 flex-shrink-0" />
+                        Pinned messages
+                      </button>
+                      <button
+                        onClick={() => { setShowHeaderMenu(false); void togglePush(); }}
+                        disabled={pushLoading}
+                        className="w-full flex items-center gap-3 px-3.5 py-2 text-[13px] text-muted hover:bg-hover hover:text-foreground disabled:opacity-40 transition-colors"
+                      >
+                        {pushEnabled ? <Bell className="w-4 h-4 flex-shrink-0 text-accent" /> : <BellOff className="w-4 h-4 flex-shrink-0" />}
+                        {pushEnabled ? "Urgent push on" : "Enable urgent push"}
+                      </button>
+
+                      {selectedChannel?.type !== "DIRECT" && (
+                        <>
+                          <div className="my-1 h-px bg-border-soft" />
+                          <button
+                            onClick={() => { setShowHeaderMenu(false); setShowAddMembers(true); }}
+                            className="w-full flex items-center gap-3 px-3.5 py-2 text-[13px] text-muted hover:bg-hover hover:text-foreground transition-colors"
+                          >
+                            <UserPlus className="w-4 h-4 flex-shrink-0" />
+                            Add members
+                          </button>
+                          <button
+                            onClick={() => { setShowHeaderMenu(false); setShowManageMembers(true); }}
+                            className="w-full flex items-center gap-3 px-3.5 py-2 text-[13px] text-muted hover:bg-hover hover:text-foreground transition-colors"
+                          >
+                            <Settings className="w-4 h-4 flex-shrink-0" />
+                            Manage members
+                          </button>
+                        </>
+                      )}
+
+                      {(selectedChannel?.type === "GROUP" ||
+                        (selectedChannel?.type !== "DIRECT" &&
+                          selectedChannel?.members?.find((m) => m.userId === currentUserId)?.role === "ADMIN")) && (
+                        <div className="my-1 h-px bg-border-soft" />
+                      )}
+                      {selectedChannel?.type === "GROUP" && (
+                        <button
+                          onClick={() => { setShowHeaderMenu(false); void handleLeaveChannel(); }}
+                          className="w-full flex items-center gap-3 px-3.5 py-2 text-[13px] text-muted hover:bg-crit-soft hover:text-crit transition-colors"
+                        >
+                          <LogOut className="w-4 h-4 flex-shrink-0" />
+                          Leave group
+                        </button>
+                      )}
+                      {selectedChannel?.type !== "DIRECT" &&
+                        selectedChannel?.members?.find((m) => m.userId === currentUserId)?.role === "ADMIN" && (
+                        <button
+                          onClick={() => { setShowHeaderMenu(false); void handleDeleteChannel(); }}
+                          className="w-full flex items-center gap-3 px-3.5 py-2 text-[13px] text-muted hover:bg-crit-soft hover:text-crit transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4 flex-shrink-0" />
+                          Delete channel
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
