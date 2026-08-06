@@ -286,7 +286,6 @@ function Avatar({ name, avatarUrl, size = "sm" }: { name: string; avatarUrl?: st
 
   if (avatarUrl) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
       <img src={avatarUrl} alt={name} className={`${sz} rounded-full object-cover flex-shrink-0`} />
     );
   }
@@ -489,6 +488,7 @@ const MessageItem = memo(function MessageItem({
   memberNames = [],
   isGroupChat = false,
   isLastInChannel = false,
+  isContinuation = false,
 }: {
   msg: Message;
   currentUserId: string;
@@ -502,6 +502,8 @@ const MessageItem = memo(function MessageItem({
   memberNames?: string[];
   isGroupChat?: boolean;
   isLastInChannel?: boolean;
+  /** Continuation of the previous message from the same author — see listItems. */
+  isContinuation?: boolean;
 }) {
   const [showActions, setShowActions] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -590,13 +592,15 @@ const MessageItem = memo(function MessageItem({
             <Phone className="w-3.5 h-3.5 text-muted" />
           )}
           <span>{label}</span>
-          <span className="text-subtle">
-            {formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true })}
+          <span className="text-subtle tabular-nums">
+            {format(new Date(msg.createdAt), "HH:mm")}
           </span>
         </div>
       </div>
     );
   }
+
+  const isMine = msg.userId === currentUserId;
 
   // Read-receipt derivation. `readBy` holds one row per (message, reader) —
   // exclude the author (a person doesn't "read" their own sent message).
@@ -606,28 +610,60 @@ const MessageItem = memo(function MessageItem({
   return (
     <div
       id={`msg-${msg.id}`}
-      className={`group relative flex gap-3 px-3 lg:px-6 py-1.5 transition-colors scroll-mt-16 ${msg.isUrgent ? "bg-crit/5 border-l-2 border-crit hover:bg-crit/10" : "hover:bg-surface-sunken"}`}
+      className={`group relative mx-2 flex gap-3 rounded-xl px-2 transition-colors scroll-mt-16 lg:mx-4 lg:px-3 ${
+        isContinuation ? "py-0.5" : "pt-2.5 pb-1"
+      } ${
+        msg.isUrgent
+          ? "border-l-2 border-crit bg-crit/5 hover:bg-crit/10"
+          : isMine
+            // Teams tints your own messages rather than flipping them to the
+            // right. Alignment stays uniform — one avatar column, one reading
+            // edge — while authorship is still obvious at a glance.
+            ? "bg-accent-soft/50 hover:bg-accent-soft/70"
+            : "hover:bg-surface-sunken"
+      }`}
       onMouseEnter={() => !isDeleted && setShowActions(true)}
       onMouseLeave={() => {
         if (!showEmojiPicker) setShowActions(false);
       }}
     >
       <div className="w-[38px] flex-shrink-0 flex justify-center">
-        <Avatar name={msg.user.fullName} avatarUrl={msg.user.avatarUrl} size="md" />
+        {isContinuation ? (
+          // The gutter keeps its width so text stays aligned; the timestamp
+          // appears there on hover, which is how you check "when exactly?" on a
+          // continuation line without repeating it on every row.
+          <span className="mt-[3px] text-[10px] tabular-nums leading-none text-subtle opacity-0 transition-opacity group-hover:opacity-100">
+            {format(new Date(msg.createdAt), "HH:mm")}
+          </span>
+        ) : (
+          <Avatar name={msg.user.fullName} avatarUrl={msg.user.avatarUrl} size="md" />
+        )}
       </div>
       <div className="flex-1 min-w-0">
-        <div className="flex items-baseline gap-2 mb-0.5">
-          <span className="font-bold text-foreground text-[13.5px]">{msg.user.fullName}</span>
-          {msg.isUrgent && (
-            <span className="text-[10px] font-semibold text-crit bg-crit/15 px-1.5 py-0.5 rounded-full leading-none inline-flex items-center gap-1"><Siren className="w-3 h-3" />Urgent</span>
-          )}
-          <span className="font-mono text-[11px] text-subtle">
-            {formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true })}
-          </span>
-          {msg.editedAt && !isDeleted && (
-            <span className="text-[11px] text-subtle italic">(edited)</span>
-          )}
-        </div>
+        {!isContinuation && (
+          <div className="flex items-baseline gap-2 mb-0.5">
+            <span className="font-semibold text-foreground text-[13.5px]">{msg.user.fullName}</span>
+            {msg.isUrgent && (
+              <span className="text-[10px] font-semibold text-crit bg-crit/15 px-1.5 py-0.5 rounded-full leading-none inline-flex items-center gap-1"><Siren className="w-3 h-3" />Urgent</span>
+            )}
+            {/* Clock time, not "22 days ago". The date separator above already
+                says which day this is, so a relative distance restates it badly
+                — and inside a day it is useless for ordering a conversation. */}
+            <time
+              dateTime={new Date(msg.createdAt).toISOString()}
+              title={format(new Date(msg.createdAt), "EEEE d MMMM yyyy, HH:mm")}
+              className="text-[11px] tabular-nums text-subtle"
+            >
+              {format(new Date(msg.createdAt), "HH:mm")}
+            </time>
+            {msg.editedAt && !isDeleted && (
+              <span className="text-[11px] text-subtle italic">(edited)</span>
+            )}
+          </div>
+        )}
+        {isContinuation && msg.editedAt && !isDeleted && (
+          <span className="text-[11px] text-subtle italic">(edited) </span>
+        )}
 
         {/* Quoted "replying to" preview — WhatsApp-style inline quote card */}
         {!isDeleted && msg.quotedMessage && (
@@ -755,9 +791,13 @@ const MessageItem = memo(function MessageItem({
         )}
       </div>
 
-      {/* Action buttons — only on non-deleted, non-editing, non-bot messages */}
+      {/* Action buttons — only on non-deleted, non-editing, non-bot messages.
+          The toolbar sits ABOVE the row's top edge, not inside it. Anchored
+          inside, it covered the first line of any message wide enough to reach
+          it — you hovered to react and lost the sentence you were reacting to.
+          -translate-y-1/2 straddles the boundary, the way Slack's does. */}
       {showActions && !editing && !isDeleted && !isBotResponse && (
-        <div className="absolute right-4 top-2 bg-surface border border-border rounded-lg shadow-sm flex items-center gap-1 px-1 py-0.5">
+        <div className="absolute right-4 top-0 z-10 -translate-y-1/2 bg-surface border border-border rounded-lg shadow-pop flex items-center gap-1 px-1 py-0.5">
           {/* Quick reactions */}
           <div className="flex items-center border-r border-border pr-1 mr-0.5">
             {QUICK_EMOJIS.slice(0, 4).map((e) => (
@@ -917,7 +957,7 @@ function ThreadPanel({
   };
 
   return (
-    <div className="bg-surface hidden lg:flex lg:flex-col lg:w-80 lg:flex-shrink-0 nx-panel-in lg:rounded-panel lg:border lg:border-border lg:shadow-sm">
+    <div className="bg-surface hidden lg:flex lg:flex-col lg:w-80 lg:flex-shrink-0 border-l border-border-soft">
       {/* Header */}
       <div className="px-4 py-3 border-b border-border flex items-center justify-between font-semibold text-foreground text-sm flex-shrink-0">
         <div className="flex items-center gap-2">
@@ -3242,17 +3282,46 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
   // Build messages list with date separators
   type ListItem =
     | { type: "separator"; label: string; key: string }
-    | { type: "message"; msg: Message };
+    | { type: "message"; msg: Message; grouped: boolean };
+
+  /**
+   * Consecutive messages from one person inside this window collapse into a
+   * single visual block — one avatar, one name, one timestamp.
+   *
+   * Without it every line repeats the author's avatar and name, and a
+   * three-message thought reads as three separate events. This is the single
+   * biggest difference between a chat log and an audit log.
+   */
+  const GROUP_WINDOW_MS = 5 * 60 * 1000;
 
   const listItems: ListItem[] = [];
   let lastDateLabel = "";
+  let prev: Message | null = null;
+
   for (const msg of messages) {
     const label = dateSeparatorLabel(msg.createdAt);
-    if (label !== lastDateLabel) {
+    const newDay = label !== lastDateLabel;
+    if (newDay) {
       listItems.push({ type: "separator", label, key: `sep-${msg.id}` });
       lastDateLabel = label;
     }
-    listItems.push({ type: "message", msg });
+
+    // Anything carrying its own chrome breaks the group: a date divider above
+    // it, an urgent flag, a quote card, or a call log all need their own header
+    // to make sense on their own.
+    const grouped =
+      !newDay &&
+      prev !== null &&
+      prev.userId === msg.userId &&
+      !msg.isUrgent &&
+      !prev.isUrgent &&
+      !msg.quotedMessage &&
+      !msg.content.startsWith("[CALL_LOG] ") &&
+      !prev.content.startsWith("[CALL_LOG] ") &&
+      new Date(msg.createdAt).getTime() - new Date(prev.createdAt).getTime() < GROUP_WINDOW_MS;
+
+    listItems.push({ type: "message", msg, grouped });
+    prev = msg;
   }
   const lastMessageId = messages.length > 0 ? messages[messages.length - 1].id : null;
 
@@ -3289,33 +3358,34 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
     });
 
   return (
-    <div className="flex h-[calc(100vh-7.25rem)] lg:h-full bg-surface lg:bg-transparent overflow-hidden lg:gap-2">
+    // One continuous surface, no inter-column gap. The `lg:gap-2` here was what
+    // separated the five floating cards; with the columns flush and divided by
+    // hairlines, a gap would just reopen the seams.
+    <div className="flex h-[calc(100vh-7.25rem)] lg:h-full bg-surface overflow-hidden">
       {/* Channel sidebar — full width on mobile when no channel, hidden when channel open */}
-      <div className={`${selectedChannelId ? "hidden lg:flex" : "flex"} w-full lg:w-64 flex-shrink-0 bg-surface nx-panel-in lg:rounded-panel lg:border lg:border-border lg:shadow-sm flex-col overflow-y-auto overflow-x-hidden`}>
-        <div className="h-[50px] flex-shrink-0 flex items-center justify-between px-4 border-b border-border">
-          <span className="text-[16px] font-semibold tracking-tight text-foreground">Messages</span>
-          <button
-            onClick={() => setShowCommandPalette(true)}
-            title="Command palette (⌘K)"
-            className="flex items-center gap-1 text-[10px] text-subtle hover:text-muted transition-colors"
-          >
-            <Search className="w-2.5 h-2.5" />
-            <span>⌘K</span>
-          </button>
-        </div>
-
-        {/* Sidebar search */}
-        <div className="px-2.5 py-2 border-b border-border">
-          <div className="flex items-center gap-2 bg-surface-sunken border border-border rounded-lg px-2.5 py-1.5">
-            <Search className="w-3 h-3 text-subtle flex-shrink-0" />
+      <div className={`${selectedChannelId ? "hidden lg:flex" : "flex"} w-full lg:w-64 flex-shrink-0 bg-surface border-r border-border-soft flex-col overflow-y-auto overflow-x-hidden`}>
+        {/* One search, not three.
+            This column previously carried a "Messages" title, a ⌘K button AND a
+            filter field — stacked directly under the shell's own search box, so
+            the same screen offered four ways to search and no clue which did
+            what. The field below filters THIS list; ⌘K (still bound globally)
+            searches everything. The redundant title bar is gone. */}
+        <div className="px-2.5 py-2.5 border-b border-border-soft flex-shrink-0">
+          <div className="flex items-center gap-2 bg-surface-sunken border border-border rounded-lg px-2.5 py-1.5 focus-within:border-accent/60 focus-within:ring-2 focus-within:ring-accent/20 transition-colors">
+            <Search className="w-3.5 h-3.5 text-subtle flex-shrink-0" />
             <input
               value={sidebarSearch}
               onChange={(e) => setSidebarSearch(e.target.value)}
-              placeholder="Search channels, people…"
-              className="flex-1 text-xs bg-transparent text-foreground placeholder-subtle outline-none"
+              placeholder="Filter conversations"
+              aria-label="Filter conversations"
+              className="flex-1 text-[13px] bg-transparent text-foreground placeholder-subtle outline-none"
             />
             {sidebarSearch && (
-              <button onClick={() => setSidebarSearch("")} className="text-subtle hover:text-muted">
+              <button
+                onClick={() => setSidebarSearch("")}
+                aria-label="Clear filter"
+                className="text-subtle hover:text-muted"
+              >
                 <X className="w-3 h-3" />
               </button>
             )}
@@ -3371,7 +3441,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
 
       {/* Main area — hidden on mobile when no channel selected */}
       {!selectedChannelId ? (
-        <div className="hidden lg:flex flex-1 flex-col items-center justify-center text-muted bg-surface nx-panel-in lg:rounded-panel lg:border lg:border-border lg:shadow-sm p-8">
+        <div className="hidden lg:flex flex-1 flex-col items-center justify-center text-muted bg-surface p-8">
           <MessageSquare className="w-16 h-16 mb-4 opacity-20" />
           <p className="text-lg font-medium">Select a channel</p>
           <p className="text-sm">Or create one from the sidebar.</p>
@@ -3380,7 +3450,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
         <>
           {/* Messages pane */}
           <div
-            className="bg-surface flex-1 flex flex-col min-w-0 overflow-x-hidden relative nx-panel-in lg:rounded-panel lg:border lg:border-border lg:shadow-sm"
+            className="bg-surface flex-1 flex flex-col min-w-0 overflow-x-hidden relative"
             onDragEnter={handleDragEnter}
             onDragLeave={handleDragLeave}
             onDragOver={handleDragOver}
@@ -3657,6 +3727,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                       memberNames={memberNames}
                       isGroupChat={selectedChannel?.type !== "DIRECT"}
                       isLastInChannel={item.msg.id === lastMessageId}
+                      isContinuation={item.grouped}
                     />
                   )
                 )
@@ -3757,10 +3828,10 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                     focus-within ring is the same accent treatment as every other
                     input in the system, so the primary control reads as primary. */}
                 <div
-                  className={`flex items-end gap-2.5 rounded-xl border py-2 pl-4 pr-2 transition-all duration-150 focus-within:ring-2 ${
+                  className={`flex items-end gap-2.5 rounded-xl border py-2 pl-4 pr-2 shadow-sm transition-all duration-150 focus-within:shadow-pop focus-within:ring-2 ${
                     composerUrgent
                       ? "border-crit/50 bg-crit-soft focus-within:ring-crit/20"
-                      : "border-border bg-surface-sunken focus-within:border-accent/60 focus-within:bg-surface focus-within:ring-accent/20"
+                      : "border-border bg-surface focus-within:border-accent/60 focus-within:ring-accent/20"
                   }`}
                 >
                   {/* Hidden file input for attachments */}
@@ -3850,7 +3921,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
 
           {/* Pinned messages panel */}
           {showPins && !threadParentMsg && (
-            <div className="bg-surface hidden lg:flex lg:flex-col lg:w-80 flex-shrink-0 nx-panel-in lg:rounded-panel lg:border lg:border-border lg:shadow-sm">
+            <div className="bg-surface hidden lg:flex lg:flex-col lg:w-80 flex-shrink-0 border-l border-border-soft">
               <div className="px-4 py-3 border-b border-border flex items-center justify-between flex-shrink-0">
                 <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                   <Pin className="w-4 h-4 text-accent" />

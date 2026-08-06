@@ -56,6 +56,16 @@ export type ConnectNavItem = {
    * Nexus. Connect does not fork chat or meetings — it re-presents them.
    */
   delegatesTo?: string;
+  /**
+   * Section renders its own full-height application chrome (its own column
+   * layout, its own list pane, its own search) rather than page content.
+   *
+   * These must NOT sit inside the shell's floating panel: doing so produced a
+   * panel inside a panel — two rounded borders, two shadows, two gutters — and
+   * a second search field stacked under the top bar's. The shell drops its
+   * padding, its panel and its own search for these, and hands over the frame.
+   */
+  fullBleed?: boolean;
 };
 
 /**
@@ -82,6 +92,7 @@ export const CONNECT_NAV: ConnectNavItem[] = [
     permission: "chat.read",
     phase: 1,
     delegatesTo: "/chat",
+    fullBleed: true,
   },
   {
     href: "/connect/teams",
@@ -108,6 +119,7 @@ export const CONNECT_NAV: ConnectNavItem[] = [
     permission: "meet.join",
     phase: 1,
     delegatesTo: "/meet",
+    fullBleed: true,
   },
   {
     href: "/connect/calls",
@@ -125,6 +137,7 @@ export const CONNECT_NAV: ConnectNavItem[] = [
     permission: "drive.read",
     phase: 1,
     delegatesTo: "/drive",
+    fullBleed: true,
   },
   {
     href: "/connect/activity",
