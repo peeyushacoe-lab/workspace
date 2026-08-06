@@ -2,10 +2,25 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { User, Settings, Bell, LogOut } from "lucide-react";
+import { User, Settings, Bell, LogOut, Check } from "lucide-react";
 import type { SessionUser } from "@/lib/auth";
 import { avatarGradient } from "@/lib/avatar";
-import { PresenceStatusPicker } from "@/components/PresenceStatusPicker";
+import { PresenceDot } from "@/components/PresenceIndicator";
+import type { PresenceStatus } from "@/app/api/presence/route";
+
+/**
+ * Status options, set inline rather than through PresenceStatusPicker.
+ *
+ * The picker is its own 288px-wide popover; nesting it inside this 256px menu
+ * meant a dropdown inside a dropdown, clipped by the parent's rounded overflow.
+ * Four flat buttons do the same job in one click instead of two.
+ */
+const STATUSES: { value: PresenceStatus; label: string }[] = [
+  { value: "online", label: "Available" },
+  { value: "away", label: "Away" },
+  { value: "busy", label: "Busy" },
+  { value: "dnd", label: "Do not disturb" },
+];
 
 /**
  * The account entry point in Connect's shell.
@@ -32,7 +47,27 @@ export function ConnectProfileMenu({
   placement?: "top" | "bottom";
 }) {
   const [open, setOpen] = useState(false);
+  const [status, setStatus] = useState<PresenceStatus>("online");
+  const [savingStatus, setSavingStatus] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+
+  const setPresence = async (next: PresenceStatus) => {
+    const previous = status;
+    setStatus(next); // optimistic — a status flag should feel instant
+    setSavingStatus(true);
+    try {
+      const res = await fetch("/api/presence", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: next }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      setStatus(previous);
+    } finally {
+      setSavingStatus(false);
+    }
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -82,19 +117,34 @@ export function ConnectProfileMenu({
       {open && (
         <div
           role="menu"
-          className={`absolute z-50 w-64 overflow-hidden rounded-xl border border-border bg-surface shadow-pop ${
+          className={`absolute z-50 w-64 rounded-xl border border-border bg-surface py-1 shadow-pop ${
             placement === "top" ? "bottom-full left-0 mb-2" : "right-0 top-full mt-2"
           }`}
         >
-          <div className="border-b border-border-soft px-3.5 py-3">
+          <div className="border-b border-border-soft px-3.5 pb-3 pt-2">
             <p className="truncate text-[13.5px] font-semibold text-foreground">
               {currentUser.fullName}
             </p>
             <p className="truncate text-xs text-subtle">{currentUser.email}</p>
           </div>
 
-          <div className="border-b border-border-soft px-3.5 py-2.5">
-            <PresenceStatusPicker />
+          <div className="border-b border-border-soft py-1.5">
+            {STATUSES.map((s) => (
+              <button
+                key={s.value}
+                onClick={() => void setPresence(s.value)}
+                disabled={savingStatus}
+                className={`flex w-full items-center gap-3 px-3.5 py-1.5 text-[13px] transition-colors disabled:opacity-60 ${
+                  status === s.value
+                    ? "font-semibold text-foreground"
+                    : "font-medium text-muted hover:bg-hover hover:text-foreground"
+                }`}
+              >
+                <PresenceDot status={s.value} size="sm" />
+                <span className="flex-1 text-left">{s.label}</span>
+                {status === s.value && <Check className="h-3.5 w-3.5 text-accent" />}
+              </button>
+            ))}
           </div>
 
           <div className="py-1.5">

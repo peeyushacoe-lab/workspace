@@ -186,7 +186,13 @@ export function ConnectShell({
         Skip to content
       </a>
 
-      <div className="flex">
+      {/* This row MUST carry a definite height for full-bleed sections. Without
+          it the chain `h-screen → flex row (auto) → main (flex-1) → ChatView
+          (h-full)` breaks: a percentage height against an auto-height parent
+          resolves to auto, so ChatView grew to its content height, the composer
+          was pushed below the clipped viewport, and scrollIntoView scrolled the
+          whole document instead of the message list. */}
+      <div className={`flex ${fullBleed ? "h-screen" : "min-h-screen"}`}>
         {/* ── Sidebar (desktop) ── */}
         <nav
           aria-label="Sage Connect"

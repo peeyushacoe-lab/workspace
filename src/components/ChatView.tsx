@@ -1005,7 +1005,7 @@ function ThreadPanel({
       </div>
 
       {/* Replies */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden py-2 space-y-1">
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden py-2 space-y-1">
         {messages.length === 0 ? (
           <div className="text-center text-muted py-8">
             <CornerDownRight className="w-8 h-8 mx-auto mb-2 opacity-20" />
@@ -1169,7 +1169,7 @@ function ChannelInfoPanel({
         ))}
       </div>
 
-      <div className="flex-1 overflow-y-auto overflow-x-hidden py-2">
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden py-2">
         {activeTab === "members" && (
           channel.members.length === 0 ? (
             <p className="text-center text-xs text-subtle py-8">No members.</p>
@@ -3071,9 +3071,18 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
     return () => source.close();
   }, [selectedChannelId]);
 
-  // Auto-scroll on new messages
+  // Auto-scroll on new messages.
+  //
+  // Scroll the message container itself rather than calling scrollIntoView on
+  // the sentinel. scrollIntoView walks up to the nearest *scrollable* ancestor
+  // — if the list isn't scrollable for any reason (a broken height chain, a
+  // very short thread) that ancestor is the document, and every incoming
+  // message yanks the whole page up and down. Setting scrollTop on the list can
+  // only ever move the list.
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const list = messagesEndRef.current?.parentElement;
+    if (!list) return;
+    list.scrollTo({ top: list.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
   const sendMessage = async () => {
@@ -3662,7 +3671,11 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
     // One continuous surface, no inter-column gap. The `lg:gap-2` here was what
     // separated the five floating cards; with the columns flush and divided by
     // hairlines, a gap would just reopen the seams.
-    <div className="flex h-[calc(100vh-7.25rem)] lg:h-full bg-surface overflow-hidden">
+    // Fills whatever the shell gives it. The old `h-[calc(100vh-7.25rem)]`
+    // hardcoded Nexus's chrome (top bar + mobile bottom tab bar); Connect has a
+    // single 56px header and no bottom tabs, so that arithmetic was wrong here
+    // and the composer ended up below the fold on mobile.
+    <div className="flex h-full min-h-0 bg-surface overflow-hidden">
       {/* Channel sidebar — full width on mobile when no channel, hidden when channel open */}
       <div className={`${selectedChannelId ? "hidden lg:flex" : "flex"} w-full lg:w-64 flex-shrink-0 bg-surface border-r border-border-soft flex-col overflow-y-auto overflow-x-hidden`}>
         {/* One search, not three.
@@ -3693,7 +3706,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto overflow-x-hidden p-2.5">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-2.5">
           <ChannelSection
             label="Channels"
             channels={publicChannels.filter((c) => !sidebarSearch || c.name.toLowerCase().includes(sidebarSearch.toLowerCase()))}
@@ -3751,7 +3764,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
         <>
           {/* Messages pane */}
           <div
-            className="bg-surface flex-1 flex flex-col min-w-0 overflow-x-hidden relative"
+            className="bg-surface flex-1 flex flex-col min-w-0 min-h-0 overflow-x-hidden relative"
             onDragEnter={handleDragEnter}
             onDragLeave={handleDragLeave}
             onDragOver={handleDragOver}
@@ -4014,7 +4027,11 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto overflow-x-hidden py-2 bg-surface">
+            {/* min-h-0 is load-bearing: a flex item defaults to min-height:auto,
+                which resolves to its content height, so without it this list
+                refuses to shrink, grows to fit every message, and shoves the
+                composer off the bottom of the screen instead of scrolling. */}
+            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden py-2 bg-surface">
               {loadingMessages ? (
                 <div className="text-center text-muted py-8 text-sm">Loading messages…</div>
               ) : messages.length === 0 ? (
@@ -4292,7 +4309,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                   <X className="w-4 h-4" />
                 </button>
               </div>
-              <div className="flex-1 overflow-y-auto overflow-x-hidden py-2">
+              <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden py-2">
                 {pinnedMessages.length === 0 ? (
                   <div className="text-center text-muted py-8">
                     <Pin className="w-8 h-8 mx-auto mb-2 opacity-20" />
