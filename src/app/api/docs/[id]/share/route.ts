@@ -3,10 +3,9 @@ import { cookies } from "next/headers";
 import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redis } from "@/lib/redis";
+import { docShareKey } from "@/lib/doc-access";
 
 const DOC_MARKER = "document";
-
-export function docShareKey(docId: string) { return `doc:share:doc:${docId}`; }
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -77,17 +76,3 @@ export async function DELETE(request: Request, { params }: Params) {
   return NextResponse.json({ ok: true });
 }
 
-/** Shared helper other doc routes (PATCH, collab) use to check access without
- * duplicating the redis-hash lookup logic. Returns the caller's effective
- * role, or null if they have no access at all. */
-export async function getDocAccessRole(
-  docId: string,
-  doc: { userId: string },
-  user: { id: string; role: string },
-): Promise<"owner" | "editor" | "viewer" | null> {
-  if (doc.userId === user.id || ["ADMIN", "CEO", "CISO"].includes(user.role)) return "owner";
-  const role = await redis.hget(docShareKey(docId), user.id) as string | null;
-  if (role === "editor") return "editor";
-  if (role === "viewer") return "viewer";
-  return null;
-}

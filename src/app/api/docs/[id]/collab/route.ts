@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redis } from "@/lib/redis";
-import { getDocAccessRole } from "../share/route";
+import { getDocAccessRole } from "@/lib/doc-access";
 
 export const dynamic = "force-dynamic";
 

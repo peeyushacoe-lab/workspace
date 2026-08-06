@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { checkConflict } from "@/lib/doc-conflict";
-import { getDocAccessRole } from "./share/route";
+import { getDocAccessRole } from "@/lib/doc-access";
 
 const DOC_MARKER = "document";
 

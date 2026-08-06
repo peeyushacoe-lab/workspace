@@ -129,3 +129,51 @@ Then, logged in on `nexus.cybersage.uk`, open `docs.cybersage.uk` in the same
 browser: you should already be authenticated. If you land on the login page,
 `COOKIE_DOMAIN` is not set or was set after the cookie was issued — sign out and
 back in once.
+
+---
+
+## Sage Connect (`connect.cybersage.uk`)
+
+Connect is the odd one out. `docs.`/`drive.`/`meet.` are single Nexus apps on a
+prettier hostname, still wearing (a slim version of) the Nexus shell. Connect is
+a **second product surface** over the same deployment: its own route group
+(`src/app/(connect)`), its own shell (`ConnectShell`), its own navigation. The
+subdomain machinery is the same; what it serves is not.
+
+Section paths come from `CONNECT_NAV` in `src/lib/connect.ts` — the entry in
+`APP_SUBDOMAINS` derives its aliases from that array rather than listing them,
+so adding a section to the nav routes it on the subdomain automatically.
+
+**Why aliases and not the single-app suffix rule.** `meet.` uses the catch-all
+rule: any unmatched path becomes `/meet/<path>`, which it must, because meeting
+room ids are unbounded. Connect's surface is enumerable, so it declares the whole
+thing. That is what makes `connect.cybersage.uk/inbox` bounce to the hub instead
+of rewriting to `/connect/inbox` and 404-ing — and people *will* paste hub links
+at Connect.
+
+### Verifying after deploy
+
+```bash
+# Connect Home
+curl -sI https://connect.cybersage.uk | head -1
+
+# vanity section path → /connect/chat
+curl -sI https://connect.cybersage.uk/chat | head -1
+
+# a hub route must 30x back to Nexus, not 404
+curl -sI https://connect.cybersage.uk/inbox | head -1
+
+# the hub still serves the same pages directly
+curl -sI https://nexus.cybersage.uk/connect | head -1
+```
+
+Signed in on `nexus.cybersage.uk`, opening `connect.cybersage.uk` must not
+prompt for login — that is `COOKIE_DOMAIN=.cybersage.uk` doing its job.
+
+### Preview deployments
+
+`rootDomain()` returns null for `*.vercel.app` and other platform hostnames. On a
+preview, subdomain routing switches off and cross-product links fall back to
+relative paths — without that guard, the "Sage Connect" link in the Nexus sidebar
+would point at `connect.vercel.app`, which does not exist. `npm run check:connect`
+asserts this.

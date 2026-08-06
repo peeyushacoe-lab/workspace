@@ -25,6 +25,8 @@
  *   3. Set COOKIE_DOMAIN=.cybersage.uk so one login covers all subdomains.
  */
 
+import { CONNECT_NAV, CONNECT_ROOT } from "@/lib/connect";
+
 export type AppSubdomain = {
   /** Hostname label, e.g. "docs" in docs.cybersage.uk. */
   host: string;
@@ -59,6 +61,25 @@ export const APP_SUBDOMAINS: AppSubdomain[] = [
   },
   { host: "drive", label: "Drive", home: "/drive", owns: ["/drive"] },
   { host: "meet",  label: "Meet",  home: "/meet",  owns: ["/meet"] },
+  // Sage Connect — the communication product. Unlike docs/drive/meet this is not
+  // one app on a prettier URL; it is a second shell over the same deployment, so
+  // it owns a whole path subtree and renders its own navigation. See
+  // src/lib/connect.ts for why it is a route group rather than a second app.
+  //
+  // Aliases are declared explicitly (rather than relying on the single-app
+  // suffix rule below) because Connect has nine sections and people will paste
+  // hub links at it. With the suffix rule, `connect.cybersage.uk/inbox` would
+  // rewrite to `/connect/inbox` and 404; with explicit aliases it matches
+  // nothing, so shouldRedirectToHub bounces it to Nexus where it belongs.
+  {
+    host: "connect",
+    label: "Sage Connect",
+    home: "/connect",
+    owns: ["/connect"],
+    aliases: CONNECT_NAV
+      .filter((i) => i.href !== CONNECT_ROOT)
+      .map((i) => ({ from: i.href.slice(CONNECT_ROOT.length), to: i.href })),
+  },
 ];
 
 /**
@@ -79,6 +100,8 @@ export const SUBDOMAIN_NAV: Record<string, { href: string; label: string }[]> = 
     { href: "/meet", label: "Meetings" },
     { href: "/meet/intelligence", label: "Meeting intelligence" },
   ],
+  // Connect deliberately has no entry: it renders ConnectShell (its own full
+  // product navigation), not the slim single-app sidebar this map drives.
 };
 
 /** Portal path → the subdomain that owns it, if any. */
@@ -94,6 +117,18 @@ export function subdomainForPath(path: string): AppSubdomain | null {
  * Root domain shared by every hostname, e.g. "cybersage.uk".
  * Derived from NEXT_PUBLIC_APP_URL so local/staging deploys don't need it set.
  */
+/**
+ * Hosting platforms whose domains must never be treated as our root.
+ *
+ * A preview deployment sets NEXT_PUBLIC_APP_URL to something like
+ * `cybersage-mail.vercel.app`. Stripping the leading label yields "vercel.app",
+ * and every cross-product link then points at `connect.vercel.app` — a hostname
+ * we do not own and that resolves to nothing. Returning null instead disables
+ * subdomain routing on previews, which is the correct behaviour there anyway:
+ * a preview serves the whole path space from one hostname.
+ */
+const PLATFORM_DOMAINS = ["vercel.app", "netlify.app", "pages.dev", "onrender.com", "fly.dev"];
+
 export function rootDomain(): string | null {
   const explicit = process.env.NEXT_PUBLIC_ROOT_DOMAIN;
   if (explicit) return explicit.replace(/^\./, "");
@@ -105,7 +140,9 @@ export function rootDomain(): string | null {
     const parts = host.split(".");
     // Strip the leading app label ("nexus") to get the registrable domain.
     // Two-label hosts (localhost, example.com) are returned unchanged.
-    return parts.length > 2 ? parts.slice(1).join(".") : host;
+    const derived = parts.length > 2 ? parts.slice(1).join(".") : host;
+    if (PLATFORM_DOMAINS.includes(derived)) return null;
+    return derived;
   } catch {
     return null;
   }
@@ -182,6 +219,18 @@ export function appUrl(path: string): string {
 }
 
 /**
+ * Paths a subdomain will render even though it doesn't "own" them, because
+ * they're part of being signed in anywhere.
+ */
+const SHARED_PATHS = [
+  "/settings", "/profile", "/notifications", "/setup-passkey", "/download",
+];
+
+function isShared(pathname: string): boolean {
+  return SHARED_PATHS.some(p => pathname === p || pathname.startsWith(`${p}/`));
+}
+
+/**
  * Inverse of the rewrite: given a subdomain and the incoming pathname, the
  * portal path to render. Used by middleware.
  */
@@ -193,6 +242,11 @@ export function subdomainToPath(sub: AppSubdomain, pathname: string): string {
     return pathname;
   }
 
+  // Shared signed-in paths render as themselves on every hostname. Without this
+  // the single-app suffix rule below rewrote meet.cybersage.uk/settings into
+  // /meet/settings, which 404s.
+  if (isShared(pathname)) return pathname;
+
   // Vanity alias, e.g. /sheets/abc → /apps/sheets/abc.
   for (const alias of sub.aliases ?? []) {
     if (pathname === alias.from || pathname.startsWith(`${alias.from}/`)) {
@@ -200,9 +254,14 @@ export function subdomainToPath(sub: AppSubdomain, pathname: string): string {
     }
   }
 
-  // Single-app subdomain: treat the path as a suffix of its home, so
-  // meet.cybersage.uk/room123 → /meet/room123.
-  if (sub.owns.length === 1) {
+  // Single-app subdomain with no alias table: treat the path as a suffix of its
+  // home, so meet.cybersage.uk/room123 → /meet/room123. This is a catch-all by
+  // design — meet has unbounded room ids that cannot be enumerated.
+  //
+  // A subdomain that DOES declare aliases has enumerated its whole surface, so
+  // anything unmatched is a hub route rather than a deep link. Falling through
+  // returns it unchanged and lets shouldRedirectToHub bounce it.
+  if (sub.owns.length === 1 && !sub.aliases?.length) {
     return `${sub.home}${pathname}`;
   }
 
@@ -210,14 +269,6 @@ export function subdomainToPath(sub: AppSubdomain, pathname: string): string {
   // `shouldRedirectToHub` decides whether it belongs here at all.
   return pathname;
 }
-
-/**
- * Paths a subdomain will render even though it doesn't "own" them, because
- * they're part of being signed in anywhere.
- */
-const SHARED_PATHS = [
-  "/settings", "/profile", "/notifications", "/setup-passkey", "/download",
-];
 
 /**
  * True when a path should bounce to the hub rather than render on this
@@ -228,13 +279,20 @@ const SHARED_PATHS = [
  * sidebar, so the "app" was really the whole product wearing a different
  * hostname. An app subdomain should behave like docs.google.com — its own
  * apps and nothing else.
+ *
+ * Ownership is tested against the MAPPED path, not the incoming one. Middleware
+ * calls this before subdomainToPath, and on a single-app subdomain the incoming
+ * path is a bare suffix — `meet.cybersage.uk/room123` arrives as `/room123`,
+ * which owns nothing. Testing the raw path bounced every meeting deep link to
+ * the hub.
  */
 export function shouldRedirectToHub(sub: AppSubdomain, pathname: string): boolean {
   if (pathname === "/") return false;
   if (isPassthrough(pathname)) return false;
-  if (SHARED_PATHS.some(p => pathname === p || pathname.startsWith(`${p}/`))) return false;
+  if (isShared(pathname)) return false;
 
-  const owned = sub.owns.some(o => pathname === o || pathname.startsWith(`${o}/`));
+  const mapped = subdomainToPath(sub, pathname);
+  const owned = sub.owns.some(o => mapped === o || mapped.startsWith(`${o}/`));
   const aliased = (sub.aliases ?? []).some(
     a => pathname === a.from || pathname.startsWith(`${a.from}/`),
   );

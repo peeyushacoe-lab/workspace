@@ -81,3 +81,21 @@ export async function resolveDocAccess(
 export function canEdit(access: DocAccess): boolean {
   return access === "owner" || access === "editor";
 }
+
+/** Redis hash key for a doc's share list. */
+export function docShareKey(docId: string): string {
+  return `doc:share:doc:${docId}`;
+}
+
+/** Returns the caller's effective role on a doc, or null if no access. */
+export async function getDocAccessRole(
+  docId: string,
+  doc: { userId: string },
+  user: { id: string; role: string },
+): Promise<"owner" | "editor" | "viewer" | null> {
+  if (doc.userId === user.id || ELEVATED_ROLES.includes(user.role)) return "owner";
+  const role = await redis.hget(docShareKey(docId), user.id) as string | null;
+  if (role === "editor") return "editor";
+  if (role === "viewer") return "viewer";
+  return null;
+}

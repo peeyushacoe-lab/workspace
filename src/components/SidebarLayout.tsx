@@ -6,8 +6,9 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import {
   LogOut, Menu, X, Settings, Inbox, MessageSquare, Video, Sparkles, Search,
-  PanelLeftClose, PanelLeftOpen,
+  PanelLeftClose, PanelLeftOpen, ArrowUpRight,
 } from "lucide-react";
+import { appUrl } from "@/lib/subdomains";
 import { iconSize } from "@/components/icons";
 import { AppSpine, SPINE_WIDTH } from "./AppSpine";
 import { NavRail } from "./NavRail";
@@ -150,6 +151,15 @@ export function SidebarLayout({
           <AppSpine groups={groups} activeId={activeId} unreadCount={unreadCount} />
           <div className="flex flex-col gap-0.5 px-2.5 pb-3">
             <div className="my-1.5 h-px bg-border-soft mx-1" aria-hidden />
+            {/* Doorway to the sibling product. Same session — no second login. */}
+            <a
+              href={appUrl("/connect")}
+              className="flex h-10 items-center gap-3 rounded-lg px-3 text-[13px] font-medium text-muted hover:bg-hover hover:text-foreground transition-colors"
+            >
+              <MessageSquare className={`${iconSize("md")} flex-shrink-0`} />
+              Sage Connect
+              <ArrowUpRight className={`${iconSize("sm")} ml-auto flex-shrink-0 text-subtle`} />
+            </a>
             <Link
               href="/settings"
               className="flex h-10 items-center gap-3 rounded-lg px-3 text-[13px] font-medium text-muted hover:bg-hover hover:text-foreground transition-colors"

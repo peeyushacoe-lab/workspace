@@ -34,6 +34,7 @@ const protectedRoutes = [
   "/setup-passkey",
   "/mentor",
   "/hr",
+  "/connect",
 ];
 
 const validRoles = new Set<string>([

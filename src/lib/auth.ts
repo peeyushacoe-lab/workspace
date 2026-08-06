@@ -1,5 +1,6 @@
 import type { UserRole } from "@/generated/prisma/enums";
 import { verifyPayload } from "@/lib/session-crypto";
+import { connectRoutePermissions } from "@/lib/connect";
 
 export type SessionUser = {
   id: string;
@@ -169,6 +170,10 @@ export const pathAccess: Array<{ prefix: string; roles: UserRole[] }> = [
   { prefix: "/brain",          roles: NON_HR_ROLES },
   { prefix: "/internship",     roles: ["INTERNSHIP", "ADMIN", "CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER"] },
   { prefix: "/mentor",         roles: MGMT_ROLES },
+  // Sage Connect. Mirrors /chat exactly — it is the same communication surface
+  // under its own shell, so the HR account is excluded here for the same reason
+  // it is there. Per-section permissions come from connectRoutePermissions().
+  { prefix: "/connect",        roles: NON_HR_ROLES },
 ];
 
 const validRoles = new Set<UserRole>(ALL_ROLES);
@@ -274,6 +279,10 @@ export const routePermission: Array<{ prefix: string; permission: string | null 
   // /internship gate (interns + their managers), so we deliberately do not add a
   // narrower rule here that would lock managers out.
   { prefix: "/internship",           permission: "internship.view" },
+  // Sage Connect — derived from CONNECT_NAV so a section cannot appear in the
+  // sidebar without a gate, or be gated without appearing. Connect introduces no
+  // new permission keys, so this needs no catalog reseed and no permEpoch bump.
+  ...connectRoutePermissions(),
   // Universal / self-service — authentication only.
   { prefix: "/settings",       permission: null },
   { prefix: "/profile",        permission: null },
