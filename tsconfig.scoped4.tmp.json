@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "noEmit": true },
+  "include": [
+    "next-env.d.ts",
+    "src/components/connect/ui/button.tsx",
+    "src/components/connect/ui/dialog.tsx",
+    "src/components/connect/ui/dropdown.tsx",
+    "src/components/connect/ui/tabs.tsx",
+    "src/components/connect/ui/tooltip.tsx",
+    "src/components/connect/ui/index.ts"
+  ]
+}

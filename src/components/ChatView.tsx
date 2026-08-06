@@ -66,6 +66,7 @@ import { toast } from "sonner";
 import { useCall } from "./call/CallProvider";
 import { avatarGradient } from "@/lib/avatar";
 import { PresenceDot } from "@/components/PresenceIndicator";
+import { Dialog, Button, Menu, MenuItem } from "@/components/connect/ui";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -770,22 +771,6 @@ const MessageItem = memo(function MessageItem({
   };
   const isBotResponse = msg.content.startsWith("[BOT_RESPONSE] ");
 
-  // Close the context menu on outside click, Escape, or scroll — a fixed-position
-  // menu would otherwise float detached from its message as the list moves.
-  useEffect(() => {
-    if (!menuPos) return;
-    const close = () => setMenuPos(null);
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && close();
-    document.addEventListener("mousedown", close);
-    document.addEventListener("keydown", onKey);
-    window.addEventListener("scroll", close, true);
-    return () => {
-      document.removeEventListener("mousedown", close);
-      document.removeEventListener("keydown", onKey);
-      window.removeEventListener("scroll", close, true);
-    };
-  }, [menuPos]);
-
   const copyText = async () => {
     try {
       await navigator.clipboard.writeText(msg.content);
@@ -1162,32 +1147,32 @@ const MessageItem = memo(function MessageItem({
       )}
 
       {menuPos && (
-        <div
-          role="menu"
-          onMouseDown={(e) => e.stopPropagation()}
+        <Menu
+          onClose={() => setMenuPos(null)}
+          closeOnScroll
           style={{
             position: "fixed",
             // Keep the menu on-screen when the message sits near an edge.
             left: Math.min(menuPos.x, (typeof window !== "undefined" ? window.innerWidth : 0) - 208),
             top: Math.min(menuPos.y, (typeof window !== "undefined" ? window.innerHeight : 0) - 300),
           }}
-          className="z-50 w-52 rounded-xl border border-border bg-surface py-1.5 shadow-pop"
+          className="w-52"
         >
           {onQuoteReply && (
-            <MessageMenuItem icon={ReplyIcon} label="Reply" onClick={() => { setMenuPos(null); onQuoteReply(msg); }} />
+            <MenuItem icon={ReplyIcon} label="Reply" onClick={() => { setMenuPos(null); onQuoteReply(msg); }} />
           )}
           {onReply && (
-            <MessageMenuItem icon={CornerDownRight} label="Reply in thread" onClick={() => { setMenuPos(null); onReply(msg); }} />
+            <MenuItem icon={CornerDownRight} label="Reply in thread" onClick={() => { setMenuPos(null); onReply(msg); }} />
           )}
-          <MessageMenuItem icon={Copy} label="Copy text" onClick={() => { setMenuPos(null); void copyText(); }} />
-          <MessageMenuItem
+          <MenuItem icon={Copy} label="Copy text" onClick={() => { setMenuPos(null); void copyText(); }} />
+          <MenuItem
             icon={Languages}
             label={translating ? "Translating…" : "Translate"}
             disabled={translating}
             onClick={() => { setMenuPos(null); void translateMessage(); }}
           />
           {!isFileAttachment && (
-            <MessageMenuItem
+            <MenuItem
               icon={ListPlus}
               label={taskCreated ? "Task created" : "Create task"}
               disabled={creatingTask || taskCreated}
@@ -1195,7 +1180,7 @@ const MessageItem = memo(function MessageItem({
             />
           )}
           {onPin && (
-            <MessageMenuItem
+            <MenuItem
               icon={msg.isPinned ? PinOff : Pin}
               label={msg.isPinned ? "Unpin" : "Pin to conversation"}
               onClick={() => { setMenuPos(null); onPin(msg.id, !msg.isPinned); }}
@@ -1204,44 +1189,15 @@ const MessageItem = memo(function MessageItem({
           {isOwn && (
             <>
               <div className="my-1 h-px bg-border-soft" />
-              <MessageMenuItem icon={Edit3} label="Edit" onClick={() => { setMenuPos(null); setEditing(true); setShowActions(false); }} />
-              <MessageMenuItem icon={Trash2} label="Delete" destructive onClick={() => { setMenuPos(null); onDelete(msg.id); }} />
+              <MenuItem icon={Edit3} label="Edit" onClick={() => { setMenuPos(null); setEditing(true); setShowActions(false); }} />
+              <MenuItem icon={Trash2} label="Delete" destructive onClick={() => { setMenuPos(null); onDelete(msg.id); }} />
             </>
           )}
-        </div>
+        </Menu>
       )}
     </div>
   );
 });
-
-/** One row of the message context menu. */
-function MessageMenuItem({
-  icon: Icon,
-  label,
-  onClick,
-  disabled = false,
-  destructive = false,
-}: {
-  icon: LucideIcon;
-  label: string;
-  onClick: () => void;
-  disabled?: boolean;
-  destructive?: boolean;
-}) {
-  return (
-    <button
-      role="menuitem"
-      onClick={onClick}
-      disabled={disabled}
-      className={`flex w-full items-center gap-3 px-3.5 py-1.5 text-[13px] font-medium transition-colors disabled:opacity-40 ${
-        destructive ? "text-muted hover:bg-crit-soft hover:text-crit" : "text-muted hover:bg-hover hover:text-foreground"
-      }`}
-    >
-      <Icon className="h-4 w-4 flex-shrink-0" />
-      {label}
-    </button>
-  );
-}
 
 // ─── Date Separator ───────────────────────────────────────────────────────────
 
@@ -1635,92 +1591,85 @@ function NewChannelModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="bg-surface rounded-2xl shadow-xl p-6 w-full max-w-md mx-4 border border-border">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-foreground">
-            {teamId ? "Create Team Channel" : "Create Channel"}
-          </h2>
-          <button onClick={onClose} className="text-muted hover:text-foreground">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-muted mb-1">
-              Channel Name
-            </label>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value.toLowerCase().replace(/\s+/g, "-"))}
-              onKeyDown={(e) => { if (e.key === "Enter" && name.trim() && !creating) void submit(); }}
-              placeholder="e.g. engineering"
-              className="w-full px-3 py-2 border border-border rounded-xl text-sm focus:ring-2 focus:ring-accent focus:bg-surface outline-none bg-surface text-foreground placeholder-muted"
-              autoFocus
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-muted mb-1">
-              Description (optional)
-            </label>
-            <input
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="What is this channel about?"
-              className="w-full px-3 py-2 border border-border rounded-xl text-sm focus:ring-2 focus:ring-accent focus:bg-surface outline-none bg-surface text-foreground placeholder-muted"
-            />
-          </div>
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={isPrivate}
-              onChange={(e) => setIsPrivate(e.target.checked)}
-              className="rounded"
-            />
-            <span className="text-sm text-foreground">Private channel</span>
-          </label>
-          {!teamId && (
-            <label className="flex items-start gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={isBroadcast}
-                onChange={(e) => setIsBroadcast(e.target.checked)}
-                className="rounded mt-0.5"
-              />
-              <div>
-                <span className="text-sm text-foreground flex items-center gap-1.5">
-                  <Megaphone className="w-3.5 h-3.5 text-muted" />
-                  Broadcast channel
-                </span>
-                <p className="text-[11px] text-subtle mt-0.5">Only you can post. Everyone can follow and read.</p>
-              </div>
-            </label>
-          )}
-          {teamId && (
-            <p className="text-[11px] text-subtle">
-              {isPrivate
-                ? "Only you will be added — invite others from the channel's member list."
-                : "Everyone currently on this team will be added automatically."}
-            </p>
-          )}
-        </div>
-        <div className="flex gap-3 mt-6">
-          <button
-            onClick={onClose}
-            className="flex-1 px-4 py-2 border border-border rounded-xl text-sm font-semibold text-muted hover:bg-surface-sunken"
-          >
+    <Dialog
+      title={teamId ? "Create Team Channel" : "Create Channel"}
+      onClose={onClose}
+      footer={
+        <>
+          <Button variant="secondary" className="flex-1 border border-border rounded-xl" onClick={onClose}>
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
+            className="flex-1 rounded-xl"
             onClick={() => void submit()}
             disabled={!name.trim() || creating}
-            className="flex-1 px-4 py-2 bg-accent text-accent-foreground rounded-xl text-sm font-semibold hover:bg-accent-hover disabled:opacity-50"
+            loading={creating}
           >
             {creating ? "Creating…" : "Create Channel"}
-          </button>
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <div>
+          <label className="block text-xs font-semibold text-muted mb-1">
+            Channel Name
+          </label>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value.toLowerCase().replace(/\s+/g, "-"))}
+            onKeyDown={(e) => { if (e.key === "Enter" && name.trim() && !creating) void submit(); }}
+            placeholder="e.g. engineering"
+            className="w-full px-3 py-2 border border-border rounded-xl text-sm focus:ring-2 focus:ring-accent focus:bg-surface outline-none bg-surface text-foreground placeholder-muted"
+            autoFocus
+          />
         </div>
+        <div>
+          <label className="block text-xs font-semibold text-muted mb-1">
+            Description (optional)
+          </label>
+          <input
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="What is this channel about?"
+            className="w-full px-3 py-2 border border-border rounded-xl text-sm focus:ring-2 focus:ring-accent focus:bg-surface outline-none bg-surface text-foreground placeholder-muted"
+          />
+        </div>
+        <label className="flex items-center gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={isPrivate}
+            onChange={(e) => setIsPrivate(e.target.checked)}
+            className="rounded"
+          />
+          <span className="text-sm text-foreground">Private channel</span>
+        </label>
+        {!teamId && (
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={isBroadcast}
+              onChange={(e) => setIsBroadcast(e.target.checked)}
+              className="rounded mt-0.5"
+            />
+            <div>
+              <span className="text-sm text-foreground flex items-center gap-1.5">
+                <Megaphone className="w-3.5 h-3.5 text-muted" />
+                Broadcast channel
+              </span>
+              <p className="text-[11px] text-subtle mt-0.5">Only you can post. Everyone can follow and read.</p>
+            </div>
+          </label>
+        )}
+        {teamId && (
+          <p className="text-[11px] text-subtle">
+            {isPrivate
+              ? "Only you will be added — invite others from the channel's member list."
+              : "Everyone currently on this team will be added automatically."}
+          </p>
+        )}
       </div>
-    </div>
+    </Dialog>
   );
 }
 
@@ -1808,107 +1757,98 @@ function NewGroupDMModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="bg-surface rounded-2xl shadow-xl p-6 w-full max-w-md mx-4 border border-border">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-foreground">
-            {selected.size > 1 ? "New Group Message" : "New Direct Message"}
-          </h2>
-          <button onClick={onClose} className="text-muted hover:text-foreground">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <p className="text-xs text-muted mb-3">
-          Select one person for a DM or multiple for a group conversation.
-        </p>
-
-        {/* Search */}
-        <div className="flex items-center gap-2 px-3 py-2 border border-border rounded-xl mb-3 bg-surface">
-          <Search className="w-3.5 h-3.5 text-muted" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search people…"
-            className="flex-1 text-sm outline-none bg-transparent text-foreground placeholder-muted"
-          />
-        </div>
-
-        {/* Selected chips */}
-        {selected.size > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-3">
-            {Array.from(selected).map((id) => {
-              const u = users.find((x) => x.id === id);
-              return u ? (
-                <span
-                  key={id}
-                  className="flex items-center gap-1 bg-accent/10 text-accent text-xs px-2.5 py-1 rounded-full"
-                >
-                  {u.fullName}
-                  <button onClick={() => toggle(id)} className="ml-0.5 opacity-60 hover:opacity-100">
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              ) : null;
-            })}
-          </div>
-        )}
-
-        {/* User list */}
-        <div className="max-h-52 overflow-y-auto space-y-0.5 mb-4">
-          {loading ? (
-            <div className="flex items-center justify-center py-6">
-              <Loader2 className="w-5 h-5 animate-spin text-muted" />
-            </div>
-          ) : filtered.length === 0 ? (
-            <p className="text-center text-xs text-muted py-4">No users found</p>
-          ) : (
-            filtered.map((u) => (
-              <button
-                key={u.id}
-                onClick={() => toggle(u.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left transition-colors ${
-                  selected.has(u.id)
-                    ? "bg-accent/10"
-                    : "hover:bg-surface"
-                }`}
-              >
-                <div
-                  className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${
-                    selected.has(u.id)
-                      ? "bg-accent border-accent"
-                      : "border-border"
-                  }`}
-                >
-                  {selected.has(u.id) && <Check className="w-3 h-3 text-accent-foreground" />}
-                </div>
-                <Avatar name={u.fullName} avatarUrl={u.avatarUrl} size="sm" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-foreground truncate">{u.fullName}</p>
-                  <p className="text-[10px] text-muted truncate">{u.email}</p>
-                </div>
-              </button>
-            ))
-          )}
-        </div>
-
-        <div className="flex gap-3">
-          <button
-            onClick={onClose}
-            className="flex-1 px-4 py-2 border border-border rounded-xl text-sm font-semibold text-muted hover:bg-surface-sunken"
-          >
+    <Dialog
+      title={selected.size > 1 ? "New Group Message" : "New Direct Message"}
+      onClose={onClose}
+      footer={
+        <>
+          <Button variant="secondary" className="flex-1 border border-border rounded-xl" onClick={onClose}>
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
+            className="flex-1 rounded-xl"
             onClick={submit}
             disabled={selected.size === 0 || creating}
-            className="flex-1 px-4 py-2 bg-accent text-accent-foreground rounded-xl text-sm font-semibold hover:bg-accent-hover disabled:opacity-50"
+            loading={creating}
           >
             {creating ? "Creating…" : selected.size === 1 ? "Send Message" : `Start Group (${selected.size})`}
-          </button>
-        </div>
+          </Button>
+        </>
+      }
+    >
+      <p className="text-xs text-muted mb-3">
+        Select one person for a DM or multiple for a group conversation.
+      </p>
+
+      {/* Search */}
+      <div className="flex items-center gap-2 px-3 py-2 border border-border rounded-xl mb-3 bg-surface">
+        <Search className="w-3.5 h-3.5 text-muted" />
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search people…"
+          className="flex-1 text-sm outline-none bg-transparent text-foreground placeholder-muted"
+        />
       </div>
-    </div>
+
+      {/* Selected chips */}
+      {selected.size > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {Array.from(selected).map((id) => {
+            const u = users.find((x) => x.id === id);
+            return u ? (
+              <span
+                key={id}
+                className="flex items-center gap-1 bg-accent/10 text-accent text-xs px-2.5 py-1 rounded-full"
+              >
+                {u.fullName}
+                <button onClick={() => toggle(id)} className="ml-0.5 opacity-60 hover:opacity-100">
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            ) : null;
+          })}
+        </div>
+      )}
+
+      {/* User list */}
+      <div className="max-h-52 overflow-y-auto space-y-0.5 mb-4">
+        {loading ? (
+          <div className="flex items-center justify-center py-6">
+            <Loader2 className="w-5 h-5 animate-spin text-muted" />
+          </div>
+        ) : filtered.length === 0 ? (
+          <p className="text-center text-xs text-muted py-4">No users found</p>
+        ) : (
+          filtered.map((u) => (
+            <button
+              key={u.id}
+              onClick={() => toggle(u.id)}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left transition-colors ${
+                selected.has(u.id)
+                  ? "bg-accent/10"
+                  : "hover:bg-surface"
+              }`}
+            >
+              <div
+                className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${
+                  selected.has(u.id)
+                    ? "bg-accent border-accent"
+                    : "border-border"
+                }`}
+              >
+                {selected.has(u.id) && <Check className="w-3 h-3 text-accent-foreground" />}
+              </div>
+              <Avatar name={u.fullName} avatarUrl={u.avatarUrl} size="sm" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-foreground truncate">{u.fullName}</p>
+                <p className="text-[10px] text-muted truncate">{u.email}</p>
+              </div>
+            </button>
+          ))
+        )}
+      </div>
+    </Dialog>
   );
 }
 
@@ -1938,70 +1878,63 @@ function SummaryModal({
       : "text-subtle";
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="bg-surface rounded-2xl shadow-xl p-6 w-full max-w-lg mx-4 border border-border">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-accent" />
-            <h2 className="text-lg font-semibold text-foreground">
-              #{channelName} Summary
-            </h2>
-          </div>
-          <button onClick={onClose} className="text-muted hover:text-foreground">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Summary */}
-        <div className="bg-surface border border-border rounded-xl p-4 mb-4">
-          <p className="text-sm text-foreground leading-relaxed">{summary.summary}</p>
-          <p className={`text-[10px] font-semibold mt-2 ${sentimentColor}`}>
-            Sentiment: {summary.sentiment}
-          </p>
-        </div>
-
-        {/* Key Points */}
-        {summary.keyPoints.length > 0 && (
-          <div className="mb-4">
-            <h3 className="text-xs font-semibold text-muted mb-2">
-              Key Points
-            </h3>
-            <ul className="space-y-1.5">
-              {summary.keyPoints.map((point, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-foreground">
-                  <span className="w-1.5 h-1.5 rounded-full bg-accent mt-1.5 flex-shrink-0" />
-                  {point}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* Action Items */}
-        {summary.actionItems.length > 0 && (
-          <div className="mb-4">
-            <h3 className="text-xs font-semibold text-muted mb-2">
-              Action Items
-            </h3>
-            <ul className="space-y-1.5">
-              {summary.actionItems.map((item, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-foreground">
-                  <Check className="w-3.5 h-3.5 text-ok mt-0.5 flex-shrink-0" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        <button
-          onClick={onClose}
-          className="w-full px-4 py-2 bg-accent text-accent-foreground rounded-xl text-sm font-semibold hover:bg-accent-hover"
-        >
+    <Dialog
+      size="lg"
+      title={
+        <span className="flex items-center gap-2">
+          <Sparkles className="w-5 h-5 text-accent" />
+          #{channelName} Summary
+        </span>
+      }
+      onClose={onClose}
+      footer={
+        <Button className="w-full rounded-xl" onClick={onClose}>
           Close
-        </button>
+        </Button>
+      }
+    >
+      {/* Summary */}
+      <div className="bg-surface border border-border rounded-xl p-4 mb-4">
+        <p className="text-sm text-foreground leading-relaxed">{summary.summary}</p>
+        <p className={`text-[10px] font-semibold mt-2 ${sentimentColor}`}>
+          Sentiment: {summary.sentiment}
+        </p>
       </div>
-    </div>
+
+      {/* Key Points */}
+      {summary.keyPoints.length > 0 && (
+        <div className="mb-4">
+          <h3 className="text-xs font-semibold text-muted mb-2">
+            Key Points
+          </h3>
+          <ul className="space-y-1.5">
+            {summary.keyPoints.map((point, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-foreground">
+                <span className="w-1.5 h-1.5 rounded-full bg-accent mt-1.5 flex-shrink-0" />
+                {point}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Action Items */}
+      {summary.actionItems.length > 0 && (
+        <div className="mb-4">
+          <h3 className="text-xs font-semibold text-muted mb-2">
+            Action Items
+          </h3>
+          <ul className="space-y-1.5">
+            {summary.actionItems.map((item, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-foreground">
+                <Check className="w-3.5 h-3.5 text-ok mt-0.5 flex-shrink-0" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </Dialog>
   );
 }
 
@@ -2245,69 +2178,65 @@ function AddMembersModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="bg-surface rounded-2xl shadow-xl p-6 w-full max-w-md mx-4 border border-border">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-foreground">Add Members to #{channel.name}</h2>
-          <button onClick={onClose} className="text-muted hover:text-foreground">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search people…"
-          className="w-full bg-surface border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder-muted outline-none focus:border-accent mb-3"
-        />
-
-        <div className="max-h-56 overflow-y-auto space-y-1 mb-4">
-          {loading ? (
-            <p className="text-sm text-muted text-center py-4">Loading users…</p>
-          ) : filtered.length === 0 ? (
-            <p className="text-sm text-muted text-center py-4">
-              {users.length === 0 ? "All users are already members" : "No matching users"}
-            </p>
-          ) : (
-            filtered.map((u) => (
-              <button
-                key={u.id}
-                onClick={() => toggle(u.id)}
-                className={`w-full flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-left transition-colors ${
-                  selected.has(u.id) ? "bg-accent/10 text-accent border border-accent/30" : "text-foreground hover:bg-surface-sunken"
-                }`}
-              >
-                <div className="w-8 h-8 rounded-full bg-surface-sunken border border-border flex items-center justify-center text-xs font-semibold text-accent flex-shrink-0">
-                  {u.fullName[0]?.toUpperCase()}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{u.fullName}</p>
-                  <p className="text-xs text-muted truncate">{u.email}</p>
-                </div>
-                {selected.has(u.id) && <Check className="w-4 h-4 text-accent flex-shrink-0" />}
-              </button>
-            ))
-          )}
-        </div>
-
-        {selected.size > 0 && (
-          <p className="text-xs text-muted mb-3">{selected.size} selected</p>
-        )}
-
-        <div className="flex gap-2">
-          <button onClick={onClose} className="flex-1 px-4 py-2 border border-border text-muted rounded-xl text-sm hover:bg-surface-sunken">
+    <Dialog
+      title={`Add Members to #${channel.name}`}
+      onClose={onClose}
+      footer={
+        <>
+          <Button variant="secondary" className="flex-1 border border-border rounded-xl" onClick={onClose}>
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
+            className="flex-1 rounded-xl"
             onClick={submit}
             disabled={selected.size === 0 || saving}
-            className="flex-1 px-4 py-2 bg-accent text-accent-foreground rounded-xl text-sm font-semibold hover:bg-accent-hover disabled:opacity-50"
+            loading={saving}
           >
             {saving ? "Adding…" : `Add ${selected.size > 0 ? selected.size : ""} Member${selected.size !== 1 ? "s" : ""}`}
-          </button>
-        </div>
+          </Button>
+        </>
+      }
+    >
+      <input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Search people…"
+        className="w-full bg-surface border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder-muted outline-none focus:border-accent mb-3"
+      />
+
+      <div className="max-h-56 overflow-y-auto space-y-1 mb-4">
+        {loading ? (
+          <p className="text-sm text-muted text-center py-4">Loading users…</p>
+        ) : filtered.length === 0 ? (
+          <p className="text-sm text-muted text-center py-4">
+            {users.length === 0 ? "All users are already members" : "No matching users"}
+          </p>
+        ) : (
+          filtered.map((u) => (
+            <button
+              key={u.id}
+              onClick={() => toggle(u.id)}
+              className={`w-full flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-left transition-colors ${
+                selected.has(u.id) ? "bg-accent/10 text-accent border border-accent/30" : "text-foreground hover:bg-surface-sunken"
+              }`}
+            >
+              <div className="w-8 h-8 rounded-full bg-surface-sunken border border-border flex items-center justify-center text-xs font-semibold text-accent flex-shrink-0">
+                {u.fullName[0]?.toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium truncate">{u.fullName}</p>
+                <p className="text-xs text-muted truncate">{u.email}</p>
+              </div>
+              {selected.has(u.id) && <Check className="w-4 h-4 text-accent flex-shrink-0" />}
+            </button>
+          ))
+        )}
       </div>
-    </div>
+
+      {selected.size > 0 && (
+        <p className="text-xs text-muted mb-3">{selected.size} selected</p>
+      )}
+    </Dialog>
   );
 }
 
@@ -2360,71 +2289,19 @@ function ManageMembersModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="bg-surface rounded-2xl shadow-xl p-6 w-full max-w-md mx-4 border border-border">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-foreground">
-            Members {channel.type !== "DIRECT" ? `(${channel.members.length})` : ""}
-          </h2>
-          <button onClick={onClose} className="text-muted hover:text-foreground">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="max-h-80 overflow-y-auto space-y-1 mb-4">
-          {loading ? (
-            <p className="text-sm text-muted text-center py-4">Loading members…</p>
-          ) : (
-            roster.map((m) => {
-              const u = usersById.get(m.userId);
-              const name = u?.fullName ?? "Unknown user";
-              const isSelf = m.userId === currentUserId;
-              const isAdmin = m.role === "ADMIN";
-              const busy = busyUserId === m.userId;
-              return (
-                <div key={m.userId} className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm hover:bg-surface-sunken">
-                  <div className="w-8 h-8 rounded-full bg-surface-sunken border border-border flex items-center justify-center text-xs font-semibold text-accent flex-shrink-0">
-                    {name[0]?.toUpperCase() ?? "?"}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate text-foreground flex items-center gap-1.5">
-                      {name}{isSelf ? " (you)" : ""}
-                      {isAdmin && <Crown className="w-3 h-3 text-warn flex-shrink-0" />}
-                    </p>
-                    <p className="text-xs text-muted truncate">{u?.email ?? ""}</p>
-                  </div>
-
-                  {channel.type !== "DIRECT" && isChannelAdmin && !isSelf && (
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      <button
-                        onClick={() => void runAction(m.userId, () => onChangeRole(m.userId, isAdmin ? "MEMBER" : "ADMIN"))}
-                        disabled={busy}
-                        title={isAdmin ? "Remove admin" : "Make admin"}
-                        className="p-1.5 rounded-lg text-muted hover:text-warn hover:bg-warn/10 transition-colors disabled:opacity-40"
-                      >
-                        <Crown className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => void runAction(m.userId, () => onRemove(m.userId, name))}
-                        disabled={busy}
-                        title="Remove from group"
-                        className="p-1.5 rounded-lg text-muted hover:text-crit hover:bg-crit/10 transition-colors disabled:opacity-40"
-                      >
-                        <UserMinus className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })
-          )}
-        </div>
-
-        <div className="flex gap-2">
-          <button onClick={onClose} className="flex-1 px-4 py-2 border border-border text-muted rounded-xl text-sm hover:bg-surface-sunken">
+    <Dialog
+      title={`Members ${channel.type !== "DIRECT" ? `(${channel.members.length})` : ""}`}
+      onClose={onClose}
+      footer={
+        <>
+          <Button variant="secondary" className="flex-1 border border-border rounded-xl" onClick={onClose}>
             Close
-          </button>
+          </Button>
           {channel.type === "GROUP" && (
+            // Not the shared Button — this is an outlined-critical look (border,
+            // no fill) that doesn't match any of Button's four variants, and
+            // forcing it in with !important overrides is worse than one plain
+            // button matching the original class string exactly.
             <button
               onClick={onLeave}
               className="flex-1 px-4 py-2 border border-crit/40 text-crit rounded-xl text-sm font-semibold hover:bg-crit/10 flex items-center justify-center gap-1.5"
@@ -2432,9 +2309,58 @@ function ManageMembersModal({
               <LogOut className="w-3.5 h-3.5" /> Leave group
             </button>
           )}
-        </div>
+        </>
+      }
+    >
+      <div className="max-h-80 overflow-y-auto space-y-1 mb-4">
+        {loading ? (
+          <p className="text-sm text-muted text-center py-4">Loading members…</p>
+        ) : (
+          roster.map((m) => {
+            const u = usersById.get(m.userId);
+            const name = u?.fullName ?? "Unknown user";
+            const isSelf = m.userId === currentUserId;
+            const isAdmin = m.role === "ADMIN";
+            const busy = busyUserId === m.userId;
+            return (
+              <div key={m.userId} className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm hover:bg-surface-sunken">
+                <div className="w-8 h-8 rounded-full bg-surface-sunken border border-border flex items-center justify-center text-xs font-semibold text-accent flex-shrink-0">
+                  {name[0]?.toUpperCase() ?? "?"}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium truncate text-foreground flex items-center gap-1.5">
+                    {name}{isSelf ? " (you)" : ""}
+                    {isAdmin && <Crown className="w-3 h-3 text-warn flex-shrink-0" />}
+                  </p>
+                  <p className="text-xs text-muted truncate">{u?.email ?? ""}</p>
+                </div>
+
+                {channel.type !== "DIRECT" && isChannelAdmin && !isSelf && (
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <button
+                      onClick={() => void runAction(m.userId, () => onChangeRole(m.userId, isAdmin ? "MEMBER" : "ADMIN"))}
+                      disabled={busy}
+                      title={isAdmin ? "Remove admin" : "Make admin"}
+                      className="p-1.5 rounded-lg text-muted hover:text-warn hover:bg-warn/10 transition-colors disabled:opacity-40"
+                    >
+                      <Crown className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => void runAction(m.userId, () => onRemove(m.userId, name))}
+                      disabled={busy}
+                      title="Remove from group"
+                      className="p-1.5 rounded-lg text-muted hover:text-crit hover:bg-crit/10 transition-colors disabled:opacity-40"
+                    >
+                      <UserMinus className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
       </div>
-    </div>
+    </Dialog>
   );
 }
 
@@ -2838,22 +2764,6 @@ export function ChatView({
 
   // Conversation header overflow menu.
   const [showHeaderMenu, setShowHeaderMenu] = useState(false);
-  const headerMenuRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!showHeaderMenu) return;
-    const onClick = (e: MouseEvent) => {
-      if (headerMenuRef.current && !headerMenuRef.current.contains(e.target as Node)) {
-        setShowHeaderMenu(false);
-      }
-    };
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setShowHeaderMenu(false);
-    document.addEventListener("mousedown", onClick);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onClick);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [showHeaderMenu]);
 
   // Group rename state
   const [renamingChannel, setRenamingChannel] = useState(false);
@@ -3653,13 +3563,28 @@ export function ChatView({
 
   const handleEdit = async (messageId: string, content: string) => {
     try {
-      await fetch(`/api/chat/messages/${messageId}`, {
+      const res = await fetch(`/api/chat/messages/${messageId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content }),
       });
-    } catch {
-      toast.error("Failed to edit message");
+      // Previously this never checked `res.ok` and never applied the result
+      // locally — a 403/404/500 failed silently (no toast, no visible change),
+      // and even on success the edit only appeared once the per-channel SSE
+      // stream round-tripped it back. That round trip can lag or, if the
+      // stream had reconnected recently, land in a dropped gap — from the
+      // editor's own screen, "I edited it and nothing happened" either way.
+      // The PUT already returns the updated message; apply it directly rather
+      // than waiting on a stream that's meant for *other* members.
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(e.error ?? "Failed to edit message");
+      }
+      const updated = (await res.json()) as Message;
+      setMessages((prev) => prev.map((m) => (m.id === messageId ? updated : m)));
+      setThreadMessages((prev) => prev.map((m) => (m.id === messageId ? updated : m)));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to edit message");
     }
   };
 
@@ -4482,7 +4407,7 @@ export function ChatView({
                     Calling someone and deleting the channel are not peers. Only
                     the two things you reach for mid-conversation stay outside;
                     everything else is one click deeper. */}
-                <div className="relative flex-shrink-0" ref={headerMenuRef}>
+                <div className="relative flex-shrink-0">
                   <button
                     onClick={() => setShowHeaderMenu((p) => !p)}
                     aria-haspopup="menu"
@@ -4494,7 +4419,7 @@ export function ChatView({
                   </button>
 
                   {showHeaderMenu && (
-                    <div role="menu" className="absolute right-0 top-full mt-1.5 w-56 bg-surface border border-border rounded-xl shadow-pop z-30 py-1.5">
+                    <Menu onClose={() => setShowHeaderMenu(false)} className="absolute right-0 top-full mt-1.5 w-56 z-30">
                       <p className="px-3.5 pb-1 pt-0.5 text-[10px] font-semibold uppercase tracking-wide text-subtle">
                         Sage Assist
                       </p>
@@ -4576,7 +4501,7 @@ export function ChatView({
                           Delete channel
                         </button>
                       )}
-                    </div>
+                    </Menu>
                   )}
                 </div>
               </div>
