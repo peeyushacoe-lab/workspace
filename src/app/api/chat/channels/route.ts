@@ -9,9 +9,16 @@ export async function GET() {
     const user = getSessionUserFromCookieStore(await cookies());
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    // Auto-add user to any non-private channels they're not yet a member of
+    // Auto-add user to any non-private, non-team channel they're not yet a
+    // member of. `teamId: null` is the load-bearing part of this filter: once
+    // ChatChannel.teamId exists, a team's channels are also `isPrivate: false`
+    // by default (open to the whole team, same as before), and without this
+    // exclusion every user in the org would get auto-joined to every team's
+    // channels the next time they loaded their chat list. Team channel
+    // membership instead tracks TeamMember — see /api/teams/[id]/channels and
+    // the join/leave sync in /api/teams/[id]/members.
     const allPublic = await prisma.chatChannel.findMany({
-      where: { isPrivate: false },
+      where: { isPrivate: false, teamId: null },
       select: { id: true },
     });
     for (const ch of allPublic) {
@@ -112,6 +119,8 @@ export async function POST(request: Request) {
     isPrivate?: boolean;
     isBroadcast?: boolean;
     memberIds?: string[];
+    /** Scopes the new channel under a team — see docs/rfc-003-teams-and-channels.md. */
+    teamId?: string;
   };
 
   try {
@@ -124,7 +133,29 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Channel name is required" }, { status: 400 });
   }
 
-  const memberIds = Array.from(new Set([user.id, ...(body.memberIds ?? [])]));
+  let memberIds = Array.from(new Set([user.id, ...(body.memberIds ?? [])]));
+  let position = 0;
+
+  if (body.teamId) {
+    const team = await prisma.team.findFirst({
+      where: { id: body.teamId },
+      include: { members: { select: { userId: true } }, channels: { select: { position: true } } },
+    });
+    if (!team) return NextResponse.json({ error: "Team not found" }, { status: 404 });
+    if (!team.members.some((m) => m.userId === user.id)) {
+      return NextResponse.json({ error: "You are not a member of this team" }, { status: 403 });
+    }
+    position = team.channels.length
+      ? Math.max(...team.channels.map((c) => c.position)) + 1
+      : 0;
+    // A non-private team channel is open to the whole team, same as a
+    // non-private org-wide channel is open to the whole org — membership
+    // seeds from the team roster rather than the creator's explicit picks.
+    // A private team channel stays invite-only even within the team.
+    if (!body.isPrivate) {
+      memberIds = Array.from(new Set([...memberIds, ...team.members.map((m) => m.userId)]));
+    }
+  }
 
   // Build data without isBroadcast first — add it only if the column exists
   const baseData = {
@@ -133,6 +164,7 @@ export async function POST(request: Request) {
     type: body.type ?? ("CHANNEL" as ChatChannelType),
     isPrivate: body.isPrivate ?? false,
     createdById: user.id,
+    ...(body.teamId ? { teamId: body.teamId, position } : {}),
     members: {
       create: memberIds.map((id) => ({
         userId: id,

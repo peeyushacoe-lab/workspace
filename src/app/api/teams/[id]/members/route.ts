@@ -86,8 +86,35 @@ export async function POST(request: Request, { params }: Params) {
       // should not be silently demoted.
       update: {},
     });
+    // Team membership is the source of truth for team channel access (RFC-003)
+    // — joining the team joins its open channels, rather than leaving the
+    // person to notice the team has channels at all. Private team channels are
+    // untouched: those are invite-only even within the team.
+    const openChannels = await prisma.chatChannel.findMany({
+      where: { teamId: team.id, isPrivate: false },
+      select: { id: true },
+    });
+    await Promise.all(
+      openChannels.map((c) =>
+        prisma.chatMember.upsert({
+          where: { channelId_userId: { channelId: c.id, userId: targetUserId } },
+          create: { channelId: c.id, userId: targetUserId, role: "MEMBER" },
+          update: {},
+        }),
+      ),
+    );
   } else if (removing) {
     await prisma.teamMember.deleteMany({ where: { teamId: team.id, userId: targetUserId } });
+    // Leaving the team revokes all of its channels, private included — those
+    // are still team space, not a separate invite the person keeps once
+    // they're off the roster.
+    const teamChannels = await prisma.chatChannel.findMany({
+      where: { teamId: team.id },
+      select: { id: true },
+    });
+    await prisma.chatMember.deleteMany({
+      where: { channelId: { in: teamChannels.map((c) => c.id) }, userId: targetUserId },
+    });
   } else {
     // set-lead
     const existing = await prisma.teamMember.findUnique({

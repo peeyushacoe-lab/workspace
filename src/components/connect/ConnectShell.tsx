@@ -140,7 +140,16 @@ export function ConnectShell({
     (i) => pathname === i.href || pathname.startsWith(`${i.href}/`),
   ).sort((a, b) => b.href.length - a.href.length)[0];
   const activeHref = section?.href;
-  const fullBleed = section?.fullBleed === true;
+  // Team detail (/connect/teams/[id]) is a chat surface — same category as
+  // Chat/Groups/Channels — even though the Teams list it sits under is not.
+  // CONNECT_NAV's fullBleed flag is per-section, not per-route, so a section
+  // can't be "sometimes full-bleed"; this is the one place that distinction
+  // has to be made by pathname instead. Without it the team page inherits the
+  // Teams list's padded panel, and ChatView's `h-full` resolves against a
+  // `min-h-*` ancestor instead of a real height — the exact composer/scroll
+  // bug this shell's height-chain comment already warns about below.
+  const isTeamDetail = /^\/connect\/teams\/[^/]+$/.test(pathname);
+  const fullBleed = section?.fullBleed === true || isTeamDetail;
 
   const byHref = new Map(CONNECT_NAV.map((i) => [i.href, i]));
   const badgeFor = (href: string) => {

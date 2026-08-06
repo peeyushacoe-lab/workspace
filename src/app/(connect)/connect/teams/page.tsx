@@ -95,10 +95,6 @@ function TeamCard({ team, mine }: { team: TeamWithMembers; mine: boolean }) {
         )}
       </div>
 
-      {/* No ?team= filter yet — ChatView only understands ?channel=<id>, and a
-          link that silently ignores its own parameter is worse than one that
-          doesn't claim to filter. Team-scoped channel lists land in phase 4,
-          which is when ChatChannel.teamId starts driving the sidebar. */}
       <div className="flex gap-1 border-t border-border-soft pt-3">
         <Link
           href="/connect/chat"
@@ -107,8 +103,12 @@ function TeamCard({ team, mine }: { team: TeamWithMembers; mine: boolean }) {
           <MessageSquare className="h-3.5 w-3.5" />
           Chat
         </Link>
+        {/* Team-scoped, via ChatChannel.teamId — /connect/teams/[id] filters
+            ChatView to this team's channels instead of every channel in the
+            workspace, and bootstraps a General channel the first time anyone
+            opens a team that doesn't have one yet. */}
         <Link
-          href="/connect/channels"
+          href={`/connect/teams/${team.id}`}
           className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[13px] font-medium text-muted transition-colors hover:bg-hover hover:text-foreground"
         >
           <Hash className="h-3.5 w-3.5" />

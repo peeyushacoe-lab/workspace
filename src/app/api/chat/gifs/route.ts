@@ -9,7 +9,15 @@ export async function GET(request: Request) {
   const user = getSessionUserFromCookieStore(await cookies());
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  if (!GIPHY_KEY) return NextResponse.json({ results: [] });
+  // `configured` tells the picker WHY the list is empty. Previously this route
+  // just returned `{ results: [] }` for a missing key, an invalid key, a rate
+  // limit, and a genuine no-matches search — indistinguishable to the client,
+  // so "GIFs don't work" produced no signal to debug from. The client-side
+  // code also used to guess at this by reading `NEXT_PUBLIC_GIPHY_KEY`, a
+  // variable that was never set anywhere (the real key is server-only
+  // `GIPHY_API_KEY`), so the "not configured" message showed unconditionally
+  // regardless of whether the key was actually present.
+  if (!GIPHY_KEY) return NextResponse.json({ results: [], configured: false });
 
   const { searchParams } = new URL(request.url);
   const q = searchParams.get("q")?.trim();
@@ -22,7 +30,17 @@ export async function GET(request: Request) {
 
   try {
     const res = await fetch(url, { next: { revalidate: 60 } });
-    if (!res.ok) return NextResponse.json({ results: [] });
+    if (!res.ok) {
+      // Surface the failure server-side instead of swallowing it — a 401/403
+      // here almost always means the key is present but wrong/revoked, which
+      // "configured: false" would mislabel as "no key set".
+      const body = await res.text().catch(() => "");
+      console.error(`[api/chat/gifs] Giphy ${type} request failed: ${res.status} ${body.slice(0, 300)}`);
+      return NextResponse.json(
+        { results: [], configured: true, error: res.status === 401 || res.status === 403 ? "invalid_key" : "upstream" },
+        { status: 200 },
+      );
+    }
     const json = await res.json() as { data: { id: string; title: string; images: { fixed_height: { url: string; width: string; height: string }; fixed_height_small: { url: string } } }[] };
 
     const results = json.data.map((g) => ({
@@ -34,8 +52,9 @@ export async function GET(request: Request) {
       height: parseInt(g.images.fixed_height.height, 10),
     }));
 
-    return NextResponse.json({ results });
-  } catch {
-    return NextResponse.json({ results: [] });
+    return NextResponse.json({ results, configured: true });
+  } catch (err) {
+    console.error("[api/chat/gifs] request threw:", err);
+    return NextResponse.json({ results: [], configured: true, error: "upstream" });
   }
 }

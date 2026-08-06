@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "noEmit": true },
+  "include": [
+    "next-env.d.ts",
+    "src/app/api/chat/gifs/route.ts",
+    "src/app/api/chat/channels/route.ts",
+    "src/app/api/teams/[id]/channels/route.ts",
+    "src/app/api/teams/[id]/members/route.ts",
+    "src/app/(connect)/connect/teams/[id]/page.tsx",
+    "src/app/(connect)/connect/teams/page.tsx",
+    "src/components/ChatView.tsx",
+    "src/components/connect/ConnectShell.tsx"
+  ]
+}

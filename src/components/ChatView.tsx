@@ -83,6 +83,9 @@ type Channel = {
   isPrivate: boolean;
   isBroadcast: boolean;
   createdById?: string | null;
+  /** Set when this channel belongs to a Team (RFC-003). Null for DMs, groups
+   *  and legacy org-wide channels. */
+  teamId?: string | null;
   members: Member[];
   _count: { messages: number };
   unreadCount?: number;
@@ -1593,9 +1596,13 @@ function ChannelInfoPanel({
 function NewChannelModal({
   onClose,
   onCreate,
+  teamId,
 }: {
   onClose: () => void;
   onCreate: (c: Channel) => void;
+  /** Creates the channel under this team instead of as an org-wide channel —
+   *  see /api/teams/[id]/channels. */
+  teamId?: string;
 }) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -1607,10 +1614,14 @@ function NewChannelModal({
     if (!name.trim()) return;
     setCreating(true);
     try {
-      const res = await fetch("/api/chat/channels", {
+      const res = await fetch(teamId ? `/api/teams/${teamId}/channels` : "/api/chat/channels", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), description, isPrivate, isBroadcast }),
+        body: JSON.stringify(
+          teamId
+            ? { name: name.trim(), description, isPrivate }
+            : { name: name.trim(), description, isPrivate, isBroadcast },
+        ),
       });
       if (!res.ok) throw new Error("Failed");
       const ch = (await res.json()) as Channel;
@@ -1627,7 +1638,9 @@ function NewChannelModal({
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
       <div className="bg-surface rounded-2xl shadow-xl p-6 w-full max-w-md mx-4 border border-border">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-foreground">Create Channel</h2>
+          <h2 className="text-lg font-semibold text-foreground">
+            {teamId ? "Create Team Channel" : "Create Channel"}
+          </h2>
           <button onClick={onClose} className="text-muted hover:text-foreground">
             <X className="w-5 h-5" />
           </button>
@@ -1666,21 +1679,30 @@ function NewChannelModal({
             />
             <span className="text-sm text-foreground">Private channel</span>
           </label>
-          <label className="flex items-start gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={isBroadcast}
-              onChange={(e) => setIsBroadcast(e.target.checked)}
-              className="rounded mt-0.5"
-            />
-            <div>
-              <span className="text-sm text-foreground flex items-center gap-1.5">
-                <Megaphone className="w-3.5 h-3.5 text-muted" />
-                Broadcast channel
-              </span>
-              <p className="text-[11px] text-subtle mt-0.5">Only you can post. Everyone can follow and read.</p>
-            </div>
-          </label>
+          {!teamId && (
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isBroadcast}
+                onChange={(e) => setIsBroadcast(e.target.checked)}
+                className="rounded mt-0.5"
+              />
+              <div>
+                <span className="text-sm text-foreground flex items-center gap-1.5">
+                  <Megaphone className="w-3.5 h-3.5 text-muted" />
+                  Broadcast channel
+                </span>
+                <p className="text-[11px] text-subtle mt-0.5">Only you can post. Everyone can follow and read.</p>
+              </div>
+            </label>
+          )}
+          {teamId && (
+            <p className="text-[11px] text-subtle">
+              {isPrivate
+                ? "Only you will be added — invite others from the channel's member list."
+                : "Everyone currently on this team will be added automatically."}
+            </p>
+          )}
         </div>
         <div className="flex gap-3 mt-6">
           <button
@@ -2437,6 +2459,12 @@ function GifPicker({
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [results, setResults] = useState<GifResult[]>([]);
   const [loading, setLoading] = useState(false);
+  // Server-reported state, not a client-side env guess. Reading
+  // `process.env.NEXT_PUBLIC_GIPHY_KEY` here used to always be undefined —
+  // that variable was never set anywhere, and the real key
+  // (`GIPHY_API_KEY`) is server-only by design, so the client could never see
+  // it. The picker now trusts what /api/chat/gifs actually reports.
+  const [gifStatus, setGifStatus] = useState<"configured" | "not_configured" | "error">("configured");
   const [emojiCategory, setEmojiCategory] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -2457,8 +2485,14 @@ function GifPicker({
       : `/api/chat/gifs?type=${tab}`;
     fetch(apiUrl)
       .then((r) => r.json())
-      .then((d: { results: GifResult[] }) => setResults(d.results ?? []))
-      .catch(() => setResults([]))
+      .then((d: { results: GifResult[]; configured?: boolean; error?: string }) => {
+        setResults(d.results ?? []);
+        setGifStatus(d.configured === false ? "not_configured" : d.error ? "error" : "configured");
+      })
+      .catch(() => {
+        setResults([]);
+        setGifStatus("error");
+      })
       .finally(() => setLoading(false));
   }, [debouncedQuery, tab]);
 
@@ -2538,7 +2572,11 @@ function GifPicker({
             </div>
           ) : results.length === 0 ? (
             <p className="text-center text-sm text-subtle py-8">
-              {!process.env.NEXT_PUBLIC_GIPHY_KEY ? "Set GIPHY_API_KEY to enable" : "No results"}
+              {gifStatus === "not_configured"
+                ? "GIF search isn't set up — add GIPHY_API_KEY to the environment"
+                : gifStatus === "error"
+                  ? "Couldn't reach Giphy right now — try again shortly"
+                  : "No results"}
             </p>
           ) : (
             <div className="grid grid-cols-3 gap-1.5">
@@ -2723,10 +2761,14 @@ export function ChatView({
   currentUserId,
   userRole: _userRole,
   scope = "all",
+  teamId,
 }: {
   currentUserId: string;
   userRole?: string;
   scope?: ChatScope;
+  /** Scopes the "channel" view to one team's channels (RFC-003) and routes
+   *  channel creation through that team instead of the org-wide list. */
+  teamId?: string;
 }) {
   const canCall = true;
   const { startCall, busy: callBusy } = useCall();
@@ -2978,6 +3020,19 @@ export function ChatView({
   useEffect(() => {
     loadChannels();
   }, [loadChannels]);
+
+  // Team-scoped mount: ensure the team has at least a General channel and the
+  // caller is a member of it before the normal channel list loads, so a team
+  // that has never been opened before doesn't show as permanently empty.
+  // /api/teams/[id]/channels does the bootstrap; this mount doesn't otherwise
+  // read its response — the channels themselves come back through the same
+  // /api/chat/channels fetch every other scope uses, filtered by teamId below.
+  useEffect(() => {
+    if (!teamId) return;
+    fetch(`/api/teams/${teamId}/channels`)
+      .then(() => loadChannels())
+      .catch(() => {});
+  }, [teamId, loadChannels]);
 
   // Periodic channel-list refresh — keeps unread badges honest and picks up
   // brand-new channels (e.g. a DM someone just started with you) that the
@@ -4079,7 +4134,8 @@ export function ChatView({
   const scopedList =
     scope === "direct" ? directChannels.filter(matchesFilter)
     : scope === "group" ? groupChannels.filter(matchesFilter)
-    : scope === "channel" ? publicChannels.filter(matchesFilter)
+    : scope === "channel"
+      ? publicChannels.filter(matchesFilter).filter((c) => !teamId || c.teamId === teamId).sort((a, b) => (a.name < b.name ? -1 : 1))
     : [];
 
   const scopeMeta: Record<Exclude<ChatScope, "all">, {
@@ -4107,8 +4163,8 @@ export function ChatView({
       filterLabel: "Filter channels",
       newTitle: "New channel",
       onNew: () => setShowNewChannel(true),
-      emptyTitle: "No channels yet.",
-      emptyHint: "Create one to open a topic to the workspace.",
+      emptyTitle: teamId ? "No channels in this team yet." : "No channels yet.",
+      emptyHint: teamId ? "Create one to open a topic for the team." : "Create one to open a topic to the workspace.",
     },
   };
   const meta = scope === "all" ? null : scopeMeta[scope];
@@ -4932,6 +4988,7 @@ export function ChatView({
       {/* Modals */}
       {showNewChannel && (
         <NewChannelModal
+          teamId={teamId}
           onClose={() => setShowNewChannel(false)}
           onCreate={(ch) => {
             setChannels((prev) => [ch, ...prev]);
