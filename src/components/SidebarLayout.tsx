@@ -261,7 +261,7 @@ export function SidebarLayout({
         <div className="flex h-[56px] items-stretch">
           {([
             { href: "/inbox", icon: Inbox,          label: "Inbox" },
-            { href: "/chat",  icon: MessageSquare,  label: "Chat"  },
+            { href: "/connect/chat", icon: MessageSquare, label: "Chat" },
             { href: "/meet",  icon: Video,          label: "Meet"  },
             { href: "/ai",    icon: Sparkles,       label: "AI"    },
           ] as const).map(({ href, icon: Icon, label }) => {

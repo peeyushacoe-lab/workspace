@@ -60,7 +60,35 @@ export async function GET() {
             },
           }).catch(() => 0)
         );
-        return { ...ch, unreadCount };
+        // Last message preview for the conversation list row — a list of bare
+        // names with no sense of what was last said or when is unusable once
+        // there are more than a handful of conversations.
+        const last = await prisma.chatMessage.findFirst({
+          where: { channelId: ch.id, deletedAt: null },
+          orderBy: { createdAt: "desc" },
+          select: {
+            content: true,
+            createdAt: true,
+            userId: true,
+            user: { select: { fullName: true } },
+          },
+        }).catch(() => null);
+
+        const lastMessage = last
+          ? {
+              content: last.content.startsWith("[FILE_ATTACHMENT] ")
+                ? "📎 Attachment"
+                : last.content.startsWith("[BOT_RESPONSE] ")
+                  ? last.content.replace("[BOT_RESPONSE] ", "").slice(0, 120)
+                  : last.content.startsWith("[CALL_LOG] ")
+                    ? "Call"
+                    : last.content,
+              createdAt: last.createdAt,
+              authorName: last.userId === user.id ? "You" : last.user.fullName.split(" ")[0],
+            }
+          : null;
+
+        return { ...ch, unreadCount, lastMessage };
       })
     );
 

@@ -99,7 +99,7 @@ const ACTIONS: Action[] = [
     iconColor: "text-ok",
     keywords: ["chat", "messages", "dm", "go"],
     kind: "navigate",
-    href: "/chat",
+    href: "/connect/chat",
   },
   {
     id: "go-drive",
@@ -159,7 +159,7 @@ const ACTIONS: Action[] = [
     iconColor: "text-ok",
     keywords: ["new", "chat", "message", "conversation"],
     kind: "chat-message",
-    href: "/chat",
+    href: "/connect/chat",
   },
 ];
 
@@ -403,7 +403,7 @@ export function GlobalSearch({
           appNavigate("/drive");
           break;
         case "create_channel":
-          appNavigate("/chat");
+          appNavigate("/connect/chat");
           break;
         case "summarize_inbox":
           appNavigate("/inbox");

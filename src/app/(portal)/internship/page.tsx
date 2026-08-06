@@ -384,7 +384,7 @@ function OverviewTab({ isMentor, userId, onNavigate }: { isMentor: boolean; user
       {/* Quick links */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <QuickLink href="/internship/attendance" icon={CalendarClock} title="Attendance" sub="Clock in / out and view your timesheet" />
-        <QuickLink href="/chat" icon={MessageSquare} title="Intern chat" sub="Ask questions and chat with the cohort" />
+        <QuickLink href="/connect/chat" icon={MessageSquare} title="Intern chat" sub="Ask questions and chat with the cohort" />
       </div>
 
       {/* Metric cards */}

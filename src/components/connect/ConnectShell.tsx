@@ -9,19 +9,18 @@ import {
 } from "lucide-react";
 import { CONNECT_NAV, isLive, type ConnectNavItem } from "@/lib/connect";
 import type { SessionUser } from "@/lib/auth";
-import { avatarGradient } from "@/lib/avatar";
 import { SearchTrigger } from "@/components/GlobalSearch";
 import { NotificationCenter } from "@/components/NotificationCenter";
+import { ConnectProfileMenu } from "@/components/connect/ConnectProfileMenu";
 import type { ConnectHomeCounts, ConnectHomeResponse } from "@/app/api/connect/home/route";
 
 /**
- * Chrome for Sage Connect — an icon rail, in the Teams/Discord lineage.
- *
- * The first cut used a 240px labelled sidebar. That was wrong for this product:
- * Chat brings its own 256px conversation column, so the screen opened with
- * ~500px of navigation before a single message. Teams solves exactly this with a
- * narrow rail of icon+label targets, and the second column becomes whatever the
- * section needs. Same nine destinations, ~170px handed back to content.
+ * Chrome for Sage Connect — a labelled sidebar, same lineage as Nexus's own
+ * shell and Teams' left rail once you include its section list underneath the
+ * app-switcher. An icon-only rail was tried first to reclaim width from Chat's
+ * own conversation column, but nine destinations reduced to a glyph and a
+ * 9.5px label is not legible at a glance — it turns navigation into a puzzle.
+ * Width belongs to being able to read where you are.
  *
  * Deliberately not SidebarLayout — Nexus's spine-and-rail is built for a dozen
  * unrelated destinations. Everything else is shared: same session cookie, same
@@ -59,67 +58,14 @@ const BADGE_FOR: Record<string, keyof ConnectHomeCounts> = {
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1 focus-visible:ring-offset-canvas";
 
-// ── Rail destination ──────────────────────────────────────────────────────────
+// ── Sidebar destination ────────────────────────────────────────────────────────
 
-function RailItem({
-  item,
-  active,
-  badge,
-}: {
-  item: ConnectNavItem;
-  active: boolean;
-  badge?: number;
-}) {
-  const Glyph = ICONS[item.icon] ?? MessageSquare;
-  const showBadge = typeof badge === "number" && badge > 0;
-
-  return (
-    <Link
-      href={item.href}
-      title={item.hint}
-      aria-current={active ? "page" : undefined}
-      className={[
-        "group relative flex h-[52px] w-full flex-col items-center justify-center gap-1 rounded-lg transition-colors",
-        focusRing,
-        active ? "bg-accent-soft text-accent" : "text-muted hover:bg-hover hover:text-foreground",
-      ].join(" ")}
-    >
-      {/* Left marker on the active destination. The tint alone reads as hover at
-          a glance; the bar is what makes "you are here" unambiguous. */}
-      <span
-        aria-hidden
-        className={[
-          "absolute left-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-r-full bg-accent transition-opacity",
-          active ? "opacity-100" : "opacity-0",
-        ].join(" ")}
-      />
-
-      <span className="relative">
-        <Glyph className="h-[18px] w-[18px]" />
-        {showBadge && (
-          <span className="absolute -right-2 -top-1.5 min-w-[15px] rounded-full bg-accent px-1 text-center text-[9px] font-semibold leading-[15px] tabular-nums text-white">
-            {badge > 9 ? "9+" : badge}
-          </span>
-        )}
-        {!showBadge && !isLive(item) && (
-          // Unbuilt sections stay reachable and say so, rather than looking
-          // broken or being hidden and forgotten.
-          <span
-            aria-hidden
-            className="absolute -right-1.5 -top-1 h-1.5 w-1.5 rounded-full bg-border-strong"
-          />
-        )}
-      </span>
-
-      <span className="max-w-full truncate px-1 text-[9.5px] font-medium leading-none">
-        {item.label}
-      </span>
-    </Link>
-  );
-}
-
-/** Full-label row, used only in the mobile drawer where width is not scarce. */
-function DrawerItem({
+/**
+ * One nav row: icon, label, trailing badge or "Soon" tag. Used for both the
+ * desktop sidebar and the mobile drawer — the two only ever differed in
+ * whether width was scarce, and it no longer is on either.
+ */
+function NavItem({
   item,
   active,
   badge,
@@ -128,7 +74,7 @@ function DrawerItem({
   item: ConnectNavItem;
   active: boolean;
   badge?: number;
-  onNavigate: () => void;
+  onNavigate?: () => void;
 }) {
   const Glyph = ICONS[item.icon] ?? MessageSquare;
   const showBadge = typeof badge === "number" && badge > 0;
@@ -136,23 +82,35 @@ function DrawerItem({
   return (
     <Link
       href={item.href}
+      title={item.hint}
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
       className={[
-        "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",
+        "group relative flex items-center gap-3 rounded-lg py-2 pl-3.5 pr-2.5 text-[13.5px] transition-colors",
         focusRing,
-        active ? "bg-accent-soft font-semibold text-accent" : "font-medium text-muted hover:bg-hover",
+        active ? "bg-accent-soft font-semibold text-accent" : "font-medium text-muted hover:bg-hover hover:text-foreground",
       ].join(" ")}
     >
+      {/* Left marker on the active destination — the tint alone reads as hover
+          at a glance; the bar makes "you are here" unambiguous. */}
+      <span
+        aria-hidden
+        className={[
+          "absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-accent transition-opacity",
+          active ? "opacity-100" : "opacity-0",
+        ].join(" ")}
+      />
+
       <Glyph className="h-[18px] w-[18px] flex-shrink-0" />
-      <span className="truncate">{item.label}</span>
+      <span className="min-w-0 flex-1 truncate">{item.label}</span>
+
       {showBadge && (
-        <span className="ml-auto min-w-[18px] rounded-full bg-accent px-1.5 py-0.5 text-center text-[10px] font-semibold tabular-nums text-white">
+        <span className="min-w-[19px] flex-shrink-0 rounded-full bg-accent px-1.5 py-0.5 text-center text-[10px] font-semibold leading-none tabular-nums text-white">
           {badge > 99 ? "99+" : badge}
         </span>
       )}
       {!showBadge && !isLive(item) && (
-        <span className="ml-auto text-[10px] font-medium text-subtle">Soon</span>
+        <span className="flex-shrink-0 text-[10px] font-medium text-subtle">Soon</span>
       )}
     </Link>
   );
@@ -217,24 +175,6 @@ export function ConnectShell({
     return () => window.removeEventListener("keydown", onKey);
   }, [mobileOpen]);
 
-  const avatar = (
-    <Link
-      href="/profile"
-      title={`${currentUser.fullName} — profile`}
-      aria-label={`${currentUser.fullName} — profile`}
-      className={`relative flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-semibold uppercase text-white ${focusRing}`}
-      style={{ background: avatarGradient(currentUser.fullName) }}
-    >
-      {currentUser.fullName.charAt(0)}
-      {/* Presence pip. Teams puts one on every avatar; on your own it is the
-          quickest confirmation that the socket is actually connected. */}
-      <span
-        aria-hidden
-        className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-canvas bg-ok"
-      />
-    </Link>
-  );
-
   return (
     // A full-bleed section manages its own internal scrolling, so the shell is
     // pinned to the viewport and does not scroll behind it.
@@ -247,23 +187,24 @@ export function ConnectShell({
       </a>
 
       <div className="flex">
-        {/* ── Icon rail (desktop) ── */}
+        {/* ── Sidebar (desktop) ── */}
         <nav
           aria-label="Sage Connect"
-          className="sticky top-0 hidden h-screen w-[72px] flex-shrink-0 flex-col items-center lg:flex"
+          className="sticky top-0 hidden h-screen w-[232px] flex-shrink-0 flex-col border-r border-border-soft bg-surface lg:flex"
         >
           <Link
             href="/connect"
-            aria-label="Sage Connect home"
-            title="Sage Connect"
-            className={`flex h-14 flex-shrink-0 items-center ${focusRing}`}
+            className={`flex h-14 flex-shrink-0 items-center gap-2.5 px-4 ${focusRing}`}
           >
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent">
-              <MessageSquare className="h-[18px] w-[18px] text-accent-foreground" />
+            <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-accent">
+              <MessageSquare className="h-4 w-4 text-accent-foreground" />
+            </span>
+            <span className="truncate text-[13.5px] font-semibold tracking-tight text-foreground">
+              Sage Connect
             </span>
           </Link>
 
-          <div className="flex w-full flex-1 flex-col gap-1 overflow-y-auto px-2 py-1">
+          <div className="flex w-full flex-1 flex-col gap-3 overflow-y-auto px-2.5 py-2">
             {GROUPS.map((hrefs, gi) => {
               const items = hrefs
                 .map((h) => byHref.get(h))
@@ -271,9 +212,9 @@ export function ConnectShell({
               if (items.length === 0) return null;
               return (
                 <div key={gi} className="flex w-full flex-col gap-0.5">
-                  {gi > 0 && <span aria-hidden className="my-1 h-px w-full bg-border-soft" />}
+                  {gi > 0 && <span aria-hidden className="mb-2.5 h-px w-full bg-border-soft" />}
                   {items.map((item) => (
-                    <RailItem
+                    <NavItem
                       key={item.href}
                       item={item}
                       active={activeHref === item.href}
@@ -285,36 +226,37 @@ export function ConnectShell({
             })}
           </div>
 
-          <div className="flex w-full flex-col items-center gap-1 px-2 pb-3">
-            <span aria-hidden className="mb-1 h-px w-full bg-border-soft" />
+          <div className="flex w-full flex-col gap-0.5 border-t border-border-soft px-2.5 py-2.5">
             {nexusHref && (
               <a
                 href={nexusHref}
-                title="Open Nexus"
-                className={`flex h-9 w-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-hover hover:text-foreground ${focusRing}`}
+                className={`flex items-center gap-3 rounded-lg py-2 pl-3.5 pr-2.5 text-[13.5px] font-medium text-muted transition-colors hover:bg-hover hover:text-foreground ${focusRing}`}
               >
-                <ArrowUpRight className="h-[18px] w-[18px]" />
+                <ArrowUpRight className="h-[18px] w-[18px] flex-shrink-0" />
+                Open Nexus
               </a>
             )}
             <Link
               href="/settings"
-              title="Settings"
-              className={`flex h-9 w-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-hover hover:text-foreground ${focusRing}`}
+              className={`flex items-center gap-3 rounded-lg py-2 pl-3.5 pr-2.5 text-[13.5px] font-medium text-muted transition-colors hover:bg-hover hover:text-foreground ${focusRing}`}
             >
-              <Settings className="h-[18px] w-[18px]" />
+              <Settings className="h-[18px] w-[18px] flex-shrink-0" />
+              Settings
             </Link>
-            <form action="/api/auth/logout" method="post" className="contents">
+            <form action="/api/auth/logout" method="post">
               {/* POST, matching the Nexus shell — logout mutates session state
                   and must not be reachable by a link prefetch or a stray GET. */}
               <button
                 type="submit"
-                title="Sign out"
-                className={`flex h-9 w-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-crit-soft hover:text-crit ${focusRing}`}
+                className={`flex w-full items-center gap-3 rounded-lg py-2 pl-3.5 pr-2.5 text-[13.5px] font-medium text-muted transition-colors hover:bg-crit-soft hover:text-crit ${focusRing}`}
               >
-                <LogOut className="h-[18px] w-[18px]" />
+                <LogOut className="h-[18px] w-[18px] flex-shrink-0" />
+                Sign out
               </button>
             </form>
-            <div className="pt-1">{avatar}</div>
+            <div className="mt-1.5">
+              <ConnectProfileMenu currentUser={currentUser} showName placement="top" />
+            </div>
           </div>
         </nav>
 
@@ -345,7 +287,7 @@ export function ConnectShell({
 
               <div className="flex-1 space-y-0.5 overflow-y-auto px-3 py-2">
                 {CONNECT_NAV.map((item) => (
-                  <DrawerItem
+                  <NavItem
                     key={item.href}
                     item={item}
                     active={activeHref === item.href}
@@ -416,7 +358,9 @@ export function ConnectShell({
             <div className="flex flex-shrink-0 items-center gap-1.5">
               {fullBleed && <SearchTrigger variant="icon" />}
               <NotificationCenter userId={currentUser.id} />
-              <span className="lg:hidden">{avatar}</span>
+              <span className="lg:hidden">
+                <ConnectProfileMenu currentUser={currentUser} placement="bottom" />
+              </span>
             </div>
           </header>
 

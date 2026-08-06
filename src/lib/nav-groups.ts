@@ -63,7 +63,7 @@ export const NAV_GROUPS: GroupDef[] = [
     owns: ["/inbox", "/contacts"],
     extra: [{ href: "/compose", label: "Compose", roles: "all", section: "Write" }],
   },
-  { id: "chat", label: "Chat", icon: "chat", selfNav: true, owns: ["/chat"] },
+  { id: "chat", label: "Chat", icon: "chat", selfNav: true, owns: ["/connect/chat"] },
   { id: "meet", label: "Meet", icon: "meet", owns: ["/meet"] },
   { id: "calendar", label: "Calendar", icon: "calendar", owns: ["/calendar"] },
   {

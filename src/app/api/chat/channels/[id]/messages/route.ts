@@ -288,7 +288,7 @@ export async function POST(request: Request, { params }: Params) {
                 : `Urgent in #${channel?.name ?? "channel"} — ${user.fullName}`
               : `New message from ${user.fullName}`,
             body: displayContent,
-            link: `/chat?channel=${channelId}`,
+            link: `/connect/chat?channel=${channelId}`,
             metadata: { channelId, urgent: isUrgent === true, senderId: user.id },
           }).catch(() => {})
         )
@@ -310,7 +310,7 @@ export async function POST(request: Request, { params }: Params) {
               await sendWebPush(sub, {
                 title: isDM ? `💬 ${user.fullName}` : pushTitle,
                 body: displayContent,
-                url: "/chat",
+                url: "/connect/chat",
                 tag: `chat-${channelId}`,
               });
             } catch {

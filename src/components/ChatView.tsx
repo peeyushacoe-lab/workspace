@@ -47,12 +47,14 @@ import {
   Mail,
   Bell,
   BellOff,
+  Info,
   type LucideIcon,
 } from "lucide-react";
 import { formatDistanceToNow, isToday, isYesterday, format } from "date-fns";
 import { toast } from "sonner";
 import { useCall } from "./call/CallProvider";
 import { avatarGradient } from "@/lib/avatar";
+import { PresenceDot } from "@/components/PresenceIndicator";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -73,7 +75,24 @@ type Channel = {
   members: Member[];
   _count: { messages: number };
   unreadCount?: number;
+  lastMessage?: {
+    content: string;
+    createdAt: string;
+    authorName: string;
+  } | null;
 };
+
+/** "now", "18m", "3h", "2d", "6 Aug" — the density a conversation list wants. */
+function relativeShort(iso: string): string {
+  const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+  if (mins < 1) return "now";
+  if (mins < 60) return `${mins}m`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h`;
+  const days = Math.floor(hrs / 24);
+  if (days < 7) return `${days}d`;
+  return format(new Date(iso), "d MMM");
+}
 
 type Reaction = {
   id: string;
@@ -1040,6 +1059,202 @@ function ThreadPanel({
   );
 }
 
+// ─── Channel Info Panel ───────────────────────────────────────────────────────
+
+type SharedFile = {
+  messageId: string;
+  name: string;
+  size: number;
+  mimeType: string;
+  url?: string;
+  fileId?: string;
+  authorName: string;
+  createdAt: string;
+};
+
+/** Pulls attachments out of the already-loaded message list — this mirrors
+ * FileAttachmentCard's own parsing rather than a second backend query, since
+ * the messages are already in memory for the open channel. */
+function extractSharedFiles(messages: Message[]): SharedFile[] {
+  const out: SharedFile[] = [];
+  for (const msg of messages) {
+    if (msg.deletedAt) continue;
+    if (msg.content.startsWith("[FILE_ATTACHMENT] ")) {
+      try {
+        const data = JSON.parse(msg.content.replace("[FILE_ATTACHMENT] ", "")) as {
+          name: string; size: number; mimeType: string; url?: string; fileId?: string;
+        };
+        out.push({ messageId: msg.id, authorName: msg.user.fullName, createdAt: msg.createdAt, ...data });
+      } catch { /* skip malformed */ }
+    } else if (msg.attachmentUrl && msg.attachmentName) {
+      out.push({
+        messageId: msg.id,
+        name: msg.attachmentName,
+        size: msg.attachmentSize ?? 0,
+        mimeType: msg.attachmentMime ?? "application/octet-stream",
+        url: msg.attachmentUrl,
+        authorName: msg.user.fullName,
+        createdAt: msg.createdAt,
+      });
+    }
+  }
+  return out.reverse(); // most recent first
+}
+
+function ChannelInfoPanel({
+  channel,
+  currentUserId,
+  memberNameOf,
+  presenceData,
+  messages,
+  pinnedMessages,
+  activeTab,
+  onTabChange,
+  onLoadPinned,
+  onUnpin,
+  onJumpTo,
+  onClose,
+}: {
+  channel: Channel;
+  currentUserId: string;
+  memberNameOf: (userId: string) => string;
+  presenceData?: Record<string, { status: string; updatedAt: string }>;
+  messages: Message[];
+  pinnedMessages: Message[];
+  activeTab: "members" | "shared" | "pinned";
+  onTabChange: (tab: "members" | "shared" | "pinned") => void;
+  onLoadPinned: () => void;
+  onUnpin: (messageId: string) => void;
+  onJumpTo: (messageId: string) => void;
+  onClose: () => void;
+}) {
+  const sharedFiles = extractSharedFiles(messages);
+  const isDirect = channel.type === "DIRECT";
+
+  return (
+    <div className="bg-surface hidden lg:flex lg:flex-col lg:w-80 flex-shrink-0 border-l border-border-soft">
+      <div className="px-4 py-3 border-b border-border flex items-center justify-between flex-shrink-0">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-foreground truncate">
+            {isDirect ? "Contact info" : channel.name}
+          </p>
+          {!isDirect && (
+            <p className="text-xs text-muted">{channel.members.length} member{channel.members.length === 1 ? "" : "s"}</p>
+          )}
+        </div>
+        <button onClick={onClose} className="p-1.5 text-muted hover:text-foreground hover:bg-surface-sunken rounded-md transition-colors flex-shrink-0">
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex border-b border-border flex-shrink-0">
+        {([
+          { key: "members" as const, label: "Members", count: channel.members.length },
+          { key: "shared" as const, label: "Shared", count: sharedFiles.length },
+          { key: "pinned" as const, label: "Pinned", count: pinnedMessages.length },
+        ]).map((t) => (
+          <button
+            key={t.key}
+            onClick={() => { onTabChange(t.key); if (t.key === "pinned") onLoadPinned(); }}
+            className={`flex-1 px-2 py-2.5 text-[12.5px] font-semibold transition-colors border-b-2 ${
+              activeTab === t.key
+                ? "text-accent border-accent"
+                : "text-muted border-transparent hover:text-foreground"
+            }`}
+          >
+            {t.label}
+            {t.count > 0 && <span className="ml-1 text-[10px] text-subtle">{t.count}</span>}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex-1 overflow-y-auto overflow-x-hidden py-2">
+        {activeTab === "members" && (
+          channel.members.length === 0 ? (
+            <p className="text-center text-xs text-subtle py-8">No members.</p>
+          ) : (
+            channel.members.map((m) => {
+              const name = memberNameOf(m.userId);
+              const status = presenceData?.[m.userId]?.status ?? "offline";
+              return (
+                <div key={m.userId} className="flex items-center gap-3 px-4 py-2 hover:bg-surface-sunken transition-colors">
+                  <div className="relative flex-shrink-0">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white" style={{ background: avatarGradient(name) }}>
+                      {name.charAt(0).toUpperCase()}
+                    </div>
+                    <PresenceDot status={status} size="sm" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[13px] font-medium text-foreground truncate">
+                      {name}{m.userId === currentUserId ? " (you)" : ""}
+                    </p>
+                  </div>
+                  {m.role === "ADMIN" && !isDirect && (
+                    <span className="flex-shrink-0 text-[10px] font-semibold text-accent bg-accent/10 rounded-full px-1.5 py-0.5">Admin</span>
+                  )}
+                </div>
+              );
+            })
+          )
+        )}
+
+        {activeTab === "shared" && (
+          sharedFiles.length === 0 ? (
+            <div className="text-center text-muted py-8">
+              <FileText className="w-8 h-8 mx-auto mb-2 opacity-20" />
+              <p className="text-xs">No files shared yet.</p>
+            </div>
+          ) : (
+            sharedFiles.map((f) => (
+              <button
+                key={f.messageId}
+                onClick={() => onJumpTo(f.messageId)}
+                className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-surface-sunken transition-colors text-left"
+              >
+                <FileText className="w-6 h-6 text-accent flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[13px] font-medium text-foreground truncate">{f.name}</p>
+                  <p className="text-[10.5px] text-subtle truncate">
+                    {formatFileSize(f.size)} · {f.authorName}
+                  </p>
+                </div>
+              </button>
+            ))
+          )
+        )}
+
+        {activeTab === "pinned" && (
+          pinnedMessages.length === 0 ? (
+            <div className="text-center text-muted py-8">
+              <Pin className="w-8 h-8 mx-auto mb-2 opacity-20" />
+              <p className="text-xs">No pinned messages yet.</p>
+            </div>
+          ) : (
+            pinnedMessages.map((msg) => (
+              <div key={msg.id} className="px-4 py-3 border-b border-border-soft hover:bg-surface-sunken transition-colors">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-semibold text-foreground">{msg.user.fullName}</span>
+                  <span className="text-[10px] text-subtle">{formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true })}</span>
+                </div>
+                <button onClick={() => onJumpTo(msg.id)} className="block text-left w-full">
+                  <p className="text-xs text-muted line-clamp-3">{msg.content}</p>
+                </button>
+                <button
+                  onClick={() => onUnpin(msg.id)}
+                  className="mt-1.5 text-[10px] text-muted hover:text-crit flex items-center gap-1 transition-colors"
+                >
+                  <PinOff className="w-3 h-3" /> Unpin
+                </button>
+              </div>
+            ))
+          )
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── New Channel Modal ────────────────────────────────────────────────────────
 
 function NewChannelModal({
@@ -1515,26 +1730,46 @@ function ChannelSection({
                 <button
                   key={ch.id}
                   onClick={() => onSelect(ch.id)}
-                  className={`nx-nav-item nx-press w-full flex items-center gap-2.5 h-11 rounded-xl px-[11px] text-left transition-colors ${
+                  className={`nx-nav-item nx-press w-full flex items-center gap-2.5 min-h-[56px] rounded-xl px-[11px] py-2 text-left transition-colors ${
                     isSelected ? "bg-accent-soft" : "hover:bg-hover"
                   }`}
                 >
                   <div className="relative flex-shrink-0">
                     {isGroup ? (
-                      <div className="w-[30px] h-[30px] rounded-full bg-surface-sunken border border-border flex items-center justify-center">
-                        <Users className="w-3.5 h-3.5 text-muted" />
+                      <div className="w-9 h-9 rounded-full bg-surface-sunken border border-border flex items-center justify-center">
+                        <Users className="w-4 h-4 text-muted" />
                       </div>
                     ) : (
-                      <div className="w-[30px] h-[30px] rounded-full flex items-center justify-center text-[11px] font-bold text-white" style={{ background: avatarGradient(ch.name) }}>
+                      <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white" style={{ background: avatarGradient(ch.name) }}>
                         {ch.name.charAt(0).toUpperCase()}
                       </div>
                     )}
-                    <span
-                      className="absolute -bottom-px -right-px w-2.5 h-2.5 rounded-full border-2 border-border"
-                      style={{ background: presence }}
-                    />
+                    {!isGroup && (
+                      <span
+                        className="absolute -bottom-px -right-px w-2.5 h-2.5 rounded-full border-2 border-surface"
+                        style={{ background: presence }}
+                      />
+                    )}
                   </div>
-                  <span className={`truncate flex-1 text-[13px] ${isSelected || hasUnread ? "font-semibold text-foreground" : "font-medium text-muted"}`}>{ch.name}</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-baseline gap-1.5">
+                      <span className={`truncate flex-1 text-[13px] ${isSelected || hasUnread ? "font-semibold text-foreground" : "font-medium text-foreground"}`}>
+                        {ch.name}
+                      </span>
+                      {ch.lastMessage && (
+                        <span className="flex-shrink-0 text-[10.5px] tabular-nums text-subtle">
+                          {relativeShort(ch.lastMessage.createdAt)}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <p className={`truncate text-[12px] ${hasUnread ? "font-medium text-foreground" : "text-subtle"}`}>
+                        {ch.lastMessage
+                          ? `${ch.lastMessage.authorName}: ${ch.lastMessage.content || "Attachment"}`
+                          : "No messages yet"}
+                      </p>
+                    </div>
+                  </div>
                   {showBadge && (
                     <span className="nx-badge font-mono bg-accent text-accent-foreground text-[10.5px] rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-[5px] font-bold leading-none flex-shrink-0">
                       {badgeCount > 99 ? "99+" : badgeCount}
@@ -2171,6 +2406,12 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
   const [showPins, setShowPins] = useState(false);
   const [pinnedMessages, setPinnedMessages] = useState<Message[]>([]);
 
+  // Channel info panel (Members / Shared / Pinned) — a single unified view,
+  // separate from the standalone pin-list shortcut above which stays as a
+  // quick jump for people who just want the pins.
+  const [showChannelInfo, setShowChannelInfo] = useState(false);
+  const [infoTab, setInfoTab] = useState<"members" | "shared" | "pinned">("members");
+
   // Group rename state
   const [renamingChannel, setRenamingChannel] = useState(false);
   const [renameValue, setRenameValue] = useState("");
@@ -2216,6 +2457,59 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
   const [showGifPicker, setShowGifPicker] = useState(false);
   const [mediaPickerTab, setMediaPickerTab] = useState<"gif" | "sticker" | "emoji">("gif");
   const [composerAttachment, setComposerAttachment] = useState<{ url: string; mime: string; name: string } | null>(null);
+
+  // Sage Assist — composer-time writing help. Deliberately scoped to actions
+  // backed by AI endpoints that already exist for Inbox compose (rewrite,
+  // translate), rather than standing up new ones. A "Draft reply" action was
+  // on the wishlist but has no clean backing endpoint yet (smart-reply is
+  // wired to InboxMessage, not ChatMessage) — left out rather than faked.
+  const [showSageAssist, setShowSageAssist] = useState(false);
+  const [sageAssistBusy, setSageAssistBusy] = useState(false);
+  const sageAssistRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showSageAssist) return;
+    const handler = (e: MouseEvent) => {
+      if (sageAssistRef.current && !sageAssistRef.current.contains(e.target as Node)) {
+        setShowSageAssist(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showSageAssist]);
+
+  const runSageAssist = async (
+    action:
+      | { kind: "rewrite"; style: "formal" | "casual" | "concise" | "expand"; label: string }
+      | { kind: "translate"; targetLanguage: string; label: string },
+  ) => {
+    if (!composerText.trim() || sageAssistBusy) return;
+    setSageAssistBusy(true);
+    setShowSageAssist(false);
+    try {
+      const res =
+        action.kind === "rewrite"
+          ? await fetch("/api/ai/rewrite", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ content: composerText, style: action.style }),
+            })
+          : await fetch("/api/ai/translate", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ text: composerText, targetLanguage: action.targetLanguage }),
+            });
+      if (!res.ok) throw new Error(await res.text());
+      const data = (await res.json()) as { result?: string; translated?: string };
+      const next = data.result ?? data.translated ?? "";
+      if (next.trim()) setComposerText(next.trim());
+      else toast.error("Sage Assist returned nothing to use");
+    } catch {
+      toast.error(`Sage Assist couldn't ${action.label.toLowerCase()}`);
+    } finally {
+      setSageAssistBusy(false);
+    }
+  };
 
   const handleEmojiInsert = (emoji: string) => {
     const ref = composerRef.current;
@@ -3033,6 +3327,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
   };
 
   const openThread = async (msg: Message) => {
+    setShowChannelInfo(false);
     setThreadParentMsg(msg);
     setThreadMessages([]);
     try {
@@ -3278,6 +3573,12 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
 
   // Collect unique member names from loaded messages for @mention highlighting
   const memberNames = [...new Set(messages.map(m => m.user.fullName))];
+
+  // Resolves any workspace member's name, not just ones who have posted —
+  // the roster in the info panel includes people who haven't said anything
+  // yet, so falling back to loaded-message authors alone would miss them.
+  const memberNameOf = (userId: string): string =>
+    dmMemberNames.get(userId) ?? messages.find(m => m.user.id === userId)?.user.fullName ?? "Member";
 
   // Build messages list with date separators
   type ListItem =
@@ -3638,13 +3939,26 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
 
                 {/* Pinned messages toggle */}
                 <button
-                  onClick={() => { if (showPins) setShowPins(false); else void loadPinnedMessages(); }}
+                  onClick={() => { if (showPins) setShowPins(false); else { setShowChannelInfo(false); void loadPinnedMessages(); } }}
                   className={`w-9 h-9 flex items-center justify-center rounded-lg border transition-colors flex-shrink-0 ${showPins ? "border-accent text-accent bg-accent/10" : "border-border bg-surface text-muted hover:bg-surface-sunken hover:text-foreground"}`}
                   title="Pinned messages"
                 >
                   <Pin className="w-[18px] h-[18px]" />
                 </button>
 
+                {/* Channel info — Members / Shared / Pinned in one place */}
+                <button
+                  onClick={() => {
+                    if (showChannelInfo) { setShowChannelInfo(false); return; }
+                    setShowPins(false);
+                    setThreadParentMsg(null);
+                    setShowChannelInfo(true);
+                  }}
+                  className={`w-9 h-9 flex items-center justify-center rounded-lg border transition-colors flex-shrink-0 ${showChannelInfo ? "border-accent text-accent bg-accent/10" : "border-border bg-surface text-muted hover:bg-surface-sunken hover:text-foreground"}`}
+                  title={selectedChannel?.type === "DIRECT" ? "Contact info" : "Channel info"}
+                >
+                  <Info className="w-[18px] h-[18px]" />
+                </button>
 
                 {/* AI Summarize dropdown moved up; remaining utilities */}
                 {/* Pinned messages toggle */}
@@ -3867,6 +4181,52 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                   <button onClick={() => { setMediaPickerTab("sticker"); setShowGifPicker(true); }} title="Send a sticker" className="nx-press p-1.5 mb-1 rounded-lg transition-colors flex-shrink-0 text-subtle hover:text-foreground hover:bg-hover"><Sticker className="w-4 h-4" /></button>
                   {/* GIF */}
                   <button onClick={() => { setMediaPickerTab("gif"); setShowGifPicker(true); }} title="Send a GIF" className="nx-press p-1.5 mb-1 rounded-lg transition-colors flex-shrink-0 text-xs font-semibold text-subtle hover:text-foreground hover:bg-hover">GIF</button>
+                  {/* Sage Assist — composer-time writing help, not a channel-wide tool */}
+                  <div className="relative" ref={sageAssistRef}>
+                    <button
+                      onClick={() => setShowSageAssist((p) => !p)}
+                      disabled={!composerText.trim() || sageAssistBusy}
+                      title="Sage Assist"
+                      className={`nx-press p-1.5 mb-1 rounded-lg transition-colors flex-shrink-0 disabled:opacity-40 ${
+                        showSageAssist ? "bg-accent-soft text-accent" : "text-subtle hover:text-accent hover:bg-hover"
+                      }`}
+                    >
+                      {sageAssistBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                    </button>
+                    {showSageAssist && (
+                      <div className="absolute bottom-full right-0 mb-1 w-52 bg-surface border border-border rounded-xl shadow-pop z-50 overflow-hidden py-1">
+                        <p className="px-3 pt-1.5 pb-1 text-[10px] font-semibold uppercase tracking-wide text-subtle">
+                          Sage Assist
+                        </p>
+                        {([
+                          { kind: "rewrite" as const, style: "expand" as const, label: "Improve writing" },
+                          { kind: "rewrite" as const, style: "formal" as const, label: "Make professional" },
+                          { kind: "rewrite" as const, style: "concise" as const, label: "Make concise" },
+                        ]).map((a) => (
+                          <button
+                            key={a.label}
+                            onClick={() => void runSageAssist(a)}
+                            className="w-full text-left px-3 py-1.5 text-[13px] text-foreground hover:bg-hover transition-colors"
+                          >
+                            {a.label}
+                          </button>
+                        ))}
+                        <div className="my-1 h-px bg-border-soft" />
+                        <p className="px-3 pt-0.5 pb-1 text-[10px] font-semibold uppercase tracking-wide text-subtle">
+                          Translate
+                        </p>
+                        {["Spanish", "French", "Hindi"].map((lang) => (
+                          <button
+                            key={lang}
+                            onClick={() => void runSageAssist({ kind: "translate", targetLanguage: lang, label: `Translate to ${lang}` })}
+                            className="w-full text-left px-3 py-1.5 text-[13px] text-foreground hover:bg-hover transition-colors"
+                          >
+                            {lang}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   {/* Urgent flag toggle */}
                   <button
                     onClick={() => setComposerUrgent(v => !v)}
@@ -3920,7 +4280,7 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
           )}
 
           {/* Pinned messages panel */}
-          {showPins && !threadParentMsg && (
+          {showPins && !threadParentMsg && !showChannelInfo && (
             <div className="bg-surface hidden lg:flex lg:flex-col lg:w-80 flex-shrink-0 border-l border-border-soft">
               <div className="px-4 py-3 border-b border-border flex items-center justify-between flex-shrink-0">
                 <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
@@ -3957,6 +4317,24 @@ export function ChatView({ currentUserId, userRole: _userRole }: { currentUserId
                 )}
               </div>
             </div>
+          )}
+
+          {/* Channel info panel — Members / Shared / Pinned in one place */}
+          {showChannelInfo && !threadParentMsg && selectedChannel && (
+            <ChannelInfoPanel
+              channel={selectedChannel}
+              currentUserId={currentUserId}
+              memberNameOf={memberNameOf}
+              presenceData={presenceData}
+              messages={messages}
+              pinnedMessages={pinnedMessages}
+              activeTab={infoTab}
+              onTabChange={setInfoTab}
+              onLoadPinned={() => void loadPinnedMessages()}
+              onUnpin={(id) => void handlePin(id, false)}
+              onJumpTo={scrollToMessage}
+              onClose={() => { setShowChannelInfo(false); setShowPins(false); }}
+            />
           )}
         </>
       )}

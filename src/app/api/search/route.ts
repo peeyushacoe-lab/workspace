@@ -358,7 +358,7 @@ export async function GET(request: Request) {
       type: "chat",
       title: `#${m.channel.name}`,
       excerpt: m.content.slice(0, 120),
-      link: `/chat?channel=${m.channel.id}`,
+      link: `/connect/chat?channel=${m.channel.id}`,
       createdAt: m.createdAt.toISOString(),
       metadata: {
         sender: m.user.fullName,

@@ -93,7 +93,10 @@ const NON_HR_ROLES: UserRole[] = ALL_ROLES.filter(r => r !== "HR");
 
 export const portalNavItems: PortalNavItem[] = [
   { href: "/inbox",     label: "Inbox",      hint: "Workspace mail",        roles: ALL_ROLES },
-  { href: "/chat",      label: "Chat",       hint: "Team messaging",        roles: NON_HR_ROLES },
+  // Chat itself now lives in Sage Connect — this nav entry sends people
+  // straight there instead of to the (now-redirecting) Nexus /chat route, so
+  // clicking "Chat" doesn't take an extra hop through a server redirect.
+  { href: "/connect/chat", label: "Chat",     hint: "Team messaging",        roles: NON_HR_ROLES },
   { href: "/meet",      label: "Meet",       hint: "Video meetings",        roles: ALL_ROLES },
   { href: "/calendar",  label: "Calendar",   hint: "Events & scheduling",   roles: ALL_ROLES },
   { href: "/whiteboard", label: "Whiteboard", hint: "Visual canvas",         roles: NON_HR_ROLES },

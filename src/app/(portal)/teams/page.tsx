@@ -195,7 +195,10 @@ function TeamCard({
           className="flex flex-wrap gap-0.5 mb-3 -mx-1 pb-3 border-b"
           style={{ borderColor: "var(--border-soft)" }}
         >
-          <QuickLink href={`/chat?team=${team.id}`}     icon={MessageSquare} label="Chat"     color="#4f46e5" />
+          {/* Chat lives in Connect now; team-scoped filtering there is a later
+              phase, so this links to Chat generally rather than a broken
+              ?team= param ChatView doesn't read. */}
+          <QuickLink href="/connect/chat"                icon={MessageSquare} label="Chat"     color="#4f46e5" />
           <QuickLink href={`/drive?team=${team.id}`}    icon={FolderOpen}    label="Files"    color="#8b5cf6" />
           <QuickLink href={`/calendar?team=${team.id}`} icon={CalendarDays}  label="Calendar" color="#b45309" />
           <QuickLink href={`/tasks?team=${team.id}`}    icon={CheckSquare}   label="Tasks"    color="#22c55e" />

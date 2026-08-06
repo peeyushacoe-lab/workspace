@@ -38,7 +38,7 @@ const icons: Record<string, LucideIcon> = {
   "/settings":   SlidersHorizontal,
   "/users":      Users,
   "/inbox":      Inbox,
-  "/chat":       MessageSquare,
+  "/connect/chat": MessageSquare,
   "/meet":       Video,
   "/drive":      HardDrive,
   "/calendar":   CalendarDays,
