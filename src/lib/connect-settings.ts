@@ -14,13 +14,21 @@
  * present-and-inert.
  */
 
-export type ThemePreference = "system" | "light" | "dark";
 export type DensityPreference = "comfortable" | "compact";
 
 export type ConnectSettings = {
   appearance: {
-    /** `dark` on <html>. "system" follows prefers-color-scheme. */
-    theme: ThemePreference;
+    /**
+     * Deliberately no theme setting.
+     *
+     * Atrium is light-first and dark mode is opt-in at the layout level (see
+     * CLAUDE.md). A picker defaulting to "system" meant anyone on a dark-OS
+     * machine got flipped to a theme they never asked for — and because the
+     * class can only be applied after hydration, they got a dark-then-light
+     * flash on every navigation on top of it. There is no way to apply a
+     * client-stored theme before first paint without an inline blocking
+     * script, so the honest options were "flash" or "don't". This is "don't".
+     */
     /** Row padding in conversation lists and message rows. */
     density: DensityPreference;
     /** Suppresses transitions and the typing/loading animations. Also set
@@ -60,7 +68,6 @@ export type ConnectSettings = {
 
 export const DEFAULT_CONNECT_SETTINGS: ConnectSettings = {
   appearance: {
-    theme: "system",
     density: "comfortable",
     reduceMotion: false,
     largerText: false,
@@ -153,6 +160,4 @@ function mergeSection<T extends Record<string, unknown>>(defaults: T, incoming: 
   return out;
 }
 
-/** Theme values a request is allowed to set. */
-export const THEME_VALUES: ThemePreference[] = ["system", "light", "dark"];
 export const DENSITY_VALUES: DensityPreference[] = ["comfortable", "compact"];

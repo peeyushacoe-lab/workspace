@@ -160,7 +160,8 @@ function checkSubdomain() {
   // Hub routes pasted at Connect must bounce to Nexus, not rewrite into a
   // /connect/* path that has no page. Connect declares its whole surface as
   // aliases precisely so this falls through instead of being suffixed.
-  for (const hubPath of ["/inbox", "/drive", "/calendar", "/admin", "/docs"]) {
+  // /admin is now a Connect-native page (ConnectAdminConsole) — remove from hub-bounce list.
+  for (const hubPath of ["/inbox", "/drive", "/calendar", "/docs"]) {
     if (!shouldRedirectToHub(sub, hubPath)) {
       fail(
         `connect.${root}${hubPath} does not bounce to the hub — it maps to ` +

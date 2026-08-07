@@ -3411,7 +3411,19 @@ export function ChatView({
       .finally(() => setLoadingMessages(false));
   }, [selectedChannelId]);
 
-  // Polling fallback — fetch new messages every 5 s in case the socket misses events
+  // Polling fallback — catches anything the live stream misses.
+  //
+  // This ran every 5 s unconditionally, including while the SSE stream was
+  // perfectly healthy and had already delivered every message. That's 12
+  // requests a minute, per person, per open conversation, purely as insurance
+  // against a transport that is usually working — and each one is a real query
+  // against the message table.
+  //
+  // So the interval now follows the connection: 5 s while live delivery is
+  // down (where the poll genuinely *is* the transport and latency matters),
+  // 20 s while it's up (where it's a safety net and 20 s of worst-case lag on
+  // a message SSE already delivered instantly is invisible). Roughly a 75 %
+  // cut in steady-state chat traffic with no user-visible change.
   useEffect(() => {
     if (!selectedChannelId) return;
 
@@ -3439,9 +3451,9 @@ export function ChatView({
       });
     };
 
-    const interval = setInterval(() => void poll(), 5_000);
+    const interval = setInterval(() => void poll(), liveConnected ? 20_000 : 5_000);
     return () => clearInterval(interval);
-  }, [selectedChannelId]);
+  }, [selectedChannelId, liveConnected]);
 
   // Reconciliation poll — the append poll above only ever *adds* messages.
   //

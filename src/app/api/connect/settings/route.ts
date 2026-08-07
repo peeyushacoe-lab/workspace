@@ -5,7 +5,6 @@ import { prisma } from "@/lib/prisma";
 import {
   readConnectSettings,
   writeConnectSettings,
-  THEME_VALUES,
   DENSITY_VALUES,
   type DeepPartial,
   type ConnectSettings,
@@ -86,7 +85,8 @@ function sanitise(body: unknown): DeepPartial<ConnectSettings> | null {
   const appearance = section("appearance");
   if (appearance) {
     patch.appearance = clean({
-      theme: pick(appearance.theme, THEME_VALUES),
+      // No `theme` — it isn't a setting any more, and accepting it here would
+      // let an old client write a key nothing reads. See connect-settings.ts.
       density: pick(appearance.density, DENSITY_VALUES),
       reduceMotion: bool(appearance.reduceMotion),
       largerText: bool(appearance.largerText),

@@ -24,6 +24,14 @@ html, body { overflow-x: hidden; max-width: 100vw; }
    ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
+  /* Tell the browser this document is light *before* any stylesheet paints.
+     Without it, a machine with a dark-mode OS renders the default canvas,
+     scrollbars and form controls dark for the first frames of a page load —
+     which is the dark-then-bright flash on navigation, and it happens
+     regardless of any theme setting in the app. Atrium is light-first, so the
+     honest declaration is `light`. */
+  color-scheme: light;
+
   /* ── Surfaces ─────────────────────────────────────────────────────────── */
   --canvas: #f0efec;          /* page behind the floating panels */
   --background: #f0efec;      /* alias — legacy callers */
@@ -116,6 +124,10 @@ html, body { overflow-x: hidden; max-width: 100vw; }
 
 /* ── Dark mode — opt-in, warm neutral rather than blue-black ─────────────── */
 .dark {
+  /* Pairs with `color-scheme: light` on :root — when something deliberately
+     opts a subtree into dark, the browser's own chrome (scrollbars, form
+     controls) has to follow or they stay light against a dark surface. */
+  color-scheme: dark;
   --canvas: #16161a;
   --background: #16161a;
   --surface: #1d1d22;

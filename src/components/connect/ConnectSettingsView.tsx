@@ -4,11 +4,11 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   Palette, MessageSquare, Video, Lock, Keyboard, Accessibility, Monitor,
-  Sun, Moon, LaptopMinimal, Loader2, LogOut, ShieldCheck,
+  Loader2, LogOut, ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/connect/ui";
 import { useConnectSettings } from "@/components/connect/ConnectSettingsEffects";
-import type { ConnectSettings, ThemePreference, DensityPreference } from "@/lib/connect-settings";
+import type { ConnectSettings, DensityPreference } from "@/lib/connect-settings";
 
 /**
  * Connect settings.
@@ -121,11 +121,6 @@ export function ConnectSettingsView() {
 type SetFn = (patch: Parameters<ReturnType<typeof useConnectSettings>["update"]>[0]) => Promise<void>;
 
 function AppearanceSection({ settings, onChange }: { settings: ConnectSettings; onChange: SetFn }) {
-  const themes: { value: ThemePreference; label: string; icon: typeof Sun }[] = [
-    { value: "system", label: "System", icon: LaptopMinimal },
-    { value: "light", label: "Light", icon: Sun },
-    { value: "dark", label: "Dark", icon: Moon },
-  ];
   const densities: { value: DensityPreference; label: string; hint: string }[] = [
     { value: "comfortable", label: "Comfortable", hint: "Roomier rows, easier to scan" },
     { value: "compact", label: "Compact", hint: "More conversations on screen at once" },
@@ -133,25 +128,6 @@ function AppearanceSection({ settings, onChange }: { settings: ConnectSettings; 
 
   return (
     <Panel title="Appearance" description="How Connect looks on this account, on every device.">
-      <Field label="Theme">
-        <div className="flex gap-2">
-          {themes.map((t) => (
-            <button
-              key={t.value}
-              onClick={() => void onChange({ appearance: { theme: t.value } })}
-              className={`flex flex-1 flex-col items-center gap-1.5 rounded-lg border px-3 py-3 text-[12px] font-medium transition-colors ${
-                settings.appearance.theme === t.value
-                  ? "border-accent/40 bg-accent-soft text-accent-strong"
-                  : "border-border text-muted hover:bg-hover hover:text-foreground"
-              }`}
-            >
-              <t.icon className="h-4 w-4" />
-              {t.label}
-            </button>
-          ))}
-        </div>
-      </Field>
-
       <Field label="Density">
         <div className="space-y-2">
           {densities.map((d) => (

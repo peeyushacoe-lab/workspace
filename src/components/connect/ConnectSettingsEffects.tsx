@@ -17,10 +17,15 @@ import { invalidateJoinPreferences } from "@/components/connect/useJoinPreferenc
  * don't flash on every navigation.
  *
  * The appearance settings are applied as classes on `<html>` rather than as
- * React state threaded through components. Theme has to reach the whole
- * document (including portalled dialogs and the scrollbar), and `largerText`
- * works by moving the root font size so every rem-based measurement in the
- * product follows without touching a single component.
+ * React state threaded through components — `largerText` works by moving the
+ * root font size so every rem-based measurement in the product follows
+ * without touching a single component.
+ *
+ * Note there is no theme here. Anything applied from a *client-fetched*
+ * preference can only land after hydration, which means a visible flash of the
+ * wrong theme on every navigation. Atrium is light-first and dark mode is
+ * opt-in at the layout level, so the correct move was to remove the setting
+ * rather than ship the flash. See src/lib/connect-settings.ts.
  */
 
 type Ctx = {
@@ -95,24 +100,7 @@ export function ConnectSettingsProvider({ children }: { children: React.ReactNod
   );
 
   // ── Apply appearance to the document ──────────────────────────────────────
-  const { theme, reduceMotion, largerText, density } = settings.appearance;
-
-  useEffect(() => {
-    const root = document.documentElement;
-
-    const apply = () => {
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      const dark = theme === "dark" || (theme === "system" && prefersDark);
-      root.classList.toggle("dark", dark);
-    };
-    apply();
-
-    // Only follow the OS while the person has actually asked to follow it.
-    if (theme !== "system") return;
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    mq.addEventListener("change", apply);
-    return () => mq.removeEventListener("change", apply);
-  }, [theme]);
+  const { reduceMotion, largerText, density } = settings.appearance;
 
   useEffect(() => {
     const root = document.documentElement;
