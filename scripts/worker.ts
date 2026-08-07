@@ -143,6 +143,9 @@ async function scheduleCleanupJobs() {
   // hourly is more than enough granularity without being noisy).
   await cleanupQueue.add("task-recurrence", { type: "TASK_RECURRENCE" }, { repeat: repeatOpts, jobId: "task-recurrence" });
   await cleanupQueue.add("task-due-soon",   { type: "TASK_DUE_SOON" },   { repeat: { pattern: "0 * * * *" }, jobId: "task-due-soon" });
+  // Chat retention. Daily is the right cadence for a policy measured in days,
+  // and it runs at 03:00 with the rest of the destructive cleanup work.
+  await cleanupQueue.add("chat-retention", { type: "CHAT_RETENTION" }, { repeat: repeatOpts, jobId: "chat-retention" });
 
   logger.info("Recurring cleanup jobs scheduled");
 }

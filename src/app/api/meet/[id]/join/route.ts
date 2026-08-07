@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { JITSI_DOMAIN, jitsiRoomUrl } from "@/lib/jitsi";
+import { JITSI_DOMAIN, jitsiRoomUrl, generateJitsiJwt } from "@/lib/jitsi";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -41,14 +41,24 @@ export async function POST(_request: Request, { params }: Params) {
     await prisma.meeting.update({ where: { id }, data: { status: "LIVE", startedAt: new Date() } });
   }
 
-  // Resolved via @/lib/jitsi so this agrees with the embed and the CSP.
   const jitsiDomain = JITSI_DOMAIN;
   const jitsiUrl = jitsiRoomUrl(meeting.roomName);
+
+  const userFull = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { email: true },
+  });
+  const jwt = await generateJitsiJwt(meeting.roomName, {
+    id: user.id,
+    name: user.fullName,
+    email: userFull?.email ?? "",
+  });
 
   return NextResponse.json({
     roomName: meeting.roomName,
     jitsiUrl,
     jitsiDomain,
+    jwt,
     userId: user.id,
     userName: user.fullName,
   });

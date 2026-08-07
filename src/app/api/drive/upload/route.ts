@@ -4,12 +4,13 @@ import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isS3Configured, uploadToR2, bucketName } from "@/lib/s3";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { policiesForUser } from "@/lib/connect-policies";
 import { emitEvent } from "@/lib/events";
 import { previewQueue } from "@/lib/queues/preview.queue";
 import { securitySyncQueue } from "@/lib/queues/security-sync.queue";
 import { indexingQueue } from "@/lib/queues/indexing.queue";
 
-const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
+const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB — hard ceiling; org policy can only lower it
 
 const ALLOWED_MIME_TYPES = new Set([
   // Images — include all common variants browsers/OSes may send
@@ -111,8 +112,16 @@ export async function POST(request: Request) {
   const folderId = formData.get("folderId") as string | null;
 
   if (!file) return NextResponse.json({ error: "No file provided" }, { status: 400 });
-  if (file.size > MAX_FILE_SIZE) {
-    return NextResponse.json({ error: "File exceeds 100 MB limit" }, { status: 413 });
+
+  // Organisation policy, capped by the hard limit above — a policy can tighten
+  // the ceiling but never raise it past what the storage tier can take.
+  const policies = await policiesForUser(user.id);
+  const limitBytes = Math.min(policies.files.maxUploadMb * 1024 * 1024, MAX_FILE_SIZE);
+  if (file.size > limitBytes) {
+    return NextResponse.json(
+      { error: `File exceeds the ${Math.round(limitBytes / 1024 / 1024)} MB limit for this workspace` },
+      { status: 413 },
+    );
   }
 
   const mimeError = isAllowedFile(file.name, file.type);

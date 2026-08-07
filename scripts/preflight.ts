@@ -130,6 +130,38 @@ async function main() {
     console.log(`${DIM}  Skipped — ${err instanceof Error ? err.message : err}${RESET}`);
   }
 
+  // ── Jitsi ────────────────────────────────────────────────────────────────
+  section("Jitsi");
+  const jitsiDomain = process.env.NEXT_PUBLIC_JITSI_DOMAIN;
+  const jitsiAppId = process.env.JITSI_JWT_APP_ID;
+  const jitsiAppSecret = process.env.JITSI_JWT_APP_SECRET;
+
+  if (!jitsiDomain) {
+    console.log(`${YELLOW}○ NEXT_PUBLIC_JITSI_DOMAIN${RESET} ${DIM}— Using public meet.jit.si. Rooms are unauthenticated and carry Jitsi branding.${RESET}`);
+    console.log(`  ${DIM}Self-host: docker-compose from github.com/jitsi/docker-jitsi-meet, then set NEXT_PUBLIC_JITSI_DOMAIN=meet.yourdomain.com${RESET}`);
+  } else {
+    console.log(`${GREEN}✓${RESET} Custom domain: ${jitsiDomain}`);
+
+    // Warn on the silent split-brain case where only the server var is set.
+    if (process.env.JITSI_DOMAIN && !jitsiDomain) {
+      console.log(`${YELLOW}!${RESET} JITSI_DOMAIN is set but NEXT_PUBLIC_JITSI_DOMAIN is not — browser embeds still use meet.jit.si`);
+    }
+  }
+
+  const jwtBothSet = jitsiAppId && jitsiAppSecret;
+  const jwtNeitherSet = !jitsiAppId && !jitsiAppSecret;
+  if (jwtBothSet) {
+    console.log(`${GREEN}✓${RESET} JWT auth configured (JITSI_JWT_APP_ID + SECRET) — rooms require a server-signed token`);
+    if (!jitsiDomain) {
+      console.log(`${YELLOW}!${RESET} JWT vars set but no custom domain — JWT has no effect on meet.jit.si`);
+    }
+  } else if (jwtNeitherSet) {
+    console.log(`${YELLOW}○ No JWT auth${RESET} ${DIM}— set JITSI_JWT_APP_ID + JITSI_JWT_APP_SECRET on a self-hosted instance to lock rooms${RESET}`);
+  } else {
+    // One var set, other missing — always a misconfiguration.
+    console.log(`${YELLOW}!${RESET} Only one of JITSI_JWT_APP_ID / JITSI_JWT_APP_SECRET is set — JWT auth will silently fail`);
+  }
+
   // ── Verdict ──────────────────────────────────────────────────────────────
   console.log("");
   if (hardFailures > 0) {

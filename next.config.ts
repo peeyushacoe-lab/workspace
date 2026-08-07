@@ -9,9 +9,20 @@ const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  // Prevents cross-origin window.opener access while still allowing Jitsi's
+  // "pop out" button (which opens a new window) to retain a reference back.
+  // "same-origin" would block that; "same-origin-allow-popups" is the safe
+  // middle ground that closes the opener-chain attack without breaking calls.
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin-allow-popups" },
+  // Prevents Flash/Acrobat cross-domain policy files from being loaded from
+  // this origin. No-op for modern browsers, zero cost to add.
+  { key: "X-Permitted-Cross-Domain-Policies", value: "none" },
   {
     key: "Permissions-Policy",
-    value: "camera=(self), microphone=(self), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), interest-cohort=()",
+    // display-capture=(self) lets the in-app screen-share button work in
+    // Jitsi's embedded iframe without requiring a user gesture on a top-level
+    // frame. geolocation/payment/usb blocked: this app never uses them.
+    value: "camera=(self), microphone=(self), display-capture=(self), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), interest-cohort=()",
   },
   {
     key: "Strict-Transport-Security",

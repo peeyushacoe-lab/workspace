@@ -6,6 +6,7 @@ import { redis } from "@/lib/redis";
 import { deliverChatMessage } from "@/lib/chat/deliver";
 import { enforceChatLimit } from "@/lib/chat/limits";
 import { readConnectSettings } from "@/lib/connect-settings";
+import { policiesForUser } from "@/lib/connect-policies";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -178,9 +179,26 @@ export async function POST(request: Request, { params }: Params) {
     return NextResponse.json({ error: "Message content is required" }, { status: 400 });
   }
 
-  if (content && content.length > 10_000) {
-    return NextResponse.json({ error: "Message too long (max 10,000 characters)" }, { status: 400 });
+  // Organisation policy. Falls back to the previous hard-coded limits when no
+  // policy is set, so nothing changes until an admin deliberately changes it.
+  const policies = await policiesForUser(user.id);
+
+  if (content && content.length > policies.messaging.maxMessageLength) {
+    return NextResponse.json(
+      { error: `Message too long (max ${policies.messaging.maxMessageLength.toLocaleString()} characters)` },
+      { status: 400 },
+    );
   }
+  if (attachmentUrl && !policies.messaging.allowAttachments) {
+    return NextResponse.json(
+      { error: "Attachments are turned off for this workspace" },
+      { status: 403 },
+    );
+  }
+  // Urgent bypasses everyone's notification preferences, which is precisely
+  // why an organisation may want it off. Downgrade rather than reject — the
+  // message itself is fine, only the flag isn't.
+  const urgentAllowed = policies.messaging.allowUrgent && isUrgent === true;
 
   // Create + broadcast + index + notify. Shared with the scheduled-send worker
   // so a message delivered an hour late is indistinguishable from one sent now.
@@ -191,7 +209,7 @@ export async function POST(request: Request, { params }: Params) {
       content: content ?? "",
       parentId,
       quotedMessageId,
-      isUrgent,
+      isUrgent: urgentAllowed,
       attachmentUrl,
       attachmentMime,
       attachmentName,

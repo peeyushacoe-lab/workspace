@@ -53,7 +53,10 @@ export type AuditAction =
   // Self-service session revocation from Connect settings. Recorded because
   // "I signed out my old laptop" and "someone else signed out my laptop" look
   // identical without it.
-  | "SESSION_REVOKED";
+  | "SESSION_REVOKED"
+  // Connect org policy change. Retention especially: deletions happen on a
+  // schedule with no other trace, so the decision has to be attributable.
+  | "CONNECT_POLICY_UPDATED";
 
 export async function logAudit({
   actorId,

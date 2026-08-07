@@ -45,6 +45,9 @@ const FEATURE: Array<[string, string]> = [
   ["GIPHY_API_KEY", "GIF and sticker picker returns no results"],
   ["NEXT_PUBLIC_SENTRY_DSN", "Errors in production are invisible — no error tracking"],
   ["JWT_SECRET", "The mobile app cannot authenticate"],
+  ["NEXT_PUBLIC_JITSI_DOMAIN", "Meetings use the public meet.jit.si server — no Jitsi watermark removal, no JWT auth, no custom branding"],
+  ["JITSI_JWT_APP_ID", "Meeting rooms are unprotected — anyone who knows the room name can join without an account"],
+  ["JITSI_JWT_APP_SECRET", "Meeting rooms are unprotected — anyone who knows the room name can join without an account"],
 ];
 
 export function checkEnv(): {
@@ -112,6 +115,15 @@ export function checkEnvSanity(): string[] {
   }
   if (vapidPublic && vapidPrivate && !process.env.VAPID_SUBJECT) {
     warnings.push("VAPID_SUBJECT is unset — some push services reject subscriptions without it");
+  }
+
+  const jwtId = Boolean(process.env.JITSI_JWT_APP_ID);
+  const jwtSecret = Boolean(process.env.JITSI_JWT_APP_SECRET);
+  if (jwtId !== jwtSecret) {
+    warnings.push("Only one of JITSI_JWT_APP_ID / JITSI_JWT_APP_SECRET is set — JWT room auth will fail silently");
+  }
+  if ((jwtId || jwtSecret) && !process.env.NEXT_PUBLIC_JITSI_DOMAIN) {
+    warnings.push("JITSI_JWT_* are set but NEXT_PUBLIC_JITSI_DOMAIN is not — JWT has no effect on meet.jit.si");
   }
 
   return warnings;

@@ -76,6 +76,60 @@ if (
   );
 }
 
+// ─── JWT auth (self-hosted Jitsi) ─────────────────────────────────────────
+//
+// When JITSI_JWT_APP_ID + JITSI_JWT_APP_SECRET are set (self-hosted instances
+// with JWT auth enabled in prosody), every embedded meeting must carry a
+// server-signed token so random users can't join rooms by guessing the name.
+//
+// The public meet.jit.si has no auth layer, so when isPublicJitsi is true
+// this function returns null and the embed skips the jwt parameter entirely.
+//
+// Token is intentionally server-only (import jwt from "jsonwebtoken") — the
+// APP_SECRET must never reach the browser bundle. The client fetches a short-
+// lived token from /api/meet/token on mount.
+
+/**
+ * True when both Jitsi JWT env vars are present. Means the self-hosted
+ * instance has JWT auth enabled and we must sign every embed.
+ */
+export function jitsiJwtEnabled(): boolean {
+  return Boolean(process.env.JITSI_JWT_APP_ID && process.env.JITSI_JWT_APP_SECRET);
+}
+
+export type JitsiJwtUser = { id: string; name: string; email: string };
+
+/**
+ * Signs a short-lived JWT for one meeting room.
+ * Returns null on the public server (no auth needed) or if env vars are absent.
+ * Server-side only — never call this from a client component.
+ */
+export async function generateJitsiJwt(
+  roomName: string,
+  user: JitsiJwtUser,
+): Promise<string | null> {
+  const appId = process.env.JITSI_JWT_APP_ID;
+  const appSecret = process.env.JITSI_JWT_APP_SECRET;
+  if (!appId || !appSecret || isPublicJitsi) return null;
+
+  // Dynamic import keeps jsonwebtoken out of the Edge bundle — this function
+  // only runs in Node.js route handlers, never in middleware.
+  const { default: jwt } = await import("jsonwebtoken");
+  return jwt.sign(
+    {
+      aud: "jitsi",
+      iss: appId,
+      sub: JITSI_DOMAIN,
+      room: roomName,
+      context: {
+        user: { id: user.id, name: user.name, email: user.email },
+      },
+    },
+    appSecret,
+    { expiresIn: "2h" },
+  );
+}
+
 // ─── External API loader ───────────────────────────────────────────────────
 //
 // Three call sites (CallStage, /meet/[roomId], and now MeetView's in-meeting

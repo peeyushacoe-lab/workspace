@@ -5,8 +5,10 @@ import { toast } from "sonner";
 import {
   Users, Hash, ScrollText, LayoutGrid, Search, ShieldOff, ShieldCheck,
   Lock, Megaphone, MessageSquare, UsersRound, RefreshCw,
+  Building2, Shield, KeyRound, SlidersHorizontal, Archive, AlertTriangle,
 } from "lucide-react";
 import { Tabs, TabButton, Dialog, Button } from "@/components/connect/ui";
+import type { ConnectPolicies } from "@/lib/connect-policies";
 
 /**
  * Connect Admin console.
@@ -44,14 +46,49 @@ type AuditRow = {
   targetId: string | null; ipAddress: string | null; createdAt: string;
 };
 
-type TabKey = "overview" | "members" | "channels" | "audit";
+type OrgInfo = {
+  org: {
+    id: string; name: string; slug: string; domain: string | null; plan: string;
+    maxUsers: number; isActive: boolean; createdAt: string;
+    _count: { users: number; teams: number; departments: number; channels: number };
+  } | null;
+};
+
+type TeamRow = {
+  id: string; name: string; slug: string; color: string | null;
+  department: string | null; members: number; channels: number;
+};
+
+type RolesInfo = {
+  roles: { id: string; name: string; isSystem: boolean; holders: number }[];
+  enumRoles: { role: string; people: number; canAdministerConnect: boolean }[];
+};
+
+type SecurityInfo = {
+  activeSessions: number; deactivated: number; mfaOn: number; totalActive: number;
+  legalHolds: number; adminActions7d: number; privateChannels: number;
+  broadcastChannels: number; rbacEnforced: boolean;
+};
+
+type TabKey =
+  | "overview" | "members" | "teams" | "channels" | "roles"
+  | "policies" | "retention" | "audit" | "security" | "organisation";
 
 const TABS: { key: TabKey; label: string; icon: typeof Users }[] = [
   { key: "overview", label: "Overview", icon: LayoutGrid },
   { key: "members", label: "Members", icon: Users },
+  { key: "teams", label: "Teams", icon: UsersRound },
   { key: "channels", label: "Channels", icon: Hash },
+  { key: "roles", label: "Roles", icon: KeyRound },
+  { key: "policies", label: "Policies", icon: SlidersHorizontal },
+  { key: "retention", label: "Retention", icon: Archive },
   { key: "audit", label: "Audit log", icon: ScrollText },
+  { key: "security", label: "Security", icon: Shield },
+  { key: "organisation", label: "Organisation", icon: Building2 },
 ];
+
+/** Views with a text filter. The rest are single-object panels. */
+const SEARCHABLE: TabKey[] = ["members", "teams", "channels", "audit"];
 
 export function ConnectAdminConsole({ currentUserId }: { currentUserId: string }) {
   const [tab, setTab] = useState<TabKey>("overview");
@@ -61,13 +98,19 @@ export function ConnectAdminConsole({ currentUserId }: { currentUserId: string }
   const [members, setMembers] = useState<Member[]>([]);
   const [channels, setChannels] = useState<Channel[]>([]);
   const [auditRows, setAuditRows] = useState<AuditRow[]>([]);
+  const [teamRows, setTeamRows] = useState<TeamRow[]>([]);
+  const [rolesInfo, setRolesInfo] = useState<RolesInfo | null>(null);
+  const [orgInfo, setOrgInfo] = useState<OrgInfo | null>(null);
+  const [securityInfo, setSecurityInfo] = useState<SecurityInfo | null>(null);
+  const [policies, setPolicies] = useState<ConnectPolicies | null>(null);
   const [confirmTarget, setConfirmTarget] = useState<Member | null>(null);
   const [working, setWorking] = useState(false);
 
   const load = useCallback(async (view: TabKey, q: string) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/connect/admin?view=${view}&q=${encodeURIComponent(q)}`, {
+      const apiView = view === "retention" ? "policies" : view;
+      const res = await fetch(`/api/connect/admin?view=${apiView}&q=${encodeURIComponent(q)}`, {
         cache: "no-store",
       });
       if (!res.ok) throw new Error("Failed");
@@ -76,6 +119,15 @@ export function ConnectAdminConsole({ currentUserId }: { currentUserId: string }
       if (view === "members") setMembers(data as Member[]);
       if (view === "channels") setChannels(data as Channel[]);
       if (view === "audit") setAuditRows(data as AuditRow[]);
+      if (view === "teams") setTeamRows(data as TeamRow[]);
+      if (view === "roles") setRolesInfo(data as RolesInfo);
+      if (view === "organisation") setOrgInfo(data as OrgInfo);
+      if (view === "security") setSecurityInfo(data as SecurityInfo);
+      // Policies and Retention are two views of the same object — one fetch
+      // backs both, so switching between them is instant.
+      if (view === "policies" || view === "retention") {
+        setPolicies((data as { policies: ConnectPolicies }).policies);
+      }
     } catch {
       toast.error("Could not load that view");
     } finally {
@@ -89,6 +141,34 @@ export function ConnectAdminConsole({ currentUserId }: { currentUserId: string }
     const t = setTimeout(() => void load(tab, query), query ? 300 : 0);
     return () => clearTimeout(t);
   }, [tab, query, load]);
+
+  const savePolicies = async (patch: Record<string, Record<string, unknown>>) => {
+    // Optimistic, like the user settings page: these are all instantly
+    // reversible, and a switch that waits on a round trip reads as broken.
+    const previous = policies;
+    setPolicies((p) =>
+      p
+        ? {
+            messaging: { ...p.messaging, ...(patch.messaging ?? {}) },
+            files: { ...p.files, ...(patch.files ?? {}) },
+            retention: { ...p.retention, ...(patch.retention ?? {}) },
+          }
+        : p,
+    );
+    try {
+      const res = await fetch("/api/connect/admin", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ policies: patch }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string; policies?: ConnectPolicies };
+      if (!res.ok) throw new Error(data.error ?? "Failed");
+      if (data.policies) setPolicies(data.policies);
+    } catch (e) {
+      setPolicies(previous);
+      toast.error(e instanceof Error ? e.message : "Couldn't save that policy");
+    }
+  };
 
   const toggleActive = async (m: Member) => {
     setWorking(true);
@@ -136,7 +216,7 @@ export function ConnectAdminConsole({ currentUserId }: { currentUserId: string }
         ))}
       </Tabs>
 
-      {tab !== "overview" && (
+      {SEARCHABLE.includes(tab) && (
         <div className="flex items-center gap-2">
           <div className="relative flex-1 max-w-sm">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle" />
@@ -174,6 +254,18 @@ export function ConnectAdminConsole({ currentUserId }: { currentUserId: string }
         />
       ) : tab === "channels" ? (
         <ChannelsPanel rows={channels} loading={loading} />
+      ) : tab === "teams" ? (
+        <TeamsPanel rows={teamRows} loading={loading} />
+      ) : tab === "roles" ? (
+        <RolesPanel data={rolesInfo} loading={loading} />
+      ) : tab === "policies" ? (
+        <PoliciesPanel policies={policies} loading={loading} onSave={savePolicies} />
+      ) : tab === "retention" ? (
+        <RetentionPanel policies={policies} loading={loading} onSave={savePolicies} />
+      ) : tab === "security" ? (
+        <SecurityPanel data={securityInfo} loading={loading} />
+      ) : tab === "organisation" ? (
+        <OrganisationPanel data={orgInfo} loading={loading} />
       ) : (
         <AuditPanel rows={auditRows} loading={loading} />
       )}
@@ -474,4 +566,422 @@ function relative(iso: string) {
   const days = Math.round(hours / 24);
   if (days < 30) return `${days}d ago`;
   return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+
+// ── Teams ─────────────────────────────────────────────────────────────────────
+
+function TeamsPanel({ rows, loading }: { rows: TeamRow[]; loading: boolean }) {
+  if (loading && !rows.length) return <SkeletonRows />;
+  if (!rows.length) return <Empty icon={UsersRound} title="No teams" hint="Teams are created from the Teams page." />;
+
+  return (
+    <TableShell head={["Team", "Department", "People", "Channels"]}>
+      {rows.map((t) => (
+        <tr key={t.id} className="border-t border-border-soft transition-colors hover:bg-hover">
+          <td className="px-4 py-2.5">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <span
+                className="h-2 w-2 flex-shrink-0 rounded-full"
+                style={{ background: t.color ?? "var(--subtle)" }}
+                aria-hidden
+              />
+              <div className="min-w-0">
+                <p className="truncate text-[13px] font-medium text-foreground">{t.name}</p>
+                <p className="truncate text-[11px] text-subtle">{t.slug}</p>
+              </div>
+            </div>
+          </td>
+          <td className="px-4 py-2.5 text-[12px] text-muted">{t.department ?? "—"}</td>
+          <td className="px-4 py-2.5 text-[12px] text-muted">{t.members}</td>
+          <td className="px-4 py-2.5 text-[12px] text-muted">
+            {t.channels === 0 ? <span className="text-warn">None yet</span> : t.channels}
+          </td>
+        </tr>
+      ))}
+    </TableShell>
+  );
+}
+
+// ── Roles ─────────────────────────────────────────────────────────────────────
+
+function RolesPanel({ data, loading }: { data: RolesInfo | null; loading: boolean }) {
+  if (loading && !data) return <SkeletonRows />;
+  if (!data) return <Empty icon={KeyRound} title="Couldn't load roles" hint="Try refreshing." />;
+
+  const admins = data.enumRoles.filter((r) => r.canAdministerConnect);
+
+  return (
+    <div className="space-y-4">
+      {/* The question an auditor actually asks, answered first. */}
+      <div className="rounded-xl border border-border bg-surface p-4 shadow-sm">
+        <h2 className="text-sm font-semibold text-foreground">Who can administer Connect</h2>
+        <p className="mt-1 text-[12.5px] leading-relaxed text-muted">
+          These roles hold <code className="rounded bg-surface-sunken px-1 py-0.5 text-[11px]">org.manage</code>,
+          which is what gates this console — including deactivating people and setting retention.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {admins.length === 0 ? (
+            <span className="text-[13px] text-muted">Nobody — only a full system admin can reach this page.</span>
+          ) : (
+            admins.map((r) => (
+              <span
+                key={r.role}
+                className="inline-flex items-center gap-1.5 rounded-full border border-accent/25 bg-accent-soft px-2.5 py-1 text-[12px] font-medium text-accent-strong"
+              >
+                {r.role}
+                <span className="opacity-70">{r.people}</span>
+              </span>
+            ))
+          )}
+        </div>
+      </div>
+
+      <TableShell head={["Role", "People", "Can administer Connect"]}>
+        {data.enumRoles.map((r) => (
+          <tr key={r.role} className="border-t border-border-soft transition-colors hover:bg-hover">
+            <td className="px-4 py-2.5 text-[13px] font-medium text-foreground">{r.role}</td>
+            <td className="px-4 py-2.5 text-[12px] text-muted">{r.people}</td>
+            <td className="px-4 py-2.5">
+              {r.canAdministerConnect ? (
+                <span className="text-[12px] font-medium text-accent">Yes</span>
+              ) : (
+                <span className="text-[12px] text-subtle">No</span>
+              )}
+            </td>
+          </tr>
+        ))}
+      </TableShell>
+
+      {data.roles.length > 0 && (
+        <TableShell head={["Custom & system roles", "Kind", "Assigned to"]}>
+          {data.roles.map((r) => (
+            <tr key={r.id} className="border-t border-border-soft transition-colors hover:bg-hover">
+              <td className="px-4 py-2.5 text-[13px] font-medium text-foreground">{r.name}</td>
+              <td className="px-4 py-2.5 text-[12px] text-muted">{r.isSystem ? "System" : "Custom"}</td>
+              <td className="px-4 py-2.5 text-[12px] text-muted">{r.holders}</td>
+            </tr>
+          ))}
+        </TableShell>
+      )}
+
+      <p className="text-[12px] text-subtle">
+        Editing roles lives in the main workspace admin at <code className="rounded bg-surface-sunken px-1 py-0.5 text-[11px]">/org</code> —
+        this view is read-only so the two can&apos;t drift apart.
+      </p>
+    </div>
+  );
+}
+
+// ── Policies ──────────────────────────────────────────────────────────────────
+
+type SaveFn = (patch: Record<string, Record<string, unknown>>) => Promise<void>;
+
+function PoliciesPanel({
+  policies, loading, onSave,
+}: {
+  policies: ConnectPolicies | null; loading: boolean; onSave: SaveFn;
+}) {
+  if (loading && !policies) return <SkeletonRows />;
+  if (!policies) return <Empty icon={SlidersHorizontal} title="Couldn't load policies" hint="Try refreshing." />;
+
+  return (
+    <div className="space-y-4">
+      <AdminPanel
+        title="Messaging"
+        description="Applies to everyone in the workspace. All of these are enforced on the server, so turning one off actually blocks the action rather than hiding the button."
+      >
+        <NumberField
+          label="Maximum message length"
+          suffix="characters"
+          value={policies.messaging.maxMessageLength}
+          min={280}
+          max={40000}
+          onCommit={(v) => void onSave({ messaging: { maxMessageLength: v } })}
+        />
+        <AdminToggle
+          label="Allow attachments in chat"
+          hint="Off blocks new file and image attachments. Existing ones stay."
+          checked={policies.messaging.allowAttachments}
+          onChange={(v) => void onSave({ messaging: { allowAttachments: v } })}
+        />
+        <AdminToggle
+          label="Allow editing sent messages"
+          checked={policies.messaging.allowEditing}
+          onChange={(v) => void onSave({ messaging: { allowEditing: v } })}
+        />
+        <AdminToggle
+          label="Allow people to delete their own messages"
+          hint="Workspace admins can always delete, so moderation keeps working when this is off."
+          checked={policies.messaging.allowDeleting}
+          onChange={(v) => void onSave({ messaging: { allowDeleting: v } })}
+        />
+        <AdminToggle
+          label="Allow the urgent flag"
+          hint="Urgent messages bypass everyone's notification preferences — which is exactly why you might turn it off."
+          checked={policies.messaging.allowUrgent}
+          onChange={(v) => void onSave({ messaging: { allowUrgent: v } })}
+        />
+      </AdminPanel>
+
+      <AdminPanel title="Files" description="Upload limits for chat attachments and Drive.">
+        <NumberField
+          label="Maximum upload size"
+          suffix="MB"
+          value={policies.files.maxUploadMb}
+          min={1}
+          max={500}
+          onCommit={(v) => void onSave({ files: { maxUploadMb: v } })}
+        />
+        <p className="text-[12px] text-subtle">
+          Capped at 100 MB by the storage tier — a higher number here won&apos;t raise it.
+        </p>
+      </AdminPanel>
+
+      {/* Said plainly rather than shipped as a switch that does nothing. */}
+      <AdminPanel title="Meetings" description="Not configurable yet, and deliberately not shown as toggles.">
+        <p className="text-[12.5px] leading-relaxed text-muted">
+          Meeting behaviour is set by Jitsi on the client, so a control here would be a request rather than
+          a rule — anyone could ignore it. Enforceable meeting policy needs the self-hosted Jitsi with
+          signed tokens. Until then there is nothing honest to put here.
+        </p>
+      </AdminPanel>
+    </div>
+  );
+}
+
+// ── Retention ─────────────────────────────────────────────────────────────────
+
+function RetentionPanel({
+  policies, loading, onSave,
+}: {
+  policies: ConnectPolicies | null; loading: boolean; onSave: SaveFn;
+}) {
+  if (loading && !policies) return <SkeletonRows />;
+  if (!policies) return <Empty icon={Archive} title="Couldn't load retention" hint="Try refreshing." />;
+
+  const days = policies.retention.messageRetentionDays;
+
+  return (
+    <AdminPanel
+      title="Message retention"
+      description="Automatically delete chat messages after a set period. Runs once a day at 03:00."
+    >
+      {days > 0 && (
+        <div className="flex items-start gap-2.5 rounded-lg border border-crit/25 bg-crit-soft px-3 py-2.5">
+          <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-crit" />
+          <div className="text-[12.5px] leading-relaxed text-crit">
+            <span className="font-semibold">This deletes messages permanently.</span> Anything older than{" "}
+            {days} days is removed and cannot be recovered. Accounts under an active legal hold are skipped.
+          </div>
+        </div>
+      )}
+
+      <NumberField
+        label="Delete messages older than"
+        suffix="days"
+        value={days}
+        min={0}
+        max={3650}
+        onCommit={(v) => void onSave({ retention: { messageRetentionDays: v } })}
+      />
+      <p className="text-[12px] text-subtle">
+        Set to <strong>0</strong> to keep everything forever. That is the default, and nothing is deleted
+        until you deliberately change it.
+      </p>
+    </AdminPanel>
+  );
+}
+
+// ── Security ──────────────────────────────────────────────────────────────────
+
+function SecurityPanel({ data, loading }: { data: SecurityInfo | null; loading: boolean }) {
+  if (loading && !data) return <SkeletonGrid />;
+  if (!data) return <Empty icon={Shield} title="Couldn't load security" hint="Try refreshing." />;
+
+  const mfaPct = data.totalActive ? Math.round((data.mfaOn / data.totalActive) * 100) : 0;
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Stat label="Signed-in sessions" value={data.activeSessions} sub="Across all devices" />
+        <Stat label="Two-factor enabled" value={data.mfaOn} sub={`${mfaPct}% of active members`} highlight={mfaPct < 80} />
+        <Stat label="Deactivated accounts" value={data.deactivated} sub="Access revoked, history kept" />
+        <Stat label="Admin actions · 7d" value={data.adminActions7d} sub="See the audit log" />
+      </div>
+
+      <AdminPanel title="Posture" description="Read from live data, not a checklist.">
+        <PostureRow
+          ok={data.rbacEnforced}
+          label="Permission enforcement"
+          okText="Enforced — pages are gated by permission"
+          badText="Shadow mode — pages still gated by the older role check. Set RBAC_ENFORCE=true once the parity test passes."
+        />
+        <PostureRow
+          ok={mfaPct >= 80}
+          label="Two-factor coverage"
+          okText={`${mfaPct}% of active members have it on`}
+          badText={`Only ${mfaPct}% of active members have two-factor on`}
+        />
+        <PostureRow
+          ok
+          label="Legal holds"
+          okText={
+            data.legalHolds === 0
+              ? "None active"
+              : `${data.legalHolds} active — those accounts are excluded from retention deletion`
+          }
+          badText=""
+        />
+        <PostureRow
+          ok
+          label="Restricted conversations"
+          okText={`${data.privateChannels} private · ${data.broadcastChannels} broadcast`}
+          badText=""
+        />
+      </AdminPanel>
+    </div>
+  );
+}
+
+function PostureRow({ ok, label, okText, badText }: { ok: boolean; label: string; okText: string; badText: string }) {
+  return (
+    <div className="flex items-start gap-2.5 border-b border-border-soft py-2.5 last:border-0">
+      {ok ? (
+        <ShieldCheck className="mt-0.5 h-4 w-4 flex-shrink-0 text-ok" />
+      ) : (
+        <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-warn" />
+      )}
+      <div className="min-w-0">
+        <p className="text-[13px] font-medium text-foreground">{label}</p>
+        <p className={`mt-0.5 text-[12px] leading-relaxed ${ok ? "text-muted" : "text-warn"}`}>
+          {ok ? okText : badText}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ── Organisation ──────────────────────────────────────────────────────────────
+
+function OrganisationPanel({ data, loading }: { data: OrgInfo | null; loading: boolean }) {
+  if (loading && !data) return <SkeletonRows />;
+  if (!data?.org) {
+    return (
+      <Empty
+        icon={Building2}
+        title="No organisation attached"
+        hint="This account isn't linked to an organisation, so policies and retention can't be set."
+      />
+    );
+  }
+  const o = data.org;
+  const usage = o.maxUsers ? Math.round((o._count.users / o.maxUsers) * 100) : 0;
+
+  return (
+    <div className="space-y-4">
+      <AdminPanel title={o.name} description={`${o.slug} · created ${new Date(o.createdAt).toLocaleDateString()}`}>
+        <dl className="grid gap-x-6 text-[13px] sm:grid-cols-2">
+          <DetailRow term="Domain" value={o.domain ?? "Not set"} />
+          <DetailRow term="Plan" value={o.plan} />
+          <DetailRow term="Members" value={`${o._count.users} of ${o.maxUsers}`} warn={usage > 90} />
+          <DetailRow term="Teams" value={String(o._count.teams)} />
+          <DetailRow term="Departments" value={String(o._count.departments)} />
+          <DetailRow term="Conversations" value={String(o._count.channels)} />
+        </dl>
+      </AdminPanel>
+      <p className="text-[12px] text-subtle">
+        Name, domain, plan and SSO are managed in the main workspace admin at{" "}
+        <code className="rounded bg-surface-sunken px-1 py-0.5 text-[11px]">/org</code>.
+      </p>
+    </div>
+  );
+}
+
+function DetailRow({ term, value, warn = false }: { term: string; value: string; warn?: boolean }) {
+  return (
+    <div className="flex items-baseline justify-between gap-3 border-b border-border-soft py-2">
+      <dt className="text-muted">{term}</dt>
+      <dd className={`font-medium ${warn ? "text-warn" : "text-foreground"}`}>{value}</dd>
+    </div>
+  );
+}
+
+// ── Admin form bits ───────────────────────────────────────────────────────────
+
+function AdminPanel({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
+  return (
+    <section className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+      <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+      {description && <p className="mt-1 text-[12.5px] leading-relaxed text-muted">{description}</p>}
+      <div className="mt-4 space-y-4">{children}</div>
+    </section>
+  );
+}
+
+function AdminToggle({
+  label, hint, checked, onChange,
+}: {
+  label: string; hint?: string; checked: boolean; onChange: (v: boolean) => void;
+}) {
+  return (
+    <div className="flex items-start justify-between gap-4">
+      <div className="min-w-0">
+        <p className="text-[13px] font-medium text-foreground">{label}</p>
+        {hint && <p className="mt-0.5 text-[12px] leading-relaxed text-muted">{hint}</p>}
+      </div>
+      <button
+        role="switch"
+        aria-checked={checked}
+        aria-label={label}
+        onClick={() => onChange(!checked)}
+        className={`relative mt-0.5 h-5 w-9 flex-shrink-0 rounded-full transition-colors ${checked ? "bg-accent" : "bg-border-strong"}`}
+      >
+        <span
+          className={`absolute top-0.5 h-4 w-4 rounded-full bg-surface shadow-sm transition-transform ${checked ? "translate-x-[18px]" : "translate-x-0.5"}`}
+        />
+      </button>
+    </div>
+  );
+}
+
+/**
+ * Commits on blur or Enter, not on every keystroke — typing "100" through a
+ * per-character save would briefly persist a limit of 1, and for retention
+ * that would mean a day of history deleted at 03:00.
+ */
+function NumberField({
+  label, suffix, value, min, max, onCommit,
+}: {
+  label: string; suffix: string; value: number; min: number; max: number; onCommit: (v: number) => void;
+}) {
+  const [draft, setDraft] = useState(String(value));
+  useEffect(() => { setDraft(String(value)); }, [value]);
+
+  const commit = () => {
+    const parsed = Number(draft);
+    if (!Number.isFinite(parsed)) { setDraft(String(value)); return; }
+    const clamped = Math.min(max, Math.max(min, Math.round(parsed)));
+    setDraft(String(clamped));
+    if (clamped !== value) onCommit(clamped);
+  };
+
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <label htmlFor={`num-${label}`} className="text-[13px] font-medium text-foreground">{label}</label>
+      <div className="flex flex-shrink-0 items-center gap-2">
+        <input
+          id={`num-${label}`}
+          type="number"
+          value={draft}
+          min={min}
+          max={max}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.currentTarget.blur(); } }}
+          className="w-28 rounded-lg border border-border bg-surface-sunken px-3 py-1.5 text-right text-sm text-foreground focus:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent/20"
+        />
+        <span className="w-20 text-[12px] text-muted">{suffix}</span>
+      </div>
+    </div>
+  );
 }

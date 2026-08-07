@@ -25,4 +25,7 @@ export type CleanupJobData =
   | { type: "UNSNOOZE_DUE_THREADS" }
   | { type: "SENTINEL_CORRELATION" }
   | { type: "TASK_RECURRENCE" }
-  | { type: "TASK_DUE_SOON" };
+  | { type: "TASK_DUE_SOON" }
+  // Per-organisation chat message retention. No-op unless an admin sets a
+  // window in Connect Admin → Retention.
+  | { type: "CHAT_RETENTION" };

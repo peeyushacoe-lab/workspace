@@ -4,6 +4,7 @@ import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redis } from "@/lib/redis";
 import { enforceChatLimit } from "@/lib/chat/limits";
+import { policiesForUser } from "@/lib/connect-policies";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -20,10 +21,20 @@ export async function PUT(request: Request, { params }: Params) {
   if (!content?.trim()) {
     return NextResponse.json({ error: "Content is required" }, { status: 400 });
   }
-  // The create endpoint caps at 10,000; the edit endpoint didn't, so the cap
-  // was one PUT away from being meaningless.
-  if (content.length > 10_000) {
-    return NextResponse.json({ error: "Message too long (max 10,000 characters)" }, { status: 400 });
+  // The create endpoint caps length; the edit endpoint didn't, so the cap was
+  // one PUT away from being meaningless. Both now read the same org policy.
+  const policies = await policiesForUser(user.id);
+  if (!policies.messaging.allowEditing) {
+    return NextResponse.json(
+      { error: "Editing messages is turned off for this workspace" },
+      { status: 403 },
+    );
+  }
+  if (content.length > policies.messaging.maxMessageLength) {
+    return NextResponse.json(
+      { error: `Message too long (max ${policies.messaging.maxMessageLength.toLocaleString()} characters)` },
+      { status: 400 },
+    );
   }
 
   const existing = await prisma.chatMessage.findUnique({ where: { id } });
@@ -78,6 +89,19 @@ export async function DELETE(_request: Request, { params }: Params) {
   const isAdmin = user.role === "ADMIN";
   if (existing.userId !== user.id && !isAdmin) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  // Org policy can disable self-deletion, but never blocks a workspace admin:
+  // moderation has to keep working precisely when normal deletion is locked
+  // down, which is usually a compliance posture rather than a UI preference.
+  if (!isAdmin) {
+    const policies = await policiesForUser(user.id);
+    if (!policies.messaging.allowDeleting) {
+      return NextResponse.json(
+        { error: "Deleting messages is turned off for this workspace" },
+        { status: 403 },
+      );
+    }
   }
 
   // Same reasoning as PUT — a removed member shouldn't be able to reach back

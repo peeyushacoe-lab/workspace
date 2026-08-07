@@ -8,6 +8,7 @@ import { runAndRecordRestoreDrill } from "@/lib/restore-drill";
 import { runSentinelCorrelation } from "@/lib/sentinel/correlation-engine";
 import { createNotification } from "@/lib/notifications";
 import { nextRecurrenceDate } from "@/lib/task-recurrence";
+import { readPolicies } from "@/lib/connect-policies";
 
 export function createCleanupWorker() {
   const worker = new Worker<CleanupJobData>(
@@ -84,6 +85,45 @@ export function createCleanupWorker() {
           data: { isSnoozed: false, snoozedUntil: null },
         });
         logger.info({ unsnoozed: result.count }, "[cleanup-worker] Due threads un-snoozed");
+        return;
+      }
+
+      if (type === "CHAT_RETENTION") {
+        // Per-organisation message retention. Off (0) by default, so this is a
+        // no-op until an admin sets a window — a retention job that starts
+        // deleting a company's history because of a shipped default would be a
+        // catastrophe, not a feature.
+        const orgs = await prisma.organization.findMany({ select: { id: true, settings: true } });
+        let totalDeleted = 0;
+
+        for (const org of orgs) {
+          const days = readPolicies(org.settings).retention.messageRetentionDays;
+          if (!days || days <= 0) continue;
+          const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+          // Legal holds outrank retention, always. A hold exists precisely to
+          // stop scheduled deletion, so anyone under one is excluded entirely
+          // rather than having their older messages quietly removed.
+          const held = await prisma.legalHold.findMany({
+            where: { isActive: true },
+            select: { userId: true },
+          }).catch(() => [] as { userId: string }[]);
+          const heldUserIds = held.map((h) => h.userId);
+
+          const result = await prisma.chatMessage.deleteMany({
+            where: {
+              createdAt: { lt: cutoff },
+              user: { organizationId: org.id },
+              ...(heldUserIds.length ? { userId: { notIn: heldUserIds } } : {}),
+            },
+          });
+          totalDeleted += result.count;
+          if (result.count) {
+            logger.info({ org: org.id, days, deleted: result.count }, "[cleanup-worker] Chat retention applied");
+          }
+        }
+
+        logger.info({ deleted: totalDeleted }, "[cleanup-worker] Chat retention pass complete");
         return;
       }
 

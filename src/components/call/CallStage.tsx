@@ -30,11 +30,18 @@ export function CallStage({
     const domain = JITSI_DOMAIN;
     let disposed = false;
 
-    loadJitsiExternalApi().then((JitsiMeetExternalAPI) => {
+    // Fetch a JWT for self-hosted auth; null on the public server.
+    const jwtPromise = fetch(`/api/meet/token?room=${encodeURIComponent(roomName)}`)
+      .then((r) => (r.ok ? r.json() : { jwt: null }))
+      .catch(() => ({ jwt: null }))
+      .then(({ jwt }: { jwt: string | null }) => jwt);
+
+    Promise.all([loadJitsiExternalApi(), jwtPromise]).then(([JitsiMeetExternalAPI, jwt]) => {
       if (disposed || !containerRef.current) return;
 
       const api = new JitsiMeetExternalAPI(domain, {
         roomName,
+        ...(jwt ? { jwt } : {}),
         parentNode: containerRef.current,
         width: "100%",
         height: "100%",

@@ -82,6 +82,11 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
       "sentinel.view", "sentinel.manage",
       "soc.view", "soc.manage",
       "dlp.manage", "compliance.view",
+      // Connect Admin. The CISO owns messaging policy, retention and the audit
+      // trail in a security company — those are security controls, not general
+      // IT administration, so requiring full ADMIN to reach them meant either
+      // the CISO couldn't do their job or everyone became an admin.
+      "org.manage",
     ]),
   },
   {

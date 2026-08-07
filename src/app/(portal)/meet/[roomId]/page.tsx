@@ -17,73 +17,81 @@ export default function MeetRoomPage() {
     if (!roomId || !containerRef.current) return;
 
     const domain = JITSI_DOMAIN;
-    const scriptSrc = `https://${domain}/external_api.js`;
+    let script: HTMLScriptElement | null = null;
+    let disposed = false;
 
-    const script = document.createElement("script");
-    script.src = scriptSrc;
-    script.async = true;
-    script.onload = () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const JitsiAPI = (window as any).JitsiMeetExternalAPI as
-        | (new (domain: string, opts: unknown) => { dispose: () => void; addListener: (e: string, cb: () => void) => void })
-        | undefined;
-      if (!containerRef.current || !JitsiAPI) return;
+    // Fetch a short-lived JWT so self-hosted Jitsi can auth the user.
+    // Returns { jwt: null } when JITSI_JWT_* env vars are absent (public server).
+    fetch(`/api/meet/token?room=${encodeURIComponent(roomId)}`)
+      .then((r) => (r.ok ? r.json() : { jwt: null }))
+      .catch(() => ({ jwt: null }))
+      .then(({ jwt }: { jwt: string | null }) => {
+        if (disposed) return;
 
-      const api = new JitsiAPI(domain, {
-        roomName: roomId,
-        parentNode: containerRef.current,
-        width: "100%",
-        height: "100%",
-        configOverwrite: {
-          startWithAudioMuted: false,
-          startWithVideoMuted: false,
-          prejoinPageEnabled: false,          // skip the pre-join lobby screen
-          disableDeepLinking: true,           // never redirect to native app
-          enableWelcomePage: false,
-          hideConferenceTimer: true,          // hide the built-in call timer
-          disableRemoteMute: false,
-          defaultBackground: "#f0efec",
-          brandingDataUrl: "",                // no external branding
-          // Disable features that expose third-party branding
-          disableThirdPartyRequests: true,
-          liveStreamingEnabled: false,
-          fileRecordingsEnabled: false,
-        },
-        interfaceConfigOverwrite: {
-          SHOW_JITSI_WATERMARK: false,
-          SHOW_WATERMARK_FOR_GUESTS: false,
-          SHOW_BRAND_WATERMARK: false,
-          BRAND_WATERMARK_LINK: "",
-          SHOW_POWERED_BY: false,
-          DISPLAY_WELCOME_FOOTER: false,
-          GENERATE_ROOMNAMES_ON_WELCOME_PAGE: false,
-          APP_NAME: "CyberSage Meet",
-          NATIVE_APP_NAME: "CyberSage Meet",
-          PROVIDER_NAME: "CyberSage",
-          DEFAULT_BACKGROUND: "#f0efec",
-          DEFAULT_LOCAL_DISPLAY_NAME: "Me",
-          TOOLBAR_ALWAYS_VISIBLE: false,
-          TOOLBAR_BUTTONS: [
-            "microphone", "camera", "closedcaptions", "desktop", "fullscreen",
-            "fodeviceselection", "hangup", "chat", "settings", "raisehand",
-            "videoquality", "filmstrip", "tileview", "help", "mute-everyone", "security",
-          ],
-        },
+        script = document.createElement("script");
+        script.src = `https://${domain}/external_api.js`;
+        script.async = true;
+        script.onload = () => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const JitsiAPI = (window as any).JitsiMeetExternalAPI as
+            | (new (domain: string, opts: unknown) => { dispose: () => void; addListener: (e: string, cb: () => void) => void })
+            | undefined;
+          if (disposed || !containerRef.current || !JitsiAPI) return;
+
+          const api = new JitsiAPI(domain, {
+            roomName: roomId,
+            ...(jwt ? { jwt } : {}),
+            parentNode: containerRef.current,
+            width: "100%",
+            height: "100%",
+            configOverwrite: {
+              startWithAudioMuted: false,
+              startWithVideoMuted: false,
+              prejoinPageEnabled: false,
+              disableDeepLinking: true,
+              enableWelcomePage: false,
+              hideConferenceTimer: true,
+              disableRemoteMute: false,
+              defaultBackground: "#f0efec",
+              brandingDataUrl: "",
+              disableThirdPartyRequests: true,
+              liveStreamingEnabled: false,
+              fileRecordingsEnabled: false,
+            },
+            interfaceConfigOverwrite: {
+              SHOW_JITSI_WATERMARK: false,
+              SHOW_WATERMARK_FOR_GUESTS: false,
+              SHOW_BRAND_WATERMARK: false,
+              BRAND_WATERMARK_LINK: "",
+              SHOW_POWERED_BY: false,
+              DISPLAY_WELCOME_FOOTER: false,
+              GENERATE_ROOMNAMES_ON_WELCOME_PAGE: false,
+              APP_NAME: "CyberSage Meet",
+              NATIVE_APP_NAME: "CyberSage Meet",
+              PROVIDER_NAME: "CyberSage",
+              DEFAULT_BACKGROUND: "#f0efec",
+              DEFAULT_LOCAL_DISPLAY_NAME: "Me",
+              TOOLBAR_ALWAYS_VISIBLE: false,
+              TOOLBAR_BUTTONS: [
+                "microphone", "camera", "closedcaptions", "desktop", "fullscreen",
+                "fodeviceselection", "hangup", "chat", "settings", "raisehand",
+                "videoquality", "filmstrip", "tileview", "help", "mute-everyone", "security",
+              ],
+            },
+          });
+
+          apiRef.current = api;
+          api.addListener("readyToClose", () => { router.back(); });
+        };
+
+        document.head.appendChild(script);
       });
 
-      apiRef.current = api;
-
-      // Auto-leave when the user hangs up inside Jitsi
-      api.addListener("readyToClose", () => {
-        router.back();
-      });
-    };
-
-    document.head.appendChild(script);
     return () => {
+      disposed = true;
       apiRef.current?.dispose();
       apiRef.current = null;
-      try { document.head.removeChild(script); } catch { /* already removed */ }
+      if (script) try { document.head.removeChild(script); } catch { /* already removed */ }
     };
   }, [roomId, router]);
 
