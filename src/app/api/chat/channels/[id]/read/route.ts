@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { enforceChatLimit } from "@/lib/chat/limits";
+import { readConnectSettings } from "@/lib/connect-settings";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -21,7 +22,16 @@ export async function POST(_request: Request, { params }: Params) {
   });
   if (!membership) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const unread = await prisma.chatMessage.findMany({
+  // Privacy → "Send read receipts". Same reasoning as the messages route: the
+  // receipt is displayed on the *sender's* screen, so withholding it has to
+  // mean not recording it. `lastReadAt` below still updates either way, so the
+  // reader's own unread count is unaffected by their privacy choice.
+  const reader = await prisma.user
+    .findUnique({ where: { id: user.id }, select: { preferences: true } })
+    .catch(() => null);
+  const shareReceipts = readConnectSettings(reader?.preferences).privacy.shareReadReceipts;
+
+  const unread = shareReceipts ? await prisma.chatMessage.findMany({
     where: {
       channelId,
       deletedAt: null,
@@ -35,7 +45,7 @@ export async function POST(_request: Request, { params }: Params) {
       select: { id: true },
       take: 500,
     })
-  );
+  ) : [];
 
   if (unread.length > 0) {
     await prisma.chatMessageRead.createMany({

@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { Phone, Video, PhoneOff } from "lucide-react";
 import type { CallMedia } from "@/lib/call-signaling";
 import { JITSI_DOMAIN, loadJitsiExternalApi, type JitsiExternalApi } from "@/lib/jitsi";
+import { useJoinPreferences } from "@/components/connect/useJoinPreferences";
 
 // Full-screen Jitsi overlay for an active 1:1 call. Audio calls start with the
 // camera off (the user can still turn it on). Hanging up here closes the stage.
@@ -22,6 +23,7 @@ export function CallStage({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const apiRef = useRef<JitsiExternalApi | null>(null);
+  const joinPrefs = useJoinPreferences();
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -38,8 +40,11 @@ export function CallStage({
         height: "100%",
         userInfo: { displayName },
         configOverwrite: {
-          startWithAudioMuted: false,
-          startWithVideoMuted: media === "audio",
+          // Settings → Calls & meetings. An audio call always starts with the
+          // camera off regardless of the preference — the preference can only
+          // make a video call quieter, never make an audio call visible.
+          startWithAudioMuted: joinPrefs.joinMuted,
+          startWithVideoMuted: media === "audio" || joinPrefs.joinCameraOff,
           prejoinPageEnabled: false,
           disableDeepLinking: true,
           enableWelcomePage: false,

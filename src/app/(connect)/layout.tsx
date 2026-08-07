@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { getCurrentUser } from "@/lib/session";
 import { getUserPermEpoch } from "@/lib/rbac/session-perms";
 import { ConnectShell } from "@/components/connect/ConnectShell";
+import { ConnectSettingsProvider } from "@/components/connect/ConnectSettingsEffects";
 import { hubUrl } from "@/lib/subdomains";
 import type { Metadata } from "next";
 
@@ -56,8 +57,13 @@ export default async function ConnectLayout({ children }: { children: React.Reac
   const nexusHref = hubUrl("/inbox");
 
   return (
-    <ConnectShell currentUser={user} nexusHref={nexusHref}>
-      {children}
-    </ConnectShell>
+    // The settings provider wraps the shell, not the page, so appearance
+    // preferences apply once for the whole session instead of re-resolving
+    // (and briefly flashing the wrong theme) on every navigation.
+    <ConnectSettingsProvider>
+      <ConnectShell currentUser={user} nexusHref={nexusHref}>
+        {children}
+      </ConnectShell>
+    </ConnectSettingsProvider>
   );
 }

@@ -70,6 +70,7 @@ import { useCall } from "./call/CallProvider";
 import { avatarGradient } from "@/lib/avatar";
 import { PresenceDot } from "@/components/PresenceIndicator";
 import { Dialog, Button, Menu, MenuItem } from "@/components/connect/ui";
+import { useConnectSettings } from "@/components/connect/ConnectSettingsEffects";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -869,6 +870,11 @@ const MessageItem = memo(function MessageItem({
   const [creatingTask, setCreatingTask] = useState(false);
   const [taskCreated, setTaskCreated] = useState(false);
   const pickerRef = useRef<HTMLDivElement>(null);
+  // Read from context rather than threaded down as a prop: this component is
+  // memoised and rendered once per message, so a new prop on every settings
+  // object identity would defeat the memo for the whole list.
+  const { settings: viewerSettings } = useConnectSettings();
+  const mediaPreviews = viewerSettings.messaging.mediaPreviews;
   const isOwn = msg.userId === currentUserId;
   const isDeleted = !!msg.deletedAt;
   const isFileAttachment = msg.content.startsWith("[FILE_ATTACHMENT] ");
@@ -1109,7 +1115,7 @@ const MessageItem = memo(function MessageItem({
             {/* `attachmentUrl` is accepted verbatim from the client by the send
                 and schedule endpoints, so it is no more trustworthy than the
                 message body — same scheme guard as the attachment card. */}
-            {safeAttachmentUrl(msg.attachmentUrl ?? undefined) && msg.attachmentMime?.startsWith("image/") && (
+            {mediaPreviews && safeAttachmentUrl(msg.attachmentUrl ?? undefined) && msg.attachmentMime?.startsWith("image/") && (
               <a
                 href={safeAttachmentUrl(msg.attachmentUrl ?? undefined) as string}
                 target="_blank"
@@ -1121,6 +1127,19 @@ const MessageItem = memo(function MessageItem({
                   alt={safeAttachmentName(msg.attachmentName)}
                   className="rounded-xl max-w-xs max-h-64 object-cover border border-accent/[0.1] hover:opacity-90 transition-opacity"
                 />
+              </a>
+            )}
+            {/* Previews off — the attachment still has to be reachable, so it
+                degrades to a named link rather than disappearing. */}
+            {!mediaPreviews && safeAttachmentUrl(msg.attachmentUrl ?? undefined) && (
+              <a
+                href={safeAttachmentUrl(msg.attachmentUrl ?? undefined) as string}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-1.5 inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface-sunken px-2.5 py-1.5 text-[12.5px] font-medium text-muted transition-colors hover:text-foreground"
+              >
+                <FileText className="h-3.5 w-3.5" />
+                {safeAttachmentName(msg.attachmentName)}
               </a>
             )}
           </>
@@ -2515,6 +2534,10 @@ function GifPicker({
   initialTab?: MediaTab;
 }) {
   const [tab, setTab] = useState<MediaTab>(initialTab);
+  // The picker now stays mounted while it's open, so clicking a different
+  // entry point (Emoji → GIF) changes `initialTab` on an already-live
+  // component. Without this it would keep showing whichever tab it opened on.
+  useEffect(() => { setTab(initialTab); }, [initialTab]);
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [results, setResults] = useState<GifResult[]>([]);
@@ -2567,14 +2590,33 @@ function GifPicker({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 " onClick={onClose}>
+    // Anchored to the composer, not a modal.
+    //
+    // This was a full-screen scrim with a bottom sheet centred in the viewport:
+    // picking an emoji dimmed the entire application, detached the picker from
+    // the button that opened it, and made a two-second action feel like leaving
+    // the conversation. Every product in this category anchors it — because the
+    // picker is part of the composer, not a separate task.
+    //
+    // On phones the sheet is still correct: there is no room for a 384px
+    // popover beside a composer, and thumb reach makes bottom-anchored the
+    // right call. So it stays a sheet under `sm`, and becomes a popover above.
+    <>
+      {/* Mobile-only scrim. Absent on desktop so the app behind stays live and
+          un-dimmed while the picker is open. */}
+      <div className="fixed inset-0 z-40 bg-black/50 sm:hidden" onClick={onClose} aria-hidden />
       <div
-        className="w-full max-w-lg bg-surface border border-accent/[0.15] rounded-t-2xl shadow-2xl overflow-hidden"
-        style={{ maxHeight: "65vh" }}
-        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-label="Insert emoji, GIF or sticker"
+        onKeyDown={(e) => e.key === "Escape" && onClose()}
+        className="
+          fixed inset-x-0 bottom-0 z-50 w-full overflow-hidden rounded-t-2xl border border-border bg-surface shadow-pop
+          sm:absolute sm:inset-x-auto sm:bottom-full sm:right-0 sm:mb-2 sm:w-[384px] sm:rounded-2xl
+        "
+        style={{ maxHeight: "min(65vh, 420px)" }}
       >
         {/* Tab bar */}
-        <div className="flex border-b border-accent/[0.1]">
+        <div className="flex border-b border-border-soft">
           {tabs.map((t) => (
             <button
               key={t.id}
@@ -2584,7 +2626,7 @@ function GifPicker({
               <t.icon className="w-4 h-4" />{t.label}
             </button>
           ))}
-          <button onClick={onClose} className="px-3 text-subtle hover:text-muted"><X className="w-4 h-4" /></button>
+          <button onClick={onClose} aria-label="Close" className="px-3 text-subtle hover:text-muted"><X className="w-4 h-4" /></button>
         </div>
 
         {/* Search bar (GIF + Sticker + Emoji) */}
@@ -2655,11 +2697,13 @@ function GifPicker({
             </div>
           )}
         </div>
-        <div className="px-4 py-1 border-t border-accent/[0.08]">
-          <span className="text-[9px] text-subtle">{tab !== "emoji" ? "Powered by GIPHY" : ""}</span>
-        </div>
+        {tab !== "emoji" && (
+          <div className="border-t border-border-soft px-4 py-1">
+            <span className="text-[9px] text-subtle">Powered by GIPHY</span>
+          </div>
+        )}
       </div>
-    </div>
+    </>
   );
 }
 
@@ -2954,6 +2998,12 @@ export function ChatView({
   // Media picker (GIF / Sticker / Emoji)
   const [showGifPicker, setShowGifPicker] = useState(false);
   const [mediaPickerTab, setMediaPickerTab] = useState<"gif" | "sticker" | "emoji">("gif");
+  // Anchor for the emoji/GIF/sticker popover. It has no desktop scrim by
+  // design, so click-outside is what dismisses it there.
+  const mediaPickerRef = useRef<HTMLDivElement>(null);
+  // User preferences. Defaults are returned until the fetch lands, so this is
+  // always a usable object — no loading branch needed at the call sites.
+  const { settings: userSettings } = useConnectSettings();
   const [composerAttachment, setComposerAttachment] = useState<{ url: string; mime: string; name: string } | null>(null);
 
   // Sage Assist — composer-time writing help. Deliberately scoped to actions
@@ -3660,6 +3710,26 @@ export function ChatView({
     };
   }, [selectedChannelId]);
 
+  // Dismiss the media picker on click-outside / Escape. Previously the
+  // full-screen scrim handled this for free; an anchored popover has to do it
+  // itself, and leaving a picker stuck open over the composer is worse than
+  // the modal ever was.
+  useEffect(() => {
+    if (!showGifPicker) return;
+    const onDown = (e: MouseEvent) => {
+      if (mediaPickerRef.current && !mediaPickerRef.current.contains(e.target as Node)) {
+        setShowGifPicker(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setShowGifPicker(false); };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [showGifPicker]);
+
   // Browser-level offline detection, which fires immediately on network loss
   // rather than waiting for a stream timeout to notice.
   useEffect(() => {
@@ -3867,7 +3937,9 @@ export function ChatView({
     const val = e.target.value;
     setComposerText(val);
     const now = Date.now();
-    if (selectedChannelId && now - lastTypingSent.current > 2000) {
+    // Privacy → "Show others when you're typing". Not sending is the whole
+    // mechanism: there is no server-side typing record to suppress later.
+    if (userSettings.privacy.shareTyping && selectedChannelId && now - lastTypingSent.current > 2000) {
       lastTypingSent.current = now;
       socketRef.current?.emit("chat:typing", { channelId: selectedChannelId });
     }
@@ -4902,7 +4974,7 @@ export function ChatView({
                 <p className="text-xs text-muted italic animate-pulse flex items-center gap-1">
                   <Sparkles className="h-3 w-3 text-accent" /> CyberSage AI is thinking…
                 </p>
-              ) : typingNames.size > 0 && (
+              ) : userSettings.messaging.showTypingIndicators && typingNames.size > 0 && (
                 <p className="text-xs text-muted italic animate-pulse">
                   {Array.from(typingNames.values()).join(", ")}{" "}
                   {typingNames.size === 1 ? "is" : "are"} typing…
@@ -5109,7 +5181,16 @@ export function ChatView({
                     onChange={handleComposerChange}
                     onKeyDown={(e) => {
                       if (e.key === "Escape") { setMentionQuery(null); return; }
-                      if (e.key === "Enter" && !e.shiftKey && mentionQuery === null) {
+                      if (e.key !== "Enter" || mentionQuery !== null) return;
+                      // Messaging → "Enter sends the message". When off, Enter
+                      // makes a new line and the modifier sends instead — the
+                      // inverse, not a disabled shortcut, so there is always a
+                      // way to send from the keyboard.
+                      const modifier = e.metaKey || e.ctrlKey;
+                      const shouldSend = userSettings.messaging.enterToSend
+                        ? !e.shiftKey && !modifier
+                        : modifier;
+                      if (shouldSend) {
                         e.preventDefault();
                         sendMessage();
                       }
@@ -5119,12 +5200,42 @@ export function ChatView({
                     className="flex-1 bg-transparent resize-none text-sm text-foreground placeholder-muted outline-none max-h-32 overflow-y-auto py-1.5"
                     style={{ minHeight: "1.5rem" }}
                   />
-                  {/* Emoji insert */}
-                  <button onClick={() => { setMediaPickerTab("emoji"); setShowGifPicker(true); }} title="Insert emoji" className="nx-press p-1.5 mb-1 rounded-lg transition-colors flex-shrink-0 text-subtle hover:text-foreground hover:bg-hover"><Smile className="w-4 h-4" /></button>
-                  {/* Sticker */}
-                  <button onClick={() => { setMediaPickerTab("sticker"); setShowGifPicker(true); }} title="Send a sticker" className="nx-press p-1.5 mb-1 rounded-lg transition-colors flex-shrink-0 text-subtle hover:text-foreground hover:bg-hover"><Sticker className="w-4 h-4" /></button>
-                  {/* GIF */}
-                  <button onClick={() => { setMediaPickerTab("gif"); setShowGifPicker(true); }} title="Send a GIF" className="nx-press p-1.5 mb-1 rounded-lg transition-colors flex-shrink-0 text-xs font-semibold text-subtle hover:text-foreground hover:bg-hover">GIF</button>
+                  {/* Emoji / sticker / GIF — one picker, three entry points.
+                      The `relative` wrapper is what anchors the popover above
+                      these buttons instead of floating it in the middle of the
+                      viewport behind a scrim. */}
+                  <div className="relative flex items-end" ref={mediaPickerRef}>
+                    <button
+                      onClick={() => { setMediaPickerTab("emoji"); setShowGifPicker((v) => !(v && mediaPickerTab === "emoji")); }}
+                      title="Insert emoji"
+                      aria-haspopup="dialog"
+                      aria-expanded={showGifPicker && mediaPickerTab === "emoji"}
+                      className={`nx-press p-1.5 mb-1 rounded-lg transition-colors flex-shrink-0 ${showGifPicker && mediaPickerTab === "emoji" ? "bg-accent-soft text-accent" : "text-subtle hover:text-foreground hover:bg-hover"}`}
+                    ><Smile className="w-4 h-4" /></button>
+                    <button
+                      onClick={() => { setMediaPickerTab("sticker"); setShowGifPicker((v) => !(v && mediaPickerTab === "sticker")); }}
+                      title="Send a sticker"
+                      aria-haspopup="dialog"
+                      aria-expanded={showGifPicker && mediaPickerTab === "sticker"}
+                      className={`nx-press p-1.5 mb-1 rounded-lg transition-colors flex-shrink-0 ${showGifPicker && mediaPickerTab === "sticker" ? "bg-accent-soft text-accent" : "text-subtle hover:text-foreground hover:bg-hover"}`}
+                    ><Sticker className="w-4 h-4" /></button>
+                    <button
+                      onClick={() => { setMediaPickerTab("gif"); setShowGifPicker((v) => !(v && mediaPickerTab === "gif")); }}
+                      title="Send a GIF"
+                      aria-haspopup="dialog"
+                      aria-expanded={showGifPicker && mediaPickerTab === "gif"}
+                      className={`nx-press p-1.5 mb-1 rounded-lg transition-colors flex-shrink-0 text-xs font-semibold ${showGifPicker && mediaPickerTab === "gif" ? "bg-accent-soft text-accent" : "text-subtle hover:text-foreground hover:bg-hover"}`}
+                    >GIF</button>
+
+                    {showGifPicker && (
+                      <GifPicker
+                        initialTab={mediaPickerTab}
+                        onSelect={(url, name) => setComposerAttachment({ url, mime: "image/gif", name })}
+                        onEmojiInsert={handleEmojiInsert}
+                        onClose={() => setShowGifPicker(false)}
+                      />
+                    )}
+                  </div>
                   {/* Sage Assist — composer-time writing help, not a channel-wide tool */}
                   <div className="relative" ref={sageAssistRef}>
                     <button
@@ -5216,7 +5327,10 @@ export function ChatView({
                 </div>
               </div>
               <p className="hidden lg:block text-[10px] text-muted mt-1.5 ml-1">
-                Enter to send · Shift+Enter for new line · Drag files to attach · @ to mention · ⌘K to navigate
+                {userSettings.messaging.enterToSend
+                  ? "Enter to send · Shift+Enter for new line"
+                  : "⌘/Ctrl+Enter to send · Enter for new line"}
+                {" · Drag files to attach · @ to mention · ⌘K to navigate"}
               </p>
             </div>
             </>
@@ -5302,15 +5416,6 @@ export function ChatView({
       )}
 
       {/* Media Picker (GIF / Sticker / Emoji) */}
-      {showGifPicker && (
-        <GifPicker
-          initialTab={mediaPickerTab}
-          onSelect={(url, name) => setComposerAttachment({ url, mime: "image/gif", name })}
-          onEmojiInsert={handleEmojiInsert}
-          onClose={() => setShowGifPicker(false)}
-        />
-      )}
-
       {/* Command Palette */}
       {showCommandPalette && (
         <CommandPalette

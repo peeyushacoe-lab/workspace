@@ -23,6 +23,7 @@
     "test:teams-parity": "tsx scripts/teams-parity-test.ts",
     "create-user": "tsx scripts/create-user.ts",
     "worker": "tsx scripts/worker.ts",
+    "preflight": "tsx scripts/preflight.ts",
     "dashboard": "tsx scripts/dashboard.ts",
     "mcp": "cd mcp-server && npm start",
     "electron:compile": "tsc -p electron/tsconfig.json",

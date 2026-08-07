@@ -66,6 +66,12 @@ export type ConnectNavItem = {
    * padding, its panel and its own search for these, and hands over the frame.
    */
   fullBleed?: boolean;
+  /**
+   * Only shown in the rail to people who hold `permission`. Everything else in
+   * Connect is reachable by the whole workspace, so this is the exception, not
+   * the pattern — see `visibleConnectNav`.
+   */
+  restricted?: boolean;
 };
 
 /**
@@ -166,7 +172,52 @@ export const CONNECT_NAV: ConnectNavItem[] = [
     phase: 1,
     delegatesTo: "/people",
   },
+  {
+    href: "/connect/admin",
+    label: "Admin",
+    icon: "Shield",
+    hint: "Members, channels, policies and audit",
+    // Reuses the existing catalog key rather than introducing `connect.admin`.
+    // A new permission would need a catalog reseed and a permEpoch bump for
+    // every user before anyone could reach the console — and "manage the
+    // organisation" is exactly what this console does.
+    permission: "org.manage",
+    phase: 1,
+    // Hidden from the rail unless the viewer actually holds the permission.
+    // Every other Connect section is reachable by everyone, so this is the one
+    // place the nav needs to differ per person — see `visibleConnectNav`.
+    restricted: true,
+  },
 ];
+
+/**
+ * The sections a given person should see in the rail.
+ *
+ * Only `restricted` items are filtered. Everything else stays unconditional:
+ * hiding a section someone can technically reach makes the product feel
+ * inconsistent between colleagues, and the middleware is the real gate either
+ * way. What's avoided here is specifically the opposite failure — showing an
+ * Admin tab to every employee that 403s the moment they click it.
+ *
+ * `perms === undefined` means a cookie issued before the RBAC rollout. Falls
+ * back to the enum role so a stale cookie doesn't lock an admin out of their
+ * own console.
+ */
+export function visibleConnectNav(
+  perms: string[] | undefined,
+  role?: string,
+): ConnectNavItem[] {
+  return CONNECT_NAV.filter((item) => {
+    if (!item.restricted) return true;
+    // ADMIN is a super-role in RFC-001 — it implicitly holds every permission,
+    // so its cookie may not list `org.manage` explicitly. Checking the role
+    // first avoids hiding the console from the one person who definitely has
+    // it, which is exactly the bug a perms-only check would produce.
+    if (role === "ADMIN") return true;
+    if (perms) return perms.includes(item.permission);
+    return role === "CEO" || role === "CISO";
+  });
+}
 
 /** True once a section's phase has been reached. */
 export function isLive(item: ConnectNavItem): boolean {

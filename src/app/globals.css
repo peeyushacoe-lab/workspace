@@ -741,3 +741,36 @@ button, a, [role="button"], input, textarea, select {
 .tiptap ul[data-type="taskList"] li[data-checked="true"] > div {
   color: var(--subtle); text-decoration: line-through;
 }
+
+/* ─── Connect user settings ──────────────────────────────────────────────────
+   Applied to <html> by ConnectSettingsProvider. Classes rather than inline
+   styles so they reach portalled dialogs, the scrollbar, and anything else
+   outside the React tree that owns the setting. */
+
+/* Reduce motion. Also applied automatically when the OS reports
+   prefers-reduced-motion, so nobody has to ask twice. `!important` is
+   warranted here: the whole point is to override component-level transitions
+   that were written without knowing this preference exists. */
+.connect-reduce-motion *,
+.connect-reduce-motion *::before,
+.connect-reduce-motion *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Larger text. Moves the root font size, so every rem-based measurement in the
+   product scales together — spacing included — instead of leaving big type in
+   boxes sized for small type. */
+.connect-larger-text {
+  font-size: 112.5%;
+}
+
+/* Compact density. Tightens the vertical rhythm of list rows and message rows
+   without changing type size, for people who would rather see more at once. */
+.connect-compact .nx-row,
+.connect-compact [data-density-row] {
+  padding-top: 0.3rem;
+  padding-bottom: 0.3rem;
+}

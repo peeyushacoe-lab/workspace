@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcrypt";
 import { getCurrentUser } from "@/lib/session";
 import { indexingQueue } from "@/lib/queues/indexing.queue";
+import { deactivateUser, purgeUser, checkPurgeBlockers } from "@/lib/users/offboard";
 import type { UserRole } from "@/generated/prisma/enums";
 
 const updateUserSchema = z.object({
@@ -101,6 +102,21 @@ export async function PUT(
   }
 }
 
+/**
+ * Removing a user.
+ *
+ * The default is now **deactivation**, not deletion. `prisma.user.delete()`
+ * cascades through `ChatMessage.user`, so the old behaviour erased every
+ * message the person ever wrote from every conversation — a departing employee
+ * took half of every thread they'd ever participated in with them, for
+ * everyone. It also cascaded `LegalHold`, destroying the records placed
+ * specifically to prevent destruction.
+ *
+ * Irreversible erasure is still available for a right-to-be-forgotten request,
+ * but it has to be asked for explicitly (`?mode=purge`), it refuses while a
+ * legal hold is active, and it requires the account to be deactivated first.
+ * See src/lib/users/offboard.ts.
+ */
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -112,33 +128,57 @@ export async function DELETE(
     }
 
     const { id } = await params;
+    const mode = new URL(request.url).searchParams.get("mode");
 
-    // Prevent deleting your own account
+    // Prevent removing your own account
     if (id === currentUser.id) {
-      return NextResponse.json({ error: "Cannot delete your own account" }, { status: 400 });
+      return NextResponse.json({ error: "Cannot remove your own account" }, { status: 400 });
     }
 
-    const target = await prisma.user.findUnique({ where: { id }, select: { role: true } });
+    const target = await prisma.user.findUnique({
+      where: { id },
+      select: { role: true, isActive: true, fullName: true },
+    });
     if (!target) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Don't allow removing the last admin (would lock everyone out of admin).
-    if (target.role === "ADMIN") {
-      const adminCount = await prisma.user.count({ where: { role: "ADMIN" } });
-      if (adminCount <= 1) {
-        return NextResponse.json({ error: "Cannot delete the last admin account" }, { status: 400 });
+    if (mode !== "purge") {
+      // Don't allow removing the last admin (would lock everyone out of admin).
+      if (target.role === "ADMIN") {
+        const adminCount = await prisma.user.count({ where: { role: "ADMIN", isActive: true } });
+        if (adminCount <= 1) {
+          return NextResponse.json({ error: "Cannot deactivate the last admin account" }, { status: 400 });
+        }
       }
+      if (!target.isActive) {
+        return NextResponse.json({ error: "That account is already deactivated" }, { status: 409 });
+      }
+
+      const result = await deactivateUser(id, currentUser.id);
+      indexingQueue.add("deindex-person", { type: "DEINDEX", resource: "person", resourceId: id }).catch(() => {});
+      return NextResponse.json({
+        success: true,
+        mode: "deactivated",
+        message: `${target.fullName}'s access has been revoked. Their messages and files remain intact.`,
+        ...result,
+      });
     }
 
-    await prisma.user.delete({
-      where: { id }
-    });
+    const blocker = await checkPurgeBlockers(id);
+    if (blocker) {
+      return NextResponse.json({ error: blocker.reason }, { status: 409 });
+    }
+
+    await purgeUser(id, currentUser.id);
     indexingQueue.add("deindex-person", { type: "DEINDEX", resource: "person", resourceId: id }).catch(() => {});
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, mode: "purged" });
   } catch (error) {
-    console.error("Delete user error:", error);
-    return NextResponse.json({ error: "Could not delete this user — they may own records that block deletion." }, { status: 500 });
+    console.error("Remove user error:", error);
+    return NextResponse.json(
+      { error: "Could not remove this user — they may own records that block deletion." },
+      { status: 500 },
+    );
   }
 }

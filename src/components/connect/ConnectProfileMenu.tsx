@@ -165,7 +165,7 @@ export function ConnectProfileMenu({
               Notifications
             </Link>
             <Link
-              href="/settings"
+              href="/connect/settings"
               onClick={() => setOpen(false)}
               className={`flex items-center gap-3 px-3.5 py-2 text-[13px] font-medium text-muted transition-colors hover:bg-hover hover:text-foreground ${focusRing}`}
             >

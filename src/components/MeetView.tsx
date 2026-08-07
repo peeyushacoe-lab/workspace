@@ -24,6 +24,7 @@ import {
 import { formatDistanceToNow, format, parseISO } from "date-fns";
 import { toast } from "sonner";
 import { avatarGradient } from "@/lib/avatar";
+import { useJoinPreferences } from "@/components/connect/useJoinPreferences";
 import { loadJitsiExternalApi, type JitsiExternalApi } from "@/lib/jitsi";
 import { IconButton } from "@/components/ui/icon-button";
 import { Panel } from "@/components/ui/panel";
@@ -260,6 +261,7 @@ function InMeetingRoom({
 
   const containerRef = useRef<HTMLDivElement>(null);
   const apiRef = useRef<JitsiExternalApi | null>(null);
+  const joinPrefs = useJoinPreferences();
 
   const formatElapsed = (s: number) => {
     const m = Math.floor(s / 60);
@@ -289,8 +291,12 @@ function InMeetingRoom({
           userInfo: { displayName: joinInfo.userName },
           configOverwrite: {
             prejoinPageEnabled: false,
-            startWithAudioMuted: false,
-            startWithVideoMuted: false,
+            // Settings → Calls & meetings. The prejoin page is disabled, so
+            // these are the only chance to arrive muted — without them the
+            // preference would be silently ignored and someone who asked to
+            // join quietly would join live.
+            startWithAudioMuted: joinPrefs.joinMuted,
+            startWithVideoMuted: joinPrefs.joinCameraOff,
             disableDeepLinking: true,
             enableWelcomePage: false,
             disableThirdPartyRequests: true,

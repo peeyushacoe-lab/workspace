@@ -5,9 +5,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   House, MessageSquare, Users, UsersRound, Hash, Video, Phone, FolderOpen, Bell, Contact,
-  Menu, X, Settings, ArrowUpRight, LogOut,
+  Shield, Menu, X, Settings, ArrowUpRight, LogOut,
 } from "lucide-react";
-import { CONNECT_NAV, isLive, type ConnectNavItem } from "@/lib/connect";
+import { CONNECT_NAV, visibleConnectNav, isLive, type ConnectNavItem } from "@/lib/connect";
 import type { SessionUser } from "@/lib/auth";
 import { SearchTrigger } from "@/components/GlobalSearch";
 import { NotificationCenter } from "@/components/NotificationCenter";
@@ -34,7 +34,7 @@ import type { ConnectHomeCounts, ConnectHomeResponse } from "@/app/api/connect/h
  * rendering nothing, and so tree-shaking keeps working.
  */
 const ICONS: Record<string, React.ElementType> = {
-  House, MessageSquare, Users, UsersRound, Hash, Video, Phone, FolderOpen, Bell, Contact,
+  House, MessageSquare, Users, UsersRound, Hash, Video, Phone, FolderOpen, Bell, Contact, Shield,
 };
 
 /** Rail grouping. Presentation only — access still comes from CONNECT_NAV. */
@@ -45,6 +45,9 @@ const GROUPS: string[][] = [
   ["/connect/chat", "/connect/groups", "/connect/channels"],
   ["/connect/teams", "/connect/meetings", "/connect/calls"],
   ["/connect/files", "/connect/activity", "/connect/contacts"],
+  // Admin sits alone at the bottom of the rail — it is a different kind of
+  // destination from the nine above it, and only some people see it at all.
+  ["/connect/admin"],
 ];
 
 /**
@@ -151,7 +154,10 @@ export function ConnectShell({
   const isTeamDetail = /^\/connect\/teams\/[^/]+$/.test(pathname);
   const fullBleed = section?.fullBleed === true || isTeamDetail;
 
-  const byHref = new Map(CONNECT_NAV.map((i) => [i.href, i]));
+  // Restricted sections (Admin) are dropped for people without the permission,
+  // so the rail never offers a destination that 403s on click.
+  const nav = visibleConnectNav(currentUser.perms, currentUser.role);
+  const byHref = new Map(nav.map((i) => [i.href, i]));
   const badgeFor = (href: string) => {
     const key = BADGE_FOR[href];
     return key && counts ? counts[key] : undefined;
@@ -255,7 +261,7 @@ export function ConnectShell({
               </a>
             )}
             <Link
-              href="/settings"
+              href="/connect/settings"
               className={`flex items-center gap-3 rounded-lg py-2 pl-3.5 pr-2.5 text-[13.5px] font-medium text-muted transition-colors hover:bg-hover hover:text-foreground ${focusRing}`}
             >
               <Settings className="h-[18px] w-[18px] flex-shrink-0" />
@@ -299,7 +305,7 @@ export function ConnectShell({
               </div>
 
               <div className="flex-1 space-y-0.5 overflow-y-auto px-3 py-2">
-                {CONNECT_NAV.map((item) => (
+                {nav.map((item) => (
                   <NavItem
                     key={item.href}
                     item={item}
@@ -321,7 +327,7 @@ export function ConnectShell({
                   </a>
                 )}
                 <Link
-                  href="/settings"
+                  href="/connect/settings"
                   className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted hover:bg-hover"
                 >
                   <Settings className="h-[18px] w-[18px]" />

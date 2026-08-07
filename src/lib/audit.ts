@@ -42,7 +42,18 @@ export type AuditAction =
   | "ORG_TEAM_UPDATED"
   | "ORG_TEAM_DELETED"
   | "ORG_TEAM_MEMBER_ADDED"
-  | "ORG_TEAM_MEMBER_REMOVED";
+  | "ORG_TEAM_MEMBER_REMOVED"
+  // User lifecycle. Deactivation is reversible and is the normal offboarding
+  // path; purge is irreversible erasure. Both are recorded because "who
+  // removed this person's access, and when" is the first question asked after
+  // an incident.
+  | "USER_DEACTIVATED"
+  | "USER_REACTIVATED"
+  | "USER_PURGED"
+  // Self-service session revocation from Connect settings. Recorded because
+  // "I signed out my old laptop" and "someone else signed out my laptop" look
+  // identical without it.
+  | "SESSION_REVOKED";
 
 export async function logAudit({
   actorId,

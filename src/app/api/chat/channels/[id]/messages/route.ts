@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { redis } from "@/lib/redis";
 import { deliverChatMessage } from "@/lib/chat/deliver";
 import { enforceChatLimit } from "@/lib/chat/limits";
+import { readConnectSettings } from "@/lib/connect-settings";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -106,6 +107,19 @@ export async function GET(request: Request, { params }: Params) {
   void (async () => {
     const unreadIds = messages.filter((m) => m.userId !== user.id).map((m) => m.id);
     if (!unreadIds.length) return;
+
+    // Privacy → "Send read receipts". Enforced here rather than by hiding the
+    // ticks in the reader's UI, because the sender's client is what displays
+    // them: suppressing the display on the wrong machine would leave the
+    // receipt fully visible to the one person it was meant to be withheld
+    // from. Opting out means the row is never written and nothing is
+    // published — `lastReadAt` above still updates, so the reader's own unread
+    // badge keeps working.
+    const reader = await prisma.user
+      .findUnique({ where: { id: user.id }, select: { preferences: true } })
+      .catch(() => null);
+    if (!readConnectSettings(reader?.preferences).privacy.shareReadReceipts) return;
+
     const readAt = new Date();
     try {
       await prisma.chatMessageRead.createMany({
