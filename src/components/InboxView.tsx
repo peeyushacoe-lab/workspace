@@ -9,7 +9,9 @@ Reply, Forward, Trash2, Star, Archive, X, Send,
   Sparkles, Loader2, ChevronDown, CalendarClock, FolderPlus,
   Folder, BellOff, Zap, Plus, MailOpen,
   Shield, ShieldCheck, ShieldX, Globe, Pencil, Check, Flame, } from "lucide-react";
-import { formatDistanceToNow, isPast, addHours, addDays, nextMonday, format, isToday, isYesterday, isThisYear } from "date-fns";
+import { isPast, addHours, addDays, nextMonday, format, isToday, isYesterday, isThisYear } from "date-fns";
+import { RelativeTime } from "@/components/RelativeTime";
+import { usableMediaUrl } from "@/lib/media-url";
 import { toast } from "sonner";
 import { SimpleComposer } from "./WorkspaceDashboard";
 import { UserProfileModal } from "./UserProfileModal";
@@ -115,10 +117,11 @@ function SenderAvatar({ member, email, size = 8, onClick }: { member?: Workspace
   const dim = size * 4; // tailwind size unit = 0.25rem = 4px
   const cls = `rounded-full object-cover flex-shrink-0`;
   const wrap = `cursor-pointer hover:opacity-80 transition-opacity`;
-  if (member?.avatarUrl && !imgFailed) {
+  const avatarSrc = usableMediaUrl(member?.avatarUrl);
+  if (avatarSrc && !imgFailed) {
     return (
       <img
-        src={member.avatarUrl}
+        src={avatarSrc}
         alt={label}
         className={`${cls} ${onClick ? wrap : ""}`}
         style={{ width: dim, height: dim }}
@@ -1436,7 +1439,7 @@ export function InboxView({ userRole, initialThreads }: {
                   </div>
                   <p className="text-xs text-muted truncate pl-5">To: {s.toAddresses.join(", ")}</p>
                   <p className="text-[11px] text-accent pl-5 mt-0.5">
-                    Sends {formatDistanceToNow(new Date(s.scheduledAt), { addSuffix: true })}
+                    Sends <RelativeTime date={s.scheduledAt} />
                   </p>
                 </div>
               ))
@@ -1461,7 +1464,7 @@ export function InboxView({ userRole, initialThreads }: {
                       {draft.subject || "(no subject)"}
                     </span>
                     <span className="ml-auto text-xs text-muted flex-shrink-0">
-                      {formatDistanceToNow(new Date(draft.savedAt), { addSuffix: true })}
+                      <RelativeTime date={draft.savedAt} />
                     </span>
                   </div>
                   <p className="text-xs text-muted truncate pl-5">{draft.to ? `To: ${draft.to}` : "(no recipient)"}</p>
@@ -1512,7 +1515,7 @@ export function InboxView({ userRole, initialThreads }: {
                         <div className="flex items-center gap-2">
                           <p className="font-semibold text-sm text-foreground truncate">To: {displayName}</p>
                           <span className="ml-auto text-xs text-muted flex-shrink-0">
-                            {formatDistanceToNow(new Date(log.createdAt), { addSuffix: true })}
+                            <RelativeTime date={log.createdAt} />
                           </span>
                         </div>
                         <p className="text-sm text-muted truncate font-medium">{log.subject}</p>

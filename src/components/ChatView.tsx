@@ -65,6 +65,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { formatDistanceToNow, isToday, isYesterday, format } from "date-fns";
+import { RelativeTime } from "@/components/RelativeTime";
+import { usableMediaUrl } from "@/lib/media-url";
 import { toast } from "sonner";
 import { useCall } from "./call/CallProvider";
 import { avatarGradient } from "@/lib/avatar";
@@ -406,9 +408,10 @@ function formatFileSize(bytes: number): string {
 function Avatar({ name, avatarUrl, size = "sm" }: { name: string; avatarUrl?: string | null; size?: "sm" | "md" }) {
   const sz = size === "sm" ? "w-8 h-8 text-xs" : "w-10 h-10 text-sm";
 
-  if (avatarUrl) {
+  const src = usableMediaUrl(avatarUrl);
+  if (src) {
     return (
-      <img src={avatarUrl} alt={name} className={`${sz} rounded-full object-cover flex-shrink-0`} />
+      <img src={src} alt={name} className={`${sz} rounded-full object-cover flex-shrink-0`} />
     );
   }
 
@@ -1680,7 +1683,7 @@ function ChannelInfoPanel({
               <div key={msg.id} className="px-4 py-3 border-b border-border-soft hover:bg-surface-sunken transition-colors">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs font-semibold text-foreground">{msg.user.fullName}</span>
-                  <span className="text-[10px] text-subtle">{formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true })}</span>
+                  <RelativeTime date={msg.createdAt} className="text-[10px] text-subtle" />
                 </div>
                 <button onClick={() => onJumpTo(msg.id)} className="block text-left w-full">
                   <p className="text-xs text-muted line-clamp-3">{msg.content}</p>
@@ -5391,7 +5394,7 @@ export function ChatView({
                     <div key={msg.id} className="px-4 py-3 border-b border-border hover:bg-surface-sunken transition-colors">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-xs font-semibold text-foreground">{msg.user.fullName}</span>
-                        <span className="text-[10px] text-muted">{formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true })}</span>
+                        <RelativeTime date={msg.createdAt} className="text-[10px] text-muted" />
                       </div>
                       <p className="text-xs text-muted line-clamp-3">{msg.content}</p>
                       <button

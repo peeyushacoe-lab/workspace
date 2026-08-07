@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { getAllowedSendersForRole, type EmailAddressConfig } from "@/lib/email-config";
 import { avatarGradient } from "@/lib/avatar";
 import type { UserRole } from "@/generated/prisma/enums";
+import { usableMediaUrl } from "@/lib/media-url";
 
 type SignatureSummary = {
   id: string;
@@ -901,8 +902,9 @@ type MemberInfo = { id: string; email: string; fullName: string; avatarUrl: stri
 function MemberAvatar({ email, members }: { email: string; members: MemberInfo[] }) {
   const m = members.find((u) => u.email.toLowerCase() === email.toLowerCase());
   const label = (m?.fullName ?? email).charAt(0).toUpperCase();
-  if (m?.avatarUrl) {
-    return <img src={m.avatarUrl} alt={label} className="w-8 h-8 rounded-full object-cover flex-shrink-0 ring-1 ring-border" />;
+  const src = usableMediaUrl(m?.avatarUrl);
+  if (src) {
+    return <img src={src} alt={label} className="w-8 h-8 rounded-full object-cover flex-shrink-0 ring-1 ring-border" />;
   }
   return (
     <div

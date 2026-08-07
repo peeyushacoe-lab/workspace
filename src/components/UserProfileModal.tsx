@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { X, Mail, MapPin, Globe, Building2, Briefcase, Clock, Loader2 } from "lucide-react";
 import { roleLabels } from "@/lib/auth";
 import type { UserRole } from "@/generated/prisma/enums";
+import { usableMediaUrl } from "@/lib/media-url";
 
 interface UserProfile {
   id: string;
@@ -100,10 +101,10 @@ export function UserProfileModal({ userId, onClose, onCompose }: Props) {
           {/* Avatar — -mt-10 pulls it up to overlap cover bottom */}
           <div className="-mt-10 mb-3 flex items-end justify-between">
             <div className="rounded-full border-4 border-border shadow-sm overflow-hidden flex-shrink-0">
-              {profile?.avatarUrl ? (
+              {usableMediaUrl(profile?.avatarUrl) ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={profile.avatarUrl}
+                  src={usableMediaUrl(profile?.avatarUrl) as string}
                   alt={displayName}
                   className="w-20 h-20 object-cover"
                 />

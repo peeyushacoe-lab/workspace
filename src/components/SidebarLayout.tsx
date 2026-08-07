@@ -20,6 +20,7 @@ import { roleLabels, type SessionUser } from "@/lib/auth";
 import type { PortalNavItem } from "@/lib/auth";
 import { activeGroupId, railVisible, type ResolvedGroup } from "@/lib/nav-groups";
 import { avatarGradient } from "@/lib/avatar";
+import { usableMediaUrl } from "@/lib/media-url";
 
 /**
  * Atrium shell.
@@ -69,7 +70,7 @@ export function SidebarLayout({
     if (currentUserId) {
       fetch("/api/profile")
         .then((r) => (r.ok ? r.json() : null))
-        .then((d) => { if (d?.avatarUrl) setAvatarUrl(d.avatarUrl); })
+        .then((d) => { const u = usableMediaUrl(d?.avatarUrl); if (u) setAvatarUrl(u); })
         .catch(() => {});
     }
   }, [currentUserId]);
