@@ -20,7 +20,7 @@ export default function SetupPasskeyPage() {
   async function skipPasskey() {
     setStep("skipping");
     await fetch("/api/auth/skip-passkey", { method: "POST" });
-    router.replace("/inbox");
+    router.replace("/home");
   }
 
   async function register() {
@@ -42,7 +42,7 @@ export default function SetupPasskeyPage() {
       if (!verRes.ok || !data.verified) throw new Error(data.error ?? "Setup failed");
 
       setStep("done");
-      setTimeout(() => router.replace("/inbox"), 1500);
+      setTimeout(() => router.replace("/home"), 1500);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Setup failed";
       if (msg.toLowerCase().includes("cancel") || msg.toLowerCase().includes("abort") || msg.includes("NotAllowedError")) {

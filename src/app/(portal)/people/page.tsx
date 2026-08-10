@@ -15,6 +15,7 @@ import {
 import { PageHeader } from "@/components/Shell";
 import { roleLabels } from "@/lib/auth";
 import { avatarGradient } from "@/lib/avatar";
+import { usableMediaUrl } from "@/lib/media-url";
 import type { UserRole } from "@/generated/prisma/enums";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -78,11 +79,15 @@ function Avatar({
     lg: "w-14 h-14 text-base",
   };
 
-  if (person.avatarUrl) {
+  // usableMediaUrl filters out bare R2 storage keys (no scheme), which the
+  // browser would resolve against the current page and 404 on. Null falls
+  // through to the initials avatar below.
+  const avatar = usableMediaUrl(person.avatarUrl);
+  if (avatar) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
-        src={person.avatarUrl}
+        src={avatar}
         alt={person.fullName}
         className={`${sizeClasses[size]} rounded-full object-cover flex-shrink-0`}
       />

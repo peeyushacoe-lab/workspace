@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     // are unreliable on shared/lab machines and unsupported browsers).
     // Passkey/MFA enrollment is still available as a self-serve option in
     // /settings for anyone who wants it.
-    const response = NextResponse.json({ success: true, redirectTo: "/inbox" });
+    const response = NextResponse.json({ success: true, redirectTo: "/home" });
     response.cookies.set("cybersage_user", signPayload(JSON.stringify(updatedUser)), cookieOptions);
 
     return response;

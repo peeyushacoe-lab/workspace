@@ -8,7 +8,9 @@ export default async function LoginPage({
   searchParams: Promise<{ next?: string; error?: string }>;
 }) {
   const params = await searchParams;
-  const next = params.next ?? "/inbox";
+  // Falls back to Home, not Inbox — and `next` is still honoured, so a deep link
+  // that bounced through login still lands where the user was headed.
+  const next = params.next ?? "/home";
   const error = Boolean(params.error);
 
   return <LoginForm next={next} error={error} />;

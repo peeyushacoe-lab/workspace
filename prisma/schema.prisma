@@ -189,12 +189,27 @@ model User {
   permissionOverrides  UserPermissionOverride[] @relation("OverrideUser")
   teamMemberships      TeamMember[]             @relation("TeamMemberUser")
 
+  // Reporting line. Distinct from Department.managerId and Team.managerId, which
+  // say who heads a *group*; this is who an individual reports to, which is often
+  // not the department head. SetNull rather than Cascade — removing a manager must
+  // orphan their reports, never delete them.
+  managerId     String?
+  manager       User?   @relation("UserManager", fields: [managerId], references: [id], onDelete: SetNull)
+  directReports User[]  @relation("UserManager")
+
   // Tasks & Work Management (RFC-002)
   taskLists          TaskList[]       @relation("TaskListOwner")
   tasksCreated       Task[]           @relation("TaskCreator")
   taskAssignments    TaskAssignee[]   @relation("TaskAssigneeUser")
   taskComments       TaskComment[]    @relation("TaskCommentAuthor")
   taskAttachments    TaskAttachment[] @relation("TaskAttachmentUploader")
+
+  // Agenda items this person is leading.
+  agendaItemsOwned   MeetingAgendaItem[] @relation("AgendaItemOwner")
+
+  // "Who reports to this person" is the only non-PK lookup on managerId, and the
+  // profile page runs it on every view.
+  @@index([managerId])
 }
 
 // WebAuthn passkey credentials
@@ -1504,6 +1519,10 @@ model Meeting {
   transcriptUrl String?
   aiSummary     String?
   actionItems   String[]      @default([])
+  // Shared notes taken during the meeting. Distinct from `aiSummary` (generated)
+  // and `actionItems` (a flat string list produced by /meet/intelligence): this is
+  // what people actually type, and it survives whether or not AI ran.
+  notes         String?
   maxParticipants Int         @default(50)
   isRecordingEnabled Boolean  @default(false)
   isTranscriptionEnabled Boolean @default(false)
@@ -1515,11 +1534,42 @@ model Meeting {
 
   organizer    User                 @relation("MeetingOrganizer", fields: [organizerId], references: [id], onDelete: Cascade)
   participants MeetingParticipant[]
+  agendaItems  MeetingAgendaItem[]
 
   @@index([organizerId])
   @@index([status])
   @@index([scheduledAt])
   @@index([organizationId])
+}
+
+/// One line on a meeting's agenda.
+///
+/// A related model rather than a text field on `Meeting`, because the agenda is
+/// the thing a meeting is *run* from: each line gets ticked off live, can be
+/// owned by a specific person, time-boxed, and turned into a task on its own.
+/// None of that is expressible in a markdown blob, and "agenda → tasks" is the
+/// whole reason the meeting page exists.
+model MeetingAgendaItem {
+  id        String   @id @default(cuid())
+  meetingId String
+  /// Manual sort order. Gaps are fine — reordering rewrites the whole list.
+  position  Int      @default(0)
+  title     String
+  /// Who is leading this item. SetNull, not Cascade: someone leaving the company
+  /// must not delete the agenda of every meeting they ever led an item in.
+  ownerId   String?
+  /// Time-box in minutes. Null = untimed.
+  minutes   Int?
+  done      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  owner   User?   @relation("AgendaItemOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+
+  /// The list is always read whole, in order, for one meeting.
+  @@index([meetingId, position])
+  @@index([ownerId])
 }
 
 enum ParticipantRole {

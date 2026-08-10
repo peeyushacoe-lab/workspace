@@ -18,7 +18,7 @@ export default async function PortalLayout({ children }: { children: React.React
   const needsRefresh = cookieEpoch === undefined || cookieEpoch !== dbEpoch;
 
   if (needsRefresh) {
-    const pathname = (await headers()).get("x-pathname") ?? "/inbox";
+    const pathname = (await headers()).get("x-pathname") ?? "/home";
     redirect(`/api/session/refresh?next=${encodeURIComponent(pathname)}`);
   }
 

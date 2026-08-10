@@ -19,7 +19,7 @@ import {
   BookOpen, LayoutTemplate, WifiOff,
   Superscript as SuperscriptIcon, Subscript as SubscriptIcon, RemoveFormatting, Highlighter,
   FileCog, BarChart3, AlignVerticalSpaceAround, Sigma, ListTree,
-  BookmarkPlus, GitMerge, ArrowLeft,
+  BookmarkPlus, GitMerge, ArrowLeft, CheckSquare,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -42,6 +42,7 @@ import * as Y from "yjs";
 // import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
 
 import { DocShareModal } from "./DocShareModal";
+import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog";
 import { DocVersionHistory, snapshotVersion } from "./DocVersionHistory";
 import { DocComments } from "./DocComments";
 import { useRecordOpen } from "@/lib/use-recent";
@@ -478,6 +479,7 @@ export function DocsView() {
   const [showAI, setShowAI] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [showCreateTask, setShowCreateTask] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [showOutline, setShowOutline] = useState(true);
   const [showExportMenu, setShowExportMenu] = useState(false);
@@ -1777,6 +1779,9 @@ h1,h2,h3,h4{break-after:avoid}
                   the server round-trip and refreshes its own list afterwards. */}
               <IconBtn icon={<BookmarkPlus className="h-4 w-4" />} title="Save a version" onClick={() => { setShowHistory(true); setShowAI(false); setShowComments(false); setShowSuggestions(false); }} />
               <IconBtn icon={<History className="h-4 w-4" />} title="Version history" active={showHistory} onClick={() => { setShowHistory(v => !v); setShowAI(false); setShowComments(false); setShowSuggestions(false); }} />
+              {/* Create a task from this document. The task stores the doc id, so
+                  its backlink chip reopens the doc via /docs?open=<id>. */}
+              <IconBtn icon={<CheckSquare className="h-4 w-4" />} title="Create task from this document" onClick={() => setShowCreateTask(true)} />
               <TSep />
 
               {/* Mode selector — Editing / Suggesting / Viewing.
@@ -2490,6 +2495,17 @@ h1,h2,h3,h4{break-after:avoid}
 
       {showShare && selectedDoc && (
         <DocShareModal docId={selectedDoc.id} docType="doc" onClose={() => setShowShare(false)} />
+      )}
+
+      {showCreateTask && selectedDoc && (
+        <CreateTaskDialog
+          open
+          onClose={() => setShowCreateTask(false)}
+          sourceType="doc"
+          sourceId={selectedDoc.id}
+          defaultTitle={selectedDoc.title ? `Follow up: ${selectedDoc.title}` : ""}
+          sourceTitle={selectedDoc.title || "Untitled document"}
+        />
       )}
 
       {showFindReplace && (

@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 // Drive lives on drive.cybersage.uk; the office editors live on
 // docs.cybersage.uk. router.push() cannot cross origins, so opening a native
 // doc/sheet/slide has to go through appNavigate.
@@ -1074,6 +1074,48 @@ export function DriveView({ currentUserId }: { currentUserId: string }) {
     if (file.href) { appNavigate(file.href); return; }
     setPreviewFile(file);
   };
+
+  /**
+   * Deep link: /drive?file=<id> — opens that file's preview straight away.
+   *
+   * Fetches `/api/drive/files/<id>` rather than searching the loaded `files`
+   * array, because the target usually isn't in it: the list is scoped to the
+   * current folder or section, and a link from Home, search or a task backlink
+   * has no idea which folder the file sits in.
+   *
+   * `/api/recent` has been emitting `?file=` hrefs for a while with nothing
+   * reading them — those links now work rather than silently landing on the
+   * Drive root.
+   *
+   * Fails soft: the route 404s for a file the caller doesn't own, and a missing
+   * or deleted id simply leaves Drive on its normal view. No error toast — the
+   * user followed a stale link, they didn't do anything wrong.
+   */
+  const searchParams = useSearchParams();
+  const deepLinkedFile = searchParams?.get("file") ?? null;
+  const handledFileDeepLink = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!deepLinkedFile || handledFileDeepLink.current === deepLinkedFile) return;
+    handledFileDeepLink.current = deepLinkedFile;
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch(`/api/drive/files/${deepLinkedFile}`);
+        if (!res.ok) return;
+        // `size` arrives as a string — BigInt isn't JSON-serialisable — but
+        // DriveFile types it as a number, and the preview shows it.
+        const raw = (await res.json()) as Omit<DriveFile, "size"> & { size: string | number };
+        if (cancelled) return;
+        setPreviewFile({ ...raw, size: Number(raw.size) });
+      } catch {
+        // Stale or unreachable link — leave Drive as it is.
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [deepLinkedFile]);
 
   const handleMove = async (id: string, isFolder: boolean, targetFolderId: string | null) => {
     try {

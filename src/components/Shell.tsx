@@ -42,7 +42,7 @@ export function Shell({
       <AppSubdomainShell
         subdomain={subdomain}
         currentUser={currentUser}
-        hubHref={hubUrl("/inbox")}
+        hubHref={hubUrl("/home")}
       >
         {inner}
       </AppSubdomainShell>

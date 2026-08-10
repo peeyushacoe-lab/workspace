@@ -5,7 +5,7 @@
 // behaves exactly like next/link for everything else.
 import { AppLink as Link } from "@/components/AppLink";
 import {
-  Mail, MessageSquare, Video, CalendarDays, HardDrive, FileText,
+  House, Mail, MessageSquare, Video, CalendarDays, HardDrive, FileText,
   CheckSquare, Sparkles, ShieldAlert, Users, GraduationCap,
   LayoutDashboard, SlidersHorizontal, MoreHorizontal, type LucideIcon,
 } from "lucide-react";
@@ -13,6 +13,7 @@ import { iconSize } from "@/components/icons";
 import { SPINE_FOOTER, type NavGroupId, type ResolvedGroup } from "@/lib/nav-groups";
 
 const GROUP_ICONS: Record<string, LucideIcon> = {
+  home: House,
   mail: Mail,
   chat: MessageSquare,
   meet: Video,

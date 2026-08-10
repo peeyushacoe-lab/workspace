@@ -5,12 +5,19 @@ import bcrypt from "bcrypt";
 import { getCurrentUser } from "@/lib/session";
 import { indexingQueue } from "@/lib/queues/indexing.queue";
 import { deactivateUser, purgeUser, checkPurgeBlockers } from "@/lib/users/offboard";
+import { wouldCreateReportingCycle } from "@/lib/reporting-line";
 import type { UserRole } from "@/generated/prisma/enums";
 
 const updateUserSchema = z.object({
   name: z.string().min(1).optional(),
   role: z.enum(["ADMIN", "CEO", "CISO", "MARKETING", "INTERNSHIP", "R_AND_D"]).optional(),
   password: z.string().min(8).optional(),
+  /**
+   * Reporting line. `null` clears it; a string sets it. `.nullable()` matters —
+   * without it there is no way to express "this person no longer reports to
+   * anyone", since an omitted key means "leave unchanged".
+   */
+  managerId: z.string().nullable().optional(),
 });
 
 export async function GET(
@@ -72,11 +79,43 @@ export async function PUT(
     const validatedData = updateUserSchema.parse(body);
     const { id } = await params;
 
-    const updateData: { fullName?: string; role?: UserRole; passwordHash?: string } = {};
+    const updateData: {
+      fullName?: string;
+      role?: UserRole;
+      passwordHash?: string;
+      managerId?: string | null;
+    } = {};
     if (validatedData.name) updateData.fullName = validatedData.name;
     if (validatedData.role) updateData.role = validatedData.role;
     if (validatedData.password) {
       updateData.passwordHash = await bcrypt.hash(validatedData.password, 12);
+    }
+
+    // Reporting line. `undefined` = not being changed; `null` = being cleared.
+    if (validatedData.managerId !== undefined) {
+      const managerId = validatedData.managerId;
+
+      if (managerId === null) {
+        updateData.managerId = null;
+      } else {
+        // Validated server-side, not just in the picker UI. A cycle (A→B→A) makes
+        // any code that walks the chain — org charts, approval routing — loop
+        // forever, and the DB can only CHECK the one-hop self-management case.
+        const manager = await prisma.user.findUnique({
+          where: { id: managerId },
+          select: { id: true, isActive: true },
+        });
+        if (!manager || !manager.isActive) {
+          return NextResponse.json({ error: "Manager not found" }, { status: 400 });
+        }
+        if (await wouldCreateReportingCycle(id, managerId)) {
+          return NextResponse.json(
+            { error: "That would create a reporting loop — this person is already above them." },
+            { status: 400 },
+          );
+        }
+        updateData.managerId = managerId;
+      }
     }
 
     const user = await prisma.user.update({
@@ -88,6 +127,8 @@ export async function PUT(
         fullName: true,
         role: true,
         createdAt: true,
+        managerId: true,
+        manager: { select: { id: true, fullName: true } },
       }
     });
 

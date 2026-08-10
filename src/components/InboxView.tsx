@@ -2,19 +2,21 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Inbox, Search, RefreshCw, Clock, ChevronLeft, ChevronRight,
 Reply, Forward, Trash2, Star, Archive, X, Send,
   AlertCircle, AlertTriangle, Info, ShieldAlert, FileText,
   Sparkles, Loader2, ChevronDown, CalendarClock, FolderPlus,
   Folder, BellOff, Zap, Plus, MailOpen,
-  Shield, ShieldCheck, ShieldX, Globe, Pencil, Check, Flame, } from "lucide-react";
+  Shield, ShieldCheck, ShieldX, Globe, Pencil, Check, Flame, CheckSquare, } from "lucide-react";
 import { isPast, addHours, addDays, nextMonday, format, isToday, isYesterday, isThisYear } from "date-fns";
 import { RelativeTime } from "@/components/RelativeTime";
 import { usableMediaUrl } from "@/lib/media-url";
 import { toast } from "sonner";
 import { SimpleComposer } from "./WorkspaceDashboard";
 import { UserProfileModal } from "./UserProfileModal";
+import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog";
 import type { UserRole } from "@/generated/prisma/enums";
 import { avatarGradient } from "@/lib/avatar";
 
@@ -747,6 +749,10 @@ export function InboxView({ userRole, initialThreads }: {
   const [showRules, setShowRules]           = useState(false);
   const [profileUserId, setProfileUserId]   = useState<string | null>(null);
   const [expandedMsgs, setExpandedMsgs]     = useState<Set<string>>(new Set());
+  // Thread the user is creating a task from — null when the dialog is closed.
+  // Holds the subject too, so the dialog can prefill the title and name the link
+  // without re-reading threadDetail (which changes as the user navigates).
+  const [taskFromThread, setTaskFromThread] = useState<{ id: string; subject: string } | null>(null);
   const rewriteMenuRef = useRef<HTMLDivElement>(null);
 
   // Drag-and-drop folder state
@@ -916,6 +922,35 @@ export function InboxView({ userRole, initialThreads }: {
       setIsDetailLoading(false);
     }
   };
+
+  /**
+   * Deep link: /inbox?thread=<id> — used by Home, universal search, notifications
+   * and the backlink on a task created from an email.
+   *
+   * Opens through `loadThreadDetail`, which fetches `/api/inbox/<id>` directly
+   * instead of looking the thread up in `threads`. That distinction is the whole
+   * feature: the target may be archived, trashed, or simply past the 50-row first
+   * page, so a list lookup would silently no-op on exactly the links most worth
+   * following. The route applies its own access check, so a deleted or forbidden
+   * id just fails to open — it never reveals that the thread exists.
+   *
+   * Fires once per id (`handledDeepLink`), so the 8s background poll and the SSE
+   * refresh can't yank the user back to the linked thread after they click away.
+   * The URL is deliberately not rewritten as they browse: a history entry per
+   * email read would make the Back button useless.
+   */
+  const searchParams = useSearchParams();
+  const deepLinkedThread = searchParams?.get("thread") ?? null;
+  const handledDeepLink = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!deepLinkedThread || handledDeepLink.current === deepLinkedThread) return;
+    handledDeepLink.current = deepLinkedThread;
+    void loadThreadDetail(deepLinkedThread);
+    // `loadThreadDetail` is redefined every render (not memoised), so listing it
+    // here would re-open the thread on every re-render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deepLinkedThread]);
 
   const patchThread = async (id: string, patch: Record<string, unknown>) => {
     setThreads(prev => prev.map(t => t.id === id ? { ...t, ...patch } : t));
@@ -1879,6 +1914,15 @@ export function InboxView({ userRole, initialThreads }: {
               >
                 <Sparkles className="w-4 h-4" />
               </button>
+              {/* Turn this email into a task without leaving the email. The dialog
+                  records the thread id, so the task links back here. */}
+              <button
+                onClick={() => setTaskFromThread({ id: threadDetail.id, subject: threadDetail.subject })}
+                title="Create task from this email"
+                className="nx-press w-[34px] h-[34px] flex items-center justify-center rounded-lg border border-border bg-surface text-muted hover:bg-surface-sunken hover:text-foreground transition-colors"
+              >
+                <CheckSquare className="w-4 h-4" />
+              </button>
               <div className="flex-1" />
               {(() => {
                 const t = threads.find(th => th.id === threadDetail.id);
@@ -2429,6 +2473,20 @@ export function InboxView({ userRole, initialThreads }: {
           </div>
         );
       })()}
+
+      {/* ── Create task from this email ──
+          Mounted once at the root rather than per thread row, so only one dialog
+          instance ever exists and its member/list fetches happen once per open. */}
+      {taskFromThread && (
+        <CreateTaskDialog
+          open
+          onClose={() => setTaskFromThread(null)}
+          sourceType="email"
+          sourceId={taskFromThread.id}
+          defaultTitle={taskFromThread.subject}
+          sourceTitle={taskFromThread.subject || "(no subject)"}
+        />
+      )}
     </div>
   );
 }

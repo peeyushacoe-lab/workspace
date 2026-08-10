@@ -209,7 +209,19 @@ export function CallProvider({
   // guaranteed, so we also poll. This is what makes ringing reliable; the SSE
   // path above just makes it instant when it works. Deduped via state refs.
   useEffect(() => {
+    /**
+     * Stops the poll permanently. A 401/403 means the session is gone or this
+     * account may not use calling — neither of which a retry can fix, and the
+     * old code retried anyway: `if (!res.ok) return` swallowed the status and the
+     * 3s interval kept firing, producing ~1,200 failed requests an hour per open
+     * tab and burying the console (and the server log) in noise.
+     */
+    let stopped = false;
+    /** Consecutive non-auth failures, for backing off a struggling server. */
+    let failures = 0;
+
     const tick = async () => {
+      if (stopped) return;
       if (activeRef.current) return; // already in a call
       const out = outgoingRef.current;
       const inc = incomingRef.current;
@@ -218,7 +230,26 @@ export function CallProvider({
           "/api/chat/call/poll" + (out ? "?callId=" + encodeURIComponent(out.callId) : ""),
           { cache: "no-store" },
         );
-        if (!res.ok) return;
+
+        if (res.status === 401 || res.status === 403) {
+          // Unrecoverable without a new session. Whatever the user does next
+          // (navigate, refresh) goes through middleware, which handles the
+          // redirect properly — this loop must not keep hammering meanwhile.
+          stopped = true;
+          clearInterval(interval);
+          return;
+        }
+
+        if (!res.ok) {
+          // Transient (5xx, network blip). Give up after a sustained outage
+          // rather than polling a dead endpoint for the life of the tab.
+          if (++failures >= 10) {
+            stopped = true;
+            clearInterval(interval);
+          }
+          return;
+        }
+        failures = 0;
         const data = (await res.json()) as {
           incoming: ActiveCall | null;
           outgoing: { status: string } | null;
@@ -253,7 +284,12 @@ export function CallProvider({
           setIncoming(null);
         }
       } catch {
-        /* ignore poll errors */
+        // Network-level failure — counted the same as a 5xx so an offline tab
+        // eventually stops rather than retrying every 3s indefinitely.
+        if (++failures >= 10) {
+          stopped = true;
+          clearInterval(interval);
+        }
       }
     };
     const interval = setInterval(() => void tick(), 3000);

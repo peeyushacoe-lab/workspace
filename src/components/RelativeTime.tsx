@@ -21,6 +21,20 @@ import { formatDistanceToNow } from "date-fns";
  * The placeholder is an absolute time rather than a blank: a timestamp that
  * appears out of nowhere a frame later is worse than one that starts precise
  * and then relaxes into "3 minutes ago".
+ *
+ * ── The `title` attribute is the same trap ────────────────────────────────────
+ * The original fix here made the *text* deterministic but left
+ * `title={parsed.toLocaleString()}`, which reads the **host** locale — and the
+ * Node server's locale is not the browser's. The server emitted
+ * "04/08/2026, 01:15:16" while the browser computed "8/4/2026, 1:15:16 AM", so
+ * React still reported #418 and still threw away the subtree; the mismatch had
+ * just moved from the children to an attribute. Home made it obvious by
+ * rendering a dozen of these at once.
+ *
+ * So the tooltip is now handled exactly like the label: a deterministic UTC
+ * string for SSR and first paint, swapped to the viewer's own locale in the
+ * effect. Anything that formats with the ambient locale or the ambient timezone
+ * has to be set in an effect, never during render.
  */
 export function RelativeTime({
   date,
@@ -42,9 +56,13 @@ export function RelativeTime({
     : "";
 
   const [label, setLabel] = useState(absolute);
+  // Seeded with the same deterministic string as the label, then localised
+  // client-side. Must never be `toLocaleString()` during render.
+  const [title, setTitle] = useState(absolute ? `${absolute} UTC` : "");
 
   useEffect(() => {
     if (!valid) return;
+    setTitle(parsed.toLocaleString());
     const update = () => setLabel(formatDistanceToNow(parsed, { addSuffix: true }));
     update();
     const t = setInterval(update, refreshMs);
@@ -56,7 +74,7 @@ export function RelativeTime({
   if (!valid) return null;
 
   return (
-    <time dateTime={iso} title={parsed.toLocaleString()} className={className}>
+    <time dateTime={iso} title={title} className={className}>
       {label}
     </time>
   );

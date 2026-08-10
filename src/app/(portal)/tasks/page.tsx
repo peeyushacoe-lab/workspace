@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Plus, X, Search, Columns, List, Calendar,
   Flag, User, Tag, ChevronDown, Loader2, Trash2,
@@ -9,6 +10,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/Shell";
+import { TaskSourceChip } from "@/components/tasks/TaskSourceChip";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -30,6 +32,10 @@ type Task = {
   labels: string[];
   recurrence?: string | null;
   listId?: string | null;
+  // Provenance — set when the task was created from an email, chat message,
+  // meeting or document. Surfaced as a backlink chip; see lib/task-source.ts.
+  sourceType?: string | null;
+  sourceId?: string | null;
   createdBy: UserLite;
   assignees: { user: UserLite }[];
   comments?: TaskComment[];
@@ -497,6 +503,7 @@ function KanbanCard({ task, onEdit, onDelete }: { task: Task; onEdit: () => void
       <div className="flex items-center flex-wrap gap-1.5 mb-2">
         <PriorityBadge priority={task.priority} size="xs" />
         {task.recurrence && <span title={task.recurrence}><Repeat className="w-3 h-3 text-subtle" /></span>}
+        <TaskSourceChip sourceType={task.sourceType} sourceId={task.sourceId} />
         {task.labels.slice(0, 2).map((l) => <LabelChip key={l} label={l} />)}
         {task.labels.length > 2 && <span className="text-[9px] text-subtle">+{task.labels.length - 2}</span>}
       </div>
@@ -570,8 +577,9 @@ function ListView({ tasks, onEdit, onDelete }: { tasks: Task[]; onEdit: (t: Task
                   <tr key={task.id} className="border-b border-border-soft hover:bg-surface-sunken/30 cursor-pointer" onClick={() => onEdit(task)}>
                     <td className="px-4 py-3">
                       <p className="text-foreground font-medium text-sm leading-snug">{task.title}</p>
-                      {task.labels.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-1">
+                      {(task.labels.length > 0 || task.sourceType) && (
+                        <div className="flex flex-wrap items-center gap-1 mt-1">
+                          <TaskSourceChip sourceType={task.sourceType} sourceId={task.sourceId} />
                           {task.labels.slice(0, 3).map((l) => <LabelChip key={l} label={l} />)}
                         </div>
                       )}
@@ -615,6 +623,31 @@ export default function TasksPage() {
   const [statusFilter, setStatusFilter] = useState<TaskStatus | "all">("all");
   const [priorityFilter, setPriorityFilter] = useState<TaskPriority | "all">("all");
   const [drawer, setDrawer] = useState<{ open: boolean; task: Task | null } | null>(null);
+
+  /**
+   * Deep link: /tasks?taskId=<id> — opens that task's drawer.
+   *
+   * The task-assigned notification has pointed here since Tasks shipped
+   * (`link: /tasks?taskId=${task.id}` in the POST handler) but nothing read the
+   * param, so clicking the notification dumped you on the board with no
+   * indication which task it meant. Universal search results link here too.
+   *
+   * Waits for `tasks` to load and resolves against it, because the drawer needs
+   * the full task object. If the id isn't in the current scope — someone else's
+   * task while the "mine" filter is on — nothing opens; the caller can switch
+   * scope. Fires once, so the load doesn't reopen the drawer after it's dismissed.
+   */
+  const searchParams = useSearchParams();
+  const deepLinkedTask = searchParams?.get("taskId") ?? null;
+  const handledTaskDeepLink = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!deepLinkedTask || handledTaskDeepLink.current === deepLinkedTask) return;
+    const match = tasks.find((t) => t.id === deepLinkedTask);
+    if (!match) return; // tasks may not have loaded yet — retried when they do
+    handledTaskDeepLink.current = deepLinkedTask;
+    setDrawer({ open: true, task: match });
+  }, [deepLinkedTask, tasks]);
 
   const load = useCallback(async (view: typeof scope) => {
     setLoading(true);

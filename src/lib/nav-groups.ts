@@ -15,6 +15,7 @@ import { getPortalNavForRole, type PortalNavItem } from "@/lib/auth";
  */
 
 export type NavGroupId =
+  | "home"
   | "mail" | "chat" | "meet" | "calendar" | "drive" | "docs"
   | "tasks" | "ai" | "security" | "people" | "internship"
   | "insights" | "admin" | "more";
@@ -58,6 +59,8 @@ type GroupDef = {
 const HR_ROLE = "HR" as UserRole;
 
 export const NAV_GROUPS: GroupDef[] = [
+  // Single destination and no rail: Home is a leaf, not an app with sub-pages.
+  { id: "home", label: "Home", icon: "home", selfNav: true, owns: ["/home"] },
   {
     id: "mail", label: "Mail", icon: "mail", selfNav: true,
     owns: ["/inbox", "/contacts"],

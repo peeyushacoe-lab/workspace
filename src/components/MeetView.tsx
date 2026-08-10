@@ -20,7 +20,10 @@ import {
   ExternalLink,
   RefreshCw,
   ChevronLeft,
+  ListChecks,
+  ArrowRight,
 } from "lucide-react";
+import Link from "next/link";
 import { formatDistanceToNow, format, parseISO } from "date-fns";
 import { toast } from "sonner";
 import { avatarGradient } from "@/lib/avatar";
@@ -963,6 +966,17 @@ export function MeetView({
                   </button>
                 </div>
               )}
+
+              {/* Agenda, notes and follow-ups live on the meeting's own page —
+                  this panel is about joining, that page is about the content. */}
+              <Link
+                href={`/meetings/${selected.id}`}
+                className="mb-4 flex items-center gap-2 rounded-xl border border-border bg-surface p-3 transition-colors hover:border-border-strong hover:bg-hover"
+              >
+                <ListChecks className="w-4 h-4 flex-shrink-0 text-accent" />
+                <span className="flex-1 text-xs font-medium text-foreground">Agenda, notes & follow-ups</span>
+                <ArrowRight className="w-3.5 h-3.5 flex-shrink-0 text-subtle" />
+              </Link>
 
               {/* Join link */}
               <div className="mb-6 flex items-center gap-2 p-3 bg-surface rounded-xl border border-border">

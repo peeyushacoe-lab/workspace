@@ -6,6 +6,7 @@
 import { AppLink as Link } from "@/components/AppLink";
 import { usePathname } from "next/navigation";
 import {
+  House,
   LayoutDashboard,
   Users,
   Inbox,
@@ -33,6 +34,7 @@ import { iconSize } from "@/components/icons";
 import type { PortalNavItem } from "@/lib/auth";
 
 const icons: Record<string, LucideIcon> = {
+  "/home":       House,
   "/dashboard":  LayoutDashboard,
   "/contacts":   Contact,
   "/settings":   SlidersHorizontal,

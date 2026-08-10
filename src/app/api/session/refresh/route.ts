@@ -15,7 +15,7 @@ import { sessionCookieOptions } from "@/lib/cookie-options";
 function safeNext(next: string | null): string {
   // Only allow internal, non-protocol-relative paths.
   if (next && next.startsWith("/") && !next.startsWith("//")) return next;
-  return "/inbox";
+  return "/home";
 }
 
 export async function GET(request: NextRequest) {

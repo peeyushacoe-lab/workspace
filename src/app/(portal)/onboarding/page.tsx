@@ -37,14 +37,14 @@ export default function OnboardingPage() {
 
     if (isLast) {
       toast.success("Setup complete — welcome to CyberSage!");
-      router.push("/inbox");
+      router.push("/home");
     } else {
       setCurrent((c) => c + 1);
     }
   };
 
   const skip = () => {
-    if (isLast) { router.push("/inbox"); return; }
+    if (isLast) { router.push("/home"); return; }
     setCurrent((c) => c + 1);
   };
 

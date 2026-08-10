@@ -54,7 +54,7 @@ export default async function ConnectLayout({ children }: { children: React.Reac
 
   // Null on localhost, where there are no subdomains — the shell then omits the
   // "Open Nexus" link rather than rendering one that goes nowhere.
-  const nexusHref = hubUrl("/inbox");
+  const nexusHref = hubUrl("/home");
 
   return (
     // The settings provider wraps the shell, not the page, so appearance

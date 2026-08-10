@@ -11,7 +11,7 @@ type Step = "idle" | "prompting" | "verifying" | "success" | "error";
 function MfaChallengeForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") ?? "/inbox";
+  const next = searchParams.get("next") ?? "/home";
 
   const [step, setStep] = useState<Step>("idle");
   const [errorMsg, setErrorMsg] = useState("");

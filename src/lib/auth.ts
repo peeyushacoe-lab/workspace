@@ -48,7 +48,11 @@ export const roleLabels: Record<UserRole, string> = {
 // Leadership roles that can access management features
 export const MGMT_ROLES: UserRole[] = ["ADMIN", "CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER"];
 
-const ALL_ROLES: UserRole[] = [
+// Exported so middleware validates session-cookie roles against this exact list
+// rather than a hand-copied duplicate. The duplicate had drifted: it was missing
+// MEMBER, so every MEMBER's cookie failed to parse in middleware and they were
+// bounced to /login in a loop no password could break.
+export const ALL_ROLES: UserRole[] = [
   "ADMIN", "CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER",
   "DEVELOPER", "CYBER_SECURITY", "QA", "MARKETING",
   "RESEARCH", "FINANCE", "OPERATIONS", "SUPPORT",
@@ -58,16 +62,20 @@ const ALL_ROLES: UserRole[] = [
 // Roles excluding interns — for features not yet ready for intern access
 export const ALL_ROLES_EXCEPT_INTERN: UserRole[] = ALL_ROLES.filter((r) => r !== "INTERNSHIP");
 
-export const portalHome = "/inbox";
+export const portalHome = "/home";
 
-// Role-specific landing page — HR goes straight to the HR dashboard
+// Role-specific landing page. Everything without a dedicated workspace lands on
+// Nexus Home, which is auth-only and gates its own cards — so it is reachable by
+// every role and can never cause a post-login redirect loop.
 export function getPortalHome(role: string): string {
+  // HR and interns keep purpose-built landing pages: both spend their whole day
+  // in one console, and Home's cards are mostly features they can't reach.
   if (role === "HR") return "/admin/hr";
   if (role === "INTERNSHIP") return "/internship/attendance";
-  // MEMBER is a neutral baseline with no workspace permissions — send it to a
-  // universally-accessible page so a bare member never hits a redirect loop.
-  if (role === "MEMBER") return "/profile";
-  return "/inbox";
+  // MEMBER previously landed on /profile purely because it held no workspace
+  // permissions and every other route 403'd. Home is universally accessible, so
+  // that workaround is no longer needed.
+  return "/home";
 }
 
 // Key roles — only one account of each can exist in the system
@@ -92,6 +100,9 @@ export const CREATOR_PERMISSIONS: Partial<Record<UserRole, UserRole[]>> = {
 const NON_HR_ROLES: UserRole[] = ALL_ROLES.filter(r => r !== "HR");
 
 export const portalNavItems: PortalNavItem[] = [
+  // Home is the post-login landing page and the only cross-app surface, so it
+  // sits above Inbox in the spine for every role.
+  { href: "/home",      label: "Home",       hint: "Your command centre",   roles: ALL_ROLES },
   { href: "/inbox",     label: "Inbox",      hint: "Workspace mail",        roles: ALL_ROLES },
   // Chat itself now lives in Sage Connect — this nav entry sends people
   // straight there instead of to the (now-redirecting) Nexus /chat route, so
@@ -132,9 +143,18 @@ export const portalNavItems: PortalNavItem[] = [
 // Exported so the RBAC seed-parity test (scripts/rbac-parity-test.ts) can prove the
 // permission-based route map reproduces these role decisions.
 export const pathAccess: Array<{ prefix: string; roles: UserRole[] }> = [
+  // Home aggregates other features but grants nothing itself — each card is
+  // gated separately in `getHomeData`, so a role that cannot reach /tasks does
+  // not get a Tasks card here.
+  { prefix: "/home",           roles: ALL_ROLES },
   { prefix: "/inbox",          roles: ALL_ROLES },
   { prefix: "/chat",           roles: NON_HR_ROLES },
   { prefix: "/meet",           roles: ALL_ROLES },
+  // Meeting detail pages (agenda, notes, follow-ups). A separate prefix from
+  // /meet because /meet/[roomId] is the live Jitsi room — a task backlink should
+  // show what a meeting was about, not join a call. Per-meeting access is
+  // enforced in the API (organizer or participant only), not by this gate.
+  { prefix: "/meetings",       roles: ALL_ROLES },
   { prefix: "/drive",          roles: ALL_ROLES },
   { prefix: "/calendar",       roles: ALL_ROLES },
   { prefix: "/notes",          roles: ALL_ROLES },
@@ -250,6 +270,7 @@ export const routePermission: Array<{ prefix: string; permission: string | null 
   { prefix: "/inbox",                permission: "email.read" },
   { prefix: "/chat",                 permission: "chat.read" },
   { prefix: "/meet/intelligence",    permission: "ai.use" },
+  { prefix: "/meetings",             permission: "meet.join" },
   { prefix: "/meet",                 permission: "meet.join" },
   { prefix: "/drive",                permission: "drive.read" },
   { prefix: "/calendar",             permission: "calendar.read" },
@@ -287,6 +308,10 @@ export const routePermission: Array<{ prefix: string; permission: string | null 
   // new permission keys, so this needs no catalog reseed and no permEpoch bump.
   ...connectRoutePermissions(),
   // Universal / self-service — authentication only.
+  // /home is auth-only by design: it is the landing page, so gating it behind a
+  // permission would leave a user with an unusual role set staring at a 403
+  // immediately after logging in. Its individual cards carry the real gates.
+  { prefix: "/home",           permission: null },
   { prefix: "/settings",       permission: null },
   { prefix: "/profile",        permission: null },
   { prefix: "/notifications",  permission: null },

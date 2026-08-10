@@ -72,6 +72,8 @@ import { useCall } from "./call/CallProvider";
 import { avatarGradient } from "@/lib/avatar";
 import { PresenceDot } from "@/components/PresenceIndicator";
 import { Dialog, Button, Menu, MenuItem } from "@/components/connect/ui";
+import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog";
+import { chatSourceId } from "@/lib/task-source";
 import { useConnectSettings } from "@/components/connect/ConnectSettingsEffects";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -870,7 +872,8 @@ const MessageItem = memo(function MessageItem({
   const [translating, setTranslating] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editContent, setEditContent] = useState(msg.content);
-  const [creatingTask, setCreatingTask] = useState(false);
+  // Sticky per-message confirmation, so the menu reads "Task created" if reopened
+  // rather than inviting a duplicate.
   const [taskCreated, setTaskCreated] = useState(false);
   const pickerRef = useRef<HTMLDivElement>(null);
   // Read from context rather than threaded down as a prop: this component is
@@ -882,28 +885,16 @@ const MessageItem = memo(function MessageItem({
   const isDeleted = !!msg.deletedAt;
   const isFileAttachment = msg.content.startsWith("[FILE_ATTACHMENT] ");
 
-  const createTaskFromMessage = async () => {
-    setCreatingTask(true);
-    try {
-      const res = await fetch("/api/tasks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: msg.content.slice(0, 200),
-          description: `Created from a chat message.`,
-          sourceType: "chat",
-          sourceId: msg.id,
-        }),
-      });
-      if (!res.ok) throw new Error();
-      setTaskCreated(true);
-      toast.success("Task created from message");
-    } catch {
-      toast.error("Failed to create task");
-    } finally {
-      setCreatingTask(false);
-    }
-  };
+  /**
+   * Create a task from this message.
+   *
+   * This used to POST immediately with no assignee or due date, and stored the
+   * message id alone in `sourceId` — which nothing could link back to, because
+   * ChatView deep-links by channel. It now opens the shared dialog (so the task
+   * can be assigned and dated in one step) and stores "<channelId>#<messageId>",
+   * which the backlink chip can resolve. See lib/task-source.ts.
+   */
+  const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const isBotResponse = msg.content.startsWith("[BOT_RESPONSE] ");
 
   const copyText = async () => {
@@ -1331,8 +1322,8 @@ const MessageItem = memo(function MessageItem({
             <MenuItem
               icon={ListPlus}
               label={taskCreated ? "Task created" : "Create task"}
-              disabled={creatingTask || taskCreated}
-              onClick={() => { setMenuPos(null); void createTaskFromMessage(); }}
+              disabled={taskCreated}
+              onClick={() => { setMenuPos(null); setTaskDialogOpen(true); }}
             />
           )}
           {onPin && (
@@ -1350,6 +1341,21 @@ const MessageItem = memo(function MessageItem({
             </>
           )}
         </Menu>
+      )}
+
+      {/* Rendered only while open — this component is one per message, so an
+          always-mounted dialog would multiply by the message count. */}
+      {taskDialogOpen && (
+        <CreateTaskDialog
+          open
+          onClose={() => setTaskDialogOpen(false)}
+          sourceType="chat"
+          sourceId={chatSourceId(msg.channelId, msg.id)}
+          defaultTitle={msg.content.slice(0, 160)}
+          defaultDescription={`From ${msg.user.fullName} in chat:\n\n"${msg.content.slice(0, 500)}"`}
+          sourceTitle={`Message from ${msg.user.fullName}`}
+          onCreated={() => setTaskCreated(true)}
+        />
       )}
     </div>
   );

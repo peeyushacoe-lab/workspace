@@ -47,6 +47,14 @@ export default function MeetingIntelligencePage() {
           description: a.owner && a.owner.toLowerCase() !== "team" ? `Owner (from meeting notes): ${a.owner}` : undefined,
           dueDate: a.due ? undefined : undefined, // meeting-extracted due text is freeform, not a parseable date — left for the user to set
           sourceType: "meeting",
+          // A TITLE, not an id — and deliberately so. This page analyses a pasted
+          // transcript; there is no Meeting row to point at, so there is nothing
+          // to link to. `looksLikeId` in lib/task-source.ts recognises this shape
+          // and renders the backlink chip as unclickable text rather than a link
+          // to /meetings/<title>, which would 404.
+          //
+          // Tasks created from a real meeting's agenda (the /meetings/<id> page)
+          // DO store the id and link correctly.
           sourceId: title || undefined,
         }),
       });

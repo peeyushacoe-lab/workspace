@@ -23,6 +23,7 @@ import {
   Video,
   StickyNote,
   Users,
+  CheckSquare,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -34,7 +35,8 @@ type SearchResultType =
   | "calendar"
   | "meeting"
   | "note"
-  | "people";
+  | "people"
+  | "task";
 
 type SearchResult = {
   id: string;
@@ -210,6 +212,12 @@ const TYPE_META: Record<
     color: "text-accent dark:text-accent",
     bg: "bg-accent/15 dark:bg-accent/20",
     Icon: Users,
+  },
+  task: {
+    label: "Tasks",
+    color: "text-violet dark:text-violet",
+    bg: "bg-violet/15 dark:bg-violet/20",
+    Icon: CheckSquare,
   },
 };
 
@@ -469,6 +477,9 @@ export function GlobalSearch({
     "calendar",
     "meeting",
     "note",
+    // Tasks sit above People: a query is far more often about work in flight
+    // than about a colleague's directory entry.
+    "task",
     "people",
   ];
 

@@ -14,7 +14,8 @@ type SearchResultType =
   | "calendar"
   | "meeting"
   | "note"
-  | "people";
+  | "people"
+  | "task";
 
 interface SearchResult {
   id: string;
@@ -82,6 +83,7 @@ export async function GET(request: Request) {
     meetingResults,
     noteResults,
     peopleResults,
+    taskResults,
   ] = await Promise.all([
     // Mail: Meilisearch thread IDs (ranked) when available, else ILIKE + filters
     (typeFilter === "all" || typeFilter === "mail")
@@ -327,6 +329,47 @@ export async function GET(request: Request) {
           })
           .catch(() => [])
       : Promise.resolve([]),
+
+    // Tasks: created by or assigned to the caller. Never org-wide — a task title
+    // can carry as much sensitive detail as the email it came from, and there is
+    // no sharing model here beyond assignment.
+    (typeFilter === "all" || typeFilter === "task")
+      ? prisma.task
+          .findMany({
+            where: {
+              OR: [{ createdById: user.id }, { assignees: { some: { userId: user.id } } }],
+              ...(parsed.before || parsed.after
+                ? { updatedAt: { ...(parsed.after ? { gte: parsed.after } : {}), ...(parsed.before ? { lte: parsed.before } : {}) } }
+                : {}),
+              ...(q
+                ? {
+                    AND: [
+                      {
+                        OR: [
+                          { title: { contains: q, mode: "insensitive" } },
+                          { description: { contains: q, mode: "insensitive" } },
+                        ],
+                      },
+                    ],
+                  }
+                : {}),
+            },
+            select: {
+              id: true,
+              title: true,
+              description: true,
+              status: true,
+              priority: true,
+              dueDate: true,
+              updatedAt: true,
+            },
+            // Open work first: a DONE task matching the query is rarely what the
+            // user is reaching for from a command palette.
+            orderBy: [{ status: "asc" }, { updatedAt: "desc" }],
+            take: perTypeLimit,
+          })
+          .catch(() => [])
+      : Promise.resolve([]),
   ]);
 
   // ── Shape into unified SearchResult[] ────────────────────────────────────
@@ -423,7 +466,10 @@ export async function GET(request: Request) {
       type: "note",
       title: n.title || "Untitled",
       excerpt: plainContent,
-      link: n.isDoc ? `/docs/${n.id}` : `/notes/${n.id}`,
+      // `/docs/<id>` and `/notes/<id>` were both linked here and neither route
+      // exists — every note result 404'd. DocsView reads ?open=; Notes has no
+      // per-item route, so it lands on the list.
+      link: n.isDoc ? `/docs?open=${n.id}` : `/notes`,
       createdAt: n.updatedAt.toISOString(),
       metadata: {
         kind: n.isDoc ? "doc" : "note",
@@ -443,6 +489,33 @@ export async function GET(request: Request) {
         email: p.email,
         role: p.role,
         jobTitle: p.jobTitle ?? "",
+      },
+    });
+  }
+
+  for (const t of taskResults) {
+    const detail = [
+      t.status.replace("_", " ").toLowerCase(),
+      t.priority.toLowerCase(),
+      t.dueDate ? `due ${t.dueDate.toISOString().slice(0, 10)}` : null,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+
+    results.push({
+      id: t.id,
+      type: "task",
+      title: t.title,
+      // Prefer the description; fall back to status/priority so a task with no
+      // notes still shows something useful under its title.
+      excerpt: t.description?.replace(/\s+/g, " ").trim().slice(0, 120) || detail,
+      // ?taskId= is read by TasksPage — see the deep-link effect there.
+      link: `/tasks?taskId=${t.id}`,
+      createdAt: t.updatedAt.toISOString(),
+      metadata: {
+        status: t.status,
+        priority: t.priority,
+        dueDate: t.dueDate?.toISOString() ?? "",
       },
     });
   }

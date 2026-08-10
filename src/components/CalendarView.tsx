@@ -1,7 +1,7 @@
 ﻿"use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ChevronLeft,
   ChevronRight,
@@ -19,6 +19,7 @@ import {
   Globe,
   Eye,
   CalendarSearch,
+  Calendar,
   Link2,
   Video,
 } from "lucide-react";
@@ -634,14 +635,20 @@ function AvailabilityGrid({ result }: { result: AvailabilityResult }) {
 
 function CreateEventModal({
   defaultDate,
+  /** Comma-separated emails to pre-add as attendees — see the ?invite= deep link. */
+  defaultAttendees = "",
   onClose,
   onCreate,
 }: {
   defaultDate: Date;
+  defaultAttendees?: string;
   onClose: () => void;
   onCreate: () => void;
 }) {
-  const [form, setForm] = useState<EventFormState>(blankForm(defaultDate));
+  const [form, setForm] = useState<EventFormState>(() => ({
+    ...blankForm(defaultDate),
+    attendeeEmails: defaultAttendees,
+  }));
   const [submitting, setSubmitting] = useState(false);
   const [checkingAvail, setCheckingAvail] = useState(false);
   const [availResult, setAvailResult] = useState<AvailabilityResult | null>(null);
@@ -1276,7 +1283,12 @@ function TimeGrid({
 
 export function CalendarView({ currentUserId }: { currentUserId: string }) {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [view, setView] = useState<"month" | "week" | "day">("month");
+  /**
+   * "agenda" is a flat chronological list of what's coming, grouped by day —
+   * the view people actually scan, and the only usable one on a phone, where a
+   * month grid is seven unreadable columns.
+   */
+  const [view, setView] = useState<"month" | "week" | "day" | "agenda">("month");
   const router = useRouter();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(false);
@@ -1284,6 +1296,25 @@ export function CalendarView({ currentUserId }: { currentUserId: string }) {
 
   const [newEventDate, setNewEventDate] = useState<Date>(new Date());
   const [showNewEvent, setShowNewEvent] = useState(false);
+
+  /**
+   * Deep link: /calendar?invite=<email> — opens the new-event modal with that
+   * person already an attendee. Used by "Schedule meeting" on a People profile.
+   *
+   * Fires once per email so closing the modal doesn't immediately reopen it.
+   */
+  const searchParams = useSearchParams();
+  const inviteParam = searchParams?.get("invite") ?? null;
+  const [inviteEmail, setInviteEmail] = useState("");
+  const handledInvite = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!inviteParam || handledInvite.current === inviteParam) return;
+    handledInvite.current = inviteParam;
+    setInviteEmail(inviteParam);
+    setNewEventDate(new Date());
+    setShowNewEvent(true);
+  }, [inviteParam]);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
 
@@ -1303,6 +1334,11 @@ export function CalendarView({ currentUserId }: { currentUserId: string }) {
       } else if (view === "week") {
         from = startOfWeek(currentDate);
         to = endOfWeek(currentDate);
+      } else if (view === "agenda") {
+        // Looks forward from today rather than around `currentDate`: an agenda is
+        // "what's next", so a 30-day window starting now is the useful range.
+        from = startOfDay(currentDate);
+        to = endOfDay(addDays(currentDate, 30));
       } else {
         from = startOfDay(currentDate);
         to = endOfDay(currentDate);
@@ -1385,12 +1421,15 @@ export function CalendarView({ currentUserId }: { currentUserId: string }) {
   const navigate = (dir: "prev" | "next") => {
     if (view === "month") setCurrentDate(dir === "prev" ? subMonths(currentDate, 1) : addMonths(currentDate, 1));
     else if (view === "week") setCurrentDate(dir === "prev" ? subWeeks(currentDate, 1) : addWeeks(currentDate, 1));
+    // Agenda pages by its own 30-day window, so prev/next moves a month at a time.
+    else if (view === "agenda") setCurrentDate(dir === "prev" ? subDays(currentDate, 30) : addDays(currentDate, 30));
     else setCurrentDate(dir === "prev" ? subDays(currentDate, 1) : addDays(currentDate, 1));
   };
 
   const headerTitle = () => {
     if (view === "month") return format(currentDate, "MMMM yyyy");
     if (view === "day") return format(currentDate, "EEEE, MMMM d, yyyy");
+    if (view === "agenda") return `${format(currentDate, "d MMM")} – ${format(addDays(currentDate, 30), "d MMM yyyy")}`;
     const ws = startOfWeek(currentDate);
     return `${format(ws, "MMM d")} – ${format(addDays(ws, 6), "MMM d, yyyy")}`;
   };
@@ -1490,7 +1529,7 @@ export function CalendarView({ currentUserId }: { currentUserId: string }) {
 
           {/* View switcher — segmented control */}
           <div className="flex p-[3px] gap-0.5 bg-surface border border-border rounded-[9px]">
-            {(["day", "week", "month"] as const).map((v) => (
+            {(["day", "week", "month", "agenda"] as const).map((v) => (
               <button
                 key={v}
                 onClick={() => setView(v)}
@@ -1649,6 +1688,94 @@ export function CalendarView({ currentUserId }: { currentUserId: string }) {
               />
             </div>
           )}
+
+          {/* ── Agenda ──
+              A flat chronological list, grouped by day, with empty days omitted.
+              The three grid views answer "what does my week look like"; this one
+              answers "what is next", which is the question people actually have
+              and the only one a phone screen can render. */}
+          {view === "agenda" && (
+            <div className="h-full overflow-y-auto px-4 py-4 sm:px-6">
+              {(() => {
+                const windowStart = startOfDay(currentDate);
+                const windowEnd = endOfDay(addDays(currentDate, 30));
+
+                // Same overlap test the grid views use, so a multi-day event
+                // appears on each day it actually covers.
+                const days = eachDayOfInterval({ start: windowStart, end: windowEnd })
+                  .map((day) => {
+                    const dayStart = startOfDay(day);
+                    const dayEnd = endOfDay(day);
+                    const dayEvents = events
+                      .filter((e) => {
+                        const s = new Date(e.startAt);
+                        const en = new Date(e.endAt);
+                        return s <= dayEnd && en > dayStart;
+                      })
+                      .sort((a, b) => +new Date(a.startAt) - +new Date(b.startAt));
+                    return { day, dayEvents };
+                  })
+                  .filter((d) => d.dayEvents.length > 0);
+
+                if (days.length === 0) {
+                  return (
+                    <div className="flex flex-col items-center justify-center gap-2 py-20 text-center">
+                      <Calendar className="w-6 h-6 text-subtle" />
+                      <p className="text-sm text-subtle">Nothing scheduled in the next 30 days.</p>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="mx-auto max-w-2xl space-y-5">
+                    {days.map(({ day, dayEvents }) => (
+                      <section key={day.toISOString()}>
+                        <h3 className="mb-2 flex items-center gap-2 text-[13px] font-semibold text-foreground">
+                          <span
+                            className={
+                              isToday(day)
+                                ? "inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-accent px-1.5 text-[11px] font-bold text-accent-foreground"
+                                : "text-muted"
+                            }
+                          >
+                            {format(day, "d")}
+                          </span>
+                          {format(day, "EEEE, MMMM yyyy")}
+                        </h3>
+                        <ul className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm divide-y divide-border-soft">
+                          {dayEvents.map((e) => (
+                            <li key={`${e.id}-${day.toISOString()}`}>
+                              <button
+                                type="button"
+                                onClick={() => handleEventClick(e)}
+                                className="flex w-full items-start gap-3 px-4 py-2.5 text-left transition-colors hover:bg-hover"
+                              >
+                                <span className="w-[74px] flex-shrink-0 pt-0.5 text-[11px] font-semibold tabular-nums text-accent">
+                                  {e.allDay
+                                    ? "All day"
+                                    : `${format(new Date(e.startAt), "HH:mm")}–${format(new Date(e.endAt), "HH:mm")}`}
+                                </span>
+                                <span className="min-w-0 flex-1">
+                                  <span className="block truncate text-[13px] font-medium text-foreground">
+                                    {e.title}
+                                  </span>
+                                  {e.location && (
+                                    <span className="mt-0.5 block truncate text-[11px] text-subtle">
+                                      {e.location}
+                                    </span>
+                                  )}
+                                </span>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </section>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
+          )}
         </div>
       </div>
 
@@ -1656,7 +1783,8 @@ export function CalendarView({ currentUserId }: { currentUserId: string }) {
       {showNewEvent && (
         <CreateEventModal
           defaultDate={newEventDate}
-          onClose={() => setShowNewEvent(false)}
+          defaultAttendees={inviteEmail}
+          onClose={() => { setShowNewEvent(false); setInviteEmail(""); }}
           onCreate={fetchEvents}
         />
       )}

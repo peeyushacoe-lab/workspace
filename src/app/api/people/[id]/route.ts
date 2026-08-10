@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { getProfileExtras } from "@/lib/people-profile";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
@@ -35,5 +36,11 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   if (!person) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  return NextResponse.json(person);
+  // Reporting line, teams, and activity the CALLER can already reach. Fetched
+  // after the 404 check so a probe for a non-existent id costs one query.
+  // `user` — not `id` — is the viewer; see lib/people-profile.ts for why that
+  // distinction is the whole point of the module.
+  const extras = await getProfileExtras(id, user);
+
+  return NextResponse.json({ ...person, ...extras });
 }

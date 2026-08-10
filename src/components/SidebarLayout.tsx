@@ -5,7 +5,7 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import {
-  LogOut, Menu, X, Settings, Inbox, MessageSquare, Video, Sparkles, Search,
+  LogOut, Menu, X, Settings, House, Inbox, MessageSquare, Video, Sparkles, Search,
   PanelLeftClose, PanelLeftOpen, ArrowUpRight,
 } from "lucide-react";
 import { appUrl } from "@/lib/subdomains";
@@ -261,6 +261,10 @@ export function SidebarLayout({
       >
         <div className="flex h-[56px] items-stretch">
           {([
+            // Home leads the mobile tab bar for the same reason it leads the
+            // spine: it is the only cross-app surface, and on mobile it is the
+            // cheapest way back to "everything" from a deep view.
+            { href: "/home",  icon: House,          label: "Home"  },
             { href: "/inbox", icon: Inbox,          label: "Inbox" },
             { href: "/connect/chat", icon: MessageSquare, label: "Chat" },
             { href: "/meet",  icon: Video,          label: "Meet"  },

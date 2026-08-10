@@ -1,9 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { canAccessPath, canAccessPathByPerms, getPortalHome, type SessionUser } from "@/lib/auth";
+import { ALL_ROLES, canAccessPath, canAccessPathByPerms, getPortalHome, type SessionUser } from "@/lib/auth";
 import { matchSubdomain, subdomainToPath, isPassthrough, shouldRedirectToHub, hubUrl } from "@/lib/subdomains";
 import { jitsiCspHosts } from "@/lib/jitsi";
 
 const protectedRoutes = [
+  "/home",
   "/dashboard",
   "/contacts",
   "/profile",
@@ -38,11 +39,15 @@ const protectedRoutes = [
   "/connect",
 ];
 
-const validRoles = new Set<string>([
-  "ADMIN", "CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER",
-  "DEVELOPER", "CYBER_SECURITY", "QA", "MARKETING",
-  "RESEARCH", "FINANCE", "OPERATIONS", "SUPPORT", "HR", "INTERNSHIP",
-]);
+/**
+ * Roles a session cookie may carry. Derived from `ALL_ROLES` rather than
+ * re-listed, because the hand-copied version drifted: MEMBER was added to the
+ * enum and to `pathAccess` but never here, so `parseUserCookie` rejected every
+ * MEMBER cookie as malformed. Login succeeded, set a valid cookie, redirected to
+ * the portal, middleware refused the cookie, and sent them back to /login —
+ * an unbreakable loop that looked like a wrong password.
+ */
+const validRoles = new Set<string>(ALL_ROLES);
 
 // MFA/passkey enforcement removed app-wide (2026-07-14) — it was blocking
 // interns from getting into the app at all on first login. MFA is still
