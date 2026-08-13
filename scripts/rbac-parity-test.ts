@@ -21,10 +21,31 @@ import { PERMISSION_CATALOG, PERMISSION_KEYS } from "@/lib/rbac/catalog";
 
 const allKeys = PERMISSION_CATALOG.map((p) => p.key);
 
-// Intentional deviations: ADMIN is a super-role, so it reaches the HR-exclusive
-// console that the old model restricted to the HR account. Documented + accepted.
+// Intentional, accepted deviations — each one is a real privilege change that
+// takes effect the moment RBAC_ENFORCE=true, so nothing goes in here without a
+// deliberate decision.
 const ALLOWED_DEVIATIONS = new Set<string>([
+  // ADMIN is a super-role, so it reaches the HR-exclusive console that the old
+  // model restricted to the HR account.
   "ADMIN /admin/hr",
+
+  // CISO gains /org. Accepted 2026-08-09 with eyes open.
+  //
+  // CISO holds `org.manage` so they can reach /connect/admin — messaging policy,
+  // retention and the audit trail, which are security controls the CISO owns
+  // (see the comment on the CISO role in src/lib/rbac/system-roles.ts).
+  // /connect/admin deliberately reuses that key rather than introducing
+  // `connect.manage`, so the same permission also opens /org.
+  //
+  // ⚠️ /org contains the Roles & Permissions editor. Under RBAC_ENFORCE=true the
+  // CISO can therefore edit role permissions — including their own. That is a
+  // privilege-escalation path, currently masked only because middleware still
+  // enforces the role gate (pathAccess restricts /org to ADMIN).
+  //
+  // If that becomes unacceptable, the fix is to split the key: add
+  // `connect.manage` to the catalog, gate /connect/admin on it, and drop
+  // `org.manage` from CISO. That needs a catalog reseed (`npm run seed:rbac`).
+  "CISO /org",
 ]);
 
 type Failure = { kind: string; detail: string };

@@ -5,6 +5,9 @@ import { useCallback, useEffect, useRef, useState, memo } from "react";
 import { useSearchParams } from "next/navigation";
 import { connectSocket, disconnectSocket } from "@/lib/socket-client";
 import type { Socket } from "socket.io-client";
+import { SAGE_NAME, mentionsSage, isSageAuthor } from "@/lib/chat/sage-identity";
+import { parseSlashCommand, matchCommands } from "@/lib/chat/slash-commands";
+import { Icon } from "@/components/icons";
 import {
   Hash,
   MessageSquare,
@@ -62,6 +65,10 @@ import {
   Code as CodeIcon,
   SquareCode,
   Quote,
+  Terminal,
+  CheckSquare,
+  BarChart3,
+  AlarmClock,
   type LucideIcon,
 } from "lucide-react";
 import { formatDistanceToNow, isToday, isYesterday, format } from "date-fns";
@@ -228,6 +235,41 @@ type UserSummary = {
   fullName: string;
   email: string;
   role: string;
+  avatarUrl?: string | null;
+};
+
+/**
+ * One row in the @mention picker.
+ *
+ * `role` doubles as the kind discriminator: "ALL" / "ONLINE" for the broadcast
+ * tokens, "AI" for Sage, "TEAM" for a team slug, and a real `UserRole` for a
+ * person. The server decides what is offerable — notably, a team only appears
+ * if some of its members are actually in this channel, because a mention that
+ * resolves to nobody is worse than no suggestion at all.
+ */
+/**
+ * Icon keys from `lib/chat/slash-commands.ts` → lucide glyphs.
+ *
+ * The command list is a server-shared module with no React in it, so it names
+ * icons as strings and the mapping lives here — the same pattern the teams seed
+ * uses for its `icon` field.
+ */
+const SLASH_ICONS: Record<string, LucideIcon> = {
+  "check-square": CheckSquare,
+  video: Video,
+  "bar-chart": BarChart3,
+  "alarm-clock": AlarmClock,
+  sparkles: Sparkles,
+  user: User,
+  smile: Smile,
+};
+
+type MentionSuggestion = {
+  id: string;
+  /** The literal text inserted after "@". */
+  fullName: string;
+  subtitle?: string;
+  role?: string;
   avatarUrl?: string | null;
 };
 
@@ -795,40 +837,149 @@ function FileAttachmentCard({ content }: { content: string }) {
 // ─── Bot Response Card ────────────────────────────────────────────────────────
 
 /**
- * `[BOT_RESPONSE]` is the same forgeable-prefix problem as attachment cards:
- * the card is built from the message body, and a bot reply is posted under the
- * *invoking user's* own account, so there is no server-side signal that
- * distinguishes a real AI reply from one a person typed by hand.
+ * The assistant's reply, rendered as a card.
  *
- * The card therefore no longer renders a free-text `from` — an attacker could
- * put "Security Team" or "IT Helpdesk" there and have it styled as a system
- * voice. The label is fixed, and the human whose account posted it is named,
- * so an impersonation attempt is attributable rather than anonymous.
+ * Two shapes reach this component:
  *
- * A full fix needs a real system account posting bot replies server-side; this
- * closes the impersonation surface in the meantime.
+ * **`trusted`** — the message was authored by the Sage system user. The server
+ * is the only thing that can create those rows, so the card is genuine and the
+ * body is the reply text verbatim.
+ *
+ * **Legacy `[BOT_RESPONSE] {json}`** — written by the old client-side bot,
+ * which posted under the *invoking user's* account. That prefix is forgeable:
+ * anyone could type it by hand and have their words styled as a system voice.
+ * Such messages still render (channels have history) but stay attributed to the
+ * human account that posted them, and the free-text `from` field is ignored —
+ * an attacker could otherwise put "IT Helpdesk" there.
  */
-function BotResponseCard({ content, senderName }: { content: string; senderName?: string }) {
-  try {
-    const jsonStr = content.replace("[BOT_RESPONSE] ", "");
-    const data = JSON.parse(jsonStr) as { from: string; text: string };
-    return (
-      <div className="mt-1 flex items-start gap-3">
-        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-accent/10 border border-accent/20">
-          <Sparkles className="h-4 w-4 text-accent" />
-        </div>
-        <div className="flex-1 min-w-0 bg-surface-sunken border border-border rounded-xl p-4 max-w-xl">
-          <p className="text-accent font-semibold text-sm mb-1">
-            CyberSage AI
-            {senderName && <span className="ml-1.5 font-normal text-subtle">· requested by {senderName}</span>}
-          </p>
-          <p className="text-sm text-foreground whitespace-pre-wrap break-words leading-relaxed">{data.text}</p>
-        </div>
-      </div>
-    );
-  } catch {
-    return <p className="text-sm text-foreground whitespace-pre-wrap break-words mt-0.5">{content}</p>;
+function BotResponseCard({
+  content,
+  senderName,
+  trusted = false,
+}: {
+  content: string;
+  senderName?: string;
+  trusted?: boolean;
+}) {
+  let text = content;
+
+  if (!trusted) {
+    try {
+      text = (JSON.parse(content.replace("[BOT_RESPONSE] ", "")) as { text: string }).text;
+    } catch {
+      return <p className="text-sm text-foreground whitespace-pre-wrap break-words mt-0.5">{content}</p>;
+    }
   }
+
+  return (
+    <div className="mt-1 flex items-start gap-3">
+      <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-accent/10 border border-accent/20">
+        <Sparkles className="h-4 w-4 text-accent" />
+      </div>
+      <div className="flex-1 min-w-0 bg-surface-sunken border border-border rounded-xl p-4 max-w-xl">
+        <p className="text-accent font-semibold text-sm mb-1">
+          {SAGE_NAME}
+          {!trusted && senderName && (
+            <span className="ml-1.5 font-normal text-subtle">· posted by {senderName}</span>
+          )}
+        </p>
+        <p className="text-sm text-foreground whitespace-pre-wrap break-words leading-relaxed">{text}</p>
+      </div>
+    </div>
+  );
+}
+
+// ─── Link Preview Card ────────────────────────────────────────────────────────
+
+/** In-memory unfurl cache, shared by every message on the page. */
+const linkPreviewCache = new Map<string, LinkPreviewData | null>();
+
+type LinkPreviewData = {
+  url: string;
+  title?: string;
+  description?: string;
+  image?: string;
+  siteName?: string;
+};
+
+/**
+ * Unfurls the first link in a message.
+ *
+ * The fetch is server-side (`/api/chat/link-preview`) rather than from here,
+ * because unfurling in the browser would make every reader's machine issue a
+ * request to whatever host the sender chose — turning a pasted link into a way
+ * to harvest the IP address of everyone who scrolled past it, and to reach
+ * anything on a reader's own network. The server does it once and caches.
+ *
+ * Rendered only when the reader has media previews enabled, so the same setting
+ * that suppresses inline images suppresses this too.
+ */
+function LinkPreviewCard({ content }: { content: string }) {
+  const url = firstLinkIn(content);
+  const [preview, setPreview] = useState<LinkPreviewData | null>(
+    url ? (linkPreviewCache.get(url) ?? null) : null,
+  );
+
+  useEffect(() => {
+    if (!url || linkPreviewCache.has(url)) return;
+    let cancelled = false;
+
+    // Mark in-flight immediately: twenty messages linking the same URL should
+    // produce one request, not twenty.
+    linkPreviewCache.set(url, null);
+
+    (async () => {
+      try {
+        const res = await fetch(`/api/chat/link-preview?url=${encodeURIComponent(url)}`);
+        if (!res.ok) return;
+        const data = (await res.json()) as { preview: LinkPreviewData | null };
+        linkPreviewCache.set(url, data.preview);
+        if (!cancelled && data.preview) setPreview(data.preview);
+      } catch {
+        // A failed unfurl leaves the plain link, which is still clickable.
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [url]);
+
+  if (!preview?.title) return null;
+
+  return (
+    <a
+      href={preview.url}
+      target="_blank"
+      rel="noopener noreferrer nofollow"
+      className="mt-1.5 flex max-w-md gap-3 overflow-hidden rounded-xl border border-border bg-surface-sunken p-3 transition-colors hover:bg-hover"
+    >
+      {preview.image && (
+        // Plain <img>, not next/image: the host is whatever the sender linked
+        // to, and next/image only serves configured remote domains.
+        <img
+          src={preview.image}
+          alt=""
+          referrerPolicy="no-referrer"
+          loading="lazy"
+          className="h-16 w-16 flex-shrink-0 rounded-lg border border-border object-cover"
+        />
+      )}
+      <span className="min-w-0 flex-1">
+        {preview.siteName && (
+          <span className="block truncate text-xs text-subtle">{preview.siteName}</span>
+        )}
+        <span className="block truncate text-[13px] font-semibold text-foreground">{preview.title}</span>
+        {preview.description && (
+          <span className="mt-0.5 line-clamp-2 block text-xs text-muted">{preview.description}</span>
+        )}
+      </span>
+    </a>
+  );
+}
+
+/** First http(s) link in a message body. Mirrors `firstUrl` on the server. */
+function firstLinkIn(content: string): string | null {
+  const match = content.match(/https?:\/\/[^\s<>"')\]]+/i);
+  return match ? match[0] : null;
 }
 
 // ─── Message Item ─────────────────────────────────────────────────────────────
@@ -895,7 +1046,12 @@ const MessageItem = memo(function MessageItem({
    * which the backlink chip can resolve. See lib/task-source.ts.
    */
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
-  const isBotResponse = msg.content.startsWith("[BOT_RESPONSE] ");
+  // Authorship, not a body prefix. `[BOT_RESPONSE]` is still recognised so that
+  // replies written by the old client-side bot keep rendering as cards in
+  // existing channels, but new replies are identified by the Sage system user —
+  // which is not forgeable, because a person cannot post as another user.
+  const isSageReply = isSageAuthor(msg.user);
+  const isBotResponse = isSageReply || msg.content.startsWith("[BOT_RESPONSE] ");
 
   const copyText = async () => {
     try {
@@ -1102,7 +1258,11 @@ const MessageItem = memo(function MessageItem({
         ) : isFileAttachment ? (
           <FileAttachmentCard content={msg.content} />
         ) : isBotResponse ? (
-          <BotResponseCard content={msg.content} senderName={msg.user?.fullName} />
+          <BotResponseCard
+            content={msg.content}
+            senderName={isSageReply ? undefined : msg.user?.fullName}
+            trusted={isSageReply}
+          />
         ) : (
           <>
             {msg.content && renderMessageBody(msg.content, currentUserId, memberNames)}
@@ -1136,6 +1296,7 @@ const MessageItem = memo(function MessageItem({
                 {safeAttachmentName(msg.attachmentName)}
               </a>
             )}
+            {mediaPreviews && <LinkPreviewCard content={msg.content} />}
           </>
         )}
 
@@ -2726,21 +2887,40 @@ type CmdAction = {
   onSelect: () => void;
 };
 
+/** One row from `/api/search`. Only the fields the palette renders. */
+type SearchHit = {
+  id: string;
+  title: string;
+  excerpt: string;
+  link: string;
+  metadata?: { sender?: string; channelName?: string };
+};
+
 function CommandPalette({
   channels,
   onClose,
   onSelectChannel,
   onNewChannel,
   onNewDM,
+  selectedChannelId,
+  onPrefillComposer,
+  onUploadFile,
 }: {
   channels: Channel[];
   onClose: () => void;
   onSelectChannel: (id: string) => void;
   onNewChannel: () => void;
   onNewDM: () => void;
+  /** The open conversation, if any — channel-scoped actions need somewhere to go. */
+  selectedChannelId: string | null;
+  /** Prefills the composer, e.g. "/task ". Lets the palette hand off to the
+   *  slash-command path rather than reimplementing task/meeting creation. */
+  onPrefillComposer: (text: string) => void;
+  onUploadFile: () => void;
 }) {
   const [query, setQuery] = useState("");
   const [cursor, setCursor] = useState(0);
+  const [messageHits, setMessageHits] = useState<SearchHit[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -2748,6 +2928,30 @@ function CommandPalette({
   }, []);
 
   const q = query.trim().toLowerCase();
+
+  /**
+   * Full-text message search, debounced.
+   *
+   * Runs against the shared `/api/search` endpoint (Meilisearch-backed, falling
+   * back to Postgres) rather than a new one, so palette results and the main
+   * search page can never disagree about what exists. Scoped to `type=chat`
+   * because the palette is Connect's, not the workspace's.
+   */
+  useEffect(() => {
+    if (q.length < 2) { setMessageHits([]); return; }
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&type=chat&limit=5`);
+        if (!res.ok) return;
+        const data = (await res.json()) as { results?: SearchHit[] };
+        if (!cancelled) setMessageHits(data.results ?? []);
+      } catch {
+        // The palette still works as a jump list without search.
+      }
+    }, 180);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [q]);
 
   const channelItems: CmdAction[] = channels
     .filter((c) => c.type === "CHANNEL" && c.name.toLowerCase().includes(q))
@@ -2768,15 +2972,49 @@ function CommandPalette({
       onSelect: () => { onSelectChannel(c.id); onClose(); },
     }));
 
+  const messageItems: CmdAction[] = messageHits.map((hit) => ({
+    id: `msg:${hit.id}`,
+    label: hit.excerpt || hit.title,
+    description: `${hit.metadata?.sender ?? "Unknown"} in ${hit.title}`,
+    icon: MessageSquare,
+    onSelect: () => {
+      // The search result carries its own link, but within Connect we already
+      // have the channel mounted — selecting it is instant where a navigation
+      // would remount the whole view.
+      const channelId = hit.link.split("channel=")[1];
+      if (channelId) onSelectChannel(channelId);
+      onClose();
+    },
+  }));
+
+  /**
+   * Channel-scoped actions hand off to the slash-command path by prefilling the
+   * composer rather than firing immediately. `/task` and `/meet` create real
+   * records, and a palette entry that silently creates one on Enter — with no
+   * chance to type the title — is a misfire waiting to happen.
+   */
+  const composerActions: CmdAction[] = selectedChannelId
+    ? [
+        { id: "_task", label: "Create task", icon: CheckSquare, description: "/task — linked back to this conversation", onSelect: () => { onPrefillComposer("/task "); onClose(); } },
+        { id: "_meet", label: "Start meeting", icon: Video, description: "/meet — posts the join link here", onSelect: () => { onPrefillComposer("/meet "); onClose(); } },
+        { id: "_sage", label: `Ask ${SAGE_NAME}`, icon: Sparkles, description: "/sage — about this conversation", onSelect: () => { onPrefillComposer("/sage "); onClose(); } },
+        { id: "_poll", label: "Create poll", icon: BarChart3, description: "/poll Question | A | B", onSelect: () => { onPrefillComposer("/poll "); onClose(); } },
+        { id: "_remind", label: "Set a reminder", icon: AlarmClock, description: "/remind 30m …", onSelect: () => { onPrefillComposer("/remind "); onClose(); } },
+        { id: "_upload", label: "Upload file", icon: Paperclip, description: "Attach a file to this conversation", onSelect: () => { onUploadFile(); onClose(); } },
+      ]
+    : [];
+
   const actionItems: CmdAction[] = [
     { id: "_new_channel", label: "New Channel", icon: Plus, description: "Create a public or private channel", onSelect: () => { onNewChannel(); onClose(); } },
     { id: "_new_dm", label: "New Direct Message", icon: Mail, description: "Open a DM or group conversation", onSelect: () => { onNewDM(); onClose(); } },
-  ].filter((a) => !q || a.label.toLowerCase().includes(q));
+    ...composerActions,
+  ].filter((a) => !q || a.label.toLowerCase().includes(q) || (a.description ?? "").toLowerCase().includes(q));
 
   const groups: { heading: string; items: CmdAction[] }[] = [
+    { heading: "Actions", items: actionItems },
     { heading: "Channels", items: channelItems },
     { heading: "Direct Messages", items: dmItems },
-    { heading: "Actions", items: actionItems },
+    { heading: "Messages", items: messageItems },
   ].filter((g) => g.items.length > 0);
 
   const allItems = groups.flatMap((g) => g.items);
@@ -2998,7 +3236,10 @@ export function ChatView({
 
   // @mention autocomplete
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
-  const [mentionResults, setMentionResults] = useState<{ id: string; fullName: string }[]>([]);
+  const [mentionResults, setMentionResults] = useState<MentionSuggestion[]>([]);
+  // Slash-command picker. Only ever open when "/" is the first character of the
+  // composer — mid-sentence slashes (URLs, dates, "and/or") must not trigger it.
+  const [slashQuery, setSlashQuery] = useState<string | null>(null);
   const composerRef = useRef<HTMLTextAreaElement>(null);
 
   // @CyberSage bot state
@@ -3663,6 +3904,11 @@ export function ChatView({
     source.addEventListener("message", (e) => {
       const msg = JSON.parse((e as MessageEvent).data) as Message;
       if (msg.channelId !== selectedChannelId) return;
+      // Sage's reply arrives over this stream like any other message, so its
+      // arrival is what clears the "thinking…" indicator. Also clears on any
+      // message from Sage, not just our own request, so two people summoning
+      // it at once don't leave a stuck spinner.
+      if (isSageAuthor(msg.user)) setBotResponding(false);
       if (msg.parentId) {
         if (threadParentIdRef.current === msg.parentId) {
           setThreadMessages((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]));
@@ -3778,9 +4024,69 @@ export function ChatView({
     list.scrollTo({ top: list.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
+  /**
+   * Execute a slash command.
+   *
+   * The composer is cleared optimistically and restored on failure — the same
+   * treatment a failed send gets, because a rejected `/poll` with a typo in it
+   * is worth editing rather than retyping.
+   */
+  const runSlashCommand = async (input: string) => {
+    if (!selectedChannelId) return;
+    setSending(true);
+    setComposerText("");
+    setSlashQuery(null);
+    try {
+      const res = await fetch(`/api/chat/channels/${selectedChannelId}/commands`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ input }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        kind?: string;
+        scheduledAt?: string;
+      };
+      if (!res.ok) throw new Error(data.error ?? "Command failed");
+
+      if (data.kind === "reminder" && data.scheduledAt) {
+        toast.success(`Reminder set for ${new Date(data.scheduledAt).toLocaleString()}`);
+      } else if (data.kind === "task") {
+        toast.success("Task created");
+      }
+      if (input.startsWith("/sage")) setBotResponding(true);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Command failed");
+      setComposerText(input);
+    } finally {
+      setSending(false);
+    }
+  };
+
   const sendMessage = async () => {
     if (!composerText.trim() && !composerAttachment) return;
     if (!selectedChannelId || sending) return;
+
+    // Slash commands are intercepted before the send path. Text macros expand
+    // in place and then send as an ordinary message; everything else goes to
+    // the commands endpoint, which is what actually creates the task/meeting/
+    // poll — the client never gets to decide that it happened.
+    const slash = parseSlashCommand(composerText.trim());
+    if (slash) {
+      if (slash.command.clientOnly) {
+        const expanded =
+          slash.command.name === "shrug"
+            ? `${slash.args} ¯\\_(ツ)_/¯`.trim()
+            : `_${slash.args}_`;
+        setComposerText(expanded);
+        // Fall through on the next send rather than recursing, so the person
+        // can see and edit what the macro produced.
+        return;
+      }
+      await runSlashCommand(composerText.trim());
+      return;
+    }
+
     setSending(true);
     const text = composerText;
     const attachment = composerAttachment;
@@ -3813,32 +4119,13 @@ export function ChatView({
       const newMsg = (await res.json()) as Message;
       setMessages((prev) => prev.some((m) => m.id === newMsg.id) ? prev : [...prev, newMsg]);
 
-      // @CyberSage bot: detect mention and auto-respond
-      const botMentionMatch = text.match(/^@CyberSage\s+([\s\S]+)/i);
-      if (botMentionMatch) {
-        const question = botMentionMatch[1].trim();
-        setBotResponding(true);
-        try {
-          const aiRes = await fetch("/api/ai/chat", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message: question }),
-          });
-          const aiData = (await aiRes.json()) as { reply?: string; error?: string };
-          if (aiData.reply) {
-            const botContent = `[BOT_RESPONSE] ${JSON.stringify({ from: "CyberSage AI", text: aiData.reply })}`;
-            await fetch(`/api/chat/channels/${selectedChannelId}/messages`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ content: botContent }),
-            });
-          }
-        } catch {
-          // bot error is non-critical — don't toast
-        } finally {
-          setBotResponding(false);
-        }
-      }
+      // @Sage is handled server-side in `lib/chat/deliver.ts` now. It used to
+      // run here: the browser POSTed the question to /api/ai/chat and then
+      // posted the answer back under *this* user's account. That meant closing
+      // the tab cancelled the reply, and the assistant's words were attributed
+      // to whoever asked. The reply now arrives over the same SSE stream as any
+      // other message, authored by the Sage system user.
+      if (mentionsSage(text)) setBotResponding(true);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to send message");
       // Put the text back rather than losing it — a rejected send is usually
@@ -4132,27 +4419,29 @@ export function ChatView({
     }
   };
 
-  // @mention autocomplete (includes @here and @channel smart mentions)
-  const SMART_MENTIONS = [
-    { id: "@here", fullName: "here — notify online members" },
-    { id: "@channel", fullName: "channel — notify all members" },
-  ];
-
+  // @mention autocomplete. The special tokens (@everyone, @here, @Sage) and the
+  // team slugs both come from the server now — they used to be a hardcoded
+  // client-side list that named tokens the server had no code to resolve.
   const handleMentionInput = async (text: string) => {
-    const mentionMatch = text.match(/@(\w*)$/);
+    // Slash picker: first character only, and only while still typing the
+    // command word itself. Once there's a space the person is writing
+    // arguments and the list is just in the way.
+    const slashMatch = text.match(/^\/([a-z]*)$/i);
+    setSlashQuery(slashMatch ? slashMatch[1].toLowerCase() : null);
+
+    const mentionMatch = text.match(/@([\w-]*)$/);
     if (!mentionMatch) { setMentionQuery(null); return; }
     const q = mentionMatch[1].toLowerCase();
     setMentionQuery(q);
     if (!selectedChannelId) return;
-    const smart = SMART_MENTIONS.filter((s) => s.id.slice(1).startsWith(q));
     const res = await fetch(`/api/chat/channels/${selectedChannelId}/mentions?q=${encodeURIComponent(q)}`).catch(() => null);
-    const members: { id: string; fullName: string }[] = res?.ok ? await res.json() : [];
-    setMentionResults([...smart, ...members]);
+    const suggestions: MentionSuggestion[] = res?.ok ? await res.json() : [];
+    setMentionResults(suggestions);
   };
 
   const insertMention = (name: string) => {
     const bare = name.startsWith("@") ? name.slice(1) : name;
-    const text = composerText.replace(/@(\w*)$/, `@${bare} `);
+    const text = composerText.replace(/@([\w-]*)$/, `@${bare} `);
     setComposerText(text);
     setMentionQuery(null);
     composerRef.current?.focus();
@@ -4993,7 +5282,7 @@ export function ChatView({
             <div className="px-6 py-2 h-7 flex items-center flex-shrink-0 bg-surface">
               {botResponding ? (
                 <p className="text-xs text-muted italic animate-pulse flex items-center gap-1">
-                  <Sparkles className="h-3 w-3 text-accent" /> CyberSage AI is thinking…
+                  <Sparkles className="h-3 w-3 text-accent" /> {SAGE_NAME} is thinking…
                 </p>
               ) : userSettings.messaging.showTypingIndicators && typingNames.size > 0 && (
                 <p className="text-xs text-muted italic animate-pulse">
@@ -5090,6 +5379,35 @@ export function ChatView({
               )}
 
               <div className="relative">
+                {/* Slash-command picker */}
+                {slashQuery !== null && matchCommands(slashQuery).length > 0 && (
+                  <div className="absolute bottom-full left-0 mb-1 w-80 bg-surface border border-border rounded-xl shadow-xl z-50 overflow-hidden">
+                    {matchCommands(slashQuery).map((cmd) => (
+                      <button
+                        key={cmd.name}
+                        onClick={() => {
+                          setComposerText(`/${cmd.name} `);
+                          setSlashQuery(null);
+                          composerRef.current?.focus();
+                        }}
+                        className="w-full text-left px-3 py-2 hover:bg-surface-sunken flex items-start gap-2.5"
+                      >
+                        <Icon
+                          as={SLASH_ICONS[cmd.icon] ?? Terminal}
+                          size="sm"
+                          className="mt-0.5 flex-shrink-0 text-accent"
+                        />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-[13px] font-medium text-foreground">
+                            {cmd.usage}
+                          </span>
+                          <span className="block truncate text-xs text-subtle">{cmd.description}</span>
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 {/* @mention autocomplete */}
                 {mentionQuery !== null && mentionResults.length > 0 && (
                   <div className="absolute bottom-full left-0 mb-1 w-64 bg-surface border border-border rounded-xl shadow-xl z-50 overflow-hidden">
@@ -5099,10 +5417,31 @@ export function ChatView({
                         onClick={() => insertMention(u.fullName)}
                         className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-surface-sunken flex items-center gap-2"
                       >
-                        <span className="w-6 h-6 rounded-full bg-accent/20 text-accent flex items-center justify-center text-xs font-semibold flex-shrink-0">
-                          {u.fullName.charAt(0)}
+                        <span
+                          className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 ${
+                            u.role === "AI"
+                              ? "bg-accent-soft text-accent-strong"
+                              : u.role === "TEAM"
+                                ? "bg-violet-soft text-violet"
+                                : u.role === "ALL" || u.role === "ONLINE"
+                                  ? "bg-warn-soft text-warn"
+                                  : "bg-accent/20 text-accent"
+                          }`}
+                        >
+                          {u.role === "AI" ? (
+                            <Sparkles className="w-3 h-3" />
+                          ) : u.role === "TEAM" ? (
+                            <Users className="w-3 h-3" />
+                          ) : (
+                            u.fullName.charAt(0).toUpperCase()
+                          )}
                         </span>
-                        {u.fullName}
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate">{u.fullName}</span>
+                          {u.subtitle && (
+                            <span className="block truncate text-xs text-subtle">{u.subtitle}</span>
+                          )}
+                        </span>
                       </button>
                     ))}
                   </div>
@@ -5201,7 +5540,19 @@ export function ChatView({
                     value={composerText}
                     onChange={handleComposerChange}
                     onKeyDown={(e) => {
-                      if (e.key === "Escape") { setMentionQuery(null); return; }
+                      if (e.key === "Escape") { setMentionQuery(null); setSlashQuery(null); return; }
+                      // Tab completes the top slash suggestion, the way a shell
+                      // does — the picker is a list of commands, so the muscle
+                      // memory people already have should work.
+                      if (e.key === "Tab" && slashQuery !== null) {
+                        const top = matchCommands(slashQuery)[0];
+                        if (top) {
+                          e.preventDefault();
+                          setComposerText(`/${top.name} `);
+                          setSlashQuery(null);
+                          return;
+                        }
+                      }
                       if (e.key !== "Enter" || mentionQuery !== null) return;
                       // Messaging → "Enter sends the message". When off, Enter
                       // makes a new line and the modifier sends instead — the
@@ -5351,7 +5702,7 @@ export function ChatView({
                 {userSettings.messaging.enterToSend
                   ? "Enter to send · Shift+Enter for new line"
                   : "⌘/Ctrl+Enter to send · Enter for new line"}
-                {" · Drag files to attach · @ to mention · ⌘K to navigate"}
+                {" · Drag files to attach · @ to mention · / for commands · ⌘K to navigate"}
               </p>
             </div>
             </>
@@ -5445,6 +5796,15 @@ export function ChatView({
           onSelectChannel={(id) => { setSelectedChannelId(id); setShowCommandPalette(false); }}
           onNewChannel={() => { setShowNewChannel(true); setShowCommandPalette(false); }}
           onNewDM={() => { setShowNewGroupDM(true); setShowCommandPalette(false); }}
+          selectedChannelId={selectedChannelId}
+          onPrefillComposer={(text) => {
+            setComposerText(text);
+            setShowCommandPalette(false);
+            // Focus lands after the palette unmounts, so the caret is in the
+            // composer ready for the argument the command still needs.
+            setTimeout(() => composerRef.current?.focus(), 0);
+          }}
+          onUploadFile={() => { setShowCommandPalette(false); chatFileInputRef.current?.click(); }}
         />
       )}
 

@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { avatarGradient } from "@/lib/avatar";
+import { usableMediaUrl } from "@/lib/media-url";
 
 /* ── types ─────────────────────────────────────────────────────────────── */
 
@@ -84,8 +85,10 @@ const inputClass =
 
 function Avatar({ user, size = 8 }: { user: { fullName: string; avatarUrl?: string | null }; size?: number }) {
   const px = size * 4;
-  return user.avatarUrl
-    ? <img src={user.avatarUrl} alt={user.fullName} style={{ width: px, height: px }} className="rounded-full object-cover shrink-0" />
+  // Bare R2 storage keys have no scheme and 404 — see lib/media-url.ts.
+  const src = usableMediaUrl(user.avatarUrl);
+  return src
+    ? <img src={src} alt={user.fullName} style={{ width: px, height: px }} className="rounded-full object-cover shrink-0" />
     : <div style={{ width: px, height: px, background: avatarGradient(user.fullName) }} className="rounded-full flex items-center justify-center text-white text-[11px] font-semibold shrink-0">{initials(user.fullName)}</div>;
 }
 

@@ -92,7 +92,25 @@ type EventFormState = {
   weeklyDays: string[];
   visibility: "PUBLIC" | "TEAM" | "PRIVATE";
   category: "" | "OUT_OF_OFFICE";
+  /**
+   * Minutes before the event to notify. `0` means no reminder.
+   *
+   * Only meaningful because `event-reminder.worker.ts` now delivers these — the
+   * API has always written EventReminder rows (defaulting to 15) but nothing
+   * ever read them, so the setting was inert.
+   */
+  reminderMinutes: number;
 };
+
+/** Reminder choices. Bounded by the worker's 7-day lookahead window. */
+const REMINDER_OPTIONS: { value: number; label: string }[] = [
+  { value: 0, label: "No reminder" },
+  { value: 5, label: "5 minutes before" },
+  { value: 15, label: "15 minutes before" },
+  { value: 30, label: "30 minutes before" },
+  { value: 60, label: "1 hour before" },
+  { value: 1440, label: "1 day before" },
+];
 
 // ─── Availability types ───────────────────────────────────────────────────────
 
@@ -236,6 +254,7 @@ function blankForm(date?: Date): EventFormState {
     weeklyDays: [],
     visibility: "PUBLIC",
     category: "",
+    reminderMinutes: 15,
   };
 }
 
@@ -264,6 +283,11 @@ function eventToForm(ev: CalendarEvent): EventFormState {
     weeklyDays,
     visibility: (ev.visibility as EventFormState["visibility"]) ?? "PUBLIC",
     category: isOOO ? "OUT_OF_OFFICE" : "",
+    // The edit form doesn't load existing reminders (the event payload doesn't
+    // include them), so this shows the default rather than the saved value.
+    // Harmless today because the edit path doesn't submit reminderMinutes —
+    // existing EventReminder rows are left untouched on edit.
+    reminderMinutes: 15,
   };
 }
 
@@ -487,6 +511,25 @@ function EventFormFields({
         </div>
       </div>
 
+      {/* Reminder. Delivered by src/workers/event-reminder.worker.ts, which the
+          worker process ticks every 60s — so this is a real setting, not a
+          preference nothing reads. */}
+      <div>
+        <label htmlFor="event-reminder" className="mb-1 block text-xs font-medium text-muted">
+          Reminder
+        </label>
+        <select
+          id="event-reminder"
+          value={form.reminderMinutes}
+          onChange={(e) => setForm((f) => ({ ...f, reminderMinutes: Number(e.target.value) }))}
+          className="w-full bg-surface border-transparent rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-accent focus:bg-surface-sunken text-foreground"
+        >
+          {REMINDER_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
+      </div>
+
       {/* Attendees */}
       {showAttendees && (
         <div>
@@ -698,6 +741,9 @@ function CreateEventModal({
           meetingUrl: form.meetingUrl.trim() || undefined,
           attendeeEmails: attendees,
           recurrenceRule,
+          // Empty array = no reminder. Omitting the key would make the API fall
+          // back to its [15] default, so "No reminder" has to send [] explicitly.
+          reminderMinutes: form.reminderMinutes > 0 ? [form.reminderMinutes] : [],
         }),
       });
       if (!res.ok) throw new Error("Failed");

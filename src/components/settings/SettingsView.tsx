@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { sanitizeHtml } from "@/lib/sanitize-html";
 import { avatarGradient } from "@/lib/avatar";
+import { usableMediaUrl } from "@/lib/media-url";
 import { MFASetup } from "@/components/MFASetup";
 import { SessionManager } from "@/components/SessionManager";
 import { toast } from "sonner";
@@ -356,12 +357,14 @@ function ProfileTab({ userId }: { userId: string }) {
         {/* Avatar card */}
         <div className="flex items-center gap-5">
           <div className="relative group">
+            {/* usableMediaUrl: bare R2 storage keys have no scheme, so the browser
+                resolves them against the current page and 404s. See lib/media-url.ts. */}
             <div
               className="h-[72px] w-[72px] flex-shrink-0 rounded-full overflow-hidden flex items-center justify-center text-2xl font-extrabold text-white"
-              style={profile.avatarUrl ? undefined : { background: avatarGradient(profile.fullName || profile.email) }}
+              style={usableMediaUrl(profile.avatarUrl) ? undefined : { background: avatarGradient(profile.fullName || profile.email) }}
             >
-              {profile.avatarUrl ? (
-                <img src={profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+              {usableMediaUrl(profile.avatarUrl) ? (
+                <img src={usableMediaUrl(profile.avatarUrl)!} alt="Avatar" className="w-full h-full object-cover" />
               ) : (
                 <span>{profile.fullName?.[0]?.toUpperCase() ?? "?"}</span>
               )}

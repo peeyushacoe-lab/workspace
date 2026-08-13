@@ -213,6 +213,7 @@ export async function POST(request: Request, { params }: Params) {
       attachmentUrl,
       attachmentMime,
       attachmentName,
+      allowBroadcast: policies.messaging.allowBroadcastMentions,
     },
   );
 

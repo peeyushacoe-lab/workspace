@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { avatarGradient } from "@/lib/avatar";
+import { usableMediaUrl } from "@/lib/media-url";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -69,8 +70,10 @@ function fmtCountdown(iso: string): { label: string; overdue: boolean } {
 
 function Avatar({ user, size = 8 }: { user: HubUser; size?: number }) {
   const s = `w-${size} h-${size}`;
-  return user.avatarUrl
-    ? <img src={user.avatarUrl} alt={user.fullName} className={`${s} rounded-full object-cover shrink-0`} />
+  // Bare R2 storage keys have no scheme and 404 — see lib/media-url.ts.
+  const src = usableMediaUrl(user.avatarUrl);
+  return src
+    ? <img src={src} alt={user.fullName} className={`${s} rounded-full object-cover shrink-0`} />
     : <div className={`${s} rounded-full flex items-center justify-center text-white text-[11px] font-semibold shrink-0`} style={{ background: avatarGradient(user.fullName) }}>{initials(user.fullName)}</div>;
 }
 

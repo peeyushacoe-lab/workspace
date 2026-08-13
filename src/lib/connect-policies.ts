@@ -32,6 +32,14 @@ export type ConnectPolicies = {
     allowDeleting: boolean;
     /** Allow the urgent flag, which bypasses notification preferences. */
     allowUrgent: boolean;
+    /**
+     * Allow `@everyone` / `@channel` to notify the whole conversation.
+     *
+     * Same rationale as `allowUrgent`: it spends everyone's attention rather
+     * than the sender's, so an organisation may want it restricted. Denying it
+     * downgrades the mention to nothing — the message still sends.
+     */
+    allowBroadcastMentions: boolean;
   };
   files: {
     /** Maximum chat/Drive upload size in megabytes. */
@@ -56,6 +64,7 @@ export const DEFAULT_POLICIES: ConnectPolicies = {
     allowEditing: true,
     allowDeleting: true,
     allowUrgent: true,
+    allowBroadcastMentions: true,
   },
   files: {
     maxUploadMb: 100,

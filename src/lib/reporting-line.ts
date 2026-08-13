@@ -80,7 +80,14 @@ export async function getReportingChain(
   const chain: Array<{ id: string; fullName: string; jobTitle: string | null }> = [];
   const seen = new Set<string>([userId]);
 
-  let cursor: string | null = userId;
+  // `string`, not `string | null`: the loop breaks the moment there is no next
+  // manager, so the cursor is never null when it reaches the query. Typing it
+  // nullable made `where: { id: cursor }` fail to match `UserWhereUniqueInput`,
+  // and a `where` that doesn't typecheck collapses Prisma's conditional result
+  // type to the full User payload — which is why the compiler reported the
+  // confusing "property 'manager' is missing" against the annotation below
+  // rather than pointing at the actual mismatch.
+  let cursor: string = userId;
 
   for (let depth = 0; depth < MAX_CHAIN; depth++) {
     const row: {

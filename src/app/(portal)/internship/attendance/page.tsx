@@ -10,6 +10,7 @@ import {
 import { toast } from "sonner";
 import { PageHeader } from "@/components/Shell";
 import { avatarGradient } from "@/lib/avatar";
+import { usableMediaUrl } from "@/lib/media-url";
 import { zonedTimeToUtc, COMMON_TIMEZONES } from "@/lib/tz";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -135,8 +136,10 @@ function getGeoLocation(): Promise<{ lat: number; lng: number; accuracy: number 
 
 function Avatar({ user, size = 8 }: { user: { fullName: string; avatarUrl?: string | null }; size?: number }) {
   const s = `w-${size} h-${size}`;
-  return user.avatarUrl
-    ? <img src={user.avatarUrl} alt={user.fullName} className={`${s} rounded-full object-cover shrink-0`} />
+  // Bare R2 storage keys have no scheme and 404 — see lib/media-url.ts.
+  const src = usableMediaUrl(user.avatarUrl);
+  return src
+    ? <img src={src} alt={user.fullName} className={`${s} rounded-full object-cover shrink-0`} />
     : <div className={`${s} rounded-full flex items-center justify-center text-white text-[11px] font-semibold shrink-0`} style={{ background: avatarGradient(user.fullName) }}>{initials(user.fullName)}</div>;
 }
 
@@ -919,8 +922,8 @@ function InternSummaryTab() {
                   className="w-full flex items-center gap-4 px-4 py-3 hover:bg-surface-sunken transition-colors text-left"
                 >
                   {/* Avatar */}
-                  {item.intern.avatarUrl
-                    ? <img src={item.intern.avatarUrl} alt={item.intern.fullName} className="h-9 w-9 rounded-full object-cover flex-shrink-0" />
+                  {usableMediaUrl(item.intern.avatarUrl)
+                    ? <img src={usableMediaUrl(item.intern.avatarUrl)!} alt={item.intern.fullName} className="h-9 w-9 rounded-full object-cover flex-shrink-0" />
                     : <div className="h-9 w-9 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0"
                         style={{ background: avatarGradient(item.intern.fullName) }}>
                         {item.intern.fullName.charAt(0).toUpperCase()}

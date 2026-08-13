@@ -8,6 +8,7 @@ import {
 import { toast } from "sonner";
 import { PageHeader } from "@/components/Shell";
 import { avatarGradient } from "@/lib/avatar";
+import { usableMediaUrl } from "@/lib/media-url";
 import HRLifecyclePanel from "@/components/HRLifecyclePanel";
 
 /* ── shared types & helpers ────────────────────────────────────────────── */
@@ -98,8 +99,12 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 function AvatarChip({ name, avatarUrl, size = 7 }: { name: string; avatarUrl?: string | null; size?: number }) {
-  return avatarUrl
-    ? <img src={avatarUrl} alt={name} className={`w-${size} h-${size} rounded-full object-cover shrink-0`} />
+  // usableMediaUrl, not the raw column: with R2_PUBLIC_URL unset, avatarUrl holds
+  // a bare storage key with no scheme, which the browser resolves against the
+  // current page and 404s on. Null falls through to the initials avatar.
+  const src = usableMediaUrl(avatarUrl);
+  return src
+    ? <img src={src} alt={name} className={`w-${size} h-${size} rounded-full object-cover shrink-0`} />
     : <div className={`w-${size} h-${size} rounded-full flex items-center justify-center text-white text-[11px] font-semibold shrink-0`} style={{ background: avatarGradient(name) }}>{initials(name)}</div>;
 }
 

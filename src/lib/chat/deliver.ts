@@ -7,6 +7,8 @@ import type { PushSubscriptionJSON } from "@/lib/web-push";
 import { shouldNotify } from "@/lib/notif-prefs";
 import { createNotification } from "@/lib/notifications";
 import { indexingQueue } from "@/lib/queues/indexing.queue";
+import { resolveMentions } from "@/lib/chat/mentions";
+import { respondAsSage } from "@/lib/chat/sage";
 
 /**
  * Everything that happens when a chat message becomes real.
@@ -32,6 +34,11 @@ export type ChatDeliveryPayload = {
   attachmentUrl?: string | null;
   attachmentMime?: string | null;
   attachmentName?: string | null;
+  /**
+   * Whether `@everyone` is honoured for this send. Comes from org policy via
+   * the route; defaults to true so existing callers are unaffected.
+   */
+  allowBroadcast?: boolean;
 };
 
 const MESSAGE_INCLUDE = {
@@ -64,7 +71,25 @@ export async function deliverChatMessage(
     attachmentUrl,
     attachmentMime,
     attachmentName,
+    allowBroadcast = true,
   } = payload;
+
+  // Mentions are resolved here, not in the route and never on the client:
+  // `mentionedUserIds` drives who gets notified, so accepting it from the
+  // request body would hand any authenticated user an org-wide notification
+  // primitive. Resolution is also what makes /connect/activity's mention feed
+  // work at all — it queries `mentionedUserIds: { has: userId }`, and until
+  // this call existed nothing ever wrote that column.
+  const mentions = await resolveMentions({
+    content,
+    channelId,
+    actorId: sender.id,
+    allowBroadcast,
+  }).catch((err: Error) => {
+    // A parser failure must not cost the user their message.
+    console.error("[chat/deliver] mention resolution failed:", err.message);
+    return null;
+  });
 
   const message = await prisma.chatMessage.create({
     data: {
@@ -74,6 +99,7 @@ export async function deliverChatMessage(
       parentId: parentId ?? null,
       quotedMessageId: quotedMessageId ?? null,
       isUrgent: isUrgent === true,
+      mentionedUserIds: mentions?.userIds ?? [],
       ...(attachmentUrl
         ? { attachmentUrl, attachmentMime: attachmentMime ?? null, attachmentName: attachmentName ?? null }
         : {}),
@@ -118,7 +144,26 @@ export async function deliverChatMessage(
     }).catch(() => {});
   }
 
-  void fanOutNotifications(sender, { channelId, content, isUrgent, attachmentName });
+  void fanOutNotifications(sender, {
+    channelId,
+    content,
+    isUrgent,
+    attachmentName,
+    mentionedUserIds: mentions?.userIds ?? [],
+  });
+
+  // @Sage is fired from here rather than from the route for the same reason
+  // every other side effect is: scheduled sends and send-now must summon the
+  // assistant too, and a copy of this in each caller would drift. It is
+  // deliberately not awaited — the sender's POST should not block on an LLM.
+  if (mentions?.sage) {
+    void respondAsSage({
+      channelId,
+      askedBy: sender,
+      prompt: mentions.sage.prompt,
+      parentId: parentId ?? null,
+    });
+  }
 
   return message;
 }
@@ -131,7 +176,14 @@ async function fanOutNotifications(
     content,
     isUrgent,
     attachmentName,
-  }: { channelId: string; content: string; isUrgent?: boolean; attachmentName?: string | null },
+    mentionedUserIds = [],
+  }: {
+    channelId: string;
+    content: string;
+    isUrgent?: boolean;
+    attachmentName?: string | null;
+    mentionedUserIds?: string[];
+  },
 ) {
   try {
     const [members, channel] = await Promise.all([
@@ -160,10 +212,14 @@ async function fanOutNotifications(
       });
     }
 
-    // Web push — always for DMs; urgent-only for group channels.
-    // Respects each recipient's notification preferences.
+    // Web push — always for DMs, urgent messages, and anyone explicitly
+    // mentioned. Being named in a channel is the whole reason mentions exist:
+    // before this, an @mention in a normal group channel produced no push and
+    // no in-app notification, so the only way to discover one was to already
+    // be reading the channel.
     const isDM = channel?.type === "DIRECT";
-    if (!(isDM || isUrgent) || !memberIds.length) return;
+    const mentioned = new Set(mentionedUserIds);
+    if (!(isDM || isUrgent || mentioned.size) || !memberIds.length) return;
 
     const memberUsers = await prisma.user.findMany({
       where: { id: { in: memberIds } },
@@ -174,13 +230,22 @@ async function fanOutNotifications(
     // notifType: DM → chatMentions, group channel → chatMentions (both use same key)
     const notifType = "chatMentions" as const;
 
+    // Who this message is actually *for*. A DM or an urgent message addresses
+    // the whole conversation; an ordinary message that merely contains a
+    // mention addresses only the people named. Widening this to `memberIds`
+    // would turn one `@Priya` into a notification for all 40 channel members,
+    // which is precisely the behaviour that trains people to mute channels.
+    const recipientIds =
+      isDM || isUrgent ? memberIds : memberIds.filter((id) => mentioned.has(id));
+    if (!recipientIds.length) return;
+
     // In-app notification — creates a Notification row AND publishes to the
     // per-user Redis channel that feeds the app-wide NotificationCenter SSE
     // stream. This is what makes a new DM / urgent message pop up on screen
     // no matter which page the recipient is on. `metadata.urgent` drives the
     // persistent urgent prompt; `metadata.channelId` lets the client suppress
     // the popup when the recipient is already viewing that conversation.
-    const inAppIds = memberIds.filter((id) => shouldNotify(prefsByUserId.get(id) ?? {}, notifType, "inApp"));
+    const inAppIds = recipientIds.filter((id) => shouldNotify(prefsByUserId.get(id) ?? {}, notifType, "inApp"));
     await Promise.all(
       inAppIds.map((recipientId) =>
         createNotification({
@@ -190,7 +255,9 @@ async function fanOutNotifications(
             ? isDM
               ? `Urgent message from ${sender.fullName}`
               : `Urgent in #${channel?.name ?? "channel"} — ${sender.fullName}`
-            : `New message from ${sender.fullName}`,
+            : mentioned.has(recipientId) && !isDM
+              ? `${sender.fullName} mentioned you in #${channel?.name ?? "channel"}`
+              : `New message from ${sender.fullName}`,
           body: displayContent,
           // Route to the page that actually lists this conversation kind —
           // Connect splits DMs, groups and channels into separate sections.
@@ -199,12 +266,17 @@ async function fanOutNotifications(
             : channel?.type === "GROUP" ? "/connect/groups"
             : "/connect/chat"
           }?channel=${channelId}`,
-          metadata: { channelId, urgent: isUrgent === true, senderId: sender.id },
+          metadata: {
+            channelId,
+            urgent: isUrgent === true,
+            senderId: sender.id,
+            mention: mentioned.has(recipientId),
+          },
         }).catch(() => {})
       )
     );
 
-    const eligibleIds = memberIds.filter((id) => shouldNotify(prefsByUserId.get(id) ?? {}, notifType, "push"));
+    const eligibleIds = recipientIds.filter((id) => shouldNotify(prefsByUserId.get(id) ?? {}, notifType, "push"));
     if (!eligibleIds.length) return;
 
     const pushLogs = await prisma.auditLog.findMany({

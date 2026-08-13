@@ -10,6 +10,7 @@ import {
   Loader2,
   Sparkles,
   MessageSquareReply,
+  Compass,
   FileText,
   Languages,
   Activity,
@@ -22,8 +23,9 @@ import {
   Play,
 } from "lucide-react";
 import { toast } from "sonner";
+import { WorkspaceChat } from "@/components/ai/WorkspaceChat";
 
-type Tab = "draft" | "reply" | "summarize" | "translate" | "status" | "memory" | "agents";
+type Tab = "ask" | "draft" | "reply" | "summarize" | "translate" | "status" | "memory" | "agents";
 
 type AIStatus = {
   provider: string;
@@ -46,6 +48,9 @@ type ReplyOption = {
 };
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
+  // First, and the default: every other tab is a text utility, this is the only
+  // one that knows anything about the user's actual workspace.
+  { id: "ask", label: "Ask Nexus", icon: <Compass className="w-4 h-4" /> },
   { id: "draft", label: "Email Draft", icon: <Sparkles className="w-4 h-4" /> },
   { id: "reply", label: "Smart Reply", icon: <MessageSquareReply className="w-4 h-4" /> },
   { id: "summarize", label: "Summarize", icon: <FileText className="w-4 h-4" /> },
@@ -1010,7 +1015,7 @@ function AgentsTab() {
 }
 
 export function AIAssistant(_props: { currentUserId: string }) {
-  const [activeTab, setActiveTab] = useState<Tab>("draft");
+  const [activeTab, setActiveTab] = useState<Tab>("ask");
   const [globalStatus, setGlobalStatus] = useState<AIStatus | null>(null);
 
   useEffect(() => {
@@ -1078,6 +1083,7 @@ export function AIAssistant(_props: { currentUserId: string }) {
                 {TABS.find((t) => t.id === activeTab)?.label}
               </h2>
               <p className="text-sm text-muted mt-0.5">
+                {activeTab === "ask" && "Ask about your mail, calendar, tasks, meetings and documents — answers cite what they came from."}
                 {activeTab === "draft" && "Generate a professional email draft using AI."}
                 {activeTab === "reply" && "Get three tailored reply options for any email."}
                 {activeTab === "summarize" && "Extract key points, action items, and sentiment."}
@@ -1089,6 +1095,7 @@ export function AIAssistant(_props: { currentUserId: string }) {
             </div>
 
             <div className="bg-surface border border-border rounded-xl p-4">
+              {activeTab === "ask" && <WorkspaceChat />}
               {activeTab === "draft" && <EmailDraftTab />}
               {activeTab === "reply" && <SmartReplyTab />}
               {activeTab === "summarize" && <SummarizeTab />}

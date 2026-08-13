@@ -43,6 +43,9 @@ export async function GET() {
       personalEmail: true,
       createdAt: true,
       invitedBy: true,
+      // Reporting line — powers the Manager column on /users and the
+      // "Reports to" section on a People profile.
+      managerId: true,
       signature: { select: { fullName: true, title: true } },
     },
     orderBy: { createdAt: "desc" },

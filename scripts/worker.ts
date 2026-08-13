@@ -13,6 +13,7 @@ import { createImportWorker } from "../src/workers/import.worker";
 import { createExportWorker } from "../src/workers/export.worker";
 import { processScheduledEmails } from "../src/workers/scheduled-send.worker";
 import { processScheduledChatMessages } from "../src/workers/scheduled-chat-send.worker";
+import { processEventReminders } from "../src/workers/event-reminder.worker";
 import { cleanupQueue } from "../src/lib/queues/cleanup.queue";
 import { attachFailedJobAlerts } from "../src/lib/queues/failed-job-monitor";
 import { logger } from "../src/lib/logger";
@@ -152,15 +153,21 @@ async function scheduleCleanupJobs() {
 
 scheduleCleanupJobs().catch((err) => logger.error({ err }, "Failed to schedule cleanup jobs"));
 
-// Poll for scheduled emails and scheduled chat messages every 60 seconds.
-// Both are DB-backed cron polls rather than BullMQ delayed jobs — see
-// src/workers/scheduled-chat-send.worker.ts for why.
+// Poll for scheduled emails, scheduled chat messages and due calendar reminders
+// every 60 seconds. All three are DB-backed cron polls rather than BullMQ delayed
+// jobs — see src/workers/scheduled-chat-send.worker.ts for why.
+//
+// 60s is the right granularity for reminders too: "15 minutes before" landing up
+// to a minute late is invisible, and a tighter loop would just poll an empty
+// table more often.
 setInterval(() => {
   processScheduledEmails().catch((err) => logger.error({ err }, "[scheduled-send] Poll failed"));
   processScheduledChatMessages().catch((err) => logger.error({ err }, "[scheduled-chat] Poll failed"));
+  processEventReminders().catch((err) => logger.error({ err }, "[event-reminder] Poll failed"));
 }, 60_000);
 processScheduledEmails().catch(() => {});
 processScheduledChatMessages().catch(() => {});
+processEventReminders().catch(() => {});
 
 // ---------------------------------------------------------------------------
 // Graceful shutdown

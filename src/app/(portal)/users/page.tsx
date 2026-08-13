@@ -95,6 +95,8 @@ interface UserRow {
   personalEmail: string | null;
   createdAt: string;
   grantedRoles: string[];
+  /** Who this person reports to. Null = nobody (top of the tree, or unset). */
+  managerId: string | null;
 }
 
 interface CurrentUser {
@@ -258,6 +260,39 @@ export default function UsersPage() {
   };
 
   const [resendingInvite, setResendingInvite] = useState<string | null>(null);
+  const [savingManager, setSavingManager] = useState<string | null>(null);
+
+  /**
+   * Set or clear someone's manager.
+   *
+   * The API is the authority here: it rejects self-assignment and reporting
+   * cycles (A → B → A), which a dropdown cannot detect on its own — the chain
+   * above the chosen manager isn't loaded on this page. So the error is
+   * surfaced verbatim and the row is reverted rather than pre-validated here.
+   */
+  const applyManager = async (userId: string, managerId: string | null) => {
+    const previous = users.find((u) => u.id === userId)?.managerId ?? null;
+    setSavingManager(userId);
+    // Optimistic — the dropdown should feel immediate on a long user list.
+    setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, managerId } : u)));
+    try {
+      const res = await fetch(`/api/users/${userId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ managerId }),
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(body.error ?? "Could not update the reporting line");
+      }
+      toast.success(managerId ? "Manager updated" : "Manager cleared");
+    } catch (err) {
+      setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, managerId: previous } : u)));
+      toast.error(err instanceof Error ? err.message : "Could not update the reporting line");
+    } finally {
+      setSavingManager(null);
+    }
+  };
   const handleResendInvite = async (userId: string, userName: string, alreadySetup = false) => {
     // Warn before resetting an active user — this invalidates their current password
     if (alreadySetup && !confirm(`This will reset ${userName}'s password and send a new temporary password to their personal email.\n\nThey will need to log in with the new temporary password and set a new one.\n\nContinue?`)) {
@@ -449,6 +484,7 @@ export default function UsersPage() {
                   <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Joined</TableHead>
+                  <TableHead>Reports to</TableHead>
                   {isCisoOrAdmin && (
                     <TableHead>
                       <div className="flex items-center gap-1.5">
@@ -464,7 +500,7 @@ export default function UsersPage() {
                 {buildUserSections(users).map(section => (
                   <Fragment key={section.label}>
                     <TableRow className="hover:bg-transparent">
-                      <TableCell colSpan={isCisoOrAdmin ? 7 : 6} className="bg-surface-sunken py-2 text-[11px] font-semibold uppercase tracking-wide text-subtle">
+                      <TableCell colSpan={isCisoOrAdmin ? 8 : 7} className="bg-surface-sunken py-2 text-[11px] font-semibold uppercase tracking-wide text-subtle">
                         {section.label} · {section.users.length}
                       </TableCell>
                     </TableRow>
@@ -497,6 +533,36 @@ export default function UsersPage() {
                     </TableCell>
                     <TableCell className="text-muted text-sm font-mono">
                       {new Date(user.createdAt).toLocaleDateString()}
+                    </TableCell>
+
+                    {/* Reporting line. Deliberately a plain <select> rather than a
+                        searchable combobox — this list is one org, not thousands,
+                        and a native control is keyboard- and screen-reader-correct
+                        for free. */}
+                    <TableCell>
+                      <div className="flex items-center gap-1.5">
+                        <select
+                          value={user.managerId ?? ""}
+                          disabled={savingManager === user.id}
+                          onChange={(e) => void applyManager(user.id, e.target.value || null)}
+                          aria-label={`Manager for ${user.fullName}`}
+                          className="max-w-[160px] rounded-md border border-border bg-surface-sunken px-2 py-1 text-xs text-foreground transition-colors focus:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:opacity-50"
+                        >
+                          <option value="">No manager</option>
+                          {users
+                            // Self-management is rejected by the API (and a DB
+                            // CHECK), so don't offer it in the first place.
+                            .filter((candidate) => candidate.id !== user.id && candidate.isActive)
+                            .map((candidate) => (
+                              <option key={candidate.id} value={candidate.id}>
+                                {candidate.fullName}
+                              </option>
+                            ))}
+                        </select>
+                        {savingManager === user.id && (
+                          <Loader2 className="w-3 h-3 flex-shrink-0 animate-spin text-muted" />
+                        )}
+                      </div>
                     </TableCell>
 
                     {/* Access roles column — CISO + ADMIN only */}
@@ -568,7 +634,7 @@ export default function UsersPage() {
                 ))}
                 {users.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={isCisoOrAdmin ? 7 : 6} className="text-center text-muted py-12">
+                    <TableCell colSpan={isCisoOrAdmin ? 8 : 7} className="text-center text-muted py-12">
                       No team members yet. Use &ldquo;Invite User&rdquo; to get started.
                     </TableCell>
                   </TableRow>
