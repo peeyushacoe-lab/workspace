@@ -30,7 +30,7 @@ const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString }) })
 const ALL_ROLES = [
   "ADMIN", "CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER",
   "DEVELOPER", "CYBER_SECURITY", "QA", "MARKETING", "RESEARCH",
-  "FINANCE", "OPERATIONS", "SUPPORT", "HR", "INTERNSHIP", "MEMBER",
+  "FINANCE", "OPERATIONS", "SUPPORT", "BUSINESS_MANAGER", "HR", "INTERNSHIP", "MEMBER",
 ] as const;
 
 const failures: string[] = [];

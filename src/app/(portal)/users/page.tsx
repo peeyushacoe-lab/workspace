@@ -23,8 +23,8 @@ const GRANTABLE_ACCESS = [
 type GrantableAccess = (typeof GRANTABLE_ACCESS)[number];
 
 const CREATOR_PERMISSIONS: Record<string, string[]> = {
-  ADMIN:       ["CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER", "DEVELOPER", "CYBER_SECURITY", "QA", "MARKETING", "RESEARCH", "FINANCE", "OPERATIONS", "SUPPORT", "HR", "INTERNSHIP"],
-  CEO:         ["MARKETING", "FINANCE"],
+  ADMIN:       ["CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER", "DEVELOPER", "CYBER_SECURITY", "QA", "MARKETING", "RESEARCH", "FINANCE", "OPERATIONS", "SUPPORT", "BUSINESS_MANAGER", "HR", "INTERNSHIP"],
+  CEO:         ["MARKETING", "FINANCE", "BUSINESS_MANAGER"],
   CISO:        ["CYBER_SECURITY"],
   R_AND_D:     ["DEVELOPER", "QA", "RESEARCH"],
   COO:         ["OPERATIONS", "FINANCE"],
@@ -39,12 +39,14 @@ const ROLE_LABELS: Record<string, string> = {
   CYBER_SECURITY: "Cyber Security", QA: "QA Engineer",
   MARKETING: "Marketing", RESEARCH: "Research",
   FINANCE: "Finance", OPERATIONS: "Operations", SUPPORT: "Support",
+  BUSINESS_MANAGER: "Business Manager",
   HR: "HR", INTERNSHIP: "Intern",
 };
 
 const ROLE_GROUPS = [
   { label: "Leadership", roles: ["CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER"] },
   { label: "Teams", roles: ["DEVELOPER", "CYBER_SECURITY", "QA", "MARKETING", "RESEARCH", "FINANCE", "OPERATIONS", "SUPPORT"] },
+  { label: "Business", roles: ["BUSINESS_MANAGER"] },
   { label: "HR", roles: ["HR"] },
   { label: "Interns", roles: ["INTERNSHIP"] },
 ];
@@ -54,6 +56,7 @@ const USER_SECTIONS: { label: string; roles: string[] }[] = [
   { label: "Leadership", roles: ["ADMIN", "CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER"] },
   { label: "Core Team", roles: ["DEVELOPER", "CYBER_SECURITY", "QA", "MARKETING", "RESEARCH", "FINANCE", "OPERATIONS"] },
   { label: "Support", roles: ["SUPPORT"] },
+  { label: "Business", roles: ["BUSINESS_MANAGER"] },
   { label: "HR", roles: ["HR"] },
   { label: "Interns", roles: ["INTERNSHIP"] },
 ];
@@ -81,6 +84,7 @@ const ROLE_COLORS: Record<string, string> = {
   FINANCE: "bg-ok/10 text-ok",
   OPERATIONS: "bg-warn/10 text-warn",
   SUPPORT: "bg-accent/10 text-accent",
+  BUSINESS_MANAGER: "bg-violet/10 text-violet",
   HR: "bg-pink-500/10 text-pink-300",
   INTERNSHIP: "bg-accent/10 text-accent",
 };
@@ -398,7 +402,7 @@ export default function UsersPage() {
                       <Label htmlFor="role">Role</Label>
                       <Select
                         value={form.role}
-                        onValueChange={v => setForm({ ...form, role: v })}
+                        onValueChange={v => setForm({ ...form, role: v, customRole: "" })}
                         required
                       >
                         <SelectTrigger id="role">
@@ -430,7 +434,23 @@ export default function UsersPage() {
                         </p>
                       )}
                     </div>
-                    {customRoles.length > 0 && (
+                    {form.role === "BUSINESS_MANAGER" && (
+                      <div>
+                        <Label htmlFor="bmRegion">Region <span className="text-muted font-normal">(optional)</span></Label>
+                        <Input
+                          id="bmRegion"
+                          value={form.customRole}
+                          onChange={e => setForm({ ...form, customRole: e.target.value })}
+                          placeholder="Business Manager India"
+                        />
+                        <p className="text-xs text-muted mt-1">
+                          Every regional business manager shares the one Business Manager role —
+                          this is the display title shown on their profile. Leave blank for plain
+                          &ldquo;Business Manager&rdquo;.
+                        </p>
+                      </div>
+                    )}
+                    {form.role !== "BUSINESS_MANAGER" && customRoles.length > 0 && (
                       <div>
                         <Label htmlFor="customRole">Custom Role <span className="text-muted font-normal">(optional)</span></Label>
                         <Select

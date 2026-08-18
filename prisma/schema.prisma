@@ -58,6 +58,12 @@ enum UserRole {
   OPERATIONS
   SUPPORT
 
+  // Business management — regional business managers (India, UK, …).
+  // Not a key role: multiple people hold it, one per region. The region lives
+  // in User.customRole as a display label ("Business Manager India"), so a new
+  // country needs no migration.
+  BUSINESS_MANAGER
+
   // Dedicated HR account
   HR
 
@@ -206,6 +212,17 @@ model User {
 
   // Agenda items this person is leading.
   agendaItemsOwned   MeetingAgendaItem[] @relation("AgendaItemOwner")
+
+  // Clients & revenue (Business Manager module).
+  clientsOwned        Client[]              @relation("ClientOwner")
+  clientsCreated      Client[]              @relation("ClientCreator")
+  deliverablesOwned   ClientDeliverable[]   @relation("DeliverableOwner")
+  feesRecorded        ClientFee[]           @relation("FeeRecorder")
+  feesConfirmed       ClientFee[]           @relation("FeeConfirmer")
+  clientRequestsRaised   ClientRequest[]    @relation("RequestRaiser")
+  clientRequestsAssigned ClientRequest[]    @relation("RequestAssignee")
+  clientRequestsClosed   ClientRequest[]    @relation("RequestCloser")
+  clientRequestComments  ClientRequestComment[] @relation("RequestCommentAuthor")
 
   // "Who reports to this person" is the only non-PK lookup on managerId, and the
   // profile page runs it on every view.
@@ -1786,6 +1803,7 @@ model Organization {
   roles       Role[]
   departments Department[]
   teams       Team[]
+  clients     Client[]
 
   @@index([slug])
   @@index([domain])
@@ -3042,4 +3060,224 @@ model BackupVerification {
   testedAt      DateTime @default(now())
 
   @@index([testedAt])
+}
+
+
+// ─── Clients & revenue (Business Manager module) ──────────────────────────────
+//
+// The client book: who we work for, what we owe them, and what they owe us.
+// Owned by the Business Manager role; Finance owns the money side; the Ops
+// Manager oversees every book; CEO/CISO read but never write (see
+// `ClientRequest` — their only way to change a record is to ask its owner).
+//
+// MONEY IS STORED AS INTEGER MINOR UNITS (`amountMinor` — pence, cents, paise),
+// never a float and never Decimal. A float cannot represent 0.1 exactly and
+// would silently drift across an aggregate; Decimal drags decimal.js into every
+// client bundle that touches a fee. Format at the edge with
+// `formatMoney()` from src/lib/clients.ts — never with `amountMinor / 100`
+// scattered through components.
+
+enum ClientStatus {
+  PROSPECT
+  ACTIVE
+  ON_HOLD
+  CHURNED
+}
+
+enum DeliverableStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  BLOCKED
+  DELIVERED
+  ACCEPTED
+}
+
+enum FeeKind {
+  RETAINER
+  PROJECT
+  MILESTONE
+  EXPENSE
+}
+
+enum FeeStatus {
+  DRAFT
+  INVOICED
+  PART_PAID
+  PAID
+  OVERDUE
+  WRITTEN_OFF
+}
+
+enum ClientRequestStatus {
+  OPEN
+  ACKNOWLEDGED
+  RESOLVED
+  DECLINED
+}
+
+enum ClientRequestPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+model Client {
+  id             String       @id @default(cuid())
+  organizationId String
+  name           String
+  legalName      String?
+  // Free-text region ("India", "UK"). Matches how a Business Manager's own
+  // region is stored (User.customRole) — a new territory needs no migration.
+  region         String?
+  industry       String?
+  website        String?
+  status         ClientStatus @default(PROSPECT)
+
+  // The Business Manager who owns this relationship. Edit rights follow this
+  // field: a BM edits their own clients, `clients.admin` edits anyone's.
+  // SetNull, not Cascade — deleting a departing BM must never delete the client.
+  ownerId     String?
+  owner       User?   @relation("ClientOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+
+  primaryContactName  String?
+  primaryContactEmail String?
+  primaryContactPhone String?
+
+  // ISO-4217. Per client, because a UK book and an India book do not share one.
+  currency  String    @default("GBP")
+  startedAt DateTime?
+  notes     String?
+
+  createdById String?
+  createdBy   User?   @relation("ClientCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  organization Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  deliverables ClientDeliverable[]
+  fees         ClientFee[]
+  requests     ClientRequest[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId, status])
+  @@index([ownerId])
+  @@index([organizationId, region])
+}
+
+model ClientDeliverable {
+  id          String            @id @default(cuid())
+  clientId    String
+  title       String
+  description String?
+  status      DeliverableStatus @default(NOT_STARTED)
+  dueDate     DateTime?
+  deliveredAt DateTime?
+
+  ownerId String?
+  owner   User?   @relation("DeliverableOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+
+  client   Client         @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  fees     ClientFee[]
+  requests ClientRequest[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientId, status])
+  @@index([dueDate])
+}
+
+model ClientFee {
+  id            String    @id @default(cuid())
+  clientId      String
+  deliverableId String?
+  kind          FeeKind   @default(PROJECT)
+  description   String
+  // Integer minor units. See the module note above.
+  amountMinor   Int
+  currency      String    @default("GBP")
+  status        FeeStatus @default(DRAFT)
+
+  invoiceRef String?
+  invoicedAt DateTime?
+  dueAt      DateTime?
+  // Also minor units. Kept separate from `amountMinor` so a part payment is a
+  // fact on the record rather than something inferred from status.
+  paidMinor  Int       @default(0)
+  paidAt     DateTime?
+
+  // Who entered the fee (usually the Business Manager)…
+  recordedById String?
+  recordedBy   User?   @relation("FeeRecorder", fields: [recordedById], references: [id], onDelete: SetNull)
+  // …and who in Finance confirmed the money actually arrived. A fee is only
+  // trustworthy as revenue once this is set.
+  confirmedById String?
+  confirmedBy   User?   @relation("FeeConfirmer", fields: [confirmedById], references: [id], onDelete: SetNull)
+
+  client      Client             @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  deliverable ClientDeliverable? @relation(fields: [deliverableId], references: [id], onDelete: SetNull)
+  requests    ClientRequest[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientId, status])
+  @@index([status, dueAt])
+  @@index([deliverableId])
+}
+
+// A tracked ask against a client record, raised by someone who can see the book
+// but not change it (CEO, CISO, COO). This is the whole "look, don't touch"
+// mechanism: leadership never edits a client, they raise a request, and the
+// record only moves when the owning Business Manager acts on it. The Ops
+// Manager is notified on every request so nothing sits unanswered.
+model ClientRequest {
+  id            String                @id @default(cuid())
+  clientId      String
+  deliverableId String?
+  feeId         String?
+  subject       String
+  body          String
+  status        ClientRequestStatus   @default(OPEN)
+  priority      ClientRequestPriority @default(NORMAL)
+
+  raisedById String
+  raisedBy   User   @relation("RequestRaiser", fields: [raisedById], references: [id], onDelete: Cascade)
+
+  // The owning BM at the time the request was raised. Nullable because a client
+  // can be unowned — those route to the Ops Manager instead.
+  assignedToId String?
+  assignedTo   User?   @relation("RequestAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  resolvedById   String?
+  resolvedBy     User?     @relation("RequestCloser", fields: [resolvedById], references: [id], onDelete: SetNull)
+  resolvedAt     DateTime?
+  resolutionNote String?
+
+  client      Client                 @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  deliverable ClientDeliverable?     @relation(fields: [deliverableId], references: [id], onDelete: SetNull)
+  fee         ClientFee?             @relation(fields: [feeId], references: [id], onDelete: SetNull)
+  comments    ClientRequestComment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientId, status])
+  @@index([assignedToId, status])
+  @@index([raisedById])
+}
+
+model ClientRequestComment {
+  id        String @id @default(cuid())
+  requestId String
+  authorId  String
+  body      String
+
+  request ClientRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  author  User          @relation("RequestCommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([requestId, createdAt])
 }

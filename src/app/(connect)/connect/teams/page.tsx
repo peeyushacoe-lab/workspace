@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Code2, Shield, DollarSign, Settings2, Crown, Users, Megaphone, FlaskConical,
-  ClipboardCheck, Headphones, GraduationCap, Loader2, MessageSquare, Hash,
+  ClipboardCheck, Headphones, GraduationCap, Briefcase, Loader2, MessageSquare, Hash,
 } from "lucide-react";
 import { avatarGradient } from "@/lib/avatar";
 import type { TeamWithMembers, TeamsResponse } from "@/app/api/teams/route";
@@ -30,6 +30,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   clipboard: ClipboardCheck,
   headphones: Headphones,
   graduation: GraduationCap,
+  briefcase: Briefcase,
 };
 
 function TeamCard({ team, mine }: { team: TeamWithMembers; mine: boolean }) {

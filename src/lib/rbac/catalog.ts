@@ -10,6 +10,7 @@
 export type PermissionCategory =
   | "Workspace"
   | "People"
+  | "Business"
   | "Security"
   | "Admin";
 
@@ -54,6 +55,16 @@ export const PERMISSION_CATALOG = [
   { key: "internship.view",resource: "internship",action: "view",  label: "Internship hub",    description: "Access the internship hub and attendance (interns & their mentors).", category: "People" },
   { key: "mentor.manage",  resource: "mentor",   action: "manage", label: "Mentor workspace",  description: "Manage interns, attendance and mentor HR.",      category: "People" },
 
+  // ── Business ───────────────────────────────────────────────────────────────
+  // The client book. Read is deliberately separated from write, and write from
+  // the money, so leadership can be given full visibility with no ability to
+  // change anything (see ClientRequest in schema.prisma).
+  { key: "clients.read",   resource: "clients",  action: "read",   label: "View clients",      description: "See the client book, deliverables and request threads.", category: "Business" },
+  { key: "clients.write",  resource: "clients",  action: "write",  label: "Manage own clients",description: "Create clients and edit the ones you own, with their deliverables.", category: "Business" },
+  { key: "clients.admin",  resource: "clients",  action: "admin",  label: "Manage all clients",description: "Edit any client regardless of owner, and reassign ownership.", category: "Business", isDangerous: true },
+  { key: "clients.finance.read",   resource: "clients", action: "finance.read",   label: "View client fees",   description: "See fees, invoices and revenue figures.", category: "Business" },
+  { key: "clients.finance.manage", resource: "clients", action: "finance.manage", label: "Manage client fees", description: "Raise invoices and confirm payments received.", category: "Business", isDangerous: true },
+
   // ── Security ───────────────────────────────────────────────────────────────
   { key: "sentinel.view",  resource: "sentinel", action: "view",   label: "View Sentinel",     description: "See security alerts and threat intelligence.",  category: "Security" },
   { key: "sentinel.manage",resource: "sentinel", action: "manage", label: "Manage Sentinel",   description: "Edit detection rules and resolve alerts.",       category: "Security", isDangerous: true },
@@ -85,7 +96,7 @@ export function isPermissionKey(value: string): value is PermissionKey {
 
 /** Catalog grouped by category — convenient for the admin UI. */
 export function catalogByCategory(): Record<PermissionCategory, PermissionEntry[]> {
-  const out = { Workspace: [], People: [], Security: [], Admin: [] } as Record<
+  const out = { Workspace: [], People: [], Business: [], Security: [], Admin: [] } as Record<
     PermissionCategory,
     PermissionEntry[]
   >;

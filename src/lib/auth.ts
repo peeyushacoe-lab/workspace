@@ -40,6 +40,7 @@ export const roleLabels: Record<UserRole, string> = {
   FINANCE: "Finance",
   OPERATIONS: "Operations",
   SUPPORT: "Support",
+  BUSINESS_MANAGER: "Business Manager",
   HR: "HR",
   INTERNSHIP: "Internship",
   MEMBER: "Member",
@@ -47,6 +48,20 @@ export const roleLabels: Record<UserRole, string> = {
 
 // Leadership roles that can access management features
 export const MGMT_ROLES: UserRole[] = ["ADMIN", "CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER"];
+
+// Leadership PLUS Business Manager. Business Manager is deliberately NOT in
+// MGMT_ROLES: it reads the executive surfaces (/dashboard, /contacts) but must
+// not inherit the rest of that group — /users (account creation), /mentor and
+// the Intern Hub. Adding it to MGMT_ROLES would silently grant all three.
+export const MGMT_ROLES_WITH_BM: UserRole[] = [...MGMT_ROLES, "BUSINESS_MANAGER"];
+
+// Who can open the client book. Read access only says the page loads — what a
+// person may CHANGE there is decided per record by src/lib/clients.ts, never by
+// this list. CEO/CISO/COO are here precisely because they should see everything
+// and edit nothing.
+export const CLIENT_BOOK_ROLES: UserRole[] = [
+  "ADMIN", "CEO", "CISO", "COO", "OPS_MANAGER", "BUSINESS_MANAGER", "FINANCE",
+];
 
 // Exported so middleware validates session-cookie roles against this exact list
 // rather than a hand-copied duplicate. The duplicate had drifted: it was missing
@@ -56,7 +71,7 @@ export const ALL_ROLES: UserRole[] = [
   "ADMIN", "CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER",
   "DEVELOPER", "CYBER_SECURITY", "QA", "MARKETING",
   "RESEARCH", "FINANCE", "OPERATIONS", "SUPPORT",
-  "HR", "INTERNSHIP", "MEMBER",
+  "BUSINESS_MANAGER", "HR", "INTERNSHIP", "MEMBER",
 ];
 
 // Roles excluding interns — for features not yet ready for intern access
@@ -88,8 +103,8 @@ export const CREATOR_PERMISSIONS: Partial<Record<UserRole, UserRole[]>> = {
   ADMIN: ["CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER",
           "DEVELOPER", "CYBER_SECURITY", "QA", "MARKETING",
           "RESEARCH", "FINANCE", "OPERATIONS", "SUPPORT",
-          "HR", "INTERNSHIP"],
-  CEO:        ["MARKETING", "FINANCE"],
+          "BUSINESS_MANAGER", "HR", "INTERNSHIP"],
+  CEO:        ["MARKETING", "FINANCE", "BUSINESS_MANAGER"],
   CISO:       ["CYBER_SECURITY"],
   R_AND_D:    ["DEVELOPER", "QA", "RESEARCH"],
   COO:        ["OPERATIONS", "FINANCE"],
@@ -118,8 +133,9 @@ export const portalNavItems: PortalNavItem[] = [
   { href: "/tasks",     label: "Tasks",      hint: "Work items",            roles: NON_HR_ROLES },
   { href: "/apps",      label: "Apps",       hint: "App marketplace",       roles: NON_HR_ROLES },
   { href: "/hr",        label: "My HR",      hint: "Leave, documents & onboarding", roles: NON_HR_ROLES },
-  { href: "/dashboard", label: "Dashboard",  hint: "Executive overview",    roles: MGMT_ROLES },
-  { href: "/contacts",  label: "Contacts",   hint: "Recipient book",        roles: MGMT_ROLES },
+  { href: "/clients",   label: "Clients",    hint: "Client book & revenue", roles: CLIENT_BOOK_ROLES },
+  { href: "/dashboard", label: "Dashboard",  hint: "Executive overview",    roles: MGMT_ROLES_WITH_BM },
+  { href: "/contacts",  label: "Contacts",   hint: "Recipient book",        roles: MGMT_ROLES_WITH_BM },
   { href: "/users",     label: "Users",      hint: "Manage team accounts",  roles: MGMT_ROLES },
   { href: "/billing",    label: "Billing",     hint: "Plans & usage",          roles: ["ADMIN"] },
   { href: "/org",       label: "Org",        hint: "Organization settings",  roles: ["ADMIN"] },
@@ -167,8 +183,9 @@ export const pathAccess: Array<{ prefix: string; roles: UserRole[] }> = [
   { prefix: "/reset-password", roles: ALL_ROLES },
   { prefix: "/setup-passkey",  roles: ALL_ROLES },
   { prefix: "/compose",        roles: ALL_ROLES },
-  { prefix: "/dashboard",      roles: MGMT_ROLES },
-  { prefix: "/contacts",       roles: MGMT_ROLES },
+  { prefix: "/clients",        roles: CLIENT_BOOK_ROLES },
+  { prefix: "/dashboard",      roles: MGMT_ROLES_WITH_BM },
+  { prefix: "/contacts",       roles: MGMT_ROLES_WITH_BM },
   { prefix: "/users",          roles: MGMT_ROLES },
   { prefix: "/billing",        roles: ["ADMIN"] },
   { prefix: "/org",            roles: ["ADMIN"] },
@@ -285,6 +302,7 @@ export const routePermission: Array<{ prefix: string; permission: string | null 
   { prefix: "/tasks",                permission: "tasks.read" },
   { prefix: "/apps",                 permission: "apps.use" },
   { prefix: "/hr",                   permission: "hr.read" },
+  { prefix: "/clients",              permission: "clients.read" },
   { prefix: "/dashboard",            permission: "dashboard.view" },
   { prefix: "/contacts",             permission: "contacts.read" },
   { prefix: "/users",                permission: "users.manage" },

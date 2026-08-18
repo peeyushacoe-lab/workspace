@@ -422,6 +422,7 @@ const TEAM_NAMES: Partial<Record<UserRole, string>> = {
   FINANCE:        "Finance",
   OPERATIONS:     "Operations",
   SUPPORT:        "Support",
+  BUSINESS_MANAGER: "Business",
   ADMIN:          "Administration",
 };
 

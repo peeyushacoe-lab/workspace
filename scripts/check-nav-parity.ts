@@ -9,7 +9,8 @@ import type { UserRole } from "../src/generated/prisma/enums";
 
 const ROLES: UserRole[] = [
   "ADMIN","CEO","CISO","R_AND_D","COO","OPS_MANAGER","DEVELOPER","CYBER_SECURITY",
-  "QA","MARKETING","RESEARCH","FINANCE","OPERATIONS","SUPPORT","INTERNSHIP","HR","MEMBER",
+  "QA","MARKETING","RESEARCH","FINANCE","OPERATIONS","SUPPORT","BUSINESS_MANAGER",
+  "INTERNSHIP","HR","MEMBER",
 ] as UserRole[];
 
 // Rail links intentionally added back for routes that were reachable by URL but

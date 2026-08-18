@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 import type { SessionUser } from "@/lib/auth";
 import { WorkspaceDashboard } from "@/components/WorkspaceDashboard";
+import { can } from "@/lib/rbac/can";
+import { RevenueSummaryCard } from "@/components/clients/RevenueSummaryCard";
 
 async function getRecentEmailLogs(user: SessionUser) {
   if (!process.env.DATABASE_URL) return [];
@@ -21,6 +23,9 @@ async function getRecentEmailLogs(user: SessionUser) {
 export default async function DashboardPage() {
   const currentUser = await getCurrentUser();
   const recentLogs = await getRecentEmailLogs(currentUser!);
+  // Checked server-side so the card (and its fetch) never mounts for a viewer
+  // who cannot see client fees — no flash of a component that immediately 403s.
+  const showRevenue = currentUser ? await can(currentUser.id, "clients.finance.read") : false;
 
   return (
     <div className="p-8 min-h-full">
@@ -30,6 +35,11 @@ export default async function DashboardPage() {
           Send quick messages and track delivery status across the workspace.
         </p>
       </div>
+      {showRevenue && (
+        <div className="mb-8">
+          <RevenueSummaryCard />
+        </div>
+      )}
       <WorkspaceDashboard currentUser={currentUser!} recentLogs={recentLogs} />
     </div>
   );

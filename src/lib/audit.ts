@@ -56,7 +56,29 @@ export type AuditAction =
   | "SESSION_REVOKED"
   // Connect org policy change. Retention especially: deletions happen on a
   // schedule with no other trace, so the decision has to be attributable.
-  | "CONNECT_POLICY_UPDATED";
+  | "CONNECT_POLICY_UPDATED"
+  // Client book. Money and ownership are the two things people argue about
+  // after the fact, so both are recorded: who changed a client's owner, who
+  // recorded a fee, and — separately — who confirmed the payment landed.
+  | "CLIENT_CREATED"
+  | "CLIENT_UPDATED"
+  | "CLIENT_DELETED"
+  | "CLIENT_OWNER_CHANGED"
+  | "CLIENT_DELIVERABLE_CREATED"
+  | "CLIENT_DELIVERABLE_UPDATED"
+  | "CLIENT_DELIVERABLE_DELETED"
+  | "CLIENT_FEE_CREATED"
+  | "CLIENT_FEE_UPDATED"
+  | "CLIENT_FEE_PAYMENT_CONFIRMED"
+  | "CLIENT_FEE_DELETED"
+  // Auto-flagged by the overdue sweep (src/workers/cleanup.worker.ts), not a
+  // human action — kept distinct from CLIENT_FEE_UPDATED so the audit trail
+  // shows plainly that nobody touched the record, the due date just passed.
+  | "CLIENT_FEE_OVERDUE_FLAGGED"
+  // The oversight trail: leadership cannot edit a client, so a request is the
+  // only mark they leave. It has to be as attributable as an edit would be.
+  | "CLIENT_REQUEST_RAISED"
+  | "CLIENT_REQUEST_UPDATED";
 
 export async function logAudit({
   actorId,

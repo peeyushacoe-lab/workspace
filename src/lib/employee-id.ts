@@ -30,6 +30,9 @@ export const ROLE_CODES: Record<string, string> = {
   FINANCE: "12",
   OPERATIONS: "13",
   SUPPORT: "14",
+  // Regional business managers share one code — the region is a display
+  // label, not a distinct role, so they sit in one sequence.
+  BUSINESS_MANAGER: "15",
 };
 
 /** Safely read preferences.hr.employeeId from a user's preferences JSON. */

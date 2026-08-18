@@ -9,6 +9,8 @@ import { runSentinelCorrelation } from "@/lib/sentinel/correlation-engine";
 import { createNotification } from "@/lib/notifications";
 import { nextRecurrenceDate } from "@/lib/task-recurrence";
 import { readPolicies } from "@/lib/connect-policies";
+import { logAudit } from "@/lib/audit";
+import { formatMoney } from "@/lib/clients";
 
 export function createCleanupWorker() {
   const worker = new Worker<CleanupJobData>(
@@ -214,6 +216,59 @@ export function createCleanupWorker() {
           }
         }
         logger.info({ notified }, "[cleanup-worker] Due-soon task reminders sent");
+        return;
+      }
+
+      if (type === "CLIENT_FEES_OVERDUE") {
+        // Only INVOICED + paidMinor 0 rows past their due date — this mirrors
+        // derivedFeeStatus() in src/lib/clients.ts exactly: a fee with any
+        // payment against it becomes PART_PAID, never OVERDUE, so it is
+        // deliberately excluded here too. Keeping the two in lockstep is what
+        // lets the UI trust a fee's stored status instead of recomputing it
+        // from amounts on every render.
+        const now = new Date();
+        const overdue = await prisma.clientFee.findMany({
+          where: { status: "INVOICED", paidMinor: 0, dueAt: { lt: now } },
+          select: {
+            id: true, clientId: true, description: true, amountMinor: true, currency: true,
+            client: { select: { id: true, name: true, ownerId: true } },
+          },
+        });
+
+        if (overdue.length > 0) {
+          await prisma.clientFee.updateMany({
+            where: { id: { in: overdue.map((f) => f.id) } },
+            data: { status: "OVERDUE" },
+          });
+
+          for (const fee of overdue) {
+            await logAudit({
+              actorId: null, // system-initiated, not a person's action
+              action: "CLIENT_FEE_OVERDUE_FLAGGED",
+              targetType: "ClientFee",
+              targetId: fee.id,
+              metadata: {
+                clientId: fee.clientId,
+                description: fee.description,
+                amountMinor: fee.amountMinor,
+                currency: fee.currency,
+              },
+            });
+            if (fee.client.ownerId) {
+              await createNotification({
+                userId: fee.client.ownerId,
+                type: "SYSTEM",
+                title: `${fee.client.name}: fee overdue`,
+                body: `${fee.description} (${formatMoney(fee.amountMinor, fee.currency)}) passed its due date with nothing received.`,
+                link: `/clients/${fee.clientId}`,
+                metadata: { kind: "client-fee-overdue", clientId: fee.clientId, feeId: fee.id },
+              }).catch((err) => {
+                logger.error({ err, feeId: fee.id }, "[cleanup-worker] Overdue-fee notify failed");
+              });
+            }
+          }
+        }
+        logger.info({ flagged: overdue.length }, "[cleanup-worker] Overdue fees flagged");
         return;
       }
 

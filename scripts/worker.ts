@@ -147,6 +147,11 @@ async function scheduleCleanupJobs() {
   // Chat retention. Daily is the right cadence for a policy measured in days,
   // and it runs at 03:00 with the rest of the destructive cleanup work.
   await cleanupQueue.add("chat-retention", { type: "CHAT_RETENTION" }, { repeat: repeatOpts, jobId: "chat-retention" });
+  // Client fees: flip INVOICED -> OVERDUE once the due date passes. Hourly,
+  // same cadence as task-due-soon — a fee going overdue is exactly as
+  // time-sensitive as a task deadline, and the BM should not learn about it a
+  // day late because it shares the 03:00 batch with log purges.
+  await cleanupQueue.add("client-fees-overdue", { type: "CLIENT_FEES_OVERDUE" }, { repeat: { pattern: "0 * * * *" }, jobId: "client-fees-overdue" });
 
   logger.info("Recurring cleanup jobs scheduled");
 }

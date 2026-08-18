@@ -45,6 +45,10 @@ export const TEAM_SEEDS: TeamSeed[] = [
   { slug: "research",    name: "Research",     icon: "flask",       color: "#7c5cd6", roles: ["RESEARCH"] },
   { slug: "qa",          name: "QA & Testing", icon: "clipboard",   color: "#22c55e", roles: ["QA"] },
   { slug: "support",     name: "Support",      icon: "headphones",  color: "#06b6d4", roles: ["SUPPORT"] },
+  // Business Managers report into the Operations Manager, so the OM is seeded
+  // into this team rather than only overseeing it from outside — the team space
+  // is where the client book actually gets discussed.
+  { slug: "business",    name: "Business",     icon: "briefcase",   color: "#0d9488", roles: ["BUSINESS_MANAGER", "OPS_MANAGER"] },
   { slug: "hr",          name: "HR",           icon: "users",       color: "#f472b6", roles: ["HR"] },
   { slug: "interns",     name: "Interns",      icon: "graduation",  color: "#ec4899", roles: ["INTERNSHIP"] },
   { slug: "all-hands",   name: "All Hands",    icon: "users",       color: "#6b6a65", roles: [], everyone: true },

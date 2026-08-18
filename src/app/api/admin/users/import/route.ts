@@ -11,7 +11,7 @@ import crypto from "crypto";
 const VALID_ROLES = new Set([
   "ADMIN", "CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER",
   "DEVELOPER", "CYBER_SECURITY", "QA", "MARKETING",
-  "RESEARCH", "FINANCE", "OPERATIONS", "SUPPORT", "INTERNSHIP",
+  "RESEARCH", "FINANCE", "OPERATIONS", "SUPPORT", "BUSINESS_MANAGER", "INTERNSHIP",
 ]);
 
 type ImportRow = { email: string; fullName: string; role: string };

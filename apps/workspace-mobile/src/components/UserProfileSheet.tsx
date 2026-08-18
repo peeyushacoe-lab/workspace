@@ -32,6 +32,7 @@ const ROLE_LABELS: Record<string, string> = {
   QA: "QA Engineer", MARKETING: "Marketing",
   RESEARCH: "Research", FINANCE: "Finance",
   OPERATIONS: "Operations", SUPPORT: "Support",
+  BUSINESS_MANAGER: "Business Manager",
 };
 
 function Avatar({ user, size = 72 }: { user: WorkspaceUser; size?: number }) {

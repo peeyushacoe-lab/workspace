@@ -1,5 +1,5 @@
 // ─── System role definitions (RFC-001) ────────────────────────────────────────
-// The 16 built-in UserRole enum values become seeded system `Role` rows. This file
+// The 17 built-in UserRole enum values become seeded system `Role` rows. This file
 // is the single translation of the ENFORCED access model — the `pathAccess` arrays
 // in src/lib/auth.ts — into the new permission-key model.
 //
@@ -59,6 +59,28 @@ const MGMT_EXTRA: PermissionKey[] = [
   "mentor.manage", "internship.view",
 ];
 
+// Business Manager extras: the executive read surfaces plus the client book.
+// Deliberately excludes users.manage / mentor.manage / internship.view — a
+// regional business manager reads the numbers and the contact book, they do not
+// issue accounts or run the internship programme.
+//
+// Note what is NOT here: `clients.admin` and `clients.finance.manage`. A BM
+// edits the clients they own (ownership is enforced per-record in
+// src/lib/clients.ts, not by this key) and can see the money, but confirming a
+// payment is Finance's call and editing another BM's book is the Ops Manager's.
+const BUSINESS_EXTRA: PermissionKey[] = [
+  "dashboard.view", "contacts.read",
+  "clients.read", "clients.write", "clients.finance.read",
+];
+
+// What leadership (CEO, CISO, COO) gets over the client book: total visibility,
+// zero write. There is no `clients.write` here and that is the whole point —
+// they influence a record by raising a ClientRequest against it, which the
+// owning Business Manager (copied to the Ops Manager) then acts on.
+const CLIENT_OVERSIGHT: PermissionKey[] = [
+  "clients.read", "clients.finance.read",
+];
+
 const uniq = (...groups: PermissionKey[][]): PermissionKey[] =>
   Array.from(new Set(groups.flat()));
 
@@ -72,7 +94,7 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
     key: "ceo", enumValue: "CEO", name: "CEO",
     description: "Chief Executive — workspace, leadership and SOC access.",
     rank: 10, isSingleton: true,
-    permissions: uniq(BASE_WORKSPACE, MGMT_EXTRA, ["soc.view", "soc.manage"]),
+    permissions: uniq(BASE_WORKSPACE, MGMT_EXTRA, CLIENT_OVERSIGHT, ["soc.view", "soc.manage"]),
   },
   {
     key: "ciso", enumValue: "CISO", name: "CISO",
@@ -87,13 +109,13 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
       // IT administration, so requiring full ADMIN to reach them meant either
       // the CISO couldn't do their job or everyone became an admin.
       "org.manage",
-    ]),
+    ], CLIENT_OVERSIGHT),
   },
   {
     key: "coo", enumValue: "COO", name: "COO",
     description: "Chief Operating Officer.",
     rank: 20, isSingleton: true,
-    permissions: uniq(BASE_WORKSPACE, MGMT_EXTRA),
+    permissions: uniq(BASE_WORKSPACE, MGMT_EXTRA, CLIENT_OVERSIGHT),
   },
   {
     key: "r_and_d", enumValue: "R_AND_D", name: "R&D Head",
@@ -103,9 +125,13 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
   },
   {
     key: "ops_manager", enumValue: "OPS_MANAGER", name: "Operations Manager",
-    description: "Operations manager.",
+    description:
+      "Operations manager. Business Managers report into this role, so it holds " +
+      "`clients.admin` — the whole client book across every region, editable.",
     rank: 30, isSingleton: true,
-    permissions: uniq(BASE_WORKSPACE, MGMT_EXTRA),
+    permissions: uniq(BASE_WORKSPACE, MGMT_EXTRA, [
+      "clients.read", "clients.write", "clients.admin", "clients.finance.read",
+    ]),
   },
   {
     key: "hr", enumValue: "HR", name: "HR",
@@ -141,8 +167,13 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
   },
   {
     key: "finance", enumValue: "FINANCE", name: "Finance",
-    description: "Finance team.",
-    rank: 100, isSingleton: false, permissions: BASE_WORKSPACE,
+    description:
+      "Finance team. Reads every client, owns the money: raises invoices and is " +
+      "the only role that can confirm a payment has actually arrived.",
+    rank: 100, isSingleton: false,
+    permissions: uniq(BASE_WORKSPACE, [
+      "clients.read", "clients.finance.read", "clients.finance.manage",
+    ]),
   },
   {
     key: "operations", enumValue: "OPERATIONS", name: "Operations",
@@ -153,6 +184,15 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
     key: "support", enumValue: "SUPPORT", name: "Support",
     description: "Customer support.",
     rank: 100, isSingleton: false, permissions: BASE_WORKSPACE,
+  },
+  {
+    key: "business_manager", enumValue: "BUSINESS_MANAGER", name: "Business Manager",
+    description:
+      "Regional business manager (India, UK, …). Full workspace plus the executive " +
+      "dashboard and contact book. Multiple holders — the region is a display label " +
+      "on the user, not a separate role.",
+    rank: 50, isSingleton: false,
+    permissions: uniq(BASE_WORKSPACE, BUSINESS_EXTRA),
   },
   {
     key: "internship", enumValue: "INTERNSHIP", name: "Internship",

@@ -6,7 +6,7 @@ import {
   Code2, Shield, DollarSign, Settings2, Crown, Users,
   MessageSquare, FolderOpen, CalendarDays, CheckSquare,
   ChevronDown, ChevronUp, Loader2,
-  Megaphone, FlaskConical, ClipboardCheck, Headphones, GraduationCap,
+  Megaphone, FlaskConical, ClipboardCheck, Headphones, GraduationCap, Briefcase,
 } from "lucide-react";
 import { PageHeader } from "@/components/Shell";
 import { avatarGradient } from "@/lib/avatar";
@@ -25,6 +25,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   clipboard:     ClipboardCheck,
   headphones:    Headphones,
   graduation:    GraduationCap,
+  briefcase:     Briefcase,
 };
 
 function TeamIcon({ icon, color, size = 18 }: { icon: string; color: string; size?: number }) {

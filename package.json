@@ -20,6 +20,7 @@
     "migrate:tasks-redis-to-pg": "tsx scripts/migrate-tasks-redis-to-pg.ts",
     "migrate:note-tags": "tsx scripts/migrate-note-tags.ts",
     "test:rbac-parity": "tsx scripts/rbac-parity-test.ts",
+    "test:clients-access": "tsx scripts/clients-access-matrix.ts",
     "test:teams-parity": "tsx scripts/teams-parity-test.ts",
     "create-user": "tsx scripts/create-user.ts",
     "worker": "tsx scripts/worker.ts",

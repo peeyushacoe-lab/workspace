@@ -10,7 +10,7 @@ import type { UserRole } from "@/generated/prisma/enums";
 const ALL_VALID_ROLES: UserRole[] = [
   "ADMIN", "CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER",
   "DEVELOPER", "CYBER_SECURITY", "QA", "MARKETING",
-  "RESEARCH", "FINANCE", "OPERATIONS", "SUPPORT", "INTERNSHIP",
+  "RESEARCH", "FINANCE", "OPERATIONS", "SUPPORT", "BUSINESS_MANAGER", "INTERNSHIP",
 ];
 
 export async function PATCH(

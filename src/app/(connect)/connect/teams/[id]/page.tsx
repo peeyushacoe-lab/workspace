@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft, Users, Code2, Shield, DollarSign, Settings2, Crown, Megaphone,
-  FlaskConical, ClipboardCheck, Headphones, GraduationCap,
+  FlaskConical, ClipboardCheck, Headphones, GraduationCap, Briefcase,
 } from "lucide-react";
 import { getSessionUserFromCookieStore } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -91,4 +91,5 @@ const ICON_MAP: Record<string, React.ElementType> = {
   clipboard: ClipboardCheck,
   headphones: Headphones,
   graduation: GraduationCap,
+  briefcase: Briefcase,
 };

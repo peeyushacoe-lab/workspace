@@ -8,6 +8,7 @@ import { CREATOR_PERMISSIONS, KEY_ROLES } from "@/lib/auth";
 import { sendInviteEmail, sendInternWelcomeEmail, sendWelcomeInboxMessage } from "@/lib/email";
 import { generateEmployeeId } from "@/lib/employee-id";
 import { indexingQueue } from "@/lib/queues/indexing.queue";
+import { findOpsManagerId } from "@/lib/client-requests";
 import type { UserRole } from "@/generated/prisma/enums";
 
 const createUserSchema = z.object({
@@ -109,6 +110,18 @@ export async function POST(request: Request) {
       return null;
     });
 
+    // Business Managers report into the Operations Manager. Setting this at
+    // creation rather than leaving it for someone to fill in later is what makes
+    // the reporting line real: it is what /people renders, and it is who an
+    // unanswered client request escalates to. Shares findOpsManagerId with the
+    // request-routing code (src/lib/client-requests.ts) so both fall back to an
+    // Admin the same way when the Ops Manager seat is empty — a missing manager
+    // must never block account creation or mean "reports to nobody".
+    const defaultManagerId =
+      role === "BUSINESS_MANAGER"
+        ? await findOpsManagerId(currentUser.organizationId ?? null)
+        : null;
+
     const user = await prisma.user.create({
       data: {
         email: validated.workEmail,
@@ -118,6 +131,7 @@ export async function POST(request: Request) {
         role,
         ...(validated.customRole ? { customRole: validated.customRole } : {}),
         ...(employeeId ? { preferences: { hr: { employeeId } } } : {}),
+        ...(defaultManagerId ? { managerId: defaultManagerId } : {}),
         mustResetPassword: true,
         invitedBy: currentUser.id,
         organizationId: currentUser.organizationId ?? undefined,

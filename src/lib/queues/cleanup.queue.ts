@@ -28,4 +28,9 @@ export type CleanupJobData =
   | { type: "TASK_DUE_SOON" }
   // Per-organisation chat message retention. No-op unless an admin sets a
   // window in Connect Admin → Retention.
-  | { type: "CHAT_RETENTION" };
+  | { type: "CHAT_RETENTION" }
+  // Flips ClientFee rows from INVOICED to OVERDUE once their due date has
+  // passed with nothing paid. See src/lib/clients.ts `derivedFeeStatus` — this
+  // job is what makes that derivation true in the database rather than only
+  // when someone happens to PATCH the fee.
+  | { type: "CLIENT_FEES_OVERDUE" };
