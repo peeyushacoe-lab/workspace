@@ -11,7 +11,7 @@ import {
   REQUEST_STATUS_LABELS, REQUEST_STATUS_TONE,
   REQUEST_PRIORITY_LABELS, REQUEST_PRIORITY_TONE,
   formatMoney,
-} from "@/lib/clients";
+} from "@/lib/clients-shared";
 import { ClientDetail } from "./ClientDetail";
 import type { ClientRow, InboxRequest, Viewer } from "./types";
 

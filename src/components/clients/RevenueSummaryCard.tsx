@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Briefcase, ArrowRight, AlertTriangle } from "lucide-react";
-import { formatMoney } from "@/lib/clients";
+import { formatMoney } from "@/lib/clients-shared";
 
 type Summary = {
   byCurrency: { currency: string; billedMinor: number; paidMinor: number }[];
