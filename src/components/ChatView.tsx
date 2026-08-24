@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 ﻿"use client";
 
-import { useCallback, useEffect, useRef, useState, memo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, memo } from "react";
 import { useSearchParams } from "next/navigation";
 import { connectSocket, disconnectSocket } from "@/lib/socket-client";
 import type { Socket } from "socket.io-client";
@@ -3602,16 +3602,32 @@ export function ChatView({
     };
   }, [selectedChannelId]);
 
+  // Stable string of all channel-member user IDs (excluding self), sorted so
+  // identical member sets produce the same string even when the channels array
+  // reference changes (e.g. every 30s when loadChannels replaces the array).
+  // The presence effect depends on this string, not on `channels`, so it won't
+  // re-run on every channel refresh — only when members actually join or leave.
+  const channelMemberKey = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          channels
+            .flatMap((c) => c.members.map((m) => m.userId))
+            .filter((id) => id !== currentUserId)
+        )
+      )
+        .sort()
+        .join(","),
+    [channels, currentUserId]
+  );
+
   // Global presence: poll Redis-backed presence for all channel members every 60s
   useEffect(() => {
-    const allMemberIds = Array.from(
-      new Set(channels.flatMap((c) => c.members.map((m) => m.userId)).filter((id) => id !== currentUserId))
-    );
-    if (allMemberIds.length === 0) return;
+    if (!channelMemberKey) return;
 
     const fetchGlobalPresence = async () => {
       try {
-        const res = await fetch(`/api/presence?userIds=${encodeURIComponent(allMemberIds.join(","))}`, { cache: "no-store" });
+        const res = await fetch(`/api/presence?userIds=${encodeURIComponent(channelMemberKey)}`, { cache: "no-store" });
         if (!res.ok) return;
         const data = await res.json() as Record<string, { status: string; updatedAt: string }>;
         setPresenceData(data);
@@ -3642,7 +3658,7 @@ export function ChatView({
       clearInterval(presenceInterval);
       clearInterval(heartbeatInterval);
     };
-  }, [channels, currentUserId]);
+  }, [channelMemberKey]);
 
   // Load top-level messages when channel changes
   useEffect(() => {
@@ -3898,8 +3914,22 @@ export function ChatView({
 
     const source = new EventSource(`/api/chat/channels/${selectedChannelId}/stream`);
 
-    source.addEventListener("connected", () => setLiveConnected(true));
-    source.onopen = () => setLiveConnected(true);
+    // Debounce the "Reconnecting" banner: on Vercel the 30s function-duration
+    // cap closes the SSE stream every ~30s and the browser reconnects within
+    // milliseconds. Without the delay, the banner flashes every 30s even though
+    // live delivery was never truly interrupted. Only show it if we're still
+    // CONNECTING after 2.5s — that's a real network problem.
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    const clearReconnectTimer = () => {
+      if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+    };
+
+    const onStreamOpen = () => {
+      clearReconnectTimer();
+      setLiveConnected(true);
+    };
+    source.addEventListener("connected", onStreamOpen);
+    source.onopen = onStreamOpen;
 
     source.addEventListener("message", (e) => {
       const msg = JSON.parse((e as MessageEvent).data) as Message;
@@ -3962,16 +3992,16 @@ export function ChatView({
     });
 
     source.onerror = () => {
-      // EventSource auto-reconnects on transient errors/timeouts (e.g. the 30s
-      // Vercel function duration cap), so this is usually a non-event and must
-      // not be treated as an error. But `readyState === CONNECTING` after an
-      // error means the connection actually dropped and is being retried — the
-      // one case where the user needs to know live delivery has paused, rather
-      // than staring at a channel that has silently stopped moving.
-      if (source.readyState === EventSource.CONNECTING) setLiveConnected(false);
+      if (source.readyState === EventSource.CONNECTING && !reconnectTimer) {
+        reconnectTimer = setTimeout(() => {
+          reconnectTimer = null;
+          if (source.readyState !== EventSource.OPEN) setLiveConnected(false);
+        }, 2500);
+      }
     };
 
     return () => {
+      clearReconnectTimer();
       setLiveConnected(true);
       source.close();
     };
@@ -4091,12 +4121,35 @@ export function ChatView({
     const text = composerText;
     const attachment = composerAttachment;
     const quotedMessageId = replyingTo?.id;
+    const urgent = composerUrgent;
     setComposerText("");
     setComposerAttachment(null);
     setReplyingTo(null);
+    setComposerUrgent(false);
+
+    // Optimistic: add the message to the timeline immediately so the user sees
+    // it appear the instant they hit send. The temp ID is replaced (or removed
+    // on failure) once the server responds. If the SSE stream also delivers the
+    // confirmed message first, the dedup check in the SSE handler prevents a
+    // duplicate — and the replace below discards the optimistic entry cleanly.
+    const optimisticId = `optimistic-${Date.now()}`;
+    const knownSelf = messages.find((m) => m.userId === currentUserId)?.user;
+    const optimisticMsg: Message = {
+      id: optimisticId,
+      channelId: selectedChannelId,
+      userId: currentUserId,
+      content: text,
+      createdAt: new Date().toISOString(),
+      isUrgent: urgent,
+      user: knownSelf ?? { id: currentUserId, fullName: "…", avatarUrl: null, role: _userRole ?? "MEMBER" },
+      reactions: [],
+      replies: [],
+      ...(quotedMessageId ? { quotedMessageId } : {}),
+      ...(attachment ? { attachmentUrl: attachment.url, attachmentMime: attachment.mime, attachmentName: attachment.name } : {}),
+    };
+    setMessages((prev) => [...prev, optimisticMsg]);
+
     try {
-      const urgent = composerUrgent;
-      setComposerUrgent(false);
       const res = await fetch(`/api/chat/channels/${selectedChannelId}/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -4115,9 +4168,16 @@ export function ChatView({
         throw new Error(e.error ?? "Failed to send message");
       }
 
-      // Add sent message to UI immediately (socket may be delayed or unavailable)
+      // Replace the optimistic message with the server-confirmed one.
+      // If the SSE stream already delivered the real message, skip the add to
+      // avoid a duplicate — just remove the optimistic entry.
       const newMsg = (await res.json()) as Message;
-      setMessages((prev) => prev.some((m) => m.id === newMsg.id) ? prev : [...prev, newMsg]);
+      setMessages((prev) => {
+        const withoutOptimistic = prev.filter((m) => m.id !== optimisticId);
+        return withoutOptimistic.some((m) => m.id === newMsg.id)
+          ? withoutOptimistic
+          : [...withoutOptimistic, newMsg];
+      });
 
       // @Sage is handled server-side in `lib/chat/deliver.ts` now. It used to
       // run here: the browser POSTed the question to /api/ai/chat and then
@@ -4128,11 +4188,12 @@ export function ChatView({
       if (mentionsSage(text)) setBotResponding(true);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to send message");
-      // Put the text back rather than losing it — a rejected send is usually
-      // retryable in a few seconds.
+      // Remove the optimistic message and restore the composer so the user can
+      // retry — a rate-limit or validation rejection is usually retryable.
+      setMessages((prev) => prev.filter((m) => m.id !== optimisticId));
       setComposerText(text);
       setComposerAttachment(attachment);
-      setComposerUrgent(composerUrgent);
+      setComposerUrgent(urgent);
     } finally {
       setSending(false);
     }
