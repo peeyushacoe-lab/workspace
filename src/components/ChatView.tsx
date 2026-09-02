@@ -2273,6 +2273,7 @@ function ChannelSection({
   onNew,
   newTitle,
   currentUserId,
+  defaultCollapsed = false,
 }: {
   label: string;
   /** Scoped pages name themselves in the shell's top bar — a heading here
@@ -2286,10 +2287,16 @@ function ChannelSection({
   onNew?: () => void;
   newTitle?: string;
   currentUserId: string;
+  /** Start collapsed — used for less-active sections (e.g. Groups). */
+  defaultCollapsed?: boolean;
 }) {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(defaultCollapsed);
 
   if (channels.length === 0 && !onNew) return null;
+
+  // Total unread across this section — shown in the header when collapsed so
+  // the user knows there's something to expand without opening every section.
+  const sectionUnread = channels.reduce((sum, c) => sum + (c.unreadCount ?? 0), 0);
 
   // Row style is derived from the channel's own type, never from `label`.
   // This used to string-match the display label ("DIRECT MESSAGES"), so simply
@@ -2299,32 +2306,37 @@ function ChannelSection({
   return (
     <div className="mb-1">
       {!hideLabel && (
-        <div className="flex items-center justify-between px-2.5 pt-3.5 pb-2">
+        <div className="flex items-center justify-between px-2 pt-3 pb-1">
           <button
             onClick={() => setCollapsed((p) => !p)}
-            className="flex items-center gap-1 text-subtle hover:text-muted transition-colors"
+            className="flex items-center gap-1.5 min-w-0 text-subtle hover:text-muted transition-colors"
           >
             {collapsed ? (
-              <ChevronRight className="w-3 h-3" />
+              <ChevronRight className="w-3 h-3 flex-shrink-0" />
             ) : (
-              <ChevronDown className="w-3 h-3" />
+              <ChevronDown className="w-3 h-3 flex-shrink-0" />
             )}
-            <span className="text-[11px] font-semibold text-subtle">{label}</span>
+            <span className="text-[11px] font-semibold tracking-wide uppercase text-subtle truncate">{label}</span>
+            {collapsed && sectionUnread > 0 && (
+              <span className="ml-1 bg-accent text-accent-foreground text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1 leading-none flex-shrink-0">
+                {sectionUnread > 99 ? "99+" : sectionUnread}
+              </span>
+            )}
           </button>
-          {onNew && (
+          {onNew && !collapsed && (
             <button
               onClick={onNew}
-              className="text-subtle hover:text-muted transition-colors"
+              className="text-subtle hover:text-muted transition-colors flex-shrink-0"
               title={newTitle ?? "New"}
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
       )}
 
       {!collapsed && (
-        <div className="space-y-0.5">
+        <div className="space-y-px">
           {channels.map((ch) => {
             const isSelected = selectedChannelId === ch.id;
             // Badge = unread messages only. The selected channel never shows a
@@ -2338,7 +2350,7 @@ function ChannelSection({
             const showAvatarRow = ch.type === "DIRECT" || isGroup;
 
             if (showAvatarRow) {
-              // Direct message / group row — 44px with avatar + presence dot
+              // Direct message / group row — avatar + presence dot + preview
               const other = ch.members?.find((m) => m.userId !== currentUserId);
               const otherStatus = other ? presenceData?.[other.userId]?.status ?? "offline" : "offline";
               const statusColors: Record<string, string> = { online: "var(--ok)", away: "var(--warn)", busy: "var(--crit)", in_meeting: "var(--violet)", dnd: "var(--crit)", offline: "#9b9a93" };
@@ -2347,48 +2359,46 @@ function ChannelSection({
                 <button
                   key={ch.id}
                   onClick={() => onSelect(ch.id)}
-                  className={`nx-nav-item nx-press w-full flex items-center gap-2.5 min-h-[56px] rounded-xl px-[11px] py-2 text-left transition-colors ${
+                  className={`nx-nav-item nx-press w-full flex items-center gap-2.5 min-h-[52px] rounded-lg px-2.5 py-2 text-left transition-colors ${
                     isSelected ? "bg-accent-soft" : "hover:bg-hover"
                   }`}
                 >
                   <div className="relative flex-shrink-0">
                     {isGroup ? (
-                      <div className="w-9 h-9 rounded-full bg-surface-sunken border border-border flex items-center justify-center">
-                        <Users className="w-4 h-4 text-muted" />
+                      <div className="w-8 h-8 rounded-full bg-surface border border-border flex items-center justify-center">
+                        <Users className="w-3.5 h-3.5 text-muted" />
                       </div>
                     ) : (
-                      <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white" style={{ background: avatarGradient(ch.name) }}>
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white" style={{ background: avatarGradient(ch.name) }}>
                         {ch.name.charAt(0).toUpperCase()}
                       </div>
                     )}
                     {!isGroup && (
                       <span
-                        className="absolute -bottom-px -right-px w-2.5 h-2.5 rounded-full border-2 border-surface"
+                        className="absolute -bottom-px -right-px w-2.5 h-2.5 rounded-full border-2 border-surface-sunken"
                         style={{ background: presence }}
                       />
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline gap-1.5">
-                      <span className={`truncate flex-1 text-[13px] ${isSelected || hasUnread ? "font-semibold text-foreground" : "font-medium text-foreground"}`}>
+                      <span className={`truncate flex-1 text-[13px] ${hasUnread ? "font-semibold text-foreground" : isSelected ? "font-semibold text-accent" : "font-medium text-foreground"}`}>
                         {ch.name}
                       </span>
                       {ch.lastMessage && (
-                        <span className="flex-shrink-0 text-[10.5px] tabular-nums text-subtle">
+                        <span className="flex-shrink-0 text-[10px] tabular-nums text-subtle">
                           {relativeShort(ch.lastMessage.createdAt)}
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-1">
-                      <p className={`truncate text-[12px] ${hasUnread ? "font-medium text-foreground" : "text-subtle"}`}>
-                        {ch.lastMessage
-                          ? `${ch.lastMessage.authorName}: ${ch.lastMessage.content || "Attachment"}`
-                          : "No messages yet"}
-                      </p>
-                    </div>
+                    <p className={`truncate text-[11.5px] ${hasUnread ? "font-medium text-muted" : "text-subtle"}`}>
+                      {ch.lastMessage
+                        ? `${ch.lastMessage.authorName}: ${ch.lastMessage.content || "Attachment"}`
+                        : "No messages yet"}
+                    </p>
                   </div>
                   {showBadge && (
-                    <span className="nx-badge font-mono bg-accent text-accent-foreground text-[10.5px] rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-[5px] font-bold leading-none flex-shrink-0">
+                    <span className="nx-badge bg-accent text-accent-foreground text-[10px] rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 font-bold leading-none flex-shrink-0">
                       {badgeCount > 99 ? "99+" : badgeCount}
                     </span>
                   )}
@@ -2396,32 +2406,57 @@ function ChannelSection({
               );
             }
 
-            // Channel row — 38px with colored #
-            const hashColor = isSelected || hasUnread ? "var(--accent)" : "var(--subtle)";
+            // Channel row — compact when no preview, expanded when there's a last message
+            const hashColor = isSelected ? "var(--accent)" : hasUnread ? "var(--accent)" : "var(--subtle)";
+            const hasPreview = !!ch.lastMessage;
             return (
               <button
                 key={ch.id}
                 onClick={() => onSelect(ch.id)}
-                className={`nx-nav-item nx-press w-full flex items-center gap-2.5 h-[38px] rounded-xl px-[11px] text-left transition-colors ${
-                  isSelected ? "bg-accent-soft" : "hover:bg-hover"
-                }`}
+                className={`nx-nav-item nx-press w-full flex items-center gap-2 rounded-lg px-2.5 text-left transition-colors ${
+                  hasPreview ? "min-h-[48px] py-2" : "h-[36px]"
+                } ${isSelected ? "bg-accent-soft" : "hover:bg-hover"}`}
               >
-                {ch.isBroadcast ? (
-                  <Megaphone className="w-3.5 h-3.5 flex-shrink-0" style={{ color: hashColor }} />
-                ) : (
-                  <span className="text-[15px] font-semibold leading-none flex-shrink-0" style={{ color: hashColor }}>#</span>
-                )}
-                <span className={`truncate flex-1 text-[13px] ${isSelected || hasUnread ? "font-semibold text-foreground" : "font-medium text-muted"}`}>{ch.name}</span>
+                <span className="flex-shrink-0 w-5 flex items-center justify-center">
+                  {ch.isBroadcast ? (
+                    <Megaphone className="w-3.5 h-3.5" style={{ color: hashColor }} />
+                  ) : (
+                    <span className="text-[14px] font-bold leading-none" style={{ color: hashColor }}>#</span>
+                  )}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className={`truncate flex-1 text-[13px] ${hasUnread ? "font-semibold text-foreground" : isSelected ? "font-semibold text-accent" : "font-medium text-muted"}`}>
+                      {ch.name}
+                    </span>
+                    {hasPreview && (
+                      <span className="flex-shrink-0 text-[10px] tabular-nums text-subtle">
+                        {relativeShort(ch.lastMessage!.createdAt)}
+                      </span>
+                    )}
+                  </div>
+                  {hasPreview && (
+                    <p className={`truncate text-[11.5px] ${hasUnread ? "font-medium text-muted" : "text-subtle"}`}>
+                      {ch.lastMessage!.authorName}: {ch.lastMessage!.content || "Attachment"}
+                    </p>
+                  )}
+                </div>
                 {showBadge && (
-                  <span className="nx-badge font-mono bg-accent text-accent-foreground text-[10.5px] rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-[5px] font-bold leading-none flex-shrink-0">
+                  <span className="nx-badge bg-accent text-accent-foreground text-[10px] rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 font-bold leading-none flex-shrink-0">
                     {badgeCount > 99 ? "99+" : badgeCount}
                   </span>
                 )}
               </button>
             );
           })}
-          {channels.length === 0 && (
-            <p className="text-subtle text-[11px] px-[11px] py-1 italic">None yet</p>
+          {channels.length === 0 && onNew && (
+            <button
+              onClick={onNew}
+              className="w-full flex items-center gap-2 h-[34px] rounded-lg px-2.5 text-[12px] text-subtle hover:text-muted hover:bg-hover transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              {newTitle ?? "New"}
+            </button>
           )}
         </div>
       )}
@@ -3902,108 +3937,124 @@ export function ChatView({
     };
   }, [selectedChannelId, currentUserId]);
 
-  // Live updates via SSE — this is the transport that actually works in production.
-  // Socket.IO (above) requires a separately-hosted always-on server (NEXT_PUBLIC_SOCKET_URL);
-  // on Vercel that env var is unset and the socket never connects, so without this SSE
-  // fallback new messages and reactions would only ever appear after a full page reload.
-  // The stream re-broadcasts the same Redis pub/sub events the API routes already publish
-  // (see /api/chat/channels/[id]/stream), so both transports can safely coexist — message
-  // appends are deduped by id and reaction/edit updates are idempotent.
+  // Live updates via WebSocket — replaces the earlier SSE stream.
+  // Socket.IO (above) requires a separately-hosted always-on server; on Vercel
+  // that env var is unset so the socket never connects. The WebSocket route at
+  // /api/chat/channels/[id]/ws re-broadcasts the same Redis pub/sub events the
+  // API routes already publish, so it coexists with Socket.IO without conflicts
+  // and message appends are deduped by id.
+  //
+  // Falls back to SSE (/api/chat/channels/[id]/stream) when the browser blocks
+  // WebSocket upgrades (rare, but some corporate proxies do this).
   useEffect(() => {
     if (!selectedChannelId) return;
 
-    const source = new EventSource(`/api/chat/channels/${selectedChannelId}/stream`);
-
-    // Debounce the "Reconnecting" banner: on Vercel the 30s function-duration
-    // cap closes the SSE stream every ~30s and the browser reconnects within
-    // milliseconds. Without the delay, the banner flashes every 30s even though
-    // live delivery was never truly interrupted. Only show it if we're still
-    // CONNECTING after 2.5s — that's a real network problem.
+    let closed = false;
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
     const clearReconnectTimer = () => {
       if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
     };
 
-    const onStreamOpen = () => {
-      clearReconnectTimer();
-      setLiveConnected(true);
-    };
-    source.addEventListener("connected", onStreamOpen);
-    source.onopen = onStreamOpen;
-
-    source.addEventListener("message", (e) => {
-      const msg = JSON.parse((e as MessageEvent).data) as Message;
-      if (msg.channelId !== selectedChannelId) return;
-      // Sage's reply arrives over this stream like any other message, so its
-      // arrival is what clears the "thinking…" indicator. Also clears on any
-      // message from Sage, not just our own request, so two people summoning
-      // it at once don't leave a stuck spinner.
-      if (isSageAuthor(msg.user)) setBotResponding(false);
-      if (msg.parentId) {
-        if (threadParentIdRef.current === msg.parentId) {
-          setThreadMessages((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]));
-        }
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === msg.parentId
-              ? { ...m, replies: [...m.replies.filter((r) => r.id !== msg.id), { id: msg.id }] }
-              : m
-          )
-        );
-      } else {
-        setMessages((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]));
+    // ── Event dispatcher — same logic for both WebSocket and SSE fallback ──
+    const dispatch = (type: string, data: unknown) => {
+      if (type === "connected") {
+        clearReconnectTimer();
+        setLiveConnected(true);
+        return;
       }
-    });
+      if (type === "message") {
+        const msg = data as Message;
+        if (msg.channelId !== selectedChannelId) return;
+        if (isSageAuthor(msg.user)) setBotResponding(false);
+        if (msg.parentId) {
+          if (threadParentIdRef.current === msg.parentId) {
+            setThreadMessages((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]));
+          }
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === msg.parentId
+                ? { ...m, replies: [...m.replies.filter((r) => r.id !== msg.id), { id: msg.id }] }
+                : m
+            )
+          );
+        } else {
+          setMessages((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]));
+        }
+        return;
+      }
+      if (type === "message_updated") {
+        const updated = data as Message;
+        setMessages((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
+        setThreadMessages((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
+        return;
+      }
+      if (type === "message_deleted") {
+        const { id } = data as { id: string };
+        const now = new Date().toISOString();
+        setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, deletedAt: now } : m)));
+        setThreadMessages((prev) => prev.map((m) => (m.id === id ? { ...m, deletedAt: now } : m)));
+        return;
+      }
+      if (type === "reactions_updated") {
+        const { messageId, reactions } = data as { messageId: string; reactions: Reaction[] };
+        setMessages((prev) => prev.map((m) => (m.id === messageId ? { ...m, reactions } : m)));
+        setThreadMessages((prev) => prev.map((m) => (m.id === messageId ? { ...m, reactions } : m)));
+        return;
+      }
+      if (type === "read") {
+        const { userId, fullName, messageIds, readAt } = data as {
+          userId: string; fullName: string; messageIds: string[]; readAt: string;
+        };
+        const applyRead = (m: Message) => {
+          if (!messageIds.includes(m.id)) return m;
+          const existing = m.readBy ?? [];
+          if (existing.some((r) => r.userId === userId)) return m;
+          return { ...m, readBy: [...existing, { userId, readAt, user: { fullName } }] };
+        };
+        setMessages((prev) => prev.map(applyRead));
+        setThreadMessages((prev) => prev.map(applyRead));
+      }
+    };
 
-    source.addEventListener("message_updated", (e) => {
-      const updated = JSON.parse((e as MessageEvent).data) as Message;
-      setMessages((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
-      setThreadMessages((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
-    });
+    // ── Try WebSocket first ────────────────────────────────────────────────
+    const wsUrl = new URL(`/api/chat/channels/${selectedChannelId}/ws`, window.location.href);
+    wsUrl.protocol = wsUrl.protocol.replace("http", "ws");
+    const ws = new WebSocket(wsUrl.toString());
 
-    source.addEventListener("message_deleted", (e) => {
-      const { id } = JSON.parse((e as MessageEvent).data) as { id: string };
-      const now = new Date().toISOString();
-      setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, deletedAt: now } : m)));
-      setThreadMessages((prev) => prev.map((m) => (m.id === id ? { ...m, deletedAt: now } : m)));
-    });
-
-    source.addEventListener("reactions_updated", (e) => {
-      const { messageId, reactions } = JSON.parse((e as MessageEvent).data) as { messageId: string; reactions: Reaction[] };
-      setMessages((prev) => prev.map((m) => (m.id === messageId ? { ...m, reactions } : m)));
-      setThreadMessages((prev) => prev.map((m) => (m.id === messageId ? { ...m, reactions } : m)));
-    });
-
-    source.addEventListener("read", (e) => {
-      const { userId, fullName, messageIds, readAt } = JSON.parse((e as MessageEvent).data) as {
-        userId: string;
-        fullName: string;
-        messageIds: string[];
-        readAt: string;
-      };
-      const applyRead = (m: Message) => {
-        if (!messageIds.includes(m.id)) return m;
-        const existing = m.readBy ?? [];
-        if (existing.some((r) => r.userId === userId)) return m;
-        return { ...m, readBy: [...existing, { userId, readAt, user: { fullName } }] };
-      };
-      setMessages((prev) => prev.map(applyRead));
-      setThreadMessages((prev) => prev.map(applyRead));
-    });
-
-    source.onerror = () => {
-      if (source.readyState === EventSource.CONNECTING && !reconnectTimer) {
+    ws.onopen = () => {
+      // connected event arrives from the server once the Redis subscription is live
+    };
+    ws.onmessage = (e) => {
+      try {
+        const { type, data } = JSON.parse(e.data as string) as { type: string; data: unknown };
+        dispatch(type, data);
+      } catch { /* ignore malformed frames */ }
+    };
+    ws.onerror = () => {
+      if (!closed && !reconnectTimer) {
         reconnectTimer = setTimeout(() => {
           reconnectTimer = null;
-          if (source.readyState !== EventSource.OPEN) setLiveConnected(false);
+          if (!closed && ws.readyState !== WebSocket.OPEN) setLiveConnected(false);
+        }, 2500);
+      }
+    };
+    ws.onclose = (ev) => {
+      if (closed) return;
+      // Normal close (1000/1001) on channel switch — no banner needed.
+      if (ev.code === 1000 || ev.code === 1001) return;
+      if (!reconnectTimer) {
+        reconnectTimer = setTimeout(() => {
+          reconnectTimer = null;
+          if (!closed) setLiveConnected(false);
         }, 2500);
       }
     };
 
     return () => {
+      closed = true;
       clearReconnectTimer();
       setLiveConnected(true);
-      source.close();
+      ws.close(1000, "channel change");
     };
   }, [selectedChannelId]);
 
@@ -4895,22 +4946,18 @@ export function ChatView({
     // single 56px header and no bottom tabs, so that arithmetic was wrong here
     // and the composer ended up below the fold on mobile.
     <div className="flex h-full min-h-0 bg-surface overflow-hidden">
-      {/* Channel sidebar — full width on mobile when no channel, hidden when channel open */}
-      <div className={`${selectedChannelId ? "hidden lg:flex" : "flex"} w-full lg:w-64 flex-shrink-0 bg-surface border-r border-border-soft flex-col overflow-y-auto overflow-x-hidden`}>
-        {/* One search, not three.
-            This column previously carried a "Messages" title, a ⌘K button AND a
-            filter field — stacked directly under the shell's own search box, so
-            the same screen offered four ways to search and no clue which did
-            what. The field below filters THIS list; ⌘K (still bound globally)
-            searches everything. The redundant title bar is gone. */}
-        <div className="px-2.5 py-2.5 border-b border-border-soft flex-shrink-0 flex items-center gap-2">
-          <div className="flex flex-1 min-w-0 items-center gap-2 bg-surface-sunken border border-border rounded-lg px-2.5 py-1.5 focus-within:border-accent/60 focus-within:ring-2 focus-within:ring-accent/20 transition-colors">
+      {/* Connect 2.0 sidebar — Teams-style: slightly sunken background, wider,
+          activity section, message previews on every row, section unread counts */}
+      <div className={`${selectedChannelId ? "hidden lg:flex" : "flex"} w-full lg:w-72 flex-shrink-0 bg-surface-sunken border-r border-border-soft flex-col overflow-hidden`}>
+        {/* Search bar */}
+        <div className="px-3 py-2.5 border-b border-border-soft flex-shrink-0 flex items-center gap-2 bg-surface-sunken">
+          <div className="flex flex-1 min-w-0 items-center gap-2 bg-surface border border-border rounded-lg px-2.5 py-1.5 focus-within:border-accent/60 focus-within:ring-2 focus-within:ring-accent/20 transition-colors shadow-sm">
             <Search className="w-3.5 h-3.5 text-subtle flex-shrink-0" />
             <input
               value={sidebarSearch}
               onChange={(e) => setSidebarSearch(e.target.value)}
-              placeholder={meta?.filterLabel ?? "Filter conversations"}
-              aria-label={meta?.filterLabel ?? "Filter conversations"}
+              placeholder={meta?.filterLabel ?? "Search conversations"}
+              aria-label={meta?.filterLabel ?? "Search conversations"}
               className="flex-1 min-w-0 text-[13px] bg-transparent text-foreground placeholder-subtle outline-none"
             />
             {sidebarSearch && (
@@ -4935,10 +4982,9 @@ export function ChatView({
           )}
         </div>
 
-        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-2.5">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-2 pb-4">
           {meta ? (
-            // Scoped: one flat list, no section heading. The page title in the
-            // shell's top bar already names what you're looking at.
+            // Scoped: one flat list, no section heading.
             scopedList.length === 0 ? (
               <div className="px-3 py-10 text-center">
                 <p className="text-xs text-muted">
@@ -4962,6 +5008,28 @@ export function ChatView({
             )
           ) : (
             <>
+              {/* ── Activity section — unread channels bubbled to the top, Teams-style ── */}
+              {!sidebarSearch && (() => {
+                const unreadAll = [...publicChannels, ...directChannels, ...groupChannels]
+                  .filter((c) => (c.unreadCount ?? 0) > 0 && c.id !== selectedChannelId)
+                  .sort((a, b) => {
+                    const ta = a.lastMessage?.createdAt ?? "";
+                    const tb = b.lastMessage?.createdAt ?? "";
+                    return ta < tb ? 1 : -1;
+                  });
+                if (unreadAll.length === 0) return null;
+                return (
+                  <ChannelSection
+                    label="Activity"
+                    channels={unreadAll}
+                    selectedChannelId={selectedChannelId}
+                    presenceData={presenceData}
+                    onSelect={setSelectedChannelId}
+                    currentUserId={currentUserId}
+                  />
+                );
+              })()}
+
               <ChannelSection
                 label="Channels"
                 channels={publicChannels.filter(matchesFilter)}
@@ -4970,7 +5038,7 @@ export function ChatView({
                 presenceData={presenceData}
                 onSelect={setSelectedChannelId}
                 onNew={sidebarSearch ? undefined : () => setShowNewChannel(true)}
-                newTitle="New Channel"
+                newTitle="New channel"
                 currentUserId={currentUserId}
               />
 
@@ -4982,7 +5050,7 @@ export function ChatView({
                 presenceData={presenceData}
                 onSelect={setSelectedChannelId}
                 onNew={sidebarSearch ? undefined : () => setShowNewGroupDM(true)}
-                newTitle="New Direct Message"
+                newTitle="New direct message"
                 currentUserId={currentUserId}
               />
 
@@ -4994,8 +5062,9 @@ export function ChatView({
                 presenceData={presenceData}
                 onSelect={setSelectedChannelId}
                 onNew={sidebarSearch ? undefined : () => setShowNewGroupDM(true)}
-                newTitle="New Group"
+                newTitle="New group"
                 currentUserId={currentUserId}
+                defaultCollapsed={groupChannels.length > 0 && groupChannels.every((c) => (c.unreadCount ?? 0) === 0)}
               />
 
               {channels.length === 0 && (
