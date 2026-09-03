@@ -2375,7 +2375,7 @@ function ChannelSection({
                     )}
                     {!isGroup && (
                       <span
-                        className="absolute -bottom-px -right-px w-2.5 h-2.5 rounded-full border-2 border-surface-sunken"
+                        className="absolute -bottom-px -right-px w-2.5 h-2.5 rounded-full border-2 border-canvas"
                         style={{ background: presence }}
                       />
                     )}
@@ -3249,6 +3249,7 @@ export function ChatView({
 
   // Sidebar search
   const [sidebarSearch, setSidebarSearch] = useState("");
+  const [sidebarTab, setSidebarTab] = useState<"all" | "unread">("all");
 
   // Workspace member name map — used to derive correct DM display names
   const [dmMemberNames, setDmMemberNames] = useState<Map<string, string>>(new Map());
@@ -4937,6 +4938,13 @@ export function ChatView({
   };
   const meta = scope === "all" ? null : scopeMeta[scope];
 
+  // Filtered list for scoped views — respects the All/Unread tab state.
+  const filteredScopedList = meta
+    ? sidebarTab === "unread"
+      ? scopedList.filter((c) => (c.unreadCount ?? 0) > 0)
+      : scopedList
+    : [];
+
   return (
     // One continuous surface, no inter-column gap. The `lg:gap-2` here was what
     // separated the five floating cards; with the columns flush and divided by
@@ -4946,11 +4954,12 @@ export function ChatView({
     // single 56px header and no bottom tabs, so that arithmetic was wrong here
     // and the composer ended up below the fold on mobile.
     <div className="flex h-full min-h-0 bg-surface overflow-hidden">
-      {/* Connect 2.0 sidebar — Teams-style: slightly sunken background, wider,
-          activity section, message previews on every row, section unread counts */}
-      <div className={`${selectedChannelId ? "hidden lg:flex" : "flex"} w-full lg:w-72 flex-shrink-0 bg-surface-sunken border-r border-border-soft flex-col overflow-hidden`}>
-        {/* Search bar */}
-        <div className="px-3 py-2.5 border-b border-border-soft flex-shrink-0 flex items-center gap-2 bg-surface-sunken">
+      {/* Connect 2.0 sidebar — Teams-style: canvas background (warm gray, matches
+          outer shell), wider than before, activity section, message previews,
+          All/Unread filter tabs on scoped views */}
+      <div className={`${selectedChannelId ? "hidden lg:flex" : "flex"} w-full lg:w-72 flex-shrink-0 bg-canvas border-r border-border flex-col overflow-hidden`}>
+        {/* Search + new-item button */}
+        <div className="px-3 pt-3 pb-2.5 flex-shrink-0 flex items-center gap-2">
           <div className="flex flex-1 min-w-0 items-center gap-2 bg-surface border border-border rounded-lg px-2.5 py-1.5 focus-within:border-accent/60 focus-within:ring-2 focus-within:ring-accent/20 transition-colors shadow-sm">
             <Search className="w-3.5 h-3.5 text-subtle flex-shrink-0" />
             <input
@@ -4982,15 +4991,51 @@ export function ChatView({
           )}
         </div>
 
+        {/* All / Unread tab strip — shown only on scoped views (Chat, Groups,
+            Channels) where the whole list is one type. Same pattern as Teams. */}
+        {meta && !sidebarSearch && (
+          <div className="px-3 pb-2 flex-shrink-0 flex items-center gap-1">
+            {(["all", "unread"] as const).map((tab) => {
+              const active = sidebarTab === tab;
+              const unreadCount = tab === "unread"
+                ? scopedList.filter((c) => (c.unreadCount ?? 0) > 0).length
+                : 0;
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setSidebarTab(tab)}
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-medium transition-colors ${
+                    active
+                      ? "bg-accent text-accent-foreground shadow-sm"
+                      : "text-muted hover:bg-hover hover:text-foreground"
+                  }`}
+                >
+                  {tab === "all" ? "All" : "Unread"}
+                  {tab === "unread" && unreadCount > 0 && (
+                    <span className={`text-[10px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1 leading-none ${
+                      active ? "bg-accent-foreground/20 text-accent-foreground" : "bg-accent text-accent-foreground"
+                    }`}>
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-2 pb-4">
           {meta ? (
-            // Scoped: one flat list, no section heading.
-            scopedList.length === 0 ? (
+            filteredScopedList.length === 0 ? (
               <div className="px-3 py-10 text-center">
                 <p className="text-xs text-muted">
-                  {sidebarSearch ? "Nothing matches that filter." : meta.emptyTitle}
+                  {sidebarSearch
+                    ? "Nothing matches that filter."
+                    : sidebarTab === "unread"
+                    ? "All caught up."
+                    : meta.emptyTitle}
                 </p>
-                {!sidebarSearch && (
+                {!sidebarSearch && sidebarTab !== "unread" && (
                   <p className="mt-1 text-[11px] text-subtle">{meta.emptyHint}</p>
                 )}
               </div>
@@ -4998,7 +5043,7 @@ export function ChatView({
               <ChannelSection
                 label=""
                 hideLabel
-                channels={scopedList}
+                channels={filteredScopedList}
                 selectedChannelId={selectedChannelId}
                 onlineUsers={onlineUsers}
                 presenceData={presenceData}
