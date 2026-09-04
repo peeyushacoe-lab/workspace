@@ -1589,7 +1589,7 @@ function ThreadPanel({
   };
 
   return (
-    <div className="bg-surface hidden lg:flex lg:flex-col lg:w-80 lg:flex-shrink-0 border-l border-border-soft">
+    <div className="bg-surface flex flex-col w-80 h-full border-l border-border-soft">
       {/* Header */}
       <div className="px-4 py-3 border-b border-border flex items-center justify-between font-semibold text-foreground text-sm flex-shrink-0">
         <div className="flex items-center gap-2">
@@ -5884,23 +5884,32 @@ export function ChatView({
             )}
           </div>
 
-          {/* Thread panel */}
-          {threadParentMsg && (
-            <ThreadPanel
-              parentMsg={threadParentMsg}
-              currentUserId={currentUserId}
-              channelId={selectedChannelId}
-              messages={threadMessages}
-              memberNames={memberNames}
-              onClose={() => {
-                setThreadParentMsg(null);
-                setThreadMessages([]);
-              }}
-              onReact={handleReact}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-            />
-          )}
+          {/* Thread panel — slides in from the right; wrapper always in DOM so
+              the CSS width transition fires on both open and close. */}
+          <div
+            className="hidden lg:block flex-shrink-0 overflow-hidden"
+            style={{
+              width: threadParentMsg ? "20rem" : "0",
+              transition: "width 0.28s cubic-bezier(0.4,0,0.2,1)",
+            }}
+          >
+            {threadParentMsg && (
+              <ThreadPanel
+                parentMsg={threadParentMsg}
+                currentUserId={currentUserId}
+                channelId={selectedChannelId}
+                messages={threadMessages}
+                memberNames={memberNames}
+                onClose={() => {
+                  setThreadParentMsg(null);
+                  setThreadMessages([]);
+                }}
+                onReact={handleReact}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
+            )}
+          </div>
 
           {/* Pinned messages panel */}
           {showPins && !threadParentMsg && !showChannelInfo && (

@@ -150,6 +150,8 @@ export type HomeData = {
     overdueTasks: number;
     tasksDueToday: number;
     unreadNotifications: number;
+    sentinelCritical: number;
+    sentinelHigh: number;
   };
 };
 
@@ -296,6 +298,8 @@ export async function getHomeData(user: SessionUser): Promise<HomeData> {
     notifications,
     unreadNotificationCount,
     resumeRows,
+    sentinelCritical,
+    sentinelHigh,
   ] = await Promise.all([
     // ── Today's calendar ────────────────────────────────────────────────────
     // Overlap test, not "starts today": a meeting that began yesterday and runs
@@ -545,6 +549,29 @@ export async function getHomeData(user: SessionUser): Promise<HomeData> {
         }),
       [],
     ),
+
+    // ── Sentinel security posture ────────────────────────────────────────────
+    // Org-wide unacknowledged alerts: every user on a cybersecurity platform
+    // should know if the workspace is under threat, not just the SOC team.
+    section(
+      "sentinel critical",
+      true,
+      () =>
+        prisma.sentinelAlert.count({
+          where: { severity: "CRITICAL", acknowledged: false },
+        }),
+      0,
+    ),
+
+    section(
+      "sentinel high",
+      true,
+      () =>
+        prisma.sentinelAlert.count({
+          where: { severity: "HIGH", acknowledged: false },
+        }),
+      0,
+    ),
   ]);
 
   // ── Resolve "continue where you left off" titles ─────────────────────────
@@ -708,6 +735,8 @@ export async function getHomeData(user: SessionUser): Promise<HomeData> {
       overdueTasks: taskCounts.overdue,
       tasksDueToday: taskCounts.dueToday,
       unreadNotifications: unreadNotificationCount,
+      sentinelCritical,
+      sentinelHigh,
     },
   };
 }

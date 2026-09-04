@@ -5,7 +5,7 @@ import {
   Mail, CalendarDays, CheckSquare, Video, FileText, HardDrive,
   MessageSquare, Bell, Clock, PenLine, FilePlus2, Upload, CalendarPlus,
   RefreshCw, Loader2, Star, Globe, Table2, Presentation, StickyNote,
-  Radio, MapPin, History, Inbox, type LucideIcon,
+  Radio, MapPin, History, Inbox, ShieldAlert, ShieldCheck, type LucideIcon,
 } from "lucide-react";
 import { AppLink } from "@/components/AppLink";
 import { RelativeTime } from "@/components/RelativeTime";
@@ -190,6 +190,12 @@ export function HomeView({ initial }: { initial: HomeData }) {
           Refresh
         </button>
       </header>
+
+      {/* ── Sentinel security posture ────────────────────────────────────── */}
+      <SentinelBar
+        critical={counts.sentinelCritical}
+        high={counts.sentinelHigh}
+      />
 
       {/* ── Quick actions ────────────────────────────────────────────────── */}
       {actions.length > 0 && (
@@ -553,6 +559,59 @@ export function HomeView({ initial }: { initial: HomeData }) {
             : undefined}
         </HomeCard>
       </div>
+    </div>
+  );
+}
+
+// ─── Sentinel security posture bar ───────────────────────────────────────────
+
+function SentinelBar({ critical, high }: { critical: number; high: number }) {
+  const total = critical + high;
+
+  if (total === 0) {
+    return (
+      <div className="mb-5 flex items-center gap-2.5 rounded-xl border border-border bg-surface px-4 py-2.5 shadow-sm">
+        <ShieldCheck className="w-4 h-4 flex-shrink-0 text-ok" />
+        <span className="text-[13px] font-medium text-ok">Workspace secure</span>
+        <span className="text-[12px] text-muted">· No active Sentinel alerts</span>
+        <AppLink
+          href="/soc"
+          className="ml-auto text-[12px] font-medium text-muted hover:text-foreground transition-colors"
+        >
+          View SOC →
+        </AppLink>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`mb-5 flex items-center gap-2.5 rounded-xl border px-4 py-2.5 shadow-sm ${
+      critical > 0
+        ? "border-crit/30 bg-crit-soft"
+        : "border-warn/30 bg-warn-soft"
+    }`}>
+      <ShieldAlert className={`w-4 h-4 flex-shrink-0 ${critical > 0 ? "text-crit" : "text-warn"}`} />
+      <span className={`text-[13px] font-semibold ${critical > 0 ? "text-crit" : "text-warn"}`}>
+        {critical > 0 ? "Critical threat detected" : "Active security alerts"}
+      </span>
+      <div className="flex items-center gap-3 text-[12px]">
+        {critical > 0 && (
+          <span className="text-crit font-medium">{critical} critical</span>
+        )}
+        {high > 0 && (
+          <span className="text-warn font-medium">{high} high</span>
+        )}
+      </div>
+      <AppLink
+        href="/soc"
+        className={`ml-auto text-[12px] font-semibold transition-colors ${
+          critical > 0
+            ? "text-crit hover:text-crit/80"
+            : "text-warn hover:text-warn/80"
+        }`}
+      >
+        View SOC →
+      </AppLink>
     </div>
   );
 }
