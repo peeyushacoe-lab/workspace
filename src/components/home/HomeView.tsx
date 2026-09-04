@@ -5,7 +5,8 @@ import {
   Mail, CalendarDays, CheckSquare, Video, FileText, HardDrive,
   MessageSquare, Bell, Clock, PenLine, FilePlus2, Upload, CalendarPlus,
   RefreshCw, Loader2, Star, Globe, Table2, Presentation, StickyNote,
-  Radio, MapPin, History, Inbox, ShieldAlert, ShieldCheck, type LucideIcon,
+  Radio, MapPin, History, Inbox, ShieldAlert, ShieldCheck, ArrowRight,
+  type LucideIcon,
 } from "lucide-react";
 import { AppLink } from "@/components/AppLink";
 import { RelativeTime } from "@/components/RelativeTime";
@@ -218,6 +219,72 @@ export function HomeView({ initial }: { initial: HomeData }) {
         <DailyBriefing />
       </div>
 
+      {/* ── At a glance — four headline numbers ──────────────────────────── */}
+      <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {sections.mail && (
+          <AppLink
+            href="/inbox"
+            className="group flex flex-col gap-1.5 rounded-xl border border-border bg-surface p-4 shadow-sm transition-all hover:border-border-strong hover:shadow-panel"
+          >
+            <div className="flex items-center justify-between">
+              <Mail className="w-4 h-4 text-subtle" />
+              <ArrowRight className="w-3.5 h-3.5 text-subtle opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+            <p className={`text-2xl font-bold tracking-tight ${counts.unreadMail > 0 ? "text-accent" : "text-foreground"}`}>
+              {counts.unreadMail}
+            </p>
+            <p className="text-[12px] text-muted font-medium">Unread mail</p>
+          </AppLink>
+        )}
+        {sections.tasks && (
+          <AppLink
+            href="/tasks"
+            className="group flex flex-col gap-1.5 rounded-xl border border-border bg-surface p-4 shadow-sm transition-all hover:border-border-strong hover:shadow-panel"
+          >
+            <div className="flex items-center justify-between">
+              <CheckSquare className="w-4 h-4 text-subtle" />
+              <ArrowRight className="w-3.5 h-3.5 text-subtle opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+            <p className={`text-2xl font-bold tracking-tight ${
+              counts.overdueTasks > 0 ? "text-crit" : counts.tasksDueToday > 0 ? "text-warn" : "text-foreground"
+            }`}>
+              {counts.overdueTasks || counts.tasksDueToday}
+            </p>
+            <p className="text-[12px] text-muted font-medium">
+              {counts.overdueTasks > 0 ? "Overdue" : "Due today"}
+            </p>
+          </AppLink>
+        )}
+        {sections.calendar && (
+          <AppLink
+            href="/calendar"
+            className="group flex flex-col gap-1.5 rounded-xl border border-border bg-surface p-4 shadow-sm transition-all hover:border-border-strong hover:shadow-panel"
+          >
+            <div className="flex items-center justify-between">
+              <CalendarDays className="w-4 h-4 text-subtle" />
+              <ArrowRight className="w-3.5 h-3.5 text-subtle opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+            <p className={`text-2xl font-bold tracking-tight ${data.events.length > 0 ? "text-foreground" : "text-foreground"}`}>
+              {data.events.length}
+            </p>
+            <p className="text-[12px] text-muted font-medium">Today&apos;s events</p>
+          </AppLink>
+        )}
+        <AppLink
+          href="/notifications"
+          className="group flex flex-col gap-1.5 rounded-xl border border-border bg-surface p-4 shadow-sm transition-all hover:border-border-strong hover:shadow-panel"
+        >
+          <div className="flex items-center justify-between">
+            <Bell className="w-4 h-4 text-subtle" />
+            <ArrowRight className="w-3.5 h-3.5 text-subtle opacity-0 group-hover:opacity-100 transition-opacity" />
+          </div>
+          <p className={`text-2xl font-bold tracking-tight ${counts.unreadNotifications > 0 ? "text-warn" : "text-foreground"}`}>
+            {counts.unreadNotifications}
+          </p>
+          <p className="text-[12px] text-muted font-medium">Notifications</p>
+        </AppLink>
+      </div>
+
       {/* ── Continue where you left off ──────────────────────────────────── */}
       {data.resume.length > 0 && (
         <section className="mb-5">
@@ -406,7 +473,7 @@ export function HomeView({ initial }: { initial: HomeData }) {
                         {m.title}
                       </span>
                       {m.status === "LIVE" ? (
-                        <span className="inline-flex flex-shrink-0 items-center gap-1 rounded-full border border-crit/25 bg-crit-soft px-1.5 py-0.5 text-[9px] font-semibold text-crit">
+                        <span className="inline-flex flex-shrink-0 items-center gap-1 rounded-full border border-crit/25 bg-crit-soft px-1.5 py-0.5 text-[9px] font-semibold text-crit animate-pulse">
                           <Radio className="w-3 h-3" />
                           LIVE
                         </span>
@@ -418,10 +485,18 @@ export function HomeView({ initial }: { initial: HomeData }) {
                         )
                       )}
                     </div>
-                    <p className="mt-0.5 text-[11px] text-subtle">
-                      {m.participantCount} participant{m.participantCount === 1 ? "" : "s"}
-                      {m.isOrganizer && " · you're hosting"}
-                    </p>
+                    <div className="mt-1 flex items-center justify-between gap-2">
+                      <p className="text-[11px] text-subtle">
+                        {m.participantCount} participant{m.participantCount === 1 ? "" : "s"}
+                        {m.isOrganizer && " · you're hosting"}
+                      </p>
+                      {m.status === "LIVE" && (
+                        <span className="inline-flex items-center gap-1 rounded-md bg-ok text-white px-2 py-0.5 text-[11px] font-semibold">
+                          <Video className="w-3 h-3" />
+                          Join now
+                        </span>
+                      )}
+                    </div>
                   </HomeRow>
                 ))
               : undefined}

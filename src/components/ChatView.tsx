@@ -1335,17 +1335,31 @@ const MessageItem = memo(function MessageItem({
           </div>
         )}
 
-        {/* Thread reply count / start thread link */}
+        {/* Thread reply count — Teams-style pill that appears when there are
+            replies, or on hover when there are none. */}
         {!isDeleted && onReply && (
-          <button
-            onClick={() => onReply(msg)}
-            className="mt-1.5 flex items-center gap-1.5 text-xs text-accent hover:underline"
-          >
-            <CornerDownRight className="w-3 h-3" />
-            {msg.replies.length > 0
-              ? `${msg.replies.length} ${msg.replies.length === 1 ? "reply" : "replies"}`
-              : "Reply in thread"}
-          </button>
+          msg.replies.length > 0 ? (
+            <button
+              onClick={() => onReply(msg)}
+              className="group/thread mt-1.5 flex items-center gap-2 rounded-lg border border-transparent hover:border-border hover:bg-surface-sunken px-2 py-1 -ml-2 transition-all"
+            >
+              <CornerDownRight className="w-3.5 h-3.5 text-accent flex-shrink-0" />
+              <span className="text-[12px] font-semibold text-accent">
+                {msg.replies.length} {msg.replies.length === 1 ? "reply" : "replies"}
+              </span>
+              <span className="text-[11px] text-subtle opacity-0 group-hover/thread:opacity-100 transition-opacity">
+                · View thread →
+              </span>
+            </button>
+          ) : (
+            <button
+              onClick={() => onReply(msg)}
+              className="mt-1.5 flex items-center gap-1.5 rounded-lg px-2 py-1 -ml-2 opacity-0 group-hover:opacity-100 hover:bg-surface-sunken transition-all text-[12px] text-muted hover:text-accent"
+            >
+              <MessageSquare className="w-3.5 h-3.5 flex-shrink-0" />
+              Reply in thread
+            </button>
+          )
         )}
 
         {/* Read receipt — WhatsApp-style "Seen" status.
@@ -1524,15 +1538,35 @@ const MessageItem = memo(function MessageItem({
 
 // ─── Date Separator ───────────────────────────────────────────────────────────
 
-function DateSeparator({ label }: { label: string }) {
+function DateSeparator({ label, isUnread }: { label: string; isUnread?: boolean }) {
   return (
-    <div className="flex items-center gap-3 px-6 py-3">
-      <div className="flex-1 h-px bg-surface-sunken" />
-      <span className="text-xs text-muted font-medium whitespace-nowrap">
+    <div className="flex items-center gap-3 px-6 py-3 my-0.5">
+      <div className={`flex-1 h-px ${isUnread ? "bg-accent/30" : "bg-border-soft"}`} />
+      <span className={`text-[11px] font-semibold whitespace-nowrap rounded-full px-3 py-0.5 border shadow-sm ${
+        isUnread
+          ? "text-accent bg-accent-soft border-accent/25"
+          : "text-muted bg-surface border-border"
+      }`}>
         {label}
       </span>
-      <div className="flex-1 h-px bg-surface-sunken" />
+      <div className={`flex-1 h-px ${isUnread ? "bg-accent/30" : "bg-border-soft"}`} />
     </div>
+  );
+}
+
+// ─── Typing Dots ──────────────────────────────────────────────────────────────
+
+function TypingDots() {
+  return (
+    <span className="inline-flex items-end gap-[3px] h-[14px] ml-0.5">
+      {[0, 1, 2].map((i) => (
+        <span
+          key={i}
+          className="block w-[5px] h-[5px] rounded-full bg-current animate-bounce"
+          style={{ animationDelay: `${i * 0.18}s`, animationDuration: "0.72s" }}
+        />
+      ))}
+    </span>
   );
 }
 
@@ -5454,16 +5488,25 @@ export function ChatView({
             </div>
 
             {/* Typing / bot indicator */}
-            <div className="px-6 py-2 h-7 flex items-center flex-shrink-0 bg-surface">
+            <div className="px-6 py-1.5 h-8 flex items-center flex-shrink-0 bg-surface">
               {botResponding ? (
-                <p className="text-xs text-muted italic animate-pulse flex items-center gap-1">
-                  <Sparkles className="h-3 w-3 text-accent" /> {SAGE_NAME} is thinking…
-                </p>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 bg-accent-soft border border-accent/20 rounded-full pl-2.5 pr-3 py-1">
+                    <Sparkles className="h-3 w-3 text-accent flex-shrink-0" />
+                    <span className="text-[12px] text-accent-strong font-medium">{SAGE_NAME} is thinking</span>
+                    <TypingDots />
+                  </div>
+                </div>
               ) : userSettings.messaging.showTypingIndicators && typingNames.size > 0 && (
-                <p className="text-xs text-muted italic animate-pulse">
-                  {Array.from(typingNames.values()).join(", ")}{" "}
-                  {typingNames.size === 1 ? "is" : "are"} typing…
-                </p>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 bg-surface-sunken border border-border rounded-full pl-2.5 pr-3 py-1">
+                    <span className="text-[12px] text-muted">
+                      {Array.from(typingNames.values()).join(", ")}
+                      {" "}{typingNames.size === 1 ? "is" : "are"} typing
+                    </span>
+                    <TypingDots />
+                  </div>
+                </div>
               )}
             </div>
 
