@@ -57,23 +57,21 @@ export function ServiceWorkerRegistration() {
       .then((reg) => {
         registration = reg;
         reg.addEventListener("updatefound", handleUpdateFound);
-        // Periodically check for updates
+        // Check for updates once on mount — not on every controllerchange,
+        // which caused a reload loop on mobile (SW killed → reinstalled →
+        // controllerchange → reload → repeat every second).
         reg.update().catch(() => {});
         return subscribeToPush(reg);
       })
       .catch(console.error);
 
-    // Also check for controller change (handles reload-after-update)
-    let refreshing = false;
-    const onControllerChange = () => {
-      if (refreshing) return;
-      refreshing = true;
-      window.location.reload();
-    };
-    navigator.serviceWorker.addEventListener("controllerchange", onControllerChange);
+    // NOTE: We intentionally do NOT listen for `controllerchange` here.
+    // The old pattern of auto-reloading on controllerchange created an infinite
+    // reload loop on mobile: SW killed by browser → reinstalled → skipWaiting
+    // → controllerchange → reload → repeat. Users see the "Reload" toast and
+    // can choose when to pick up a new version.
 
     return () => {
-      navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange);
       if (registration) {
         registration.removeEventListener("updatefound", handleUpdateFound);
       }

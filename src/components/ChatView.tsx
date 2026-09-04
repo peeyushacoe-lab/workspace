@@ -5757,6 +5757,7 @@ export function ChatView({
                     ref={composerRef}
                     value={composerText}
                     onChange={handleComposerChange}
+                    style={{ minHeight: "1.5rem", touchAction: "manipulation", fontSize: 16 }}
                     onKeyDown={(e) => {
                       if (e.key === "Escape") { setMentionQuery(null); setSlashQuery(null); return; }
                       // Tab completes the top slash suggestion, the way a shell
@@ -5787,8 +5788,7 @@ export function ChatView({
                     }}
                     placeholder={composerUrgent ? `Urgent message to #${selectedChannel?.name ?? ""}` : `Message #${selectedChannel?.name ?? ""}`}
                     rows={1}
-                    className="flex-1 bg-transparent resize-none text-sm text-foreground placeholder-muted outline-none max-h-32 overflow-y-auto py-1.5"
-                    style={{ minHeight: "1.5rem" }}
+                    className="flex-1 bg-transparent resize-none text-foreground placeholder-muted outline-none max-h-32 overflow-y-auto py-1.5"
                   />
                   {/* Emoji / sticker / GIF — one picker, three entry points.
                       The `relative` wrapper is what anchors the popover above
