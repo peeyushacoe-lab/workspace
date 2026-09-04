@@ -347,7 +347,7 @@ export function SidebarLayout({
               Hence: hidden for paned views, auto for everything else. */}
           <div
             key={pathname}
-            className={`nexpage h-full min-h-[calc(100vh-116px)] lg:h-[calc(100vh-64px)] lg:min-h-[calc(100vh-64px)] ${
+            className={`nexpage h-[calc(100dvh-116px)] min-h-[calc(100dvh-116px)] lg:h-[calc(100vh-64px)] lg:min-h-[calc(100vh-64px)] ${
               panedView
                 ? "overflow-hidden bg-surface lg:bg-transparent"
                 : "overflow-y-auto overflow-x-hidden bg-surface lg:rounded-panel lg:border lg:border-border lg:shadow-panel"

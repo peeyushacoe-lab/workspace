@@ -49,10 +49,18 @@ export function LoginForm({ next, error: initialError }: { next: string; error: 
         .nx-link { transition: opacity .15s ease; }
         .nx-link:hover { opacity:.8; }
         .nx-signin:hover:not(:disabled) { background: var(--accent-hover) !important; }
+        /* iOS Safari zooms the page when an input font-size < 16px — prevent by
+           matching the system minimum. The visual size stays the same because the
+           card shrinks its padding on small screens to compensate. */
+        @media (max-width: 500px) {
+          .nx-card { padding: 24px !important; }
+          .nx-field input { font-size: 16px !important; }
+        }
       `}</style>
 
       {/* card — Atrium: a floating panel on the canvas, no blur, no glow */}
       <div
+        className="nx-card"
         style={{
           position: "relative",
           width: 408,
@@ -140,6 +148,7 @@ export function LoginForm({ next, error: initialError }: { next: string; error: 
                 outline: "none",
                 color: "var(--foreground)",
                 fontSize: 14,
+                touchAction: "manipulation",
               }}
             />
           </div>
@@ -177,6 +186,7 @@ export function LoginForm({ next, error: initialError }: { next: string; error: 
                 color: "var(--foreground)",
                 fontSize: 14,
                 letterSpacing: 1,
+                touchAction: "manipulation",
               }}
             />
           </div>
