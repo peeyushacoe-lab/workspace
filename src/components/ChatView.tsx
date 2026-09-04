@@ -3986,6 +3986,7 @@ export function ChatView({
 
     let closed = false;
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let retryDelay = 2000; // ms — doubles on each failed attempt, capped at 30s
     const clearReconnectTimer = () => {
       if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
     };
@@ -3994,6 +3995,7 @@ export function ChatView({
     const dispatch = (type: string, data: unknown) => {
       if (type === "connected") {
         clearReconnectTimer();
+        retryDelay = 2000; // reset backoff on successful connect
         setLiveConnected(true);
         return;
       }
@@ -4051,45 +4053,58 @@ export function ChatView({
       }
     };
 
-    // ── Try WebSocket first ────────────────────────────────────────────────
-    const wsUrl = new URL(`/api/chat/channels/${selectedChannelId}/ws`, window.location.href);
-    wsUrl.protocol = wsUrl.protocol.replace("http", "ws");
-    const ws = new WebSocket(wsUrl.toString());
+    // ── WebSocket with automatic reconnect ────────────────────────────────
+    // Vercel serverless functions have a 300s max duration. When the function
+    // times out, the WS closes with a non-1000 code. Without reconnect the
+    // banner stays up forever even though the poll fallback is working fine.
+    let currentWs: WebSocket | undefined;
 
-    ws.onopen = () => {
-      // connected event arrives from the server once the Redis subscription is live
-    };
-    ws.onmessage = (e) => {
-      try {
-        const { type, data } = JSON.parse(e.data as string) as { type: string; data: unknown };
-        dispatch(type, data);
-      } catch { /* ignore malformed frames */ }
-    };
-    ws.onerror = () => {
-      if (!closed && !reconnectTimer) {
-        reconnectTimer = setTimeout(() => {
-          reconnectTimer = null;
-          if (!closed && ws.readyState !== WebSocket.OPEN) setLiveConnected(false);
-        }, 2500);
-      }
-    };
-    ws.onclose = (ev) => {
+    const connect = () => {
       if (closed) return;
-      // Normal close (1000/1001) on channel switch — no banner needed.
-      if (ev.code === 1000 || ev.code === 1001) return;
-      if (!reconnectTimer) {
-        reconnectTimer = setTimeout(() => {
-          reconnectTimer = null;
-          if (!closed) setLiveConnected(false);
-        }, 2500);
-      }
+      const wsUrl = new URL(`/api/chat/channels/${selectedChannelId}/ws`, window.location.href);
+      wsUrl.protocol = wsUrl.protocol.replace("http", "ws");
+      const ws = new WebSocket(wsUrl.toString());
+      currentWs = ws;
+
+      ws.onmessage = (e) => {
+        try {
+          const { type, data } = JSON.parse(e.data as string) as { type: string; data: unknown };
+          dispatch(type, data);
+        } catch { /* ignore malformed frames */ }
+      };
+
+      ws.onclose = (ev) => {
+        if (closed) return;
+        // Normal close on channel switch — no banner, no reconnect.
+        if (ev.code === 1000 || ev.code === 1001) return;
+
+        // Unexpected close: show the banner after a brief grace period, then
+        // try to reconnect with exponential backoff. The poll fallback keeps
+        // messages flowing while the WS is down.
+        if (!reconnectTimer) {
+          const delay = retryDelay;
+          retryDelay = Math.min(retryDelay * 2, 30_000);
+          reconnectTimer = setTimeout(() => {
+            reconnectTimer = null;
+            if (!closed) {
+              setLiveConnected(false);
+              connect();
+            }
+          }, delay);
+        }
+      };
+
+      // onerror always fires before onclose — let onclose do the work.
+      ws.onerror = () => {};
     };
+
+    connect();
 
     return () => {
       closed = true;
       clearReconnectTimer();
       setLiveConnected(true);
-      ws.close(1000, "channel change");
+      currentWs?.close(1000, "channel change");
     };
   }, [selectedChannelId]);
 
