@@ -19,7 +19,7 @@ import { ComposeButton } from "./ComposeButton";
 import { roleLabels, type SessionUser } from "@/lib/auth";
 import type { PortalNavItem } from "@/lib/auth";
 import { activeGroupId, railVisible, type ResolvedGroup } from "@/lib/nav-groups";
-import { avatarGradient } from "@/lib/avatar";
+import { dicebearUrl } from "@/lib/avatar";
 import { usableMediaUrl } from "@/lib/media-url";
 
 /**
@@ -100,21 +100,25 @@ export function SidebarLayout({
     });
   };
 
-  const avatar = (size: string, ring = false) =>
-    avatarUrl ? (
+  const avatar = (size: string, ring = false) => {
+    const name = currentUser?.fullName ?? "U";
+    const src = avatarUrl || dicebearUrl(name);
+    return (
       <img
-        src={avatarUrl}
-        alt={currentUser?.fullName ?? ""}
-        className={`${size} rounded-full object-cover ${ring ? "ring-2 ring-border" : ""}`}
+        src={src}
+        alt={name}
+        className={`${size} rounded-full object-cover bg-surface-sunken ${ring ? "ring-2 ring-border" : ""}`}
+        onError={(e) => {
+          e.currentTarget.onerror = null;
+          if (e.currentTarget.src !== avatarUrl && avatarUrl) {
+            e.currentTarget.src = avatarUrl;
+          } else {
+            e.currentTarget.style.display = "none";
+          }
+        }}
       />
-    ) : (
-      <div
-        className={`${size} flex items-center justify-center rounded-full text-[11px] font-semibold text-white ${ring ? "ring-2 ring-border" : ""}`}
-        style={{ background: avatarGradient(currentUser?.fullName ?? "U") }}
-      >
-        {(currentUser?.fullName ?? "U").charAt(0).toUpperCase()}
-      </div>
     );
+  };
 
   if (fullScreen) {
     return <div className="h-screen w-screen overflow-hidden bg-canvas">{children}</div>;

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { User, Settings, Bell, LogOut, Check } from "lucide-react";
 import type { SessionUser } from "@/lib/auth";
-import { avatarGradient } from "@/lib/avatar";
+import { avatarGradient, dicebearUrl } from "@/lib/avatar";
 import { PresenceDot } from "@/components/PresenceIndicator";
 import type { PresenceStatus } from "@/app/api/presence/route";
 
@@ -95,11 +95,18 @@ export function ConnectProfileMenu({
         aria-label={`${currentUser.fullName} — account menu`}
         className={`flex items-center gap-2.5 rounded-lg py-1.5 pl-1.5 pr-2 transition-colors hover:bg-hover ${showName ? "w-full" : ""} ${focusRing}`}
       >
-        <span
-          className="relative flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-semibold uppercase text-white"
-          style={{ background: avatarGradient(currentUser.fullName) }}
-        >
-          {currentUser.fullName.charAt(0)}
+        <span className="relative flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full">
+          <img
+            src={dicebearUrl(currentUser.fullName)}
+            alt={currentUser.fullName}
+            className="h-8 w-8 rounded-full object-cover bg-surface-sunken"
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              // Fallback: render gradient background by showing the parent span's initial
+              (e.currentTarget.parentElement as HTMLElement).style.background = avatarGradient(currentUser.fullName);
+              e.currentTarget.style.display = "none";
+            }}
+          />
           {/* Presence pip on your own avatar doubles as confirmation the
               socket is actually connected. */}
           <span

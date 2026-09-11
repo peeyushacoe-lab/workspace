@@ -39,3 +39,16 @@ function hash(key: string): number {
 export function avatarGradient(key: string): string {
   return AVATAR_COLORS[hash(key) % AVATAR_COLORS.length];
 }
+
+/**
+ * DiceBear illustrated avatar URL.
+ *
+ * Returns a deterministic SVG URL from the DiceBear API. Uses the
+ * `adventurer` style — illustrated, friendly, character-based avatars.
+ * The seed is derived from the user's name/email so the same person
+ * always gets the same avatar everywhere.
+ */
+export function dicebearUrl(seed: string, style = "adventurer"): string {
+  const safeSeed = encodeURIComponent(seed.toLowerCase().trim());
+  return `https://api.dicebear.com/9.x/${style}/svg?seed=${safeSeed}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf&backgroundType=gradientLinear`;
+}

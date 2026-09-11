@@ -76,7 +76,7 @@ import { RelativeTime } from "@/components/RelativeTime";
 import { usableMediaUrl } from "@/lib/media-url";
 import { toast } from "sonner";
 import { useCall } from "./call/CallProvider";
-import { avatarGradient } from "@/lib/avatar";
+import { avatarGradient, dicebearUrl } from "@/lib/avatar";
 import { PresenceDot } from "@/components/PresenceIndicator";
 import { Dialog, Button, Menu, MenuItem } from "@/components/connect/ui";
 import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog";
@@ -451,11 +451,26 @@ function formatFileSize(bytes: number): string {
 
 function Avatar({ name, avatarUrl, size = "sm" }: { name: string; avatarUrl?: string | null; size?: "sm" | "md" }) {
   const sz = size === "sm" ? "w-8 h-8 text-xs" : "w-10 h-10 text-sm";
+  const [dicebearFailed, setDicebearFailed] = useState(false);
 
   const src = usableMediaUrl(avatarUrl);
   if (src) {
     return (
       <img src={src} alt={name} className={`${sz} rounded-full object-cover flex-shrink-0`} />
+    );
+  }
+
+  // Use DiceBear illustrated avatar as the fallback when no real photo is set.
+  // If the DiceBear CDN fails (offline, blocked), we fall back to the
+  // gradient-initial div so avatars are never broken.
+  if (!dicebearFailed) {
+    return (
+      <img
+        src={dicebearUrl(name)}
+        alt={name}
+        className={`${sz} rounded-full object-cover flex-shrink-0 bg-surface-sunken`}
+        onError={() => setDicebearFailed(true)}
+      />
     );
   }
 
@@ -601,11 +616,31 @@ function renderInline(
  * Full message body: splits fenced ```code``` blocks out first, then renders
  * inline formatting in the prose between them.
  */
+// Matches one or more emoji grapheme clusters with optional whitespace.
+// Used to render pure-emoji messages at a larger size — the same treatment
+// WhatsApp and Telegram apply so a sticker-like emoji lands with presence.
+const EMOJI_ONLY_RE = /^[\s‍\u{1F000}-\u{1FFFF}\u{2600}-\u{27FF}\u{FE00}-\u{FEFF}\u{1F1E0}-\u{1F1FF}↔-↪⌚-⭕\u{2702}-\u{27B0}☀-⛿✂-✋✌-✏❓-❗⬅-⬇⬛⬜⭐⭕\p{Emoji}]+$/u;
+
+function isEmojiOnly(text: string): boolean {
+  const trimmed = text.trim();
+  if (!trimmed || trimmed.length > 12) return false;
+  return EMOJI_ONLY_RE.test(trimmed);
+}
+
 function renderMessageBody(
   content: string,
   currentUserId: string,
   memberNames: string[],
 ): React.ReactNode {
+  // Emoji-only messages (stickers) render large — WhatsApp/Telegram style.
+  if (isEmojiOnly(content)) {
+    return (
+      <p className="text-5xl leading-tight select-none" role="img" aria-label={content.trim()}>
+        {content.trim()}
+      </p>
+    );
+  }
+
   if (!content.includes("```")) {
     return (
       <p className="text-[14px] leading-[1.55] text-foreground whitespace-pre-wrap break-words">
@@ -1827,9 +1862,16 @@ function ChannelInfoPanel({
               return (
                 <div key={m.userId} className="flex items-center gap-3 px-4 py-2 hover:bg-surface-sunken transition-colors">
                   <div className="relative flex-shrink-0">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white" style={{ background: avatarGradient(name) }}>
-                      {name.charAt(0).toUpperCase()}
-                    </div>
+                    <img
+                      src={dicebearUrl(name)}
+                      alt={name}
+                      className="w-8 h-8 rounded-full object-cover bg-surface-sunken"
+                      onError={(e) => {
+                        const t = e.currentTarget;
+                        t.onerror = null;
+                        t.style.display = "none";
+                      }}
+                    />
                     <PresenceDot status={status} size="sm" />
                   </div>
                   <div className="min-w-0 flex-1">
@@ -2403,9 +2445,12 @@ function ChannelSection({
                         <Users className="w-3.5 h-3.5 text-muted" />
                       </div>
                     ) : (
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white" style={{ background: avatarGradient(ch.name) }}>
-                        {ch.name.charAt(0).toUpperCase()}
-                      </div>
+                      <img
+                        src={dicebearUrl(ch.name)}
+                        alt={ch.name}
+                        className="w-8 h-8 rounded-full object-cover bg-surface-sunken"
+                        onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = ""; }}
+                      />
                     )}
                     {!isGroup && (
                       <span
@@ -2759,6 +2804,108 @@ function ManageMembersModal({
 // ─── GIF Picker ──────────────────────────────────────────────────────────────
 
 type GifResult = { id: string; title: string; url: string; previewUrl: string };
+// ─── Sticker Packs ────────────────────────────────────────────────────────────
+// Curated emoji sticker packs — works without any API key.
+// Each sticker is an emoji rendered large with a label; selecting one sends the
+// emoji as a special "sticker" message (oversized inline rendering).
+const STICKER_PACKS: { id: string; label: string; icon: string; stickers: { emoji: string; label: string }[] }[] = [
+  {
+    id: "reactions",
+    label: "Reactions",
+    icon: "👍",
+    stickers: [
+      { emoji: "👍", label: "Thumbs up" },
+      { emoji: "❤️", label: "Love" },
+      { emoji: "🎉", label: "Party" },
+      { emoji: "🔥", label: "Fire" },
+      { emoji: "✅", label: "Done" },
+      { emoji: "😂", label: "LOL" },
+      { emoji: "😮", label: "Wow" },
+      { emoji: "😢", label: "Sad" },
+      { emoji: "😡", label: "Angry" },
+      { emoji: "🙏", label: "Thanks" },
+      { emoji: "💯", label: "100" },
+      { emoji: "👏", label: "Clap" },
+    ],
+  },
+  {
+    id: "emotions",
+    label: "Emotions",
+    icon: "😊",
+    stickers: [
+      { emoji: "😊", label: "Happy" },
+      { emoji: "🥺", label: "Pleading" },
+      { emoji: "😎", label: "Cool" },
+      { emoji: "🤩", label: "Star-struck" },
+      { emoji: "🥳", label: "Partying" },
+      { emoji: "🤔", label: "Thinking" },
+      { emoji: "😴", label: "Sleepy" },
+      { emoji: "🤯", label: "Mind blown" },
+      { emoji: "🙃", label: "Upside-down" },
+      { emoji: "😤", label: "Determined" },
+      { emoji: "🤗", label: "Hugging" },
+      { emoji: "😏", label: "Smirk" },
+    ],
+  },
+  {
+    id: "fun",
+    label: "Fun",
+    icon: "🦄",
+    stickers: [
+      { emoji: "🦄", label: "Unicorn" },
+      { emoji: "🐸", label: "Frog" },
+      { emoji: "🐻", label: "Bear" },
+      { emoji: "🦊", label: "Fox" },
+      { emoji: "🐼", label: "Panda" },
+      { emoji: "🦋", label: "Butterfly" },
+      { emoji: "🐙", label: "Octopus" },
+      { emoji: "🦖", label: "Dino" },
+      { emoji: "🌈", label: "Rainbow" },
+      { emoji: "✨", label: "Sparkles" },
+      { emoji: "🍕", label: "Pizza" },
+      { emoji: "🎮", label: "Gaming" },
+    ],
+  },
+  {
+    id: "work",
+    label: "Work",
+    icon: "💼",
+    stickers: [
+      { emoji: "💼", label: "Work" },
+      { emoji: "📊", label: "Stats" },
+      { emoji: "🚀", label: "Launch" },
+      { emoji: "💡", label: "Idea" },
+      { emoji: "⚡", label: "Fast" },
+      { emoji: "🎯", label: "Target" },
+      { emoji: "🏆", label: "Win" },
+      { emoji: "📈", label: "Growth" },
+      { emoji: "🤝", label: "Deal" },
+      { emoji: "☕", label: "Coffee" },
+      { emoji: "⏰", label: "Deadline" },
+      { emoji: "🧠", label: "Think" },
+    ],
+  },
+  {
+    id: "cyber",
+    label: "Cyber",
+    icon: "🛡️",
+    stickers: [
+      { emoji: "🛡️", label: "Shield" },
+      { emoji: "🔐", label: "Lock" },
+      { emoji: "🔍", label: "Scan" },
+      { emoji: "⚠️", label: "Alert" },
+      { emoji: "🎭", label: "Phishing" },
+      { emoji: "🐛", label: "Bug" },
+      { emoji: "💻", label: "Hacker" },
+      { emoji: "🕵️", label: "Spy" },
+      { emoji: "🧩", label: "Exploit" },
+      { emoji: "🔑", label: "Key" },
+      { emoji: "🌐", label: "Network" },
+      { emoji: "🚨", label: "Incident" },
+    ],
+  },
+];
+
 type MediaTab = "gif" | "sticker" | "emoji";
 
 function GifPicker({
@@ -2788,6 +2935,7 @@ function GifPicker({
   // it. The picker now trusts what /api/chat/gifs actually reports.
   const [gifStatus, setGifStatus] = useState<"configured" | "not_configured" | "error">("configured");
   const [emojiCategory, setEmojiCategory] = useState(0);
+  const [stickerPack, setStickerPack] = useState(STICKER_PACKS[0].id);
   const inputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -2800,7 +2948,8 @@ function GifPicker({
   }, [query]);
 
   useEffect(() => {
-    if (tab === "emoji") return;
+    // Sticker tab uses local packs — no API call needed.
+    if (tab === "emoji" || tab === "sticker") return;
     setLoading(true);
     const apiUrl = debouncedQuery.trim()
       ? `/api/chat/gifs?type=${tab}&q=${encodeURIComponent(debouncedQuery.trim())}`
@@ -2894,9 +3043,47 @@ function GifPicker({
           </div>
         )}
 
+        {/* Sticker pack selector */}
+        {tab === "sticker" && !query.trim() && (
+          <div className="flex gap-1 px-3 py-1.5 overflow-x-auto border-b border-accent/[0.08]">
+            {STICKER_PACKS.map((pack) => (
+              <button
+                key={pack.id}
+                onClick={() => setStickerPack(pack.id)}
+                className={`flex-shrink-0 flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full transition-colors ${stickerPack === pack.id ? "bg-accent/20 text-accent" : "text-subtle hover:text-muted"}`}
+              >
+                <span>{pack.icon}</span> {pack.label}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Content */}
         <div className="overflow-y-auto p-2" style={{ maxHeight: "calc(65vh - 120px)" }}>
-          {tab === "emoji" ? (
+          {tab === "sticker" ? (
+            (() => {
+              const activePack = STICKER_PACKS.find((p) => p.id === stickerPack) ?? STICKER_PACKS[0];
+              const filtered = query.trim()
+                ? STICKER_PACKS.flatMap((p) => p.stickers).filter((s) => s.label.toLowerCase().includes(query.toLowerCase()) || s.emoji.includes(query))
+                : activePack.stickers;
+              return (
+                <div className="grid grid-cols-4 gap-2">
+                  {filtered.map((s, i) => (
+                    <button
+                      key={`${s.emoji}-${i}`}
+                      onClick={() => { onEmojiInsert(s.emoji); onClose(); }}
+                      title={s.label}
+                      className="group flex flex-col items-center gap-1 rounded-xl p-2 hover:bg-surface-sunken transition-all hover:scale-105 active:scale-95"
+                    >
+                      <span className="text-4xl leading-none select-none">{s.emoji}</span>
+                      <span className="text-[9px] text-subtle group-hover:text-muted transition-colors truncate w-full text-center">{s.label}</span>
+                    </button>
+                  ))}
+                  {filtered.length === 0 && <p className="col-span-4 text-center text-sm text-subtle py-6">No stickers found</p>}
+                </div>
+              );
+            })()
+          ) : tab === "emoji" ? (
             <div className="grid grid-cols-8 gap-0.5">
               {emojiRows.map((emoji, i) => (
                 <button
@@ -5200,12 +5387,12 @@ export function ChatView({
                           className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-hover border-b border-border-soft last:border-0"
                         >
                           {isDirect ? (
-                            <div
-                              className="h-8 w-8 flex-shrink-0 rounded-full flex items-center justify-center text-[11px] font-bold text-white"
-                              style={{ background: avatarGradient(ch.name) }}
-                            >
-                              {ch.name.charAt(0).toUpperCase()}
-                            </div>
+                            <img
+                              src={dicebearUrl(ch.name)}
+                              alt={ch.name}
+                              className="h-8 w-8 flex-shrink-0 rounded-full object-cover bg-surface-sunken"
+                              onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = ""; }}
+                            />
                           ) : (
                             <div className="h-8 w-8 flex-shrink-0 rounded-lg bg-accent-soft flex items-center justify-center">
                               <Hash className="h-3.5 w-3.5 text-accent" />
