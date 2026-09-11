@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
-import { sendEmail, renderComposeHtml } from "@/lib/email";
+import { sendEmail, renderComposeHtml, getSignatureHtml } from "@/lib/email";
 import { getTokensForUser, sendExpoPush, getUnreadBadgeCount } from "@/lib/expo-push";
 import { indexingQueue } from "@/lib/queues/indexing.queue";
 import { uploadToR2, isS3Configured } from "@/lib/s3";
@@ -117,7 +117,11 @@ export async function POST(request: Request) {
       `</div>`;
     sigTemplate = { fullName: user.fullName, title: "Intern", phone: undefined, linkedinUrl: undefined, website: "https://www.cybersage.uk", avatarUrl: undefined, html: internHtml };
   }
-  const finalHtml = htmlBody ?? renderComposeHtml(textBody, { email: toAddr, name: toAddr.split("@")[0], status: "Direct" }, sigTemplate);
+  // When htmlBody (e.g. forwarded email) is already provided, append the signature block
+  // separately so it always appears — otherwise it would be silently omitted.
+  const finalHtml = htmlBody
+    ? (sigTemplate ? `${htmlBody}${getSignatureHtml(sigTemplate)}` : htmlBody)
+    : renderComposeHtml(textBody, { email: toAddr, name: toAddr.split("@")[0], status: "Direct" }, sigTemplate);
 
   if (isInternal(toAddr)) {
     // ── Direct internal delivery ────────────────────────────────────────────

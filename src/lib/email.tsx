@@ -18,7 +18,7 @@ function splitName(name: string, email: string) {
   return { first, last };
 }
 
-function getSignatureHtml(signature: SignatureTemplate): string {
+export function getSignatureHtml(signature: SignatureTemplate): string {
   // When the user has an avatar, always render via the full template so the
   // photo appears in email clients. Only use saved HTML for text-only signatures.
   if (signature.html && !signature.avatarUrl) return signature.html;

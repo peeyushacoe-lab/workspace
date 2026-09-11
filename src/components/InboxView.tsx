@@ -2155,8 +2155,8 @@ export function InboxView({ userRole, initialThreads }: {
                     )}
 
                     {msg.htmlBody ? (
-                      <div className="overflow-x-auto max-w-full">
-                        <div className="prose prose-sm max-w-none text-foreground prose-a:text-accent leading-[1.75] [&_table]:max-w-full [&_img]:max-w-full [&_pre]:overflow-x-auto [&_*]:max-w-full" dangerouslySetInnerHTML={{ __html: sanitizeHtml(msg.htmlBody) }} />
+                      <div className="overflow-x-auto max-w-full rounded-lg bg-white p-1">
+                        <div className="prose prose-sm max-w-none text-gray-900 prose-a:text-accent leading-[1.75] [&_table]:max-w-full [&_img]:max-w-full [&_pre]:overflow-x-auto [&_*]:max-w-full" dangerouslySetInnerHTML={{ __html: sanitizeHtml(msg.htmlBody) }} />
                       </div>
                     ) : (
                       <p className="text-[14.5px] text-foreground whitespace-pre-wrap break-words leading-[1.75]">{msg.textBody}</p>

@@ -471,7 +471,7 @@ export function SimpleComposer({
       ...(priority !== "NORMAL" ? { priority } : {}),
     };
 
-    const DELAY = 30;
+    const DELAY = 5;
     let remaining = DELAY;
     const toastId = "undo-send";
 

@@ -16,7 +16,7 @@ function stripDangerousHtml(html: string): string {
 
 const signatureSchema = z.object({
   fullName: z.string().trim().min(1),
-  title: z.string().trim().min(1),
+  title: z.string().trim().default(""),
   phone: z.string().trim().optional(),
   linkedinUrl: z.string().trim().optional(),
   website: z.string().trim().optional(),

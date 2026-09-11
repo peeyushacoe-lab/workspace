@@ -41,6 +41,7 @@ export function ServiceWorkerRegistration() {
         ) {
           // A new SW is waiting — prompt user to reload
           toast("Update available", {
+            id: "sw-update",
             description: "A new version of CyberSage is ready.",
             action: {
               label: "Reload",
