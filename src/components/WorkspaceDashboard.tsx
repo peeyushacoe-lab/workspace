@@ -457,12 +457,18 @@ export function SimpleComposer({
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!recipient.trim() || !subject.trim()) { toast.error("Recipient and subject are required"); return; }
-
     const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const parseEmails = (raw: string) => raw.split(",").map(s => s.trim()).filter(s => s && EMAIL_RE.test(s));
+
+    // Allow BCC-only sends (no To) — use sender's own address as To so the
+    // email is still deliverable. Standard bulk-mail pattern.
+    const hasBcc = bcc.trim() && parseEmails(bcc).length > 0;
+    const hasCc  = cc.trim()  && parseEmails(cc).length  > 0;
+    const effectiveTo = recipient.trim() || (hasBcc || hasCc ? selectedSenderEmail : "");
+    if (!effectiveTo || !subject.trim()) { toast.error("Add at least one recipient and a subject"); return; }
+
     const payload = {
-      to: recipient,
+      to: effectiveTo,
       subject,
       body,
       ...(defaultHtmlBody ? { htmlBody: defaultHtmlBody } : {}),

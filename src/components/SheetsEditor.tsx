@@ -813,8 +813,11 @@ export default function SheetsEditor({ sheetId }: { sheetId: string }) {
 
   const pasteFromClipboard = useCallback(async () => {
     let text = "";
-    try { text = await navigator.clipboard.readText(); } catch { toast.error("Clipboard access blocked"); return; }
-    if (!text) return;
+    try { text = await navigator.clipboard.readText(); } catch { /* permission denied — fall through */ }
+    // If clipboard API is blocked (e.g. browser permission denied or non-secure context),
+    // fall back to the last in-app copy so Ctrl+C → right-click Paste still works.
+    if (!text) text = lastCopyOriginRef.current?.text ?? "";
+    if (!text) { toast.error("Nothing to paste — copy some cells first"); return; }
     const grid = text.replace(/\r/g, "").split("\n").map(l => l.split("\t"));
     if (grid.length > 1 && grid[grid.length - 1].length === 1 && grid[grid.length - 1][0] === "") grid.pop();
 
@@ -2544,7 +2547,11 @@ tr{break-inside:avoid}
                 value={renameVal}
                 onChange={e => setRenameVal(e.target.value)}
                 onBlur={() => {
-                  setSheets(prev => prev.map(s => s.id === sh.id ? { ...s, name: renameVal || s.name } : s));
+                  setSheets(prev => {
+                    const next = prev.map(s => s.id === sh.id ? { ...s, name: renameVal.trim() || s.name } : s);
+                    scheduleSave(next, title);
+                    return next;
+                  });
                   setEditingSheetName(null);
                 }}
                 onKeyDown={e => { if (e.key === "Enter" || e.key === "Escape") { e.currentTarget.blur(); } }}
