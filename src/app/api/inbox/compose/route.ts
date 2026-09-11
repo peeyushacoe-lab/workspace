@@ -258,20 +258,35 @@ export async function POST(request: Request) {
     }).catch(() => {});
 
     // ── Route CC/BCC recipients ────────────────────────────────────────────
-    // Internal CC/BCC → deliver directly to their mailbox
-    // External CC/BCC → send via Resend (fire-and-forget, non-fatal)
-    const allExtra = [...ccAddrs, ...bccAddrs];
-    for (const addr of allExtra) {
-      if (isInternal(addr)) {
-        void (async () => {
-          const mb = await prisma.mailbox.findUnique({ where: { email: addr } }).catch(() => null);
-          if (!mb) return;
-          const t = await prisma.inboxThread.create({ data: { subject: cleanSubject, mailboxId: mb.id } });
-          await prisma.inboxMessage.create({ data: { threadId: t.id, from: fromAddr, to: addr, subject, textBody, htmlBody: finalHtml ?? null, isRead: false } });
-        })();
-      } else {
-        void sendEmail(subject, textBody, { email: addr, name: addr.split("@")[0], status: "Direct" }, sigTemplate, `${user.fullName} <${fromAddr}>`, undefined, undefined, undefined, attachmentFiles.length ? attachmentFiles : undefined).catch(() => {});
-      }
+    // Internal CC/BCC → deliver directly to their mailbox (one DB write each).
+    // External CC/BCC → ONE single Resend call with all external addrs as BCC
+    // to avoid per-address rate-limit hits and ensure proper BCC behaviour.
+    const internalExtra = [...ccAddrs, ...bccAddrs].filter(a => isInternal(a));
+    const externalBcc   = bccAddrs.filter(a => !isInternal(a));
+    const externalCc    = ccAddrs.filter(a => !isInternal(a));
+
+    for (const addr of internalExtra) {
+      void (async () => {
+        const mb = await prisma.mailbox.findUnique({ where: { email: addr } }).catch(() => null);
+        if (!mb) return;
+        const t = await prisma.inboxThread.create({ data: { subject: cleanSubject, mailboxId: mb.id } });
+        await prisma.inboxMessage.create({ data: { threadId: t.id, from: fromAddr, to: addr, subject, textBody, htmlBody: finalHtml ?? null, isRead: false } });
+      })();
+    }
+
+    // Single Resend call for all external CC/BCC — uses toAddr (may be the
+    // sender's own address in BCC-only mode) so the envelope is valid.
+    if (externalBcc.length || externalCc.length) {
+      void sendEmail(
+        subject, textBody,
+        { email: toAddr, name: toAddr.split("@")[0], status: "Direct" },
+        sigTemplate,
+        `${user.fullName} <${fromAddr}>`,
+        externalCc.length ? externalCc : undefined,
+        externalBcc.length ? externalBcc : undefined,
+        undefined,
+        attachmentFiles.length ? attachmentFiles : undefined,
+      ).catch(() => {});
     }
 
     return NextResponse.json({ ok: true, delivery: "internal" });
