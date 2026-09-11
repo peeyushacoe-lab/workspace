@@ -733,6 +733,7 @@ export function InboxView({ userRole, initialThreads }: {
   const [showUnreadOnly, setShowUnreadOnly]  = useState(false);
   const [showReply, setShowReply]           = useState(false);
   const [showForward, setShowForward]       = useState(false);
+  const [forwardMsgId, setForwardMsgId]     = useState<string | null>(null);
   const [activeFolder, setActiveFolder]     = useState<SystemFolder>("inbox");
   const [activeCustomFolder, setActiveCustomFolder] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<Category>("All");
@@ -2162,6 +2163,24 @@ export function InboxView({ userRole, initialThreads }: {
                       <p className="text-[14.5px] text-foreground whitespace-pre-wrap break-words leading-[1.75]">{msg.textBody}</p>
                     )}
 
+                    {/* Per-message reply / forward */}
+                    {isExpanded && (
+                      <div className="mt-4 flex gap-2">
+                        <button
+                          onClick={() => { setShowReply(true); setShowForward(false); setForwardMsgId(null); setShowSmartReply(false); }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-border text-muted hover:text-foreground hover:bg-surface-sunken transition-colors"
+                        >
+                          <Reply className="w-3.5 h-3.5" /> Reply
+                        </button>
+                        <button
+                          onClick={() => { setForwardMsgId(msg.id); setShowForward(false); setShowReply(false); setShowSmartReply(false); }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-border text-muted hover:text-foreground hover:bg-surface-sunken transition-colors"
+                        >
+                          <Forward className="w-3.5 h-3.5" /> Forward
+                        </button>
+                      </div>
+                    )}
+
                     {msg.attachments && msg.attachments.length > 0 && (
                       <div className="mt-5 pt-5 border-t border-border">
                         <p className="text-xs font-medium text-muted mb-2">
@@ -2362,7 +2381,7 @@ export function InboxView({ userRole, initialThreads }: {
             )}
 
             {/* Forward Modal */}
-            {showForward && (
+            {(showForward || forwardMsgId !== null) && (
               <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
                 <div
                   className="absolute inset-0 bg-black/40 "
@@ -2380,7 +2399,7 @@ export function InboxView({ userRole, initialThreads }: {
                       </div>
                     </div>
                     <button
-                      onClick={() => setShowForward(false)}
+                      onClick={() => { setShowForward(false); setForwardMsgId(null); }}
                       className="p-2 text-muted hover:bg-surface-sunken hover:text-foreground rounded-full transition-colors"
                     >
                       <X className="h-5 w-5" />
@@ -2388,11 +2407,11 @@ export function InboxView({ userRole, initialThreads }: {
                   </div>
                   <div className="max-h-[80vh] overflow-y-auto">
                     {(() => {
-                      const orig = threadDetail.messages[0];
+                      const orig = forwardMsgId
+                        ? (threadDetail.messages.find(m => m.id === forwardMsgId) ?? threadDetail.messages[0])
+                        : threadDetail.messages[0];
                       const header = `-------- Forwarded message --------\nFrom: ${orig?.from ?? ""}\nDate: ${orig ? new Date(orig.receivedAt).toLocaleString() : ""}\nSubject: ${threadDetail.subject}`;
-                      // Plain text shown in the textarea
                       const plainBody = `\n\n${header}\n\n${(orig?.textBody ?? "").slice(0, 2000)}`;
-                      // Full HTML forwarded block sent to the API — preserves rich email formatting
                       const htmlBody = orig?.htmlBody
                         ? `<p></p><hr style="border:none;border-top:1px solid #e7e6e1;margin:16px 0"/><div style="font-size:12px;color:#6b6a65;margin-bottom:12px;white-space:pre">${header}</div>${orig.htmlBody}`
                         : undefined;
@@ -2405,6 +2424,7 @@ export function InboxView({ userRole, initialThreads }: {
                           defaultHtmlBody={htmlBody}
                           onSuccess={() => {
                             setShowForward(false);
+                            setForwardMsgId(null);
                             toast.success("Message forwarded");
                           }}
                         />

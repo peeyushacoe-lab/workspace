@@ -18,7 +18,7 @@ import {
   Undo2, Redo2, WrapText, EyeOff, Tag, ListChecks, Table, Grid2x2,
   Columns, LayoutGrid, Search, Replace, Brush,
   MessageSquare, CopyMinus, SplitSquareHorizontal,
-  Lock, ListFilter, History, Target, FileSpreadsheet,
+  Lock, ListFilter, History, Target, FileSpreadsheet, Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import { EditorMenuBar } from "./EditorMenuBar";
@@ -2538,17 +2538,18 @@ tr{break-inside:avoid}
         {sheets.map(sh => (
           <div key={sh.id} className={`group flex items-center gap-1 px-3 py-1.5 text-xs cursor-pointer border-r border-border transition-colors ${sh.id === activeSheetId ? "bg-surface text-accent font-semibold border-t-2 border-t-accent" : "text-muted hover:bg-border"}`}
             onClick={() => { if (editingSheetName !== sh.id) setActiveSheetId(sh.id); }}
-            onDoubleClick={() => { setEditingSheetName(sh.id); setRenameVal(sh.name); }}
           >
             {editingSheetName === sh.id ? (
               <input
                 autoFocus
-                className="w-20 text-xs border border-accent rounded px-1 outline-none"
+                className="w-20 text-xs border border-accent rounded px-1 outline-none bg-surface text-foreground"
                 value={renameVal}
                 onChange={e => setRenameVal(e.target.value)}
+                onClick={e => e.stopPropagation()}
                 onBlur={() => {
+                  const newName = renameVal.trim() || sh.name;
                   setSheets(prev => {
-                    const next = prev.map(s => s.id === sh.id ? { ...s, name: renameVal.trim() || s.name } : s);
+                    const next = prev.map(s => s.id === sh.id ? { ...s, name: newName } : s);
                     scheduleSave(next, title);
                     return next;
                   });
@@ -2557,6 +2558,10 @@ tr{break-inside:avoid}
                 onKeyDown={e => { if (e.key === "Enter" || e.key === "Escape") { e.currentTarget.blur(); } }}
               />
             ) : sh.name}
+            <button className="hidden group-hover:flex items-center ml-1 text-subtle hover:text-accent"
+              onClick={e => { e.stopPropagation(); setEditingSheetName(sh.id); setRenameVal(sh.name); }}>
+              <Pencil className="h-3 w-3" />
+            </button>
             {sheets.length > 1 && (
               <button className="hidden group-hover:flex items-center ml-1 text-subtle hover:text-crit"
                 onClick={e => { e.stopPropagation(); deleteSheet(sh.id); }}>
