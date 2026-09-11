@@ -3,10 +3,8 @@ import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
-// Roles allowed to configure external email forwarding
-const FORWARDING_ROLES = ["CEO", "CISO", "R_AND_D", "OPS_MANAGER", "ADMIN"] as const;
+const FORWARDING_ROLES = ["CEO", "CISO", "R_AND_D", "OPS_MANAGER", "ADMIN", "BUSINESS_MANAGER"] as const;
 type ForwardingRole = (typeof FORWARDING_ROLES)[number];
-
 function canForward(role: string): role is ForwardingRole {
   return FORWARDING_ROLES.includes(role as ForwardingRole);
 }

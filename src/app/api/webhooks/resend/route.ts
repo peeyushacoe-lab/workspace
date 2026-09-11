@@ -465,7 +465,7 @@ async function handleInboundEmail(data: InboundEmailPayload) {
     })();
   }
 
-  // 6. External email forwarding — for eligible roles (CEO / CISO / R_AND_D / OPS_MANAGER)
+  // 6. External email forwarding — for eligible roles (CEO / CISO / R_AND_D / OPS_MANAGER / ADMIN / BUSINESS_MANAGER)
   // Never forward mail flagged as spam/phishing to a personal address.
   if (mailboxOwner?.userId && resendClient && !scan?.isSpam) {
     void (async () => {
@@ -474,7 +474,7 @@ async function handleInboundEmail(data: InboundEmailPayload) {
         select: { personalEmail: true, preferences: true, role: true },
       }).catch(() => null);
 
-      const FORWARDING_ROLES = ["CEO", "CISO", "R_AND_D", "OPS_MANAGER", "ADMIN"];
+      const FORWARDING_ROLES = ["CEO", "CISO", "R_AND_D", "OPS_MANAGER", "ADMIN", "BUSINESS_MANAGER"];
       const prefs = (owner?.preferences ?? {}) as Record<string, unknown>;
       const enabled = prefs.externalForwardEnabled === true;
       const dest = owner?.personalEmail;

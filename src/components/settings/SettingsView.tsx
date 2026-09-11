@@ -191,7 +191,7 @@ const ALL_TABS: { id: Tab; label: string; icon: React.ElementType; description: 
   { id: "signature",     label: "Signature",         icon: FileSignature, description: "Email signature editor" },
   { id: "mail-rules",    label: "Mail Rules",        icon: Filter,        description: "Auto-sort emails" },
   { id: "mailboxes",     label: "Mailboxes",         icon: Mail,          description: "Managed inbox access" },
-  { id: "forwarding",    label: "Email Forwarding",  icon: Forward,       description: "Forward emails to your personal address", roleOnly: ["CEO", "CISO", "R_AND_D", "OPS_MANAGER", "ADMIN"] },
+  { id: "forwarding",    label: "Email Forwarding",  icon: Forward,       description: "Forward emails to your personal address", roleOnly: ["CEO", "CISO", "R_AND_D", "OPS_MANAGER", "ADMIN", "BUSINESS_MANAGER"] },
   { id: "security",      label: "Security",          icon: Shield,        description: "MFA, sessions, logins" },
   { id: "language",      label: "Language & Region", icon: Globe,         description: "Locale and timezone" },
   { id: "privacy",       label: "Privacy & Data",    icon: Lock,          description: "Export and account controls" },
