@@ -529,9 +529,81 @@ function CodeBlock({ code, lang }: { code: string; lang?: string }) {
   );
 }
 
+// ─── Mention hover card ───────────────────────────────────────────────────────
+
+function MentionHoverCard({
+  displayName,
+  memberName,
+  onNavigate,
+}: {
+  displayName: string;
+  memberName: string;
+  onNavigate?: (name: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const enter = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => setOpen(true), 250);
+  };
+  const leave = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => setOpen(false), 150);
+  };
+
+  return (
+    <span className="relative inline-block">
+      <span
+        onMouseEnter={enter}
+        onMouseLeave={leave}
+        className="bg-accent/10 text-accent font-semibold rounded px-0.5 cursor-pointer hover:bg-accent/20 transition-colors"
+      >
+        {displayName}
+      </span>
+      {open && (
+        <span
+          onMouseEnter={enter}
+          onMouseLeave={leave}
+          className="absolute bottom-full left-0 mb-2 z-50 pointer-events-auto inline-flex"
+          style={{ minWidth: 200 }}
+        >
+          <span className="flex flex-col gap-2.5 bg-surface border border-border rounded-xl shadow-pop p-3 w-[200px]">
+            <span className="flex items-center gap-2.5">
+              <img
+                src={dicebearUrl(memberName)}
+                alt={memberName}
+                className="w-10 h-10 rounded-full object-cover bg-surface-sunken flex-shrink-0"
+              />
+              <span className="min-w-0">
+                <span className="block text-[13px] font-semibold text-foreground truncate">{memberName}</span>
+                <span className="block text-[11px] text-subtle truncate">Team member</span>
+              </span>
+            </span>
+            {onNavigate && (
+              <button
+                onClick={() => { onNavigate(memberName); setOpen(false); }}
+                className="flex items-center justify-center gap-1.5 w-full rounded-lg bg-accent-soft text-accent text-[12px] font-semibold py-1.5 hover:bg-accent/20 transition-colors"
+              >
+                <MessageSquare className="w-3.5 h-3.5 flex-shrink-0" />
+                Message
+              </button>
+            )}
+          </span>
+        </span>
+      )}
+    </span>
+  );
+}
+
 // ─── Mention renderer ────────────────────────────────────────────────────────
 
-function renderWithMentions(content: string, currentUserId: string, memberNames: string[]): React.ReactNode {
+function renderWithMentions(
+  content: string,
+  currentUserId: string,
+  memberNames: string[],
+  onMentionNavigate?: (name: string) => void,
+): React.ReactNode {
   const parts = content.split(/(@\w[\w\s]{0,30})/g);
   return parts.map((part, i) => {
     if (part.startsWith("@")) {
@@ -543,12 +615,15 @@ function renderWithMentions(content: string, currentUserId: string, memberNames:
           </span>
         );
       }
-      const isMention = memberNames.some(m => m.toLowerCase().startsWith(name));
-      if (isMention) {
+      const matchedMember = memberNames.find(m => m.toLowerCase().startsWith(name));
+      if (matchedMember) {
         return (
-          <span key={i} className="bg-accent/10 text-accent font-semibold rounded px-0.5">
-            {part}
-          </span>
+          <MentionHoverCard
+            key={i}
+            displayName={part}
+            memberName={matchedMember}
+            onNavigate={onMentionNavigate}
+          />
         );
       }
     }
@@ -574,6 +649,7 @@ function renderInline(
   keyPrefix: string,
   currentUserId: string,
   memberNames: string[],
+  onMentionNavigate?: (name: string) => void,
 ): React.ReactNode[] {
   const out: React.ReactNode[] = [];
   const parts = text.split(INLINE_PATTERN).filter((p) => p !== undefined && p !== "");
@@ -605,7 +681,7 @@ function renderInline(
     } else if (part.startsWith("*") && part.endsWith("*") && part.length > 2) {
       out.push(<em key={key}>{part.slice(1, -1)}</em>);
     } else {
-      out.push(<span key={key}>{renderWithMentions(part, currentUserId, memberNames)}</span>);
+      out.push(<span key={key}>{renderWithMentions(part, currentUserId, memberNames, onMentionNavigate)}</span>);
     }
   });
 
@@ -631,6 +707,7 @@ function renderMessageBody(
   content: string,
   currentUserId: string,
   memberNames: string[],
+  onMentionNavigate?: (name: string) => void,
 ): React.ReactNode {
   // Emoji-only messages (stickers) render large — WhatsApp/Telegram style.
   if (isEmojiOnly(content)) {
@@ -644,7 +721,7 @@ function renderMessageBody(
   if (!content.includes("```")) {
     return (
       <p className="text-[14px] leading-[1.55] text-foreground whitespace-pre-wrap break-words">
-        {renderInline(content, "t", currentUserId, memberNames)}
+        {renderInline(content, "t", currentUserId, memberNames, onMentionNavigate)}
       </p>
     );
   }
@@ -666,7 +743,7 @@ function renderMessageBody(
         if (!seg) return null;
         return (
           <p key={`p-${i}`} className="text-[14px] leading-[1.55] text-foreground whitespace-pre-wrap break-words">
-            {renderInline(seg, `t${i}`, currentUserId, memberNames)}
+            {renderInline(seg, `t${i}`, currentUserId, memberNames, onMentionNavigate)}
           </p>
         );
       })}
@@ -708,9 +785,27 @@ function ReactionPill({
 
       {hovered && reactors.length > 0 && (
         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 z-50 pointer-events-none">
-          <div className="bg-surface text-foreground text-[10px] rounded-lg px-2.5 py-1.5 whitespace-nowrap shadow-lg max-w-[200px] border border-border">
-            <div className="font-semibold mb-0.5 text-subtle">Reacted by:</div>
-            <div className="text-foreground truncate">{reactors.join(", ")}</div>
+          <div className="bg-surface text-foreground text-[10px] rounded-xl px-2.5 py-2 shadow-pop max-w-[220px] border border-border flex flex-col gap-1.5">
+            {/* Avatar stack */}
+            <div className="flex items-center gap-1.5">
+              <span className="flex items-center -space-x-1.5">
+                {reactors.slice(0, 4).map((name) => (
+                  <img
+                    key={name}
+                    src={dicebearUrl(name)}
+                    alt={name}
+                    className="w-5 h-5 rounded-full object-cover border-2 border-surface bg-surface-sunken"
+                  />
+                ))}
+              </span>
+              {reactors.length > 4 && (
+                <span className="text-[9px] text-subtle">+{reactors.length - 4}</span>
+              )}
+            </div>
+            <div className="text-foreground truncate leading-relaxed">
+              {reactors.slice(0, 3).map((n) => n.split(" ")[0]).join(", ")}
+              {reactors.length > 3 ? ` +${reactors.length - 3} more` : ""}
+            </div>
             <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-border" />
           </div>
         </div>
@@ -1029,6 +1124,7 @@ const MessageItem = memo(function MessageItem({
   onQuoteReply,
   onPin,
   onJumpTo,
+  onMentionNavigate,
   memberNames = [],
   isGroupChat = false,
   isLastInChannel = false,
@@ -1043,6 +1139,7 @@ const MessageItem = memo(function MessageItem({
   onQuoteReply?: (msg: Message) => void;
   onPin?: (messageId: string, pinned: boolean) => void;
   onJumpTo?: (messageId: string) => void;
+  onMentionNavigate?: (name: string) => void;
   memberNames?: string[];
   isGroupChat?: boolean;
   isLastInChannel?: boolean;
@@ -1300,7 +1397,7 @@ const MessageItem = memo(function MessageItem({
           />
         ) : (
           <>
-            {msg.content && renderMessageBody(msg.content, currentUserId, memberNames)}
+            {msg.content && renderMessageBody(msg.content, currentUserId, memberNames, onMentionNavigate)}
             {/* `attachmentUrl` is accepted verbatim from the client by the send
                 and schedule endpoints, so it is no more trustworthy than the
                 message body — same scheme guard as the attachment card. */}
@@ -5762,6 +5859,10 @@ export function ChatView({
                       onQuoteReply={setReplyingTo}
                       onJumpTo={scrollToMessage}
                       onPin={handlePin}
+                      onMentionNavigate={(name) => {
+                        const dmCh = directChannels.find((c) => c.name === name || c.name.includes(name));
+                        if (dmCh) setSelectedChannelId(dmCh.id);
+                      }}
                       memberNames={memberNames}
                       isGroupChat={selectedChannel?.type !== "DIRECT"}
                       isLastInChannel={item.msg.id === lastMessageId}
@@ -5785,10 +5886,23 @@ export function ChatView({
                 </div>
               ) : userSettings.messaging.showTypingIndicators && typingNames.size > 0 && (
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1.5 bg-surface-sunken border border-border rounded-full pl-2.5 pr-3 py-1">
+                  <div className="flex items-center gap-1.5 bg-surface-sunken border border-border rounded-full pl-1.5 pr-3 py-1">
+                    {/* DiceBear avatar stack for typers */}
+                    <span className="flex items-center -space-x-1.5 mr-0.5">
+                      {Array.from(typingNames.values()).slice(0, 3).map((name) => (
+                        <img
+                          key={name}
+                          src={dicebearUrl(name)}
+                          alt={name}
+                          title={name}
+                          className="w-5 h-5 rounded-full object-cover border-2 border-surface-sunken bg-surface"
+                        />
+                      ))}
+                    </span>
                     <span className="text-[12px] text-muted">
-                      {Array.from(typingNames.values()).join(", ")}
-                      {" "}{typingNames.size === 1 ? "is" : "are"} typing
+                      {typingNames.size === 1
+                        ? `${Array.from(typingNames.values())[0].split(" ")[0]} is typing`
+                        : `${typingNames.size} people are typing`}
                     </span>
                     <TypingDots />
                   </div>

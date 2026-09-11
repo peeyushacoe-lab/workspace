@@ -18,7 +18,7 @@ import { SimpleComposer } from "./WorkspaceDashboard";
 import { UserProfileModal } from "./UserProfileModal";
 import { CreateTaskDialog } from "@/components/tasks/CreateTaskDialog";
 import type { UserRole } from "@/generated/prisma/enums";
-import { avatarGradient } from "@/lib/avatar";
+import { avatarGradient, dicebearUrl } from "@/lib/avatar";
 
 type ThreadPriority = "LOW" | "NORMAL" | "HIGH" | "URGENT";
 
@@ -116,16 +116,23 @@ function dayLaneLabel(date: Date | string): string {
 function SenderAvatar({ member, email, size = 8, onClick }: { member?: WorkspaceMember; email: string; size?: number; onClick?: (e?: React.MouseEvent) => void }) {
   const [imgFailed, setImgFailed] = useState(false);
   const label = (member?.displayName ?? member?.fullName ?? email).charAt(0).toUpperCase();
-  const dim = size * 4; // tailwind size unit = 0.25rem = 4px
+  const dim = size * 4;
   const cls = `rounded-full object-cover flex-shrink-0`;
   const wrap = `cursor-pointer hover:opacity-80 transition-opacity`;
-  const avatarSrc = usableMediaUrl(member?.avatarUrl);
-  if (avatarSrc && !imgFailed) {
+
+  // Prefer real avatar URL, then DiceBear illustrated avatar (workspace members
+  // only — external senders don't have a consistent seed, so we keep the gradient
+  // initials for them to avoid pulling down random DiceBear faces for strangers).
+  const realSrc = usableMediaUrl(member?.avatarUrl);
+  const name = member?.displayName ?? member?.fullName;
+  const src = realSrc ?? (name ? dicebearUrl(name) : null);
+
+  if (src && !imgFailed) {
     return (
       <img
-        src={avatarSrc}
+        src={src}
         alt={label}
-        className={`${cls} ${onClick ? wrap : ""}`}
+        className={`${cls} bg-surface-sunken ${onClick ? wrap : ""}`}
         style={{ width: dim, height: dim }}
         onClick={onClick}
         onError={() => setImgFailed(true)}

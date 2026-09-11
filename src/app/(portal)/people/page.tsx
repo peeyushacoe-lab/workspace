@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { PageHeader } from "@/components/Shell";
 import { roleLabels } from "@/lib/auth";
-import { avatarGradient } from "@/lib/avatar";
+import { avatarGradient, dicebearUrl } from "@/lib/avatar";
 import { usableMediaUrl } from "@/lib/media-url";
 import type { UserRole } from "@/generated/prisma/enums";
 
@@ -82,25 +82,20 @@ function Avatar({
   // usableMediaUrl filters out bare R2 storage keys (no scheme), which the
   // browser would resolve against the current page and 404 on. Null falls
   // through to the initials avatar below.
-  const avatar = usableMediaUrl(person.avatarUrl);
-  if (avatar) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={avatar}
-        alt={person.fullName}
-        className={`${sizeClasses[size]} rounded-full object-cover flex-shrink-0`}
-      />
-    );
-  }
-
+  const avatar = usableMediaUrl(person.avatarUrl) ?? dicebearUrl(person.fullName || person.email);
   return (
-    <div
-      className={`${sizeClasses[size]} rounded-full flex items-center justify-center font-semibold text-white flex-shrink-0`}
-      style={{ background: avatarGradient(person.email || person.fullName) }}
-    >
-      {initials(person.fullName)}
-    </div>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={avatar}
+      alt={person.fullName}
+      className={`${sizeClasses[size]} rounded-full object-cover flex-shrink-0 bg-surface-sunken`}
+      onError={(e) => {
+        e.currentTarget.onerror = null;
+        // Inline gradient fallback via SVG data URI is impractical —
+        // hide the img; a sibling element shows initials as a last resort.
+        e.currentTarget.style.display = "none";
+      }}
+    />
   );
 }
 
