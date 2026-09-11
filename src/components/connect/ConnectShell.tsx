@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   House, MessageSquare, Users, UsersRound, Hash, Video, Phone, FolderOpen, Bell, Contact,
-  Shield, Menu, X, Settings, ArrowUpRight, LogOut,
+  Shield, Menu, X, Settings, ArrowUpRight, LogOut, Pencil,
 } from "lucide-react";
 import { CONNECT_NAV, visibleConnectNav, isLive, type ConnectNavItem } from "@/lib/connect";
 import type { SessionUser } from "@/lib/auth";
@@ -37,17 +37,22 @@ const ICONS: Record<string, React.ElementType> = {
   House, MessageSquare, Users, UsersRound, Hash, Video, Phone, FolderOpen, Bell, Contact, Shield,
 };
 
-/** Rail grouping. Presentation only — access still comes from CONNECT_NAV. */
-const GROUPS: string[][] = [
-  ["/connect"],
-  // The three conversation kinds, most-used first. Separate destinations, not
-  // three sections in one column — see CONNECT_NAV.
-  ["/connect/chat", "/connect/groups", "/connect/channels"],
-  ["/connect/teams", "/connect/meetings", "/connect/calls"],
-  ["/connect/files", "/connect/activity", "/connect/contacts"],
-  // Admin sits alone at the bottom of the rail — it is a different kind of
-  // destination from the nine above it, and only some people see it at all.
-  ["/connect/admin"],
+/** Rail grouping with optional section labels. Presentation only. */
+const GROUPS: { hrefs: string[]; label?: string }[] = [
+  { hrefs: ["/connect"] },
+  {
+    label: "Messaging",
+    hrefs: ["/connect/chat", "/connect/groups", "/connect/channels"],
+  },
+  {
+    label: "Collaborate",
+    hrefs: ["/connect/teams", "/connect/meetings", "/connect/calls"],
+  },
+  {
+    label: "More",
+    hrefs: ["/connect/files", "/connect/activity", "/connect/contacts"],
+  },
+  { hrefs: ["/connect/admin"] },
 ];
 
 /**
@@ -92,13 +97,12 @@ function NavItem({
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
       className={[
-        "group relative flex items-center gap-3 rounded-lg py-2 pl-3.5 pr-2.5 text-[13.5px] transition-colors",
+        "group relative flex items-center gap-2.5 rounded-lg py-[7px] pl-3 pr-2.5 text-[13px] transition-colors",
         focusRing,
         active ? "bg-accent-soft font-semibold text-accent" : "font-medium text-muted hover:bg-hover hover:text-foreground",
       ].join(" ")}
     >
-      {/* Left marker on the active destination — the tint alone reads as hover
-          at a glance; the bar makes "you are here" unambiguous. */}
+      {/* Left accent bar — "you are here" */}
       <span
         aria-hidden
         className={[
@@ -107,16 +111,16 @@ function NavItem({
         ].join(" ")}
       />
 
-      <Glyph className="h-[18px] w-[18px] flex-shrink-0" />
+      <Glyph className="h-4 w-4 flex-shrink-0" />
       <span className="min-w-0 flex-1 truncate">{item.label}</span>
 
       {showBadge && (
-        <span className="min-w-[19px] flex-shrink-0 rounded-full bg-accent px-1.5 py-0.5 text-center text-[10px] font-semibold leading-none tabular-nums text-white">
+        <span className="min-w-[18px] flex-shrink-0 rounded-full bg-accent px-1.5 py-0.5 text-center text-[10px] font-bold leading-none tabular-nums text-accent-foreground">
           {badge > 99 ? "99+" : badge}
         </span>
       )}
       {!showBadge && !isLive(item) && (
-        <span className="flex-shrink-0 text-[10px] font-medium text-subtle">Soon</span>
+        <span className="flex-shrink-0 rounded-md bg-surface-sunken px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-subtle">Soon</span>
       )}
     </Link>
   );
@@ -228,23 +232,41 @@ export function ConnectShell({
             <ConnectWordmark className="h-[22px] w-auto" />
           </Link>
 
-          <div className="flex w-full flex-1 flex-col gap-3 overflow-y-auto px-2.5 py-2">
-            {GROUPS.map((hrefs, gi) => {
-              const items = hrefs
+          {/* Compose button */}
+          <div className="px-2.5 pb-1 pt-1 flex-shrink-0">
+            <Link
+              href="/connect/chat"
+              className={`flex w-full items-center gap-2.5 rounded-lg bg-accent px-3.5 py-2 text-[13px] font-semibold text-accent-foreground shadow-sm transition-all hover:opacity-90 active:scale-[0.98] ${focusRing}`}
+            >
+              <Pencil className="h-[15px] w-[15px] flex-shrink-0" />
+              New message
+            </Link>
+          </div>
+
+          <div className="flex w-full flex-1 flex-col overflow-y-auto px-2.5 py-1">
+            {GROUPS.map((group, gi) => {
+              const items = group.hrefs
                 .map((h) => byHref.get(h))
                 .filter((x): x is ConnectNavItem => Boolean(x));
               if (items.length === 0) return null;
               return (
-                <div key={gi} className="flex w-full flex-col gap-0.5">
-                  {gi > 0 && <span aria-hidden className="mb-2.5 h-px w-full bg-border-soft" />}
-                  {items.map((item) => (
-                    <NavItem
-                      key={item.href}
-                      item={item}
-                      active={activeHref === item.href}
-                      badge={badgeFor(item.href)}
-                    />
-                  ))}
+                <div key={gi} className="flex w-full flex-col">
+                  {gi > 0 && <span aria-hidden className="my-1 h-px w-full bg-border-soft" />}
+                  {group.label && (
+                    <p className="mt-1 mb-0.5 px-3 text-[10px] font-semibold uppercase tracking-widest text-subtle">
+                      {group.label}
+                    </p>
+                  )}
+                  <div className="flex flex-col gap-0.5">
+                    {items.map((item) => (
+                      <NavItem
+                        key={item.href}
+                        item={item}
+                        active={activeHref === item.href}
+                        badge={badgeFor(item.href)}
+                      />
+                    ))}
+                  </div>
                 </div>
               );
             })}

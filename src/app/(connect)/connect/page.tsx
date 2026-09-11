@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
-  MessageSquare, AtSign, Video, FolderOpen, Bell, ArrowRight, Hash, Users, RefreshCw,
+  MessageSquare, AtSign, Video, FolderOpen, Bell, ArrowRight, Hash,
+  Users, RefreshCw, CheckCircle2, Pencil, Calendar, Zap,
 } from "lucide-react";
 import { avatarGradient } from "@/lib/avatar";
 import type {
@@ -11,16 +12,6 @@ import type {
   ConnectConversation,
   ConnectMeeting,
 } from "@/app/api/connect/home/route";
-
-/**
- * Connect Home.
- *
- * The roadmap's brief was explicit: not a dashboard of statistics, but an answer
- * to "what do I need to respond to?". So the attention figures are a single
- * hairline-divided strip rather than five elevated cards — cards would make five
- * numbers compete with the one list that actually gets acted on. Every figure is
- * a link to the thing it counts, and a zero is greyed rather than emphasised.
- */
 
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface";
@@ -32,7 +23,6 @@ function greeting(d: Date): string {
   return "Good evening";
 }
 
-/** "now", "18m", "3h", "2d", "6 Aug" — the density a message list wants. */
 function relative(iso: string, now: number): string {
   const mins = Math.floor((now - new Date(iso).getTime()) / 60000);
   if (mins < 1) return "now";
@@ -44,178 +34,151 @@ function relative(iso: string, now: number): string {
   return new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short" });
 }
 
+function dayLabel(d: Date): string {
+  return d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
+}
+
 function clockTime(iso: string | null): string {
   if (!iso) return "—";
   return new Date(iso).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
 }
 
-// ── Attention ledger ──────────────────────────────────────────────────────────
+// ── Stat card ─────────────────────────────────────────────────────────────────
 
-function LedgerItem({
+function StatCard({
   icon: Icon,
   count,
   label,
   href,
+  accent,
 }: {
   icon: React.ElementType;
   count: number;
   label: string;
   href: string;
+  accent?: boolean;
 }) {
-  const quiet = count === 0;
+  const hot = count > 0 && accent;
   return (
     <Link
       href={href}
-      className={`group flex flex-1 items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-hover ${focusRing}`}
+      className={`group flex flex-col gap-2 rounded-xl border p-4 shadow-sm transition-all hover:shadow-panel hover:-translate-y-px ${focusRing} ${
+        hot
+          ? "border-accent/30 bg-accent-soft"
+          : "border-border bg-surface hover:border-border-strong"
+      }`}
     >
-      <Icon
-        className={`h-4 w-4 flex-shrink-0 ${quiet ? "text-subtle" : "text-accent"}`}
-        aria-hidden
-      />
-      <span className="min-w-0">
-        <span
-          className={`block text-lg font-semibold leading-none tabular-nums tracking-tight ${
-            quiet ? "text-subtle" : "text-foreground"
-          }`}
-        >
+      <div className="flex items-center justify-between">
+        <Icon className={`h-4 w-4 ${hot ? "text-accent" : "text-subtle"}`} aria-hidden />
+        <ArrowRight className="h-3.5 w-3.5 text-subtle opacity-0 transition-opacity group-hover:opacity-100" />
+      </div>
+      <div>
+        <p className={`text-2xl font-bold tracking-tight leading-none tabular-nums ${hot ? "text-accent" : count > 0 ? "text-foreground" : "text-subtle"}`}>
           {count}
-        </span>
-        <span className="mt-1 block truncate text-xs text-muted">{label}</span>
-      </span>
+        </p>
+        <p className={`mt-1 text-[11px] font-medium ${hot ? "text-accent-strong" : "text-muted"}`}>{label}</p>
+      </div>
     </Link>
   );
 }
 
-// ── Rows ──────────────────────────────────────────────────────────────────────
+// ── Conversation row ───────────────────────────────────────────────────────────
 
 function ConversationRow({ c, now }: { c: ConnectConversation; now: number }) {
-  const KindIcon = c.kind === "CHANNEL" ? Hash : c.kind === "GROUP" ? Users : null;
+  const isDirect = c.kind === "DIRECT";
+  const isGroup = c.kind === "GROUP";
 
   return (
     <Link
       href={`/connect/chat?channel=${encodeURIComponent(c.channelId)}`}
-      className={`group relative flex items-start gap-3 rounded-lg py-2.5 pl-3 pr-3 transition-colors hover:bg-hover ${focusRing}`}
+      className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-hover ${focusRing}`}
     >
       {c.unread && (
-        <span
-          aria-hidden
-          className="absolute left-0 top-1/2 h-6 w-0.5 -translate-y-1/2 rounded-r-full bg-accent"
-        />
+        <span aria-hidden className="absolute left-1 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-r-full bg-accent" />
       )}
 
-      {KindIcon ? (
-        <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-surface-sunken">
-          <KindIcon className="h-4 w-4 text-muted" />
-        </span>
-      ) : (
-        <span
-          className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-semibold uppercase text-accent-foreground"
+      {/* Avatar */}
+      {isDirect ? (
+        <div
+          className="relative h-9 w-9 flex-shrink-0 rounded-full flex items-center justify-center text-[11px] font-bold text-accent-foreground"
           style={{ background: avatarGradient(c.title) }}
         >
-          {c.title.charAt(0)}
-        </span>
+          {c.title.charAt(0).toUpperCase()}
+        </div>
+      ) : (
+        <div className="h-9 w-9 flex-shrink-0 rounded-xl bg-surface-sunken border border-border flex items-center justify-center">
+          {isGroup
+            ? <Users className="h-4 w-4 text-muted" />
+            : <Hash className="h-4 w-4 text-muted" />}
+        </div>
       )}
 
-      <span className="min-w-0 flex-1">
-        <span className="flex items-baseline gap-2">
-          <span
-            className={`truncate text-[13px] leading-tight ${
-              c.unread ? "font-semibold text-foreground" : "font-medium text-muted"
-            }`}
-          >
+      <div className="min-w-0 flex-1">
+        <div className="flex items-baseline gap-2">
+          <span className={`flex-1 truncate text-[13px] leading-tight ${c.unread ? "font-semibold text-foreground" : "font-medium text-muted"}`}>
             {c.title}
           </span>
-          <time
-            dateTime={c.at}
-            className="ml-auto flex-shrink-0 text-[10px] tabular-nums text-subtle"
-          >
+          <time dateTime={c.at} className="flex-shrink-0 text-[10px] tabular-nums text-subtle">
             {relative(c.at, now)}
           </time>
-        </span>
-        <span className="mt-0.5 block truncate text-xs text-subtle">
-          {c.authorName}: {c.preview}
-        </span>
-      </span>
+        </div>
+        <p className={`mt-0.5 truncate text-[12px] ${c.unread ? "text-foreground/70 font-medium" : "text-subtle"}`}>
+          <span className="font-medium text-muted">{c.authorName.split(" ")[0]}:</span>{" "}
+          {c.preview}
+        </p>
+      </div>
 
       {c.unread && (
-        <span className="sr-only">Unread</span>
+        <span className="h-2 w-2 flex-shrink-0 rounded-full bg-accent" aria-label="Unread" />
       )}
     </Link>
   );
 }
+
+// ── Meeting row ────────────────────────────────────────────────────────────────
 
 function MeetingRow({ m }: { m: ConnectMeeting }) {
   const live = m.status === "LIVE";
   return (
     <Link
       href={`/meet/${encodeURIComponent(m.roomName)}`}
-      className={`flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-hover ${focusRing}`}
+      className={`flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-hover ${focusRing}`}
     >
-      <time
-        dateTime={m.at ?? undefined}
-        className="w-12 flex-shrink-0 text-xs font-medium tabular-nums text-muted"
-      >
-        {clockTime(m.at)}
-      </time>
-      <span className="min-w-0 flex-1 truncate text-[13px] text-foreground">{m.title}</span>
+      <div className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg ${live ? "bg-ok-soft" : "bg-surface-sunken"}`}>
+        <Video className={`h-4 w-4 ${live ? "text-ok" : "text-muted"}`} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[13px] font-medium text-foreground">{m.title}</p>
+        <p className="text-[11px] text-subtle">{live ? "Live now" : clockTime(m.at)}</p>
+      </div>
       {live && (
-        <span className="flex flex-shrink-0 items-center gap-1.5 rounded-full border border-ok/25 bg-ok-soft px-2 py-0.5 text-[10px] font-semibold text-ok">
+        <span className="flex flex-shrink-0 items-center gap-1 rounded-full bg-ok-soft border border-ok/25 px-2 py-0.5 text-[10px] font-semibold text-ok">
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-ok" aria-hidden />
-          Live
+          Join
         </span>
       )}
     </Link>
   );
 }
 
-// ── Panels ────────────────────────────────────────────────────────────────────
+// ── Quick actions ──────────────────────────────────────────────────────────────
 
-function Panel({
-  title,
-  href,
-  hrefLabel,
-  children,
-}: {
-  title: string;
-  href?: string;
-  hrefLabel?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="rounded-xl border border-border bg-surface shadow-sm">
-      <div className="flex items-center justify-between border-b border-border-soft px-4 py-3">
-        <h2 className="text-[13px] font-semibold tracking-tight text-foreground">{title}</h2>
-        {href && (
-          <Link
-            href={href}
-            className={`group flex items-center gap-1 rounded px-1 text-xs font-medium text-muted transition-colors hover:text-foreground ${focusRing}`}
-          >
-            {hrefLabel ?? "View all"}
-            <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
-          </Link>
-        )}
-      </div>
-      <div className="p-1.5">{children}</div>
-    </section>
-  );
-}
+const QUICK_ACTIONS = [
+  { icon: Pencil, label: "New message", href: "/connect/chat", color: "text-accent bg-accent-soft" },
+  { icon: Calendar, label: "Schedule meeting", href: "/connect/meetings", color: "text-violet bg-violet-soft" },
+  { icon: FolderOpen, label: "Shared files", href: "/connect/files", color: "text-ok bg-ok-soft" },
+  { icon: Zap, label: "Activity", href: "/connect/activity", color: "text-warn bg-warn-soft" },
+];
 
-function Empty({ text }: { text: string }) {
-  return <p className="px-3 py-8 text-center text-xs text-subtle">{text}</p>;
-}
+// ── Skeleton ───────────────────────────────────────────────────────────────────
 
-/**
- * Skeleton rather than a spinner. Home is polled and re-rendered often; a
- * centred spinner collapses the layout on every refresh, while a skeleton in the
- * final shape keeps the page from jumping under the cursor.
- */
 function SkeletonRow() {
   return (
     <div className="flex items-center gap-3 px-3 py-2.5">
-      <div className="h-8 w-8 flex-shrink-0 animate-pulse rounded-full bg-surface-sunken" />
+      <div className="h-9 w-9 flex-shrink-0 animate-pulse rounded-full bg-surface-sunken" />
       <div className="min-w-0 flex-1 space-y-1.5">
-        <div className="h-2.5 w-1/3 animate-pulse rounded bg-surface-sunken" />
-        <div className="h-2 w-2/3 animate-pulse rounded bg-surface-sunken" />
+        <div className="h-2.5 w-1/3 animate-pulse rounded-full bg-surface-sunken" />
+        <div className="h-2 w-2/3 animate-pulse rounded-full bg-surface-sunken" />
       </div>
     </div>
   );
@@ -227,19 +190,11 @@ export default function ConnectHomePage() {
   const [data, setData] = useState<ConnectHomeResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
-
-  /**
-   * Wall-clock time, captured on the client only.
-   *
-   * Greetings and relative timestamps both depend on "now". Computing them
-   * during render would run once on the server and again on the client, and
-   * "Good morning" vs "Good afternoon" across that boundary is a hydration
-   * mismatch. Null until mounted; the header renders without a greeting for one
-   * frame instead of rendering the wrong one.
-   */
   const [now, setNow] = useState<number | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (quiet = false) => {
+    if (!quiet) setRefreshing(true);
     try {
       const res = await fetch("/api/connect/home", { cache: "no-store" });
       if (!res.ok) throw new Error(String(res.status));
@@ -249,111 +204,184 @@ export default function ConnectHomePage() {
       setFailed(true);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, []);
 
   useEffect(() => {
     setNow(Date.now());
-    void load();
-    // Home is a glanceable surface people leave open, so it refreshes itself.
-    // 60s rather than the inbox's 30s — nothing here is time-critical enough to
-    // justify doubling the query load.
-    const t = setInterval(() => {
-      setNow(Date.now());
-      void load();
-    }, 60_000);
+    void load(true);
+    const t = setInterval(() => { setNow(Date.now()); void load(true); }, 60_000);
     return () => clearInterval(t);
   }, [load]);
 
   const counts = data?.counts;
-  const allQuiet =
-    !!counts &&
-    counts.unreadConversations === 0 &&
-    counts.mentions === 0 &&
-    counts.notifications === 0;
+  const totalAttention = counts
+    ? counts.unreadConversations + counts.mentions + counts.notifications
+    : -1;
+  const allQuiet = totalAttention === 0;
 
   return (
-    <div className="px-6 py-6 lg:px-8">
-      <header className="mb-5">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          {now !== null && data
-            ? `${greeting(new Date(now))}, ${data.greetingName}`
-            : " "}
-        </h1>
-        <p className="mt-1 text-[13px] text-muted" aria-live="polite">
-          {!data
-            ? " "
-            : allQuiet
-              ? "Nothing is waiting on you right now."
-              : "Here's what's waiting on you."}
-        </p>
+    <div className="px-5 py-6 lg:px-8 max-w-5xl mx-auto">
+
+      {/* ── Hero greeting ────────────────────────────────────────────────── */}
+      <header className="mb-7 flex items-start justify-between gap-4">
+        <div>
+          <p className="mb-0.5 text-[11px] font-semibold text-subtle uppercase tracking-wider">
+            {now ? dayLabel(new Date(now)) : " "}
+          </p>
+          <h1 className="text-[26px] font-bold leading-tight tracking-[-0.03em] text-foreground">
+            {now && data ? `${greeting(new Date(now))}, ${data.greetingName}` : " "}
+          </h1>
+          <p className="mt-1.5 text-[13px] text-muted" aria-live="polite">
+            {!data ? " " : allQuiet
+              ? "You're all caught up — nothing waiting."
+              : `${totalAttention > 0 ? `${totalAttention} item${totalAttention > 1 ? "s" : ""} need your attention.` : "Here's what's happening."}`}
+          </p>
+        </div>
+        <button
+          onClick={() => void load()}
+          disabled={refreshing}
+          className={`flex-shrink-0 flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-[12px] font-medium text-muted shadow-sm transition-colors hover:bg-hover hover:text-foreground disabled:opacity-50 ${focusRing}`}
+        >
+          <RefreshCw className={`h-3 w-3 ${refreshing ? "animate-spin" : ""}`} />
+          Refresh
+        </button>
       </header>
 
-      {/* Attention ledger — one surface, hairline dividers, no card grid. */}
-      <div className="mb-6 flex flex-col divide-y divide-border-soft rounded-xl border border-border bg-surface shadow-sm sm:flex-row sm:divide-x sm:divide-y-0">
+      {/* ── Stat cards ───────────────────────────────────────────────────── */}
+      <div className="mb-7 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {counts ? (
           <>
-            <LedgerItem
-              icon={MessageSquare}
-              count={counts.unreadConversations}
-              label="unread conversations"
-              href="/connect/chat"
-            />
-            <LedgerItem icon={AtSign} count={counts.mentions} label="mentions" href="/connect/activity" />
-            <LedgerItem icon={Video} count={counts.meetingsToday} label="meetings today" href="/connect/meetings" />
-            <LedgerItem icon={FolderOpen} count={counts.filesShared} label="files shared with you" href="/connect/files" />
-            <LedgerItem icon={Bell} count={counts.notifications} label="notifications" href="/notifications" />
+            <StatCard icon={MessageSquare} count={counts.unreadConversations} label="Unread" href="/connect/chat" accent />
+            <StatCard icon={AtSign} count={counts.mentions} label="Mentions" href="/connect/activity" accent />
+            <StatCard icon={Video} count={counts.meetingsToday} label="Meetings today" href="/connect/meetings" />
+            <StatCard icon={FolderOpen} count={counts.filesShared} label="Shared files" href="/connect/files" />
+            <StatCard icon={Bell} count={counts.notifications} label="Notifications" href="/notifications" />
           </>
         ) : (
           Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="flex-1 space-y-2 px-3 py-2.5">
-              <div className="h-4 w-6 animate-pulse rounded bg-surface-sunken" />
-              <div className="h-2 w-20 animate-pulse rounded bg-surface-sunken" />
+            <div key={i} className="rounded-xl border border-border bg-surface p-4 shadow-sm">
+              <div className="mb-3 h-4 w-4 animate-pulse rounded bg-surface-sunken" />
+              <div className="h-6 w-8 animate-pulse rounded-lg bg-surface-sunken mb-2" />
+              <div className="h-2.5 w-16 animate-pulse rounded-full bg-surface-sunken" />
             </div>
           ))
         )}
       </div>
 
+      {/* ── Quick actions strip ───────────────────────────────────────────── */}
+      <div className="mb-7 flex flex-wrap gap-2">
+        {QUICK_ACTIONS.map(({ icon: Icon, label, href, color }) => (
+          <Link
+            key={href}
+            href={href}
+            className={`flex items-center gap-2 rounded-xl border border-border bg-surface px-3.5 py-2 text-[13px] font-medium text-foreground shadow-sm transition-all hover:border-border-strong hover:shadow-panel hover:-translate-y-px ${focusRing}`}
+          >
+            <span className={`flex h-6 w-6 items-center justify-center rounded-lg ${color}`}>
+              <Icon className="h-3.5 w-3.5" />
+            </span>
+            {label}
+          </Link>
+        ))}
+      </div>
+
+      {/* ── Two-column body ───────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+
+        {/* Left: conversations */}
+        <section className="lg:col-span-2 rounded-xl border border-border bg-surface shadow-sm overflow-hidden">
+          <div className="flex items-center justify-between border-b border-border-soft px-4 py-3">
+            <h2 className="text-[13px] font-semibold text-foreground">Recent conversations</h2>
+            <Link
+              href="/connect/chat"
+              className={`flex items-center gap-1 rounded px-1 text-[12px] font-medium text-muted transition-colors hover:text-foreground ${focusRing}`}
+            >
+              View all
+              <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
+
+          {allQuiet && !loading && data && (
+            <div className="flex flex-col items-center gap-2 py-12 px-6 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-ok-soft">
+                <CheckCircle2 className="h-6 w-6 text-ok" />
+              </div>
+              <p className="text-[13px] font-semibold text-foreground">All caught up</p>
+              <p className="text-[12px] text-muted">No unread conversations.</p>
+              <Link
+                href="/connect/chat"
+                className={`mt-1 inline-flex items-center gap-1.5 rounded-lg bg-accent-soft px-3 py-1.5 text-[12px] font-semibold text-accent hover:bg-accent/20 transition-colors ${focusRing}`}
+              >
+                <MessageSquare className="h-3.5 w-3.5" />
+                Start a conversation
+              </Link>
+            </div>
+          )}
+
+          <div className="p-1.5">
+            {loading ? (
+              Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
+            ) : data && data.conversations.length > 0 && now !== null ? (
+              data.conversations.map((c) => (
+                <ConversationRow key={c.channelId} c={c} now={now} />
+              ))
+            ) : !allQuiet ? (
+              <p className="py-10 text-center text-xs text-subtle">
+                No conversations yet — start one from Chat.
+              </p>
+            ) : null}
+          </div>
+        </section>
+
+        {/* Right: meetings */}
+        <section className="rounded-xl border border-border bg-surface shadow-sm overflow-hidden">
+          <div className="flex items-center justify-between border-b border-border-soft px-4 py-3">
+            <h2 className="text-[13px] font-semibold text-foreground">Upcoming meetings</h2>
+            <Link
+              href="/connect/meetings"
+              className={`flex items-center gap-1 rounded px-1 text-[12px] font-medium text-muted transition-colors hover:text-foreground ${focusRing}`}
+            >
+              View all
+              <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
+
+          <div className="p-1.5">
+            {loading ? (
+              Array.from({ length: 2 }).map((_, i) => <SkeletonRow key={i} />)
+            ) : data && data.upcoming.length > 0 ? (
+              data.upcoming.map((m) => <MeetingRow key={m.id} m={m} />)
+            ) : (
+              <div className="flex flex-col items-center gap-2 py-10 text-center px-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-sunken">
+                  <Video className="h-5 w-5 text-subtle" />
+                </div>
+                <p className="text-[12px] text-subtle">Nothing scheduled today.</p>
+                <Link
+                  href="/connect/meetings"
+                  className={`text-[12px] font-medium text-accent hover:underline ${focusRing}`}
+                >
+                  Schedule a meeting →
+                </Link>
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
+
       {failed && (
-        <div className="mb-4 flex items-center gap-3 rounded-lg border border-warn/25 bg-warn-soft px-3 py-2">
-          <p className="flex-1 text-xs text-warn">
-            Couldn&apos;t refresh your summary. Showing the last result.
-          </p>
+        <div className="mt-4 flex items-center gap-3 rounded-xl border border-warn/25 bg-warn-soft px-4 py-2.5">
+          <p className="flex-1 text-[12px] text-warn">Couldn&apos;t refresh — showing cached data.</p>
           <button
             onClick={() => void load()}
-            className={`flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-warn transition-colors hover:bg-warn/10 ${focusRing}`}
+            className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[12px] font-medium text-warn transition-colors hover:bg-warn/10 ${focusRing}`}
           >
             <RefreshCw className="h-3 w-3" />
             Retry
           </button>
         </div>
       )}
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <Panel title="Recent conversations" href="/connect/chat">
-            {loading ? (
-              Array.from({ length: 4 }).map((_, i) => <SkeletonRow key={i} />)
-            ) : data && data.conversations.length > 0 && now !== null ? (
-              data.conversations.map((c) => (
-                <ConversationRow key={c.channelId} c={c} now={now} />
-              ))
-            ) : (
-              <Empty text="No conversations yet — start one from Chat." />
-            )}
-          </Panel>
-        </div>
-
-        <Panel title="Upcoming" href="/connect/meetings">
-          {loading ? (
-            Array.from({ length: 2 }).map((_, i) => <SkeletonRow key={i} />)
-          ) : data && data.upcoming.length > 0 ? (
-            data.upcoming.map((m) => <MeetingRow key={m.id} m={m} />)
-          ) : (
-            <Empty text="Nothing scheduled today." />
-          )}
-        </Panel>
-      </div>
     </div>
   );
 }

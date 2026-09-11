@@ -5175,10 +5175,94 @@ export function ChatView({
 
       {/* Main area — hidden on mobile when no channel selected */}
       {!selectedChannelId ? (
-        <div className="hidden lg:flex flex-1 flex-col items-center justify-center text-muted bg-surface p-8">
-          <MessageSquare className="w-16 h-16 mb-4 opacity-20" />
-          <p className="text-lg font-medium">Select a channel</p>
-          <p className="text-sm">Or create one from the sidebar.</p>
+        <div className="hidden lg:flex flex-1 flex-col bg-canvas">
+          {/* Top bar placeholder to match channel header height */}
+          <div className="h-[57px] flex-shrink-0 border-b border-border-soft bg-surface" />
+          <div className="flex flex-1 flex-col items-center justify-center p-10 gap-8">
+            {/* Unread highlight — most important item */}
+            {(() => {
+              const unreadAll = [...publicChannels, ...directChannels, ...groupChannels]
+                .filter((c) => (c.unreadCount ?? 0) > 0)
+                .sort((a, b) => (b.lastMessage?.createdAt ?? "") > (a.lastMessage?.createdAt ?? "") ? 1 : -1);
+              if (unreadAll.length === 0) return null;
+              return (
+                <div className="w-full max-w-sm">
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-subtle px-1">
+                    Jump back in
+                  </p>
+                  <div className="rounded-xl border border-border bg-surface shadow-sm overflow-hidden">
+                    {unreadAll.slice(0, 4).map((ch) => {
+                      const isDirect = ch.type === "DIRECT";
+                      return (
+                        <button
+                          key={ch.id}
+                          onClick={() => setSelectedChannelId(ch.id)}
+                          className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-hover border-b border-border-soft last:border-0"
+                        >
+                          {isDirect ? (
+                            <div
+                              className="h-8 w-8 flex-shrink-0 rounded-full flex items-center justify-center text-[11px] font-bold text-white"
+                              style={{ background: avatarGradient(ch.name) }}
+                            >
+                              {ch.name.charAt(0).toUpperCase()}
+                            </div>
+                          ) : (
+                            <div className="h-8 w-8 flex-shrink-0 rounded-lg bg-accent-soft flex items-center justify-center">
+                              <Hash className="h-3.5 w-3.5 text-accent" />
+                            </div>
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-[13px] font-semibold text-foreground">{ch.name}</p>
+                            {ch.lastMessage && (
+                              <p className="truncate text-[11px] text-muted">
+                                {ch.lastMessage.authorName.split(" ")[0]}: {ch.lastMessage.content || "Attachment"}
+                              </p>
+                            )}
+                          </div>
+                          <span className="flex-shrink-0 bg-accent text-accent-foreground text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 leading-none">
+                            {ch.unreadCount! > 99 ? "99+" : ch.unreadCount}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Welcome state */}
+            <div className="text-center max-w-xs">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-accent-soft">
+                <MessageSquare className="h-7 w-7 text-accent" />
+              </div>
+              <p className="text-[15px] font-semibold text-foreground mb-1">
+                {publicChannels.length + directChannels.length + groupChannels.length === 0
+                  ? "Welcome to Sage Connect"
+                  : "Select a conversation"}
+              </p>
+              <p className="text-[12px] text-muted leading-relaxed">
+                {publicChannels.length + directChannels.length + groupChannels.length === 0
+                  ? "Start a DM or create a channel to begin messaging your team."
+                  : "Choose from the sidebar or start a new message."}
+              </p>
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                <button
+                  onClick={() => setShowNewGroupDM(true)}
+                  className="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-[12px] font-medium text-foreground shadow-sm transition-colors hover:bg-hover"
+                >
+                  <MessageSquare className="h-3.5 w-3.5 text-accent" />
+                  New DM
+                </button>
+                <button
+                  onClick={() => setShowNewChannel(true)}
+                  className="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-[12px] font-medium text-foreground shadow-sm transition-colors hover:bg-hover"
+                >
+                  <Hash className="h-3.5 w-3.5 text-accent" />
+                  New channel
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       ) : (
         <>
