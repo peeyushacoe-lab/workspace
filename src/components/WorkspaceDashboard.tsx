@@ -310,7 +310,8 @@ export function SimpleComposer({
       toast.error("Scheduled time must be in the future");
       return;
     }
-    const parseEmails = (raw: string) => raw.split(",").map(s => s.trim()).filter(Boolean);
+    const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const parseEmails = (raw: string) => raw.split(",").map(s => s.trim()).filter(s => s && EMAIL_RE.test(s));
     setIsScheduling(true);
     try {
       const res = await fetch("/api/inbox/scheduled", {
@@ -458,7 +459,8 @@ export function SimpleComposer({
     e.preventDefault();
     if (!recipient.trim() || !subject.trim()) { toast.error("Recipient and subject are required"); return; }
 
-    const parseEmails = (raw: string) => raw.split(",").map(s => s.trim()).filter(Boolean);
+    const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const parseEmails = (raw: string) => raw.split(",").map(s => s.trim()).filter(s => s && EMAIL_RE.test(s));
     const payload = {
       to: recipient,
       subject,

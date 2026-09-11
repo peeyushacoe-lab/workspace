@@ -7,16 +7,24 @@ import { getTokensForUser, sendExpoPush, getUnreadBadgeCount } from "@/lib/expo-
 import { indexingQueue } from "@/lib/queues/indexing.queue";
 import { uploadToR2, isS3Configured } from "@/lib/s3";
 
+// Accept any string for cc/bcc items and filter invalid emails server-side,
+// so a single malformed address doesn't kill the entire send.
+const emailStr = z.string().trim().min(1);
 const composeSchema = z.object({
   to:        z.string().email(),
   subject:   z.string().min(1).max(500),
   body:      z.string().min(1).max(100_000),
   htmlBody:  z.string().optional(),
-  cc:        z.array(z.string().email()).optional(),
-  bcc:       z.array(z.string().email()).optional(),
+  cc:        z.array(emailStr).optional(),
+  bcc:       z.array(emailStr).optional(),
   replyToThreadId: z.string().optional(),
   signatureId: z.string().optional(),
 });
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+function filterEmails(addrs: string[] | undefined): string[] {
+  return (addrs ?? []).map(s => s.trim()).filter(s => EMAIL_RE.test(s));
+}
 
 const INTERNAL_DOMAIN = "cybersage.uk";
 
@@ -65,6 +73,8 @@ export async function POST(request: Request) {
   const textBody = parsed.data.body;
   const toAddr = to.toLowerCase();
   const fromAddr = user.email.toLowerCase();
+  const ccAddrs  = filterEmails(parsed.data.cc);
+  const bccAddrs = filterEmails(parsed.data.bcc);
 
   let signature: { html?: string | null; fullName?: string; title?: string | null; phone?: string | null; linkedinUrl?: string | null; website?: string | null; avatarUrl?: string | null } | null = null;
   if (signatureId) {
@@ -247,6 +257,23 @@ export async function POST(request: Request) {
       }
     }).catch(() => {});
 
+    // ── Route CC/BCC recipients ────────────────────────────────────────────
+    // Internal CC/BCC → deliver directly to their mailbox
+    // External CC/BCC → send via Resend (fire-and-forget, non-fatal)
+    const allExtra = [...ccAddrs, ...bccAddrs];
+    for (const addr of allExtra) {
+      if (isInternal(addr)) {
+        void (async () => {
+          const mb = await prisma.mailbox.findUnique({ where: { email: addr } }).catch(() => null);
+          if (!mb) return;
+          const t = await prisma.inboxThread.create({ data: { subject: cleanSubject, mailboxId: mb.id } });
+          await prisma.inboxMessage.create({ data: { threadId: t.id, from: fromAddr, to: addr, subject, textBody, htmlBody: finalHtml ?? null, isRead: false } });
+        })();
+      } else {
+        void sendEmail(subject, textBody, { email: addr, name: addr.split("@")[0], status: "Direct" }, sigTemplate, `${user.fullName} <${fromAddr}>`, undefined, undefined, undefined, attachmentFiles.length ? attachmentFiles : undefined).catch(() => {});
+      }
+    }
+
     return NextResponse.json({ ok: true, delivery: "internal" });
   }
 
@@ -258,8 +285,8 @@ export async function POST(request: Request) {
       { email: toAddr, name: toAddr.split("@")[0], status: "Direct" },
       sigTemplate,
       `${user.fullName} <${fromAddr}>`,
-      parsed.data.cc,
-      parsed.data.bcc,
+      ccAddrs.length ? ccAddrs : undefined,
+      bccAddrs.length ? bccAddrs : undefined,
       undefined,
       attachmentFiles.length ? attachmentFiles : undefined,
     );
