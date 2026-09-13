@@ -258,8 +258,14 @@ export function parseSessionUser(signedValue: string | undefined): SessionUser |
         fullName: parsed.fullName,
         role: parsed.role as UserRole,
         mustResetPassword: parsed.mustResetPassword === true,
+        mfaEnabled: parsed.mfaEnabled === true,
         organizationId: parsed.organizationId ?? null,
         orgRole: parsed.orgRole ?? null,
+        // Must be carried through: layouts refresh the cookie when orgType is
+        // missing, so dropping it here sent every org member into an infinite
+        // /api/session/refresh loop. Absent key stays undefined (a genuinely old
+        // cookie, refreshed once); an explicit null means "core org".
+        orgType: typeof parsed.orgType === "string" ? parsed.orgType : parsed.orgType === null ? null : undefined,
         perms: Array.isArray(parsed.perms) ? parsed.perms : undefined,
         permEpoch: typeof parsed.permEpoch === "number" ? parsed.permEpoch : undefined,
       };
