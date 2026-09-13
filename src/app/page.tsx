@@ -19,6 +19,9 @@ const inter = Inter({
   display: "swap",
 });
 
+// Must be dynamic — reads cookies to decide whether to redirect or show portal.
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Nexus Suite",
   description: "Select your workspace — Nexus, Nexus Hospitality, or Nexus Education.",

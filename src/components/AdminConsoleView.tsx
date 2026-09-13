@@ -2756,8 +2756,8 @@ function HospitalityOrgsTab() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-[15px] font-semibold text-foreground">Hospitality Organizations</h2>
-          <p className="text-xs text-muted mt-0.5">Create hotel pilot orgs and generate login credentials for GMs and operations teams.</p>
+          <h2 className="text-[15px] font-semibold text-foreground">Organizations</h2>
+          <p className="text-xs text-muted mt-0.5">Create organizations and user accounts for Nexus Hospitality, Core, or Education.</p>
         </div>
         <button onClick={() => setShowCreate(true)}
           className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold bg-accent text-accent-foreground rounded-lg hover:bg-accent-hover transition-colors">
@@ -2770,8 +2770,8 @@ function HospitalityOrgsTab() {
       ) : orgs.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center border border-dashed border-border rounded-xl">
           <Hotel className="w-10 h-10 text-subtle mb-3" />
-          <p className="text-sm font-medium text-foreground mb-1">No hospitality organizations yet</p>
-          <p className="text-xs text-muted mb-4">Create your first hotel org to set up a demo or pilot environment.</p>
+          <p className="text-sm font-medium text-foreground mb-1">No organizations yet</p>
+          <p className="text-xs text-muted mb-4">Create your first organization to generate login credentials.</p>
           <button onClick={() => setShowCreate(true)} className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold bg-accent text-accent-foreground rounded-lg hover:bg-accent-hover transition-colors">
             <Plus className="w-4 h-4" /> New organization
           </button>
@@ -2838,26 +2838,21 @@ function HospitalityOrgsTab() {
   );
 }
 
-// ─── Create hospitality org modal ─────────────────────────────────────────────
+// ─── Create org modal ─────────────────────────────────────────────────────────
 function CreateHospOrgModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [result, setResult] = useState<{ orgName: string; email: string; password: string } | null>(null);
-  const [f, setF] = useState({
-    orgName: "", hotelName: "", city: "", country: "India",
-    starRating: "5", totalRooms: "286", currency: "INR",
-    timezone: "Asia/Kolkata", isDemo: true, productType: "HOSPITALITY",
-    userName: "", userEmail: "", userPassword: genPassword(),
-  });
-  const set = (k: keyof typeof f, v: string | boolean) => setF(p => ({ ...p, [k]: v }));
+  const [f, setF] = useState({ orgName: "", hotelName: "", productType: "HOSPITALITY", userName: "", userEmail: "", userPassword: genPassword() });
+  const set = (k: keyof typeof f, v: string) => setF(p => ({ ...p, [k]: v }));
 
   const submit = async () => {
     setLoading(true); setError("");
     try {
       const res = await fetch("/api/admin/hospitality/orgs", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orgName: f.orgName, productType: f.productType, hotelName: f.hotelName, city: f.city, country: f.country, starRating: parseInt(f.starRating) || null, totalRooms: parseInt(f.totalRooms) || 0, currency: f.currency, timezone: f.timezone, isDemo: f.isDemo, userName: f.userName, userEmail: f.userEmail, userPassword: f.userPassword }),
+        body: JSON.stringify({ orgName: f.orgName, productType: f.productType, hotelName: f.hotelName, isDemo: false, userName: f.userName, userEmail: f.userEmail, userPassword: f.userPassword }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed");
@@ -2887,57 +2882,29 @@ function CreateHospOrgModal({ onClose, onCreated }: { onClose: () => void; onCre
   );
 
   return (
-    <div className="fixed inset-0 bg-overlay/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-surface border border-border rounded-xl shadow-pop w-full max-w-lg my-4">
+    <div className="fixed inset-0 bg-overlay/60 z-50 flex items-center justify-center p-4">
+      <div className="bg-surface border border-border rounded-xl shadow-pop w-full max-w-md">
         <div className="flex items-center justify-between px-6 py-4 border-b border-border-soft">
-          <h2 className="text-[15px] font-semibold text-foreground">New hospitality organization</h2>
+          <h2 className="text-[15px] font-semibold text-foreground">New organization</h2>
           <button onClick={onClose} className="text-subtle hover:text-muted transition-colors text-lg leading-none">&times;</button>
         </div>
-        <div className="p-6 space-y-5">
+        <div className="p-6 space-y-4">
           {error && <p className="text-xs text-crit bg-crit-soft border border-crit/20 rounded-lg px-3 py-2">{error}</p>}
-          <fieldset className="space-y-3">
-            <legend className="text-[11px] font-semibold uppercase tracking-wide text-subtle mb-2">Organization</legend>
-            <input className="w-full px-3 py-2 bg-surface-sunken border border-border rounded-lg text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20" placeholder="Org name (e.g. The Grand Nexus Mumbai) *" value={f.orgName} onChange={e => set("orgName", e.target.value)} />
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-subtle mb-1.5">Product</p>
-              <div className="flex gap-2">
-                {[{ v: "HOSPITALITY", label: "Nexus Hospitality" }, { v: "CORE", label: "Nexus Core" }, { v: "EDUCATION", label: "Nexus Education" }].map(opt => (
-                  <button key={opt.v} type="button" onClick={() => set("productType", opt.v)}
-                    className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-colors ${f.productType === opt.v ? "bg-accent text-accent-foreground border-accent" : "bg-surface-sunken text-muted border-border hover:border-accent/40 hover:text-foreground"}`}>
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-subtle mb-1.5">Product</p>
+            <div className="flex gap-2">
+              {[{ v: "HOSPITALITY", label: "Hospitality" }, { v: "CORE", label: "Core" }, { v: "EDUCATION", label: "Education" }].map(opt => (
+                <button key={opt.v} type="button" onClick={() => set("productType", opt.v)}
+                  className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-colors ${f.productType === opt.v ? "bg-accent text-accent-foreground border-accent" : "bg-surface-sunken text-muted border-border hover:border-accent/40 hover:text-foreground"}`}>
+                  {opt.label}
+                </button>
+              ))}
             </div>
-          </fieldset>
-          <fieldset className="space-y-3">
-            <legend className="text-[11px] font-semibold uppercase tracking-wide text-subtle mb-2">Hotel property</legend>
-            <input className="w-full px-3 py-2 bg-surface-sunken border border-border rounded-lg text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20" placeholder="Hotel name *" value={f.hotelName} onChange={e => set("hotelName", e.target.value)} />
-            <div className="grid grid-cols-2 gap-3">
-              <input className="px-3 py-2 bg-surface-sunken border border-border rounded-lg text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20" placeholder="City" value={f.city} onChange={e => set("city", e.target.value)} />
-              <input className="px-3 py-2 bg-surface-sunken border border-border rounded-lg text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20" placeholder="Country" value={f.country} onChange={e => set("country", e.target.value)} />
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              <select className="px-3 py-2 bg-surface-sunken border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20" value={f.starRating} onChange={e => set("starRating", e.target.value)}>
-                {[1,2,3,4,5].map(n => <option key={n} value={n}>{n}★</option>)}
-              </select>
-              <input type="number" className="px-3 py-2 bg-surface-sunken border border-border rounded-lg text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20" placeholder="Rooms" value={f.totalRooms} onChange={e => set("totalRooms", e.target.value)} />
-              <select className="px-3 py-2 bg-surface-sunken border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20" value={f.currency} onChange={e => set("currency", e.target.value)}>
-                <option value="INR">INR ₹</option><option value="GBP">GBP £</option><option value="USD">USD $</option><option value="EUR">EUR €</option><option value="AED">AED</option>
-              </select>
-            </div>
-            <div className="grid grid-cols-2 gap-3 items-center">
-              <select className="px-3 py-2 bg-surface-sunken border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20" value={f.timezone} onChange={e => set("timezone", e.target.value)}>
-                <option value="Asia/Kolkata">Asia/Kolkata</option><option value="Asia/Dubai">Asia/Dubai</option><option value="Europe/London">Europe/London</option><option value="UTC">UTC</option>
-              </select>
-              <label className="flex items-center gap-2 cursor-pointer text-sm text-foreground">
-                <input type="checkbox" className="w-4 h-4 rounded" checked={f.isDemo} onChange={e => set("isDemo", e.target.checked)} />
-                Demo property
-              </label>
-            </div>
-          </fieldset>
-          <fieldset className="space-y-3">
-            <legend className="text-[11px] font-semibold uppercase tracking-wide text-subtle mb-2">Admin user account</legend>
+          </div>
+          <input className="w-full px-3 py-2 bg-surface-sunken border border-border rounded-lg text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20" placeholder="Organization name *" value={f.orgName} onChange={e => set("orgName", e.target.value)} />
+          <input className="w-full px-3 py-2 bg-surface-sunken border border-border rounded-lg text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20" placeholder="Property / site name *" value={f.hotelName} onChange={e => set("hotelName", e.target.value)} />
+          <div className="border-t border-border-soft pt-4 space-y-3">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-subtle">Admin account</p>
             <input className="w-full px-3 py-2 bg-surface-sunken border border-border rounded-lg text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20" placeholder="Full name *" value={f.userName} onChange={e => set("userName", e.target.value)} />
             <input type="email" className="w-full px-3 py-2 bg-surface-sunken border border-border rounded-lg text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20" placeholder="Email address *" value={f.userEmail} onChange={e => set("userEmail", e.target.value)} />
             <div className="relative">
@@ -2947,13 +2914,12 @@ function CreateHospOrgModal({ onClose, onCreated }: { onClose: () => void; onCre
                 <button type="button" onClick={() => set("userPassword", genPassword())} className="p-1 text-subtle hover:text-muted"><RefreshCw className="w-3.5 h-3.5" /></button>
               </div>
             </div>
-            <p className="text-[11px] text-subtle">Auto-generated secure password. Save it before closing.</p>
-          </fieldset>
+          </div>
         </div>
         <div className="flex justify-end gap-3 px-6 py-4 border-t border-border-soft">
           <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-muted hover:text-foreground hover:bg-hover rounded-lg transition-colors">Cancel</button>
           <button onClick={submit} disabled={loading} className="px-5 py-2 text-sm font-semibold bg-accent text-accent-foreground rounded-lg hover:bg-accent-hover disabled:opacity-50 transition-colors">
-            {loading ? "Creating…" : "Create organization"}
+            {loading ? "Creating…" : "Create"}
           </button>
         </div>
       </div>
@@ -3044,7 +3010,7 @@ const SIDEBAR_TABS: { id: AdminSidebarTab; label: string; icon: React.ElementTyp
   { id: "retention",       label: "Retention",       icon: Timer,       description: "Configure automatic data retention and deletion policies." },
   { id: "sso",             label: "SSO / SAML",      icon: ShieldAlert, description: "Configure Single Sign-On providers (SAML, OIDC, Google, Microsoft)." },
   { id: "sentinel",        label: "Sentinel Alerts", icon: AlertTriangle, description: "View and acknowledge security alerts from CyberSage Sentinel." },
-  { id: "hospitality",    label: "Hospitality Orgs", icon: Hotel,        description: "Create and manage hotel pilot organizations and login accounts." },
+  { id: "hospitality",    label: "Organizations",    icon: Building2,    description: "Create and manage organizations and user accounts for any Nexus product." },
 ];
 
 export function AdminConsoleView(_props: { currentUserId: string }) {

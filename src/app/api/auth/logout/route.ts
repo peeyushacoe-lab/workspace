@@ -1,23 +1,45 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { clearCookieOptions } from "@/lib/cookie-options";
+
+const COOKIE_NAMES = ["cybersage_session", "cybersage_user", "cybersage_admin", "mfa_verified"];
 
 export async function POST(request: NextRequest) {
-  const response = NextResponse.redirect(new URL("/login", request.url));
+  const isProd = process.env.NODE_ENV === "production";
+  const domain = process.env.COOKIE_DOMAIN?.trim(); // e.g. ".cybersage.uk"
 
-  // Clear domain-scoped cookies (set with COOKIE_DOMAIN=.cybersage.uk in prod).
-  // IMPORTANT: do NOT call response.cookies.delete() for the same names after
-  // these — in Next.js the internal cookie map is keyed by name, so a plain
-  // delete() call overwrites the domain-aware set() and the domain-scoped
-  // cookie never gets a clearing Set-Cookie header, leaving the session alive.
-  const opts = clearCookieOptions();
-  response.cookies.set("cybersage_admin",   "", { ...opts, maxAge: 0 });
-  response.cookies.set("cybersage_session", "", { ...opts, maxAge: 0 });
-  response.cookies.set("cybersage_user",    "", { ...opts, maxAge: 0 });
-  response.cookies.set("mfa_verified",      "", { ...opts, maxAge: 0 });
+  // Build a Set-Cookie header string that expires the cookie immediately.
+  // We send it TWICE — once host-only (no Domain attr) and once domain-scoped —
+  // so we clear the cookie regardless of how it was originally set. This covers
+  // the case where COOKIE_DOMAIN was not set at login time but is set now, or
+  // vice-versa, without needing to know which variant is currently in the jar.
+  const makeClear = (name: string, cookieDomain?: string) =>
+    [
+      `${name}=`,
+      `Path=/`,
+      cookieDomain ? `Domain=${cookieDomain}` : null,
+      `Max-Age=0`,
+      `Expires=Thu, 01 Jan 1970 00:00:00 GMT`,
+      `HttpOnly`,
+      `SameSite=Lax`,
+      isProd ? `Secure` : null,
+    ]
+      .filter(Boolean)
+      .join("; ");
 
-  // For environments where COOKIE_DOMAIN is NOT set (local dev, Vercel previews),
-  // the cookies above were set host-only (no domain). clearCookieOptions() also
-  // returns no domain in that case, so the same set() correctly clears them.
+  const loginUrl = new URL("/login", request.url);
+  // Use a 302 so POST→redirect doesn't cause method confusion in some clients.
+  const response = new NextResponse(null, {
+    status: 302,
+    headers: { Location: loginUrl.toString() },
+  });
+
+  for (const name of COOKIE_NAMES) {
+    // Host-only clear (covers cookies set without COOKIE_DOMAIN)
+    response.headers.append("Set-Cookie", makeClear(name));
+    // Domain-scoped clear (covers cookies set with COOKIE_DOMAIN=.cybersage.uk)
+    if (domain) {
+      response.headers.append("Set-Cookie", makeClear(name, domain));
+    }
+  }
 
   return response;
 }
