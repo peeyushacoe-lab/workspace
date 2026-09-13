@@ -11,6 +11,7 @@ export type SessionUser = {
   mfaEnabled?: boolean;
   organizationId?: string | null;
   orgRole?: string | null;
+  orgType?: string | null; // "CORE" | "HOSPITALITY" | "EDUCATION" — from org.settings.orgType
   // RBAC (RFC-001): effective permission keys + epoch, embedded at login and
   // refreshed when the DB epoch advances. Optional so cookies issued before the
   // RBAC rollout still parse.
@@ -88,16 +89,26 @@ export const portalHome = "/home";
 // Role-specific landing page. Everything without a dedicated workspace lands on
 // Nexus Home, which is auth-only and gates its own cards — so it is reachable by
 // every role and can never cause a post-login redirect loop.
-export function getPortalHome(role: string): string {
+export function getPortalHome(role: string, orgType?: string | null): string {
   // HR and interns keep purpose-built landing pages: both spend their whole day
   // in one console, and Home's cards are mostly features they can't reach.
   if (role === "HR") return "/admin/hr";
   if (role === "INTERNSHIP") return "/internship/attendance";
+  // Hospitality org users land directly on their module — the core workspace
+  // Home is irrelevant for hotel staff.
+  if (orgType === "HOSPITALITY") return "/hospitality";
   // MEMBER previously landed on /profile purely because it held no workspace
   // permissions and every other route 403'd. Home is universally accessible, so
   // that workaround is no longer needed.
   return "/home";
 }
+
+// Nav hrefs shown to hospitality-org users: email + connect + full hospitality module.
+const HOSPITALITY_NAV_HREFS = new Set([
+  "/inbox", "/connect/chat", "/meet", "/calendar", "/notifications",
+  "/hospitality", "/hospitality/operations", "/hospitality/alerts",
+  "/hospitality/tasks", "/hospitality/reports", "/hospitality/integrations",
+]);
 
 // Key roles — only one account of each can exist in the system
 export const KEY_ROLES = new Set<UserRole>(["CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER"]);
@@ -384,6 +395,8 @@ export function canAccessPathByPerms(
   return perms.includes(match.permission);
 }
 
-export function getPortalNavForRole(role: UserRole) {
-  return portalNavItems.filter((item) => item.roles.includes(role));
+export function getPortalNavForRole(role: UserRole, orgType?: string | null) {
+  const items = portalNavItems.filter((item) => item.roles.includes(role));
+  if (orgType === "HOSPITALITY") return items.filter((item) => HOSPITALITY_NAV_HREFS.has(item.href));
+  return items;
 }

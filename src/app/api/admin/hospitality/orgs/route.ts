@@ -48,13 +48,13 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const {
     // Org
-    orgName,
+    orgName, productType,
     // Hotel
     hotelName, city, country, starRating, totalRooms, currency, timezone, isDemo,
     // First user
     userName, userEmail, userPassword,
   } = body as {
-    orgName: string;
+    orgName: string; productType?: string;
     hotelName: string; city?: string; country?: string; starRating?: number;
     totalRooms?: number; currency?: string; timezone?: string; isDemo?: boolean;
     userName: string; userEmail: string; userPassword: string;
@@ -81,6 +81,7 @@ export async function POST(req: NextRequest) {
         slug: orgSlug,
         plan: "PRO",
         maxUsers: 50,
+        settings: { orgType: productType ?? "HOSPITALITY" },
       },
     });
 

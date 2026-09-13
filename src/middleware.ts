@@ -37,6 +37,15 @@ const protectedRoutes = [
   "/mentor",
   "/hr",
   "/connect",
+  "/hospitality",
+  "/internship",
+  "/clients",
+  "/people",
+  "/teams",
+  "/org",
+  "/billing",
+  "/compliance",
+  "/soc",
 ];
 
 /**
@@ -253,7 +262,7 @@ export async function middleware(request: NextRequest) {
   const effective = enforce ? (newDecision ?? oldDecision) : oldDecision;
 
   if (!effective) {
-    return withCsp(NextResponse.redirect(new URL(getPortalHome(user.role), request.url)), nonce);
+    return withCsp(NextResponse.redirect(new URL(getPortalHome(user.role, user.orgType), request.url)), nonce);
   }
 
   // MFA enforcement: admin-level roles with MFA enabled must complete the challenge each session

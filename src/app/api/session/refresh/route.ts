@@ -33,6 +33,7 @@ export async function GET(request: NextRequest) {
       id: true, email: true, fullName: true, role: true,
       isActive: true, mustResetPassword: true, mfaEnabled: true,
       organizationId: true, orgRole: true,
+      organization: { select: { settings: true } },
     },
   });
 
@@ -44,6 +45,8 @@ export async function GET(request: NextRequest) {
   }
 
   const { perms, permEpoch } = await getSessionPerms(dbUser.id);
+  const orgSettings = dbUser.organization?.settings as Record<string, unknown> | null | undefined;
+  const orgType = (orgSettings?.orgType as string | undefined) ?? null;
 
   const sessionUser: SessionUser = {
     id: dbUser.id,
@@ -54,6 +57,7 @@ export async function GET(request: NextRequest) {
     mfaEnabled: dbUser.mfaEnabled,
     organizationId: dbUser.organizationId,
     orgRole: dbUser.orgRole,
+    orgType,
     perms,
     permEpoch,
   };

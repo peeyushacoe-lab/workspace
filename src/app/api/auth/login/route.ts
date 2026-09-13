@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
 
     const user = await prisma.user.findUnique({
       where: { email },
-      select: { id: true, email: true, passwordHash: true, role: true, fullName: true, isActive: true, mustResetPassword: true, mfaEnabled: true, organizationId: true, orgRole: true },
+      select: { id: true, email: true, passwordHash: true, role: true, fullName: true, isActive: true, mustResetPassword: true, mfaEnabled: true, organizationId: true, orgRole: true, organization: { select: { settings: true } } },
     });
 
     const hashToCompare = user?.passwordHash ?? DUMMY_HASH;
@@ -112,6 +112,9 @@ export async function POST(request: NextRequest) {
     // so Edge middleware can gate pages without a DB call.
     const { perms, permEpoch } = await getSessionPerms(user.id);
 
+    const orgSettings = user.organization?.settings as Record<string, unknown> | null | undefined;
+    const orgType = (orgSettings?.orgType as string | undefined) ?? null;
+
     const sessionUser: SessionUser = {
       id: user.id,
       email: user.email,
@@ -121,11 +124,12 @@ export async function POST(request: NextRequest) {
       mfaEnabled: user.mfaEnabled,
       organizationId: user.organizationId,
       orgRole: user.orgRole,
+      orgType,
       perms,
       permEpoch,
     };
 
-    const roleHome = getPortalHome(user.role);
+    const roleHome = getPortalHome(user.role, orgType);
     // Forced password reset takes priority over any requested destination.
     // /api/sso/authorize is explicitly allowed as a next destination (internal SSO flow).
     const isSsoNext = requestedNext.startsWith("/api/sso/authorize");

@@ -155,8 +155,8 @@ function extraAllowed(roles: "all" | "non-hr" | UserRole[], role: UserRole): boo
  * Build the spine + rail for a role. Only groups with at least one reachable
  * link are returned, so an intern sees a short spine and an admin a long one.
  */
-export function getNavGroups(role: UserRole): ResolvedGroup[] {
-  const allowed: PortalNavItem[] = getPortalNavForRole(role);
+export function getNavGroups(role: UserRole, orgType?: string | null): ResolvedGroup[] {
+  const allowed: PortalNavItem[] = getPortalNavForRole(role, orgType);
   const byHref = new Map(allowed.map((i) => [i.href, i]));
   const claimed = new Set<string>();
 

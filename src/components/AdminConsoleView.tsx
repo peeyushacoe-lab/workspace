@@ -32,11 +32,18 @@ import {
   FileText,
   Check,
   Menu,
+  Hotel,
+  UserPlus,
+  Copy,
+  Eye,
+  EyeOff,
+  RefreshCw,
+  Building2,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
 
-type AdminSidebarTab = "overview" | "users" | "mailboxes" | "audit" | "security" | "suppression" | "legal-hold" | "gdpr" | "security-stats" | "retention" | "sso" | "sentinel";
+type AdminSidebarTab = "overview" | "users" | "mailboxes" | "audit" | "security" | "suppression" | "legal-hold" | "gdpr" | "security-stats" | "retention" | "sso" | "sentinel" | "hospitality";
 
 type AdminUser = {
   id: string;
@@ -2699,6 +2706,331 @@ function SentinelTab() {
   );
 }
 
+// ─── Hospitality Orgs Tab ─────────────────────────────────────────────────────
+
+interface HotelOrg {
+  id: string; name: string; slug: string; createdAt: string;
+  hotelProperties: { id: string; name: string; city: string | null; country: string | null; starRating: number | null; totalRooms: number; currency: string; isDemo: boolean }[];
+  _count: { users: number };
+}
+
+function genPassword() {
+  const c = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#";
+  return Array.from({ length: 14 }, () => c[Math.floor(Math.random() * c.length)]).join("");
+}
+
+function CopyText({ text }: { text: string }) {
+  const [done, setDone] = useState(false);
+  return (
+    <button onClick={() => { navigator.clipboard.writeText(text); setDone(true); setTimeout(() => setDone(false), 1500); }}
+      className="ml-1 text-subtle hover:text-foreground transition-colors">
+      {done ? <Check className="w-3 h-3 text-ok" /> : <Copy className="w-3 h-3" />}
+    </button>
+  );
+}
+
+function HospitalityOrgsTab() {
+  const [orgs, setOrgs] = useState<HotelOrg[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showCreate, setShowCreate] = useState(false);
+  const [addUserOrg, setAddUserOrg] = useState<HotelOrg | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<HotelOrg | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try { const r = await fetch("/api/admin/hospitality/orgs"); const d = await r.json(); setOrgs(d.orgs ?? []); }
+    finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try { await fetch(`/api/admin/hospitality/orgs/${deleteTarget.id}`, { method: "DELETE" }); setDeleteTarget(null); load(); }
+    finally { setDeleting(false); }
+  };
+
+  return (
+    <div className="p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-[15px] font-semibold text-foreground">Hospitality Organizations</h2>
+          <p className="text-xs text-muted mt-0.5">Create hotel pilot orgs and generate login credentials for GMs and operations teams.</p>
+        </div>
+        <button onClick={() => setShowCreate(true)}
+          className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold bg-accent text-accent-foreground rounded-lg hover:bg-accent-hover transition-colors">
+          <Plus className="w-4 h-4" /> New organization
+        </button>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-16"><Loader2 className="w-5 h-5 text-subtle animate-spin" /></div>
+      ) : orgs.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 text-center border border-dashed border-border rounded-xl">
+          <Hotel className="w-10 h-10 text-subtle mb-3" />
+          <p className="text-sm font-medium text-foreground mb-1">No hospitality organizations yet</p>
+          <p className="text-xs text-muted mb-4">Create your first hotel org to set up a demo or pilot environment.</p>
+          <button onClick={() => setShowCreate(true)} className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold bg-accent text-accent-foreground rounded-lg hover:bg-accent-hover transition-colors">
+            <Plus className="w-4 h-4" /> New organization
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {orgs.map(org => {
+            const prop = org.hotelProperties[0];
+            return (
+              <div key={org.id} className="bg-surface-sunken border border-border rounded-xl p-4">
+                <div className="flex items-start justify-between gap-2 mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-accent-soft flex items-center justify-center flex-shrink-0">
+                      <Building2 className="w-5 h-5 text-accent-strong" />
+                    </div>
+                    <div>
+                      <p className="text-[13px] font-semibold text-foreground leading-tight">{org.name}</p>
+                      <p className="text-[11px] text-subtle font-mono">{org.slug}</p>
+                    </div>
+                  </div>
+                  {prop?.isDemo && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-warn-soft text-warn border border-warn/20 flex-shrink-0">DEMO</span>}
+                </div>
+                {prop && (
+                  <div className="space-y-1 text-xs mb-3">
+                    <div className="flex justify-between"><span className="text-muted">Hotel</span><span className="text-foreground font-medium">{prop.name}</span></div>
+                    {prop.city && <div className="flex justify-between"><span className="text-muted">Location</span><span className="text-foreground">{[prop.city, prop.country].filter(Boolean).join(", ")}</span></div>}
+                    <div className="flex justify-between"><span className="text-muted">Rooms / Rating</span><span className="text-foreground">{prop.totalRooms} rooms{prop.starRating ? ` · ${"★".repeat(prop.starRating)}` : ""}</span></div>
+                    <div className="flex justify-between"><span className="text-muted">Users</span><span className="text-foreground">{org._count.users} account{org._count.users !== 1 ? "s" : ""}</span></div>
+                  </div>
+                )}
+                <div className="flex gap-2 pt-2 border-t border-border-soft">
+                  <button onClick={() => setAddUserOrg(org)} className="flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium text-muted hover:text-foreground hover:bg-hover rounded-lg transition-colors border border-border">
+                    <UserPlus className="w-3.5 h-3.5" /> Add user
+                  </button>
+                  <button onClick={() => setDeleteTarget(org)} className="p-2 text-subtle hover:text-crit hover:bg-crit-soft rounded-lg transition-colors border border-border">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Create org modal */}
+      {showCreate && <CreateHospOrgModal onClose={() => setShowCreate(false)} onCreated={load} />}
+      {addUserOrg && <AddHospUserModal org={addUserOrg} onClose={() => setAddUserOrg(null)} onAdded={load} />}
+
+      {deleteTarget && (
+        <div className="fixed inset-0 bg-overlay/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-surface border border-border rounded-xl shadow-pop w-full max-w-sm p-6">
+            <h2 className="text-[15px] font-semibold text-foreground mb-2">Delete &ldquo;{deleteTarget.name}&rdquo;?</h2>
+            <p className="text-sm text-muted mb-5">All hotel properties, users and data for this organization will be permanently deleted.</p>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setDeleteTarget(null)} className="px-4 py-2 text-sm font-medium text-muted hover:text-foreground hover:bg-hover rounded-lg transition-colors">Cancel</button>
+              <button onClick={confirmDelete} disabled={deleting} className="px-4 py-2 text-sm font-semibold text-white bg-crit rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity">
+                {deleting ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Create hospitality org modal ─────────────────────────────────────────────
+function CreateHospOrgModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [showPw, setShowPw] = useState(false);
+  const [result, setResult] = useState<{ orgName: string; email: string; password: string } | null>(null);
+  const [f, setF] = useState({
+    orgName: "", hotelName: "", city: "", country: "India",
+    starRating: "5", totalRooms: "286", currency: "INR",
+    timezone: "Asia/Kolkata", isDemo: true, productType: "HOSPITALITY",
+    userName: "", userEmail: "", userPassword: genPassword(),
+  });
+  const set = (k: keyof typeof f, v: string | boolean) => setF(p => ({ ...p, [k]: v }));
+
+  const submit = async () => {
+    setLoading(true); setError("");
+    try {
+      const res = await fetch("/api/admin/hospitality/orgs", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orgName: f.orgName, productType: f.productType, hotelName: f.hotelName, city: f.city, country: f.country, starRating: parseInt(f.starRating) || null, totalRooms: parseInt(f.totalRooms) || 0, currency: f.currency, timezone: f.timezone, isDemo: f.isDemo, userName: f.userName, userEmail: f.userEmail, userPassword: f.userPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed");
+      setResult({ orgName: data.org.name, email: f.userEmail, password: f.userPassword });
+      onCreated();
+    } catch (e: unknown) { setError(e instanceof Error ? e.message : "Something went wrong"); }
+    finally { setLoading(false); }
+  };
+
+  if (result) return (
+    <div className="fixed inset-0 bg-overlay/60 z-50 flex items-center justify-center p-4">
+      <div className="bg-surface border border-border rounded-xl shadow-pop w-full max-w-md p-6">
+        <div className="flex items-center gap-3 mb-5">
+          <div className="w-10 h-10 rounded-lg bg-ok-soft flex items-center justify-center"><Check className="w-5 h-5 text-ok" /></div>
+          <div><p className="text-[15px] font-semibold text-foreground">Organization created</p><p className="text-xs text-muted">{result.orgName}</p></div>
+        </div>
+        <div className="bg-surface-sunken border border-border rounded-lg p-4 space-y-3 text-sm mb-5">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-subtle">Login credentials — save these now</p>
+          <div className="flex items-center justify-between"><span className="text-muted">Login URL</span><span className="font-mono text-xs text-foreground flex items-center">nexus.cybersage.uk/login<CopyText text="https://nexus.cybersage.uk/login" /></span></div>
+          <div className="flex items-center justify-between"><span className="text-muted">Email</span><span className="font-mono text-xs text-foreground flex items-center">{result.email}<CopyText text={result.email} /></span></div>
+          <div className="flex items-center justify-between"><span className="text-muted">Password</span><span className="font-mono text-xs text-foreground flex items-center">{result.password}<CopyText text={result.password} /></span></div>
+        </div>
+        <p className="text-xs text-subtle mb-4">This password will not be shown again.</p>
+        <button onClick={onClose} className="w-full py-2 bg-accent text-accent-foreground text-sm font-semibold rounded-lg hover:bg-accent-hover transition-colors">Done</button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="fixed inset-0 bg-overlay/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-surface border border-border rounded-xl shadow-pop w-full max-w-lg my-4">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border-soft">
+          <h2 className="text-[15px] font-semibold text-foreground">New hospitality organization</h2>
+          <button onClick={onClose} className="text-subtle hover:text-muted transition-colors text-lg leading-none">&times;</button>
+        </div>
+        <div className="p-6 space-y-5">
+          {error && <p className="text-xs text-crit bg-crit-soft border border-crit/20 rounded-lg px-3 py-2">{error}</p>}
+          <fieldset className="space-y-3">
+            <legend className="text-[11px] font-semibold uppercase tracking-wide text-subtle mb-2">Organization</legend>
+            <input className="w-full px-3 py-2 bg-surface-sunken border border-border rounded-lg text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20" placeholder="Org name (e.g. The Grand Nexus Mumbai) *" value={f.orgName} onChange={e => set("orgName", e.target.value)} />
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-subtle mb-1.5">Product</p>
+              <div className="flex gap-2">
+                {[{ v: "HOSPITALITY", label: "Nexus Hospitality" }, { v: "CORE", label: "Nexus Core" }, { v: "EDUCATION", label: "Nexus Education" }].map(opt => (
+                  <button key={opt.v} type="button" onClick={() => set("productType", opt.v)}
+                    className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-colors ${f.productType === opt.v ? "bg-accent text-accent-foreground border-accent" : "bg-surface-sunken text-muted border-border hover:border-accent/40 hover:text-foreground"}`}>
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </fieldset>
+          <fieldset className="space-y-3">
+            <legend className="text-[11px] font-semibold uppercase tracking-wide text-subtle mb-2">Hotel property</legend>
+            <input className="w-full px-3 py-2 bg-surface-sunken border border-border rounded-lg text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20" placeholder="Hotel name *" value={f.hotelName} onChange={e => set("hotelName", e.target.value)} />
+            <div className="grid grid-cols-2 gap-3">
+              <input className="px-3 py-2 bg-surface-sunken border border-border rounded-lg text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20" placeholder="City" value={f.city} onChange={e => set("city", e.target.value)} />
+              <input className="px-3 py-2 bg-surface-sunken border border-border rounded-lg text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20" placeholder="Country" value={f.country} onChange={e => set("country", e.target.value)} />
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <select className="px-3 py-2 bg-surface-sunken border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20" value={f.starRating} onChange={e => set("starRating", e.target.value)}>
+                {[1,2,3,4,5].map(n => <option key={n} value={n}>{n}★</option>)}
+              </select>
+              <input type="number" className="px-3 py-2 bg-surface-sunken border border-border rounded-lg text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20" placeholder="Rooms" value={f.totalRooms} onChange={e => set("totalRooms", e.target.value)} />
+              <select className="px-3 py-2 bg-surface-sunken border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20" value={f.currency} onChange={e => set("currency", e.target.value)}>
+                <option value="INR">INR ₹</option><option value="GBP">GBP £</option><option value="USD">USD $</option><option value="EUR">EUR €</option><option value="AED">AED</option>
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-3 items-center">
+              <select className="px-3 py-2 bg-surface-sunken border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20" value={f.timezone} onChange={e => set("timezone", e.target.value)}>
+                <option value="Asia/Kolkata">Asia/Kolkata</option><option value="Asia/Dubai">Asia/Dubai</option><option value="Europe/London">Europe/London</option><option value="UTC">UTC</option>
+              </select>
+              <label className="flex items-center gap-2 cursor-pointer text-sm text-foreground">
+                <input type="checkbox" className="w-4 h-4 rounded" checked={f.isDemo} onChange={e => set("isDemo", e.target.checked)} />
+                Demo property
+              </label>
+            </div>
+          </fieldset>
+          <fieldset className="space-y-3">
+            <legend className="text-[11px] font-semibold uppercase tracking-wide text-subtle mb-2">Admin user account</legend>
+            <input className="w-full px-3 py-2 bg-surface-sunken border border-border rounded-lg text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20" placeholder="Full name *" value={f.userName} onChange={e => set("userName", e.target.value)} />
+            <input type="email" className="w-full px-3 py-2 bg-surface-sunken border border-border rounded-lg text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20" placeholder="Email address *" value={f.userEmail} onChange={e => set("userEmail", e.target.value)} />
+            <div className="relative">
+              <input type={showPw ? "text" : "password"} className="w-full px-3 py-2 pr-20 bg-surface-sunken border border-border rounded-lg text-sm font-mono text-foreground focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20" value={f.userPassword} onChange={e => set("userPassword", e.target.value)} />
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
+                <button type="button" onClick={() => setShowPw(p => !p)} className="p-1 text-subtle hover:text-muted">{showPw ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}</button>
+                <button type="button" onClick={() => set("userPassword", genPassword())} className="p-1 text-subtle hover:text-muted"><RefreshCw className="w-3.5 h-3.5" /></button>
+              </div>
+            </div>
+            <p className="text-[11px] text-subtle">Auto-generated secure password. Save it before closing.</p>
+          </fieldset>
+        </div>
+        <div className="flex justify-end gap-3 px-6 py-4 border-t border-border-soft">
+          <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-muted hover:text-foreground hover:bg-hover rounded-lg transition-colors">Cancel</button>
+          <button onClick={submit} disabled={loading} className="px-5 py-2 text-sm font-semibold bg-accent text-accent-foreground rounded-lg hover:bg-accent-hover disabled:opacity-50 transition-colors">
+            {loading ? "Creating…" : "Create organization"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Add user to hospitality org modal ────────────────────────────────────────
+function AddHospUserModal({ org, onClose, onAdded }: { org: HotelOrg; onClose: () => void; onAdded: () => void }) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [showPw, setShowPw] = useState(false);
+  const [result, setResult] = useState<{ email: string; password: string } | null>(null);
+  const [f, setF] = useState({ userName: "", userEmail: "", userPassword: genPassword(), role: "OPS_MANAGER" });
+  const set = (k: keyof typeof f, v: string) => setF(p => ({ ...p, [k]: v }));
+
+  const submit = async () => {
+    setLoading(true); setError("");
+    try {
+      const res = await fetch(`/api/admin/hospitality/orgs/${org.id}/users`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userName: f.userName, userEmail: f.userEmail, userPassword: f.userPassword, role: f.role }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed");
+      setResult({ email: f.userEmail, password: f.userPassword });
+      onAdded();
+    } catch (e: unknown) { setError(e instanceof Error ? e.message : "Something went wrong"); }
+    finally { setLoading(false); }
+  };
+
+  if (result) return (
+    <div className="fixed inset-0 bg-overlay/60 z-50 flex items-center justify-center p-4">
+      <div className="bg-surface border border-border rounded-xl shadow-pop w-full max-w-sm p-6">
+        <div className="flex items-center gap-3 mb-4"><div className="w-10 h-10 rounded-lg bg-ok-soft flex items-center justify-center"><Check className="w-5 h-5 text-ok" /></div><div><p className="text-[15px] font-semibold text-foreground">User created</p><p className="text-xs text-muted">{org.name}</p></div></div>
+        <div className="bg-surface-sunken border border-border rounded-lg p-4 space-y-3 text-sm mb-5">
+          <div className="flex justify-between"><span className="text-muted">Email</span><span className="font-mono text-xs flex items-center">{result.email}<CopyText text={result.email} /></span></div>
+          <div className="flex justify-between"><span className="text-muted">Password</span><span className="font-mono text-xs flex items-center">{result.password}<CopyText text={result.password} /></span></div>
+        </div>
+        <button onClick={onClose} className="w-full py-2 bg-accent text-accent-foreground text-sm font-semibold rounded-lg hover:bg-accent-hover transition-colors">Done</button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="fixed inset-0 bg-overlay/60 z-50 flex items-center justify-center p-4">
+      <div className="bg-surface border border-border rounded-xl shadow-pop w-full max-w-md">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border-soft">
+          <h2 className="text-[15px] font-semibold text-foreground">Add user — {org.name}</h2>
+          <button onClick={onClose} className="text-subtle hover:text-muted transition-colors text-lg leading-none">&times;</button>
+        </div>
+        <div className="p-6 space-y-4">
+          {error && <p className="text-xs text-crit bg-crit-soft border border-crit/20 rounded-lg px-3 py-2">{error}</p>}
+          <input className="w-full px-3 py-2 bg-surface-sunken border border-border rounded-lg text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20" placeholder="Full name" value={f.userName} onChange={e => set("userName", e.target.value)} />
+          <input type="email" className="w-full px-3 py-2 bg-surface-sunken border border-border rounded-lg text-sm text-foreground placeholder:text-subtle focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20" placeholder="Email address" value={f.userEmail} onChange={e => set("userEmail", e.target.value)} />
+          <select className="w-full px-3 py-2 bg-surface-sunken border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20" value={f.role} onChange={e => set("role", e.target.value)}>
+            <option value="OPS_MANAGER">Operations Manager</option><option value="COO">COO / Director</option><option value="CEO">GM / CEO</option><option value="BUSINESS_MANAGER">Business Manager</option><option value="ADMIN">Admin</option>
+          </select>
+          <div className="relative">
+            <input type={showPw ? "text" : "password"} className="w-full px-3 py-2 pr-20 bg-surface-sunken border border-border rounded-lg text-sm font-mono text-foreground focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20" value={f.userPassword} onChange={e => set("userPassword", e.target.value)} />
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
+              <button type="button" onClick={() => setShowPw(p => !p)} className="p-1 text-subtle hover:text-muted">{showPw ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}</button>
+              <button type="button" onClick={() => set("userPassword", genPassword())} className="p-1 text-subtle hover:text-muted"><RefreshCw className="w-3.5 h-3.5" /></button>
+            </div>
+          </div>
+        </div>
+        <div className="flex justify-end gap-3 px-6 py-4 border-t border-border-soft">
+          <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-muted hover:text-foreground hover:bg-hover rounded-lg transition-colors">Cancel</button>
+          <button onClick={submit} disabled={loading} className="px-5 py-2 text-sm font-semibold bg-accent text-accent-foreground rounded-lg hover:bg-accent-hover disabled:opacity-50 transition-colors">
+            {loading ? "Creating…" : "Add user"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const SIDEBAR_TABS: { id: AdminSidebarTab; label: string; icon: React.ElementType; description: string }[] = [
   { id: "overview",        label: "Overview",        icon: BarChart3,   description: "System-wide statistics at a glance." },
   { id: "users",           label: "Users",           icon: Users,       description: "Manage workspace users, roles, and access." },
@@ -2712,6 +3044,7 @@ const SIDEBAR_TABS: { id: AdminSidebarTab; label: string; icon: React.ElementTyp
   { id: "retention",       label: "Retention",       icon: Timer,       description: "Configure automatic data retention and deletion policies." },
   { id: "sso",             label: "SSO / SAML",      icon: ShieldAlert, description: "Configure Single Sign-On providers (SAML, OIDC, Google, Microsoft)." },
   { id: "sentinel",        label: "Sentinel Alerts", icon: AlertTriangle, description: "View and acknowledge security alerts from CyberSage Sentinel." },
+  { id: "hospitality",    label: "Hospitality Orgs", icon: Hotel,        description: "Create and manage hotel pilot organizations and login accounts." },
 ];
 
 export function AdminConsoleView(_props: { currentUserId: string }) {
@@ -2786,6 +3119,7 @@ export function AdminConsoleView(_props: { currentUserId: string }) {
             {activeTab === "retention" && <RetentionTab />}
             {activeTab === "sso" && <SSOTab />}
             {activeTab === "sentinel" && <SentinelTab />}
+            {activeTab === "hospitality" && <HospitalityOrgsTab />}
           </div>
         </div>
       </div>

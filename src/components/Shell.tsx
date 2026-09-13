@@ -18,9 +18,9 @@ export function Shell({
   currentUser?: SessionUser | null;
   host?: string | null;
 }) {
-  const nav = currentUser ? getPortalNavForRole(currentUser.role) : [];
+  const nav = currentUser ? getPortalNavForRole(currentUser.role, currentUser.orgType) : [];
   // Spine + rail model. Derived from `nav`, so access control is unchanged.
-  const groups = currentUser ? getNavGroups(currentUser.role) : [];
+  const groups = currentUser ? getNavGroups(currentUser.role, currentUser.orgType) : [];
 
   const inner = (
     <>

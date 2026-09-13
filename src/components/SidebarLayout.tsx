@@ -149,9 +149,12 @@ export function SidebarLayout({
       >
         <div className="flex h-full flex-col flex-shrink-0" style={{ width: SPINE_WIDTH }}>
           {/* Brand mark doubles as the spine header */}
-          <Link href="/inbox" aria-label="Nexus home" className="flex h-[56px] flex-shrink-0 items-center gap-2.5 px-4">
+          <Link href={currentUser?.orgType === "HOSPITALITY" ? "/hospitality" : "/inbox"} aria-label="Nexus home"
+            className="flex h-[56px] flex-shrink-0 items-center gap-2.5 px-4">
             <img src="/nexus.png" alt="Nexus" className="h-6 w-6 flex-shrink-0 object-contain" />
-            <span className="truncate text-[13.5px] font-semibold text-foreground">Nexus</span>
+            <span className="truncate text-[13.5px] font-semibold text-foreground">
+              {currentUser?.orgType === "HOSPITALITY" ? "Hospitality" : "Nexus"}
+            </span>
           </Link>
           <AppSpine groups={groups} activeId={activeId} unreadCount={unreadCount} />
           <div className="flex flex-col gap-0.5 px-2.5 pb-3">
