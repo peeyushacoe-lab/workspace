@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import Link from "next/link";
 import {
   Bed, LogIn, LogOut, XCircle, Banknote, TrendingUp,
   AlertTriangle, AlertCircle, CheckCircle2, Clock,
@@ -254,12 +255,12 @@ export function HospitalityDashboard() {
                   {topAlerts.length}
                 </span>
               </h2>
-              <a
+              <Link
                 href="/hospitality/alerts"
                 className="text-[12px] text-accent flex items-center gap-0.5 hover:underline"
               >
                 View all <ChevronRight className="w-3 h-3" />
-              </a>
+              </Link>
             </div>
             {topAlerts.length === 0 ? (
               <div className="bg-surface border border-border rounded-xl p-6 text-center">
