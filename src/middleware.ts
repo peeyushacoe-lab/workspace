@@ -126,7 +126,7 @@ function buildCsp(nonce: string): string {
     // style-src keeps 'unsafe-inline' — inline styles are used widely and are
     // lower-severity (no code execution) than inline scripts.
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "img-src 'self' data: blob: https://lh3.googleusercontent.com https://avatars.githubusercontent.com",
+    "img-src 'self' data: blob: https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://api.dicebear.com",
     "font-src 'self' https://fonts.gstatic.com",
     "connect-src 'self' https://*.sentry.io wss: ws: https://fonts.googleapis.com",
     "media-src 'self' blob:",

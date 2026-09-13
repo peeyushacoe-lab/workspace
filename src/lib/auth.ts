@@ -64,10 +64,11 @@ export const CLIENT_BOOK_ROLES: UserRole[] = [
   "ADMIN", "CEO", "CISO", "COO", "OPS_MANAGER", "BUSINESS_MANAGER", "FINANCE",
 ];
 
-// Who can access the Hospitality module. OPS_MANAGER and COO have full manage;
-// CEO and BUSINESS_MANAGER have view-only. ADMIN gets everything via super-role.
+// Who can access the Hospitality module. These are hotel staff roles only.
+// ADMIN is intentionally excluded — the system admin manages orgs via the admin
+// console, they do not use the hospitality product themselves.
 export const HOSPITALITY_ROLES: UserRole[] = [
-  "ADMIN", "CEO", "COO", "OPS_MANAGER", "BUSINESS_MANAGER",
+  "CEO", "COO", "OPS_MANAGER", "BUSINESS_MANAGER",
 ];
 
 // Exported so middleware validates session-cookie roles against this exact list

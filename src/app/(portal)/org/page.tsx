@@ -720,11 +720,11 @@ export default function OrgPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/organizations/current").then(jsonOrThrow),
-      fetch("/api/organizations/members").then(jsonOrThrow),
+      fetch("/api/organizations/current").then(r => r.ok ? r.json() : null),
+      fetch("/api/organizations/members").then(r => r.ok ? r.json() : []),
     ])
-      .then(([o, m]: [OrgData, Member[]]) => { setOrg(o); setMembers(m); })
-      .catch(() => toast.error("Failed to load organization"))
+      .then(([o, m]: [OrgData | null, Member[]]) => { setOrg(o); setMembers(m ?? []); })
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
@@ -737,6 +737,14 @@ export default function OrgPage() {
       />
 
       <div className="max-w-6xl mx-auto px-6 py-6 space-y-6">
+        {!loading && !org && (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <Building2 className="w-10 h-10 text-subtle mb-3" />
+            <p className="text-sm font-semibold text-foreground mb-1">No organization attached to this account</p>
+            <p className="text-xs text-muted mb-4">To create organizations and user accounts, go to Admin → Organizations.</p>
+            <a href="/admin" className="px-4 py-2 text-sm font-semibold bg-accent text-accent-foreground rounded-lg hover:bg-accent-hover transition-colors">Go to Admin console</a>
+          </div>
+        )}
         {org && (
           <div className="flex items-center gap-3 bg-accent/5 border border-accent/15 rounded-xl px-4 py-3">
             <Building2 className="w-4 h-4 text-accent flex-shrink-0" />
