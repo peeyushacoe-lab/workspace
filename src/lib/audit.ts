@@ -78,7 +78,26 @@ export type AuditAction =
   // The oversight trail: leadership cannot edit a client, so a request is the
   // only mark they leave. It has to be as attributable as an edit would be.
   | "CLIENT_REQUEST_RAISED"
-  | "CLIENT_REQUEST_UPDATED";
+  | "CLIENT_REQUEST_UPDATED"
+  // Hospitality module. Alert lifecycle and integration events are security-
+  // relevant (missed alert, integration disconnected) so they live in AuditLog.
+  | "HOTEL_PROPERTY_CREATED"
+  | "HOTEL_PROPERTY_UPDATED"
+  | "HOTEL_ALERT_CREATED"
+  | "HOTEL_ALERT_UPDATED"
+  | "HOTEL_ALERT_RESOLVED"
+  | "HOTEL_ALERT_ASSIGNED"
+  | "HOTEL_ALERT_DISMISSED"
+  | "HOTEL_ALERT_PRIORITY_CHANGED"
+  | "HOTEL_ALERT_STATUS_CHANGED"
+  | "HOTEL_ALERT_TASK_CREATED"
+  | "HOTEL_INTEGRATION_CREATED"
+  | "HOTEL_INTEGRATION_UPDATED"
+  | "HOTEL_INTEGRATION_SYNCED"
+  | "HOTEL_INTEGRATION_SYNC_STARTED"
+  | "HOTEL_INTEGRATION_SYNC_COMPLETED"
+  | "HOTEL_INTEGRATION_SYNC_FAILED"
+  | "HOTEL_METRIC_BREACH";
 
 export async function logAudit({
   actorId,

@@ -7,7 +7,7 @@ import { AppLink as Link } from "@/components/AppLink";
 import {
   House, Mail, MessageSquare, Video, CalendarDays, HardDrive, FileText,
   CheckSquare, Sparkles, ShieldAlert, Users, GraduationCap,
-  LayoutDashboard, SlidersHorizontal, MoreHorizontal, type LucideIcon,
+  LayoutDashboard, SlidersHorizontal, MoreHorizontal, Building2, type LucideIcon,
 } from "lucide-react";
 import { iconSize } from "@/components/icons";
 import { SPINE_FOOTER, type NavGroupId, type ResolvedGroup } from "@/lib/nav-groups";
@@ -25,6 +25,7 @@ const GROUP_ICONS: Record<string, LucideIcon> = {
   security: ShieldAlert,
   people: Users,
   internship: GraduationCap,
+  hospitality: Building2,
   insights: LayoutDashboard,
   admin: SlidersHorizontal,
   more: MoreHorizontal,

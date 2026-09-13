@@ -224,6 +224,9 @@ model User {
   clientRequestsClosed   ClientRequest[]    @relation("RequestCloser")
   clientRequestComments  ClientRequestComment[] @relation("RequestCommentAuthor")
 
+  // Hospitality module
+  hotelAlertsAssigned HotelAlert[] @relation("HotelAlertAssignee")
+
   // "Who reports to this person" is the only non-PK lookup on managerId, and the
   // profile page runs it on every view.
   @@index([managerId])
@@ -1323,6 +1326,8 @@ enum NotificationType {
   TASK_ASSIGNED
   TASK_DUE_SOON
   TASK_COMMENT
+  HOTEL_ALERT
+  HOTEL_METRIC_BREACH
 }
 
 model Notification {
@@ -1796,14 +1801,15 @@ model Organization {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  users       User[]
-  mailboxes   Mailbox[]
-  channels    ChatChannel[]
-  invites     OrganizationInvite[]
-  roles       Role[]
-  departments Department[]
-  teams       Team[]
-  clients     Client[]
+  users            User[]
+  mailboxes        Mailbox[]
+  channels         ChatChannel[]
+  invites          OrganizationInvite[]
+  roles            Role[]
+  departments      Department[]
+  teams            Team[]
+  clients          Client[]
+  hotelProperties  HotelProperty[]
 
   @@index([slug])
   @@index([domain])
@@ -3280,4 +3286,128 @@ model ClientRequestComment {
   createdAt DateTime @default(now())
 
   @@index([requestId, createdAt])
+}
+
+// ─── Hospitality Module ────────────────────────────────────────────────────────
+// Intelligence and operational visibility layer for hotel operations.
+// Sits above specialist systems (PMS, POS, inventory) as a communication and
+// alerting layer — it does NOT replace those systems.
+//
+// Tenancy: Organization → HotelProperty → (existing) Department / Team / User.
+// All new tables carry organizationId-scoped access via HotelProperty.propertyId.
+
+enum HotelAlertPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum HotelAlertStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  DISMISSED
+}
+
+// A hotel property beneath an organisation. One org can have many properties
+// (hotel chain), or exactly one (independent hotel).
+model HotelProperty {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  slug           String
+  address        String?
+  city           String?
+  country        String?
+  starRating     Int?
+  totalRooms     Int      @default(0)
+  timezone       String   @default("UTC")
+  currency       String   @default("GBP")
+  isDemo         Boolean  @default(false)
+  settings       Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  metrics      HotelMetric[]
+  alerts       HotelAlert[]
+  integrations HotelIntegration[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+}
+
+// Daily KPI snapshot for a property. One row per property per day.
+// Source-agnostic: values come from integrations or manual entry.
+model HotelMetric {
+  id         String   @id @default(cuid())
+  propertyId String
+  date       DateTime @db.Date
+  occupancy  Float?   // percentage 0-100
+  arrivals   Int?
+  departures Int?
+  roomsOoo   Int?     // rooms out of order
+  adr        Float?   // average daily rate
+  revpar     Float?   // revenue per available room
+  fbRevenue  Float?   // F&B total revenue (minor units in property currency)
+  fbCovers   Int?     // F&B total covers
+  openIssues Int?     // count of open operational issues at end of day
+  raw        Json?    // raw payload from integration for re-processing
+  createdAt  DateTime @default(now())
+
+  property HotelProperty @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([propertyId, date])
+  @@index([propertyId, date])
+}
+
+// An operational alert surfaced from any integration source or entered manually.
+// source / type are free strings so the model is source-agnostic and extensible
+// without schema changes. taskId is a soft reference to the existing Task model
+// via Task.sourceType = "hotel_alert" / Task.sourceId = this id.
+model HotelAlert {
+  id           String             @id @default(cuid())
+  propertyId   String
+  source       String             // "pms" | "inventory" | "maintenance" | "manual" | "demo"
+  type         String             // "VIP_ARRIVAL" | "ROOM_ISSUE" | "STOCK_VARIANCE" | etc.
+  department   String?            // "housekeeping" | "engineering" | "f_and_b" | "front_office"
+  priority     HotelAlertPriority @default(MEDIUM)
+  title        String
+  description  String?
+  roomNumber   String?
+  status       HotelAlertStatus   @default(OPEN)
+  assignedToId String?
+  taskId       String?            // soft ref — Task.sourceId = this id, Task.sourceType = "hotel_alert"
+  metadata     Json?
+  resolvedAt   DateTime?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  property   HotelProperty @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  assignedTo User?         @relation("HotelAlertAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  @@index([propertyId, status])
+  @@index([propertyId, createdAt])
+}
+
+// Integration registry — one row per integration type per property.
+// For demo mode: status = "demo", config = null. Real integrations supply config
+// but credentials must be encrypted at the application layer before storage.
+model HotelIntegration {
+  id         String    @id @default(cuid())
+  propertyId String
+  type       String    // "pms_opera" | "pos" | "inventory" | "reputation" | "demo"
+  label      String
+  status     String    @default("demo") // "demo" | "connected" | "error" | "disabled"
+  config     Json?     // app-layer encrypted; never stored in plaintext
+  lastSyncAt DateTime?
+  lastError  String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  property HotelProperty @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([propertyId, type])
+  @@index([propertyId])
 }

@@ -12,7 +12,8 @@ export type PermissionCategory =
   | "People"
   | "Business"
   | "Security"
-  | "Admin";
+  | "Admin"
+  | "Hospitality";
 
 export type PermissionEntry = {
   key: string;
@@ -81,6 +82,12 @@ export const PERMISSION_CATALOG = [
   { key: "org.manage",     resource: "org",      action: "manage", label: "Manage organisation",description: "Departments, teams, domains, policies, analytics.", category: "Admin", isDangerous: true },
   { key: "rbac.manage",    resource: "rbac",     action: "manage", label: "Manage roles",      description: "Create roles and assign permissions.",           category: "Admin", isDangerous: true },
   { key: "billing.manage", resource: "billing",  action: "manage", label: "Manage billing",    description: "View and change plans and billing.",             category: "Admin", isDangerous: true },
+
+  // ── Hospitality ────────────────────────────────────────────────────────────
+  { key: "hospitality.view",           resource: "hospitality", action: "view",           label: "View Hospitality",         description: "Access the Hospitality module (overview, alerts, operations, reports).", category: "Hospitality" },
+  { key: "hospitality.manage",         resource: "hospitality", action: "manage",         label: "Manage Hospitality",       description: "Configure properties, integrations and hospitality settings.",           category: "Hospitality", isDangerous: true },
+  { key: "hospitality.alerts.resolve", resource: "hospitality", action: "alerts.resolve", label: "Resolve hotel alerts",     description: "Acknowledge, assign and resolve operational hotel alerts.",              category: "Hospitality" },
+  { key: "hospitality.reports.view",   resource: "hospitality", action: "reports.view",   label: "View hotel reports",       description: "Access daily operational and management reports.",                       category: "Hospitality" },
 ] as const satisfies readonly PermissionEntry[];
 
 export type PermissionKey = (typeof PERMISSION_CATALOG)[number]["key"];
@@ -96,7 +103,7 @@ export function isPermissionKey(value: string): value is PermissionKey {
 
 /** Catalog grouped by category — convenient for the admin UI. */
 export function catalogByCategory(): Record<PermissionCategory, PermissionEntry[]> {
-  const out = { Workspace: [], People: [], Business: [], Security: [], Admin: [] } as Record<
+  const out = { Workspace: [], People: [], Business: [], Security: [], Admin: [], Hospitality: [] } as Record<
     PermissionCategory,
     PermissionEntry[]
   >;

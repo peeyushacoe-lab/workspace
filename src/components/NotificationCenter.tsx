@@ -15,6 +15,7 @@ import {
   Bell,
   X,
   CheckSquare,
+  Building2,
   type LucideIcon,
 } from "lucide-react";
 import type { NotificationType } from "@/generated/prisma/enums";
@@ -55,9 +56,11 @@ const TYPE_ICON: Record<NotificationType, LucideIcon> = {
   NEW_MESSAGE: MessageSquare,
   FILE_SHARED: Folder,
   SYSTEM: Info,
-  TASK_ASSIGNED: CheckSquare,
-  TASK_DUE_SOON: CheckSquare,
-  TASK_COMMENT: CheckSquare,
+  TASK_ASSIGNED:       CheckSquare,
+  TASK_DUE_SOON:       CheckSquare,
+  TASK_COMMENT:        CheckSquare,
+  HOTEL_ALERT:         Building2,
+  HOTEL_METRIC_BREACH: Building2,
 };
 
 function TypeIcon({ type }: { type: NotificationType }) {
@@ -74,9 +77,11 @@ const TYPE_COLOR: Record<NotificationType, string> = {
   NEW_MESSAGE:       "bg-ok/10 text-ok border border-ok/20",
   FILE_SHARED:       "bg-accent/10 text-accent border border-accent/20",
   SYSTEM:            "bg-surface-sunken text-muted border border-border",
-  TASK_ASSIGNED:     "bg-ok/10 text-ok border border-ok/20",
-  TASK_DUE_SOON:     "bg-warn/10 text-warn border border-warn/20",
-  TASK_COMMENT:      "bg-accent/10 text-accent border border-accent/20",
+  TASK_ASSIGNED:       "bg-ok/10 text-ok border border-ok/20",
+  TASK_DUE_SOON:       "bg-warn/10 text-warn border border-warn/20",
+  TASK_COMMENT:        "bg-accent/10 text-accent border border-accent/20",
+  HOTEL_ALERT:         "bg-warn/10 text-warn border border-warn/20",
+  HOTEL_METRIC_BREACH: "bg-crit/10 text-crit border border-crit/20",
 };
 
 function timeAgo(iso: string): string {

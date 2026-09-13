@@ -73,6 +73,15 @@ const BUSINESS_EXTRA: PermissionKey[] = [
   "clients.read", "clients.write", "clients.finance.read",
 ];
 
+// Hospitality module permissions. View-only roles see the dashboards and reports;
+// operational managers can resolve alerts and configure properties.
+const HOSPITALITY_VIEW: PermissionKey[] = [
+  "hospitality.view", "hospitality.alerts.resolve", "hospitality.reports.view",
+];
+const HOSPITALITY_MANAGE: PermissionKey[] = [
+  "hospitality.view", "hospitality.manage", "hospitality.alerts.resolve", "hospitality.reports.view",
+];
+
 // What leadership (CEO, CISO, COO) gets over the client book: total visibility,
 // zero write. There is no `clients.write` here and that is the whole point —
 // they influence a record by raising a ClientRequest against it, which the
@@ -94,7 +103,7 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
     key: "ceo", enumValue: "CEO", name: "CEO",
     description: "Chief Executive — workspace, leadership and SOC access.",
     rank: 10, isSingleton: true,
-    permissions: uniq(BASE_WORKSPACE, MGMT_EXTRA, CLIENT_OVERSIGHT, ["soc.view", "soc.manage"]),
+    permissions: uniq(BASE_WORKSPACE, MGMT_EXTRA, CLIENT_OVERSIGHT, ["soc.view", "soc.manage"], HOSPITALITY_VIEW),
   },
   {
     key: "ciso", enumValue: "CISO", name: "CISO",
@@ -115,7 +124,7 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
     key: "coo", enumValue: "COO", name: "COO",
     description: "Chief Operating Officer.",
     rank: 20, isSingleton: true,
-    permissions: uniq(BASE_WORKSPACE, MGMT_EXTRA, CLIENT_OVERSIGHT),
+    permissions: uniq(BASE_WORKSPACE, MGMT_EXTRA, CLIENT_OVERSIGHT, HOSPITALITY_MANAGE),
   },
   {
     key: "r_and_d", enumValue: "R_AND_D", name: "R&D Head",
@@ -131,7 +140,7 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
     rank: 30, isSingleton: true,
     permissions: uniq(BASE_WORKSPACE, MGMT_EXTRA, [
       "clients.read", "clients.write", "clients.admin", "clients.finance.read",
-    ]),
+    ], HOSPITALITY_MANAGE),
   },
   {
     key: "hr", enumValue: "HR", name: "HR",
@@ -192,7 +201,7 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
       "dashboard and contact book. Multiple holders — the region is a display label " +
       "on the user, not a separate role.",
     rank: 50, isSingleton: false,
-    permissions: uniq(BASE_WORKSPACE, BUSINESS_EXTRA),
+    permissions: uniq(BASE_WORKSPACE, BUSINESS_EXTRA, HOSPITALITY_VIEW),
   },
   {
     key: "internship", enumValue: "INTERNSHIP", name: "Internship",

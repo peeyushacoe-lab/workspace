@@ -63,6 +63,12 @@ export const CLIENT_BOOK_ROLES: UserRole[] = [
   "ADMIN", "CEO", "CISO", "COO", "OPS_MANAGER", "BUSINESS_MANAGER", "FINANCE",
 ];
 
+// Who can access the Hospitality module. OPS_MANAGER and COO have full manage;
+// CEO and BUSINESS_MANAGER have view-only. ADMIN gets everything via super-role.
+export const HOSPITALITY_ROLES: UserRole[] = [
+  "ADMIN", "CEO", "COO", "OPS_MANAGER", "BUSINESS_MANAGER",
+];
+
 // Exported so middleware validates session-cookie roles against this exact list
 // rather than a hand-copied duplicate. The duplicate had drifted: it was missing
 // MEMBER, so every MEMBER's cookie failed to parse in middleware and they were
@@ -140,6 +146,7 @@ export const portalNavItems: PortalNavItem[] = [
   { href: "/billing",    label: "Billing",     hint: "Plans & usage",          roles: ["ADMIN"] },
   { href: "/org",       label: "Org",        hint: "Organization settings",  roles: ["ADMIN"] },
   { href: "/admin",     label: "Admin",      hint: "System administration", roles: ["ADMIN"] },
+  { href: "/admin/hospitality", label: "Hosp. Orgs", hint: "Hotel pilot organizations", roles: ["ADMIN"] },
   { href: "/admin/hr",  label: "HR Console", hint: "People, leave & org",   roles: ["HR"] },
   { href: "/compliance",  label: "Compliance",  hint: "Audit logs & GDPR",         roles: ["ADMIN", "CISO"] },
   { href: "/soc",         label: "SOC",         hint: "Security operations centre", roles: ["ADMIN", "CISO", "CEO"] },
@@ -149,6 +156,13 @@ export const portalNavItems: PortalNavItem[] = [
   // Mentors get the full management hub (curriculum, attendance, HR); interns keep a simple punch-in page.
   { href: "/mentor",                 label: "Mentor",      hint: "Interns, attendance & HR", roles: MGMT_ROLES },
   { href: "/internship/attendance",  label: "Attendance",  hint: "Punch-in / timesheet",   roles: ["INTERNSHIP"] },
+  // Hospitality module — hotel operations intelligence layer
+  { href: "/hospitality",              label: "Hospitality",   hint: "Hotel operations overview",   roles: HOSPITALITY_ROLES },
+  { href: "/hospitality/operations",   label: "Operations",    hint: "Rooms, housekeeping & F&B",   roles: HOSPITALITY_ROLES },
+  { href: "/hospitality/alerts",       label: "Alerts",        hint: "Operational alerts",          roles: HOSPITALITY_ROLES },
+  { href: "/hospitality/tasks",        label: "Tasks",         hint: "Hotel task board",            roles: HOSPITALITY_ROLES },
+  { href: "/hospitality/reports",      label: "Reports",       hint: "Daily & management reports",  roles: HOSPITALITY_ROLES },
+  { href: "/hospitality/integrations", label: "Integrations",  hint: "PMS, POS & data sources",     roles: HOSPITALITY_ROLES },
   // Settings is shown via the hardcoded icon in SidebarLayout (top bar + bottom of sidebar) — no need for a nav item
   // { href: "/settings",    label: "Settings",    hint: "Signature & security",       roles: ALL_ROLES },
   // Desktop App download hidden for now
@@ -214,6 +228,8 @@ export const pathAccess: Array<{ prefix: string; roles: UserRole[] }> = [
   // under its own shell, so the HR account is excluded here for the same reason
   // it is there. Per-section permissions come from connectRoutePermissions().
   { prefix: "/connect",        roles: NON_HR_ROLES },
+  // Hospitality module — all sub-routes share the same role gate
+  { prefix: "/hospitality",    roles: HOSPITALITY_ROLES },
 ];
 
 const validRoles = new Set<UserRole>(ALL_ROLES);
@@ -321,6 +337,12 @@ export const routePermission: Array<{ prefix: string; permission: string | null 
   // /internship gate (interns + their managers), so we deliberately do not add a
   // narrower rule here that would lock managers out.
   { prefix: "/internship",           permission: "internship.view" },
+  // Hospitality. Sub-routes inherit the top-level gate; reports sub-page carries
+  // its own permission so the parity test can distinguish view vs reports-view.
+  { prefix: "/admin/hospitality",         permission: "admin.access" },
+  { prefix: "/hospitality/reports",      permission: "hospitality.reports.view" },
+  { prefix: "/hospitality/integrations", permission: "hospitality.manage" },
+  { prefix: "/hospitality",             permission: "hospitality.view" },
   // Sage Connect — derived from CONNECT_NAV so a section cannot appear in the
   // sidebar without a gate, or be gated without appearing. Connect introduces no
   // new permission keys, so this needs no catalog reseed and no permEpoch bump.
