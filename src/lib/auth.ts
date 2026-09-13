@@ -104,13 +104,6 @@ export function getPortalHome(role: string, orgType?: string | null): string {
   return "/home";
 }
 
-// Nav hrefs shown to hospitality-org users: email + connect + full hospitality module.
-const HOSPITALITY_NAV_HREFS = new Set([
-  "/inbox", "/connect/chat", "/meet", "/calendar", "/notifications",
-  "/hospitality", "/hospitality/operations", "/hospitality/alerts",
-  "/hospitality/tasks", "/hospitality/reports", "/hospitality/integrations",
-]);
-
 // Key roles — only one account of each can exist in the system
 export const KEY_ROLES = new Set<UserRole>(["CEO", "CISO", "R_AND_D", "COO", "OPS_MANAGER"]);
 
@@ -167,13 +160,8 @@ export const portalNavItems: PortalNavItem[] = [
   // Mentors get the full management hub (curriculum, attendance, HR); interns keep a simple punch-in page.
   { href: "/mentor",                 label: "Mentor",      hint: "Interns, attendance & HR", roles: MGMT_ROLES },
   { href: "/internship/attendance",  label: "Attendance",  hint: "Punch-in / timesheet",   roles: ["INTERNSHIP"] },
-  // Hospitality module — hotel operations intelligence layer
-  { href: "/hospitality",              label: "Hospitality",   hint: "Hotel operations overview",   roles: HOSPITALITY_ROLES },
-  { href: "/hospitality/operations",   label: "Operations",    hint: "Rooms, housekeeping & F&B",   roles: HOSPITALITY_ROLES },
-  { href: "/hospitality/alerts",       label: "Alerts",        hint: "Operational alerts",          roles: HOSPITALITY_ROLES },
-  { href: "/hospitality/tasks",        label: "Tasks",         hint: "Hotel task board",            roles: HOSPITALITY_ROLES },
-  { href: "/hospitality/reports",      label: "Reports",       hint: "Daily & management reports",  roles: HOSPITALITY_ROLES },
-  { href: "/hospitality/integrations", label: "Integrations",  hint: "PMS, POS & data sources",     roles: HOSPITALITY_ROLES },
+  // Hospitality is NOT here. Hotel orgs get their own shell and sidebar
+  // (src/components/hospitality/shell); the core Nexus nav never links to it.
   // Settings is shown via the hardcoded icon in SidebarLayout (top bar + bottom of sidebar) — no need for a nav item
   // { href: "/settings",    label: "Settings",    hint: "Signature & security",       roles: ALL_ROLES },
   // Desktop App download hidden for now
@@ -395,8 +383,8 @@ export function canAccessPathByPerms(
   return perms.includes(match.permission);
 }
 
-export function getPortalNavForRole(role: UserRole, orgType?: string | null) {
-  const items = portalNavItems.filter((item) => item.roles.includes(role));
-  if (orgType === "HOSPITALITY") return items.filter((item) => HOSPITALITY_NAV_HREFS.has(item.href));
-  return items;
+// `orgType` is accepted for call-site compatibility; hotel orgs never reach the
+// core nav (they get HospitalityShell), so it no longer filters anything.
+export function getPortalNavForRole(role: UserRole, _orgType?: string | null) {
+  return portalNavItems.filter((item) => item.roles.includes(role));
 }

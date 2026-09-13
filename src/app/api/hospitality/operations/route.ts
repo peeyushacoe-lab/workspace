@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireApiPermission } from "@/lib/rbac/can";
+import { requireHospitalityApi } from "@/lib/hospitality/access";
 import { prisma } from "@/lib/prisma";
 import { getDemoOperationsData } from "@/lib/hospitality/demo-data";
 import { logAudit } from "@/lib/audit";
@@ -10,7 +10,7 @@ import type { OperationsData } from "@/lib/hospitality/types";
 // - Demo property or no real properties → demo data.
 // - Real property → strict organizationId check before returning DB data.
 export async function GET(req: NextRequest) {
-  const auth = await requireApiPermission("hospitality.view");
+  const auth = await requireHospitalityApi();
   if ("error" in auth) return auth.error;
 
   const { user } = auth;

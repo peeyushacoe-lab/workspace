@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireApiPermission } from "@/lib/rbac/can";
+import { requireHospitalityApi } from "@/lib/hospitality/access";
 import { prisma } from "@/lib/prisma";
 import { createTaskFromHotelAlert } from "@/lib/hospitality/alerts";
 
@@ -9,7 +9,7 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const auth = await requireApiPermission("hospitality.manage");
+  const auth = await requireHospitalityApi("manage");
   if ("error" in auth) return auth.error;
   const { user } = auth;
   const { id } = await params;

@@ -18,8 +18,7 @@ export type NavGroupId =
   | "home"
   | "mail" | "chat" | "meet" | "calendar" | "drive" | "docs"
   | "tasks" | "ai" | "security" | "people" | "internship"
-  | "insights" | "admin" | "more"
-  | "hospitality";
+  | "insights" | "admin" | "more";
 
 export type RailItem = {
   href: string;
@@ -92,18 +91,6 @@ export const NAV_GROUPS: GroupDef[] = [
   {
     id: "internship", label: "Internship", icon: "internship",
     owns: ["/internship", "/mentor", "/internship/attendance", "/admin/hr"],
-  },
-  {
-    id: "hospitality", label: "Hospitality", icon: "hotel",
-    lead: "/hospitality",
-    owns: [
-      "/hospitality",
-      "/hospitality/operations",
-      "/hospitality/alerts",
-      "/hospitality/tasks",
-      "/hospitality/reports",
-      "/hospitality/integrations",
-    ],
   },
   { id: "insights", label: "Insights", icon: "insights", owns: ["/dashboard"] },
   {

@@ -165,8 +165,57 @@ html, body { overflow-x: hidden; max-width: 100vw; }
   --destructive-foreground: #12101f;
 }
 
+/* ═══ Nexus Hospitality ════════════════════════════════════════════════════
+   The hotel workspace is a separate product, so it carries its own identity:
+   a deep lagoon sidebar and a teal accent in place of core indigo. Defined as
+   tokens like everything else — components use bg-hosp-* / the accent utilities
+   and never a literal. `.hosp-workspace` re-points the accent tokens for every
+   component rendered inside the hotel shell (mail and calendar included). */
+:root {
+  --hosp-sidebar: #0f2b30;
+  --hosp-sidebar-fg: #eef6f5;
+  --hosp-sidebar-muted: #9bb8b6;
+  --hosp-sidebar-hover: #173c42;
+  --hosp-sidebar-active: #21525a;
+  --hosp-sidebar-line: #1d434a;
+  --hosp-sidebar-mark: #6fd3c6;
+}
+.dark {
+  --hosp-sidebar: #0a1c1f;
+  --hosp-sidebar-fg: #e6f1f0;
+  --hosp-sidebar-muted: #86a3a1;
+  --hosp-sidebar-hover: #12292d;
+  --hosp-sidebar-active: #1a3a3f;
+  --hosp-sidebar-line: #16302f;
+  --hosp-sidebar-mark: #6fd3c6;
+}
+.hosp-workspace {
+  --accent: #0b7285;
+  --accent-hover: #095e6e;
+  --accent-soft: #e2f3f5;
+  --accent-strong: #07505d;
+  --accent-foreground: #ffffff;
+  --ring: rgba(11, 114, 133, 0.22);
+}
+.dark .hosp-workspace {
+  --accent: #4fc3cf;
+  --accent-hover: #74d2db;
+  --accent-soft: #0f2e33;
+  --accent-strong: #9ce3ea;
+  --accent-foreground: #061a1d;
+  --ring: rgba(79, 195, 207, 0.30);
+}
+
 /* ═══ Tailwind utility surface — this is what components consume ══════════ */
 @theme inline {
+  --color-hosp-sidebar: var(--hosp-sidebar);
+  --color-hosp-sidebar-fg: var(--hosp-sidebar-fg);
+  --color-hosp-sidebar-muted: var(--hosp-sidebar-muted);
+  --color-hosp-sidebar-hover: var(--hosp-sidebar-hover);
+  --color-hosp-sidebar-active: var(--hosp-sidebar-active);
+  --color-hosp-sidebar-line: var(--hosp-sidebar-line);
+  --color-hosp-sidebar-mark: var(--hosp-sidebar-mark);
+
   --color-canvas: var(--canvas);
   --color-background: var(--background);
   --color-surface: var(--surface);

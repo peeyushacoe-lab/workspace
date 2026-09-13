@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { ALL_ROLES, canAccessPath, canAccessPathByPerms, getPortalHome, type SessionUser } from "@/lib/auth";
 import { matchSubdomain, subdomainToPath, isPassthrough, shouldRedirectToHub, hubUrl } from "@/lib/subdomains";
 import { jitsiCspHosts } from "@/lib/jitsi";
+import { HOSPITALITY_HOME, hospitalityCanAccess, isHospitalityOrgType } from "@/lib/hospitality/scope";
 
 const protectedRoutes = [
   "/home",
@@ -239,6 +240,23 @@ export async function middleware(request: NextRequest) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("next", pathname);
     return withCsp(NextResponse.redirect(loginUrl), nonce);
+  }
+
+  // ── Hospitality workspace isolation ───────────────────────────────────────
+  // A hotel org is its own product: a closed set of routes, decided by org
+  // rather than by role (every hotel employee gets the hotel workspace; none of
+  // them get Drive, AI, Internship or the core Home). And the reverse: nobody
+  // outside a hotel org — the system admin included — opens /hospitality.
+  if (isHospitalityOrgType(user.orgType)) {
+    if (!hospitalityCanAccess(pathname)) {
+      return withCsp(NextResponse.redirect(new URL(HOSPITALITY_HOME, request.url)), nonce);
+    }
+    requestHeaders.set("x-pathname", pathname);
+    if (subdomain) requestHeaders.set("x-app-subdomain", subdomain.host);
+    return withCsp(proceed(), nonce);
+  }
+  if (pathname === HOSPITALITY_HOME || pathname.startsWith(HOSPITALITY_HOME + "/")) {
+    return withCsp(NextResponse.redirect(new URL(getPortalHome(user.role, user.orgType), request.url)), nonce);
   }
 
   // ── Access gating (RFC-001, PR7) ──────────────────────────────────────────

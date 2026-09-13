@@ -238,7 +238,7 @@ export function ConnectShell({
               href="/connect/chat"
               className={`flex w-full items-center gap-2.5 rounded-lg bg-accent px-3.5 py-2 text-[13px] font-semibold text-accent-foreground shadow-sm transition-all hover:opacity-90 active:scale-[0.98] ${focusRing}`}
             >
-              <Pencil className="h-[15px] w-[15px] flex-shrink-0" />
+              <Pencil className="h-4 w-4 flex-shrink-0" />
               New message
             </Link>
           </div>

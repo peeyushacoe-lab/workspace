@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireApiPermission } from "@/lib/rbac/can";
+import { requireHospitalityApi } from "@/lib/hospitality/access";
 import { prisma } from "@/lib/prisma";
 import { createHotelAlert } from "@/lib/hospitality/alerts";
 import { getDemoAlerts } from "@/lib/hospitality/demo-data";
@@ -16,7 +16,7 @@ const ALERT_SELECT = {
 // GET /api/hospitality/alerts
 // Params: status, priority, department, propertyId, source, sortBy, page, limit
 export async function GET(req: NextRequest) {
-  const auth = await requireApiPermission("hospitality.view");
+  const auth = await requireHospitalityApi();
   if ("error" in auth) return auth.error;
   const { user } = auth;
 
@@ -94,7 +94,7 @@ export async function GET(req: NextRequest) {
 
 // POST /api/hospitality/alerts
 export async function POST(req: NextRequest) {
-  const auth = await requireApiPermission("hospitality.manage");
+  const auth = await requireHospitalityApi("manage");
   if ("error" in auth) return auth.error;
   const { user } = auth;
 

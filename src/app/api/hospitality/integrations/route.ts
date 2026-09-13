@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireApiPermission }      from "@/lib/rbac/can";
+import { requireHospitalityApi } from "@/lib/hospitality/access";
 import { prisma }                    from "@/lib/prisma";
 import { logAudit }                  from "@/lib/audit";
 import { getAdapter }                from "@/lib/hospitality/adapters/index";
@@ -46,7 +46,7 @@ function toFull(
 // ─── GET /api/hospitality/integrations ───────────────────────────────────────
 
 export async function GET(req: NextRequest) {
-  const auth = await requireApiPermission("hospitality.view");
+  const auth = await requireHospitalityApi();
   if ("error" in auth) return auth.error;
   const { user } = auth;
 
@@ -84,7 +84,7 @@ export async function GET(req: NextRequest) {
 // ─── POST /api/hospitality/integrations ──────────────────────────────────────
 
 export async function POST(req: NextRequest) {
-  const auth = await requireApiPermission("hospitality.manage");
+  const auth = await requireHospitalityApi("manage");
   if ("error" in auth) return auth.error;
   const { user } = auth;
 

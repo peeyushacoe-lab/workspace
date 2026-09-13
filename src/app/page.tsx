@@ -1,9 +1,11 @@
+/* eslint-disable @next/next/no-img-element */
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
-import { getSessionUserFromCookieStore } from "@/lib/auth";
+import { getSessionUserFromCookieStore, getPortalHome } from "@/lib/auth";
 import { Playfair_Display, Inter } from "next/font/google";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { BookOpen, User, Lock, ShieldCheck, Check } from "lucide-react";
 import s from "./portal-landing.module.css";
 
 const playfair = Playfair_Display({
@@ -27,28 +29,36 @@ export const metadata: Metadata = {
   description: "Select your workspace — Nexus, Nexus Hospitality, or Nexus Education.",
 };
 
+// Every enquiry from the public page goes to the business inbox.
+const BUSINESS_EMAIL = "business@cybersage.uk";
+const mail = (subject: string) => `mailto:${BUSINESS_EMAIL}?subject=${encodeURIComponent(subject)}`;
+
+// Product marks fill the card's icon slot edge to edge.
+const markStyle = { width: "100%", height: "100%", borderRadius: 12, display: "block" } as const;
+
 export default async function RootPage() {
   const user = getSessionUserFromCookieStore(await cookies());
-  if (user) redirect("/home");
+  if (user) redirect(getPortalHome(user.role, user.orgType));
 
   return (
     <div className={`${s.page} ${playfair.variable} ${inter.variable}`}>
 
       {/* Nav */}
       <nav className={s.nav}>
-        <div className={s.navLogo}>
-          <div className={s.navIcon}>
-            <svg className={s.navIconSvg} viewBox="0 0 24 24">
-              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-              <path d="M2 17l10 5 10-5"/>
-              <path d="M2 12l10 5 10-5"/>
-            </svg>
+        <Link href="/" className={s.navLogo} aria-label="Nexus Suite by CyberSage">
+          {/* CyberSage eagle is white artwork — it sits on the dark tile. */}
+          <div className={s.navIcon} style={{ width: 44, height: 44, overflow: "hidden" }}>
+            <img
+              src="/cybersage-logo.png"
+              alt="CyberSage"
+              style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "50% 30%", transform: "scale(1.45)" }}
+            />
           </div>
           <div>
             <span className={s.navBrandName}>Nexus Suite</span>
-            <span className={s.navBrandSub}>nexus.cybersage.uk</span>
+            <span className={s.navBrandSub}>by CyberSage</span>
           </div>
-        </div>
+        </Link>
 
         <span className={s.navPill}>
           <span className={s.liveDot} />
@@ -56,36 +66,27 @@ export default async function RootPage() {
         </span>
 
         <ul className={s.navLinks}>
-          <li><a href="#" className={`${s.navLink} ${s.navLinkActive}`}>Gateway</a></li>
-          <li><a href="#" className={s.navLink}>Documentation</a></li>
-          <li><a href="#" className={s.navLink}>Enterprise Support</a></li>
-          <li><a href="#" className={s.navLink}>System Status</a></li>
+          <li><Link href="/" className={`${s.navLink} ${s.navLinkActive}`}>Gateway</Link></li>
+          <li><Link href="/help#documentation" className={s.navLink}>Documentation</Link></li>
+          <li><a href={mail("Enterprise support")} className={s.navLink}>Enterprise Support</a></li>
+          <li><Link href="/status" className={s.navLink}>System Status</Link></li>
         </ul>
 
         <div className={s.navRight}>
-          <a href="#" className={s.btnDocs}>
-            <svg className={s.btnDocsSvg} viewBox="0 0 24 24">
-              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
-              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
-            </svg>
+          <Link href="/help" className={s.btnDocs}>
+            <BookOpen className={s.btnDocsSvg} />
             Docs
-          </a>
-          <div className={s.btnUser}>
-            <svg className={s.btnUserSvg} viewBox="0 0 24 24">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-              <circle cx="12" cy="7" r="4"/>
-            </svg>
-          </div>
+          </Link>
+          <Link href="/login" className={s.btnUser} aria-label="Sign in">
+            <User className={s.btnUserSvg} />
+          </Link>
         </div>
       </nav>
 
       {/* Hero */}
       <header className={s.hero}>
         <div className={s.heroBadge}>
-          <svg className={s.heroBadgeSvg} viewBox="0 0 24 24">
-            <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-          </svg>
+          <Lock className={s.heroBadgeSvg} />
           Single Sign-On Authentication Gateway
         </div>
         <h1 className={s.heroTitle}>Select your workspace</h1>
@@ -105,10 +106,8 @@ export default async function RootPage() {
               <span className={s.pillDot} />Active &bull; Live
             </span>
           </div>
-          <div className={`${s.cardIcon} ${s.iconDark}`}>
-            <svg className={s.cardIconSvg} viewBox="0 0 24 24">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            </svg>
+          <div className={s.cardIcon}>
+            <img src="/icon-512.png" alt="Nexus" style={markStyle} />
           </div>
           <h2 className={s.cardName}>Nexus</h2>
           <p className={s.cardTagline}>Unified Security Operations</p>
@@ -126,7 +125,7 @@ export default async function RootPage() {
             Sign in to Nexus &nbsp;&rarr;
           </Link>
           <div className={s.cardLinks}>
-            <a href="#" className={s.cardLink}>Security credentials guide ↗</a>
+            <Link href="/help#sign-in" className={s.cardLink}>Security credentials guide ↗</Link>
             <span className={s.cardLink}>v4.12</span>
           </div>
         </div>
@@ -139,30 +138,27 @@ export default async function RootPage() {
               <span className={s.pillDot} />Pilot Programme
             </span>
           </div>
-          <div className={`${s.cardIcon} ${s.iconAmber}`}>
-            <svg className={s.cardIconSvg} viewBox="0 0 24 24">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-              <polyline points="9 22 9 12 15 12 15 22"/>
-            </svg>
+          <div className={s.cardIcon}>
+            <img src="/brand/nexus-hospitality.svg" alt="Nexus Hospitality" style={markStyle} />
           </div>
           <h2 className={s.cardName}>Nexus Hospitality</h2>
           <p className={s.cardTagline}>Property Experience Platform</p>
           <p className={s.cardDesc}>
-            AI-driven operational intelligence, property management sync, and guest experience orchestration for premier hospitality brands.
+            Live room status, housekeeping, stock control and team operations for hotels — with the mail and meetings your staff already use.
           </p>
           <div className={s.cardTags}>
-            <span className={s.tag}>PMS Sync</span>
-            <span className={s.tag}>Guest Intelligence</span>
-            <span className={s.tag}>Predictive Operations</span>
-            <span className={s.tag}>Daily Briefings</span>
+            <span className={s.tag}>Room Board</span>
+            <span className={s.tag}>Housekeeping</span>
+            <span className={s.tag}>Stock Control</span>
+            <span className={s.tag}>Team Tasks</span>
           </div>
           <div className={s.cardSpacer} />
           <Link href="/login" className={`${s.cardCta} ${s.ctaAmber}`}>
             Sign in to Hospitality &nbsp;&rarr;
           </Link>
           <div className={s.cardLinks}>
-            <a href="#" className={s.cardLink}>Request pilot onboarding ›</a>
-            <span className={s.cardLink}>Cohort 2</span>
+            <a href={mail("Nexus Hospitality pilot onboarding")} className={s.cardLink}>Request pilot onboarding ›</a>
+            <Link href="/help#hospitality" className={s.cardLink}>Product guide</Link>
           </div>
         </div>
 
@@ -174,15 +170,8 @@ export default async function RootPage() {
               <span className={s.pillDot} />Coming 2027
             </span>
           </div>
-          <div className={`${s.cardIcon} ${s.iconLight}`}>
-            <svg className={s.cardIconSvg} viewBox="0 0 24 24">
-              <line x1="3" x2="21" y1="22" y2="22"/>
-              <line x1="6" x2="6" y1="18" y2="11"/>
-              <line x1="10" x2="10" y1="18" y2="11"/>
-              <line x1="14" x2="14" y1="18" y2="11"/>
-              <line x1="18" x2="18" y1="18" y2="11"/>
-              <polygon points="12 2 20 7 4 7"/>
-            </svg>
+          <div className={s.cardIcon}>
+            <img src="/brand/nexus-education.svg" alt="Nexus Education" style={markStyle} />
           </div>
           <h2 className={s.cardName}>Nexus Education</h2>
           <p className={s.cardTagline}>Collegiate Core Infrastructure</p>
@@ -196,15 +185,12 @@ export default async function RootPage() {
             <span className={s.tag}>Faculty Portal</span>
           </div>
           <div className={s.cardSpacer} />
-          <a
-            href="mailto:peeyushmaster21@gmail.com?subject=Nexus Education Waitlist"
-            className={`${s.cardCta} ${s.ctaOutline}`}
-          >
+          <a href={mail("Nexus Education waitlist")} className={`${s.cardCta} ${s.ctaOutline}`}>
             Join Waitlist &nbsp;&rarr;
           </a>
           <div className={s.cardLinks}>
-            <a href="#" className={s.cardLink}>View institutional roadmap ↗</a>
-            <span className={s.cardLink}>Briefing Pack</span>
+            <Link href="/help#education" className={s.cardLink}>View institutional roadmap ↗</Link>
+            <a href={mail("Nexus Education briefing pack")} className={s.cardLink}>Briefing Pack</a>
           </div>
         </div>
 
@@ -215,17 +201,14 @@ export default async function RootPage() {
         <div className={s.ssoInner}>
           <div className={s.ssoLeft}>
             <div className={s.ssoIcon}>
-              <svg className={s.ssoIconSvg} viewBox="0 0 24 24">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                <circle cx="12" cy="12" r="2"/>
-              </svg>
+              <ShieldCheck className={s.ssoIconSvg} />
             </div>
             <div>
               <p className={s.ssoTitle}>Enterprise Identity Federation</p>
               <p className={s.ssoDesc}>Compatible with Okta, Microsoft Entra ID, Google Workspace &amp; SAML 2.0.</p>
             </div>
           </div>
-          <a href="mailto:peeyushmaster21@gmail.com?subject=Workspace Provisioning" className={s.ssoCta}>
+          <a href={mail("Workspace provisioning")} className={s.ssoCta}>
             Need workspace provisioning? Contact Support
           </a>
         </div>
@@ -236,23 +219,19 @@ export default async function RootPage() {
         <div className={s.footerLeft}>
           <span className={s.footerCopy}>&copy; 2026 CyberSage Technologies Ltd. All rights reserved.</span>
           <span className={s.certBadge}>
-            <svg className={s.certBadgeSvg} viewBox="0 0 24 24">
-              <polyline points="20 6 9 17 4 12"/>
-            </svg>
+            <Check className={s.certBadgeSvg} />
             SOC 2 Type II
           </span>
           <span className={s.certBadge}>
-            <svg className={s.certBadgeSvg} viewBox="0 0 24 24">
-              <polyline points="20 6 9 17 4 12"/>
-            </svg>
+            <Check className={s.certBadgeSvg} />
             ISO 27001 Certified
           </span>
         </div>
         <div className={s.footerLinks}>
-          <a href="#" className={s.footerLink}>Privacy Policy</a>
-          <a href="#" className={s.footerLink}>Terms of Service</a>
-          <a href="#" className={s.footerLink}>Security Overview</a>
-          <a href="#" className={s.footerLink}>Support Desk</a>
+          <Link href="/help#privacy" className={s.footerLink}>Privacy Policy</Link>
+          <Link href="/help#terms" className={s.footerLink}>Terms of Service</Link>
+          <Link href="/help#security" className={s.footerLink}>Security Overview</Link>
+          <a href={mail("Support request")} className={s.footerLink}>Support Desk</a>
         </div>
       </footer>
 

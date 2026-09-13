@@ -54,7 +54,8 @@ export default async function ConnectLayout({ children }: { children: React.Reac
 
   // Null on localhost, where there are no subdomains — the shell then omits the
   // "Open Nexus" link rather than rendering one that goes nowhere.
-  const nexusHref = hubUrl("/home");
+  // Hotel users go back to their hotel workspace, not the core Home.
+  const nexusHref = hubUrl(user.orgType === "HOSPITALITY" ? "/hospitality" : "/home");
 
   return (
     // The settings provider wraps the shell, not the page, so appearance

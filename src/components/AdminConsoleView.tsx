@@ -2798,7 +2798,7 @@ function HospitalityOrgsTab() {
                   <div className="space-y-1 text-xs mb-3">
                     <div className="flex justify-between"><span className="text-muted">Hotel</span><span className="text-foreground font-medium">{prop.name}</span></div>
                     {prop.city && <div className="flex justify-between"><span className="text-muted">Location</span><span className="text-foreground">{[prop.city, prop.country].filter(Boolean).join(", ")}</span></div>}
-                    <div className="flex justify-between"><span className="text-muted">Rooms / Rating</span><span className="text-foreground">{prop.totalRooms} rooms{prop.starRating ? ` · ${"★".repeat(prop.starRating)}` : ""}</span></div>
+                    <div className="flex justify-between"><span className="text-muted">Rooms / Rating</span><span className="text-foreground">{prop.totalRooms} rooms{prop.starRating ? ` · ${prop.starRating}-star` : ""}</span></div>
                     <div className="flex justify-between"><span className="text-muted">Users</span><span className="text-foreground">{org._count.users} account{org._count.users !== 1 ? "s" : ""}</span></div>
                   </div>
                 )}

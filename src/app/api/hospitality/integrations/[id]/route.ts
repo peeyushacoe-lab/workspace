@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireApiPermission }      from "@/lib/rbac/can";
+import { requireHospitalityApi } from "@/lib/hospitality/access";
 import { prisma }                    from "@/lib/prisma";
 import { logAudit }                  from "@/lib/audit";
 import { getAdapter }                from "@/lib/hospitality/adapters/index";
@@ -31,7 +31,7 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const auth = await requireApiPermission("hospitality.view");
+  const auth = await requireHospitalityApi();
   if ("error" in auth) return auth.error;
   const { user } = auth;
   const { id }   = await params;
@@ -77,7 +77,7 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const auth = await requireApiPermission("hospitality.manage");
+  const auth = await requireHospitalityApi("manage");
   if ("error" in auth) return auth.error;
   const { user } = auth;
   const { id }   = await params;

@@ -5,6 +5,7 @@ import { getSessionUserFromCookieStore, type SessionUser } from "@/lib/auth";
 import { signPayload } from "@/lib/session-crypto";
 import { getSessionPerms } from "@/lib/rbac/session-perms";
 import { sessionCookieOptions } from "@/lib/cookie-options";
+import { resolveOrgType } from "@/lib/hospitality/scope";
 
 // ─── Session cookie refresh (RFC-001, PR6) ────────────────────────────────────
 // The portal layout redirects here when the cookie's permEpoch is behind the DB
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest) {
       id: true, email: true, fullName: true, role: true,
       isActive: true, mustResetPassword: true, mfaEnabled: true,
       organizationId: true, orgRole: true,
-      organization: { select: { settings: true } },
+      organization: { select: { settings: true, _count: { select: { hotelProperties: true } } } },
     },
   });
 
@@ -45,8 +46,9 @@ export async function GET(request: NextRequest) {
   }
 
   const { perms, permEpoch } = await getSessionPerms(dbUser.id);
-  const orgSettings = dbUser.organization?.settings as Record<string, unknown> | null | undefined;
-  const orgType = (orgSettings?.orgType as string | undefined) ?? null;
+  const orgType = dbUser.organization
+    ? resolveOrgType(dbUser.organization.settings, dbUser.organization._count.hotelProperties)
+    : null;
 
   const sessionUser: SessionUser = {
     id: dbUser.id,

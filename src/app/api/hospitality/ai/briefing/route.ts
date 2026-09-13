@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse }  from "next/server";
-import { requireApiPermission }       from "@/lib/rbac/can";
+import { requireHospitalityApi } from "@/lib/hospitality/access";
 import { prisma }                     from "@/lib/prisma";
 import { claudeComplete }             from "@/lib/claude";
 import { getAIClient, AI_MODEL }      from "@/lib/ai";
@@ -74,7 +74,7 @@ function buildFallbackBriefing(type: BriefingType, isDemo: boolean): AIBriefing 
 // ─── POST /api/hospitality/ai/briefing ───────────────────────────────────────
 
 export async function POST(req: NextRequest) {
-  const auth = await requireApiPermission("hospitality.view");
+  const auth = await requireHospitalityApi();
   if ("error" in auth) return auth.error;
   const { user } = auth;
 

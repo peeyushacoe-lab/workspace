@@ -3330,9 +3330,11 @@ model HotelProperty {
   updatedAt      DateTime @updatedAt
 
   organization Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  metrics      HotelMetric[]
-  alerts       HotelAlert[]
-  integrations HotelIntegration[]
+  metrics        HotelMetric[]
+  alerts         HotelAlert[]
+  integrations   HotelIntegration[]
+  rooms          HotelRoom[]
+  inventoryItems HotelInventoryItem[]
 
   @@unique([organizationId, slug])
   @@index([organizationId])
@@ -3410,4 +3412,80 @@ model HotelIntegration {
 
   @@unique([propertyId, type])
   @@index([propertyId])
+}
+
+// Housekeeping status of a physical room — the vocabulary front office and
+// housekeeping already use on the floor (VC / VD / OCC / INSP / OOO).
+enum HotelRoomStatus {
+  VACANT_CLEAN
+  VACANT_DIRTY
+  OCCUPIED
+  INSPECTED
+  OUT_OF_ORDER
+}
+
+// A room on the property. Drives the room board and the housekeeping queue.
+model HotelRoom {
+  id           String          @id @default(cuid())
+  propertyId   String
+  number       String
+  floor        String?
+  type         String          @default("Standard")
+  status       HotelRoomStatus @default(VACANT_CLEAN)
+  assignedToId String?         // soft ref → User.id (housekeeper on the room)
+  guestName    String?
+  notes        String?
+  statusAt     DateTime        @default(now()) // when the status last changed
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  property HotelProperty @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([propertyId, number])
+  @@index([propertyId, status])
+}
+
+// A stocked item: linen, amenities, minibar, F&B, cleaning and engineering stores.
+model HotelInventoryItem {
+  id           String   @id @default(cuid())
+  propertyId   String
+  name         String
+  sku          String?
+  category     String   // "linen" | "amenities" | "minibar" | "f_and_b" | "cleaning" | "engineering" | "other"
+  unit         String   @default("pcs")
+  quantity     Float    @default(0)
+  parLevel     Float    @default(0)   // target on-hand quantity
+  reorderPoint Float    @default(0)   // at or below this → low stock
+  unitCost     Float?
+  supplier     String?
+  location     String?  // store room / outlet
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  property  HotelProperty        @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  movements HotelStockMovement[]
+
+  @@index([propertyId, category])
+}
+
+// Every change to an item's on-hand quantity. `quantity` is the signed delta;
+// `balance` is the on-hand figure after the movement, so the ledger reads on its own.
+model HotelStockMovement {
+  id          String   @id @default(cuid())
+  itemId      String
+  propertyId  String
+  type        String   // "IN" | "OUT" | "WASTE" | "ADJUST"
+  quantity    Float
+  balance     Float
+  reason      String?
+  reference   String?  // PO / GRN / requisition number
+  department  String?  // who the stock was issued to
+  createdById String?  // soft ref → User.id
+  createdAt   DateTime @default(now())
+
+  item HotelInventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId, createdAt])
+  @@index([propertyId, createdAt])
 }

@@ -10,6 +10,7 @@ import { emitEvent } from "@/lib/events";
 import { securitySyncQueue } from "@/lib/queues/security-sync.queue";
 import bcrypt from "bcrypt";
 import { sessionCookieOptions } from "@/lib/cookie-options";
+import { resolveOrgType } from "@/lib/hospitality/scope";
 
 // Assumes deployment is behind a trusted edge/CDN (Vercel) that sets
 // X-Forwarded-For reliably; if ever deployed without such an edge, this
@@ -71,7 +72,7 @@ export async function POST(request: NextRequest) {
 
     const user = await prisma.user.findUnique({
       where: { email },
-      select: { id: true, email: true, passwordHash: true, role: true, fullName: true, isActive: true, mustResetPassword: true, mfaEnabled: true, organizationId: true, orgRole: true, organization: { select: { settings: true } } },
+      select: { id: true, email: true, passwordHash: true, role: true, fullName: true, isActive: true, mustResetPassword: true, mfaEnabled: true, organizationId: true, orgRole: true, organization: { select: { settings: true, _count: { select: { hotelProperties: true } } } } },
     });
 
     const hashToCompare = user?.passwordHash ?? DUMMY_HASH;
@@ -112,8 +113,9 @@ export async function POST(request: NextRequest) {
     // so Edge middleware can gate pages without a DB call.
     const { perms, permEpoch } = await getSessionPerms(user.id);
 
-    const orgSettings = user.organization?.settings as Record<string, unknown> | null | undefined;
-    const orgType = (orgSettings?.orgType as string | undefined) ?? null;
+    const orgType = user.organization
+      ? resolveOrgType(user.organization.settings, user.organization._count.hotelProperties)
+      : null;
 
     const sessionUser: SessionUser = {
       id: user.id,
