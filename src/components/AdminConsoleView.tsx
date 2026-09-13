@@ -2739,7 +2739,15 @@ function HospitalityOrgsTab() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    try { const r = await fetch("/api/admin/hospitality/orgs"); const d = await r.json(); setOrgs(d.orgs ?? []); }
+    try {
+      const r = await fetch("/api/admin/hospitality/orgs", { cache: "no-store" });
+      // Session gone (signed out in another tab, or expired) — the page may still
+      // be on screen from before, so send the admin to sign in rather than
+      // showing an empty list and failing every action with a bare error.
+      if (r.status === 401) { window.location.href = "/login?next=/admin"; return; }
+      const d = await r.json();
+      setOrgs(d.orgs ?? []);
+    } catch { setOrgs([]); }
     finally { setLoading(false); }
   }, []);
 

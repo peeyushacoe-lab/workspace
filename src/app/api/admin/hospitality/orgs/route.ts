@@ -23,7 +23,8 @@ async function uniqueSlug(base: string, model: "organization" | "hotel") {
 // ─── GET  /api/admin/hospitality/orgs ────────────────────────────────────────
 export async function GET(_req: NextRequest) {
   const user = getSessionUserFromCookieStore(await cookies());
-  if (!user || user.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!user) return NextResponse.json({ error: "Your session has ended — sign in again." }, { status: 401 });
+  if (user.role !== "ADMIN") return NextResponse.json({ error: "Only the system admin can manage organizations." }, { status: 403 });
 
   const orgs = await prisma.organization.findMany({
     where: { hotelProperties: { some: {} } },
@@ -43,7 +44,8 @@ export async function GET(_req: NextRequest) {
 // Creates: Organization + HotelProperty + first admin user + their mailbox
 export async function POST(req: NextRequest) {
   const me = getSessionUserFromCookieStore(await cookies());
-  if (!me || me.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!me) return NextResponse.json({ error: "Your session has ended — sign in again." }, { status: 401 });
+  if (me.role !== "ADMIN") return NextResponse.json({ error: "Only the system admin can manage organizations." }, { status: 403 });
 
   const body = await req.json();
   const {

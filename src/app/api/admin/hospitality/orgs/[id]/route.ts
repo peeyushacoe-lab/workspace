@@ -6,7 +6,8 @@ import { prisma } from "@/lib/prisma";
 // ─── GET /api/admin/hospitality/orgs/[id] ────────────────────────────────────
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const me = getSessionUserFromCookieStore(await cookies());
-  if (!me || me.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!me) return NextResponse.json({ error: "Your session has ended — sign in again." }, { status: 401 });
+  if (me.role !== "ADMIN") return NextResponse.json({ error: "Only the system admin can manage organizations." }, { status: 403 });
 
   const { id } = await params;
 
@@ -28,7 +29,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 // ─── DELETE /api/admin/hospitality/orgs/[id] ─────────────────────────────────
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const me = getSessionUserFromCookieStore(await cookies());
-  if (!me || me.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!me) return NextResponse.json({ error: "Your session has ended — sign in again." }, { status: 401 });
+  if (me.role !== "ADMIN") return NextResponse.json({ error: "Only the system admin can manage organizations." }, { status: 403 });
 
   const { id } = await params;
 
