@@ -46,12 +46,14 @@ export default async function RootPage() {
       {/* Nav */}
       <nav className={s.nav}>
         <Link href="/" className={s.navLogo} aria-label="Nexus Suite by CyberSage">
-          {/* CyberSage eagle is white artwork — it sits on the dark tile. */}
-          <div className={s.navIcon} style={{ width: 44, height: 44, overflow: "hidden" }}>
+          {/* The CyberSage eagle ships as white artwork on transparency; invert it to
+              charcoal so it reads on the light nav, and crop to the eagle — the
+              wordmark is illegible at this size and the brand text sits beside it. */}
+          <div className={s.navIcon} style={{ width: 46, height: 46, overflow: "hidden", background: "transparent" }}>
             <img
               src="/cybersage-logo.png"
               alt="CyberSage"
-              style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "50% 30%", transform: "scale(1.45)" }}
+              style={{ width: "100%", height: "100%", objectFit: "cover", transform: "translateY(12%) scale(1.55)", filter: "invert(0.78)" }}
             />
           </div>
           <div>
@@ -139,7 +141,7 @@ export default async function RootPage() {
             </span>
           </div>
           <div className={s.cardIcon}>
-            <img src="/brand/nexus-hospitality.svg" alt="Nexus Hospitality" style={markStyle} />
+            <img src="/brand/nexus-hospitality-mark.png" alt="Nexus Hospitality" style={{ ...markStyle, objectFit: "contain" }} />
           </div>
           <h2 className={s.cardName}>Nexus Hospitality</h2>
           <p className={s.cardTagline}>Property Experience Platform</p>

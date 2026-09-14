@@ -205,7 +205,8 @@ export function HospitalityShell({
     <div className="flex h-full flex-col bg-hosp-sidebar text-hosp-sidebar-fg">
       {/* Property identity — the hotel, not the platform, is the brand here. */}
       <Link href="/hospitality" className="flex items-start gap-3 px-4 pb-4 pt-5">
-        <img src="/brand/nexus-hospitality.svg" alt="Nexus Hospitality" className="h-9 w-9 flex-shrink-0 rounded-xl" />
+        {/* Navy mark on a light tile — it would disappear straight on the dark sidebar. */}
+        <img src="/brand/nexus-hospitality-mark.png" alt="Nexus Hospitality" className="h-9 w-9 flex-shrink-0 rounded-xl bg-surface object-contain p-0.5" />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[14px] font-semibold leading-tight tracking-tight">{propertyName}</span>
           <span className="mt-0.5 flex items-center gap-1 truncate text-[11.5px] text-hosp-sidebar-muted">
