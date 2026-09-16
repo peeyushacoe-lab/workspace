@@ -1,4 +1,8 @@
-const CACHE_NAME = "cybersage-v4";
+// Bump this on every deploy that changes a static asset (logo, icons, manifest).
+// `activate` below deletes any cache under the old name, which is the ONLY thing
+// that forces already-visiting browsers to drop stale cache-first entries —
+// redeploying the server does nothing for bytes a browser already cached here.
+const CACHE_NAME = "cybersage-v5";
 const STATIC_ASSETS = ["/", "/manifest.json", "/icon-192.png", "/icon-512.png"];
 const OFFLINE_QUEUE_DB = "cybersage-offline";
 const OFFLINE_QUEUE_STORE = "compose-queue";
@@ -142,17 +146,23 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Other static assets (icons, manifest): cache-first, network fallback
+  // Other static assets (icons, logos, manifest): stale-while-revalidate.
+  // These URLs are NOT content-hashed (unlike /_next/static/), so a plain
+  // cache-first here means a swapped logo/icon never reaches an already-visiting
+  // browser until CACHE_NAME is bumped by hand — which is exactly what silently
+  // broke a Nexus logo rollout once already. Serve the cached copy instantly for
+  // speed, but always kick off a network fetch to refresh the cache for next time.
   event.respondWith(
     caches.match(request).then((cached) => {
-      if (cached) return cached;
-      return fetch(request).then((response) => {
-        if (response.ok && response.type === "basic") {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-        }
-        return response;
-      }).catch(() => new Response("", { status: 503 }));
+      const network = fetch(request)
+        .then((response) => {
+          if (response.ok && response.type === "basic") {
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, response.clone()));
+          }
+          return response;
+        })
+        .catch(() => undefined);
+      return cached ?? network.then((r) => r ?? new Response("", { status: 503 }));
     })
   );
 });
